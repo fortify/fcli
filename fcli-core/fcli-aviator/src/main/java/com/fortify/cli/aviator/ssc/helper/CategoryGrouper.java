@@ -122,6 +122,21 @@ public class CategoryGrouper {
     }
 
     /**
+     * Get SAST only findings
+
+     */
+
+    public int getSASTonlyFinding(){
+        List<CategoryBucket> sastOnly = getSastOnlyBuckets();
+        // Count total findings in SAST-only buckets
+        int sastOnlyFindings = 0;
+        for (CategoryBucket bucket : sastOnly) {
+            sastOnlyFindings += bucket.getSastCount();
+        }
+        return sastOnlyFindings;
+    }
+
+    /**
      * Prints the grouping statistics to the log.
      */
     public void printStatistics() {

@@ -14,8 +14,10 @@ package com.fortify.cli.aviator.dast;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import lombok.Data;
 
@@ -48,4 +50,11 @@ public class DastIssue {
 
     // Audit status
     private boolean suppressed = false;
+
+    /**
+     * SAST instance IDs that are already correlated to this DAST issue, as read
+     * from {@code <ExternalFindings>/<ExternalFinding>/<OriginFindingID>} in the
+     * webinspect.xml from a previous correlation run.
+     */
+    private Set<String> existingCorrelatedSastIds = new HashSet<>();
 }

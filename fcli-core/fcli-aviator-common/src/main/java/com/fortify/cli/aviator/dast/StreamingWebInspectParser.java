@@ -280,6 +280,9 @@ public class StreamingWebInspectParser {
                     case "ReportSection":
                         parseReportSectionSummaryOnly(reader, issue);
                         break;
+                    case "ExternalFindings":
+                        parseExternalFindings(reader, issue);
+                        break;
                     default:
                         break;
                 }
@@ -332,6 +335,9 @@ public class StreamingWebInspectParser {
                         break;
                     case "ReportSection":
                         parseReportSectionAll(reader, issue);
+                        break;
+                    case "ExternalFindings":
+                        parseExternalFindings(reader, issue);
                         break;
                     default:
                         break;
@@ -527,6 +533,32 @@ public class StreamingWebInspectParser {
     // =========================================================================
     // Helper methods
     // =========================================================================
+
+    /**
+     * Parses {@code <ExternalFindings>} and populates
+     * {@link DastIssue#getExistingCorrelatedSastIds()} with every
+     * {@code <OriginFindingID>} found inside. These IDs represent SAST
+     * findings already correlated to this DAST issue in a prior run, and
+     * are used to skip redundant gRPC calls.
+     */
+    private void parseExternalFindings(XMLStreamReader reader, DastIssue issue)
+            throws XMLStreamException {
+
+        while (reader.hasNext()) {
+            int event = reader.next();
+
+            if (event == XMLStreamConstants.START_ELEMENT
+                    && "OriginFindingID".equals(reader.getLocalName())) {
+                String originFindingId = readElementText(reader);
+                if (originFindingId != null && !originFindingId.isEmpty()) {
+                    issue.getExistingCorrelatedSastIds().add(originFindingId);
+                }
+            } else if (event == XMLStreamConstants.END_ELEMENT
+                    && "ExternalFindings".equals(reader.getLocalName())) {
+                return;
+            }
+        }
+    }
 
     private void applyFallbackCategory(DastIssue issue) {
         if ((issue.getCategory() == null || issue.getCategory().isEmpty())

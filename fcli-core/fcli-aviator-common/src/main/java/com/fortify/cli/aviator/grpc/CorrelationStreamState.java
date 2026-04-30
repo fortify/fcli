@@ -50,6 +50,7 @@ class CorrelationStreamState {
     // Results
     final List<CandidateMatch> candidateMatches = Collections.synchronizedList(new ArrayList<>());
     final List<CorrelatedPair> confirmedPairs = Collections.synchronizedList(new ArrayList<>());
+    final List<CorrelatedPair> rejectedPairs  = Collections.synchronizedList(new ArrayList<>());
 
     // Retry
     volatile int streamRetryCount = 0;

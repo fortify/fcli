@@ -15,9 +15,12 @@ package com.fortify.cli.aviator.ssc.cli.cmd;
 import static com.fortify.cli.ssc.artifact.helper.SSCArtifactHelper.getLatestDASTArtifact;
 import static com.fortify.cli.ssc.artifact.helper.SSCArtifactHelper.getLatestSASTArtifact;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -30,6 +33,7 @@ import com.fortify.cli.aviator.config.AviatorLoggerImpl;
 import com.fortify.cli.aviator.dast.DastIssue;
 import com.fortify.cli.aviator.fpr.Vulnerability;
 import com.fortify.cli.aviator.grpc.*;
+import com.fortify.cli.aviator.ssc.helper.AviatorSSCAttributeHelper;
 import com.fortify.cli.aviator.ssc.helper.AviatorSSCCorrelateDownloadHelper;
 import com.fortify.cli.aviator.ssc.helper.AviatorSSCCorrelateFprParser;
 import com.fortify.cli.aviator.ssc.helper.AviatorSSCCorrelateFprParser.ParseResult;
@@ -37,6 +41,7 @@ import com.fortify.cli.aviator.ssc.helper.AviatorSSCCorrelateHelper;
 import com.fortify.cli.aviator.ssc.helper.CategoryBucket;
 import com.fortify.cli.aviator.ssc.helper.CategoryGrouper;
 import com.fortify.cli.aviator.ssc.helper.DastFprCorrelationEnricher;
+import com.fortify.cli.aviator.ssc.helper.SastFprCorrelationRecorder;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
@@ -107,10 +112,21 @@ public class AviatorSSCCorrelateSastDastCommand extends AbstractSSCJsonNodeOutpu
                 .filter(d -> !d.isSuppressed())
                 .collect(Collectors.toList());
 
+            // Build the set of already-tried pair keys:
+            //   confirmedPairKeys — from <ExternalFindings> in DAST FPR webinspect.xml (authoritative)
+            //   rejectedPairKeys  — from DAST_CORRELATION_STATUS tag in SAST FPR audit.xml
+            Set<String> confirmedPairKeys = buildPreviouslyCorrelatedPairKeys(unsuppressedDast);
+            Set<String> rejectedPairKeys  = SastFprCorrelationRecorder.readTriedPairKeys(downloadedSASTFprPath);
+            Set<String> alreadyTriedKeys  = new HashSet<>(confirmedPairKeys);
+            alreadyTriedKeys.addAll(rejectedPairKeys);
+
             LOG.info("Total SAST issues {}", sastResult.vulnerabilities.size());
             LOG.info("Total DAST issues {}", dastResult.dastIssues.size());
             LOG.info("Total Unsupressed SAST issues {}", unsuppressedSast.size());
             LOG.info("Total Unsupressed DAST issues {}", unsuppressedDast.size());
+            LOG.info("Confirmed pairs (from ExternalFindings): {}", confirmedPairKeys.size());
+            LOG.info("Rejected pairs (from DAST_CORRELATION_STATUS tag): {}", rejectedPairKeys.size());
+            LOG.info("Total already-tried pairs (will be skipped): {}", alreadyTriedKeys.size());
 
             logger.progress("Status: Found %d SAST and %d DAST unsuppressed issues to correlate",
                 unsuppressedSast.size(), unsuppressedDast.size());
@@ -120,11 +136,15 @@ public class AviatorSSCCorrelateSastDastCommand extends AbstractSSCJsonNodeOutpu
             CategoryGrouper grouper = new CategoryGrouper();
             grouper.groupFindings(unsuppressedSast, unsuppressedDast);
             grouper.printStatistics();
+            int sastOnlyFindings = grouper.getSASTonlyFinding();
             List<CategoryBucket> mixedBuckets = grouper.getMixedBuckets();
 
             // Step 5: gRPC correlation (if mixed buckets exist)
-            int submitted = mixedBuckets.stream().mapToInt(CategoryBucket::getSastCount).sum();
+            // Count only SAST findings with at least one untried DAST pairing in their bucket
+            int submitted = countNewSastFindings(mixedBuckets, alreadyTriedKeys);
+            logger.info("New pairs after removing the already-tried pairs is {}", submitted);
             List<CorrelatedPair> newPairs = new ArrayList<>();
+            List<CorrelatedPair> newRejectedPairs = new ArrayList<>();
             if (!mixedBuckets.isEmpty()) {
                 logger.progress("Status: Found %d mixed category bucket(s) with %d SAST findings to correlate",
                     mixedBuckets.size(), submitted);
@@ -147,7 +167,9 @@ public class AviatorSSCCorrelateSastDastCommand extends AbstractSSCJsonNodeOutpu
 
                 //logger.progress("Status: Connecting to Aviator server for correlation...");
                 try (AviatorGrpcClient grpcClient = AviatorGrpcClientHelper.createClient(aviatorUrl, logger, 30)) {
-                    newPairs = performCorrelation(grpcClient, config, bucketData, sastResult.scanGuid, logger);
+                    CorrelationResult result = performCorrelation(grpcClient, config, bucketData, sastResult.scanGuid, logger, alreadyTriedKeys);
+                    newPairs = result.confirmedPairs();
+                    newRejectedPairs = result.rejectedPairs();
                 }
 
                 logger.progress("Status: Correlation complete — %d of %d SAST findings confirmed as correlated",
@@ -203,19 +225,42 @@ public class AviatorSSCCorrelateSastDastCommand extends AbstractSSCJsonNodeOutpu
                 logger.progress("Status: No correlated pairs found — skipping DAST FPR upload.");
             }
 
+            // Step 6b: Write DAST_CORRELATION_STATUS tags into SAST FPR and re-upload
+            if (!newPairs.isEmpty() || !newRejectedPairs.isEmpty()) {
+                logger.progress("Status: Writing correlation status tags to SAST FPR (%d confirmed, %d rejected)...",
+                    newPairs.size(), newRejectedPairs.size());
+                SastFprCorrelationRecorder.writeCorrelationTags(downloadedSASTFprPath, newPairs, newRejectedPairs);
+                try {
+                    Files.copy(downloadedSASTFprPath, Path.of("C:/Users/nmeshram/Documents/TestSastDastCorrelation/enriched-sast.fpr"), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+                    LOG.info("Enriched SAST FPR saved to: C:/Users/nmeshram/Documents/TestSastDastCorrelation/enriched-sast.fpr");
+                } catch (java.io.IOException e) {
+                    LOG.warn("Failed to save enriched SAST FPR locally: {}", e.getMessage());
+                }
+                logger.progress("Status: Uploading updated SAST FPR to SSC...");
+                AviatorSSCCorrelateDownloadHelper.uploadEnrichedSastFpr(unirest, av, downloadedSASTFprPath, progressWriter);
+                logger.progress("Status: Updated SAST FPR uploaded successfully.");
+
+                // Step 6c: Write last_correlation timestamp to SSC app version attribute.
+                // Placed after all FPR uploads so it is always later than lastScanDate.
+                logger.progress("Status: Writing last_correlation timestamp to app version...");
+                AviatorSSCAttributeHelper.writeLastCorrelationTimestamp(unirest, av.getVersionId());
+                logger.progress("Status: last_correlation timestamp written successfully.");
+            }
+
             // Step 7: Build output
             logger.progress("Status: Correlation process complete for %s:%s — result: %s",
                 av.getApplicationName(), av.getVersionName(), actionResult);
-            return AviatorSSCCorrelateHelper.buildOutputJson(av, uploadedArtifactId, submitted, newPairs, actionResult);
+            return AviatorSSCCorrelateHelper.buildOutputJson(av, uploadedArtifactId, submitted, sastOnlyFindings, newPairs, actionResult);
         }
     }
 
-    private List<CorrelatedPair> performCorrelation(
+    private CorrelationResult performCorrelation(
             AviatorGrpcClient grpcClient,
             CorrelationStreamConfig config,
             List<CorrelationStreamProcessor.CorrelationBucketData> bucketData,
             String scanGuid,
-            AviatorLoggerImpl logger) {
+            AviatorLoggerImpl logger,
+            Set<String> alreadyTriedKeys) {
         try {
             var processor = new CorrelationStreamProcessor(
                 grpcClient, logger,
@@ -225,13 +270,75 @@ public class AviatorSSCCorrelateSastDastCommand extends AbstractSSCJsonNodeOutpu
                 grpcClient.getDefaultTimeoutSeconds()
             );
             long timeoutSeconds = Math.max(grpcClient.getDefaultTimeoutSeconds(), 300);
-            return processor.processCorrelation(config, bucketData, scanGuid)
+            return processor.processCorrelation(config, bucketData, scanGuid, alreadyTriedKeys)
                 .get(timeoutSeconds, TimeUnit.SECONDS);
         } catch (java.util.concurrent.TimeoutException e) {
             throw new FcliSimpleException("Correlation stream timed out waiting for server responses", e);
         } catch (Exception e) {
             throw new FcliSimpleException("Correlation stream failed: " + e.getMessage(), e);
         }
+    }
+
+    /**
+     * Builds a set of {@code "sastInstanceId::dastIssueId"} keys from the
+     * {@code <ExternalFindings>} already present in the parsed DAST issues.
+     * These pairs were confirmed in a previous correlation run and will be
+     * skipped by the gRPC processor to avoid redundant server calls.
+     */
+    private Set<String> buildPreviouslyCorrelatedPairKeys(List<DastIssue> dastIssues) {
+        Set<String> keys = new HashSet<>();
+        for (DastIssue dastIssue : dastIssues) {
+            if (dastIssue.getId() == null || dastIssue.getId().isEmpty()) continue;
+            for (String sastId : dastIssue.getExistingCorrelatedSastIds()) {
+                keys.add(sastId + "::" + dastIssue.getId());
+            }
+        }
+        LOG.debug("Built {} previously-correlated pair keys from ExternalFindings", keys.size());
+        return keys;
+    }
+
+    /**
+     * Counts SAST findings across all mixed buckets that have at least one
+     * uncorrelated DAST pairing in the same bucket. Already fully-correlated
+     * SAST findings (every co-bucket DAST issue already confirmed) are excluded,
+     * so {@code submitted} accurately reflects the new work being sent to the
+     * gRPC server.
+     */
+    private int countNewSastFindings(List<CategoryBucket> buckets, Set<String> alreadyTriedKeys) {
+        LOG.debug("=== Already-tried pair keys ({}) ===", alreadyTriedKeys.size());
+        for (String key : alreadyTriedKeys) {
+            String[] parts = key.split("::", 2);
+            LOG.debug("  Already tried — SAST: {} | DAST: {}",
+                parts.length == 2 ? parts[0] : key,
+                parts.length == 2 ? parts[1] : "?");
+        }
+
+        LOG.debug("=== Mixed bucket SAST/DAST instance IDs ===");
+        for (CategoryBucket bucket : buckets) {
+            LOG.debug("  Category: {}", bucket.getCategory());
+            for (Vulnerability sast : bucket.getSastFindings()) {
+                LOG.debug("    SAST instanceId: {}", sast.getInstanceID());
+            }
+            for (DastIssue dast : bucket.getDastFindings()) {
+                LOG.debug("    DAST issueId:    {}", dast.getId());
+            }
+        }
+
+        if (alreadyTriedKeys.isEmpty()) {
+            return buckets.stream().mapToInt(CategoryBucket::getSastCount).sum();
+        }
+
+        int count = 0;
+        for (CategoryBucket bucket : buckets) {
+            for (Vulnerability sast : bucket.getSastFindings()) {
+                boolean hasNewPairing = bucket.getDastFindings().stream()
+                    .anyMatch(dast -> !alreadyTriedKeys.contains(
+                        sast.getInstanceID() + "::" + dast.getId()));
+                LOG.debug("  SAST {} hasNewPairing={}", sast.getInstanceID(), hasNewPairing);
+                if (hasNewPairing) count++;
+            }
+        }
+        return count;
     }
 
     @Override

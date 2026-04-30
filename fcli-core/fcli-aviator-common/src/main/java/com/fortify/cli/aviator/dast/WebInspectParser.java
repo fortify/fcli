@@ -294,6 +294,8 @@ public class WebInspectParser {
             }
         }
 
+        parseExternalFindings(issueElement, issue);
+
         return issue;
     }
 
@@ -385,7 +387,30 @@ public class WebInspectParser {
             }
         }
 
+        parseExternalFindings(issueElement, issue);
+
         return issue;
+    }
+
+    /**
+     * Reads {@code <ExternalFindings>/<ExternalFinding>/<OriginFindingID>} from the given
+     * issue element and populates {@link DastIssue#getExistingCorrelatedSastIds()}.
+     * This records which SAST findings were already correlated in a prior run so that
+     * the processor can skip re-submitting them to the gRPC service.
+     */
+    private void parseExternalFindings(Element issueElement, DastIssue issue) {
+        NodeList efContainers = issueElement.getElementsByTagName("ExternalFindings");
+        if (efContainers.getLength() == 0) return;
+
+        Element efContainer = (Element) efContainers.item(0);
+        NodeList efNodes = efContainer.getElementsByTagName("ExternalFinding");
+        for (int i = 0; i < efNodes.getLength(); i++) {
+            Element ef = (Element) efNodes.item(i);
+            String originFindingId = getElementText(ef, "OriginFindingID");
+            if (originFindingId != null && !originFindingId.isEmpty()) {
+                issue.getExistingCorrelatedSastIds().add(originFindingId);
+            }
+        }
     }
 
     private String getElementText(Element parent, String tagName) {
