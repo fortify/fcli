@@ -10,21 +10,18 @@
  * herein. The information contained herein is subject to change
  * without notice.
  */
-package com.fortify.cli.aviator.ssc.cli.cmd;
+package com.fortify.cli.aviator.grpc;
 
-import com.fortify.cli.common.cli.cmd.AbstractContainerCommand;
+import java.util.List;
 
-import picocli.CommandLine;
-
-@CommandLine.Command(
-        name = "ssc",
-        subcommands = {
-                AviatorSSCAuditCommand.class,
-                AviatorSSCPrepareCommand.class,
-                AviatorSSCApplyRemediationsCommand.class,
-                AviatorSSCCorrelateSastDastCommand.class
-        }
-
-)
-public class AviatorSSCCommands extends AbstractContainerCommand {
-}
+/**
+ * Holds the outcome of a full correlation stream run — both confirmed
+ * and rejected SAST–DAST pairs.
+ *
+ * @param confirmedPairs pairs where Phase 2 validation returned confirmed=true
+ * @param rejectedPairs  pairs where Phase 2 validation returned confirmed=false
+ */
+public record CorrelationResult(
+    List<CorrelatedPair> confirmedPairs,
+    List<CorrelatedPair> rejectedPairs
+) {}

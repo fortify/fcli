@@ -1,0 +1,169 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "com.fortify.aviator.grpc";
+
+package correlation;
+
+service CorrelationService {
+  rpc ProcessCorrelationStream (stream CorrelationClientMessage) returns (stream CorrelationServerMessage);
+}
+
+message CorrelationStreamInitRequest {
+  string token = 1;
+  string applicationName = 2;
+  string streamId = 3;
+  string requestId = 4;
+  int32 totalReportedIssues = 5;
+  int32 totalIssuesToCorrelate = 6;
+  optional string fprBuildId = 7;
+  optional string sscApplicationName = 8;
+  optional string sscApplicationVersion = 9;
+}
+
+message CorrelationClientMessage {
+  oneof request_type {
+    CorrelationStreamInitRequest init = 1;
+    CorrelationRequest correlation = 2;
+    CorrelationValidationRequest validation = 3;
+    CorrelationPingRequest ping = 4;
+  }
+}
+
+message CorrelationServerMessage {
+  oneof response_type {
+    CorrelationInitResponse init = 1;
+    CorrelationResponse correlation = 2;
+    CorrelationValidationResponse validation = 3;
+    CorrelationErrorResponse error = 4;
+    CorrelationPongResponse pong = 5;
+  }
+}
+
+message CorrelationInitResponse {
+  string requestId = 1;
+  string clientStreamId = 2;
+  string serverStreamId = 3;
+  string status = 4;
+  string statusMessage = 5;
+  int32 reservedQuota = 6;
+  int32 exceededCount = 7;
+  bool unlimitedQuota = 8;
+  optional string quotaLastUpdated = 9;
+  optional string nextQuotaUpdateMessage = 10;
+  optional string reassignedEntitlementId = 11;
+}
+
+message CorrelationErrorResponse {
+  string requestId = 1;
+  string clientStreamId = 2;
+  string serverStreamId = 3;
+  string status = 4;
+  string statusMessage = 5;
+}
+
+message CorrelationPingRequest {
+  string streamId = 1;
+  int64 timestamp = 2;
+}
+
+message CorrelationPongResponse {
+  string streamId = 1;
+  int64 serverTimestamp = 2;
+  int64 clientTimestamp = 3;
+}
+
+message CorrelationRequest {
+  string requestId = 1;
+  string streamId = 2;
+  string category = 3;
+  string bucketKey = 4; // ??
+  SastFindingContext sastFinding = 5;
+  repeated DastUrlCandidate dastUrlCandidates = 6;
+}
+
+message CorrelationResponse {
+  string requestId = 1;
+  string streamId = 2;
+  string sastId = 3;
+  string status = 4;
+  string statusMessage = 5;
+  string noCorrelationReason = 6;
+  repeated CorrelationCandidateMatch matches = 7;
+}
+
+message CorrelationValidationRequest {
+  string requestId = 1;
+  string streamId = 2;
+  string category = 3;
+  SastFindingContext sastFinding = 4;
+  DastIssueContext dastIssue = 5;
+}
+
+message CorrelationValidationResponse {
+  string requestId = 1;
+  string streamId = 2;
+  string sastId = 3;
+  string dastId = 4;
+  string status = 5;
+  string statusMessage = 6;
+  CorrelationDecision decision = 7;
+}
+
+message SastFindingContext {
+  string instanceId = 1;
+  string category = 2;
+  string type = 3;
+  string subType = 4;
+  string fullSourceFileName = 5;
+  string shortDescription = 6;
+  SastCodeLocation source = 10;
+  SastCodeLocation sink = 11;
+  repeated SastCodeFile files = 12;
+}
+
+message SastCodeLocation {
+  string filename = 1;
+  int32 line = 2;
+  string code = 3;
+}
+
+message SastFragment {
+  string content = 1;
+  int32 startLine = 2;
+  int32 endLine = 3;
+}
+
+message SastCodeFile {
+  string name = 1;
+  string content = 2;
+  bool segment = 3;
+  int32 startLine = 4;
+  int32 endLine = 5;
+}
+
+message DastUrlCandidate {
+  string url = 1;
+}
+
+message CorrelationCandidateMatch {
+  string url = 1;
+  string rationale = 2;
+  string confidence = 3;
+}
+
+message DastIssueContext {
+  string dastIssueId = 1;
+  string issueName = 2;
+  string severity = 3;
+  string url = 4;
+  string summary = 5;
+  string cweId = 6;
+  repeated string reproStepUrls = 7;
+}
+
+message CorrelationDecision {
+  bool confirmed = 1;
+  string rationale = 2;
+  string confidence = 3;
+}
