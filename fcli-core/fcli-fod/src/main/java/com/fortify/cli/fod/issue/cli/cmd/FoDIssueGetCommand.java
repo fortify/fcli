@@ -13,19 +13,22 @@
 package com.fortify.cli.fod.issue.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.exception.FcliSimpleException;
+import com.fortify.cli.common.exception.FcliTechnicalException;
 import com.fortify.cli.common.json.producer.IObjectNodeProducer;
 import com.fortify.cli.common.json.producer.ObjectNodeProducerApplyFrom;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
-import com.fortify.cli.common.util.DisableTest;
-import com.fortify.cli.common.util.DisableTest.TestType;
 import com.fortify.cli.fod._common.cli.mixin.FoDDelimiterMixin;
 import com.fortify.cli.fod._common.output.cli.cmd.AbstractFoDOutputCommand;
 import com.fortify.cli.fod._common.rest.FoDUrls;
 import com.fortify.cli.fod._common.rest.helper.FoDInputTransformer;
 import com.fortify.cli.fod.issue.cli.mixin.FoDIssueEmbedMixin;
 import com.fortify.cli.fod.issue.cli.mixin.FoDIssueIncludeMixin;
+import com.fortify.cli.fod.issue.helper.FoDIssueHelper;
+import com.fortify.cli.fod.issue.helper.FoDIssueHelper.IssueAggregationData;
 import com.fortify.cli.fod.release.cli.mixin.FoDReleaseByQualifiedNameOrIdResolverMixin;
+import com.fortify.cli.fod.release.helper.FoDReleaseDescriptor;
 
 import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
@@ -34,50 +37,49 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Parameters;
 
-@DisableTest(TestType.CMD_DEFAULT_TABLE_OPTIONS_PRESENT)
 @Command(name = OutputHelperMixins.Get.CMD_NAME)
 public class FoDIssueGetCommand extends AbstractFoDOutputCommand {
     @Getter @Mixin private OutputHelperMixins.Get outputHelper;
     @Mixin private FoDDelimiterMixin delimiterMixin; // Is automatically injected in resolver mixins
     @Mixin private FoDReleaseByQualifiedNameOrIdResolverMixin.RequiredOption releaseResolver;
-    @Parameters(index = "0", arity = "1", descriptionKey = "fcli.fod.issue.get.id")
+    @Parameters(index = "0", arity = "1", descriptionKey = "fcli.fod.issue.get.vulnId")
     private String vulnId;
     @Mixin private FoDIssueEmbedMixin embedMixin;
     @Mixin private FoDIssueIncludeMixin includeMixin;
 
     @Override
     protected IObjectNodeProducer getObjectNodeProducer(UnirestInstance unirest) {
-        String releaseId = releaseResolver.getReleaseId(unirest);
-        JsonNode issue = getIssue(unirest, releaseId);
+        FoDReleaseDescriptor releaseDescriptor = releaseResolver.getReleaseDescriptor(unirest);
+        String releaseId = releaseDescriptor.getReleaseId().toString();
+        JsonNode issue = findIssue(unirest, releaseId);
+        if ( issue==null ) {
+            throw new FcliSimpleException(String.format("No vulnerability found for vulnId '%s' in release '%s'", vulnId, releaseDescriptor.getReleaseName()));
+        }
+        if ( issue instanceof ObjectNode issueObject ) {
+            issueObject.put("releaseId", releaseId);
+            issueObject.put("releaseName", releaseDescriptor.getReleaseName());
+            FoDIssueHelper.transformRecord(issueObject, IssueAggregationData.forSingleRelease(issueObject));
+        }
         return simpleObjectNodeProducerBuilder(ObjectNodeProducerApplyFrom.SPEC)
                 .source(issue)
                 .build();
     }
 
-    private JsonNode getIssue(UnirestInstance unirest, String releaseId) {
-        boolean numericId = vulnId!=null && vulnId.chars().allMatch(Character::isDigit);
-        JsonNode issue = numericId
-            ? getIssueByFilter(unirest, releaseId, "id", vulnId)
-            : getIssueByFilter(unirest, releaseId, "vulnId", vulnId);
-        if ( issue==null ) {
-            issue = numericId
-                ? getIssueByFilter(unirest, releaseId, "vulnId", vulnId)
-                : getIssueByFilter(unirest, releaseId, "id", vulnId);
-        }
-        if ( issue==null ) {
-            throw new FcliSimpleException(String.format("No issue found for id or vulnId '%s' in the specified release", vulnId));
-        }
-        return issue;
-    }
-
-    private JsonNode getIssueByFilter(UnirestInstance unirest, String releaseId, String fieldName, String value) {
+    private JsonNode findIssue(UnirestInstance unirest, String releaseId) {
         HttpRequest<?> request = unirest.get(FoDUrls.VULNERABILITIES)
                 .routeParam("relId", releaseId)
-                .queryString("filters", fieldName+":"+value)
-                .queryString("limit", "1");
-        JsonNode body = includeMixin.updateRequest(request).asObject(JsonNode.class).getBody();
-        JsonNode items = FoDInputTransformer.getItems(body);
-        return items!=null && items.isArray() && !items.isEmpty() ? items.get(0) : null;
+                .queryString("filters", "vulnId:" + vulnId)
+                .queryString("limit", "2");
+        var response = includeMixin.updateRequest(request).asObject(JsonNode.class);
+        if ( response.getStatus() >= 400 ) {
+            throw new FcliTechnicalException(String.format("FoD API returned HTTP %d while searching for vulnerability '%s'", response.getStatus(), vulnId));
+        }
+        JsonNode items = FoDInputTransformer.getItems(response.getBody());
+        if ( items==null || !items.isArray() ) { return null; }
+        if ( items.size()>1 ) {
+            throw new FcliSimpleException(String.format("Multiple vulnerabilities found for vulnId '%s'; please check your input", vulnId));
+        }
+        return items.isEmpty() ? null : items.get(0);
     }
 
     @Override

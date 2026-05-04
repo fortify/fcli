@@ -152,7 +152,7 @@ public class FoDIssueHelper {
                 .releaseNames(Set.of(releaseName))
                 .releaseIds(Set.of(releaseId))
                 .ids(Set.of(id))
-                .vulnIds(Set.of(vulnId))
+                .vulnIds(vulnId!=null ? Set.of(vulnId) : Collections.emptySet())
                 .build();
         }
 
@@ -179,7 +179,7 @@ public class FoDIssueHelper {
         }
 
         public String getIdsString() {
-        return asString(ids);
+            return asString(ids);
         }
 
         private String asString(Set<String> values) {
@@ -192,23 +192,27 @@ public class FoDIssueHelper {
     /** Overload adding aggregation fields to an ObjectNode using provided data. */
     public static final ObjectNode transformRecord(ObjectNode record, IssueAggregationData data) {
         transformRecord(record); // apply generic transformations first (rename etc.)
-        ArrayNode vulnIdsArray = JsonHelper.getObjectMapper().createArrayNode();
-        data.getVulnIds().forEach(vulnIdsArray::add);
-        ArrayNode releaseNamesArray = JsonHelper.getObjectMapper().createArrayNode();
-        data.getReleaseNames().forEach(releaseNamesArray::add);
-        ArrayNode releaseIdsArray = JsonHelper.getObjectMapper().createArrayNode();
-        data.getReleaseIds().forEach(releaseIdsArray::add);
-        ArrayNode idsArray = JsonHelper.getObjectMapper().createArrayNode();
-        data.getIds().forEach(idsArray::add);
-        record.set("vulnIds", vulnIdsArray);
+        record.set("vulnIds", toJsonNode(data.getVulnIds()));
         record.put("vulnIdsString", data.getVulnIdsString());
-        record.set("foundInReleases", releaseNamesArray);
+        record.set("foundInReleases", toJsonNode(data.getReleaseNames()));
         record.put("foundInReleasesString", data.getReleaseNamesString());
-        record.set("foundInReleaseIds", releaseIdsArray);
+        record.set("foundInReleaseIds", toJsonNode(data.getReleaseIds()));
         record.put("foundInReleaseIdsString", data.getReleaseIdsString());
-        record.set("ids", idsArray);
+        record.set("ids", toJsonNode(data.getIds()));
         record.put("idsString", data.getIdsString());
         return record;
+    }
+
+    private static JsonNode toJsonNode(Set<String> values) {
+        if ( values == null || values.isEmpty() ) {
+            return JsonHelper.getObjectMapper().getNodeFactory().textNode("N/A");
+        } else if ( values.size() == 1 ) {
+            return JsonHelper.getObjectMapper().getNodeFactory().textNode(values.iterator().next());
+        } else {
+            var array = JsonHelper.getObjectMapper().createArrayNode();
+            values.forEach(array::add);
+            return array;
+        }
     }
 
     public static final FoDBulkIssueUpdateResponse updateIssues(UnirestInstance unirest, String releaseId, FoDBulkIssueUpdateRequest issueUpdateRequest) {
