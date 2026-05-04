@@ -248,6 +248,11 @@ public class AuditProcessor {
     }
 
     private Map<String, String> updateAuditXml(Map<String, AuditResponse> auditResponses, TagMappingConfig tagMappingConfig) throws AviatorTechnicalException {
+        return updateAuditXml(auditResponses, tagMappingConfig, Map.of());
+    }
+
+    private Map<String, String> updateAuditXml(Map<String, AuditResponse> auditResponses,
+            TagMappingConfig tagMappingConfig, Map<String, String> issueCategoryLookup) throws AviatorTechnicalException {
         Map<String, String> remediationCommentTimestamps = new HashMap<>();
         for (Map.Entry<String, AuditResponse> entry : auditResponses.entrySet()) {
             String instanceId = entry.getKey();
@@ -268,9 +273,9 @@ public class AuditProcessor {
 
             if (response.getAuditResult() != null) {
                 if (issueElement != null) {
-                    commentTimestamp = updateIssueElement(issueElement, response, tagMappingConfig);
+                    commentTimestamp = updateIssueElement(issueElement, response, tagMappingConfig, issueCategoryLookup);
                 } else {
-                    commentTimestamp = addNewIssueElement(instanceId, response, tagMappingConfig);
+                    commentTimestamp = addNewIssueElement(instanceId, response, tagMappingConfig, issueCategoryLookup);
                 }
                 if (commentTimestamp != null &&
                         response.getAuditResult().getAutoremediation() != null &&
@@ -295,7 +300,8 @@ public class AuditProcessor {
         return null;
     }
 
-    public String updateIssueElement(Element issueElement, AuditResponse response, TagMappingConfig tagMappingConfig) {
+    public String updateIssueElement(Element issueElement, AuditResponse response, TagMappingConfig tagMappingConfig,
+            Map<String, String> issueCategoryLookup) throws AviatorTechnicalException {
         int revision = Integer.parseInt(issueElement.getAttribute("revision"));
         issueElement.setAttribute("revision", String.valueOf(++revision));
         String commentTimestamp = null;
@@ -326,9 +332,7 @@ public class AuditProcessor {
             if (resultConfig != null && resultConfig.getValue() != null && !resultConfig.getValue().isEmpty()) {
                 updateOrAddTag(issueElement, tagMappingConfig.getTag_id(), resultConfig.getValue());
             }
-            if (resultConfig != null && resultConfig.getSuppress()) {
-                issueElement.setAttribute("suppressed", "true");
-            }
+            applySuppressionDecision(issueElement, issueElement.getAttribute("instanceId"), resultConfig, tagMappingConfig, issueCategoryLookup);
         }
 
         updateOrAddTag(issueElement, Constants.AVIATOR_STATUS_TAG_ID, Constants.PROCESSED_BY_AVIATOR);
@@ -337,12 +341,13 @@ public class AuditProcessor {
             commentTimestamp = updateOrAddComment(issueElement, response.getAuditResult().comment);
         }
 
-        updateClientAuditTrail(issueElement, response, tagMappingConfig);
+        updateClientAuditTrail(issueElement, response, tagMappingConfig, issueCategoryLookup);
 
         return commentTimestamp;
     }
 
-    private void updateClientAuditTrail(Element issueElement, AuditResponse response, TagMappingConfig tagMappingConfig) {
+    private void updateClientAuditTrail(Element issueElement, AuditResponse response, TagMappingConfig tagMappingConfig,
+            Map<String, String> issueCategoryLookup) throws AviatorTechnicalException {
         Element clientAuditTrail = getClientAuditTrailElement(issueElement);
 
         if (response != null && response.getAuditResult() != null) {
@@ -371,11 +376,42 @@ public class AuditProcessor {
             if (resultConfig != null && resultConfig.getValue() != null && !resultConfig.getValue().isEmpty()) {
                 addTagHistory(clientAuditTrail, tagMappingConfig.getTag_id(), resultConfig.getValue());
             }
-            if (resultConfig != null && resultConfig.getSuppress()) {
-                issueElement.setAttribute("suppressed", "true");
-            }
+            applySuppressionDecision(issueElement, issueElement.getAttribute("instanceId"), resultConfig, tagMappingConfig, issueCategoryLookup);
         }
         addTagHistory(clientAuditTrail, Constants.AVIATOR_STATUS_TAG_ID, Constants.PROCESSED_BY_AVIATOR);
+    }
+
+    private void applySuppressionDecision(Element issueElement, String instanceId, TagMappingConfig.Result resultConfig,
+            TagMappingConfig tagMappingConfig, Map<String, String> issueCategoryLookup) throws AviatorTechnicalException {
+        if (shouldSuppress(instanceId, resultConfig, tagMappingConfig, issueCategoryLookup)) {
+            issueElement.setAttribute("suppressed", "true");
+        }
+    }
+
+    private boolean shouldSuppress(String instanceId, TagMappingConfig.Result resultConfig,
+            TagMappingConfig tagMappingConfig, Map<String, String> issueCategoryLookup) throws AviatorTechnicalException {
+        if (resultConfig == null || !Boolean.TRUE.equals(resultConfig.getSuppress())) {
+            return false;
+        }
+
+        if (!tagMappingConfig.hasSuppressionExclusions()) {
+            return true;
+        }
+
+        String issueCategory = null;
+        if (tagMappingConfig.requiresCategoryForSuppressionEvaluation()) {
+            issueCategory = Optional.ofNullable(issueCategoryLookup.get(instanceId))
+                    .map(String::trim)
+                    .filter(category -> !category.isEmpty())
+                    .orElseThrow(() -> new AviatorTechnicalException(
+                            "Cannot apply suppression exclusions for issue '" + instanceId + "' because no vulnerability category was available."));
+        }
+
+        TagMappingConfig.SuppressionExclusionContext suppressionExclusionContext = TagMappingConfig.SuppressionExclusionContext
+                .builder()
+                .withExactMatchSelectorValue(TagMappingConfig.SUPPRESSION_SELECTOR_CATEGORIES, issueCategory)
+                .build();
+        return !tagMappingConfig.isSuppressionExcluded(suppressionExclusionContext);
     }
 
     private Element getClientAuditTrailElement(Element issueElement) {
@@ -473,7 +509,8 @@ public class AuditProcessor {
         return timestamp;
     }
 
-    public String addNewIssueElement(String instanceId, AuditResponse response, TagMappingConfig tagMappingConfig) {
+    public String addNewIssueElement(String instanceId, AuditResponse response, TagMappingConfig tagMappingConfig,
+            Map<String, String> issueCategoryLookup) throws AviatorTechnicalException {
         Element issueList = (Element) auditDoc.getElementsByTagNameNS(AUDIT_NAMESPACE_URI, "IssueList").item(0);
         if (issueList == null) {
             issueList = auditDoc.createElementNS(AUDIT_NAMESPACE_URI, "IssueList");
@@ -511,9 +548,7 @@ public class AuditProcessor {
             if (resultConfig != null && resultConfig.getValue() != null && !resultConfig.getValue().isEmpty()) {
                 updateOrAddTag(newIssue, tagMappingConfig.getTag_id(), resultConfig.getValue());
             }
-            if (resultConfig != null && resultConfig.getSuppress()) {
-                newIssue.setAttribute("suppressed", "true");
-            }
+            applySuppressionDecision(newIssue, instanceId, resultConfig, tagMappingConfig, issueCategoryLookup);
         }
 
         updateOrAddTag(newIssue, Constants.AVIATOR_STATUS_TAG_ID, Constants.PROCESSED_BY_AVIATOR);
@@ -522,7 +557,7 @@ public class AuditProcessor {
             commentTimestamp = updateOrAddComment(newIssue, response.getAuditResult().comment);
         }
 
-        updateClientAuditTrail(newIssue, response, tagMappingConfig);
+        updateClientAuditTrail(newIssue, response, tagMappingConfig, issueCategoryLookup);
 
         issueList.appendChild(newIssue);
         return commentTimestamp;
@@ -638,10 +673,12 @@ public class AuditProcessor {
     }
 
     public File updateAndSaveAuditAndRemediationsXml(Map<String, AuditResponse> auditResponses,
-                                                    TagMappingConfig tagMappingConfig,
-                                                    FPRInfo fprInfo) throws AviatorTechnicalException {
+            TagMappingConfig tagMappingConfig, Map<String, String> issueCategoryLookup,
+            FPRInfo fprInfo) throws AviatorTechnicalException {
         // Step 1: Update the in-memory audit.xml document. This returns timestamps needed for remediations.
-        Map<String, String> remediationCommentTimestamps = updateAuditXml(auditResponses, tagMappingConfig);
+        Map<String, String> effectiveIssueCategoryLookup = issueCategoryLookup == null ? Map.of() : issueCategoryLookup;
+        Map<String, String> remediationCommentTimestamps = updateAuditXml(
+                auditResponses, tagMappingConfig, effectiveIssueCategoryLookup);
 
         // Step 2: Check if there are any remediations to generate.
         boolean hasRemediations = auditResponses.values().stream()
