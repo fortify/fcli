@@ -110,6 +110,23 @@ public class Action implements IActionElement {
     @JsonProperty(value = "cli.options", required = false) private Map<String, ActionCliOption> cliOptions = Collections.emptyMap();
     
     @JsonPropertyDescription("""
+        Optional map: Reusable functions that can be called from action steps via \
+        #fn.call() SpEL expressions. Map keys define function names, map values \
+        define function arguments, steps, and return expressions.
+        """)
+    @SampleYamlSnippets("""
+        functions:
+          myFunction:
+            args:
+              arg1: { required: true }
+              arg2: { default: "defaultValue" }
+            steps:
+              - var.set:
+                  _result: ${args.arg1} - ${args.arg2}
+        """)
+    @JsonProperty(value = "functions", required = false) private Map<String, ActionFunction> functions = Collections.emptyMap();
+
+    @JsonPropertyDescription("""
         Required list: Steps to be executed when this action is being run. Each list item should consist of a \
         single instruction to be executed, optionally together with the 'if:' instruction to allow for conditional \
         execution. Note that the YAML schema allows for multiple instructions to be present within a single list \

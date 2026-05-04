@@ -1,5 +1,40 @@
 # Changelog
 
+## [3.18.0](https://github.com/fortify/fcli/compare/v3.17.0...v3.18.0) (2026-04-22)
+
+
+### Features
+
+* `fcli fod * list`: Add `--fetch` option on most `list` commands to fetch subset of records from FoD ([2bba9c5](https://github.com/fortify/fcli/commit/2bba9c513b011845579fd4b6340f4ffc1326d84c))
+* `fcli fod session list`: Add `--validate` option to check validity of FoD OAuth token ([525e13f](https://github.com/fortify/fcli/commit/525e13ff93d6a2500b7fdb245585488b64852961))
+* `fcli sc-dast * list`: Add `--fetch` option on most `list` commands to fetch subset of records from ScanCentral DAST ([2bba9c5](https://github.com/fortify/fcli/commit/2bba9c513b011845579fd4b6340f4ffc1326d84c))
+* `fcli sc-sast * list`: Add `--fetch` option on some `list` commands that utilize SSC REST endpoints to fetch subset of records from SSC ([2bba9c5](https://github.com/fortify/fcli/commit/2bba9c513b011845579fd4b6340f4ffc1326d84c))
+* `fcli ssc * list`: Add `--fetch` option on most `list` commands to fetch subset of records from SSC ([2bba9c5](https://github.com/fortify/fcli/commit/2bba9c513b011845579fd4b6340f4ffc1326d84c))
+* `fcli ssc session list`: Add `--validate` option to check and update session data based on current SSC token state (token deleted, expiry date changed, ...) ([525e13f](https://github.com/fortify/fcli/commit/525e13ff93d6a2500b7fdb245585488b64852961))
+* `fcli ssc tag`: Add `--[no-]extensible` option to `create` and `update` commands ([d92c7bd](https://github.com/fortify/fcli/commit/d92c7bd6c7f7bcf651a8896528446619b966b55f))
+* `fcli util all-commands list`: Enrich output with module category (`PRODUCT`/`CONFIG`/`UTIL`) and session requirement metadata ([f64243e](https://github.com/fortify/fcli/commit/f64243ebaeb69f7581114e5912b05a2bd0f42ccc))
+* `fcli util mcp-server start`: `--module` option is now optional (at least one of `--module` or `--import` must be specified) ([f64243e](https://github.com/fortify/fcli/commit/f64243ebaeb69f7581114e5912b05a2bd0f42ccc))
+* `fcli util mcp-server start`: Add `--import` option for importing action YAML files, exposing exported action functions as MCP tools or resource templates ([f64243e](https://github.com/fortify/fcli/commit/f64243ebaeb69f7581114e5912b05a2bd0f42ccc))
+* `fcli util mcp-server start`: Support MCP resource templates via function `meta.mcp.resource` metadata ([f64243e](https://github.com/fortify/fcli/commit/f64243ebaeb69f7581114e5912b05a2bd0f42ccc))
+* `fcli util rpc-server start`: New JSON-RPC server command for programmatic fcli access (hidden, for internal use only for now) ([f64243e](https://github.com/fortify/fcli/commit/f64243ebaeb69f7581114e5912b05a2bd0f42ccc))
+* fcli `--style` option: Add `[no-]envelope` style for various output formats like JSON and YAML to allow for outputting paging and potentially other metadata ([2bba9c5](https://github.com/fortify/fcli/commit/2bba9c513b011845579fd4b6340f4ffc1326d84c))
+* fcli action framework: Add `#fcli.listCommands()`, `#fcli.listCommands(query)`, `#fcli.getCommandSpec(command)`, and `#fcli.getCommandArgs(command)` SpEL functions for querying available fcli commands from within action YAML ([f64243e](https://github.com/fortify/fcli/commit/f64243ebaeb69f7581114e5912b05a2bd0f42ccc))
+* fcli action framework: Add `fn.yield` step for emitting records from streaming functions, with automatic consumer termination detection ([f64243e](https://github.com/fortify/fcli/commit/f64243ebaeb69f7581114e5912b05a2bd0f42ccc))
+* fcli action framework: Add `functions` support — define reusable functions in action YAML with typed arguments, return values, and streaming (lazy `fn.yield`) capabilities; invoke via `#fn.call('name', args...)` SpEL function ([f64243e](https://github.com/fortify/fcli/commit/f64243ebaeb69f7581114e5912b05a2bd0f42ccc))
+* fcli action framework: Add `sleep` step for pausing execution for a SpEL-evaluated duration in milliseconds ([f64243e](https://github.com/fortify/fcli/commit/f64243ebaeb69f7581114e5912b05a2bd0f42ccc))
+* fcli action framework: Add `with.product` step for establishing product context (SSC/FoD) within action steps, making product-specific SpEL functions and REST targets available without running product-specific action commands ([f64243e](https://github.com/fortify/fcli/commit/f64243ebaeb69f7581114e5912b05a2bd0f42ccc))
+* fcli action framework: Emit `<key>.metadata` variable on `run.fcli` instructions to allow actions to access paging and potentially other metadata produced by the fcli command ([2bba9c5](https://github.com/fortify/fcli/commit/2bba9c513b011845579fd4b6340f4ffc1326d84c))
+
+
+### Bug Fixes
+
+* `fcli aviator ssc audit`: Improve filter set handling ([#981](https://github.com/fortify/fcli/issues/981)) ([c23d9e1](https://github.com/fortify/fcli/commit/c23d9e1e365be7006dda5d707e143d368b5a77b7))
+* `fcli fod dast-scan get-config`: Fix `NullPointerException` when DAST Automated scan has not been configured ([7e84eee](https://github.com/fortify/fcli/commit/7e84eee24fadea2ebed4b52f1ed8b7787ba264ad))
+* `fcli fod dast-scan setup-*`: Improve error messaging with information on locked settings. ([7e84eee](https://github.com/fortify/fcli/commit/7e84eee24fadea2ebed4b52f1ed8b7787ba264ad))
+* `fcli util mcp-server start`: Fix option `required` reporting for options inside optional argument groups ([f64243e](https://github.com/fortify/fcli/commit/f64243ebaeb69f7581114e5912b05a2bd0f42ccc))
+* Fix potential concurrent modification of global values in multi-threaded contexts (e.g., async jobs in RPC/MCP servers) ([f64243e](https://github.com/fortify/fcli/commit/f64243ebaeb69f7581114e5912b05a2bd0f42ccc))
+* Fix some potential issues related to fcli stdio handling ([f64243e](https://github.com/fortify/fcli/commit/f64243ebaeb69f7581114e5912b05a2bd0f42ccc))
+
 ## [3.17.0](https://github.com/fortify/fcli/compare/v3.16.0...v3.17.0) (2026-04-10)
 
 

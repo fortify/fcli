@@ -30,6 +30,8 @@ import picocli.CommandLine.Mixin;
 @Command(name = OutputHelperMixins.List.CMD_NAME)
 public class FoDMicroserviceListCommand extends AbstractFoDBaseRequestOutputCommand implements IRecordTransformer {
     @Getter @Mixin private OutputHelperMixins.List outputHelper;
+    // FoD does not support paging for this endpoint, so we cannot use the fetch range mixin here
+    //@Mixin private FoDFetchRangeMixin fetchRangeMixin;
     @Mixin private FoDAppResolverMixin.RequiredOption appResolver;
 
     @Override

@@ -14,6 +14,7 @@ package com.fortify.cli.ssc.plugin.cli.cmd;
 
 import com.fortify.cli.common.mcp.MCPInclude;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
+import com.fortify.cli.ssc._common.cli.mixin.SSCFetchRangeMixin;
 import com.fortify.cli.ssc._common.output.cli.cmd.AbstractSSCBaseRequestOutputCommand;
 
 import kong.unirest.HttpRequest;
@@ -26,11 +27,12 @@ import picocli.CommandLine.Mixin;
 @Command(name = OutputHelperMixins.List.CMD_NAME)
 public class SSCPluginListCommand extends AbstractSSCBaseRequestOutputCommand  {
     @Getter @Mixin private OutputHelperMixins.List outputHelper; 
+    @Mixin private SSCFetchRangeMixin fetchRangeMixin;
     // TODO Can we do any server-side filtering?
 
     @Override
     public HttpRequest<?> getBaseRequest(UnirestInstance unirest) {
-        return unirest.get("/api/v1/plugins?orderBy=pluginType,pluginName,pluginVersion&limit=100");
+        return unirest.get("/api/v1/plugins?orderBy=pluginType,pluginName,pluginVersion");
     }
     
     @Override

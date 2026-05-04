@@ -35,6 +35,8 @@ public class FoDRoleListCommand extends AbstractFoDBaseRequestOutputCommand impl
     private static final RenameFieldsTransformer RECORD_TRANSFORMER = new RenameFieldsTransformer(
             new String[] {"value:id", "text:name"});
     @Getter @Mixin private OutputHelperMixins.TableWithQuery outputHelper;
+    // FoD does not support paging for this endpoint, so we cannot use the fetch range mixin here
+    //@Mixin private FoDFetchRangeMixin fetchRangeMixin;
     
     @Override
     public HttpRequest<?> getBaseRequest(UnirestInstance unirest) {

@@ -24,6 +24,7 @@ import com.fortify.cli.app.runner.util.FortifyCLIStaticInitializer;
 import com.fortify.cli.common.cli.util.FcliCommandSpecHelper;
 import com.fortify.cli.common.cli.util.FcliExecutionStrategyFactory;
 import com.fortify.cli.common.cli.util.FcliWrappedHelpExclude;
+import com.fortify.cli.common.cli.util.StdioHelper;
 import com.fortify.cli.common.exception.FcliExecutionExceptionHandler;
 import com.fortify.cli.common.output.writer.CommandSpecMessageResolver;
 import com.fortify.cli.common.util.FcliDockerHelper;
@@ -60,30 +61,35 @@ public final class DefaultFortifyCLIRunner {
     }
     
     public static final int run(String... args) {
-        // If first arg is 'fcli', remove it. This allows for passing 'fcli' command name
-        // to scratch Docker image, for consistency with non-scratch/shell-based images.
-        if ( args.length>0 && "fcli".equalsIgnoreCase(args[0]) ) {
-            args = Arrays.copyOfRange(args, 1, args.length);
+        StdioHelper.install();
+        try {
+            // If first arg is 'fcli', remove it. This allows for passing 'fcli' command name
+            // to scratch Docker image, for consistency with non-scratch/shell-based images.
+            if ( args.length>0 && "fcli".equalsIgnoreCase(args[0]) ) {
+                args = Arrays.copyOfRange(args, 1, args.length);
+            }
+            
+            // Check for -Xwrapped option and remove it from args
+            boolean isWrapped = Arrays.stream(args).anyMatch("-Xwrapped"::equals);
+            if ( isWrapped ) {
+                args = Arrays.stream(args).filter(arg -> !"-Xwrapped".equals(arg)).toArray(String[]::new);
+            }
+            
+            // Replace --fcli-help with --help for wrapper compatibility
+            args = Arrays.stream(args)
+                    .map(arg -> "--fcli-help".equals(arg) ? "--help" : arg)
+                    .toArray(String[]::new);
+            
+            String[] resolvedArgs = FcliVariableHelper.resolveVariables(args);
+            FortifyCLIDynamicInitializer.getInstance().initialize(resolvedArgs);
+            //CommandLine cl = getCommandLine(); // TODO See https://github.com/remkop/picocli/issues/2066
+            CommandLine cl = createCommandLine(isWrapped);
+            FcliExecutionStrategyFactory.configureCommandLine(cl);
+            cl.clearExecutionResults();
+            return cl.execute(resolvedArgs);
+        } finally {
+            StdioHelper.uninstall();
         }
-        
-        // Check for -Xwrapped option and remove it from args
-        boolean isWrapped = Arrays.stream(args).anyMatch("-Xwrapped"::equals);
-        if ( isWrapped ) {
-            args = Arrays.stream(args).filter(arg -> !"-Xwrapped".equals(arg)).toArray(String[]::new);
-        }
-        
-        // Replace --fcli-help with --help for wrapper compatibility
-        args = Arrays.stream(args)
-                .map(arg -> "--fcli-help".equals(arg) ? "--help" : arg)
-                .toArray(String[]::new);
-        
-        String[] resolvedArgs = FcliVariableHelper.resolveVariables(args);
-        FortifyCLIDynamicInitializer.getInstance().initialize(resolvedArgs);
-        //CommandLine cl = getCommandLine(); // TODO See https://github.com/remkop/picocli/issues/2066
-        CommandLine cl = createCommandLine(isWrapped);
-        FcliExecutionStrategyFactory.configureCommandLine(cl);
-        cl.clearExecutionResults();
-        return cl.execute(resolvedArgs);
     }
     
     private static abstract class AbstractFcliHelp extends CommandLine.Help {

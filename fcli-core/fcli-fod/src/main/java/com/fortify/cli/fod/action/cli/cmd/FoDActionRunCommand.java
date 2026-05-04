@@ -16,7 +16,7 @@ import org.springframework.expression.spel.support.SimpleEvaluationContext;
 
 import com.fortify.cli.common.action.cli.cmd.AbstractActionRunCommand;
 import com.fortify.cli.common.action.runner.ActionRunnerConfig.ActionRunnerConfigBuilder;
-import com.fortify.cli.common.action.runner.ActionRunnerContext;
+import com.fortify.cli.common.action.runner.ActionRunnerContextLocal;
 import com.fortify.cli.common.action.runner.processor.IActionRequestHelper.BasicActionRequestHelper;
 import com.fortify.cli.common.output.product.IProductHelper;
 import com.fortify.cli.common.rest.unirest.IUnirestInstanceSupplier;
@@ -45,11 +45,11 @@ public class FoDActionRunCommand extends AbstractActionRunCommand {
             .actionContextSpelEvaluatorConfigurer(this::configureSpelContext);
     }
     
-    protected void configureActionContext(ActionRunnerContext ctx) {
+    protected void configureActionContext(ActionRunnerContextLocal ctx) {
         ctx.addRequestHelper("fod", new FoDActionRequestHelper(unirestInstanceSupplier::getUnirestInstance, FoDProductHelper.INSTANCE));
     }
     
-    protected void configureSpelContext(ActionRunnerContext actionRunnerContext, SimpleEvaluationContext spelContext) {
+    protected void configureSpelContext(ActionRunnerContextLocal actionRunnerContext, SimpleEvaluationContext spelContext) {
         spelContext.setVariable("fod", new FoDActionSpelFunctions(unirestInstanceSupplier, actionRunnerContext));
     }
     

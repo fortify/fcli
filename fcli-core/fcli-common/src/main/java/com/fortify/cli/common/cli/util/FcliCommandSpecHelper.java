@@ -14,6 +14,8 @@ package com.fortify.cli.common.cli.util;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.AccessibleObject;
+import java.util.Collection;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.ResourceBundle;
@@ -37,9 +39,11 @@ import com.fortify.cli.common.util.ReflectionHelper;
 
 import lombok.Setter;
 import picocli.CommandLine;
+import picocli.CommandLine.Model.ArgGroupSpec;
 import picocli.CommandLine.Model.ArgSpec;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Model.Messages;
+import picocli.CommandLine.Model.OptionSpec;
 
 public class FcliCommandSpecHelper {
     @Setter // Injected by DefaultFortifyCLIRunner
@@ -223,6 +227,26 @@ public class FcliCommandSpecHelper {
     return as.required() && isSensitive(as);
     }
 
+    public static final boolean isEffectivelyRequired(ArgSpec argSpec) {
+        if (!argSpec.required()) { return false; }
+        if (!(argSpec instanceof OptionSpec option)) { return true; }
+        var commandSpec = argSpec.command();
+        if (commandSpec == null) { return true; }
+        return !isInOptionalGroup(option, commandSpec.argGroups(), false);
+    }
+
+    private static boolean isInOptionalGroup(
+            OptionSpec option, Collection<ArgGroupSpec> groups, boolean parentOptional) {
+        for (var g : groups) {
+            var thisOptional = parentOptional;
+            var multiplicity = g.multiplicity();
+            if (multiplicity != null && multiplicity.min() == 0) { thisOptional = true; }
+            if (g.options().contains(option)) { return thisOptional; }
+            if (isInOptionalGroup(option, g.subgroups(), thisOptional)) { return true; }
+        }
+        return false;
+    }
+
     public static final boolean isSensitive(ArgSpec as) {
         return (as.interactive() && !as.echo()) 
             || ReflectionHelper.getAnnotationValue(as.userObject(), MaskValue.class, MaskValue::sensitivity, ()->null)==LogSensitivityLevel.high;
@@ -248,6 +272,14 @@ public class FcliCommandSpecHelper {
         ).filter(Objects::nonNull);
     }
         
+    public static final List<Annotation> getMetadataAnnotations(CommandSpec spec) {
+        var userObject = spec.userObject();
+        if (userObject == null) { return List.of(); }
+        return Stream.of(userObject.getClass().getAnnotations())
+                .filter(ann -> ann.annotationType().isAnnotationPresent(FcliCommandMetadata.class))
+                .toList();
+    }
+
     public static final Optional<QueryExpression> getQueryExpression(CommandSpec commandSpec) {
         var expressions = getAllUserObjectsStream(commandSpec)
                 .filter(o -> o instanceof IQueryExpressionSupplier)

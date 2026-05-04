@@ -18,9 +18,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.action.model.FcliActionValidationException;
 import com.fortify.cli.common.action.model.TemplateExpressionWithFormatter;
-import com.fortify.cli.common.action.runner.ActionRunnerContext;
+import com.fortify.cli.common.action.runner.ActionRunnerContextLocal;
 import com.fortify.cli.common.action.runner.ActionRunnerHelper;
-import com.fortify.cli.common.action.runner.ActionRunnerVars;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -28,8 +27,7 @@ import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor @Data @EqualsAndHashCode(callSuper = true) @Reflectable
 public class ActionStepProcessorWriterAppend extends AbstractActionStepProcessorMapEntries<String, TemplateExpressionWithFormatter>{
-    private final ActionRunnerContext ctx;
-    private final ActionRunnerVars vars;
+    private final ActionRunnerContextLocal ctx;
     private final LinkedHashMap<String,TemplateExpressionWithFormatter> map;
     
     @Override
@@ -38,12 +36,12 @@ public class ActionStepProcessorWriterAppend extends AbstractActionStepProcessor
         if ( writer==null ) {
             throw new FcliActionValidationException("No writer available with id "+writerId);
         }
-        var value = ActionRunnerHelper.formatValueAsJsonNode(ctx, vars, templateExpressionWithFormatter);
+        var value = ActionRunnerHelper.formatValueAsJsonNode(ctx, getVars(), templateExpressionWithFormatter);
         if ( !(value instanceof ObjectNode) ) {
             throw new FcliActionValidationException("Data to append to writer must be an ObjectNode; actual type: "+value.getClass().getSimpleName());
         }
         writer.append((ObjectNode)value);
         var countVarName = String.format("%s.count", writerId);  
-        vars.set(countVarName, new IntNode(vars.eval(countVarName, Integer.class)+1));
+        getVars().set(countVarName, new IntNode(getVars().eval(countVarName, Integer.class)+1));
     }
 }

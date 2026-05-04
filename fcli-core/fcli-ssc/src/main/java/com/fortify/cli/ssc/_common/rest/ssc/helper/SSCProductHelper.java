@@ -13,14 +13,17 @@
 package com.fortify.cli.ssc._common.rest.ssc.helper;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.product.IProductHelper;
+import com.fortify.cli.common.output.product.IResponseMetadataCollector;
 import com.fortify.cli.common.output.transform.IInputTransformer;
 import com.fortify.cli.common.rest.paging.INextPageUrlProducer;
 import com.fortify.cli.common.rest.paging.INextPageUrlProducerSupplier;
 
 //IMPORTANT: When updating/adding any methods in this class, SSCRestCallCommand
 //also likely needs to be updated
-public class SSCProductHelper implements IProductHelper, IInputTransformer, INextPageUrlProducerSupplier
+public class SSCProductHelper implements IProductHelper, IInputTransformer, INextPageUrlProducerSupplier, IResponseMetadataCollector
 {
     public static final SSCProductHelper INSTANCE = new SSCProductHelper();
     private SSCProductHelper() {}
@@ -32,5 +35,18 @@ public class SSCProductHelper implements IProductHelper, IInputTransformer, INex
     @Override
     public JsonNode transformInput(JsonNode input) {
         return SSCInputTransformer.getDataOrSelf(input);
+    }
+    
+    @Override
+    public ObjectNode collectResponseMetadata(JsonNode responseBody) {
+        if ( responseBody==null || !responseBody.has("data") ) { return null; }
+        var metadata = JsonHelper.getObjectMapper().createObjectNode();
+        if ( responseBody.has("count") ) {
+            metadata.set("totalCount", responseBody.get("count"));
+        }
+        if ( responseBody.has("links") ) {
+            metadata.set("links", responseBody.get("links"));
+        }
+        return metadata.isEmpty() ? null : metadata;
     }
 }

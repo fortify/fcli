@@ -29,7 +29,6 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.json.transform.fields.RenameFieldsTransformer;
-import com.fortify.cli.common.rest.unirest.UnexpectedHttpResponseException;
 import com.fortify.cli.fod._common.rest.FoDUrls;
 import com.fortify.cli.fod._common.scan.helper.dast.FoDScanDastAutomatedHelper;
 import com.fortify.cli.fod._common.util.FoDEnums;
@@ -135,13 +134,7 @@ public class FoDScanHelper {
     public static FoDScanAssessmentTypeDescriptor getEntitlementToUse(UnirestInstance unirest, String relId, FoDScanType scanType,
                                                                     String assessmentType, FoDEnums.EntitlementFrequencyType entitlementFrequencyType,
                                                                     int entitlementId) {
-        FoDScanConfigDastAutomatedDescriptor currentSetup = null;
-        try {
-            currentSetup = FoDScanDastAutomatedHelper.getSetupDescriptor(unirest, relId);
-        } catch (UnexpectedHttpResponseException ex) {
-            // we have no current setup;
-            LOG.info("Unable to find current setup: " + ex);
-        }
+        FoDScanConfigDastAutomatedDescriptor currentSetup = FoDScanDastAutomatedHelper.getSetupDescriptor(unirest, relId);
         Integer entitlementIdToUse = 0;
         Integer assessmentTypeId = 0;
         LOG.info("Finding/Validating entitlement to use.");

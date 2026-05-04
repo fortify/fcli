@@ -19,7 +19,7 @@ import org.apache.commons.lang3.StringUtils;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.action.helper.ci.IActionSpelFunctions;
-import com.fortify.cli.common.action.runner.ActionRunnerContext;
+import com.fortify.cli.common.action.runner.ActionRunnerContextLocal;
 import com.fortify.cli.common.ci.gitlab.GitLabEnvironment;
 import com.fortify.cli.common.ci.gitlab.GitLabRestHelper;
 import com.fortify.cli.common.ci.gitlab.GitLabUnirestInstanceSupplier;
@@ -44,7 +44,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 @SpelFunctionPrefix("gitlab.")
 public class ActionGitLabSpelFunctions implements IActionSpelFunctions {
-    private final ActionRunnerContext ctx;
+    private final ActionRunnerContextLocal ctx;
     private final GitLabEnvironment env;
     private GitLabRestHelper restHelper;
     
@@ -52,7 +52,7 @@ public class ActionGitLabSpelFunctions implements IActionSpelFunctions {
      * Create helper with automatic environment detection.
      * Does not throw if not in CI - use getEnv() != null to check.
      */
-    public ActionGitLabSpelFunctions(ActionRunnerContext ctx) {
+    public ActionGitLabSpelFunctions(ActionRunnerContextLocal ctx) {
         this.ctx = ctx;
         this.env = GitLabEnvironment.detect();
     }
