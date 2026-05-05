@@ -148,7 +148,7 @@ public class CorrelationStreamProcessor implements AutoCloseable {
         urlToDastIssues.forEach((k,v)->LOG.debug(" For url {} no. of dast issues {}", k, v.size()));
         if (workItems.isEmpty()) {
             LOG.info("No SAST findings in mixed buckets; skipping correlation stream.");
-            return CompletableFuture.completedFuture(new CorrelationResult(List.of(), List.of()));
+            return CompletableFuture.completedFuture(new CorrelationResult(List.of(), List.of(), 0));
         }
 
         String streamId = UUID.randomUUID().toString();
@@ -239,7 +239,8 @@ public class CorrelationStreamProcessor implements AutoCloseable {
             if (!resultFuture.isDone()) {
                 resultFuture.complete(new CorrelationResult(
                     new ArrayList<>(state.confirmedPairs),
-                    new ArrayList<>(state.rejectedPairs)
+                    new ArrayList<>(state.rejectedPairs),
+                    state.receivedCorrelations.get()
                 ));
             }
             requestHandler.complete();
@@ -312,7 +313,8 @@ public class CorrelationStreamProcessor implements AutoCloseable {
             if (!resultFuture.isDone()) {
                 resultFuture.complete(new CorrelationResult(
                     new ArrayList<>(state.confirmedPairs),
-                    new ArrayList<>(state.rejectedPairs)
+                    new ArrayList<>(state.rejectedPairs),
+                    state.receivedCorrelations.get()
                 ));
             }
             streamLatch.countDown();
@@ -406,7 +408,8 @@ public class CorrelationStreamProcessor implements AutoCloseable {
             if (!resultFuture.isDone()) {
                 resultFuture.complete(new CorrelationResult(
                     new ArrayList<>(state.confirmedPairs),
-                    new ArrayList<>(state.rejectedPairs)
+                    new ArrayList<>(state.rejectedPairs),
+                    state.receivedCorrelations.get()
                 ));
             }
             requestHandler.complete();

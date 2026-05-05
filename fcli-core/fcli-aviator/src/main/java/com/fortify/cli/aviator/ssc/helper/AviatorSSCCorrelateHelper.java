@@ -44,10 +44,11 @@ public final class AviatorSSCCorrelateHelper {
     public static ObjectNode buildOutputJson(SSCAppVersionDescriptor av,
                                               String artifactId,
                                               int submitted,
-                                              int sastOnlyFindings,
+                                              int succeeded,
                                               List<CorrelatedPair> newPairs,
                                               String actionResult) {
         int correlated = newPairs.size();
+        int skipped = submitted - succeeded;
 
         ObjectNode result = JsonHelper.getObjectMapper().createObjectNode();
         result.put("id", av.getVersionId());
@@ -68,10 +69,12 @@ public final class AviatorSSCCorrelateHelper {
                     submitted, correlated);
             correlate.put("message", message);
             correlate.put("submitted", submitted);
-            correlate.put("skipped", sastOnlyFindings);
+            correlate.put("succeeded", succeeded);
+            correlate.put("skipped", skipped);
         } else {
             correlate.putNull("message");
             correlate.putNull("submitted");
+            correlate.putNull("succeeded");
             correlate.putNull("skipped");
         }
         correlate.put("correlated", correlated);

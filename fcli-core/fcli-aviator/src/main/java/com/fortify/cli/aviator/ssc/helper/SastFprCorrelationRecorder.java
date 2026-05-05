@@ -94,8 +94,6 @@ public final class SastFprCorrelationRecorder {
             Document doc = parseXml(auditPath);
             NodeList issueNodes = doc.getElementsByTagNameNS(NS_AUDIT, "Issue");
 
-            LOG.info("Total issues are {}", issueNodes.getLength());
-
             for (int i = 0; i < issueNodes.getLength(); i++) {
                 if (!(issueNodes.item(i) instanceof Element issue)) continue;
                 String instanceId = issue.getAttribute("instanceId");
@@ -189,7 +187,12 @@ public final class SastFprCorrelationRecorder {
             // An issue appears in audit.xml only if it was previously audited (has tags/comments).
             // For brand-new findings never touched in the SSC UI, we must add the <Issue> element.
             int createdCount = 0;
+            // Try namespace-aware lookup first; fall back to no-namespace for un-audited FPRs
+            // whose audit.xml uses the default (null) namespace.
             Element issueList = (Element) doc.getElementsByTagNameNS(NS_AUDIT, "IssueList").item(0);
+            if (issueList == null) {
+                issueList = (Element) doc.getElementsByTagName("IssueList").item(0);
+            }
 
             for (var entry : incoming.entrySet()) {
                 String instanceId = entry.getKey();
@@ -206,7 +209,11 @@ public final class SastFprCorrelationRecorder {
                     newValue = truncateTagValue(newEntries);
                 }
 
-                Element newIssue = doc.createElementNS(NS_AUDIT, "Issue");
+                // Match the namespace of the parent <IssueList> element
+                String ns = issueList.getNamespaceURI();
+                Element newIssue = (ns != null)
+                    ? doc.createElementNS(ns, "Issue")
+                    : doc.createElement("Issue");
                 newIssue.setAttribute("instanceId", instanceId);
                 newIssue.setAttribute("revision", "0");
                 newIssue.setAttribute("suppressed", "false");

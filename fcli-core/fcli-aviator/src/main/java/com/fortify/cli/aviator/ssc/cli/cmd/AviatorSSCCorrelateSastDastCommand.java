@@ -15,7 +15,6 @@ package com.fortify.cli.aviator.ssc.cli.cmd;
 import static com.fortify.cli.ssc.artifact.helper.SSCArtifactHelper.getLatestDASTArtifact;
 import static com.fortify.cli.ssc.artifact.helper.SSCArtifactHelper.getLatestSASTArtifact;
 
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -125,7 +124,7 @@ public class AviatorSSCCorrelateSastDastCommand extends AbstractSSCJsonNodeOutpu
             LOG.info("Total Unsupressed SAST issues {}", unsuppressedSast.size());
             LOG.info("Total Unsupressed DAST issues {}", unsuppressedDast.size());
             LOG.info("Confirmed pairs (from ExternalFindings): {}", confirmedPairKeys.size());
-            LOG.info("Rejected pairs (from DAST_CORRELATION_STATUS tag): {}", rejectedPairKeys.size());
+            LOG.info("Pairs from DAST_CORRELATION_STATUS tag: {}", rejectedPairKeys.size());
             LOG.info("Total already-tried pairs (will be skipped): {}", alreadyTriedKeys.size());
 
             logger.progress("Status: Found %d SAST and %d DAST unsuppressed issues to correlate",
@@ -136,7 +135,6 @@ public class AviatorSSCCorrelateSastDastCommand extends AbstractSSCJsonNodeOutpu
             CategoryGrouper grouper = new CategoryGrouper();
             grouper.groupFindings(unsuppressedSast, unsuppressedDast);
             grouper.printStatistics();
-            int sastOnlyFindings = grouper.getSASTonlyFinding();
             List<CategoryBucket> mixedBuckets = grouper.getMixedBuckets();
 
             // Step 5: gRPC correlation (if mixed buckets exist)
@@ -145,6 +143,7 @@ public class AviatorSSCCorrelateSastDastCommand extends AbstractSSCJsonNodeOutpu
             logger.info("New pairs after removing the already-tried pairs is {}", submitted);
             List<CorrelatedPair> newPairs = new ArrayList<>();
             List<CorrelatedPair> newRejectedPairs = new ArrayList<>();
+            int succeeded = 0;
             if (!mixedBuckets.isEmpty()) {
                 logger.progress("Status: Found %d mixed category bucket(s) with %d SAST findings to correlate",
                     mixedBuckets.size(), submitted);
@@ -170,14 +169,15 @@ public class AviatorSSCCorrelateSastDastCommand extends AbstractSSCJsonNodeOutpu
                     CorrelationResult result = performCorrelation(grpcClient, config, bucketData, sastResult.scanGuid, logger, alreadyTriedKeys);
                     newPairs = result.confirmedPairs();
                     newRejectedPairs = result.rejectedPairs();
+                    succeeded = result.receivedCorrelationResponses();
                 }
 
                 logger.progress("Status: Correlation complete — %d of %d SAST findings confirmed as correlated",
                     newPairs.size(), submitted);
 
-                if (newPairs.isEmpty()) {
+                if (succeeded==0) {
                     actionResult = "SKIPPED";
-                } else if (newPairs.size() < submitted) {
+                } else if (succeeded < submitted) {
                     actionResult = "PARTIALLY_CORRELATED";
                 } else {
                     actionResult = "CORRELATED";
@@ -230,12 +230,12 @@ public class AviatorSSCCorrelateSastDastCommand extends AbstractSSCJsonNodeOutpu
                 logger.progress("Status: Writing correlation status tags to SAST FPR (%d confirmed, %d rejected)...",
                     newPairs.size(), newRejectedPairs.size());
                 SastFprCorrelationRecorder.writeCorrelationTags(downloadedSASTFprPath, newPairs, newRejectedPairs);
-                try {
+                /*try {
                     Files.copy(downloadedSASTFprPath, Path.of("C:/Users/nmeshram/Documents/TestSastDastCorrelation/enriched-sast.fpr"), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
                     LOG.info("Enriched SAST FPR saved to: C:/Users/nmeshram/Documents/TestSastDastCorrelation/enriched-sast.fpr");
                 } catch (java.io.IOException e) {
                     LOG.warn("Failed to save enriched SAST FPR locally: {}", e.getMessage());
-                }
+                }*/
                 logger.progress("Status: Uploading updated SAST FPR to SSC...");
                 AviatorSSCCorrelateDownloadHelper.uploadEnrichedSastFpr(unirest, av, downloadedSASTFprPath, progressWriter);
                 logger.progress("Status: Updated SAST FPR uploaded successfully.");
@@ -247,10 +247,11 @@ public class AviatorSSCCorrelateSastDastCommand extends AbstractSSCJsonNodeOutpu
                 logger.progress("Status: last_correlation timestamp written successfully.");
             }
 
+
             // Step 7: Build output
             logger.progress("Status: Correlation process complete for %s:%s — result: %s",
                 av.getApplicationName(), av.getVersionName(), actionResult);
-            return AviatorSSCCorrelateHelper.buildOutputJson(av, uploadedArtifactId, submitted, sastOnlyFindings, newPairs, actionResult);
+            return AviatorSSCCorrelateHelper.buildOutputJson(av, uploadedArtifactId, submitted, succeeded, newPairs, actionResult);
         }
     }
 
