@@ -25,7 +25,7 @@ import com.fortify.cli.fpr.trim.cli.cmd.FPRTrimCommand;
 import picocli.CommandLine.Command;
 
 @Command(
-        name = "information",
+        name = "information", aliases = {"info"},
         subcommands = {
                 FPRSummaryCommand.class,
                 FPRLocCommand.class,

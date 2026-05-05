@@ -28,7 +28,7 @@ import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
-@Command(name = "list-errors")
+@Command(name = "list-errors", aliases = {"errors", "le"})
 public class FPRErrorsCommand extends AbstractOutputCommand {
     private static final ObjectMapper MAPPER = new ObjectMapper();
     @Getter @Mixin private OutputHelperMixins.TableNoQuery outputHelper;

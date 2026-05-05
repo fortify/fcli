@@ -20,13 +20,12 @@ import java.nio.file.StandardCopyOption;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import javax.xml.parsers.DocumentBuilderFactory;
-
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fortify.cli.aviator.fpr.utils.XmlUtils;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.exception.FcliTechnicalException;
 import com.fortify.cli.common.output.cli.cmd.AbstractOutputCommand;
@@ -39,7 +38,7 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
-@Command(name = "extract-source")
+@Command(name = "extract-source", aliases = {"source", "es"})
 public class FPRSourceExtractCommand extends AbstractOutputCommand implements IJsonNodeSupplier {
     private static final ObjectMapper MAPPER = new ObjectMapper();
     @Getter @Mixin private OutputHelperMixins.DetailsNoQuery outputHelper;
@@ -92,13 +91,7 @@ public class FPRSourceExtractCommand extends AbstractOutputCommand implements IJ
     private Map<String, String> parseSourceIndex(Path indexPath) throws IOException {
         var map = new LinkedHashMap<String, String>();
         try (InputStream is = Files.newInputStream(indexPath)) {
-            var dbf = DocumentBuilderFactory.newInstance();
-            dbf.setFeature("http://xml.org/sax/features/external-general-entities", false);
-            dbf.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
-            dbf.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
-            dbf.setXIncludeAware(false);
-            dbf.setExpandEntityReferences(false);
-            var doc = dbf.newDocumentBuilder().parse(is);
+            var doc = XmlUtils.secureDocumentBuilder(false).parse(is);
             NodeList entries = doc.getElementsByTagName("entry");
             for (int i = 0; i < entries.getLength(); i++) {
                 var elem = (Element) entries.item(i);

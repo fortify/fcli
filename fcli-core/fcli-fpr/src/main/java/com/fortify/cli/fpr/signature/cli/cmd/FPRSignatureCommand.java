@@ -29,7 +29,7 @@ import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
-@Command(name = "show-signature")
+@Command(name = "show-signature", aliases = {"signature", "sign"})
 public class FPRSignatureCommand extends AbstractOutputCommand implements IJsonNodeSupplier {
     private static final ObjectMapper MAPPER = new ObjectMapper();
     @Getter @Mixin private OutputHelperMixins.DetailsNoQuery outputHelper;

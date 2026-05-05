@@ -24,9 +24,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
-import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.transform.OutputKeys;
-import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
@@ -36,6 +34,7 @@ import org.w3c.dom.NodeList;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fortify.cli.aviator.fpr.utils.XmlUtils;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.exception.FcliTechnicalException;
 import com.fortify.cli.common.output.cli.cmd.AbstractOutputCommand;
@@ -143,9 +142,7 @@ public class FPRMergeCommand extends AbstractOutputCommand implements IJsonNodeS
             ZipEntry auditEntry = zipFile.getEntry("audit.xml");
             if (auditEntry == null) { return null; }
             try (InputStream is = zipFile.getInputStream(auditEntry)) {
-                var dbf = DocumentBuilderFactory.newInstance();
-                dbf.setNamespaceAware(true);
-                return dbf.newDocumentBuilder().parse(is);
+                return XmlUtils.secureDocumentBuilder(true).parse(is);
             } catch (Exception e) {
                 throw new FcliTechnicalException("Failed to parse audit.xml from " + fprPath, e);
             }
@@ -167,9 +164,7 @@ public class FPRMergeCommand extends AbstractOutputCommand implements IJsonNodeS
 
     private Document createEmptyAuditDoc() {
         try {
-            var dbf = DocumentBuilderFactory.newInstance();
-            dbf.setNamespaceAware(true);
-            var doc = dbf.newDocumentBuilder().newDocument();
+            var doc = XmlUtils.secureDocumentBuilder(true).newDocument();
             var root = doc.createElementNS(AUDIT_NS, "ProjectVersionAudit");
             doc.appendChild(root);
             return doc;
@@ -207,7 +202,7 @@ public class FPRMergeCommand extends AbstractOutputCommand implements IJsonNodeS
 
                 // Write merged audit.xml
                 zipOut.putNextEntry(new ZipEntry("audit.xml"));
-                var transformer = TransformerFactory.newInstance().newTransformer();
+                var transformer = XmlUtils.secureTransformerFactory().newTransformer();
                 transformer.setOutputProperty(OutputKeys.INDENT, "yes");
                 transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
                 transformer.transform(new DOMSource(auditDoc), new StreamResult(zipOut));

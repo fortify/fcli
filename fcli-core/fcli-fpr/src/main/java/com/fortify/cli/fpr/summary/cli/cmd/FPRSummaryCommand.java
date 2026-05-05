@@ -28,7 +28,7 @@ import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
-@Command(name = "show-summary")
+@Command(name = "show-summary", aliases = {"summary", "sum"})
 public class FPRSummaryCommand extends AbstractOutputCommand implements IJsonNodeSupplier {
     private static final ObjectMapper MAPPER = new ObjectMapper();
     @Getter @Mixin private OutputHelperMixins.DetailsNoQuery outputHelper;

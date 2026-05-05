@@ -23,14 +23,13 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
-import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.transform.OutputKeys;
-import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fortify.cli.aviator.fpr.utils.XmlUtils;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.exception.FcliTechnicalException;
 import com.fortify.cli.common.output.cli.cmd.AbstractOutputCommand;
@@ -47,7 +46,7 @@ import picocli.CommandLine.Option;
  * Creates or replaces the {@code src-archive/} entries with a
  * generated {@code index.xml} and numbered archive entries.
  */
-@Command(name = "merge-source")
+@Command(name = "merge-source", aliases = {"ms"})
 public class FPRSourceMergeCommand extends AbstractOutputCommand implements IJsonNodeSupplier {
     private static final ObjectMapper MAPPER = new ObjectMapper();
     @Getter @Mixin private OutputHelperMixins.DetailsNoQuery outputHelper;
@@ -118,8 +117,7 @@ public class FPRSourceMergeCommand extends AbstractOutputCommand implements IJso
                 }
 
                 // Generate index.xml and add source files
-                var dbf = DocumentBuilderFactory.newInstance();
-                var doc = dbf.newDocumentBuilder().newDocument();
+                var doc = XmlUtils.secureDocumentBuilder(false).newDocument();
                 var root = doc.createElement("index");
                 doc.appendChild(root);
 
@@ -143,7 +141,7 @@ public class FPRSourceMergeCommand extends AbstractOutputCommand implements IJso
 
                 // Write index.xml
                 zipOut.putNextEntry(new ZipEntry("src-archive/index.xml"));
-                var transformer = TransformerFactory.newInstance().newTransformer();
+                var transformer = XmlUtils.secureTransformerFactory().newTransformer();
                 transformer.setOutputProperty(OutputKeys.INDENT, "yes");
                 transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
                 transformer.transform(new DOMSource(doc), new StreamResult(zipOut));

@@ -29,7 +29,7 @@ import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
-@Command(name = "list-source-files")
+@Command(name = "list-source-files", aliases = {"loc", "lsf"})
 public class FPRLocCommand extends AbstractOutputCommand {
     private static final ObjectMapper MAPPER = new ObjectMapper();
     @Getter @Mixin private OutputHelperMixins.TableNoQuery outputHelper;
