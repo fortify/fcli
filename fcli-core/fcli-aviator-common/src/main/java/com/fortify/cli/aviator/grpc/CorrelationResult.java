@@ -16,12 +16,15 @@ import java.util.List;
 
 /**
  * Holds the outcome of a full correlation stream run — both confirmed
- * and rejected SAST–DAST pairs.
+ * and rejected SAST–DAST pairs, plus the count of correlation requests
+ * that received a successful response from the server.
  *
- * @param confirmedPairs pairs where Phase 2 validation returned confirmed=true
- * @param rejectedPairs  pairs where Phase 2 validation returned confirmed=false
+ * @param confirmedPairs                pairs where Phase 2 validation returned confirmed=true
+ * @param rejectedPairs                 pairs where Phase 2 validation returned confirmed=false
+ * @param receivedCorrelationResponses  number of Phase 1 correlation requests that received a response
  */
 public record CorrelationResult(
     List<CorrelatedPair> confirmedPairs,
-    List<CorrelatedPair> rejectedPairs
+    List<CorrelatedPair> rejectedPairs,
+    int receivedCorrelationResponses
 ) {}
