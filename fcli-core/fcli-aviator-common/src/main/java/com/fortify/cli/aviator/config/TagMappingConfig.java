@@ -253,20 +253,20 @@ public class TagMappingConfig {
         }
     }
 
-    @Data
+    @Data @Reflectable
     public static class Mapping {
         private Tier tier_1;
         private Tier tier_2;
     }
 
-    @Data
+    @Data @Reflectable
     public static class Tier {
         private Result fp;
         private Result tp;
         private Result unsure;
     }
 
-    @Data
+    @Data @Reflectable
     public static class Result {
         private String value;
         private Boolean suppress = false;
