@@ -15,8 +15,8 @@ package com.fortify.cli.ssc.custom_tag.cli.mixin;
 import org.apache.commons.lang3.StringUtils;
 
 import com.fortify.cli.common.cli.util.EnvSuffix;
+import com.fortify.cli.ssc.custom_tag.helper.SSCCustomTagDefinitionHelper;
 import com.fortify.cli.ssc.custom_tag.helper.SSCCustomTagDescriptor;
-import com.fortify.cli.ssc.custom_tag.helper.SSCCustomTagHelper;
 
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
@@ -30,7 +30,7 @@ public class SSCCustomTagResolverMixin {
             String customTagNameOrGuid = getCustomTagNameOrGuid();
             return StringUtils.isBlank(customTagNameOrGuid)
                 ? null
-                : new SSCCustomTagHelper(unirest).getDescriptorByCustomTagSpec(customTagNameOrGuid, true);
+                : new SSCCustomTagDefinitionHelper(unirest).getDescriptorByCustomTagSpec(customTagNameOrGuid, true);
         }
     }
     public static class OptionalOption extends AbstractSSCCustomTagResolverMixin {

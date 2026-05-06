@@ -21,39 +21,30 @@ import com.fasterxml.jackson.databind.JsonNode;
 
 import kong.unirest.UnirestInstance;
 
-public class SSCCustomTagUpdateHelper {
-    private final SSCCustomTagHelper tagHelper;
+public class SSCCustomTagAssignmentHelper {
+    private final SSCCustomTagDefinitionHelper tagDefinitionHelper;
 
-    public SSCCustomTagUpdateHelper(UnirestInstance unirest) {
-        this.tagHelper = new SSCCustomTagHelper(unirest);
+    public SSCCustomTagAssignmentHelper(UnirestInstance unirest) {
+        this.tagDefinitionHelper = new SSCCustomTagDefinitionHelper(unirest);
     }
 
-    /**
-     * Resolves tag specs (name, guid, id) to descriptors using SSCCustomTagHelper.
-     */
     public Set<SSCCustomTagDescriptor> resolveTagSpecs(List<String> tagSpecs) {
-        return tagHelper.getDescriptorsByCustomTagSpec(tagSpecs, false).collect(Collectors.toSet());
+        return tagDefinitionHelper.getDescriptorsByCustomTagSpec(tagSpecs, false).collect(Collectors.toSet());
     }
 
-    /**
-     * Computes the updated stream of custom tag descriptors given current, add, and remove specs.
-     */
     public Stream<SSCCustomTagDescriptor> computeUpdatedTagDescriptors(List<SSCCustomTagDescriptor> currentTags, List<String> addSpecs, List<String> rmSpecs) {
         var currentTagsStream = currentTags.stream();
-        var addDescriptorsStream = tagHelper.getDescriptorsByCustomTagSpec(addSpecs, false);
-        var rmDescriptors = tagHelper.getDescriptorsByCustomTagSpec(rmSpecs, false).toList();
+        var addDescriptorsStream = tagDefinitionHelper.getDescriptorsByCustomTagSpec(addSpecs, false);
+        var rmDescriptors = tagDefinitionHelper.getDescriptorsByCustomTagSpec(rmSpecs, false).toList();
         return Stream.concat(
                 currentTagsStream.filter(tag -> rmDescriptors.stream().noneMatch(rmTag -> rmTag.isEqualById(tag))),
                 addDescriptorsStream
         ).distinct();
     }
 
-    /**
-     * Overload: Accepts current custom tags as json nodes, resolves to descriptors, then computes updated descriptors.
-     */
     public Stream<SSCCustomTagDescriptor> computeUpdatedTagDescriptors(JsonNode currentTagsNode, List<String> addSpecs, List<String> rmSpecs) {
         return computeUpdatedTagDescriptors(
-                SSCCustomTagHelper.toDescriptors(currentTagsNode),
+                SSCCustomTagDefinitionHelper.toDescriptors(currentTagsNode),
                 addSpecs, rmSpecs);
     }
 }
