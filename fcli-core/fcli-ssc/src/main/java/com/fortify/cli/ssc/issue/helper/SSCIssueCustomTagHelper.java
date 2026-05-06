@@ -27,7 +27,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.ssc._common.rest.ssc.SSCUrls;
-import com.fortify.cli.ssc.custom_tag.helper.SSCCustomTagUpdateHelper;
+import com.fortify.cli.ssc.custom_tag.helper.SSCCustomTagDefinitionHelper;
 import com.fortify.cli.ssc.custom_tag.helper.SSCCustomTagValueType;
 
 import kong.unirest.UnirestInstance;
@@ -158,7 +158,7 @@ public class SSCIssueCustomTagHelper {
             return extendTagWithValue(tagInfo, value);
         }
         String hint = tagInfo.isExtensible()
-                ? " To add new value, pass --extend."
+                ? " Use --extend to add new values."
                 : " This tag is not extensible.";
         if (valueList == null || valueList.isEmpty()) {
             throw new FcliSimpleException("Custom tag '" + tagName + "' has no valid list values configured." + hint);
@@ -166,12 +166,12 @@ public class SSCIssueCustomTagHelper {
         String validValues = valueList.stream()
                 .map(ValueListItem::getLookupValue)
                 .collect(Collectors.joining(", "));
-        throw new FcliSimpleException("Invalid value '" + value + "' for list custom tag '" + tagName + "'."
-                + " Valid values are: " + validValues + "." + hint);
+        throw new FcliSimpleException("Invalid value '" + value + "' for custom tag '" + tagName + "'."
+                + " Supported values: " + validValues + "." + hint);
     }
     
     private int extendTagWithValue(CustomTagInfo tagInfo, String newValue) {
-        int newIndex = new SSCCustomTagUpdateHelper(unirest).addValueToListTag(tagInfo.getGuid(), newValue);
+        int newIndex = new SSCCustomTagDefinitionHelper(unirest).addValueToListTag(tagInfo.getGuid(), newValue);
         // Keep local cache in sync so subsequent lookups within the same helper instance are consistent
         ValueListItem newItem = new ValueListItem();
         newItem.setLookupIndex(newIndex);
