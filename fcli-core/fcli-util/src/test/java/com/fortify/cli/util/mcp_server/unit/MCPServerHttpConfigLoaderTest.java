@@ -39,7 +39,6 @@ class MCPServerHttpConfigLoaderTest {
         System.setProperty(envProperty, "secret-token");
         try {
             Files.writeString(configFile, """
-                    product: ssc
                     imports:
                       - imports/ssc-actions.yaml
                     ssc:
@@ -60,20 +59,17 @@ class MCPServerHttpConfigLoaderTest {
     }
 
     @Test
-    void loadFailsIfConfiguredProductSectionDoesNotMatchSelectedProduct() throws Exception {
+    void loadFailsIfNoProductSectionIsSpecified() throws Exception {
         var importFile = tempDir.resolve("fod-actions.yaml");
         Files.writeString(importFile, "functions: {}\n");
         var configFile = tempDir.resolve("mcp-http.yaml");
         Files.writeString(configFile, """
-                product: fod
                 imports:
                   - fod-actions.yaml
-                ssc:
-                  url: https://ssc.example.com
                 """);
 
         var exception = assertThrows(FcliSimpleException.class, () -> MCPServerHttpConfigLoader.load(configFile));
 
-        assertEquals("HTTP MCP config product 'fod' requires a fod section", exception.getMessage());
+        assertEquals("HTTP MCP config must specify exactly one of ssc or fod section", exception.getMessage());
     }
 }

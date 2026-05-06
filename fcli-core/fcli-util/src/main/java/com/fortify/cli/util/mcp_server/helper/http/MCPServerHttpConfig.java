@@ -36,7 +36,6 @@ public class MCPServerHttpConfig {
     private int asyncBgThreads = AsyncJobManager.DEFAULT_BG_THREADS;
     private String jobSafeReturn = "25s";
     private String progressInterval = "5s";
-    private Product product;
     private List<String> imports = new ArrayList<>();
     private SscConfig ssc;
     private FoDConfig fod;
@@ -63,18 +62,24 @@ public class MCPServerHttpConfig {
 
     public void validate(Path configPath) {
         this.configPath = configPath;
-        if ( product == null ) {
-            throw new FcliSimpleException("HTTP MCP config must specify product: ssc|fod");
-        }
         if ( imports == null || imports.isEmpty() ) {
             throw new FcliSimpleException("HTTP MCP config must specify at least one imports entry");
         }
         imports.forEach(this::validateImportPath);
-        switch ( product ) {
+        switch ( getProduct() ) {
         case ssc -> validateSscConfig();
         case fod -> validateFoDConfig();
-        default -> throw new FcliSimpleException("Unsupported HTTP MCP product: " + product);
         }
+    }
+
+    @JsonIgnore
+    public Product getProduct() {
+        var hasSsc = ssc != null;
+        var hasFod = fod != null;
+        if ( hasSsc == hasFod ) {
+            throw new FcliSimpleException("HTTP MCP config must specify exactly one of ssc or fod section");
+        }
+        return hasSsc ? Product.ssc : Product.fod;
     }
 
     @JsonIgnore
@@ -106,11 +111,8 @@ public class MCPServerHttpConfig {
     }
 
     private void validateSscConfig() {
-        if ( ssc == null ) {
-            throw new FcliSimpleException("HTTP MCP config product 'ssc' requires an ssc section");
-        }
         if ( fod != null ) {
-            throw new FcliSimpleException("HTTP MCP config product 'ssc' does not allow a fod section");
+            throw new FcliSimpleException("HTTP MCP config must not specify both ssc and fod sections");
         }
         if ( StringUtils.isBlank(ssc.getUrl()) ) {
             throw new FcliSimpleException("HTTP MCP config ssc.url must be specified");
@@ -118,11 +120,8 @@ public class MCPServerHttpConfig {
     }
 
     private void validateFoDConfig() {
-        if ( fod == null ) {
-            throw new FcliSimpleException("HTTP MCP config product 'fod' requires a fod section");
-        }
         if ( ssc != null ) {
-            throw new FcliSimpleException("HTTP MCP config product 'fod' does not allow an ssc section");
+            throw new FcliSimpleException("HTTP MCP config must not specify both ssc and fod sections");
         }
         if ( StringUtils.isBlank(fod.getUrl()) ) {
             throw new FcliSimpleException("HTTP MCP config fod.url must be specified");
