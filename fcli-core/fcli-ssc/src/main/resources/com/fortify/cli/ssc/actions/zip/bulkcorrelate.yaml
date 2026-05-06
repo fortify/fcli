@@ -1,0 +1,426 @@
+# yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-dev-2.x.json
+
+author: Fortify
+usage:
+  header: (PREVIEW) Perform SAST-DAST correlation of SSC application versions in bulk.
+  description: |
+    This action identifies SSC application versions that have both a processed
+    SAST FPR and a processed DAST FPR, determines whether the scan data has
+    changed since the last successful correlation, and runs
+    `fcli aviator ssc correlate-sast-dast` for the selected versions.
+
+    Versions missing either processed artifact are skipped before any attribute
+    lookup is performed. For versions that have both artifact types, the action
+    compares the most recent scan date with the SSC `last_correlation` custom
+    attribute written by the correlation command.
+
+    For application versions that don't already exist in Aviator, the action
+    will automatically create them before correlation.
+
+    By default (--aviator-app-mapping=app), SSC project versions map to a
+    single Aviator application per SSC project. Set
+    --aviator-app-mapping=version to map each SSC project version to its own
+    Aviator application (project_name__version_name).
+
+    Before running correlation, the action automatically runs
+    `fcli aviator ssc prepare` for each selected application version so the
+    required SSC custom tags and `last_correlation` attribute are available.
+
+    If entitlement is exhausted while creating applications, the action
+    suppresses further create attempts and continues processing versions that
+    already have a matching Aviator application.
+
+    This action assumes active sessions with SSC, Aviator user access for
+    prepare and correlation, and Aviator admin access for application listing
+    and creation.
+
+config:
+  output: immediate
+  rest.target.default: ssc
+  run.fcli.status.log.default: true
+  run.fcli.status.check.default: false
+  mcp: exclude # Not suitable for MCP tool invocation
+
+cli.options:
+  max-correlations:
+    names: --max-correlations, -m
+    description: "Maximum number of application versions to correlate. Default: -1 (unlimited)"
+    required: false
+    default: -1
+    type: int
+  aviator-app-mapping:
+    names: --aviator-app-mapping
+    description: "Controls how SSC project versions map to Aviator applications. 'app' (default) maps one Aviator app per SSC project; 'version' maps one Aviator app per SSC project version (using project_name__version_name)."
+    required: false
+    default: app
+  filter:
+    names: --filter, -f
+    description: "Optional SSC filter to include application versions. Example: 'Languages:java'. Default: no filtering"
+    required: false
+    default: ""
+  exclude-filter:
+    names: --exclude-filter, -e
+    description: "Optional SSC filter to exclude application versions. Example: 'Languages:c#'. Default: no exclusion"
+    required: false
+    default: ""
+  dry-run:
+    names: --dry-run, -n
+    description: "Show what Aviator commands would be executed without actually running them. Default: false"
+    required: false
+    default: false
+    type: boolean
+
+steps:
+  - var.set:
+      module: ssc
+      stats.missing_scan_skipped: 0
+      stats.unchanged_skipped: 0
+      stats.create_attempts: 0
+      stats.create_successes: 0
+      stats.create_failures: 0
+      stats.prepare_failures: 0
+      stats.correlation_attempts: 0
+      stats.correlation_failures: 0
+      stats.failures: 0
+      stats.entitlement_exhausted: false
+      stats.create_skipped_due_to_entitlement: 0
+      stats.would_create_count: 0
+
+  - if: ${!(cli['aviator-app-mapping'] matches 'app|version')}
+    throw: "Invalid --aviator-app-mapping value '${cli['aviator-app-mapping']}'. Valid values are: app, version"
+
+  - log.progress: "Using Aviator app mapping: ${cli['aviator-app-mapping']}"
+
+  - log.progress: Retrieving existing Aviator applications...
+  - run.fcli:
+      aviator_apps:
+        cmd: aviator app ls -o json
+        status.check: true
+        records.collect: true
+
+  - var.set:
+      aviator_app_names: null
+  - records.for-each:
+      from: ${aviator_apps.records}
+      record.var-name: aviator_app
+      do:
+        - var.set:
+            aviator_app_names..: ${aviator_app.name}
+
+  - log.progress: Querying SSC application versions...
+  - var.set:
+      candidate_versions: null
+
+  - if: ${cli.filter == ''}
+    rest.call:
+      app_versions:
+        uri: /api/v1/projectVersions
+        type: paged
+        query:
+          limit: -1
+        records.for-each:
+          record.var-name: version
+          do:
+            - var.set:
+                current_project_name: ${version.project.name}
+                current_version_name: ${version.name}
+                current_aviator_app_name: ${version.project.name.replaceAll('"', '')}
+            - if: ${'version'.equals(cli['aviator-app-mapping'])}
+              var.set:
+                current_aviator_app_name: ${(current_project_name + '__' + current_version_name).replaceAll('"', '')}
+            - var.set:
+                project_exists_in_aviator: ${aviator_app_names != null && aviator_app_names.contains(current_aviator_app_name)}
+            - var.set:
+                candidate_versions..: {fmt: candidate_version}
+
+  - if: ${cli.filter != ''}
+    do:
+      - log.progress: Using issue aging filter scope for candidate discovery...
+      - rest.call:
+          app_versions:
+            uri: /api/v1/issueaging
+            type: paged
+            query:
+              limit: -1
+              filterby: ${cli.filter}
+            records.for-each:
+              record.var-name: version
+              embed:
+                project_details:
+                  uri: /api/v1/projectVersions/${version.id}
+              do:
+                - var.set:
+                    current_project_name: ${version.project_details.project.name}
+                    current_version_name: ${version.project_details.name}
+                    current_aviator_app_name: ${version.project_details.project.name.replaceAll('"', '')}
+                - if: ${'version'.equals(cli['aviator-app-mapping'])}
+                  var.set:
+                    current_aviator_app_name: ${(current_project_name + '__' + current_version_name).replaceAll('"', '')}
+                - var.set:
+                    project_exists_in_aviator: ${aviator_app_names != null && aviator_app_names.contains(current_aviator_app_name)}
+                - var.set:
+                    candidate_versions..: {fmt: candidate_version}
+
+  - if: ${candidate_versions != null}
+    log.progress: Found ${candidate_versions.size()} SSC application versions in initial scope
+  - if: ${candidate_versions == null}
+    log.progress: Found 0 SSC application versions in initial scope
+
+  - var.set:
+      scoped_versions: ${candidate_versions}
+
+  - if: ${candidate_versions != null && candidate_versions.size() > 0 && cli['exclude-filter'] != ''}
+    do:
+      - log.progress: Resolving exclusion filter scope...
+      - rest.call:
+          excluded_versions:
+            uri: /api/v1/issueaging
+            type: paged
+            query:
+              limit: -1
+              filterby: ${cli['exclude-filter']}
+            records.for-each:
+              record.var-name: excluded_version
+              do:
+                - var.set:
+                    excluded_ids..: ${excluded_version.id}
+
+      - var.set:
+          filtered_versions: null
+          excluded_count: 0
+
+      - records.for-each:
+          from: ${candidate_versions}
+          record.var-name: candidate
+          do:
+            - var.set:
+                should_exclude: false
+            - if: ${excluded_ids != null && excluded_ids.contains(candidate.id)}
+              var.set:
+                should_exclude: true
+            - if: ${should_exclude}
+              var.set:
+                excluded_count: ${excluded_count + 1}
+            - if: ${!should_exclude}
+              var.set:
+                filtered_versions..: ${candidate}
+
+      - var.set:
+          scoped_versions: ${filtered_versions}
+      - if: ${scoped_versions != null}
+        log.progress: Excluded ${excluded_count} application versions, ${scoped_versions.size()} remaining
+      - if: ${scoped_versions == null}
+        log.progress: Excluded ${excluded_count} application versions, 0 remaining
+
+  - if: ${candidate_versions == null}
+    log.progress: 0 application versions remain after filtering
+  - if: ${candidate_versions != null && cli['exclude-filter'] == ''}
+    log.progress: ${scoped_versions.size()} application versions remain after filtering
+
+  - if: ${scoped_versions != null && scoped_versions.size() > 0}
+    do:
+      - log.progress: Evaluating application versions for bulk correlation...
+      - var.set:
+          selected_versions: null
+      - records.for-each:
+          from: ${scoped_versions}
+          record.var-name: candidate
+          do:
+            - var.set:
+                latest_sast_scan_date: null
+                latest_dast_scan_date: null
+                most_recent_scan_date: null
+                last_correlation_value: null
+            - rest.call:
+                candidate_artifacts:
+                  uri: /api/v1/projectVersions/${candidate.id}/artifacts
+                  type: paged
+                  query:
+                    limit: -1
+                    embed: scans
+                    orderby: uploadDate DESC
+                  records.for-each:
+                    record.var-name: artifact
+                    breakIf: ${latest_sast_scan_date != null && latest_dast_scan_date != null}
+                    do:
+                      - var.set:
+                          artifact_scan_date: ${#ifBlank(artifact.lastScanDate, artifact.uploadDate)}
+                      - if: ${latest_sast_scan_date == null && artifact.status == 'PROCESS_COMPLETE' && !#isBlank(artifact_scan_date) && artifact._embed.scans?.^[type=='SCA'] != null}
+                        var.set:
+                          latest_sast_scan_date: ${artifact_scan_date}
+                      - if: ${latest_dast_scan_date == null && artifact.status == 'PROCESS_COMPLETE' && !#isBlank(artifact_scan_date) && artifact._embed.scans?.^[type=='WEBINSPECT'] != null}
+                        var.set:
+                          latest_dast_scan_date: ${artifact_scan_date}
+            - if: ${latest_sast_scan_date == null || latest_dast_scan_date == null}
+              do:
+                - var.set:
+                    stats.missing_scan_skipped: ${stats.missing_scan_skipped + 1}
+            - if: ${latest_sast_scan_date != null && latest_dast_scan_date != null}
+              do:
+                - var.set:
+                    most_recent_scan_date: "${#date(latest_sast_scan_date).isAfter(#date(latest_dast_scan_date)) ? latest_sast_scan_date : latest_dast_scan_date}"
+                - rest.call:
+                    candidate_attributes:
+                      uri: /api/v1/projectVersions/${candidate.id}/attributes
+                      records.for-each:
+                        record.var-name: attribute
+                        breakIf: ${last_correlation_value != null}
+                        if: ${attribute.guid == 'B2C3D4E5-F6A7-8901-BCDE-F12345678901'}
+                        do:
+                          - var.set:
+                              last_correlation_value: ${attribute.value}
+                - if: ${!#isBlank(last_correlation_value) && !#date(most_recent_scan_date).isAfter(#date(last_correlation_value))}
+                  var.set:
+                    stats.unchanged_skipped: ${stats.unchanged_skipped + 1}
+                - if: "${#isBlank(last_correlation_value) || #date(most_recent_scan_date).isAfter(#date(last_correlation_value))}"
+                  var.set:
+                    selected_versions..: {fmt: selected_version}
+
+  - if: ${selected_versions != null}
+    log.progress: Found ${selected_versions.size()} application versions requiring correlation before limit
+  - if: ${selected_versions == null}
+    log.progress: Found 0 application versions requiring correlation before limit
+
+  - if: ${selected_versions != null && selected_versions.size() > 0}
+    do:
+      - var.set:
+          correlation_candidates: ${selected_versions}
+      - if: ${cli['max-correlations'] != -1 && selected_versions.size() > cli['max-correlations']}
+        do:
+          - log.progress: Limiting bulk correlation run to ${cli['max-correlations']} application versions
+          - var.set:
+              correlation_candidates: null
+              correlation_counter: 0
+          - records.for-each:
+              from: ${selected_versions}
+              record.var-name: selected_version
+              breakIf: ${correlation_counter >= cli['max-correlations']}
+              do:
+                - var.set:
+                    correlation_candidates..: ${selected_version}
+                    correlation_counter: ${correlation_counter + 1}
+
+  - if: ${correlation_candidates != null}
+    log.progress: Processing ${correlation_candidates.size()} application versions for correlation
+  - if: ${correlation_candidates == null}
+    log.progress: Processing 0 application versions for correlation
+
+  - var.set:
+      known_aviator_app_names: ${aviator_app_names}
+
+  - if: ${correlation_candidates != null && correlation_candidates.size() > 0}
+    do:
+      - records.for-each:
+          from: ${correlation_candidates}
+          record.var-name: project
+          do:
+            - var.set:
+                app_known_in_aviator: ${known_aviator_app_names != null && known_aviator_app_names.contains(project.aviator_app_name)}
+            - if: ${cli['dry-run']}
+              do:
+                - if: ${!app_known_in_aviator}
+                  do:
+                    - log.info: Would create app ${project.aviator_app_name}
+                    - var.set:
+                        stats.would_create_count: ${stats.would_create_count + 1}
+                        known_aviator_app_names..: ${project.aviator_app_name}
+                - log.info: Would prepare Aviator tags and attributes for ${project.project_name}:${project.version_name}
+                - log.info: Would correlate ${project.project_name}:${project.version_name}
+            - if: ${!cli['dry-run']}
+              do:
+                - var.set:
+                    app_ready: ${app_known_in_aviator}
+                - if: ${!app_known_in_aviator && !stats.entitlement_exhausted}
+                  do:
+                    - var.set:
+                        stats.create_attempts: ${stats.create_attempts + 1}
+                    - run.fcli:
+                        create_app:
+                          cmd: aviator app create "${project.aviator_app_name}"
+                          status.check: false
+                    - if: ${create_app.exitCode == 0}
+                      var.set:
+                        app_ready: true
+                        stats.create_successes: ${stats.create_successes + 1}
+                        known_aviator_app_names..: ${project.aviator_app_name}
+                    - if: ${create_app.exitCode != 0}
+                      do:
+                        - var.set:
+                            create_app_error_text: "${(create_app.stderr == null ? '' : create_app.stderr) + ' ' + (create_app.stdout == null ? '' : create_app.stdout)}"
+                            create_app_already_exists: ${create_app_error_text.toLowerCase().contains('already exists')}
+                            create_app_entitlement_or_quota_error: ${create_app_error_text.toLowerCase().contains('entitlement') || create_app_error_text.toLowerCase().contains('quota')}
+                        - if: ${create_app_already_exists}
+                          var.set:
+                            app_ready: true
+                            known_aviator_app_names..: ${project.aviator_app_name}
+                        - if: ${!create_app_already_exists}
+                          do:
+                            - var.set:
+                                stats.create_failures: ${stats.create_failures + 1}
+                                stats.failures: ${stats.failures + 1}
+                            - if: ${create_app_entitlement_or_quota_error && !stats.entitlement_exhausted}
+                              do:
+                                - log.warn: App creation failed due to entitlement/quota - suppressing further create attempts
+                                - var.set:
+                                    stats.entitlement_exhausted: true
+                            - if: ${!create_app_entitlement_or_quota_error}
+                              log.warn: App creation failed for ${project.aviator_app_name}; continuing with remaining candidates
+                - if: ${!app_known_in_aviator && stats.entitlement_exhausted && !app_ready}
+                  var.set:
+                    stats.create_skipped_due_to_entitlement: ${stats.create_skipped_due_to_entitlement + 1}
+                - if: ${app_ready}
+                  do:
+                    - log.progress: Preparing Aviator tags and attributes for ${project.project_name}:${project.version_name}
+                    - run.fcli:
+                        prepare_version:
+                          cmd: aviator ssc prepare --av "${project.id}"
+                          status.check: false
+                    - if: ${prepare_version.exitCode != 0}
+                      do:
+                        - var.set:
+                            stats.prepare_failures: ${stats.prepare_failures + 1}
+                        - log.warn: Aviator preparation failed for ${project.project_name}:${project.version_name}
+                    - var.set:
+                        stats.correlation_attempts: ${stats.correlation_attempts + 1}
+                    - run.fcli:
+                        run_correlation:
+                          cmd: "aviator ssc correlate-sast-dast --av \"${project.id}\" --app \"${project.aviator_app_name}\" --log-level=INFO"
+                          status.check: false
+                    - if: ${run_correlation.exitCode != 0}
+                      do:
+                        - var.set:
+                            stats.correlation_failures: ${stats.correlation_failures + 1}
+                            stats.failures: ${stats.failures + 1}
+                        - log.warn: Correlation failed for ${project.project_name}:${project.version_name}
+
+  - if: ${correlation_candidates == null || correlation_candidates.size() == 0}
+    log.info: No application versions found that require correlation
+
+  - if: ${cli['dry-run']}
+    do:
+      - log.info: "Dry-run complete (mapping: ${cli['aviator-app-mapping']}) - would process ${correlation_candidates == null ? 0 : correlation_candidates.size()} versions, create ${stats.would_create_count} apps, skip ${stats.missing_scan_skipped} due to missing SAST or DAST results"
+
+  - if: ${!cli['dry-run']}
+    do:
+      - log.info: "Complete (mapping: ${cli['aviator-app-mapping']}) - Apps created ${stats.create_successes}/${stats.create_attempts}, Correlations attempted ${stats.correlation_attempts}, Failures ${stats.failures} (create ${stats.create_failures}, correlation ${stats.correlation_failures}), Prepare warnings ${stats.prepare_failures}"
+      - if: ${stats.entitlement_exhausted}
+        log.info: Note - Entitlement exhausted, some app creations were skipped
+
+formatters:
+  candidate_version:
+    id: ${version.id}
+    project_name: ${current_project_name}
+    version_name: ${current_version_name}
+    aviator_app_name: ${current_aviator_app_name}
+    exists_in_aviator: ${project_exists_in_aviator}
+
+  selected_version:
+    id: ${candidate.id}
+    project_name: ${candidate.project_name}
+    version_name: ${candidate.version_name}
+    aviator_app_name: ${candidate.aviator_app_name}
+    exists_in_aviator: ${candidate.exists_in_aviator}
+    latest_sast_scan_date: ${latest_sast_scan_date}
+    latest_dast_scan_date: ${latest_dast_scan_date}
+    most_recent_scan_date: ${most_recent_scan_date}
+    last_correlation: ${last_correlation_value}
