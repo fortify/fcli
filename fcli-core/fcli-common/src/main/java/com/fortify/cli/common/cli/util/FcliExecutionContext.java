@@ -18,6 +18,7 @@ package com.fortify.cli.common.cli.util;
 import java.nio.file.Path;
 import java.security.SecureRandom;
 import java.util.Base64;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -25,32 +26,55 @@ import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.crypto.helper.EncryptionHelper;
 import com.fortify.cli.common.rest.unirest.UnirestContext;
+import com.fortify.cli.common.session.helper.ISessionDescriptor;
+
+import lombok.Getter;
 
 /**
  * Per-top-level execution context holding mutable execution-scoped state.
- * The {@code globalValues} ObjectNode is backed by a {@link ConcurrentHashMap}
+ * The {@code globalActionValues} ObjectNode is backed by a {@link ConcurrentHashMap}
  * to allow safe concurrent access from multiple threads (e.g. async jobs,
  * server request handlers).
  */
 public final class FcliExecutionContext {
-    private final ObjectNode globalValues = new ObjectNode(JsonNodeFactory.instance, new ConcurrentHashMap<>());
-    private final UnirestContext unirestContext = new UnirestContext();
+    @Getter private final ObjectNode globalActionValues = new ObjectNode(JsonNodeFactory.instance, new ConcurrentHashMap<>());
+    @Getter private final UnirestContext unirestContext = new UnirestContext();
     // Encryption helper used for encrypt/decrypt in this execution. Default to global DEFAULT.
     private volatile EncryptionHelper encryptionHelper = EncryptionHelper.DEFAULT;
     // Set of absolute file paths that were saved using ephemeral encryption during this execution
     private final Set<Path> ephemeralEncryptedFiles = ConcurrentHashMap.newKeySet();
+    @Getter private final Map<String, ISessionDescriptor> transientSessionDescriptors = new ConcurrentHashMap<>();
 
-    public ObjectNode getGlobalValues() { return globalValues; }
-    public UnirestContext getUnirestContext() { return unirestContext; }
+    public void clearTransientSessionDescriptors() {
+        transientSessionDescriptors.clear();
+    }
+
+    public ISessionDescriptor getTransientSessionDescriptor(String type) {
+        return type == null ? null : transientSessionDescriptors.get(type);
+    }
+
+    public void setTransientSessionDescriptor(ISessionDescriptor descriptor) {
+        if ( descriptor == null ) {
+            return;
+        }
+        transientSessionDescriptors.put(descriptor.getType(), descriptor);
+    }
+
+    public void clearTransientSessionDescriptor(String type) {
+        if ( type != null ) {
+            transientSessionDescriptors.remove(type);
+        }
+    }
 
     public String info() {
-        return String.format("FcliExecutionContext@%s(%d) actionGlobalValues@%s(%d) unirestContext@%s(%s)",
+        return String.format("FcliExecutionContext@%s(%d) actionGlobalValues@%s(%d) unirestContext@%s(%s) transientSessions=%d",
                 Integer.toHexString(System.identityHashCode(this)),
                 FcliExecutionContextHolder.stackDepth(),
-                Integer.toHexString(System.identityHashCode(globalValues)),
-                globalValues.size(),
+                Integer.toHexString(System.identityHashCode(globalActionValues)),
+                globalActionValues.size(),
                 Integer.toHexString(System.identityHashCode(unirestContext)),
-                unirestContext.getCachedInstanceCount());
+                unirestContext.getCachedInstanceCount(),
+                transientSessionDescriptors.size());
     }
 
     /**

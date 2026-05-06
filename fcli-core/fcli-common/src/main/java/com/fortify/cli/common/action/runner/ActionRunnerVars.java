@@ -53,7 +53,7 @@ public final class ActionRunnerVars {
     private static final String CLI_OPTIONS_VAR_NAME = "cli";
     private static final String[] PROTECTED_VAR_NAMES = {GLOBAL_VAR_NAME, CLI_OPTIONS_VAR_NAME};
     @Getter private final ObjectNode values;
-    private final ObjectNode globalValues;
+    private final ObjectNode globalActionValues;
     private IConfigurableSpelEvaluator spelEvaluator;
     private final ActionRunnerVars parent;
     private final boolean propagateToParent;
@@ -67,8 +67,8 @@ public final class ActionRunnerVars {
     public ActionRunnerVars(IConfigurableSpelEvaluator spelEvaluator, ObjectNode cliOptions) {
         this.spelEvaluator = spelEvaluator;
         this.values = objectMapper.createObjectNode();
-        this.globalValues = FcliExecutionContextHolder.current().getGlobalValues();
-        this.values.set(GLOBAL_VAR_NAME, this.globalValues);
+        this.globalActionValues = FcliExecutionContextHolder.current().getGlobalActionValues();
+        this.values.set(GLOBAL_VAR_NAME, this.globalActionValues);
         this.values.set(CLI_OPTIONS_VAR_NAME, cliOptions);
         this.parent = null;
         this.propagateToParent = true;
@@ -80,7 +80,7 @@ public final class ActionRunnerVars {
     private ActionRunnerVars(ActionRunnerVars parent, boolean propagateToParent) {
         this.spelEvaluator = parent.spelEvaluator;
         this.values = JsonHelper.shallowCopy(parent.values);
-        this.globalValues = parent.globalValues;
+        this.globalActionValues = parent.globalActionValues;
         this.parent = parent;
         this.propagateToParent = propagateToParent;
     }
@@ -157,8 +157,8 @@ public final class ActionRunnerVars {
         Function<String, JsonNode> getter = values::get;
         if ( name.startsWith("global.") ) {
             name = name.replaceAll("^global\\.", "");
-            setter = globalValues::set;
-            getter = globalValues::get;
+            setter = globalActionValues::set;
+            getter = globalActionValues::get;
         }
         var finalName = name; // Needed for lambda below
         logDebug(()->String.format("Set %s: %s", finalName, toDebugString(value)));
@@ -180,7 +180,7 @@ public final class ActionRunnerVars {
         Consumer<String> unsetter = this::_unset;
         if ( name.startsWith("global.") ) {
             name = name.replaceAll("^global\\.", "");
-            unsetter = globalValues::remove;
+            unsetter = globalActionValues::remove;
         }
         rejectProtectedVarNames(name);
         var finalName = name; // Needed for lambda below

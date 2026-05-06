@@ -28,7 +28,7 @@ import com.fortify.cli.common.progress.helper.ProgressWriterType;
  * and delegates to {@link ActionFunctionSpelFunctions#call(String, Object...)}.
  * <p>
  * All executors created for the same server share a single
- * {@link FcliExecutionContext} so that {@code globalValues} persist across
+ * {@link FcliExecutionContext} so that {@code globalActionValues} persist across
  * invocations. The shared context is pushed onto the calling thread's stack
  * during execution and popped afterwards.
  * <p>
