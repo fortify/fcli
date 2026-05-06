@@ -82,7 +82,11 @@ public final class RPCMethodHandlerFcliExecute implements IRPCMethodHandler {
 
         var task = new AsyncTaskFcliCommand(command, collectRecords);
         var description = "fcli " + command;
-        var jobId = asyncJobManager.startBackground(task, effectiveListener, description);
+        var jobId = asyncJobManager.startBackground(AsyncJobManager.TaskDescriptor.builder()
+            .task(task)
+            .listener(effectiveListener)
+            .description(description)
+            .build());
 
         if (collector != null) {
             return RPCWaitHelper.awaitOrFallback(collector, waitConfig, jobId, jobType, cacheConfig, collectRecords);

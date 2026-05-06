@@ -73,7 +73,12 @@ public class MCPToolAsyncJobManager {
             return new InProgressEntry(jobId, cachingListener, jobTokens.get(jobId));
         }
         // Start new background job with the semantic jobId
-        delegate.startBackground(jobId, task, cachingListener, "mcp:" + jobId);
+        delegate.startBackground(AsyncJobManager.TaskDescriptor.builder()
+            .jobId(jobId)
+            .task(task)
+            .listener(cachingListener)
+            .description("mcp:" + jobId)
+            .build());
         var future = delegate.getFuture(jobId);
         if (future != null) {
             var jobToken = jobManager.trackFuture("async_job", future,

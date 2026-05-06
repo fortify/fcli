@@ -20,7 +20,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
+import com.fortify.cli.common.cli.util.FcliExecutionContext;
 import com.fortify.cli.common.cli.util.FcliExecutionContextHolder;
 import com.fortify.cli.common.cli.util.StdioHelper;
 
@@ -49,6 +51,18 @@ public class AsyncJobManager {
         @Builder.Default int bgThreads = DEFAULT_BG_THREADS;
     }
 
+    /**
+     * Descriptor for starting a background task.
+     */
+    @Value @Builder
+    public static class TaskDescriptor {
+        String jobId;
+        IAsyncTask task;
+        @Builder.Default IJobEventListener listener = IJobEventListener.NOOP;
+        @Builder.Default String description = "";
+        Consumer<FcliExecutionContext> executionContextConfigurer;
+    }
+
     private final Map<String, JobEntry> jobs = new ConcurrentHashMap<>();
     private final ExecutorService backgroundExecutor;
 
@@ -66,10 +80,20 @@ public class AsyncJobManager {
     }
 
     /**
-     * Start a background job with the given {@code jobId}, dispatching events to the listener.
-     * Use this when the caller needs a deterministic/semantic job identifier.
+     * Start a background job described by the given {@link TaskDescriptor}.
      */
-    public String startBackground(String jobId, IAsyncTask task, IJobEventListener listener, String description) {
+    public String startBackground(TaskDescriptor descriptor) {
+        if ( descriptor == null ) {
+            throw new IllegalArgumentException("TaskDescriptor must be specified");
+        }
+        var task = descriptor.getTask();
+        if ( task == null ) {
+            throw new IllegalArgumentException("TaskDescriptor.task must be specified");
+        }
+        var jobId = descriptor.getJobId() == null ? UUID.randomUUID().toString() : descriptor.getJobId();
+        var listener = descriptor.getListener();
+        var description = descriptor.getDescription() == null ? "" : descriptor.getDescription();
+        var executionContextConfigurer = descriptor.getExecutionContextConfigurer();
         var entry = new JobEntry(jobId, description);
         jobs.put(jobId, entry);
 
@@ -77,7 +101,10 @@ public class AsyncJobManager {
 
         var future = CompletableFuture.runAsync(() -> {
             entry.thread = Thread.currentThread();
-            FcliExecutionContextHolder.pushNew();
+            var context = FcliExecutionContextHolder.pushNew();
+            if ( executionContextConfigurer != null ) {
+                executionContextConfigurer.accept(context);
+            }
             // Register per-thread progress callback so that progress writer
             // messages are forwarded to the job event listener as notifications.
             // Masking is applied by StdioHelper before invoking the callback.
@@ -115,21 +142,6 @@ public class AsyncJobManager {
         entry.future = future;
         log.debug("Started async job: jobId={} description={}", jobId, description);
         return jobId;
-    }
-
-    /**
-     * Start a background job, dispatching events to the given listener.
-     * Returns a fresh {@code jobId}.
-     */
-    public String startBackground(IAsyncTask task, IJobEventListener listener, String description) {
-        return startBackground(UUID.randomUUID().toString(), task, listener, description);
-    }
-
-    /**
-     * Start a background job with no-op listener and no description.
-     */
-    public String startBackground(IAsyncTask task) {
-        return startBackground(task, IJobEventListener.NOOP, "");
     }
 
     /**

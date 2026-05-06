@@ -84,7 +84,11 @@ public final class RPCMethodHandlerFnCall implements IRPCMethodHandler {
             var argsNode = buildArgsNode(params);
             var task = new AsyncTaskActionFunction(executor, argsNode);
             var description = "fn:" + name;
-            var jobId = asyncJobManager.startBackground(task, effectiveListener, description);
+            var jobId = asyncJobManager.startBackground(AsyncJobManager.TaskDescriptor.builder()
+                    .task(task)
+                    .listener(effectiveListener)
+                    .description(description)
+                    .build());
 
             if (collector != null) {
                 return RPCWaitHelper.awaitOrFallback(collector, waitConfig, jobId, "records", cacheConfig, true);
