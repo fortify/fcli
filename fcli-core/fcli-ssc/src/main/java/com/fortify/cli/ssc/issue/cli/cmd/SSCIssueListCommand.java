@@ -23,7 +23,6 @@ import com.fortify.cli.common.json.producer.ObjectNodeProducerApplyFrom;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.rest.query.IServerSideQueryParamGeneratorSupplier;
 import com.fortify.cli.common.rest.query.IServerSideQueryParamValueGenerator;
-import com.fortify.cli.ssc._common.cli.mixin.SSCFetchRangeMixin;
 import com.fortify.cli.ssc._common.output.cli.cmd.AbstractSSCOutputCommand;
 import com.fortify.cli.ssc._common.rest.ssc.query.SSCQParamGenerator;
 import com.fortify.cli.ssc._common.rest.ssc.query.SSCQParamValueGenerators;
@@ -46,7 +45,6 @@ import picocli.CommandLine.Option;
 @Command(name = OutputHelperMixins.List.CMD_NAME)
 public class SSCIssueListCommand extends AbstractSSCOutputCommand implements IServerSideQueryParamGeneratorSupplier {
     @Getter @Mixin private OutputHelperMixins.List outputHelper; 
-    @Mixin private SSCFetchRangeMixin fetchRangeMixin;
     @Mixin private SSCAppVersionResolverMixin.RequiredOption parentResolver;
     @Mixin private SSCIssueFilterSetResolverMixin.FilterSetOption filterSetResolver;
     @Mixin private SSCQParamMixin qParamMixin;
@@ -72,7 +70,7 @@ public class SSCIssueListCommand extends AbstractSSCOutputCommand implements ISe
     }
     
     public HttpRequest<?> getBaseRequest(UnirestInstance unirest, String appVersionId, SSCIssueFilterSetDescriptor filterSetDescriptor) {
-        GetRequest request = unirest.get("/api/v1/projectVersions/{id}/issues?qm=issues")
+        GetRequest request = unirest.get("/api/v1/projectVersions/{id}/issues?limit=100&qm=issues")
                 .routeParam("id", appVersionId);
         if ( filterSetDescriptor!=null ) {
             request.queryString("filterset", filterSetDescriptor.getGuid());

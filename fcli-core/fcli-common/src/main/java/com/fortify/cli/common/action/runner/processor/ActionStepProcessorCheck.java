@@ -17,7 +17,8 @@ import com.fasterxml.jackson.databind.node.TextNode;
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.action.model.ActionStepCheckEntry;
 import com.fortify.cli.common.action.model.ActionStepCheckEntry.CheckStatus;
-import com.fortify.cli.common.action.runner.ActionRunnerContextLocal;
+import com.fortify.cli.common.action.runner.ActionRunnerContext;
+import com.fortify.cli.common.action.runner.ActionRunnerVars;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -25,7 +26,8 @@ import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor @Data @EqualsAndHashCode(callSuper = true) @Reflectable
 public class ActionStepProcessorCheck extends AbstractActionStepProcessorMapEntries<String, ActionStepCheckEntry> {
-    private final ActionRunnerContextLocal ctx;
+    private final ActionRunnerContext ctx;
+    private final ActionRunnerVars vars;
     private final LinkedHashMap<String,ActionStepCheckEntry> map;
     
     @Override
@@ -33,10 +35,10 @@ public class ActionStepProcessorCheck extends AbstractActionStepProcessorMapEntr
         var failIf = checkStep.getFailIf();
         var passIf = checkStep.getPassIf();
         var pass = passIf!=null 
-                ? getVars().eval(passIf, Boolean.class)
-                : !getVars().eval(failIf, Boolean.class);
+                ? vars.eval(passIf, Boolean.class)
+                : !vars.eval(failIf, Boolean.class);
         var currentStatus = pass ? CheckStatus.PASS : CheckStatus.FAIL;
         var newCheckStatus = ctx.getCheckStatuses().compute(checkStep, (s,oldStatus)->CheckStatus.combine(oldStatus, currentStatus));
-        getVars().set("checkStatus."+key, new TextNode(newCheckStatus.name()));
+        vars.set("checkStatus."+key, new TextNode(newCheckStatus.name()));
     }
 }

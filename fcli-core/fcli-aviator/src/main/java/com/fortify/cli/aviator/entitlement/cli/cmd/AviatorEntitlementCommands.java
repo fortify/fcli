@@ -19,9 +19,7 @@ import picocli.CommandLine.Command;
 
 @Command(name = "entitlement",
         subcommands = {
-            AviatorEntitlementListCommand.class,
-            AviatorEntitlementListSastCommand.class,
-            AviatorEntitlementListDastCommand.class
+            AviatorEntitlementListCommand.class
         }
 )
 public class AviatorEntitlementCommands extends AbstractContainerCommand {

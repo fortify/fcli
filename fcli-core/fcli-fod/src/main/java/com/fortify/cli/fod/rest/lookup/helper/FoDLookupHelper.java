@@ -12,8 +12,8 @@
  */
 package com.fortify.cli.fod.rest.lookup.helper;
 
+import java.util.Iterator;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -38,48 +38,45 @@ public class FoDLookupHelper {
 
     public static final FoDLookupDescriptor getDescriptor(UnirestInstance unirestInstance, FoDLookupType type,
                                                         String text, boolean failIfNotFound) throws JsonProcessingException {
+        FoDLookupDescriptor currentLookup = null;
         GetRequest request = unirestInstance.get(FoDUrls.LOOKUP_ITEMS).queryString("type",
                 type.name());
         JsonNode items = request.asObject(ObjectNode.class).getBody().get("items");
         List<FoDLookupDescriptor> lookupList = objectMapper.readValue(objectMapper.writeValueAsString(items),
                 new TypeReference<List<FoDLookupDescriptor>>() {
                 });
-        FoDLookupDescriptor foundLookup = null;
-        for (FoDLookupDescriptor current : lookupList) {
-            if (current.getText().equals(text) || current.getValue().equals(text)) {
-                foundLookup = current;
+        Iterator<FoDLookupDescriptor> lookupIterator = lookupList.iterator();
+        while (lookupIterator.hasNext()) {
+            currentLookup = lookupIterator.next();
+            if (currentLookup.getText().equals(text)) {
                 break;
             }
         }
-        if (foundLookup == null && failIfNotFound) {
-            var allowedValues = lookupList.stream().map(FoDLookupDescriptor::getText).collect(Collectors.joining(", "));
-            throw new FcliSimpleException(String.format("No value found for '%s' in %s (case-sensitive). Allowed values: %s", text, type.name(), allowedValues));
+        if (currentLookup == null && failIfNotFound) {
+            throw new FcliSimpleException("No value found for '" + text + "' in " + type.name());
         }
-        return foundLookup;
+        return currentLookup;
     }
 
     public static final FoDLookupDescriptor getDescriptor(UnirestInstance unirestInstance, FoDLookupType type,
                                                         String group, String text, boolean failIfNotFound) throws JsonProcessingException {
+        FoDLookupDescriptor currentLookup = null;
         GetRequest request = unirestInstance.get(FoDUrls.LOOKUP_ITEMS).queryString("type",
                 type.name());
         JsonNode items = request.asObject(ObjectNode.class).getBody().get("items");
         List<FoDLookupDescriptor> lookupList = objectMapper.readValue(objectMapper.writeValueAsString(items),
                 new TypeReference<List<FoDLookupDescriptor>>() {
                 });
-        FoDLookupDescriptor foundLookup = null;
-        for (FoDLookupDescriptor current : lookupList) {
-            if (current.getGroup().equals(group) && current.getText().equals(text)) {
-                foundLookup = current;
+        Iterator<FoDLookupDescriptor> lookupIterator = lookupList.iterator();
+        while (lookupIterator.hasNext()) {
+            currentLookup = lookupIterator.next();
+            if (currentLookup.getGroup().equals(group) && currentLookup.getText().equals(text)) {
                 break;
             }
         }
-        if (foundLookup == null && failIfNotFound) {
-            var allowedValues = lookupList.stream()
-                    .filter(d -> d.getGroup().equals(group))
-                    .map(FoDLookupDescriptor::getText)
-                    .collect(Collectors.joining(", "));
-            throw new FcliSimpleException(String.format("No value found for '%s' with group '%s' in %s. Allowed values: %s", text, group, type.name(), allowedValues));
+        if (currentLookup == null && failIfNotFound) {
+            throw new FcliSimpleException("No value found for '" + text + "' with group '" + group + "' in " + type.name());
         }
-        return foundLookup;
+        return currentLookup;
     }
 }

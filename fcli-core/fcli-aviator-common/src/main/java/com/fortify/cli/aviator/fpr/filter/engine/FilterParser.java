@@ -166,19 +166,14 @@ public final class FilterParser {
             attributeName = modifier;
         }
         if (values.size() == 1) {
-            SearchComparer comparer = createComparer(values.get(0));
-            if (isSpecialModifier(modifier)) {
-                attributeName = getSpecialAttributeName(modifier);
-                comparer = createSpecialComparer(modifier, values.get(0));
-            }
-            return new SearchQuery(attributeName, comparer);
+            return new SearchQuery(attributeName, createComparer(values.get(0)));
         }
         BooleanComparer combinedComparer = new BooleanComparer();
         for (String value : values) {
             combinedComparer.addComparer(createComparer(value));
         }
         if (isSpecialModifier(modifier)) {
-            attributeName = getSpecialAttributeName(modifier);
+            attributeName = "confidence";
         }
         return new SearchQuery(attributeName, combinedComparer);
     }
@@ -217,7 +212,7 @@ public final class FilterParser {
         SearchComparer comparer = createComparer(valuePart);
         if (isSpecialModifier(cleanedModifier)) {
             comparer = createSpecialComparer(cleanedModifier, valuePart);
-            attributeName = getSpecialAttributeName(cleanedModifier); // like library
+            attributeName = "confidence"; // like library
         }
         return new SearchQuery(attributeName, comparer);
     }
@@ -294,10 +289,7 @@ public final class FilterParser {
 
     // NEW: Specials like library (e.g., maxconf as range on confidence)
     private static boolean isSpecialModifier(String modifier) {
-        return "maxconf".equalsIgnoreCase(modifier)
-            || "minconf".equalsIgnoreCase(modifier)
-            || "maxvirtconf".equalsIgnoreCase(modifier)
-            || "minvirtconf".equalsIgnoreCase(modifier);
+        return "maxconf".equalsIgnoreCase(modifier) || "minconf".equalsIgnoreCase(modifier); // add more as needed
     }
 
     private static SearchComparer createSpecialComparer(String modifier, String value) {
@@ -305,18 +297,7 @@ public final class FilterParser {
             return new NumberRangeComparer("[0," + value + "]");
         } else if ("minconf".equalsIgnoreCase(modifier)) {
             return new NumberRangeComparer("[" + value + ",5]");
-        } else if ("maxvirtconf".equalsIgnoreCase(modifier)) {
-            return new NumberRangeComparer("[0," + value + "]");
-        } else if ("minvirtconf".equalsIgnoreCase(modifier)) {
-            return new NumberRangeComparer("[" + value + ",1]");
         }
         return null;
-    }
-
-    private static String getSpecialAttributeName(String modifier) {
-        if ("maxvirtconf".equalsIgnoreCase(modifier) || "minvirtconf".equalsIgnoreCase(modifier)) {
-            return "minvirtualcallconfidence";
-        }
-        return "confidence";
     }
 }

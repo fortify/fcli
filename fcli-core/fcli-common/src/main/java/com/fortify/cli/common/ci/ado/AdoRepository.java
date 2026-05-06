@@ -20,7 +20,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.json.JsonHelper;
-import com.fortify.cli.common.rest.unirest.HttpHeader;
 import com.fortify.cli.common.util.Break;
 
 import kong.unirest.UnirestInstance;
@@ -70,8 +69,7 @@ public class AdoRepository {
             .routeParam("organization", organization)
             .routeParam("project", project)
             .queryString("api-version", "7.1-preview.1")
-            // Use headerReplace to replace rather than add the Content-Type header (avoid duplicates with defaults)
-            .headerReplace(HttpHeader.CONTENT_TYPE, "application/json")
+            .header("Content-Type", "application/json")
             .body(body)
             .asObject(ObjectNode.class)
             .getBody();

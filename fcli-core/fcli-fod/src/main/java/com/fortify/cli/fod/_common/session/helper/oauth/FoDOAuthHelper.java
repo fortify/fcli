@@ -16,7 +16,6 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import com.fortify.cli.common.http.proxy.helper.ProxyHelper;
-import com.fortify.cli.common.rest.unirest.HttpHeader;
 import com.fortify.cli.common.rest.unirest.UnirestHelper;
 import com.fortify.cli.common.rest.unirest.config.IUrlConfig;
 import com.fortify.cli.common.rest.unirest.config.UnirestJsonHeaderConfigurer;
@@ -45,9 +44,8 @@ public class FoDOAuthHelper {
     private static final FoDTokenCreateResponse createToken(UnirestInstance unirest, IUrlConfig urlConfig, Map<String, Object> formData) {
         configureUnirest(unirest, urlConfig);
         return unirest.post("/oauth/token")
-                // Use headerReplace to replace rather than add headers (avoid duplicates with defaults)
-                .headerReplace(HttpHeader.ACCEPT, "application/json")
-                .headerReplace(HttpHeader.CONTENT_TYPE, "application/x-www-form-urlencoded")
+                .accept("application/json")
+                .headerReplace("Content-Type", "application/x-www-form-urlencoded")
                 .fields(formData)
                 .asObject(FoDTokenCreateResponse.class)
                 .getBody();

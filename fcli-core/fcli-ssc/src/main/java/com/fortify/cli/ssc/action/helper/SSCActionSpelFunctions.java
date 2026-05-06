@@ -17,7 +17,6 @@ import static com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunction.
 import java.io.InputStream;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.function.Supplier;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -32,7 +31,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.action.model.ActionStepRecordsForEach.IActionStepForEachProcessor;
-import com.fortify.cli.common.action.runner.ActionRunnerContextLocal;
+import com.fortify.cli.common.action.runner.ActionRunnerContext;
 import com.fortify.cli.common.action.runner.ActionSpelFunctions;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonHelper;
@@ -52,35 +51,18 @@ import kong.unirest.UnirestInstance;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 
-@Reflectable
+@RequiredArgsConstructor @Reflectable
 @SpelFunctionPrefix("ssc.")
 public final class SSCActionSpelFunctions {
-    private final Supplier<UnirestInstance> sscUnirestSupplier;
-    private final Supplier<String> baseUrlSupplier;
-    private final ActionRunnerContextLocal ctx;
-    
-    /** Constructor for picocli mixin usage (existing SSCActionRunCommand pattern). */
-    public SSCActionSpelFunctions(SSCAndScanCentralUnirestInstanceSupplierMixin mixin, ActionRunnerContextLocal ctx) {
-        this(mixin::getSscUnirestInstance,
-             () -> mixin.getSessionDescriptor().getSscUrlConfig().getUrl(),
-             ctx);
-    }
-    
-    /** Constructor for programmatic usage (product context provider). */
-    public SSCActionSpelFunctions(Supplier<UnirestInstance> sscUnirestSupplier,
-                                   Supplier<String> baseUrlSupplier,
-                                   ActionRunnerContextLocal ctx) {
-        this.sscUnirestSupplier = sscUnirestSupplier;
-        this.baseUrlSupplier = baseUrlSupplier;
-        this.ctx = ctx;
-    }
+    private final SSCAndScanCentralUnirestInstanceSupplierMixin unirestInstanceSupplier;
+    private final ActionRunnerContext ctx;
     
     @SpelFunction(cat=fortify, returns="SSC application version object for the given application version name or id") 
     public final ObjectNode appVersion(
             @SpelFunctionParam(name="nameOrId", desc="the name or ID of the application version to load") String nameOrId) 
     {
         ctx.getProgressWriter().writeProgress("Loading application version %s", nameOrId);
-        var result = SSCAppVersionHelper.getRequiredAppVersion(sscUnirestSupplier.get(),
+        var result = SSCAppVersionHelper.getRequiredAppVersion(unirestInstanceSupplier.getSscUnirestInstance(),
                 nameOrId, ":");
         ctx.getProgressWriter().writeProgress("Loaded application version %s", result.getAppAndVersionName());
         return result.asObjectNode();
@@ -94,7 +76,7 @@ public final class SSCActionSpelFunctions {
         var progressMessage = StringUtils.isBlank(titleOrId) ? "Loading default filter set"
                 : String.format("Loading filter set %s", titleOrId);
         ctx.getProgressWriter().writeProgress(progressMessage);
-        var filterSetDescriptor = new SSCIssueFilterSetHelper(sscUnirestSupplier.get(),
+        var filterSetDescriptor = new SSCIssueFilterSetHelper(unirestInstanceSupplier.getSscUnirestInstance(),
                 appVersion.get("id").asText()).getDescriptorByTitleOrId(titleOrId, false);
         if (filterSetDescriptor == null) {
             throw new FcliSimpleException("Unknown filter set: " + titleOrId);
@@ -143,7 +125,8 @@ public final class SSCActionSpelFunctions {
     }
 
     private String baseUrl() {
-        return baseUrlSupplier.get().replaceAll("/+$", "");
+        return unirestInstanceSupplier.getSessionDescriptor().getSscUrlConfig().getUrl()
+                .replaceAll("/+$", "");
     }
     
     @RequiredArgsConstructor

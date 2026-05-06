@@ -29,7 +29,6 @@ import com.fortify.cli.common.output.transform.IInputTransformer;
 import com.fortify.cli.common.output.transform.IRecordTransformer;
 import com.fortify.cli.common.rest.paging.INextPageUrlProducer;
 import com.fortify.cli.common.rest.paging.INextPageUrlProducerSupplier;
-import com.fortify.cli.common.rest.paging.IPagingSuppressor;
 import com.fortify.cli.common.rest.unirest.IUnirestInstanceSupplier;
 import com.fortify.cli.common.util.DisableTest;
 import com.fortify.cli.common.util.DisableTest.TestType;
@@ -50,7 +49,7 @@ import picocli.CommandLine.Parameters;
  * 
  * @author Ruud Senden
  */
-public abstract class AbstractRestCallCommand extends AbstractOutputCommand implements IBaseRequestSupplier, IUnirestInstanceSupplier, IInputTransformer, IRecordTransformer, INextPageUrlProducerSupplier, IPagingSuppressor {
+public abstract class AbstractRestCallCommand extends AbstractOutputCommand implements IBaseRequestSupplier, IUnirestInstanceSupplier, IInputTransformer, IRecordTransformer, INextPageUrlProducerSupplier {
     @EnvSuffix("URI") @Parameters(index = "0", arity = "1..1", descriptionKey = "api.uri") String uri;
     
     @Option(names = {"--request", "-X"}, required = false, defaultValue = "GET")
@@ -111,13 +110,12 @@ public abstract class AbstractRestCallCommand extends AbstractOutputCommand impl
     }
 
     @Override
-    public boolean isPagingSuppressed() {
-        return noPaging;
-    }
-
-    @Override
     public final INextPageUrlProducer getNextPageUrlProducer() {
-        return applyOnProductHelper(INextPageUrlProducerSupplier.class, s->s.getNextPageUrlProducer(), null);
+        INextPageUrlProducer result = null;
+        if ( !noPaging ) {
+            result = _getNextPageUrlProducer();
+        }
+        return result;
     }
 
     private final JsonNode _transformRecord(JsonNode input) {
@@ -125,6 +123,9 @@ public abstract class AbstractRestCallCommand extends AbstractOutputCommand impl
     }
     private final JsonNode _transformInput(JsonNode input) {
         return applyOnProductHelper(IInputTransformer.class, t->t.transformInput(input), input);
+    }
+    private final INextPageUrlProducer _getNextPageUrlProducer() {
+        return applyOnProductHelper(INextPageUrlProducerSupplier.class, s->s.getNextPageUrlProducer(), null);
     }
 
     protected String formatUri(String uri) {

@@ -15,7 +15,8 @@ import java.util.LinkedHashMap;
 
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.action.model.ActionStepRestTargetEntry;
-import com.fortify.cli.common.action.runner.ActionRunnerContextLocal;
+import com.fortify.cli.common.action.runner.ActionRunnerContext;
+import com.fortify.cli.common.action.runner.ActionRunnerVars;
 import com.fortify.cli.common.action.runner.processor.IActionRequestHelper.BasicActionRequestHelper;
 import com.fortify.cli.common.rest.unirest.IUnirestInstanceSupplier;
 import com.fortify.cli.common.rest.unirest.UnirestContext;
@@ -28,7 +29,8 @@ import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor @Data @EqualsAndHashCode(callSuper = true) @Reflectable
 public class ActionStepProcessorRestTarget extends AbstractActionStepProcessorMapEntries<String, ActionStepRestTargetEntry> {
-    private final ActionRunnerContextLocal ctx;
+    private final ActionRunnerContext ctx;
+    private final ActionRunnerVars vars;
     private final LinkedHashMap<String,ActionStepRestTargetEntry> map;
     
     @Override
@@ -37,8 +39,8 @@ public class ActionStepProcessorRestTarget extends AbstractActionStepProcessorMa
     }
     
     private IActionRequestHelper createBasicRequestHelper(String name, ActionStepRestTargetEntry entry) {
-        var baseUrl = getVars().eval(entry.getBaseUrl(), String.class);
-        var headers = getVars().eval(entry.getHeaders(), String.class);
+        var baseUrl = vars.eval(entry.getBaseUrl(), String.class);
+        var headers = vars.eval(entry.getHeaders(), String.class);
         UnirestContext context = ctx.getConfig().getUnirestContext();
         IUnirestInstanceSupplier unirestInstanceSupplier = () -> context.getUnirestInstance(name, u->{
             u.config().defaultBaseUrl(baseUrl).getDefaultHeaders().add(headers);

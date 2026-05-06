@@ -16,7 +16,8 @@ import org.apache.commons.lang3.StringUtils;
 
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.action.model.MessageWithCause;
-import com.fortify.cli.common.action.runner.ActionRunnerContextLocal;
+import com.fortify.cli.common.action.runner.ActionRunnerContext;
+import com.fortify.cli.common.action.runner.ActionRunnerVars;
 import com.fortify.cli.common.action.runner.FcliActionStepException;
 import com.fortify.cli.common.exception.AbstractFcliException;
 
@@ -26,11 +27,12 @@ import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor @Data @EqualsAndHashCode(callSuper = true) @Reflectable
 public class ActionStepProcessorThrow extends AbstractActionStepProcessor {
-    private final ActionRunnerContextLocal ctx;
+    private final ActionRunnerContext ctx;
+    private final ActionRunnerVars vars;
     private final MessageWithCause msgWithCause;
 
     public final void process() {
-        var evaluated = evaluateMessageWithCause(msgWithCause, getVars());
+        var evaluated = evaluateMessageWithCause(msgWithCause, vars);
         
         if (StringUtils.isBlank(evaluated.message()) && evaluated.cause() != null) {
             // Only cause provided - rethrow if FcliException, otherwise wrap

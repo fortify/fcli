@@ -31,6 +31,8 @@ import com.fortify.cli.common.output.writer.record.RecordWriterConfig;
 import com.fortify.cli.common.output.writer.record.RecordWriterFactory;
 import com.fortify.cli.common.output.writer.record.RecordWriterStyle;
 import com.fortify.cli.common.output.writer.record.RecordWriterStyle.RecordWriterStyleElement;
+import com.fortify.cli.common.progress.helper.IProgressWriterI18n;
+import com.fortify.cli.common.util.NonClosingPrintStream;
 
 import lombok.RequiredArgsConstructor;
 
@@ -54,10 +56,11 @@ public class ActionRunner {
         int exitCode = 0;
         var progressWriter = config.getProgressWriter();
         var parameterValues = getParameterValues(args);
-        try ( var ctx = ActionRunnerContextLocal.create(config, progressWriter, parameterValues) ) {
+        try ( var ctx = createContext(progressWriter, parameterValues) ) {
             initializeCheckStatuses(ctx);
+            ActionRunnerVars vars = ctx.getVars();
             try {
-                new ActionStepProcessorSteps(ctx, config.getAction().getSteps()).process();
+                new ActionStepProcessorSteps(ctx, vars, config.getAction().getSteps()).process();
             } finally {
                 overallCheckstatus = processAndPrintCheckStatuses(ctx);
             }
@@ -66,6 +69,14 @@ public class ActionRunner {
         }
         // Determine final exit code: add 100 when checks failed
         return exitCode + (overallCheckstatus==CheckStatus.FAIL ? 100 : 0);
+    }
+
+    private ActionRunnerContext createContext(IProgressWriterI18n progressWriter, ObjectNode parameterValues) {
+        return ActionRunnerContext.builder()
+                .config(config)
+                .progressWriter(progressWriter)
+                .parameterValues(parameterValues)
+                .build().initialize();
     }
 
     private ObjectNode getParameterValues(String[] args) {
@@ -77,7 +88,7 @@ public class ActionRunner {
         return parameterValues;
     }
     
-    private static final void initializeCheckStatuses(ActionRunnerContextLocal ctx) {
+    private static final void initializeCheckStatuses(ActionRunnerContext ctx) {
         for ( var elt : ctx.getConfig().getAction().getAllActionElements() ) {
             if ( elt instanceof ActionStepCheckEntry ) {
                 var checkStep = (ActionStepCheckEntry)elt;
@@ -87,7 +98,7 @@ public class ActionRunner {
         }
     }
     
-    private final CheckStatus processAndPrintCheckStatuses(ActionRunnerContextLocal ctx) {
+    private final CheckStatus processAndPrintCheckStatuses(ActionRunnerContext ctx) {
         ctx.getProgressWriter().clearProgress();
         var checkStatuses = ctx.getCheckStatuses();
         if ( checkStatuses.isEmpty() ) { return CheckStatus.SKIP; }
@@ -115,7 +126,7 @@ public class ActionRunner {
     private IRecordWriter createCheckStatusWriter() {
         var recordWriterConfig = RecordWriterConfig.builder()
             .style(RecordWriterStyle.apply(RecordWriterStyleElement.md_border))
-            .writerSupplier(()->new OutputStreamWriter(System.out))
+            .writerSupplier(()->new OutputStreamWriter(new NonClosingPrintStream(false, "System.out", System.out)))
             .build();
         var recordWriter = RecordWriterFactory.table.createWriter(recordWriterConfig);
         return recordWriter;

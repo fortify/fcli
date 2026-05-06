@@ -46,7 +46,6 @@ public abstract class AbstractOutputCommand extends AbstractRunnableCommand
         implements ISingularSupplier, IOutputHelperSupplier, IRecordCollectionSupport 
 {
     @Getter private Consumer<ObjectNode> recordConsumer;
-    @Getter private Consumer<ObjectNode> metadataConsumer;
     @Getter private boolean stdoutSuppressedForRecordCollection;
 
     @Override
@@ -125,10 +124,5 @@ public abstract class AbstractOutputCommand extends AbstractRunnableCommand
     public final void setRecordConsumer(Consumer<ObjectNode> consumer, boolean suppressStdout) {
         this.recordConsumer = consumer;
         this.stdoutSuppressedForRecordCollection = suppressStdout;
-    }
-    
-    @Override
-    public final void setMetadataConsumer(Consumer<ObjectNode> consumer) {
-        this.metadataConsumer = consumer;
     }
 }

@@ -28,7 +28,7 @@ import org.junit.jupiter.api.Test;
 import com.fasterxml.jackson.databind.node.TextNode;
 import com.fortify.cli.common.action.runner.ActionRunnerVars;
 import com.fortify.cli.common.cli.util.FcliExecutionContextHolder;
-import com.fortify.cli.common.cli.util.StdioHelper;
+import com.fortify.cli.common.cli.util.FcliExecutionOutputContext;
 import com.fortify.cli.common.json.JsonHelper;
 
 public class FcliConcurrencyTest {
@@ -70,24 +70,24 @@ public class FcliConcurrencyTest {
 
     @Test
     public void outputDelegationIsThreadLocal() throws Exception {
-        StdioHelper.install();
+        FcliExecutionOutputContext.installIfNeeded();
         ExecutorService ex = Executors.newFixedThreadPool(2);
         Callable<String> t1 = () -> {
             var baos = new ByteArrayOutputStream();
             var ps = new PrintStream(baos, true);
-            StdioHelper.pushOut(ps);
+            FcliExecutionOutputContext.setThreadOut(ps);
             System.out.println("hello-1");
             ps.flush();
-            StdioHelper.popOut();
+            FcliExecutionOutputContext.clearThreadOut();
             return baos.toString();
         };
         Callable<String> t2 = () -> {
             var baos = new ByteArrayOutputStream();
             var ps = new PrintStream(baos, true);
-            StdioHelper.pushOut(ps);
+            FcliExecutionOutputContext.setThreadOut(ps);
             System.out.println("hello-2");
             ps.flush();
-            StdioHelper.popOut();
+            FcliExecutionOutputContext.clearThreadOut();
             return baos.toString();
         };
         var f1 = ex.submit(t1);

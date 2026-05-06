@@ -17,7 +17,8 @@ import java.util.List;
 
 import com.fortify.cli.common.action.model.ActionStepWith;
 import com.fortify.cli.common.action.model.ActionStepWithSession;
-import com.fortify.cli.common.action.runner.ActionRunnerContextLocal;
+import com.fortify.cli.common.action.runner.ActionRunnerContext;
+import com.fortify.cli.common.action.runner.ActionRunnerVars;
 import com.fortify.cli.common.cli.util.FcliCommandExecutorFactory;
 import com.fortify.cli.common.spel.wrapper.TemplateExpression;
 
@@ -26,16 +27,17 @@ import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor @Data
 public class ActionStepWithSessionHandler implements IActionStepWithHandler {
-    private final ActionRunnerContextLocal ctx;
+    private final ActionRunnerContext ctx;
+    private final ActionRunnerVars vars;
     private final ActionStepWithSession withSession;
     
-    public static final List<? extends IActionStepWithHandler> createHandlers(ActionStepProcessorWith actionStepProcessorWith, ActionRunnerContextLocal ctx, ActionStepWith withStep) {
+    public static final List<? extends IActionStepWithHandler> createHandlers(ActionStepProcessorWith actionStepProcessorWith, ActionRunnerContext ctx, ActionRunnerVars vars, ActionStepWith withStep) {
         var withSessions = withStep.getSessions();
         return withSessions==null || withSessions.isEmpty() 
                 ? Collections.emptyList() 
                 : withSessions.stream()
                     .filter(actionStepProcessorWith::_if)
-                    .map(ws->new ActionStepWithSessionHandler(ctx, ws))
+                    .map(ws->new ActionStepWithSessionHandler(ctx, vars, ws))
                     .toList();
     }
 
@@ -56,7 +58,7 @@ public class ActionStepWithSessionHandler implements IActionStepWithHandler {
     
     private final void processFcliSessionCmd(TemplateExpression cmd) {
         FcliCommandExecutorFactory.builder()
-            .cmd(ctx.getVars().eval(cmd, String.class))
+            .cmd(vars.eval(cmd, String.class))
             .build().create().execute();
     }
 }

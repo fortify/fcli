@@ -57,7 +57,6 @@ import com.fortify.cli.aviator.audit.model.AuditResponse;
 import com.fortify.cli.aviator.config.TagMappingConfig;
 import com.fortify.cli.aviator.fpr.model.AuditIssue;
 import com.fortify.cli.aviator.fpr.model.FPRInfo;
-import com.fortify.cli.aviator.fpr.utils.FileUtils;
 import com.fortify.cli.aviator.util.Constants;
 import com.fortify.cli.aviator.util.FprHandle;
 
@@ -639,7 +638,8 @@ public class AuditProcessor {
 
     public File updateAndSaveAuditAndRemediationsXml(Map<String, AuditResponse> auditResponses,
                                                     TagMappingConfig tagMappingConfig,
-                                                    FPRInfo fprInfo) throws AviatorTechnicalException {
+                                                    FPRInfo fprInfo,
+                                                    FVDLProcessor fvdlProcessor) throws AviatorTechnicalException {
         // Step 1: Update the in-memory audit.xml document. This returns timestamps needed for remediations.
         Map<String, String> remediationCommentTimestamps = updateAuditXml(auditResponses, tagMappingConfig);
 
@@ -652,7 +652,7 @@ public class AuditProcessor {
 
         // Step 3: Generate the in-memory remediations.xml document if needed.
         if (hasRemediations && !remediationCommentTimestamps.isEmpty()) {
-            this.remediationsDoc = generateRemediationsXml(auditResponses, remediationCommentTimestamps, fprInfo);
+            this.remediationsDoc = generateRemediationsXml(auditResponses, remediationCommentTimestamps, fprInfo, fvdlProcessor);
         } else {
             this.remediationsDoc = null;
             if (hasRemediations) {
@@ -689,7 +689,8 @@ public class AuditProcessor {
 
     private Document generateRemediationsXml(Map<String, AuditResponse> auditResponses,
                                             Map<String, String> remediationCommentTimestamps,
-                                            FPRInfo fprInfo) throws AviatorTechnicalException {
+                                            FPRInfo fprInfo,
+                                            FVDLProcessor fvdlProcessor) throws AviatorTechnicalException {
         try {
             DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
             docFactory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
@@ -752,9 +753,7 @@ public class AuditProcessor {
                         filenameElement.setTextContent(filename);
                         fileChangesElement.appendChild(filenameElement);
 
-                        //Optional<String> originalFileContentOptional = fvdlProcessor.getSourceFileContent(filename);
-                        FileUtils fileUtils = new FileUtils();
-                        Optional<String> originalFileContentOptional =  fileUtils.getSourceFileContent(fprHandle, filename);
+                        Optional<String> originalFileContentOptional = fvdlProcessor.getSourceFileContent(filename);
 
                         if (originalFileContentOptional.isEmpty()) {
                             logger.warn("WARN: Could not retrieve source code for file '{}'. Skipping remediation generation for this file for instanceId '{}'.", filename, instanceId);

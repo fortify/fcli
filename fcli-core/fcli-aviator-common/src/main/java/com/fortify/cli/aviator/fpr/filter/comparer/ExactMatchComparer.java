@@ -27,10 +27,10 @@ public class ExactMatchComparer implements SearchComparer {
         if (searchTerm == null) {
             return attributeValue == null;
         }
-        if (attributeValue == null) {
+        if (!(attributeValue instanceof String)) {
             return false;
         }
-        boolean result = searchTerm.equalsIgnoreCase(attributeValue.toString());
+        boolean result = searchTerm.equalsIgnoreCase((String) attributeValue);
         return result;
     }
 

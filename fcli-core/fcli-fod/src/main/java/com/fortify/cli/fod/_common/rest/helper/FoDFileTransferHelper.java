@@ -22,7 +22,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.progress.helper.IProgressWriter;
-import com.fortify.cli.common.rest.unirest.HttpHeader;
 import com.fortify.cli.common.rest.unirest.URIHelper;
 import com.fortify.cli.fod._common.util.FoDConstants;
 
@@ -87,9 +86,8 @@ public final class FoDFileTransferHelper {
                 lastBody = unirest.request(
                                 String.valueOf(baseRequest.getHttpMethod()),
                                 getUri(baseRequest, fragmentNumber++, offset))
-                        // Use headerReplace to replace rather than add headers (avoid duplicates with defaults)
-                        .headerReplace(HttpHeader.CONTENT_TYPE, "application/octet-stream")
-                        .headerReplace(HttpHeader.ACCEPT, "application/json")
+                        .contentType("application/octet-stream")
+                        .header("Accept", "application/json")
                         .body(sendByteArray)
                         .asString()
                         .getBody();

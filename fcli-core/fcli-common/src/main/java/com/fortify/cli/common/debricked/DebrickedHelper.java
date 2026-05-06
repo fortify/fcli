@@ -30,7 +30,6 @@ import com.fortify.cli.common.debricked.DebrickedLoginOptions.DebrickedUserCrede
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.http.proxy.helper.ProxyHelper;
 import com.fortify.cli.common.json.JsonHelper;
-import com.fortify.cli.common.rest.unirest.HttpHeader;
 import com.fortify.cli.common.rest.unirest.config.UnirestJsonHeaderConfigurer;
 import com.fortify.cli.common.rest.unirest.config.UnirestUnexpectedHttpResponseConfigurer;
 import com.fortify.cli.common.rest.unirest.config.UnirestUrlConfigConfigurer;
@@ -81,8 +80,7 @@ public final class DebrickedHelper  {
 
     public final String getDebrickedJwtToken(UnirestInstance debrickedUnirest, DebrickedAccessTokenCredentialOptions tokenOptions) {
         return debrickedUnirest.post("/api/login_refresh")
-                // Use headerReplace to replace rather than add the Content-Type header (avoid duplicates with defaults)
-                .headerReplace(HttpHeader.CONTENT_TYPE, "application/x-www-form-urlencoded")
+                .header("Content-Type", "application/x-www-form-urlencoded")
                 .field("refresh_token", new String(tokenOptions.getAccessToken()))
                 .asObject(JsonNode.class)
                 .getBody()
@@ -92,8 +90,7 @@ public final class DebrickedHelper  {
 
     public final String getDebrickedJwtToken(UnirestInstance debrickedUnirest, DebrickedUserCredentialOptions userCredentialsOptions) {
         return debrickedUnirest.post("/api/login_check")
-                // Use headerReplace to replace rather than add the Content-Type header (avoid duplicates with defaults)
-                .headerReplace(HttpHeader.CONTENT_TYPE, "application/x-www-form-urlencoded")
+                .header("Content-Type", "application/x-www-form-urlencoded")
                 .field("_username", userCredentialsOptions.getUser())
                 .field("_password", new String(userCredentialsOptions.getPassword()))
                 .asObject(JsonNode.class)

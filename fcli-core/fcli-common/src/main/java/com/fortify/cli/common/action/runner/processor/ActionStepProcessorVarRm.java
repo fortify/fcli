@@ -15,7 +15,8 @@ package com.fortify.cli.common.action.runner.processor;
 import java.util.List;
 
 import com.formkiq.graalvm.annotations.Reflectable;
-import com.fortify.cli.common.action.runner.ActionRunnerContextLocal;
+import com.fortify.cli.common.action.runner.ActionRunnerContext;
+import com.fortify.cli.common.action.runner.ActionRunnerVars;
 import com.fortify.cli.common.spel.wrapper.TemplateExpression;
 
 import lombok.Data;
@@ -24,11 +25,12 @@ import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor @Data @EqualsAndHashCode(callSuper = true) @Reflectable
 public class ActionStepProcessorVarRm extends AbstractActionStepProcessorVarRm {
-    private final ActionRunnerContextLocal ctx;
+    private final ActionRunnerContext ctx;
+    private final ActionRunnerVars vars;
     private final List<TemplateExpression> list;
 
     @Override
     protected void rmVar(String name) {
-        getVars().rm(name);
+        vars.rm(name);
     }
 }

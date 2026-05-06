@@ -37,7 +37,7 @@ import com.fortify.cli.aviator.fpr.filter.FilterSetSelector;
 import com.fortify.cli.aviator.fpr.model.AuditIssue;
 import com.fortify.cli.aviator.fpr.model.FPRInfo;
 import com.fortify.cli.aviator.fpr.processor.AuditProcessor;
-import com.fortify.cli.aviator.fpr.processor.StreamingFVDLProcessor;
+import com.fortify.cli.aviator.fpr.processor.FVDLProcessor;
 import com.fortify.cli.aviator.util.FprHandle;
 import com.fortify.cli.aviator.util.ResourceUtil;
 
@@ -65,13 +65,13 @@ public class AuditFPR {
         Map<String, AuditResponse> auditResponses = new ConcurrentHashMap<>();
         AuditOutcome auditOutcome = performAviatorAudit(
                 parsedData, options.getLogger(), options.getToken(), options.getAppVersion(), options.getUrl(), options.getSscAppName(), options.getSscAppVersion(),
-                auditResponses, filterSelection, options.getFprHandle(), options.getFolderPriorityOrder()
+                auditResponses, filterSelection
         );
 
         // --- STAGE 4: FINALIZATION ---
         return finalizeFprAudit(
                 auditOutcome, auditResponses, parsedData.auditProcessor,
-                tagMappingConfig, parsedData.fprInfo
+                tagMappingConfig, parsedData.fprInfo, parsedData.fvdlProcessor
         );
     }
 
@@ -79,15 +79,14 @@ public class AuditFPR {
         try {
             // Processors now take the FprHandle directly, no more extracted path
             AuditProcessor auditProcessor = new AuditProcessor(fprHandle);
-            //FVDLProcessor fvdlProcessor = new FVDLProcessor(fprHandle);
-            StreamingFVDLProcessor streamingFVDLProcessor = new StreamingFVDLProcessor(fprHandle);
+            FVDLProcessor fvdlProcessor = new FVDLProcessor(fprHandle);
 
             Map<String, AuditIssue> auditIssueMap = auditProcessor.processAuditXML();
             FPRProcessor fprProcessor = new FPRProcessor(fprHandle, auditIssueMap, auditProcessor);
-            List<Vulnerability> vulnerabilities = fprProcessor.process(streamingFVDLProcessor);
+            List<Vulnerability> vulnerabilities = fprProcessor.process(fvdlProcessor);
             FPRInfo fprInfo = fprProcessor.getFprInfo();
 
-            return new ParsedFprData(auditIssueMap, vulnerabilities, fprInfo, auditProcessor, streamingFVDLProcessor);
+            return new ParsedFprData(auditIssueMap, vulnerabilities, fprInfo, auditProcessor, fvdlProcessor);
         } catch (Exception e) {
             LOG.error("A critical error occurred during FPR processing.", e);
             throw new AviatorTechnicalException("Failed to process FPR contents.", e);
@@ -107,28 +106,21 @@ public class AuditFPR {
     private static AuditOutcome performAviatorAudit(
             ParsedFprData parsedData, IAviatorLogger logger,
             String token, String appVersion, String url, String sscAppName, String sscAppVersion,
-            Map<String, AuditResponse> auditResponsesToFill, FilterSelection filterSelection, FprHandle fprHandle, List<String> folderPriorityOrder) {
+            Map<String, AuditResponse> auditResponsesToFill, FilterSelection filterSelection) {
 
         IssueAuditor issueAuditor = new IssueAuditor(
-                parsedData.vulnerabilities,
-                parsedData.auditProcessor,
-                parsedData.auditIssueMap,
-                parsedData.fprInfo,
-                sscAppName,
-                sscAppVersion,
-                filterSelection,
-                logger,
-                folderPriorityOrder
+                parsedData.vulnerabilities, parsedData.auditProcessor, parsedData.auditIssueMap,
+                parsedData.fprInfo, sscAppName, sscAppVersion, filterSelection, logger
         );
         return issueAuditor.performAudit(
-                auditResponsesToFill, token, appVersion, parsedData.fprInfo.getBuildId(), url, fprHandle
+                auditResponsesToFill, token, appVersion, parsedData.fprInfo.getBuildId(), url
         );
     }
 
     private static FPRAuditResult finalizeFprAudit(
             AuditOutcome auditOutcome, Map<String, AuditResponse> auditResponses,
             AuditProcessor auditProcessor, TagMappingConfig tagMappingConfig,
-            FPRInfo fprInfo) {
+            FPRInfo fprInfo, FVDLProcessor fvdlProcessor) {
 
         int totalIssuesToAudit = auditOutcome.getTotalIssuesToAudit();
         if (auditResponses.isEmpty()) {
@@ -168,7 +160,7 @@ public class AuditFPR {
 
         File updatedFile = null;
         if (issuesSuccessfullyAudited > 0) {
-            updatedFile = auditProcessor.updateAndSaveAuditAndRemediationsXml(auditResponses, tagMappingConfig, fprInfo);
+            updatedFile = auditProcessor.updateAndSaveAuditAndRemediationsXml(auditResponses, tagMappingConfig, fprInfo, fvdlProcessor);
         }
 
         LOG.info("FPR audit process completed with status: {}", status);

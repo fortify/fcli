@@ -19,7 +19,7 @@ import com.fortify.cli.aviator.fpr.Vulnerability;
 import com.fortify.cli.aviator.fpr.model.AuditIssue;
 import com.fortify.cli.aviator.fpr.model.FPRInfo;
 import com.fortify.cli.aviator.fpr.processor.AuditProcessor;
-import com.fortify.cli.aviator.fpr.processor.StreamingFVDLProcessor;
+import com.fortify.cli.aviator.fpr.processor.FVDLProcessor;
 
 /**
  * A data-holding class that represents the complete, parsed contents of an FPR file.
@@ -31,14 +31,13 @@ public final class ParsedFprData {
     public final List<Vulnerability> vulnerabilities;
     public final FPRInfo fprInfo;
     public final AuditProcessor auditProcessor;
-    //public final FVDLProcessor fvdlProcessor;
-    public final StreamingFVDLProcessor streamingFVDLProcessor;
+    public final FVDLProcessor fvdlProcessor;
 
-    public ParsedFprData(Map<String, AuditIssue> auditIssueMap, List<Vulnerability> vulnerabilities, FPRInfo fprInfo, AuditProcessor auditProcessor, StreamingFVDLProcessor streamingFvdlProcessor) {
+    public ParsedFprData(Map<String, AuditIssue> auditIssueMap, List<Vulnerability> vulnerabilities, FPRInfo fprInfo, AuditProcessor auditProcessor, FVDLProcessor fvdlProcessor) {
         this.auditIssueMap = auditIssueMap;
         this.vulnerabilities = vulnerabilities;
         this.fprInfo = fprInfo;
         this.auditProcessor = auditProcessor;
-        this.streamingFVDLProcessor = streamingFvdlProcessor;
+        this.fvdlProcessor = fvdlProcessor;
     }
 }

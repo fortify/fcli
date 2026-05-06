@@ -14,7 +14,6 @@ package com.fortify.cli.fod.attribute.helper;
 
 import java.util.ArrayList;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.json.JsonNodeHolder;
 
@@ -23,8 +22,7 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 @Data @EqualsAndHashCode(callSuper = true)
-@Reflectable @NoArgsConstructor 
-@JsonIgnoreProperties(ignoreUnknown = true) // Fix for FoD 26.2+ where the API returns additional fields that are not mapped to this class (e.g. "isMultiSelect")
+@Reflectable @NoArgsConstructor
 public class FoDAttributeDescriptor extends JsonNodeHolder {
     private Integer id;
     private String name;
@@ -36,5 +34,4 @@ public class FoDAttributeDescriptor extends JsonNodeHolder {
     private Boolean isRestricted;
     private ArrayList<FoDPickListDescriptor> picklistValues;
     private String value;
-    private String defaultValue;
 }

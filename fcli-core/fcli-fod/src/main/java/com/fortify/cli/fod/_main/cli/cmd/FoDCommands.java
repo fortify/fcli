@@ -12,16 +12,12 @@
  */
 package com.fortify.cli.fod._main.cli.cmd;
 
-import static com.fortify.cli.common.cli.util.FcliModuleCategories.PRODUCT;
-
 import com.fortify.cli.common.cli.cmd.AbstractContainerCommand;
-import com.fortify.cli.common.cli.util.FcliModuleCategory;
 import com.fortify.cli.fod._common.session.cli.cmd.FoDSessionCommands;
 import com.fortify.cli.fod.access_control.cli.cmd.FoDAccessControlCommands;
 import com.fortify.cli.fod.action.cli.cmd.FoDActionCommands;
 import com.fortify.cli.fod.app.cli.cmd.FoDAppCommands;
 import com.fortify.cli.fod.attribute.cli.cmd.FoDAttributeCommands;
-import com.fortify.cli.fod.aviator.cmd.FoDAviatorCommands;
 import com.fortify.cli.fod.dast_scan.cli.cmd.FoDDastScanCommands;
 import com.fortify.cli.fod.issue.cli.cmd.FoDIssueCommands;
 import com.fortify.cli.fod.mast_scan.cli.cmd.FoDMastScanCommands;
@@ -34,7 +30,6 @@ import com.fortify.cli.fod.sast_scan.cli.cmd.FoDSastScanCommands;
 
 import picocli.CommandLine.Command;
 
-@FcliModuleCategory(PRODUCT)
 @Command(
         name = "fod",
         resourceBundle = "com.fortify.cli.fod.i18n.FoDMessages",
@@ -54,7 +49,6 @@ import picocli.CommandLine.Command;
                 FoDAccessControlCommands.class,
                 FoDAppCommands.class,
                 FoDAttributeCommands.class,
-                FoDAviatorCommands.class,
                 FoDMicroserviceCommands.class,
                 FoDReleaseCommands.class,
                 FoDSastScanCommands.class,

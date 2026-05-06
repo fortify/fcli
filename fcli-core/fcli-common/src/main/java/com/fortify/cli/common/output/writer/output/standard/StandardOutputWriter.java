@@ -15,7 +15,6 @@ package com.fortify.cli.common.output.writer.output.standard;
 import java.io.FileWriter;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
-import java.util.function.Consumer;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.cli.util.FcliCommandSpecHelper;
@@ -34,6 +33,7 @@ import com.fortify.cli.common.output.writer.record.RecordWriterFactory;
 import com.fortify.cli.common.output.writer.record.RecordWriterStyle;
 import com.fortify.cli.common.output.writer.record.util.AppendOnCloseWriterWrapper;
 import com.fortify.cli.common.util.Break;
+import com.fortify.cli.common.util.NonClosingPrintStream;
 import com.fortify.cli.common.variable.DefaultVariablePropertyName;
 import com.fortify.cli.common.variable.EncryptVariable;
 import com.fortify.cli.common.variable.FcliVariableHelper;
@@ -51,7 +51,6 @@ public class StandardOutputWriter implements IOutputWriter {
     private final IOutputOptions outputOptions;
     private final IMessageResolver messageResolver;
     private final IRecordWriter recordCollector; // instance-level collector, may be null
-    private final Consumer<ObjectNode> metadataConsumer; // programmatic metadata callback, may be null
     private final boolean suppressOutput;
 
     public StandardOutputWriter(CommandSpec commandSpec, IOutputOptions outputOptions, StandardOutputConfig defaultOutputConfig) {
@@ -73,11 +72,9 @@ public class StandardOutputWriter implements IOutputWriter {
                 }
             };
             this.suppressOutput = rcs.isStdoutSuppressedForRecordCollection();
-            this.metadataConsumer = rcs.getMetadataConsumer();
         } else {
             this.recordCollector = null;
             this.suppressOutput = false;
-            this.metadataConsumer = null;
         }
     }
 
@@ -92,11 +89,6 @@ public class StandardOutputWriter implements IOutputWriter {
         }
         try (IRecordWriter rw = new OutputAndVariableRecordWriter()) {
             recordProducer.forEach(recordConsumer(rw));
-            var metadata = recordProducer.getResponseMetadata();
-            rw.setResponseMetadata(metadata);
-            if (metadataConsumer != null && metadata != null) {
-                metadataConsumer.accept(metadata);
-            }
         }
     }
 
@@ -156,13 +148,6 @@ public class StandardOutputWriter implements IOutputWriter {
             }
         }
 
-        @Override
-        public void setResponseMetadata(ObjectNode metadata) {
-            if (outputRecordWriter != null) {
-                outputRecordWriter.setResponseMetadata(metadata);
-            }
-        }
-
         private IRecordWriter createOutputRecordWriter() {
             return suppressOutput ? null : createUnsuppressed();
         }
@@ -184,7 +169,7 @@ public class StandardOutputWriter implements IOutputWriter {
         private Writer createWriter() {
             var outputFile = outputOptions.getOutputFile();
             return outputFile == null
-                    ? new AppendOnCloseWriterWrapper("\n\n", new OutputStreamWriter(System.out))
+                    ? new AppendOnCloseWriterWrapper("\n\n", new OutputStreamWriter(new NonClosingPrintStream(false, "System.out", System.out)))
                     : new FileWriter(outputFile);
         }
     }

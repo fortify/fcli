@@ -17,7 +17,6 @@ import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IRecordTransformer;
 import com.fortify.cli.common.rest.query.IServerSideQueryParamGeneratorSupplier;
 import com.fortify.cli.common.rest.query.IServerSideQueryParamValueGenerator;
-import com.fortify.cli.ssc._common.cli.mixin.SSCFetchRangeMixin;
 import com.fortify.cli.ssc._common.output.cli.cmd.AbstractSSCBaseRequestOutputCommand;
 import com.fortify.cli.ssc._common.rest.ssc.query.SSCQParamGenerator;
 import com.fortify.cli.ssc._common.rest.ssc.query.SSCQParamValueGenerators;
@@ -36,7 +35,6 @@ import picocli.CommandLine.Mixin;
 @Command(name = OutputHelperMixins.List.CMD_NAME)
 public class SSCAppVersionListCommand extends AbstractSSCBaseRequestOutputCommand implements IRecordTransformer, IServerSideQueryParamGeneratorSupplier {
     @Getter @Mixin private OutputHelperMixins.List outputHelper; 
-    @Mixin private SSCFetchRangeMixin fetchRangeMixin;
     @Mixin private SSCQParamMixin qParamMixin;
     @Getter private IServerSideQueryParamValueGenerator serverSideQueryParamGenerator = new SSCQParamGenerator()
                 .add("id", SSCQParamValueGenerators::plain)
@@ -49,7 +47,7 @@ public class SSCAppVersionListCommand extends AbstractSSCBaseRequestOutputComman
     
     @Override
     public HttpRequest<?> getBaseRequest(UnirestInstance unirest) {
-        return unirest.get("/api/v1/projectVersions");
+        return unirest.get("/api/v1/projectVersions?limit=100");
     }
 
     @Override

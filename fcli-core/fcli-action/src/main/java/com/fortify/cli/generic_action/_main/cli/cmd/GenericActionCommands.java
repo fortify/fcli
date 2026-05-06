@@ -12,10 +12,7 @@
  */
 package com.fortify.cli.generic_action._main.cli.cmd;
 
-import static com.fortify.cli.common.cli.util.FcliModuleCategories.UTIL;
-
 import com.fortify.cli.common.cli.cmd.AbstractContainerCommand;
-import com.fortify.cli.common.cli.util.FcliModuleCategory;
 import com.fortify.cli.generic_action.action.cli.cmd.GenericActionAsciidocCommand;
 import com.fortify.cli.generic_action.action.cli.cmd.GenericActionGetCommand;
 import com.fortify.cli.generic_action.action.cli.cmd.GenericActionHelpCommand;
@@ -27,7 +24,6 @@ import com.fortify.cli.generic_action.action.cli.cmd.GenericActionSignCommand;
 
 import picocli.CommandLine.Command;
 
-@FcliModuleCategory(UTIL)
 @Command(
         name = "action",
         resourceBundle = "com.fortify.cli.generic_action.i18n.GenericActionMessages",

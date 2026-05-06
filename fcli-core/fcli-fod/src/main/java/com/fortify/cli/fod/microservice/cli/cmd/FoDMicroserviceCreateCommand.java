@@ -14,6 +14,7 @@ package com.fortify.cli.fod.microservice.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.cli.mixin.CommonOptionMixins;
+import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.fod._common.cli.mixin.FoDDelimiterMixin;
@@ -46,12 +47,16 @@ public class FoDMicroserviceCreateCommand extends AbstractFoDJsonNodeOutputComma
 
     @Override
     public JsonNode getJsonNode(UnirestInstance unirest) {
+        FoDAppDescriptor appDescriptor = qualifiedMicroserviceNameResolver.getAppDescriptor(unirest, true);
+        FoDQualifiedMicroserviceNameDescriptor qualifiedMicroserviceNameDescriptor = qualifiedMicroserviceNameResolver.getQualifiedMicroserviceNameDescriptor();
+        // throw an exception if the application is not microservice-enabled
+        if (!appDescriptor.isHasMicroservices()) {
+            throw new FcliSimpleException("Cannot create microservice for non-microservice application "+appDescriptor.getApplicationName());
+        }
         if (skipIfExistsOption.isSkipIfExists()) {
             FoDMicroserviceDescriptor descriptor = qualifiedMicroserviceNameResolver.getMicroserviceDescriptor(unirest, false);
             if (descriptor != null) { return descriptor.asObjectNode().put("__action__", "SKIPPED_EXISTING"); }
         }
-        FoDAppDescriptor appDescriptor = qualifiedMicroserviceNameResolver.getAppDescriptor(unirest, true);
-        FoDQualifiedMicroserviceNameDescriptor qualifiedMicroserviceNameDescriptor = qualifiedMicroserviceNameResolver.getQualifiedMicroserviceNameDescriptor();
         FoDMicroserviceUpdateRequest msCreateRequest = FoDMicroserviceUpdateRequest.builder()
                 .microserviceName(qualifiedMicroserviceNameDescriptor.getMicroserviceName())
                 .attributes(FoDAttributeHelper.getAttributesNode(unirest, FoDEnums.AttributeTypes.Microservice,

@@ -14,6 +14,7 @@ package com.fortify.cli.fod.access_control.helper;
 
 import java.util.ArrayList;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -34,8 +35,6 @@ import com.fortify.cli.fod.rest.lookup.helper.FoDLookupType;
 import kong.unirest.GetRequest;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
-import lombok.SneakyThrows;
-
 
 // TODO Methods are relatively long, consider splitting if possible
 public class FoDUserHelper {
@@ -156,9 +155,19 @@ public class FoDUserHelper {
         return userDescriptor;
     }
 
-    @SneakyThrows
-    public static FoDLookupDescriptor getRoleDescriptor(UnirestInstance unirest, String roleNameOrId) {
-        return FoDLookupHelper.getDescriptor(unirest, FoDLookupType.Roles, roleNameOrId, true);
+    public static Integer getRoleId(UnirestInstance unirest, String roleNameOrId) {
+        int roleId = 0;
+        try {
+            roleId = Integer.parseInt(roleNameOrId);
+        } catch (NumberFormatException nfe) {
+            try {
+                FoDLookupDescriptor lookupDescriptor = FoDLookupHelper.getDescriptor(unirest, FoDLookupType.Roles, roleNameOrId, true);
+                roleId = Integer.valueOf(lookupDescriptor.getValue());
+            } catch (JsonProcessingException e) {
+                throw new FcliSimpleException("Unable to find role with name: " + roleNameOrId);
+            }
+        }
+        return roleId;
     }
 
     public static JsonNode getUsersNode(UnirestInstance unirest, ArrayList<String> users) {

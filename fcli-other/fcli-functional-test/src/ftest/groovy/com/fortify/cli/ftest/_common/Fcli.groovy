@@ -21,8 +21,7 @@ public class Fcli {
         "fcli.env.FCLI_DEFAULT_STYLE", "no-fast-output" // Disable fast output style for tests
     )
     // Pre-built list of -D arguments as plain java.lang.String instances (avoid GString for static type checking)
-    // Package-accessible for RPCServerHelper which builds subprocess commands independently
-    static final List<String> FCLI_SYSTEM_PROPERTY_ARGS = FCLI_SYSTEM_PROPERTIES
+    private static final List<String> FCLI_SYSTEM_PROPERTY_ARGS = FCLI_SYSTEM_PROPERTIES
         .collect { k,v -> ("-D"+k+"="+v) as String } as List<String>
     
     static void initialize(Path fortifyDataDir) {
@@ -167,42 +166,25 @@ public class Fcli {
         }
     }
     
-    /**
-     * Returns true if fcli is run in reflective (build) mode, false for external (jar/native) mode.
-     */
-    static boolean isReflective() {
-        String fcli = Input.FcliCommand.get()
-        return !fcli || fcli == "build"
-    }
-    
-    /**
-     * Builds the full external command for invoking fcli with the given server args.
-     * The returned list starts with the executable, followed by system property args,
-     * any jar-specific args, and finally the provided server args.
-     * Only valid when not in reflective mode.
-     */
-    static List<String> buildExternalCommand(List<String> serverArgs) {
+    private static IRunner createRunner() {
         String fcli = Input.FcliCommand.get()
         String java = Input.JavaCommand.get() ?: "java"
-        def cmd = [] as List<String>
-        if ( fcli.endsWith(".jar") ) {
-            cmd.add(java)
-            cmd.addAll(FCLI_SYSTEM_PROPERTY_ARGS)
-            cmd.add("-jar")
-            cmd.add(fcli)
-        } else {
-            cmd.add(fcli)
-            cmd.addAll(FCLI_SYSTEM_PROPERTY_ARGS)
-        }
-        cmd.addAll(serverArgs)
-        return cmd
-    }
-    
-    private static IRunner createRunner() {
-        if ( isReflective() ) {
+        if ( !fcli || fcli=="build" ) {
             return new ReflectiveRunner()
         } else {
-            return new ExternalRunner(buildExternalCommand([]))
+            def cmd = [] as List<String>
+            if ( fcli.endsWith(".jar") ) {
+                // java -Dprop=val ... -jar file.jar
+                cmd.add(java)
+                cmd.addAll(FCLI_SYSTEM_PROPERTY_ARGS)
+                cmd.add("-jar")
+                cmd.add(fcli)
+            } else {
+                // native fcli -Dprop=val ... (system properties must come right after executable)
+                cmd.add(fcli)
+                cmd.addAll(FCLI_SYSTEM_PROPERTY_ARGS)
+            }
+            return new ExternalRunner(cmd)
         }
     }
     

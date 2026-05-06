@@ -100,11 +100,6 @@ public final class RecordWriterStyle {
         return getOrDefault(RecordWriterStyleElementGroup.FAST_OUTPUT)==RecordWriterStyleElement.fast_output;
     }
     
-    /** Indicates whether output should be wrapped in an envelope containing response metadata. Defaults to no-envelope. */
-    public final boolean isEnvelope() {
-        return getOrDefault(RecordWriterStyleElementGroup.ENVELOPE)==RecordWriterStyleElement.envelope;
-    }
-    
     private final RecordWriterStyleElement getOrDefault(RecordWriterStyleElementGroup group) {
         return styleElementsByGroup.getOrDefault(group, group.defaultStyle());
     }
@@ -118,8 +113,7 @@ public final class RecordWriterStyle {
         border(RecordWriterStyleElementGroup.BORDER), no_border(RecordWriterStyleElementGroup.BORDER),
         md_border(RecordWriterStyleElementGroup.BORDER),
         wrap(RecordWriterStyleElementGroup.WRAP), no_wrap(RecordWriterStyleElementGroup.WRAP),
-        fast_output(RecordWriterStyleElementGroup.FAST_OUTPUT), no_fast_output(RecordWriterStyleElementGroup.FAST_OUTPUT),
-        envelope(RecordWriterStyleElementGroup.ENVELOPE), no_envelope(RecordWriterStyleElementGroup.ENVELOPE)
+        fast_output(RecordWriterStyleElementGroup.FAST_OUTPUT), no_fast_output(RecordWriterStyleElementGroup.FAST_OUTPUT)
         ;
         
         @Getter private final RecordWriterStyleElementGroup group;
@@ -141,8 +135,7 @@ public final class RecordWriterStyle {
         SINGULAR("array"),
         BORDER("no-border"),
         WRAP("wrap"),
-        FAST_OUTPUT("fast-output"),
-        ENVELOPE("no-envelope");
+        FAST_OUTPUT("fast-output");
         
         private final String defaultStyleElementName;
         

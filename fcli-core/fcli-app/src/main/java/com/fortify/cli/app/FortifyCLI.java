@@ -13,6 +13,7 @@
 package com.fortify.cli.app;
 
 import com.fortify.cli.app.runner.DefaultFortifyCLIRunner;
+import com.fortify.cli.common.output.transform.mask.StdIoMaskHelper;
 import com.fortify.cli.common.util.ConsoleHelper;
 
 import picocli.CommandLine.Help.Ansi;
@@ -36,11 +37,12 @@ public class FortifyCLI {
     private static final int execute(String[] args) {
         try {
             ConsoleHelper.installJAnsiConsole();
-            // ANSI detection must happen before StdioHelper.install(), as masking
-            // may interfere with ANSI capability detection
+            // Need to do ANSI detection before installing StdIoMaskHelper, as the latter may interfere with ANSI detection
             DefaultFortifyCLIRunner.ANSI = Ansi.AUTO.enabled() ? Ansi.ON : Ansi.AUTO;
+            StdIoMaskHelper.INSTANCE.install();
             return DefaultFortifyCLIRunner.run(args);
         } finally {
+            StdIoMaskHelper.INSTANCE.uninstall();
             ConsoleHelper.uninstallJAnsiConsole();
         }
     }

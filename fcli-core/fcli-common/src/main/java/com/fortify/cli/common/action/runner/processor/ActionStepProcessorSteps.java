@@ -26,7 +26,8 @@ import org.apache.commons.lang3.StringUtils;
 
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.action.model.ActionStep;
-import com.fortify.cli.common.action.runner.ActionRunnerContextLocal;
+import com.fortify.cli.common.action.runner.ActionRunnerContext;
+import com.fortify.cli.common.action.runner.ActionRunnerVars;
 import com.fortify.cli.common.exception.FcliBugException;
 
 import lombok.Data;
@@ -35,7 +36,8 @@ import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor @Data @EqualsAndHashCode(callSuper = true) @Reflectable
 public class ActionStepProcessorSteps extends AbstractActionStepProcessorListEntries<ActionStep> {
-    private final ActionRunnerContextLocal ctx;
+    private final ActionRunnerContext ctx;
+    private final ActionRunnerVars vars;
     private final List<ActionStep> list;
 
     // Note that if-handling and logging is handled by AbstractActionStepProcessorListEntries
@@ -47,7 +49,7 @@ public class ActionStepProcessorSteps extends AbstractActionStepProcessorListEnt
         IActionStepProcessor processor = null;
         try {
             processor = ((IActionStepProcessor)ActionStepProcessorFactoryHelper.get(stepValue.getKey())
-                    .invoke(ctx, stepValue.getValue()));
+                    .invoke(ctx, vars, stepValue.getValue()));
         } catch (Throwable e) {
             throw new FcliBugException("Unable to invoke ActionStepProcessor constructor", e);
         }
@@ -82,12 +84,12 @@ public class ActionStepProcessorSteps extends AbstractActionStepProcessorListEnt
             while ( currentType!=null ) {
                 try {
                     return MethodHandles.lookup().findConstructor(processorClazz,
-                        MethodType.methodType(Void.TYPE, ActionRunnerContextLocal.class, currentType));
+                        MethodType.methodType(Void.TYPE, ActionRunnerContext.class, ActionRunnerVars.class, currentType));
                 } catch (NoSuchMethodException e) {
                     currentType = currentType.getSuperclass();
                 }
             }
-            throw new FcliBugException(String.format("Step processor %s doesn't provide required constructor(ActionRunnerContextLocal, %s)", processorClazz.getSimpleName(), valueType.getSimpleName()));
+            throw new FcliBugException(String.format("Step processor %s doesn't provide required constructor(ActionRunnercontext, ActionRunnerVars, %s)", processorClazz.getSimpleName(), valueType.getSimpleName()));
         }
     
         @SuppressWarnings("unchecked")

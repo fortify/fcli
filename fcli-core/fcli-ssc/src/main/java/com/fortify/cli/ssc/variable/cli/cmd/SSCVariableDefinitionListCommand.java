@@ -14,7 +14,6 @@ package com.fortify.cli.ssc.variable.cli.cmd;
 
 import com.fortify.cli.common.cli.util.CommandGroup;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
-import com.fortify.cli.ssc._common.cli.mixin.SSCFetchRangeMixin;
 import com.fortify.cli.ssc._common.output.cli.cmd.AbstractSSCBaseRequestOutputCommand;
 import com.fortify.cli.ssc._common.rest.ssc.SSCUrls;
 
@@ -27,7 +26,6 @@ import picocli.CommandLine.Mixin;
 @Command(name = OutputHelperMixins.ListDefinitions.CMD_NAME) @CommandGroup("definition")
 public class SSCVariableDefinitionListCommand extends AbstractSSCBaseRequestOutputCommand {
     @Getter @Mixin private OutputHelperMixins.ListDefinitions outputHelper; 
-    @Mixin private SSCFetchRangeMixin fetchRangeMixin;
     
     @Override
     public HttpRequest<?> getBaseRequest(UnirestInstance unirest) {

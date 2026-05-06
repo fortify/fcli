@@ -14,7 +14,8 @@ package com.fortify.cli.common.action.runner.processor;
 
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.action.model.MessageWithCause;
-import com.fortify.cli.common.action.runner.ActionRunnerContextLocal;
+import com.fortify.cli.common.action.runner.ActionRunnerContext;
+import com.fortify.cli.common.action.runner.ActionRunnerVars;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -22,11 +23,12 @@ import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor @Data @EqualsAndHashCode(callSuper = true) @Reflectable
 public class ActionStepProcessorLogDebug extends AbstractActionStepProcessor {
-    private final ActionRunnerContextLocal ctx;
+    private final ActionRunnerContext ctx;
+    private final ActionRunnerVars vars;
     private final MessageWithCause msgWithCause;
 
     public final void process() {
-        var evaluated = evaluateMessageWithCause(msgWithCause, getVars());
+        var evaluated = evaluateMessageWithCause(msgWithCause, vars);
         
         if (evaluated.cause() != null) {
             LOG.debug(evaluated.message(), evaluated.cause());

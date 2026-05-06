@@ -15,7 +15,6 @@ package com.fortify.cli.common.ci.bitbucket;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.json.JsonHelper;
-import com.fortify.cli.common.rest.unirest.HttpHeader;
 
 import kong.unirest.UnirestInstance;
 import lombok.RequiredArgsConstructor;
@@ -48,8 +47,7 @@ public class BitbucketRepository {
             .routeParam("repo_slug", repoSlug)
             .routeParam("commit", commitSha)
             .routeParam("report_id", reportId)
-            // Use headerReplace to replace rather than add the Content-Type header (avoid duplicates with defaults)
-            .headerReplace(HttpHeader.CONTENT_TYPE, "application/json")
+            .header("Content-Type", "application/json")
             .body(reportContent)
             .asObject(ObjectNode.class)
             .getBody();
@@ -74,8 +72,7 @@ public class BitbucketRepository {
             .routeParam("repo_slug", repoSlug)
             .routeParam("commit", commitSha)
             .routeParam("report_id", reportId)
-            // Use headerReplace to replace rather than add the Content-Type header (avoid duplicates with defaults)
-            .headerReplace(HttpHeader.CONTENT_TYPE, "application/json")
+            .header("Content-Type", "application/json")
             .body(body)
             .asObject(ObjectNode.class)
             .getBody();
