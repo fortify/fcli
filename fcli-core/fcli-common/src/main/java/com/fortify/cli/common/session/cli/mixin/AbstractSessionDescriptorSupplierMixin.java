@@ -12,20 +12,28 @@
  */
 package com.fortify.cli.common.session.cli.mixin;
 
+import com.fortify.cli.common.cli.util.FcliExecutionContextHolder;
 import com.fortify.cli.common.session.helper.ISessionDescriptor;
 import com.fortify.cli.common.session.helper.ISessionDescriptorSupplier;
 
 public abstract class AbstractSessionDescriptorSupplierMixin<D extends ISessionDescriptor> implements ISessionNameSupplier, ISessionDescriptorSupplier<D> {
     public final D getSessionDescriptor() {
-        return getSessionDescriptor(getSessionName());
+        var transientSessionDescriptor = getTransientSessionDescriptor();
+        return transientSessionDescriptor != null ? transientSessionDescriptor : getSessionDescriptor(getSessionName());
     }
 
     public final String getSessionName() {
         var sessionNameSupplier = getSessionNameSupplier();
         return sessionNameSupplier==null?"default":sessionNameSupplier.getSessionName();
     }
+
+    @SuppressWarnings("unchecked")
+    private D getTransientSessionDescriptor() {
+        return (D)FcliExecutionContextHolder.current().getTransientSessionDescriptor(getSessionDescriptorType());
+    }
     
     public abstract ISessionNameSupplier getSessionNameSupplier();
+    protected abstract String getSessionDescriptorType();
 
     protected abstract D getSessionDescriptor(String sessionName);
 }

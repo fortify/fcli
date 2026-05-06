@@ -43,6 +43,11 @@ public final class FoDUnirestInstanceSupplierMixin extends AbstractSessionDescri
     protected final FoDSessionDescriptor getSessionDescriptor(String sessionName) {
         return FoDSessionHelper.instance().get(sessionName, true);
     }
+
+    @Override
+    protected String getSessionDescriptorType() {
+        return FoDSessionHelper.instance().getType();
+    }
     
     @Override
     public UnirestInstance getUnirestInstance() {
