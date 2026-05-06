@@ -23,7 +23,9 @@ import org.slf4j.LoggerFactory;
 
 import com.fortify.cli.aviator.fpr.Vulnerability;
 import com.fortify.cli.aviator.fpr.jaxb.Description;
+import com.fortify.cli.aviator.fpr.model.FVDLMetadata;
 import com.fortify.cli.aviator.fpr.model.ReplacementData;
+import com.fortify.cli.aviator.fpr.model.StreamedDescription;
 
 /**
  * Processor for FVDL Descriptions section. Caches descriptions by classID and processes
@@ -69,6 +71,39 @@ public class DescriptionProcessor {
 
         String abstractText = desc.getAbstract() != null ? desc.getAbstract() : "";
         String explanationText = desc.getExplanation() != null ? desc.getExplanation() : "";
+
+        // Use the new parser to process the text
+        String shortDesc = FvdlParser.parseAndRender(abstractText, vuln, replacementData);
+        String explanation = FvdlParser.parseAndRender(explanationText, vuln, replacementData);
+
+        return new String[]{shortDesc, explanation};
+    }
+
+    /**
+     * Processes description for a Streaming vulnerability, applying replacements and conditionals.
+     *
+     * @param vuln            Vulnerability object
+     * @param classId         Class ID for description lookup
+     * @param replacementData Replacement data from AnalysisInfo
+     * @return Array of [shortDescription, explanation]
+     */
+
+    public String[] processForVuln(Vulnerability vuln, String classId, ReplacementData replacementData, FVDLMetadata streamingFvdlData) {
+        //Description desc = descriptionCache.get(classId);
+        StreamedDescription desc = streamingFvdlData.getDescriptionCache().get(classId);
+        if (desc == null) {
+            logger.debug("No description found for classID: {}", classId);
+            return new String[]{"", ""};
+        }
+
+        String abstractText = desc.getAbstract() != null ? desc.getAbstract() : "";
+        String explanationText = desc.getExplanation() != null ? desc.getExplanation() : "";
+
+
+            /*logger.info("For classId {} ", classId);
+            logger.info("Streaming abstractText {} ", abstractText);
+            logger.info("Streaming explanationText {} ", explanationText);*/
+
 
         // Use the new parser to process the text
         String shortDesc = FvdlParser.parseAndRender(abstractText, vuln, replacementData);

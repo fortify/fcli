@@ -16,8 +16,11 @@ import java.net.MalformedURLException;
 import java.net.URL;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.exception.FcliSimpleException;
+import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.product.IProductHelper;
+import com.fortify.cli.common.output.product.IResponseMetadataCollector;
 import com.fortify.cli.common.output.transform.IInputTransformer;
 import com.fortify.cli.common.rest.paging.INextPageUrlProducer;
 import com.fortify.cli.common.rest.paging.INextPageUrlProducerSupplier;
@@ -26,7 +29,7 @@ import lombok.SneakyThrows;
 
 // IMPORTANT: When updating/adding any methods in this class, FoDRestCallCommand
 // also likely needs to be updated
-public class FoDProductHelper implements IProductHelper, IInputTransformer, INextPageUrlProducerSupplier 
+public class FoDProductHelper implements IProductHelper, IInputTransformer, INextPageUrlProducerSupplier, IResponseMetadataCollector 
 {
     public static final FoDProductHelper INSTANCE = new FoDProductHelper(); 
     private FoDProductHelper() {}
@@ -38,6 +41,22 @@ public class FoDProductHelper implements IProductHelper, IInputTransformer, INex
     @Override
     public JsonNode transformInput(JsonNode input) {
         return FoDInputTransformer.getItems(input);
+    }
+    
+    @Override
+    public ObjectNode collectResponseMetadata(JsonNode responseBody) {
+        if ( responseBody==null || !responseBody.has("items") ) { return null; }
+        var metadata = JsonHelper.getObjectMapper().createObjectNode();
+        if ( responseBody.has("totalCount") ) {
+            metadata.set("totalCount", responseBody.get("totalCount"));
+        }
+        if ( responseBody.has("offset") ) {
+            metadata.set("offset", responseBody.get("offset"));
+        }
+        if ( responseBody.has("limit") ) {
+            metadata.set("limit", responseBody.get("limit"));
+        }
+        return metadata.isEmpty() ? null : metadata;
     }
     
     public String getApiUrl(String url) {

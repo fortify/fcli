@@ -28,7 +28,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fortify.cli.aviator.audit.model.Fragment;
+import com.fortify.cli.aviator.util.FileTypeLanguageMapperUtil;
+import com.fortify.cli.aviator.util.FileUtil;
 import com.fortify.cli.aviator.util.FprHandle;
+import com.fortify.cli.aviator.util.LanguageCommentMapperUtil;
 
 public class FileUtils {
     private static final Logger logger = LoggerFactory.getLogger(FileUtils.class);
@@ -137,5 +140,28 @@ public class FileUtils {
             logger.warn("Could not read source file content for path: {}", relativePath, e);
             return Optional.empty();
         }
+    }
+
+    public String appendLineNumbers(String content, String fileName, int startLineNo) {
+        String fileExtension = FileUtil.getFileExtension(fileName);
+        String language = FileTypeLanguageMapperUtil.getProgrammingLanguage(fileExtension);
+        String commentSymbol = LanguageCommentMapperUtil.getProgrammingLanguageComment(language);
+        if(commentSymbol.equals("Unknown")) {
+            logger.warn("No Comment symbol is there so line numbers not appended");
+            return content;
+        }
+        StringBuilder result = new StringBuilder();
+        String[] lines = content.split("\\R", -1); // keep trailing empty lines
+        int endLineNo = startLineNo + lines.length;
+        for (int i = startLineNo; i < endLineNo; i++) {
+            result.append(lines[i-startLineNo]).append(" ").append(commentSymbol).append(" L").append(i + 1);
+            if(commentSymbol.equals("<!--"))
+                result.append(" -->");
+            else if(commentSymbol.equals("<%--"))
+                result.append(" --%>");
+            if(i!=endLineNo-1)
+                result.append(System.lineSeparator());
+        }
+        return result.toString();
     }
 }

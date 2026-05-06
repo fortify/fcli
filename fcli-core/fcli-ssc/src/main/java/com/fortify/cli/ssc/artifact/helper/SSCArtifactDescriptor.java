@@ -23,4 +23,5 @@ import lombok.NoArgsConstructor;
 @Data @EqualsAndHashCode(callSuper=true)
 public class SSCArtifactDescriptor extends JsonNodeHolder {
     private String id;
+    private String uploadDate;
 }

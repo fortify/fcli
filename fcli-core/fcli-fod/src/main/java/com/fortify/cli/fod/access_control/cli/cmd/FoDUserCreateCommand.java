@@ -15,17 +15,18 @@ package com.fortify.cli.fod.access_control.cli.cmd;
 import java.util.ArrayList;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.cli.util.CommandGroup;
 import com.fortify.cli.common.cli.util.EnvSuffix;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
-import com.fortify.cli.common.output.transform.IRecordTransformer;
 import com.fortify.cli.common.variable.DefaultVariablePropertyName;
 import com.fortify.cli.fod._common.output.cli.cmd.AbstractFoDJsonNodeOutputCommand;
 import com.fortify.cli.fod.access_control.helper.FoDUserCreateRequest;
 import com.fortify.cli.fod.access_control.helper.FoDUserGroupHelper;
 import com.fortify.cli.fod.access_control.helper.FoDUserHelper;
 import com.fortify.cli.fod.app.helper.FoDAppHelper;
+import com.fortify.cli.fod.rest.lookup.helper.FoDLookupDescriptor;
 
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
@@ -36,7 +37,7 @@ import picocli.CommandLine.Parameters;
 
 @Command(name = "create-user") @CommandGroup("user")
 @DefaultVariablePropertyName("userId")
-public class FoDUserCreateCommand extends AbstractFoDJsonNodeOutputCommand implements IRecordTransformer, IActionCommandResultSupplier {
+public class FoDUserCreateCommand extends AbstractFoDJsonNodeOutputCommand implements IActionCommandResultSupplier {
     @Getter @Mixin private OutputHelperMixins.TableNoQuery outputHelper;
 
     @EnvSuffix("NAME") @Parameters(index = "0", descriptionKey = "user-name")
@@ -60,13 +61,14 @@ public class FoDUserCreateCommand extends AbstractFoDJsonNodeOutputCommand imple
     public JsonNode getJsonNode(UnirestInstance unirest) {
         validate();
 
+        FoDLookupDescriptor roleDescriptor = FoDUserHelper.getRoleDescriptor(unirest, roleNameOrId);
         FoDUserCreateRequest userCreateRequest = FoDUserCreateRequest.builder()
                 .userName(userName)
                 .email(email)
                 .firstName(firstName)
                 .lastName(lastName)
                 .phoneNumber(phoneNumber)
-                .roleId(FoDUserHelper.getRoleId(unirest, roleNameOrId))
+                .roleId(Integer.parseInt(roleDescriptor.getValue()))
                 .build();
 
         if (userGroups != null && userGroups.size() > 0) {
@@ -76,16 +78,13 @@ public class FoDUserCreateCommand extends AbstractFoDJsonNodeOutputCommand imple
             userCreateRequest.setApplicationIds(FoDAppHelper.getApplicationsNode(unirest, applications));
         }
 
-        return FoDUserHelper.createUser(unirest, userCreateRequest).asJsonNode();
+        ObjectNode objectNode = FoDUserHelper.createUser(unirest, userCreateRequest).asObjectNode();
+        objectNode.put("roleName", roleDescriptor.getText());
+        return objectNode;
     }
 
     private void validate() {
 
-    }
-
-    @Override
-    public JsonNode transformRecord(JsonNode record) {
-        return FoDUserHelper.renameFields(record);
     }
 
     @Override

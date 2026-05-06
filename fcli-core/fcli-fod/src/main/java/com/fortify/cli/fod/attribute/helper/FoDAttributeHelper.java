@@ -14,6 +14,7 @@ package com.fortify.cli.fod.attribute.helper;
 
 import java.util.*;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,6 +25,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonHelper;
+import com.fortify.cli.common.rest.unirest.HttpHeader;
 import com.fortify.cli.fod._common.rest.FoDUrls;
 import com.fortify.cli.fod._common.rest.helper.FoDDataHelper;
 import com.fortify.cli.fod._common.util.FoDEnums;
@@ -67,23 +69,9 @@ public class FoDAttributeHelper {
             FoDAttributeDescriptor currentLookup = lookupIterator.next();
             // currentLookup.getAttributeTypeId() == 1 if "Application", 4 if "Release" - filter above does not support querying on this yet!
             if (currentLookup.getIsRequired() && (attrType.getValue() == 0 || currentLookup.getAttributeTypeId() == attrType.getValue())) {
-                switch (currentLookup.getAttributeDataType()) {
-                    case "Text":
-                        reqAttrs.put(currentLookup.getName(), "autofilled by fcli");
-                        break;
-                    case "Boolean":
-                        reqAttrs.put(currentLookup.getName(), String.valueOf(false));
-                        break;
-                    case "User":
-                        // use the first user in the list
-                        reqAttrs.put(currentLookup.getName(), currentLookup.getPicklistValues().get(0).getName());
-                        break;
-                    case "Picklist":
-                        // use the first value in the picklist
-                        reqAttrs.put(currentLookup.getName(), currentLookup.getPicklistValues().get(0).getName());
-                        break;
-                    default:
-                        break;
+                var defaultValue = getDefaultValue(currentLookup);
+                if (defaultValue != null) {
+                    reqAttrs.put(currentLookup.getName(), defaultValue);
                 }
             }
         }
@@ -143,18 +131,16 @@ public class FoDAttributeHelper {
         return attrArray;
     }
 
-    public static JsonNode getAttributesNode(UnirestInstance unirest, FoDEnums.AttributeTypes attrType, 
-        Map<String, String> attributesMap, boolean autoReqdAttributes) {
-        Map<String, String> combinedAttributesMap = new LinkedHashMap<>();
-        if (autoReqdAttributes) {
-            // find any required attributes
-            combinedAttributesMap.putAll(getRequiredAttributesDefaultValues(unirest, attrType));
-        }
-        if ( attributesMap!=null && !attributesMap.isEmpty() ) {
-            combinedAttributesMap.putAll(attributesMap);
-        }
+    /**
+     * For create commands: amends user-provided attribute values with server-side defaults
+     * for any required attributes not already specified by the user.
+     * Resolves attribute names to IDs and filters by attrType.
+     */
+    public static JsonNode getAttributesNode(UnirestInstance unirest, FoDEnums.AttributeTypes attrType,
+            Map<String, String> attributesMap, boolean autoReqdAttributes) {
+        var effectiveMap = buildEffectiveAttributeUpdates(unirest, attrType, null, attributesMap, autoReqdAttributes);
         ArrayNode attrArray = JsonHelper.getObjectMapper().createArrayNode();
-        for (Map.Entry<String, String> attr : combinedAttributesMap.entrySet()) {
+        for (Map.Entry<String, String> attr : effectiveMap.entrySet()) {
             ObjectNode attrObj = getObjectMapper().createObjectNode();
             FoDAttributeDescriptor attributeDescriptor = FoDAttributeHelper.getAttributeDescriptor(unirest, attr.getKey(), true);
             // filter out any attributes that aren't valid for the entity we are working on, e.g. Application or Release
@@ -164,15 +150,60 @@ public class FoDAttributeHelper {
                 attrArray.add(attrObj);
             } else {
                 LOG.debug("Skipping attribute '"+attributeDescriptor.getName()+"' as it is not a "+attrType.toString()+" attribute");
-
-            }   
+            }
         }
         return attrArray;
     }
 
+    /**
+     * For update commands: merges user-supplied attribute values with the entity's existing
+     * attribute values, then amends with server-side defaults for any required attributes
+     * not already covered by either the current values or user-supplied updates.
+     */
+    public static JsonNode getAttributesNodeForUpdate(UnirestInstance unirest, FoDEnums.AttributeTypes attrType,
+            ArrayList<FoDAttributeDescriptor> currentAttributes, Map<String, String> userSuppliedUpdates,
+            boolean autoReqdAttributes) {
+        var effectiveUpdates = buildEffectiveAttributeUpdates(
+                unirest, attrType, currentAttributes, userSuppliedUpdates, autoReqdAttributes);
+        return effectiveUpdates.isEmpty()
+                ? getAttributesNode(attrType, currentAttributes)
+                : mergeAttributesNode(unirest, attrType, currentAttributes, effectiveUpdates);
+    }
+
+    /**
+     * Computes the effective attribute updates to apply. For required attributes not already
+     * covered by current entity values or user-supplied updates, server-side defaults are added.
+     * User-supplied updates always take highest priority.
+     * Pass {@code currentAttributes=null} for create scenarios.
+     */
+    private static Map<String, String> buildEffectiveAttributeUpdates(UnirestInstance unirest,
+            FoDEnums.AttributeTypes attrType, ArrayList<FoDAttributeDescriptor> currentAttributes,
+            Map<String, String> userSuppliedUpdates, boolean autoReqdAttributes) {
+        var effective = new LinkedHashMap<String, String>();
+        if (autoReqdAttributes) {
+            Set<String> covered = new HashSet<>();
+            if (currentAttributes != null) {
+                currentAttributes.stream()
+                        .filter(a -> StringUtils.isNotBlank(a.getValue()))
+                        .map(FoDAttributeDescriptor::getName)
+                        .forEach(covered::add);
+            }
+            if (userSuppliedUpdates != null) {
+                covered.addAll(userSuppliedUpdates.keySet());
+            }
+            getRequiredAttributesDefaultValues(unirest, attrType)
+                    .forEach((k, v) -> { if (!covered.contains(k)) effective.put(k, v); });
+        }
+        if (userSuppliedUpdates != null) {
+            effective.putAll(userSuppliedUpdates);
+        }
+        return effective;
+    }
+
     public static FoDAttributeDescriptor createAttribute(UnirestInstance unirest, FoDAttributeCreateRequest request) {
         var response =  unirest.post(FoDUrls.ATTRIBUTES)
-                .header("Content-Type", "application/json")
+                // Use headerReplace to replace rather than add the Content-Type header (avoid duplicates with defaults)
+                .headerReplace(HttpHeader.CONTENT_TYPE, "application/json")
                 .body(request)
                 .asObject(JsonNode.class)
                 .getBody();
@@ -202,4 +233,16 @@ public class FoDAttributeHelper {
 
     }
 
+    private static String getDefaultValue(FoDAttributeDescriptor attribute) {
+        if (StringUtils.isNotBlank(attribute.getDefaultValue())) {
+            return attribute.getDefaultValue();
+        }
+        return switch (attribute.getAttributeDataType()) {
+            case "Text" -> "autofilled by fcli";
+            case "Boolean" -> String.valueOf(false);
+            case "User", "Picklist" -> attribute.getPicklistValues() != null && !attribute.getPicklistValues().isEmpty()
+                ? attribute.getPicklistValues().get(0).getName() : null;
+            default -> null;
+        };
+    }
 }

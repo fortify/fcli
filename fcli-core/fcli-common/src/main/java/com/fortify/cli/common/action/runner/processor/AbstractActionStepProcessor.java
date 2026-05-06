@@ -33,7 +33,7 @@ import com.fortify.cli.common.action.model.ActionStep;
 import com.fortify.cli.common.action.model.IActionStepElement;
 import com.fortify.cli.common.action.model.IMapKeyAware;
 import com.fortify.cli.common.action.model.MessageWithCause;
-import com.fortify.cli.common.action.runner.ActionRunnerContext;
+import com.fortify.cli.common.action.runner.ActionRunnerContextLocal;
 import com.fortify.cli.common.action.runner.ActionRunnerVars;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.rest.unirest.UnexpectedHttpResponseException;
@@ -68,7 +68,7 @@ public abstract class AbstractActionStepProcessor implements IActionStepProcesso
     }
     
     protected final void processSteps(List<ActionStep> steps) {
-        new ActionStepProcessorSteps(getCtx(), getVars(), steps).process();
+        new ActionStepProcessorSteps(getCtx(), steps).process();
     }
     
     protected boolean processForEachStepNode(AbstractActionStepElementForEachRecord forEachRecord, JsonNode node) {
@@ -281,6 +281,6 @@ public abstract class AbstractActionStepProcessor implements IActionStepProcesso
         return causeValue instanceof Throwable ? (Throwable) causeValue : null;
     }
     
-    public abstract ActionRunnerContext getCtx();
-    public abstract ActionRunnerVars getVars();
+    public abstract ActionRunnerContextLocal getCtx();
+    public final ActionRunnerVars getVars() { return getCtx().getVars(); }
 }

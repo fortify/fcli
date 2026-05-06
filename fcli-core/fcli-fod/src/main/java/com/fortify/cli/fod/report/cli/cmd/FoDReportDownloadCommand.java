@@ -18,6 +18,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.cli.mixin.CommonOptionMixins;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
+import com.fortify.cli.common.rest.unirest.HttpHeader;
 import com.fortify.cli.fod._common.output.cli.cmd.AbstractFoDJsonNodeOutputCommand;
 import com.fortify.cli.fod._common.rest.FoDUrls;
 import com.fortify.cli.fod.report.cli.mixin.FoDReportResolverMixin;
@@ -44,7 +45,8 @@ public class FoDReportDownloadCommand extends AbstractFoDJsonNodeOutputCommand i
         var file = outputFileMixin.getFile().getAbsolutePath();
         GetRequest request = unirest.get(FoDUrls.REPORT + "/download")
                 .routeParam("reportId", reportResolver.getReportId())
-                .accept("application/octet-stream");
+                // Use headerReplace to replace rather than add the Accept header (avoid duplicates with defaults)
+                .headerReplace(HttpHeader.ACCEPT, "application/octet-stream");
         int status = 202;
         while ( status==202 ) {
             status = request

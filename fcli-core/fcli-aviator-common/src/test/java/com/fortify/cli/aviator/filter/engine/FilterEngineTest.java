@@ -22,6 +22,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
+import com.fortify.cli.aviator.audit.model.StackTraceElement;
 import com.fortify.cli.aviator.fpr.Vulnerability;
 import com.fortify.cli.aviator.fpr.filter.Filter;
 import com.fortify.cli.aviator.fpr.filter.FilterSet;
@@ -128,6 +129,121 @@ class FilterEngineTest {
             assertEquals(1, result.size());
         }
 
+        @Test
+        void testAnalysisTypeFilterMatchesOnlyMatchingVulnerability() {
+            Vulnerability scaVuln = new Vulnerability();
+            scaVuln.setInstanceID("SCA_VULN");
+            scaVuln.setAnalysisType("SCA");
+
+            Vulnerability webInspectVuln = new Vulnerability();
+            webInspectVuln.setInstanceID("WEBINSPECT_VULN");
+            webInspectVuln.setAnalysisType("WEBINSPECT");
+
+            List<Vulnerability> result = VulnerabilityFilterer.filter(
+                List.of(scaVuln, webInspectVuln),
+                "[analysis type]:SCA"
+            );
+
+            assertEquals(1, result.size());
+            assertEquals("SCA_VULN", result.get(0).getInstanceID());
+        }
+
+        @Test
+        void testStreamingBackedAttributesAreFilterable() {
+            Vulnerability matchingVuln = new Vulnerability();
+            matchingVuln.setInstanceID("MATCHING_VULN");
+            matchingVuln.setClassID("RULE-123");
+            matchingVuln.setKingdom("Dataflow");
+            matchingVuln.setProbability(2.5);
+            matchingVuln.setRequestBody("username=admin");
+            matchingVuln.setRequestMethod("POST");
+            matchingVuln.setAttackPayload("drop table users");
+            matchingVuln.setResponse("HTTP/1.1 500 Internal Server Error");
+            matchingVuln.setSource(new StackTraceElement("src/main/java/com/acme/SqlExample.java", 41, "dangerousCall()", "Call", null, "", ""));
+
+            Vulnerability nonMatchingVuln = new Vulnerability();
+            nonMatchingVuln.setInstanceID("NON_MATCHING_VULN");
+            nonMatchingVuln.setClassID("RULE-999");
+            nonMatchingVuln.setKingdom("Control Flow");
+            nonMatchingVuln.setProbability(0.5);
+            nonMatchingVuln.setRequestBody("username=guest");
+            nonMatchingVuln.setRequestMethod("GET");
+            nonMatchingVuln.setAttackPayload("benign payload");
+            nonMatchingVuln.setResponse("HTTP/1.1 200 OK");
+            nonMatchingVuln.setSource(new StackTraceElement("src/test/java/com/acme/SafeExample.java", 12, "safeCall()", "Call", null, "", ""));
+
+            List<Vulnerability> vulnerabilities = List.of(matchingVuln, nonMatchingVuln);
+
+            assertMatchesOnly("ruleid:RULE-123", vulnerabilities, "MATCHING_VULN");
+            assertMatchesOnly("kingdom:Dataflow", vulnerabilities, "MATCHING_VULN");
+            assertMatchesOnly("probability:[2.0,3.0]", vulnerabilities, "MATCHING_VULN");
+            assertMatchesOnly("body:username=admin", vulnerabilities, "MATCHING_VULN");
+            assertMatchesOnly("method:POST", vulnerabilities, "MATCHING_VULN");
+            assertMatchesOnly("[attack payload]:\"drop table users\"", vulnerabilities, "MATCHING_VULN");
+            assertMatchesOnly("response:500 Internal Server Error", vulnerabilities, "MATCHING_VULN");
+            assertMatchesOnly("file:SqlExample.java", vulnerabilities, "MATCHING_VULN");
+            assertMatchesOnly("sourcefile:src/main/java/com/acme/SqlExample.java", vulnerabilities, "MATCHING_VULN");
+            assertMatchesOnly("shortfilename:SqlExample.java", vulnerabilities, "MATCHING_VULN");
+        }
+
+        @Test
+        void testCodeSnippetFilterUsesSourceCode() {
+            Vulnerability matchingVuln = new Vulnerability();
+            matchingVuln.setInstanceID("MATCHING_VULN");
+            matchingVuln.setSource(new StackTraceElement("src/Main.java", 42, "dangerousCall()", "Call", null, "", ""));
+
+            Vulnerability nonMatchingVuln = new Vulnerability();
+            nonMatchingVuln.setInstanceID("NON_MATCHING_VULN");
+            nonMatchingVuln.setSource(new StackTraceElement("src/Main.java", 43, "safeCall()", "Call", null, "", ""));
+
+            assertMatchesOnly(
+                "codesnippet:\"dangerousCall()\"",
+                List.of(matchingVuln, nonMatchingVuln),
+                "MATCHING_VULN"
+            );
+        }
+
+        @Test
+        void testVirtualConfidenceFilters() {
+            Vulnerability mediumVirtConf = new Vulnerability();
+            mediumVirtConf.setInstanceID("MEDIUM_VIRT_CONF");
+            mediumVirtConf.setMinVirtualCallConfidence(0.58);
+
+            Vulnerability highVirtConf = new Vulnerability();
+            highVirtConf.setInstanceID("HIGH_VIRT_CONF");
+            highVirtConf.setMinVirtualCallConfidence(0.95);
+
+            List<Vulnerability> vulnerabilities = List.of(mediumVirtConf, highVirtConf);
+
+            assertMatchesOnly("virtconf:0.58", vulnerabilities, "MEDIUM_VIRT_CONF");
+            assertMatchesOnly("maxVirtConf:0.60", vulnerabilities, "MEDIUM_VIRT_CONF");
+            assertMatchesOnly("minVirtConf:0.90", vulnerabilities, "HIGH_VIRT_CONF");
+        }
+
+        @Test
+        void testLegacyFortifyAliasesRemainSupported() {
+            Vulnerability matchingVuln = new Vulnerability();
+            matchingVuln.setInstanceID("MATCHING_VULN");
+            matchingVuln.getKnowledge().put("EnginePriority", "5");
+            matchingVuln.getKnowledge().put("IssueAge", "7");
+            matchingVuln.getKnowledge().put("MappedCategory", "OWASP A1");
+            matchingVuln.getKnowledge().put("SecondaryRequests", "3");
+
+            Vulnerability nonMatchingVuln = new Vulnerability();
+            nonMatchingVuln.setInstanceID("NON_MATCHING_VULN");
+            nonMatchingVuln.getKnowledge().put("EnginePriority", "2");
+            nonMatchingVuln.getKnowledge().put("IssueAge", "1");
+            nonMatchingVuln.getKnowledge().put("MappedCategory", "OWASP A3");
+            nonMatchingVuln.getKnowledge().put("SecondaryRequests", "0");
+
+            List<Vulnerability> vulnerabilities = List.of(matchingVuln, nonMatchingVuln);
+
+            assertMatchesOnly("[engine priority]:[4,5]", vulnerabilities, "MATCHING_VULN");
+            assertMatchesOnly("[issue age]:[6,8]", vulnerabilities, "MATCHING_VULN");
+            assertMatchesOnly("[mapped category]:\"OWASP A1\"", vulnerabilities, "MATCHING_VULN");
+            assertMatchesOnly("[secondary requests]:[2,4]", vulnerabilities, "MATCHING_VULN");
+        }
+
         // Null Attr Handling
         @Test
         void testNullAttrNotContains() {
@@ -135,6 +251,12 @@ class FilterEngineTest {
             List<Vulnerability> vulns = List.of(vuln);
             List<Vulnerability> result = VulnerabilityFilterer.filter(vulns, "analyzer:!pentest");
             assertEquals(1, result.size()); // !false (null not contains) = true, matches
+        }
+
+        private void assertMatchesOnly(String query, List<Vulnerability> vulnerabilities, String expectedInstanceId) {
+            List<Vulnerability> result = VulnerabilityFilterer.filter(vulnerabilities, query);
+            assertEquals(1, result.size(), "Unexpected match count for query: " + query);
+            assertEquals(expectedInstanceId, result.get(0).getInstanceID(), "Unexpected match for query: " + query);
         }
 
         private Filter createFolderFilter(String query) { Filter f = new Filter(); f.setAction("setFolder"); f.setQuery(query); return f; }

@@ -26,6 +26,7 @@ import com.fasterxml.jackson.databind.node.TextNode;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.http.proxy.helper.ProxyHelper;
 import com.fortify.cli.common.json.JsonHelper;
+import com.fortify.cli.common.rest.unirest.HttpHeader;
 import com.fortify.cli.common.rest.unirest.UnexpectedHttpResponseException;
 import com.fortify.cli.common.rest.unirest.UnirestHelper;
 import com.fortify.cli.common.rest.unirest.config.IUrlConfig;
@@ -161,7 +162,8 @@ public class SSCTokenHelper {
     private static final <T> T createToken(UnirestInstance unirest, IUrlConfig urlConfig, IUserCredentialsConfig uc, SSCTokenCreateRequest tokenCreateRequest, Class<T> returnType) {
         configureUnirest(unirest, urlConfig, uc);
         return unirest.post("/api/v1/tokens")
-                .header("accept-encoding", null)
+                // Disable Accept-Encoding to avoid gzip/deflate compression issues with SSC token endpoint
+                .headerReplace(HttpHeader.ACCEPT_ENCODING, null)
                 .body(tokenCreateRequest)
                 .asObject(returnType)
                 .getBody();
@@ -170,7 +172,7 @@ public class SSCTokenHelper {
     private static SSCTokenData getTokenData(UnirestInstance unirest, IUrlConfig urlConfig, char[] token) {
         configureUnirest(unirest, urlConfig, token);
         try {
-            var result = unirest.post("/api/v1/userSession/tokenData")
+            var result = unirest.post(SSCUrls.USER_SESSION_TOKEN_DATA)
                     .body(JsonHelper.getObjectMapper().createObjectNode())
                     .asObject(SSCTokenGetOrCreateResponse.class)
                     .getBody().getData();

@@ -12,6 +12,7 @@
  */
 package com.fortify.cli.fod.oss_scan.cli.cmd;
 
+import com.fortify.cli.common.rest.unirest.HttpHeader;
 import com.fortify.cli.fod._common.output.cli.mixin.FoDOutputHelperMixins;
 import com.fortify.cli.fod._common.scan.cli.cmd.AbstractFoDScanDownloadLatestCommand;
 import com.fortify.cli.fod._common.scan.helper.FoDScanDescriptor;
@@ -40,7 +41,8 @@ public class FoDOssScanDownloadLatestCommand extends AbstractFoDScanDownloadLate
         if ( format != null ) {
             req = req.queryString("format", format.getValue());
         }
-        return req.accept("application/octet-stream");
+        // Use headerReplace to replace rather than add the Accept header (avoid duplicates with defaults)
+        return req.headerReplace(HttpHeader.ACCEPT, "application/octet-stream");
     }
 
     @Override

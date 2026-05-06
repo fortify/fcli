@@ -12,7 +12,12 @@
  */
 package com.fortify.cli.sc_sast._main.cli.cmd;
 
+import static com.fortify.cli.common.cli.util.FcliModuleCategories.PRODUCT;
+import static com.fortify.cli.common.cli.util.FcliModules.SSC;
+
 import com.fortify.cli.common.cli.cmd.AbstractContainerCommand;
+import com.fortify.cli.common.cli.util.FcliModuleCategory;
+import com.fortify.cli.common.cli.util.RequiresSessionFrom;
 import com.fortify.cli.sc_sast.rest.cli.cmd.SCSastRestCommands;
 import com.fortify.cli.sc_sast.scan.cli.cmd.SCSastScanCommands;
 import com.fortify.cli.sc_sast.sensor.cli.cmd.SCSastSensorCommands;
@@ -20,6 +25,8 @@ import com.fortify.cli.sc_sast.sensor_pool.cli.cmd.SCSastSensorPoolCommands;
 
 import picocli.CommandLine.Command;
 
+@FcliModuleCategory(PRODUCT)
+@RequiresSessionFrom(SSC)
 @Command(
         name = "sc-sast",
         resourceBundle = "com.fortify.cli.sc_sast.i18n.SCSastMessages",

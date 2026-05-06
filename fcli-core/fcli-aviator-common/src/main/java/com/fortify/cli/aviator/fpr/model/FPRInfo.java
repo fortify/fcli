@@ -52,12 +52,131 @@ public class FPRInfo {
 
     public FPRInfo(FprHandle fprHandle) {
         FPRName = String.valueOf(fprHandle.getFprPath().getFileName());
+        buildId = "";
         try {
-            extractInfoFromAuditFvdl(fprHandle);
+            extractInfoFromAuditFvdlStreaming(fprHandle);
         } catch (Exception e) {
             // It's better to wrap this in a specific runtime exception
             throw new RuntimeException("Failed to extract info from audit.fvdl", e);
         }
+    }
+
+    /**
+     * Extract FPR metadata from audit.fvdl using streaming XML parsing (StAX).
+     * More memory-efficient than DOM parsing for large files.
+     *
+     * Extracts:
+     * - UUID
+     * - Build information (BuildID, SourceBasePath, NumberFiles, ScanTime)
+     *
+     * @param fprHandle for getting path
+     * @throws Exception if parsing fails
+     */
+    private void extractInfoFromAuditFvdlStreaming(FprHandle fprHandle) throws Exception {
+        Path auditPath = fprHandle.getPath("/audit.fvdl");
+
+        if (!Files.exists(auditPath)) {
+            throw new IllegalStateException("audit.fvdl not found in FPR: " + fprHandle.getFprPath());
+        }
+
+        javax.xml.stream.XMLInputFactory factory = javax.xml.stream.XMLInputFactory.newInstance();
+        // Security: Disable external entity processing
+        factory.setProperty(javax.xml.stream.XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, false);
+        factory.setProperty(javax.xml.stream.XMLInputFactory.SUPPORT_DTD, false);
+
+        try (java.io.InputStream inputStream = Files.newInputStream(auditPath)) {
+            javax.xml.stream.XMLStreamReader reader = factory.createXMLStreamReader(inputStream);
+
+            boolean inBuild = false;
+            String currentElement = null;
+
+            while (reader.hasNext()) {
+                int event = reader.next();
+
+                if (event == javax.xml.stream.XMLStreamConstants.START_ELEMENT) {
+                    String localName = reader.getLocalName();
+
+                    if ("UUID".equals(localName)) {
+                        // Extract UUID text content
+                        this.uuid = readElementText(reader);
+
+                    } else if ("Build".equals(localName)) {
+                        // Entering Build section
+                        inBuild = true;
+
+                    } else if (inBuild) {
+                        // Inside Build section, capture element name
+                        currentElement = localName;
+                    }
+
+                } else if (event == javax.xml.stream.XMLStreamConstants.CHARACTERS && inBuild && currentElement != null) {
+                    // Read text content for Build child elements
+                    String text = reader.getText().trim();
+                    if (!text.isEmpty()) {
+                        switch (currentElement) {
+                            case "BuildID":
+                                this.buildId = text;
+                                break;
+                            case "SourceBasePath":
+                                this.sourceBasePath = text;
+                                break;
+                            case "NumberFiles":
+                                this.numberOfFiles = parseIntegerContent(text);
+                                break;
+                            case "ScanTime":
+                                this.scanTime = parseIntegerContent(text);
+                                break;
+                        }
+                    }
+
+                } else if (event == javax.xml.stream.XMLStreamConstants.END_ELEMENT) {
+                    String localName = reader.getLocalName();
+
+                    if ("Build".equals(localName)) {
+                        // Exiting Build section, we have all needed data
+                        inBuild = false;
+                        // Early exit: we've extracted all needed metadata
+                        if (this.uuid != null) {
+                            break; // Stop parsing, we have everything
+                        }
+
+                    } else if (inBuild) {
+                        // Clear current element when exiting child element
+                        currentElement = null;
+                    }
+                }
+            }
+
+            reader.close();
+
+        } catch (javax.xml.stream.XMLStreamException e) {
+            throw new Exception("Failed to parse audit.fvdl using streaming parser", e);
+        }
+
+        if (buildId == null) {
+            buildId = "";
+        }
+    }
+
+    /**
+     * Helper method to read element text content using StAX reader.
+     * Advances reader to the text content and returns it.
+     *
+     * @param reader XMLStreamReader positioned at START_ELEMENT
+     * @return Text content of the element, or empty string if no text
+     * @throws javax.xml.stream.XMLStreamException if reading fails
+     */
+    private String readElementText(javax.xml.stream.XMLStreamReader reader) throws javax.xml.stream.XMLStreamException {
+        StringBuilder text = new StringBuilder();
+        while (reader.hasNext()) {
+            int event = reader.next();
+            if (event == javax.xml.stream.XMLStreamConstants.CHARACTERS) {
+                text.append(reader.getText());
+            } else if (event == javax.xml.stream.XMLStreamConstants.END_ELEMENT) {
+                break;
+            }
+        }
+        return text.toString().trim();
     }
 
     private void extractInfoFromAuditFvdl(FprHandle fprHandle) throws Exception {

@@ -34,6 +34,7 @@ import com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunctionPrefix;
 @Reflectable
 @SpelFunctionPrefix("fs.")
 public class ActionFileSystemSpelFunctions {
+    public static final ActionFileSystemSpelFunctions INSTANCE = new ActionFileSystemSpelFunctions();
     
     @SpelFunction(cat=util, desc="Checks whether a file or directory exists at the given path.",
             returns="`true` if the file or directory exists, `false` otherwise")

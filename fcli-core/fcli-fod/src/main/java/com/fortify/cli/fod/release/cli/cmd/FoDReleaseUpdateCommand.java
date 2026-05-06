@@ -12,13 +12,10 @@
  */
 package com.fortify.cli.fod.release.cli.cmd;
 
-import java.util.ArrayList;
-import java.util.Map;
-
 import org.apache.commons.lang3.StringUtils;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fortify.cli.common.cli.mixin.CommonOptionMixins;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
@@ -28,7 +25,6 @@ import com.fortify.cli.fod._common.output.cli.cmd.AbstractFoDJsonNodeOutputComma
 import com.fortify.cli.fod._common.util.FoDEnums;
 import com.fortify.cli.fod.app.cli.mixin.FoDSdlcStatusTypeOptions;
 import com.fortify.cli.fod.attribute.cli.mixin.FoDAttributeUpdateOptions;
-import com.fortify.cli.fod.attribute.helper.FoDAttributeDescriptor;
 import com.fortify.cli.fod.attribute.helper.FoDAttributeHelper;
 import com.fortify.cli.fod.release.cli.mixin.FoDReleaseByQualifiedNameOrIdResolverMixin;
 import com.fortify.cli.fod.release.helper.FoDReleaseDescriptor;
@@ -45,9 +41,10 @@ import picocli.CommandLine.Option;
 @Command(name = OutputHelperMixins.Update.CMD_NAME)
 public class FoDReleaseUpdateCommand extends AbstractFoDJsonNodeOutputCommand implements IRecordTransformer, IActionCommandResultSupplier {
     @Getter @Mixin private OutputHelperMixins.Update outputHelper;
-    private final ObjectMapper objectMapper = new ObjectMapper();
     @Mixin private FoDDelimiterMixin delimiterMixin; // Is automatically injected in resolver mixins
     @Mixin private FoDReleaseByQualifiedNameOrIdResolverMixin.PositionalParameter releaseResolver;
+    @Mixin private CommonOptionMixins.AutoRequiredAttrsOption autoRequiredAttrsOption;
+
     @Option(names = {"--name", "-n"})
     private String releaseName;
 
@@ -59,22 +56,16 @@ public class FoDReleaseUpdateCommand extends AbstractFoDJsonNodeOutputCommand im
 
     @Mixin
     private FoDSdlcStatusTypeOptions.OptionalOption sdlcStatus;
-    @Mixin 
+    @Mixin
     private FoDAttributeUpdateOptions.OptionalAttrOption appAttrsUpdate;
 
     @Override
     public JsonNode getJsonNode(UnirestInstance unirest) {
         FoDReleaseDescriptor releaseDescriptor = releaseResolver.getReleaseDescriptor(unirest);
-        ArrayList<FoDAttributeDescriptor> releaseAttrsCurrent = releaseDescriptor.getAttributes();
         FoDSdlcStatusTypeOptions.FoDSdlcStatusType sdlcStatusTypeNew = sdlcStatus.getSdlcStatusType();
-        Map<String, String> attributeUpdates = appAttrsUpdate.getAttributes();
-        JsonNode jsonAttrs = objectMapper.createArrayNode();
-        if (attributeUpdates != null && !attributeUpdates.isEmpty()) {
-            jsonAttrs = FoDAttributeHelper.mergeAttributesNode(unirest, FoDEnums.AttributeTypes.Release, 
-                releaseAttrsCurrent, attributeUpdates);
-        } else {
-            jsonAttrs = FoDAttributeHelper.getAttributesNode(FoDEnums.AttributeTypes.Release, releaseAttrsCurrent);
-        }
+        JsonNode jsonAttrs = FoDAttributeHelper.getAttributesNodeForUpdate(unirest, FoDEnums.AttributeTypes.Release,
+                releaseDescriptor.getAttributes(), appAttrsUpdate.getAttributes(), autoRequiredAttrsOption.isAutoRequiredAttrs());
+
         FoDReleaseUpdateRequest appRelUpdateRequest = FoDReleaseUpdateRequest.builder()
                 .releaseName(StringUtils.isNotBlank(releaseName) ? getUnqualifiedReleaseName(releaseName, releaseDescriptor) : releaseDescriptor.getReleaseName())
                 .releaseDescription(StringUtils.isNotBlank(description) ? description : releaseDescriptor.getReleaseDescription())
@@ -85,7 +76,7 @@ public class FoDReleaseUpdateCommand extends AbstractFoDJsonNodeOutputCommand im
 
         return FoDReleaseHelper.updateRelease(unirest, releaseDescriptor.getReleaseId(), appRelUpdateRequest).asJsonNode();
     }
-    
+
     private String getUnqualifiedReleaseName(String potentialQualifiedName, FoDReleaseDescriptor descriptor) {
         if ( StringUtils.isBlank(potentialQualifiedName) ) { return null; }
         var delim = delimiterMixin.getDelimiter();

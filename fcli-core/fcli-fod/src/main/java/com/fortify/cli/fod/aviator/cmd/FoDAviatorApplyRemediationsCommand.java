@@ -1,0 +1,148 @@
+/*
+ * Copyright 2021-2026 Open Text.
+ *
+ * The only warranties for products and services of Open Text
+ * and its affiliates and licensors ("Open Text") are as may
+ * be set forth in the express warranty statements accompanying
+ * such products and services. Nothing herein should be construed
+ * as constituting an additional warranty. Open Text shall not be
+ * liable for technical or editorial errors or omissions contained
+ * herein. The information contained herein is subject to change
+ * without notice.
+ */
+package com.fortify.cli.fod.aviator.cmd;
+
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.aviator.applyRemediation.ApplyAutoRemediationOnSource;
+import com.fortify.cli.aviator.config.AviatorLoggerImpl;
+import com.fortify.cli.aviator.util.FprHandle;
+import com.fortify.cli.common.exception.FcliSimpleException;
+import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
+import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
+import com.fortify.cli.common.output.transform.IRecordTransformer;
+import com.fortify.cli.common.progress.cli.mixin.ProgressWriterFactoryMixin;
+import com.fortify.cli.common.progress.helper.IProgressWriter;
+import com.fortify.cli.common.rest.unirest.HttpHeader;
+import com.fortify.cli.fod._common.cli.mixin.FoDDelimiterMixin;
+import com.fortify.cli.fod._common.output.cli.cmd.AbstractFoDJsonNodeOutputCommand;
+import com.fortify.cli.fod._common.scan.helper.FoDScanDescriptor;
+import com.fortify.cli.fod._common.scan.helper.FoDScanHelper;
+import com.fortify.cli.fod._common.scan.helper.FoDScanType;
+import com.fortify.cli.fod.aviator.helper.AviatorFoDApplyRemediationsHelper;
+import com.fortify.cli.fod.release.cli.mixin.FoDReleaseByQualifiedNameOrIdResolverMixin;
+import com.fortify.cli.fod.release.helper.FoDReleaseDescriptor;
+
+import kong.unirest.GetRequest;
+import kong.unirest.UnirestInstance;
+import lombok.Getter;
+import lombok.SneakyThrows;
+import picocli.CommandLine.Command;
+import picocli.CommandLine.Mixin;
+import picocli.CommandLine.Option;
+
+@Command(name = "apply-remediations")
+public class FoDAviatorApplyRemediationsCommand extends AbstractFoDJsonNodeOutputCommand implements IRecordTransformer, IActionCommandResultSupplier {
+    @Getter @Mixin private OutputHelperMixins.TableNoQuery outputHelper;
+    @Mixin private ProgressWriterFactoryMixin progressWriterFactoryMixin;
+    @Mixin private FoDDelimiterMixin delimiterMixin; // Is automatically injected in resolver mixins
+    @Mixin private FoDReleaseByQualifiedNameOrIdResolverMixin.RequiredOption releaseResolver;
+    private static final Logger LOG = LoggerFactory.getLogger(FoDAviatorApplyRemediationsCommand.class);
+    @Option(names = {"--source-dir"}) private String sourceCodeDirectory = System.getProperty("user.dir");
+
+    @Override @SneakyThrows
+    public JsonNode getJsonNode(UnirestInstance unirest) {
+        validateSourceCodeDirectory();
+        try (IProgressWriter progressWriter = progressWriterFactoryMixin.create()) {
+            AviatorLoggerImpl logger = new AviatorLoggerImpl(progressWriter);
+            FoDReleaseDescriptor rd = releaseResolver.getReleaseDescriptor(unirest);
+            return processFprRemediations(unirest, rd, logger);
+        }
+    }
+
+    private void validateSourceCodeDirectory() {
+        if (sourceCodeDirectory == null || sourceCodeDirectory.isBlank()) {
+            throw new FcliSimpleException("--source-dir must specify a valid directory path");
+        }
+    }
+
+    @SneakyThrows
+    private JsonNode processFprRemediations(UnirestInstance unirest, FoDReleaseDescriptor rd, AviatorLoggerImpl logger) {
+        Path downloadedFprPath = null;
+        try {
+            logger.progress("Status: Downloading Audited FPR from FOD");
+            downloadedFprPath = downloadFprFromFod(unirest, rd);
+
+            logger.progress("Status: Processing FPR with Aviator for Applying Auto Remediations");
+            try (FprHandle fprHandle = new FprHandle(downloadedFprPath)) {
+                var remediationMetric = ApplyAutoRemediationOnSource.applyRemediations(fprHandle, sourceCodeDirectory, logger);
+                LOG.info("Applied remediation {}", remediationMetric.appliedRemediations());
+                LOG.info("Total remediation {}", remediationMetric.totalRemediations());
+                String status = remediationMetric.appliedRemediations() > 0 ? "Remediation-Applied" : "No-Remediation-Applied";
+                return AviatorFoDApplyRemediationsHelper.buildResultNode(rd, remediationMetric.totalRemediations(), remediationMetric.appliedRemediations(), remediationMetric.skippedRemediations(), status);
+            }
+        } finally {
+            if (downloadedFprPath != null) {
+                try {
+                    Files.deleteIfExists(downloadedFprPath);
+                } catch (IndexOutOfBoundsException e) {
+                    LOG.warn("WARN: Failed to delete temporary downloaded FPR file: {}", downloadedFprPath, e);
+                }
+            }
+        }
+    }
+
+    @SneakyThrows
+    private Path  downloadFprFromFod(UnirestInstance unirest, FoDReleaseDescriptor releaseDescriptor) {
+        Path fprPath = Files.createTempFile("aviator_" + releaseDescriptor.getReleaseId() + "_", ".fpr");
+        FoDScanDescriptor scanDescriptor = FoDScanHelper.getLatestScanDescriptor(unirest, releaseDescriptor.getReleaseId(),
+                getScanType(), false);
+        FoDScanHelper.validateScanDate(scanDescriptor, FoDScanHelper.MAX_RETENTION_PERIOD);
+        var file = fprPath.toString();
+        GetRequest request = getDownloadRequest(unirest, releaseDescriptor, scanDescriptor);
+        int status = 202;
+        while ( status==202 ) {
+            status = request
+                    .asFile(file, StandardCopyOption.REPLACE_EXISTING)
+                    .getStatus();
+            if ( status==202 ) { Thread.sleep(30000L); }
+        }
+        return fprPath;
+    }
+
+
+
+    protected FoDScanType getScanType() {
+        return FoDScanType.Static;
+    }
+
+    protected GetRequest getDownloadRequest(UnirestInstance unirest, FoDReleaseDescriptor releaseDescriptor, FoDScanDescriptor scanDescriptor) {
+        return unirest.get("/api/v3/releases/{releaseId}/fpr")
+                .routeParam("releaseId", releaseDescriptor.getReleaseId())
+                // Use headerReplace to replace rather than add the Accept header (avoid duplicates with defaults)
+                .headerReplace(HttpHeader.ACCEPT, "application/octet-stream")
+                .queryString("scanType", scanDescriptor.getScanType());
+    }
+
+    @Override
+    public boolean isSingular() {
+        return true;
+    }
+
+
+    @Override
+    public String getActionCommandResult() {
+        return "Remediation-Applied";
+    }
+
+    @Override
+    public JsonNode transformRecord(JsonNode record) {
+        return record;
+    }
+}

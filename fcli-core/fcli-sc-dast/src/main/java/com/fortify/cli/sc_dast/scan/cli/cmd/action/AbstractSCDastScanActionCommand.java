@@ -12,6 +12,7 @@
  */
 package com.fortify.cli.sc_dast.scan.cli.cmd.action;
 
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -21,6 +22,7 @@ import com.fortify.cli.sc_dast.scan.cli.cmd.AbstractSCDastScanOutputCommand;
 import com.fortify.cli.sc_dast.scan.cli.mixin.SCDastScanResolverMixin;
 import com.fortify.cli.sc_dast.scan.helper.SCDastScanDescriptor;
 
+import kong.unirest.HttpRequestWithBody;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import picocli.CommandLine.Mixin;
@@ -43,11 +45,19 @@ public abstract class AbstractSCDastScanActionCommand extends AbstractSCDastScan
         SCDastScanDescriptor descriptor = scanResolver.getScanDescriptor(unirest);
         ObjectNode body = new ObjectMapper().createObjectNode()
                 .put("scanActionType", getAction().name());
-        unirest.post("/api/v2/scans/{id}/scan-action")
-            .routeParam("id", descriptor.getId())
-            .body(body)
+        var request = updateRequest(unirest.post("/api/v2/scans/{id}/scan-action")
+            .routeParam("id", descriptor.getId()));
+        request.body(body)
             .asString().getBody(); // TODO Does SC DAST return proper HTTP codes if there are any errors, or should we parse the response?
         return descriptor.asJsonNode();
+    }
+
+    /**
+     * Subclasses can override this method to provide additional query parameters
+     * for the scan-action request.
+     */
+    protected HttpRequestWithBody updateRequest(HttpRequestWithBody request) {
+        return request;
     }
     
     @Override

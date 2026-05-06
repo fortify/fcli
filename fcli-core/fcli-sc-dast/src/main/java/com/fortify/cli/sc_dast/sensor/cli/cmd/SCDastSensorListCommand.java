@@ -13,6 +13,7 @@
 package com.fortify.cli.sc_dast.sensor.cli.cmd;
 
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
+import com.fortify.cli.sc_dast._common.cli.mixin.SCDastFetchRangeMixin;
 import com.fortify.cli.sc_dast._common.output.cli.cmd.AbstractSCDastBaseRequestOutputCommand;
 
 import kong.unirest.HttpRequest;
@@ -24,6 +25,7 @@ import picocli.CommandLine.Mixin;
 @Command(name=OutputHelperMixins.List.CMD_NAME)
 public class SCDastSensorListCommand extends AbstractSCDastBaseRequestOutputCommand {
     @Getter @Mixin private OutputHelperMixins.List outputHelper;
+    @Mixin private SCDastFetchRangeMixin fetchRangeMixin;
     public HttpRequest<?> getBaseRequest(UnirestInstance unirest) {
         return unirest.get("/api/v2/scanners");
     };

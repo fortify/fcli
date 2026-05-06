@@ -32,7 +32,14 @@ import com.fortify.aviator.application.ApplicationList;
 import com.fortify.aviator.application.ApplicationResponseMessage;
 import com.fortify.aviator.application.ApplicationServiceGrpc;
 import com.fortify.aviator.application.CreateApplicationRequest;
+import com.fortify.aviator.application.GetApplicationByTokenRequest;
+import com.fortify.aviator.application.GetDefaultQuotaRequest;
+import com.fortify.aviator.application.GetDefaultQuotaResponse;
 import com.fortify.aviator.application.UpdateApplicationRequest;
+import com.fortify.aviator.dastentitlement.DastEntitlement;
+import com.fortify.aviator.dastentitlement.DastEntitlementServiceGrpc;
+import com.fortify.aviator.dastentitlement.ListDastEntitlementsByTenantRequest;
+import com.fortify.aviator.dastentitlement.ListDastEntitlementsByTenantResponse;
 import com.fortify.aviator.entitlement.Entitlement;
 import com.fortify.aviator.entitlement.EntitlementServiceGrpc;
 import com.fortify.aviator.entitlement.ListEntitlementsByTenantRequest;
@@ -44,6 +51,7 @@ import com.fortify.cli.aviator.audit.model.AuditResponse;
 import com.fortify.cli.aviator.audit.model.UserPrompt;
 import com.fortify.cli.aviator.config.IAviatorLogger;
 import com.fortify.cli.aviator.util.Constants;
+import com.fortify.cli.aviator.util.FprHandle;
 import com.fortify.grpc.token.DeleteTokenRequest;
 import com.fortify.grpc.token.DeleteTokenResponse;
 import com.fortify.grpc.token.ListTokensByDeveloperRequest;
@@ -72,6 +80,7 @@ public class AviatorGrpcClient implements AutoCloseable {
     private final ApplicationServiceGrpc.ApplicationServiceBlockingStub blockingStub;
     private final TokenServiceGrpc.TokenServiceBlockingStub tokenServiceBlockingStub;
     private final EntitlementServiceGrpc.EntitlementServiceBlockingStub entitlementServiceBlockingStub;
+    private final DastEntitlementServiceGrpc.DastEntitlementServiceBlockingStub dastEntitlementServiceBlockingStub;
     private final long defaultTimeoutSeconds;
     private final java.util.concurrent.ExecutorService processingExecutor;
     private final long pingIntervalSeconds;
@@ -86,6 +95,7 @@ public class AviatorGrpcClient implements AutoCloseable {
         this.blockingStub = ApplicationServiceGrpc.newBlockingStub(channel).withCompression("gzip").withMaxInboundMessageSize(Constants.MAX_MESSAGE_SIZE).withMaxOutboundMessageSize(Constants.MAX_MESSAGE_SIZE).withWaitForReady();
         this.tokenServiceBlockingStub = TokenServiceGrpc.newBlockingStub(channel).withCompression("gzip").withMaxInboundMessageSize(Constants.MAX_MESSAGE_SIZE).withMaxOutboundMessageSize(Constants.MAX_MESSAGE_SIZE).withWaitForReady();
         this.entitlementServiceBlockingStub = EntitlementServiceGrpc.newBlockingStub(channel).withCompression("gzip").withMaxInboundMessageSize(Constants.MAX_MESSAGE_SIZE).withMaxOutboundMessageSize(Constants.MAX_MESSAGE_SIZE).withWaitForReady();
+        this.dastEntitlementServiceBlockingStub = DastEntitlementServiceGrpc.newBlockingStub(channel).withCompression("gzip").withMaxInboundMessageSize(Constants.MAX_MESSAGE_SIZE).withMaxOutboundMessageSize(Constants.MAX_MESSAGE_SIZE).withWaitForReady();
         this.defaultTimeoutSeconds = defaultTimeoutSeconds;
         this.processingExecutor = Executors.newFixedThreadPool(4, r -> {
             Thread t = new Thread(r, "aviator-client-processing-" + r.hashCode());
@@ -109,9 +119,9 @@ public class AviatorGrpcClient implements AutoCloseable {
         this(channel, defaultTimeoutSeconds, logger, 30);
     }
 
-    public CompletableFuture<Map<String, AuditResponse>> processBatchRequests(Queue<UserPrompt> requests, String projectName, String FPRBuildId, String SSCApplicationName, String SSCApplicationVersion, String token) {
-        AviatorStreamProcessor processor = new AviatorStreamProcessor(this, logger, asyncStub, processingExecutor, pingScheduler, pingIntervalSeconds, defaultTimeoutSeconds);
-        CompletableFuture<Map<String, AuditResponse>> future = processor.processBatchRequests(requests, projectName, FPRBuildId, SSCApplicationName, SSCApplicationVersion, token);
+    public CompletableFuture<Map<String, AuditResponse>> processBatchRequests(Queue<UserPrompt> requests, String projectName, String FPRBuildId, String SSCApplicationName, String SSCApplicationVersion, String token, FprHandle fprHandle, List<String> customPriorityOrder) {
+        AviatorStreamProcessor processor = new AviatorStreamProcessor(this, logger, asyncStub, processingExecutor, pingScheduler, pingIntervalSeconds, defaultTimeoutSeconds, fprHandle);
+        CompletableFuture<Map<String, AuditResponse>> future = processor.processBatchRequests(requests, projectName, FPRBuildId, SSCApplicationName, SSCApplicationVersion, token, customPriorityOrder);
         future.whenComplete((res, th) -> processor.close());
         return future.exceptionally(ex -> {
             Throwable cause = (ex instanceof CompletionException || ex instanceof ExecutionException) && ex.getCause() != null ? ex.getCause() : ex;
@@ -181,6 +191,24 @@ public class AviatorGrpcClient implements AutoCloseable {
         return GrpcUtil.executeGrpcCall(blockingStub, ApplicationServiceGrpc.ApplicationServiceBlockingStub::getApplication, request, Constants.OP_GET_APP);
     }
 
+    public Application getApplicationByToken(String token, String appName) {
+        GetApplicationByTokenRequest request = GetApplicationByTokenRequest.newBuilder()
+            .setToken(token)
+            .setAppName(appName)
+            .build();
+        return GrpcUtil.executeGrpcCall(blockingStub, ApplicationServiceGrpc.ApplicationServiceBlockingStub::getApplicationByToken, request, Constants.OP_GET_APP_BY_TOKEN);
+    }
+
+    public long getDefaultQuota(String token) {
+        GetDefaultQuotaRequest request = GetDefaultQuotaRequest.newBuilder()
+            .setToken(token)
+            .build();
+        GetDefaultQuotaResponse response = GrpcUtil.executeGrpcCall(blockingStub,
+            ApplicationServiceGrpc.ApplicationServiceBlockingStub::getDefaultQuota,
+            request, Constants.OP_GET_DEFAULT_QUOTA);
+        return response.getDefaultQuota();
+    }
+
     public List<Application> listApplication(String tenantName, String signature, String message) {
         ApplicationByTenantName request = ApplicationByTenantName.newBuilder().setName(tenantName).setSignature(signature).setMessage(message).build();
         ApplicationList applicationList = GrpcUtil.executeGrpcCall(blockingStub, ApplicationServiceGrpc.ApplicationServiceBlockingStub::listApplications, request, Constants.OP_LIST_APPS);
@@ -229,6 +257,12 @@ public class AviatorGrpcClient implements AutoCloseable {
     public List<Entitlement> listEntitlements(String tenantName, String signature, String message) {
         ListEntitlementsByTenantRequest request = ListEntitlementsByTenantRequest.newBuilder().setTenantName(tenantName).setSignature(signature).setMessage(message).build();
         ListEntitlementsByTenantResponse response = GrpcUtil.executeGrpcCall(entitlementServiceBlockingStub, EntitlementServiceGrpc.EntitlementServiceBlockingStub::listEntitlementsByTenant, request, Constants.OP_LIST_ENTITLEMENTS);
+        return response.getEntitlementsList();
+    }
+
+    public List<DastEntitlement> listDastEntitlements(String tenantName, String signature, String message) {
+        ListDastEntitlementsByTenantRequest request = ListDastEntitlementsByTenantRequest.newBuilder().setTenantName(tenantName).setSignature(signature).setMessage(message).build();
+        ListDastEntitlementsByTenantResponse response = GrpcUtil.executeGrpcCall(dastEntitlementServiceBlockingStub, DastEntitlementServiceGrpc.DastEntitlementServiceBlockingStub::listDastEntitlementsByTenant, request, Constants.OP_LIST_DAST_ENTITLEMENTS);
         return response.getEntitlementsList();
     }
 }

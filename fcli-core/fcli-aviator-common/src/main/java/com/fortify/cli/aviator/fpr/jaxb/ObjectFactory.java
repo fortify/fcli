@@ -17,13 +17,13 @@ import jakarta.xml.bind.annotation.XmlRegistry;
 /**
  * This object contains factory methods for each 
  * Java content interface and Java element interface 
- * generated in the com.fortify.aviator.fpr.jaxb package. 
+ * generated in this package. 
  * <p>An ObjectFactory allows you to programatically 
  * construct new instances of the Java representation 
  * for XML content. The Java representation of XML 
  * content can consist of schema derived interfaces 
  * and classes representing the binding of schema 
- * type definitions, element declarations and model 
+ * type definitions, element declarations and 
  * groups.  Factory methods for each of these are 
  * provided in this class.
  * 
@@ -62,7 +62,7 @@ public class ObjectFactory {
     private final static QName _RulePackListRulePackMAC_QNAME = new QName("xmlns://www.fortifysoftware.com/schema/fvdl", "MAC");
 
     /**
-     * Create a new ObjectFactory that can be used to create new instances of schema derived classes for package: com.fortify.aviator.fpr.jaxb
+     * Create a new ObjectFactory that can be used to create new instances of schema-derived classes for this package.
      * 
      */
     public ObjectFactory() {

@@ -19,6 +19,7 @@ import com.fortify.cli.common.output.transform.IRecordTransformer;
 import com.fortify.cli.common.rest.query.IServerSideQueryParamGeneratorSupplier;
 import com.fortify.cli.common.rest.query.IServerSideQueryParamValueGenerator;
 import com.fortify.cli.common.variable.DefaultVariablePropertyName;
+import com.fortify.cli.fod._common.cli.mixin.FoDFetchRangeMixin;
 import com.fortify.cli.fod._common.output.cli.cmd.AbstractFoDBaseRequestOutputCommand;
 import com.fortify.cli.fod._common.rest.FoDUrls;
 import com.fortify.cli.fod._common.rest.query.FoDFiltersParamGenerator;
@@ -35,6 +36,7 @@ import picocli.CommandLine.Mixin;
 @DefaultVariablePropertyName("userId")
 public class FoDUserListCommand extends AbstractFoDBaseRequestOutputCommand implements IRecordTransformer, IServerSideQueryParamGeneratorSupplier {
     @Getter @Mixin private OutputHelperMixins.TableWithQuery outputHelper;
+    @Mixin private FoDFetchRangeMixin fetchRangeMixin;
     @Mixin private FoDFiltersParamMixin filterParamMixin;
     @Getter private IServerSideQueryParamValueGenerator serverSideQueryParamGenerator = new FoDFiltersParamGenerator()
             .add("userId","userId")

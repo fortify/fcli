@@ -13,6 +13,7 @@
 package com.fortify.cli.fod._common.scan.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fortify.cli.common.cli.util.CommandGroup;
 import com.fortify.cli.common.json.JsonNodeHolder;
 import com.fortify.cli.common.util.DisableTest;
@@ -32,8 +33,11 @@ public abstract class AbstractFoDScanConfigGetCommand extends AbstractFoDJsonNod
     @Override
     public final JsonNode getJsonNode(UnirestInstance unirest) {
         var releaseId = releaseResolver.getReleaseId(unirest);
-        var result = getDescriptor(unirest, releaseId).asObjectNode();
-        return result.get("assessmentTypeId").asText().equals("0")
+        var descriptor = getDescriptor(unirest, releaseId);
+        var result = descriptor == null
+                ? JsonNodeFactory.instance.objectNode().put("assessmentTypeId", 0)
+                : descriptor.asObjectNode();
+        return result.path("assessmentTypeId").asInt(0) == 0
                 ? result.put("state", "Not configured")
                 : result.put("state", "Configured");
     }

@@ -57,6 +57,22 @@ message ApplicationResponseMessage {
   string responseMessage = 1;
 }
 
+message GetApplicationByTokenRequest {
+  string token = 1;
+  string app_name = 2;
+}
+
+message GetDefaultQuotaRequest {
+  optional string token = 1;
+  optional string tenant_name = 2;
+  optional string signature = 3;
+  optional string message = 4;
+}
+
+message GetDefaultQuotaResponse {
+  int64 default_quota = 1;
+}
+
 service ApplicationService {
   rpc CreateApplication(CreateApplicationRequest) returns (Application) {}
   rpc GetApplication(ApplicationById) returns (Application) {}
@@ -64,4 +80,6 @@ service ApplicationService {
   rpc DeleteApplication(ApplicationById) returns (ApplicationResponseMessage) {}
   rpc ListApplications(ApplicationByTenantName) returns (ApplicationList) {}
   rpc ListApplicationsByEntitlement(ApplicationById) returns (ApplicationList) {}
+  rpc GetApplicationByToken(GetApplicationByTokenRequest) returns (Application) {}
+  rpc GetDefaultQuota(GetDefaultQuotaRequest) returns (GetDefaultQuotaResponse) {}
 }

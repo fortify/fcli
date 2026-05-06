@@ -21,6 +21,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.json.JsonHelper;
+import com.fortify.cli.common.rest.unirest.HttpHeader;
 import com.fortify.cli.common.util.Break;
 
 import kong.unirest.UnirestInstance;
@@ -64,7 +65,8 @@ public class GitLabProject {
             .routeParam("id", projectId)
             .routeParam("pipeline_id", pipelineId)
             .queryString("report_type", reportType)
-            .header("Content-Type", "application/json")
+            // Use headerReplace to replace rather than add the Content-Type header (avoid duplicates with defaults)
+            .headerReplace(HttpHeader.CONTENT_TYPE, "application/json")
             .body(reportContent)
             .asObject(ObjectNode.class)
             .getBody();
@@ -105,7 +107,8 @@ public class GitLabProject {
             .post("/projects/{id}/merge_requests/{merge_request_iid}/code_quality_reports")
             .routeParam("id", projectId)
             .routeParam("merge_request_iid", mergeRequestIid)
-            .header("Content-Type", "application/json")
+            // Use headerReplace to replace rather than add the Content-Type header (avoid duplicates with defaults)
+            .headerReplace(HttpHeader.CONTENT_TYPE, "application/json")
             .body(reportContent)
             .asObject(ObjectNode.class)
             .getBody();

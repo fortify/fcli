@@ -13,6 +13,7 @@
 package com.fortify.cli.sc_dast.scan_settings.cli.cmd;
 
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
+import com.fortify.cli.sc_dast._common.cli.mixin.SCDastFetchRangeMixin;
 import com.fortify.cli.sc_dast._common.output.cli.cmd.AbstractSCDastBaseRequestOutputCommand;
 import com.fortify.cli.ssc._common.rest.sc_dast.query.cli.mixin.SCDastQueryParamsMixin;
 
@@ -25,6 +26,7 @@ import picocli.CommandLine.Mixin;
 @Command(name = OutputHelperMixins.List.CMD_NAME)
 public class SCDastScanSettingsListCommand extends AbstractSCDastBaseRequestOutputCommand {
     @Getter @Mixin private OutputHelperMixins.List outputHelper;
+    @Mixin private SCDastFetchRangeMixin fetchRangeMixin;
     // TODO Re-implement support for querying on scan type name based on 
     //      SCDastScanStatus.valueOf(scanStatus).getScanStatusType()
     // TODO Re-implement auto-generated queries based on -q / --query option

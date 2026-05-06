@@ -12,7 +12,10 @@
  */
 package com.fortify.cli.tool._main.cli.cmd;
 
+import static com.fortify.cli.common.cli.util.FcliModuleCategories.UTIL;
+
 import com.fortify.cli.common.cli.cmd.AbstractContainerCommand;
+import com.fortify.cli.common.cli.util.FcliModuleCategory;
 import com.fortify.cli.tool.bugtracker_utility.cli.cmd.ToolBugTrackerUtilityCommands;
 import com.fortify.cli.tool.debricked_cli.cli.cmd.ToolDebrickedCliCommands;
 import com.fortify.cli.tool.definitions.cli.cmd.ToolDefinitionsCommands;
@@ -25,6 +28,7 @@ import com.fortify.cli.tool.vuln_exporter.cli.cmd.ToolVulnExporterCommands;
 
 import picocli.CommandLine.Command;
 
+@FcliModuleCategory(UTIL)
 @Command(
         name = "tool",
         resourceBundle = "com.fortify.cli.tool.i18n.ToolMessages",

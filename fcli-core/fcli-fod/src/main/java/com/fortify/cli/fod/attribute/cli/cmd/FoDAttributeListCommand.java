@@ -29,6 +29,8 @@ import picocli.CommandLine.Mixin;
 @Command(name = OutputHelperMixins.List.CMD_NAME)
 public class FoDAttributeListCommand extends AbstractFoDBaseRequestOutputCommand implements IServerSideQueryParamGeneratorSupplier {
     @Getter @Mixin private OutputHelperMixins.List outputHelper;
+    // FoD does not support paging for this endpoint, so we cannot use the fetch range mixin here
+    //@Mixin private FoDFetchRangeMixin fetchRangeMixin;
     @Mixin private FoDFiltersParamMixin filterParamMixin;
     @Getter private IServerSideQueryParamValueGenerator serverSideQueryParamGenerator = new FoDFiltersParamGenerator()
             .add("id", "attributeId")
