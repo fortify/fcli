@@ -591,6 +591,10 @@ Fcli allows for configuring trust store settings through the `fcli config trusts
 * `FCLI_TRUSTSTORE`: Absolute path to the trust store file to use
 * `FCLI_TRUSTSTORE_TYPE`: Type of the trust store, usually JKS, which is the default type if not specified
 * `FCLI_TRUSTSTORE_PWD`: Trust store password
+* `FCLI_DISABLE_OS_TRUSTSTORE`: Set to `true` or `1` to disable automatic merge with OS trust store certificates
+
+When configuring trust stores through `fcli config truststore set`, use `--no-os-truststore` to persistently disable automatic
+OS trust store certificate merge for that configured trust store.
 
 === Fcli User Home Folder
 

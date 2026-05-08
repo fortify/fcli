@@ -41,6 +41,7 @@ import com.fortify.cli.common.action.runner.ActionProductContextProviders;
 import com.fortify.cli.common.http.ssl.truststore.helper.TrustStoreConfigDescriptor;
 import com.fortify.cli.common.http.ssl.truststore.helper.TrustStoreConfigHelper;
 import com.fortify.cli.common.i18n.helper.LanguageHelper;
+import com.fortify.cli.common.util.EnvHelper;
 import com.fortify.cli.fod.action.helper.FoDActionProductContextProvider;
 import com.fortify.cli.ssc.action.helper.SSCActionProductContextProvider;
 import com.fortify.cli.tool._common.helper.ToolUninstaller;
@@ -96,13 +97,12 @@ public final class FortifyCLIStaticInitializer {
 
         // Merge OS platform trust store (e.g. Windows Certificate Store / macOS Keychain)
         // with the configured trust store so enterprise CAs are trusted automatically.
-        initializePlatformTrustStore();
+        initializePlatformTrustStore(descriptor);
     }
 
-    private void initializePlatformTrustStore() {
-        if ("true".equalsIgnoreCase(System.getenv("FCLI_DISABLE_OS_TRUSTSTORE"))
-                || "1".equals(System.getenv("FCLI_DISABLE_OS_TRUSTSTORE"))) {
-            log.debug("OS trust store merge disabled via FCLI_DISABLE_OS_TRUSTSTORE");
+    private void initializePlatformTrustStore(TrustStoreConfigDescriptor descriptor) {
+        if (isOsTrustStoreDisabled(descriptor)) {
+            log.debug("OS trust store merge disabled");
             return;
         }
         KeyStore platformKeyStore = loadPlatformKeyStore();
@@ -126,6 +126,14 @@ public final class FortifyCLIStaticInitializer {
         } catch (GeneralSecurityException e) {
             log.warn("Could not install composite SSL context with OS trust store: " + e.getMessage());
         }
+    }
+
+    private boolean isOsTrustStoreDisabled(TrustStoreConfigDescriptor descriptor) {
+        String disableOsTrustStore = EnvHelper.env("FCLI_DISABLE_OS_TRUSTSTORE");
+        if ("true".equalsIgnoreCase(disableOsTrustStore) || "1".equals(disableOsTrustStore)) {
+            return true;
+        }
+        return descriptor != null && Boolean.FALSE.equals(descriptor.getUseOsTrustStore());
     }
 
     private void addTrustManagerFromKeyStore(List<X509TrustManager> managers, KeyStore keyStore) {
