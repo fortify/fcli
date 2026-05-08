@@ -17,7 +17,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260508.144106-dev_v3.x" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260508.144741-dev_v3.x" %}
 
 
 <div id="header">
@@ -35,7 +35,7 @@ fcli_version:
 </div>
 <h2>Name</h2>
 <div class="sectionbody">
-<p>fcli-fod-issue-update - Bulk update vulnerabilities.</p>
+<p>fcli-fod-issue-update - Bulk update issues (vulnerabilities).</p>
 </div>
 </div>
 <div id="content">
@@ -48,13 +48,13 @@ fcli_version:
                       [<strong>--delim</strong>=<em>&lt;delimiter&gt;</em>] [<strong>--dev-status</strong>=<em>&lt;developerStatus&gt;</em>]
                       <strong>--rel</strong>=<em>id|app[:ms]:rel</em> [<strong>--severity</strong>=<em>&lt;severity&gt;</em>]
                       <strong>--user</strong>=<em>&lt;user&gt;</em> <em class="<strong>--attrs</strong>=_[ATTR=VALUE">[,</em>[ATTR=VALUE]<em>&#8230;&#8203;]]&#8230;&#8203;
-                      <strong>--vuln-ids</strong>=</em>&lt;vulnIds&gt;_[,<em>&lt;vulnIds&gt;</em>&#8230;&#8203;] [<strong>--vuln-ids</strong>=<em>&lt;vulnIds&gt;</em>
-                      [,<em>&lt;vulnIds&gt;</em>&#8230;&#8203;]]&#8230;&#8203; [[<strong>-h</strong>] [<strong>--env-prefix</strong>=<em>&lt;prefix&gt;</em>]
-                      [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>] [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]
-                      [<strong>--log-mask</strong>=<em>&lt;level&gt;</em>] [<strong>--debug</strong>]]
+                      [[<strong>-h</strong>] [<strong>--env-prefix</strong>=</em>&lt;prefix&gt;_] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
+                      [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>] [<strong>--log-mask</strong>=<em>&lt;level&gt;</em>] [<strong>--debug</strong>]]
                       [[<strong>--fod-session</strong>=<em>&lt;sessionName&gt;</em>]] [[<strong>-o</strong>=<em>&lt;type+args&gt;</em>]
                       [<strong>--style*<em>=&lt;style&gt;,&#8230;&#8203;</em>]&#8230;&#8203; <em class="</strong>--store*=_&lt;var&gt;[:&lt;prop&gt;">]
-                      [<strong>--to-file</strong>=</em>&lt;outputFile&gt;_]]</p>
+                      [<strong>--to-file</strong>=</em>&lt;outputFile&gt;_]] (<strong>--vuln-ids</strong>=<em>&lt;vulnIds&gt;</em>[,
+                      <em>&lt;vulnIds&gt;</em>&#8230;&#8203;] [<strong>--vuln-ids</strong>=<em>&lt;vulnIds&gt;</em>[,<em>&lt;vulnIds&gt;</em>&#8230;&#8203;]]&#8230;&#8203; |
+                      <strong>--all</strong>)</p>
 </div>
 </div>
 </div>
@@ -62,7 +62,7 @@ fcli_version:
 <h2 id="_description"><a class="anchor" href="#_description"></a>Description</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>This command allows for updating the audit information for multiple vulnerabilities. Note: for "vuln-ids" you can use either the numeric Id as shown in the FOD UI, or the "vulnId" UUID field that is retrieved using the <code>fcli fod issue ls</code> command.</p>
+<p>This command allows for updating the audit information for multiple issues (vulnerabilities). Note: for --vuln-ids/--issue-ids, you can use either the numeric Id as shown in the FoD UI, or the "vulnId" UUID field that is retrieved using the <code>fcli fod issue ls</code> command. Alternatively, use --include-all/--all to update all issues from the specified release without providing issue ids.</p>
 </div>
 </div>
 </div>
@@ -71,17 +71,33 @@ fcli_version:
 <div class="sectionbody">
 <div class="dlist">
 <dl>
+<dt class="hdlist1"><strong>--all, --include-all</strong></dt>
+<dd>
+<p>Include all the issues from the specified release in the update.</p>
+<div class="admonitionblock warning">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Warning</div>
+</td>
+<td class="content">
+This will update all issues in the specified release regardless of their current status, so use with caution.
+</td>
+</tr>
+</table>
+</div>
+</dd>
 <dt class="hdlist1"><strong>--attrs, --attributes</strong>=<em>[ATTR=VALUE]</em>[,<em>[ATTR=VALUE]</em>&#8230;&#8203;]</dt>
 <dd>
-<p>A comma separated list of "attributeName=attributeValue" pairs to set on the vulnerabilities. It is recommended to provide attribute names as they appear in the FoD UI. For example: "Business Criticality=High,Attribute 2=Value". You can also use multiple --attributes options to provide more "attributeName=attributeValue" pairs.</p>
+<p>A comma separated list of "attributeName=attributeValue" pairs to set on the issues. It is recommended to provide attribute names as they appear in the FoD UI. For example: "Business Criticality=High,Attribute 2=Value". You can also use multiple --attributes options to provide more "attributeName=attributeValue" pairs.</p>
 </dd>
 <dt class="hdlist1"><strong>--auditor-status</strong>=<em>&lt;auditorStatus&gt;</em></dt>
 <dd>
-<p>The Auditor Status to set for the vulnerabilities, see the FoD UI for valid values.</p>
+<p>The Auditor Status to set for the issues, see the FoD UI for valid values.</p>
 </dd>
 <dt class="hdlist1"><strong>--comment</strong>=<em>&lt;comment&gt;</em></dt>
 <dd>
-<p>A comment to apply to all of the vulnerabilities that are updated.</p>
+<p>A comment to apply to all of the issues that are updated.</p>
 </dd>
 <dt class="hdlist1"><strong>--delim</strong>=<em>&lt;delimiter&gt;</em></dt>
 <dd>
@@ -89,7 +105,7 @@ fcli_version:
 </dd>
 <dt class="hdlist1"><strong>--dev-status</strong>=<em>&lt;developerStatus&gt;</em></dt>
 <dd>
-<p>The Developer Status to set for the vulnerabilities, see the FoD UI for valid values.</p>
+<p>The Developer Status to set for the issues, see the FoD UI for valid values.</p>
 </dd>
 <dt class="hdlist1"><strong>--rel, --release</strong>=<em>id|app[:ms]:rel</em></dt>
 <dd>
@@ -97,15 +113,15 @@ fcli_version:
 </dd>
 <dt class="hdlist1"><strong>--severity</strong>=<em>&lt;severity&gt;</em></dt>
 <dd>
-<p>The Severity to set for the vulnerabilities. Allowed values: Low, Medium, High, Critical, Info, Best Practice.</p>
+<p>The Severity to set for the issues. Allowed values: Low, Medium, High, Critical, Info, Best Practice.</p>
 </dd>
 <dt class="hdlist1"><strong>--user</strong>=<em>&lt;user&gt;</em></dt>
 <dd>
-<p>The username or user id of the user the update will be recorded as.</p>
+<p>The username or user id of the user to assign the issue to.</p>
 </dd>
-<dt class="hdlist1"><strong>--vuln-ids</strong>=<em>&lt;vulnIds&gt;</em>[,<em>&lt;vulnIds&gt;</em>&#8230;&#8203;]</dt>
+<dt class="hdlist1"><strong>--vuln-ids, --issue-ids</strong>=<em>&lt;vulnIds&gt;</em>[,<em>&lt;vulnIds&gt;</em>&#8230;&#8203;]</dt>
 <dd>
-<p>Comma separated list of the vulnerability ids to be updated.</p>
+<p>Comma separated list of the issue ids to be updated.</p>
 </dd>
 </dl>
 </div>
@@ -187,7 +203,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2026-05-08 14:43:35 UTC
+Last updated 2026-05-08 14:50:12 UTC
 </div>
 </div>
 </body>

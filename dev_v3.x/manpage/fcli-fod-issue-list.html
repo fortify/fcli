@@ -17,7 +17,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260508.144106-dev_v3.x" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260508.144741-dev_v3.x" %}
 
 
 <div id="header">
@@ -35,7 +35,7 @@ fcli_version:
 </div>
 <h2>Name</h2>
 <div class="sectionbody">
-<p>fcli-fod-issue-list - List vulnerabilities.</p>
+<p>fcli-fod-issue-list - List issues (vulnerabilities).</p>
 </div>
 </div>
 <div id="content">
@@ -61,7 +61,7 @@ fcli_version:
 <h2 id="_description"><a class="anchor" href="#_description"></a>Description</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>This command allows for listing FoD vulnerability data for a given application or release. By default, only visible issues will be returned; the --include option can be used to (also) include suppressed or fixed issues. If any such issues are included, the default table output will show (S) and/or (F) for respectively suppressed and fixed issues.</p>
+<p>This command allows for listing FoD issue data for a given application or release. By default, only visible issues will be returned; the --include option can be used to (also) include suppressed or fixed issues. If any such issues are included, the default table output will show (S) and/or (F) for respectively suppressed and fixed issues.</p>
 </div>
 <div class="paragraph">
 <p>Optionally, additional details may be included in the output using the --embed option, but please note that this may have a significant impact on performance as this will result in additional HTTP requests to FoD for every individual issue, and FoD rate limits may apply to those requests.</p>
@@ -204,7 +204,7 @@ The --app option is currently in PREVIEW. If you wish to use this option it is r
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2026-05-08 14:43:35 UTC
+Last updated 2026-05-08 14:50:12 UTC
 </div>
 </div>
 </body>
