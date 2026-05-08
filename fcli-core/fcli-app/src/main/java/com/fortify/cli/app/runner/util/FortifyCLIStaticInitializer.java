@@ -165,9 +165,10 @@ public final class FortifyCLIStaticInitializer {
             ks.load(null, null);
             log.debug("Loaded OS trust store: " + type);
             return ks;
-        } catch (Exception e) {
+        } catch (Exception | LinkageError e) {
             // Provider may be unavailable in GraalVM native images built on a different OS
-            log.debug("OS trust store unavailable (" + type + "): " + e.getMessage());
+            log.warn("OS trust store unavailable ({}): {}", type, e.getMessage());
+            log.debug("OS trust store load failure details", e);
             return null;
         }
     }
