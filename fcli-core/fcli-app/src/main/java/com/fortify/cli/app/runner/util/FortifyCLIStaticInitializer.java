@@ -112,9 +112,10 @@ public final class FortifyCLIStaticInitializer {
 
         List<X509TrustManager> managers = new ArrayList<>();
         addTrustManagerFromKeyStore(managers, null); // null = use javax.net.ssl.trustStore system props
+        int managerCountBeforePlatformStore = managers.size();
         addTrustManagerFromKeyStore(managers, platformKeyStore);
 
-        if (managers.size() < 2) {
+        if (managers.size() == managerCountBeforePlatformStore) {
             return; // Nothing new to add; skip installing a composite context
         }
 
@@ -129,8 +130,7 @@ public final class FortifyCLIStaticInitializer {
     }
 
     private boolean isOsTrustStoreDisabled(TrustStoreConfigDescriptor descriptor) {
-        String disableOsTrustStore = EnvHelper.env("FCLI_DISABLE_OS_TRUSTSTORE");
-        if ("true".equalsIgnoreCase(disableOsTrustStore) || "1".equals(disableOsTrustStore)) {
+        if (EnvHelper.asBoolean(EnvHelper.env("FCLI_DISABLE_OS_TRUSTSTORE"))) {
             return true;
         }
         return descriptor != null && Boolean.FALSE.equals(descriptor.getUseOsTrustStore());
@@ -281,7 +281,10 @@ public final class FortifyCLIStaticInitializer {
                 try { check.check(tm); return; }
                 catch (CertificateException e) { last = e; }
             }
-            if (last != null) throw last;
+            if (last != null) {
+                throw last;
+            }
+            throw new CertificateException("No trust manager accepted the certificate chain");
         }
 
         @FunctionalInterface
