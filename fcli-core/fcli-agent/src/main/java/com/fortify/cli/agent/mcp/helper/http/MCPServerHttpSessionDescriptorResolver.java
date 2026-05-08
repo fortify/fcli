@@ -26,6 +26,7 @@ import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
 
+import com.fortify.cli.common.cli.util.FcliExecutionContext;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.rest.unirest.config.UrlConfig;
 import com.fortify.cli.common.session.helper.ISessionDescriptor;
@@ -70,11 +71,30 @@ public final class MCPServerHttpSessionDescriptorResolver {
             return size() > MAX_SESSION_DESCRIPTOR_CACHE_SIZE;
         }
     };
+    private final Map<String, FcliExecutionContext> functionContextCache = new LinkedHashMap<>(16, 0.75f, true) {
+        private static final long serialVersionUID = 1L;
+
+        @Override
+        protected boolean removeEldestEntry(Map.Entry<String, FcliExecutionContext> eldest) {
+            return size() > MAX_SESSION_DESCRIPTOR_CACHE_SIZE;
+        }
+    };
 
     public ISessionDescriptor getOrCreateSessionDescriptor(McpTransportContext transportContext) {
         var cacheKey = createAuthCacheKey(transportContext);
         synchronized (sessionDescriptorCache) {
             return sessionDescriptorCache.computeIfAbsent(cacheKey, ignored -> createSessionDescriptor(transportContext));
+        }
+    }
+
+    /**
+     * Returns the {@link FcliExecutionContext} for the given auth scope key, creating one
+     * on first use. Each distinct auth identity gets its own context so that
+     * {@code global.*} action variables are not shared across different callers.
+     */
+    public FcliExecutionContext getOrCreateFunctionContext(String authScopeKey) {
+        synchronized (functionContextCache) {
+            return functionContextCache.computeIfAbsent(authScopeKey, ignored -> new FcliExecutionContext());
         }
     }
 

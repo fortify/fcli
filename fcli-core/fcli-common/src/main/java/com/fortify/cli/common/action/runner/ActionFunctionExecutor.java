@@ -12,6 +12,8 @@
  */
 package com.fortify.cli.common.action.runner;
 
+import java.util.function.Supplier;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.action.model.Action;
@@ -27,22 +29,35 @@ import com.fortify.cli.common.progress.helper.ProgressWriterType;
  * {@link ActionRunnerContextLocal} per invocation, builds the args ObjectNode,
  * and delegates to {@link ActionFunctionSpelFunctions#call(String, Object...)}.
  * <p>
- * All executors created for the same server share a single
- * {@link FcliExecutionContext} so that {@code globalActionValues} persist across
- * invocations. The shared context is pushed onto the calling thread's stack
- * during execution and popped afterwards.
+ * A {@link Supplier} of {@link FcliExecutionContext} is evaluated on each invocation
+ * to determine which context to push. For RPC/stdio servers this supplier typically
+ * returns the same shared instance (so {@code globalActionValues} persist across
+ * invocations). For HTTP servers the supplier can return a per-auth-scope context
+ * so that different auth identities have isolated {@code globalActionValues}.
  * <p>
  * Used by MCP/RPC server implementations to invoke exported functions.
  */
 public final class ActionFunctionExecutor {
     private final Action action;
     private final ActionFunction function;
-    private final FcliExecutionContext sharedContext;
+    private final Supplier<FcliExecutionContext> contextSupplier;
 
-    public ActionFunctionExecutor(Action action, ActionFunction function, FcliExecutionContext sharedContext) {
+    /**
+     * Create an executor that resolves its execution context via a supplier on
+     * each invocation.
+     */
+    public ActionFunctionExecutor(Action action, ActionFunction function, Supplier<FcliExecutionContext> contextSupplier) {
         this.action = action;
         this.function = function;
-        this.sharedContext = sharedContext;
+        this.contextSupplier = contextSupplier;
+    }
+
+    /**
+     * Convenience constructor that wraps a fixed, shared {@link FcliExecutionContext}
+     * so that all invocations use the same context (original behaviour for RPC/stdio).
+     */
+    public ActionFunctionExecutor(Action action, ActionFunction function, FcliExecutionContext sharedContext) {
+        this(action, function, () -> sharedContext);
     }
 
     public Action getAction() {
@@ -62,7 +77,7 @@ public final class ActionFunctionExecutor {
      *         For streaming functions: an IActionStepForEachProcessor.
      */
     public Object execute(ObjectNode argsNode) {
-        FcliExecutionContextHolder.push(sharedContext);
+        FcliExecutionContextHolder.push(contextSupplier.get());
         try {
             var config = ActionRunnerConfig.builder()
                     .action(action)

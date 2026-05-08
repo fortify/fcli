@@ -15,7 +15,6 @@ package com.fortify.cli.agent.mcp.helper.http;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -88,8 +87,6 @@ public class JdkHttpServerMcpStatelessTransport implements McpStatelessServerTra
             sendPlainError(exchange, 503, "MCP handler not initialized");
             return;
         }
-
-        log.info("[TEMP DEBUG] Incoming MCP HTTP request headers: {}", formatHeadersForLog(exchange.getRequestHeaders()));
 
         var accept = getFirstHeader(exchange, "Accept");
         if ( accept == null || !(accept.contains(APPLICATION_JSON) && accept.contains(TEXT_EVENT_STREAM)) ) {
@@ -177,13 +174,4 @@ public class JdkHttpServerMcpStatelessTransport implements McpStatelessServerTra
         exchange.close();
     }
 
-    private String formatHeadersForLog(Map<String, List<String>> headers) {
-        if ( headers == null || headers.isEmpty() ) {
-            return "{}";
-        }
-        return headers.entrySet().stream()
-                .sorted(Comparator.comparing(Map.Entry::getKey, String.CASE_INSENSITIVE_ORDER))
-                .map(e -> e.getKey() + "=" + e.getValue())
-                .collect(Collectors.joining(", ", "{", "}"));
-    }
 }

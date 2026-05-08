@@ -26,7 +26,6 @@ import com.fortify.cli.agent.mcp.helper.http.JdkHttpServerMcpStatelessTransport;
 import com.fortify.cli.agent.mcp.helper.http.MCPServerHttpConfigLoader;
 import com.fortify.cli.agent.mcp.helper.http.MCPServerHttpSessionDescriptorResolver;
 import com.fortify.cli.common.cli.cmd.AbstractRunnableCommand;
-import com.fortify.cli.common.cli.util.FcliExecutionContext;
 import com.fortify.cli.common.cli.util.FcliExecutionContextHolder;
 import com.fortify.cli.common.concurrent.job.AsyncJobManager;
 import com.fortify.cli.common.exception.FcliSimpleException;
@@ -75,9 +74,9 @@ public class AgentMCPStartHttpCommand extends AbstractRunnableCommand {
                 asyncJobManager
         );
 
-        var sharedFunctionContext = new FcliExecutionContext();
-        var importSpecsFactory = new MCPImportedActionMcpSpecsFactory(jobManager, sharedFunctionContext);
         var sessionDescriptorResolver = new MCPServerHttpSessionDescriptorResolver(config);
+        var importSpecsFactory = new MCPImportedActionMcpSpecsFactory(jobManager,
+                () -> sessionDescriptorResolver.getOrCreateFunctionContext(FcliExecutionContextHolder.getMcpRequestAuthScopeKey()));
         var toolSpecs = new ArrayList<McpStatelessServerFeatures.SyncToolSpecification>();
         var resourceTemplateSpecs = new ArrayList<McpStatelessServerFeatures.SyncResourceTemplateSpecification>();
         for ( var importPath : config.getResolvedImportPaths() ) {

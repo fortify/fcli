@@ -15,6 +15,7 @@ package com.fortify.cli.agent.mcp.helper;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.function.Supplier;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.agent.mcp.helper.arg.MCPToolArgHandlerPaging;
@@ -39,7 +40,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class MCPImportedActionMcpSpecsFactory {
     private final MCPJobManager jobManager;
-    private final FcliExecutionContext sharedFunctionContext;
+    private final Supplier<FcliExecutionContext> functionContextSupplier;
 
     public ImportedSpecs create(Path importFile) {
         var action = ActionLoaderHelper.load(
@@ -65,7 +66,7 @@ public class MCPImportedActionMcpSpecsFactory {
     }
 
     private SyncToolSpecification createToolSpec(com.fortify.cli.common.action.model.Action action, String functionName, ActionFunction function) {
-        var executor = new ActionFunctionExecutor(action, function, sharedFunctionContext);
+        var executor = new ActionFunctionExecutor(action, function, functionContextSupplier);
         var toolName = "fcli_fn_" + functionName.replace('-', '_');
         var schema = buildFunctionArgsSchema(function);
         var description = function.getDescription() != null ? function.getDescription() : functionName;
@@ -95,7 +96,7 @@ public class MCPImportedActionMcpSpecsFactory {
         var uriTemplate = getMetaString(resourceMeta, "uri-template");
         var name = getMetaString(resourceMeta, "name");
         var mimeType = getMetaString(resourceMeta, "mime-type");
-        var executor = new ActionFunctionExecutor(action, function, sharedFunctionContext);
+        var executor = new ActionFunctionExecutor(action, function, functionContextSupplier);
         var template = ResourceTemplate.builder()
                 .uriTemplate(uriTemplate)
                 .name(name != null ? name : functionName)
