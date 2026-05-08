@@ -16,11 +16,11 @@ import java.time.Duration;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fortify.cli.common.concurrent.job.CachingJobEventListener;
+import com.fortify.cli.common.concurrent.job.CompositeJobEventListener;
+import com.fortify.cli.common.concurrent.job.IJobEventListener;
 import com.fortify.cli.common.util.DateTimePeriodHelper;
 import com.fortify.cli.common.util.DateTimePeriodHelper.Period;
-import com.fortify.cli.util._common.helper.CachingJobEventListener;
-import com.fortify.cli.util._common.helper.CompositeJobEventListener;
-import com.fortify.cli.util._common.helper.IJobEventListener;
 
 import lombok.extern.slf4j.Slf4j;
 

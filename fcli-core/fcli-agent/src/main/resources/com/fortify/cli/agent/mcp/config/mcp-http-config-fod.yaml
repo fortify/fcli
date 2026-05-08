@@ -1,0 +1,8 @@
+port: 8080
+imports:
+  - actions/http-fod.yaml
+fod:
+  url: https://api.ams.fortify.com
+  connectTimeout: 30s
+  socketTimeout: 10m
+  insecureModeEnabled: false

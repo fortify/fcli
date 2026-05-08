@@ -1,0 +1,54 @@
+/*
+ * Copyright 2021-2026 Open Text.
+ *
+ * The only warranties for products and services of Open Text
+ * and its affiliates and licensors ("Open Text") are as may
+ * be set forth in the express warranty statements accompanying
+ * such products and services. Nothing herein should be construed
+ * as constituting an additional warranty. Open Text shall not be
+ * liable for technical or editorial errors or omissions contained
+ * herein. The information contained herein is subject to change
+ * without notice.
+ */
+package com.fortify.cli.util.mcp_server.cli.cmd;
+
+import java.util.List;
+
+import org.apache.commons.lang3.StringUtils;
+
+import com.fortify.cli.common.cli.cmd.AbstractRunnableCommand;
+import com.fortify.cli.common.cli.util.FcliCommandExecutorFactory;
+import com.fortify.cli.common.mcp.MCPExclude;
+import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
+import com.fortify.cli.common.util.OutputHelper.OutputType;
+
+import lombok.extern.slf4j.Slf4j;
+import picocli.CommandLine.Command;
+import picocli.CommandLine.Unmatched;
+
+@Command(name = OutputHelperMixins.Start.CMD_NAME)
+@MCPExclude
+@Slf4j
+public class MCPServerStartDeprecatedCommand extends AbstractRunnableCommand {
+    @Unmatched private List<String> delegatedArgs;
+
+    @Override
+    public Integer call() {
+        var cmd = "fcli agent mcp start-stdio";
+        if ( delegatedArgs != null && !delegatedArgs.isEmpty() ) {
+            cmd += " " + String.join(" ", delegatedArgs);
+        }
+        log.warn("The 'fcli util mcp-server start' command is deprecated; please use 'fcli agent mcp start-stdio'");
+        var result = FcliCommandExecutorFactory.builder()
+                .cmd(cmd)
+            .stdoutOutputType(OutputType.show)
+            .stderrOutputType(OutputType.show)
+                .createInvocationContext(true)
+                .onFail(r -> {})
+                .build().create().execute();
+        if ( result.getExitCode() != 0 && StringUtils.isNotBlank(result.getErr()) ) {
+            log.debug("Delegated command failed: {}", result.getErr());
+        }
+        return result.getExitCode();
+    }
+}

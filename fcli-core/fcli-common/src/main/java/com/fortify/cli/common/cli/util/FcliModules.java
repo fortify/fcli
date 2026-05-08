@@ -22,7 +22,7 @@ package com.fortify.cli.common.cli.util;
  * </pre>
  */
 public enum FcliModules {
-    ACTION, AVIATOR, CONFIG, FOD, LICENSE, SC_DAST, SC_SAST, SSC, TOOL, UTIL;
+    ACTION, AGENT, AVIATOR, CONFIG, FOD, LICENSE, SC_DAST, SC_SAST, SSC, TOOL, UTIL;
 
     @Override
     public String toString() { return name().toLowerCase().replace('_', '-'); }

@@ -69,6 +69,16 @@ public final class FcliExecutionContextHolder {
         }
         return null;
     }
+
+    public static String getMcpRequestAuthScopeKey() {
+        for ( var context : HOLDER.get() ) {
+            var authScopeKey = context.getMcpRequestAuthScopeKey();
+            if ( authScopeKey != null ) {
+                return authScopeKey;
+            }
+        }
+        return null;
+    }
     
     /** Return the current stack depth. Useful for logging/troubleshooting. */
     public static int stackDepth() { return HOLDER.get().size(); }

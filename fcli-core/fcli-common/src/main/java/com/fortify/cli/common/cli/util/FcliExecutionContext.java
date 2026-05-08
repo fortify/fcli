@@ -39,6 +39,7 @@ import lombok.Getter;
 public final class FcliExecutionContext {
     @Getter private final ObjectNode globalActionValues = new ObjectNode(JsonNodeFactory.instance, new ConcurrentHashMap<>());
     @Getter private final UnirestContext unirestContext = new UnirestContext();
+    @Getter private volatile String mcpRequestAuthScopeKey;
     // Encryption helper used for encrypt/decrypt in this execution. Default to global DEFAULT.
     private volatile EncryptionHelper encryptionHelper = EncryptionHelper.DEFAULT;
     // Set of absolute file paths that were saved using ephemeral encryption during this execution
@@ -66,15 +67,20 @@ public final class FcliExecutionContext {
         }
     }
 
+    public void setMcpRequestAuthScopeKey(String mcpRequestAuthScopeKey) {
+        this.mcpRequestAuthScopeKey = mcpRequestAuthScopeKey;
+    }
+
     public String info() {
-        return String.format("FcliExecutionContext@%s(%d) actionGlobalValues@%s(%d) unirestContext@%s(%s) transientSessions=%d",
+        return String.format("FcliExecutionContext@%s(%d) actionGlobalValues@%s(%d) unirestContext@%s(%s) transientSessions=%d authScope=%s",
                 Integer.toHexString(System.identityHashCode(this)),
                 FcliExecutionContextHolder.stackDepth(),
                 Integer.toHexString(System.identityHashCode(globalActionValues)),
                 globalActionValues.size(),
                 Integer.toHexString(System.identityHashCode(unirestContext)),
                 unirestContext.getCachedInstanceCount(),
-                transientSessionDescriptors.size());
+                transientSessionDescriptors.size(),
+                mcpRequestAuthScopeKey != null ? "set" : "unset");
     }
 
     /**

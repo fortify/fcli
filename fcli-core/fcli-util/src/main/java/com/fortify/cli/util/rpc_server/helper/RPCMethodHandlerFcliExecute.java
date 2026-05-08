@@ -13,9 +13,9 @@
 package com.fortify.cli.util.rpc_server.helper;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.util._common.helper.AsyncJobManager;
-import com.fortify.cli.util._common.helper.AsyncTaskFcliCommand;
-import com.fortify.cli.util._common.helper.CollectingJobEventListener;
+import com.fortify.cli.common.concurrent.job.AsyncJobManager;
+import com.fortify.cli.common.concurrent.job.CollectingJobEventListener;
+import com.fortify.cli.common.concurrent.job.task.AsyncTaskFcliCommand;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

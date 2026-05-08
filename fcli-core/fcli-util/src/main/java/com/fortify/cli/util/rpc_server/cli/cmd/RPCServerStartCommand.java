@@ -18,12 +18,12 @@ import java.util.List;
 
 import com.fortify.cli.common.cli.cmd.AbstractRunnableCommand;
 import com.fortify.cli.common.cli.util.StdioHelper;
+import com.fortify.cli.common.concurrent.job.AsyncJobManager;
+import com.fortify.cli.common.concurrent.job.cli.mixin.AsyncJobManagerMixin;
 import com.fortify.cli.common.mcp.MCPExclude;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.util.DisableTest;
 import com.fortify.cli.common.util.DisableTest.TestType;
-import com.fortify.cli.util._common.cli.mixin.AsyncJobManagerMixin;
-import com.fortify.cli.util._common.helper.AsyncJobManager;
 import com.fortify.cli.util.rpc_server.helper.RPCMethodHandlerRegistry;
 import com.fortify.cli.util.rpc_server.helper.RPCServer;
 

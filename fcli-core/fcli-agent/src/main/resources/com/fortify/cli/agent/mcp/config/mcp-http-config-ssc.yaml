@@ -1,0 +1,9 @@
+port: 8080
+imports:
+  - actions/http-ssc.yaml
+ssc:
+  url: https://ssc.example.com
+  connectTimeout: 30s
+  socketTimeout: 10m
+  insecureModeEnabled: false
+  scSastClientAuthToken: ${#env('SSC_SAST_CLIENT_AUTH_TOKEN')}

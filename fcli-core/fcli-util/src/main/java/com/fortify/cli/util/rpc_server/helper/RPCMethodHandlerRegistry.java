@@ -21,8 +21,8 @@ import com.fortify.cli.common.action.helper.ActionLoaderHelper.ActionSource;
 import com.fortify.cli.common.action.helper.ActionLoaderHelper.ActionValidationHandler;
 import com.fortify.cli.common.action.runner.ActionFunctionExecutor;
 import com.fortify.cli.common.cli.util.FcliExecutionContext;
-import com.fortify.cli.util._common.helper.AsyncJobManager;
-import com.fortify.cli.util._common.helper.CachingJobEventListener;
+import com.fortify.cli.common.concurrent.job.AsyncJobManager;
+import com.fortify.cli.common.concurrent.job.CachingJobEventListener;
 
 import lombok.extern.slf4j.Slf4j;
 

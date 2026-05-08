@@ -12,6 +12,7 @@
  */
 package com.fortify.cli.common.cli.util;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
@@ -59,6 +60,22 @@ class FcliExecutionContextTest {
         context.setTransientSessionDescriptor(descriptor);
 
         assertSame(descriptor, context.getTransientSessionDescriptor("dummy"));
+    }
+
+    @Test
+    void mcpRequestAuthScopeKeyIsFoundInNestedParentContext() {
+        FcliExecutionContextHolder.pushNew();
+        try {
+            FcliExecutionContextHolder.current().setMcpRequestAuthScopeKey("ssc|abc123");
+            FcliExecutionContextHolder.pushNew();
+            try {
+                assertEquals("ssc|abc123", FcliExecutionContextHolder.getMcpRequestAuthScopeKey());
+            } finally {
+                FcliExecutionContextHolder.pop();
+            }
+        } finally {
+            FcliExecutionContextHolder.pop();
+        }
     }
 
     private static final class DummySessionDescriptor implements ISessionDescriptor {
