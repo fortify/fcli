@@ -19,7 +19,7 @@ Fcli is a modular CLI tool for interacting with Fortify products (FoD, SSC, Scan
 - **Validation:** Use `get_errors` tool first, then full Gradle build to catch warnings
 - **Testing:**
   - Unit tests: `src/test`; command structure validated in `FortifyCLITest`
-  - Functional tests: `fcli-core/fcli-functional-test` module; run with `./gradlew :fcli-core:fcli-functional-test:test`
+  - Functional tests: `fcli-other/fcli-functional-test` module; run with `./gradlew :fcli-other:fcli-functional-test:ftest`
 
 ## Code Conventions
 
