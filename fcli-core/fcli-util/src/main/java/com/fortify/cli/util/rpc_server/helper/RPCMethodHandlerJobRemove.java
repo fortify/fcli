@@ -13,6 +13,7 @@
 package com.fortify.cli.util.rpc_server.helper;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.common.cli.util.FcliExecutionContextHolder;
 import com.fortify.cli.common.concurrent.job.AsyncJobManager;
 import com.fortify.cli.common.concurrent.job.CachingJobEventListener;
 import com.fortify.cli.common.json.JsonHelper;
@@ -39,7 +40,6 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public final class RPCMethodHandlerJobRemove implements IRPCMethodHandler {
     private final AsyncJobManager asyncJobManager;
-    private final CachingJobEventListener cachingListener;
 
     @Override
     public String description() {
@@ -67,8 +67,13 @@ public final class RPCMethodHandlerJobRemove implements IRPCMethodHandler {
         }
 
         asyncJobManager.removeJob(jobId);
-        cachingListener.remove(jobId);
+        getCachingListener().remove(jobId);
         return result(true, jobId, "Job removed successfully");
+    }
+
+    private CachingJobEventListener getCachingListener() {
+        return FcliExecutionContextHolder.current().getIsolationScope()
+                .getOrCreateScopedState(CachingJobEventListener.class, CachingJobEventListener::new);
     }
 
     private static JsonNode result(boolean success, String jobId, String message) {

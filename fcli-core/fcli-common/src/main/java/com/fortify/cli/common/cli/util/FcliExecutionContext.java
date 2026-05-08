@@ -18,69 +18,69 @@ package com.fortify.cli.common.cli.util;
 import java.nio.file.Path;
 import java.security.SecureRandom;
 import java.util.Base64;
-import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
-import com.fasterxml.jackson.databind.node.JsonNodeFactory;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.crypto.helper.EncryptionHelper;
 import com.fortify.cli.common.rest.unirest.UnirestContext;
-import com.fortify.cli.common.session.helper.ISessionDescriptor;
 
 import lombok.Getter;
 
 /**
- * Per-top-level execution context holding mutable execution-scoped state.
- * The {@code globalActionValues} ObjectNode is backed by a {@link ConcurrentHashMap}
- * to allow safe concurrent access from multiple threads (e.g. async jobs,
- * server request handlers).
+ * Execution-frame local state for a single invocation.
+ *
+ * <p>Each execution context owns resources that must not be shared across
+ * independent invocations, such as the per-execution {@link UnirestContext} and
+ * ephemeral encryption state. Longer-lived isolation concerns like request/auth
+ * scoped caches and transient session descriptors are kept in the associated
+ * {@link FcliIsolationScope}, while shared action variables live in the
+ * associated {@link FcliActionState}.</p>
  */
 public final class FcliExecutionContext {
-    @Getter private final ObjectNode globalActionValues = new ObjectNode(JsonNodeFactory.instance, new ConcurrentHashMap<>());
+    @Getter private final FcliIsolationScope isolationScope;
+    @Getter private final FcliActionState actionState;
     @Getter private final UnirestContext unirestContext = new UnirestContext();
-    @Getter private volatile String mcpRequestAuthScopeKey;
     // Encryption helper used for encrypt/decrypt in this execution. Default to global DEFAULT.
     private volatile EncryptionHelper encryptionHelper = EncryptionHelper.DEFAULT;
     // Set of absolute file paths that were saved using ephemeral encryption during this execution
-    private final Set<Path> ephemeralEncryptedFiles = ConcurrentHashMap.newKeySet();
-    @Getter private final Map<String, ISessionDescriptor> transientSessionDescriptors = new ConcurrentHashMap<>();
+    private final Set<Path> ephemeralEncryptedFiles = java.util.concurrent.ConcurrentHashMap.newKeySet();
 
-    public void clearTransientSessionDescriptors() {
-        transientSessionDescriptors.clear();
+    public FcliExecutionContext() {
+        this(new FcliIsolationScope(), new FcliActionState());
     }
 
-    public ISessionDescriptor getTransientSessionDescriptor(String type) {
-        return type == null ? null : transientSessionDescriptors.get(type);
+    public FcliExecutionContext(FcliIsolationScope isolationScope, FcliActionState actionState) {
+        this.isolationScope = isolationScope == null ? new FcliIsolationScope() : isolationScope;
+        this.actionState = actionState == null ? new FcliActionState() : actionState;
     }
 
-    public void setTransientSessionDescriptor(ISessionDescriptor descriptor) {
-        if ( descriptor == null ) {
-            return;
-        }
-        transientSessionDescriptors.put(descriptor.getType(), descriptor);
+    /**
+     * Create a child execution frame that inherits the current isolation scope
+     * while starting with a fresh action state.
+     */
+    public FcliExecutionContext createChild() {
+        return new FcliExecutionContext(isolationScope, new FcliActionState());
     }
 
-    public void clearTransientSessionDescriptor(String type) {
-        if ( type != null ) {
-            transientSessionDescriptors.remove(type);
-        }
-    }
-
-    public void setMcpRequestAuthScopeKey(String mcpRequestAuthScopeKey) {
-        this.mcpRequestAuthScopeKey = mcpRequestAuthScopeKey;
+    /**
+     * Create a child execution frame that inherits both the isolation scope and
+     * shared action state.
+     */
+    public FcliExecutionContext createChildWithSharedActionState() {
+        return new FcliExecutionContext(isolationScope, actionState);
     }
 
     public String info() {
-        return String.format("FcliExecutionContext@%s(%d) actionGlobalValues@%s(%d) unirestContext@%s(%s) transientSessions=%d authScope=%s",
+        return String.format("FcliExecutionContext@%s(%d) isolationScope@%s actionState@%s actionGlobalValues@%s(%d) unirestContext@%s(%s) transientSessions=%d authScope=%s",
                 Integer.toHexString(System.identityHashCode(this)),
                 FcliExecutionContextHolder.stackDepth(),
-                Integer.toHexString(System.identityHashCode(globalActionValues)),
-                globalActionValues.size(),
+                Integer.toHexString(System.identityHashCode(isolationScope)),
+                Integer.toHexString(System.identityHashCode(actionState)),
+                Integer.toHexString(System.identityHashCode(actionState.getGlobalActionValues())),
+                actionState.getGlobalActionValues().size(),
                 Integer.toHexString(System.identityHashCode(unirestContext)),
                 unirestContext.getCachedInstanceCount(),
-                transientSessionDescriptors.size(),
-                mcpRequestAuthScopeKey != null ? "set" : "unset");
+                isolationScope.getTransientSessionDescriptors().size(),
+                isolationScope.getMcpRequestAuthScopeKey() != null ? "set" : "unset");
     }
 
     /**

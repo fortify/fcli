@@ -32,6 +32,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.agent.mcp.helper.runner.MCPToolAsyncJobManager;
+import com.fortify.cli.common.cli.util.FcliExecutionContextHolder;
 import com.fortify.cli.common.concurrent.job.AsyncJobManager;
 
 import io.modelcontextprotocol.server.McpServerFeatures;
@@ -61,9 +62,12 @@ public class MCPJobManager {
     private final ScheduledExecutorService progressExecutor;
     private final long safeReturnMillis;
     private final long progressIntervalMillis;
-    private final Map<String, JobExecution> jobs = new ConcurrentHashMap<>();
     private final ObjectMapper mapper = new ObjectMapper();
     private final MCPToolAsyncJobManager asyncJobManager;
+
+    private static final class ScopeState {
+        private final Map<String, JobExecution> jobs = new ConcurrentHashMap<>();
+    }
 
     public MCPJobManager(int workThreads, int progressThreads, long safeReturnMillis, long progressIntervalMillis, AsyncJobManager asyncJobManager) {
         this.workExecutor = Executors.newFixedThreadPool(workThreads);
@@ -95,13 +99,23 @@ public class MCPJobManager {
     private JobExecution createAndQueueJob(String toolName, ProgressStrategy progressStrategy) {
         String token = UUID.randomUUID().toString();
         JobExecution exec = new JobExecution(token, toolName, progressStrategy);
-        jobs.put(token, exec);
+        getScopeState().jobs.put(token, exec);
         log.info("Queued job {} for tool {}", token, toolName);
         return exec;
     }
     
     private CompletableFuture<CallToolResult> startJobExecution(McpSyncServerExchange exchange, JobExecution exec, Callable<CallToolResult> work, boolean sendNotifications) {
-        CompletableFuture<CallToolResult> future = CompletableFuture.supplyAsync(() -> executeWork(exchange, exec, work, sendNotifications), workExecutor)
+        // Capture the calling thread's execution context so that the worker thread inherits
+        // the same isolation scope (auth scope key, transient sessions) when executing the work.
+        var parentContext = FcliExecutionContextHolder.current();
+        CompletableFuture<CallToolResult> future = CompletableFuture.supplyAsync(() -> {
+            FcliExecutionContextHolder.push(parentContext.createChild());
+            try {
+                return executeWork(exchange, exec, work, sendNotifications);
+            } finally {
+                FcliExecutionContextHolder.pop();
+            }
+        }, workExecutor)
             .whenComplete((res, t) -> handleJobCompletion(exchange, exec, res, t, sendNotifications));
         exec.future = future;
         return future;
@@ -170,7 +184,7 @@ public class MCPJobManager {
         while ( System.currentTimeMillis()-start < safeReturnMillis ) {
             if ( future.isDone() ) {
                 exec.cleanup();
-                jobs.remove(exec.token);
+                getScopeState().jobs.remove(exec.token);
                 return exec.result!=null?exec.result:buildErrorResult(exec.token, exec.toolName, "No result");
             }
             sleep(100);
@@ -208,7 +222,7 @@ public class MCPJobManager {
     private JobExecution createRunningJob(String toolName, ProgressStrategy progressStrategy) {
         String token = UUID.randomUUID().toString();
         JobExecution exec = new JobExecution(token, toolName, progressStrategy);
-        jobs.put(token, exec);
+        getScopeState().jobs.put(token, exec);
         exec.status = JobStatus.RUNNING;
         exec.startTime = Instant.now();
         log.info("Tracking external future as job {} tool {}", token, toolName);
@@ -291,7 +305,7 @@ public class MCPJobManager {
         if ( token==null || op==null ) {
             return CallToolResult.builder().addTextContent("Missing job_token or operation").isError(true).build();
         }
-        JobExecution exec = jobs.get(token);
+        JobExecution exec = getScopeState().jobs.get(token);
         try {
             return JobOperation.valueOf(op.toUpperCase()).apply(this, exec, token);
         } catch ( IllegalArgumentException e ) {
@@ -333,7 +347,7 @@ public class MCPJobManager {
         }
         if ( exec.future!=null && exec.future.isDone() ) {
             exec.cleanup();
-            jobs.remove(token);
+            getScopeState().jobs.remove(token);
         }
         return status(exec, token);
     }
@@ -514,6 +528,10 @@ public class MCPJobManager {
             default -> root.put("message", status);
         }
         return root.toPrettyString();
+    }
+
+    private ScopeState getScopeState() {
+        return FcliExecutionContextHolder.current().getIsolationScope().getOrCreateScopedState(ScopeState.class, ScopeState::new);
     }
 
     private static enum JobOperation {

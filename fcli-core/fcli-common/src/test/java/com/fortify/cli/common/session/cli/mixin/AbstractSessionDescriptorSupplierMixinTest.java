@@ -29,7 +29,7 @@ class AbstractSessionDescriptorSupplierMixinTest {
         var transientDescriptor = new DummySessionDescriptor("transient");
         FcliExecutionContextHolder.pushNew();
         try {
-            FcliExecutionContextHolder.current().setTransientSessionDescriptor(transientDescriptor);
+            FcliExecutionContextHolder.current().getIsolationScope().setTransientSessionDescriptor(transientDescriptor);
 
             var result = supplier.getSessionDescriptor();
 
@@ -45,7 +45,7 @@ class AbstractSessionDescriptorSupplierMixinTest {
         var supplier = new DummySessionDescriptorSupplier();
         FcliExecutionContextHolder.pushNew();
         try {
-            FcliExecutionContextHolder.current().setTransientSessionDescriptor(new OtherSessionDescriptor());
+            FcliExecutionContextHolder.current().getIsolationScope().setTransientSessionDescriptor(new OtherSessionDescriptor());
 
             var result = supplier.getSessionDescriptor();
 
@@ -62,7 +62,7 @@ class AbstractSessionDescriptorSupplierMixinTest {
         var transientDescriptor = new DummySessionDescriptor("transient");
         FcliExecutionContextHolder.pushNew();
         try {
-            FcliExecutionContextHolder.current().setTransientSessionDescriptor(transientDescriptor);
+            FcliExecutionContextHolder.current().getIsolationScope().setTransientSessionDescriptor(transientDescriptor);
             FcliExecutionContextHolder.pushNew();
             try {
                 var result = supplier.getSessionDescriptor();

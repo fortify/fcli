@@ -34,10 +34,13 @@ import com.fortify.cli.common.concurrent.job.IAsyncTask;
  * or {@link #getOrStartBackground(String, boolean, IAsyncTask)}.
  */
 public class MCPToolAsyncJobManager {
+    private static final class ScopeState {
+        private final CachingJobEventListener cachingListener = new CachingJobEventListener();
+        private final Map<String, String> jobTokens = new ConcurrentHashMap<>();
+    }
+
     private final AsyncJobManager delegate;
     private final MCPJobManager jobManager;
-    private final CachingJobEventListener cachingListener = new CachingJobEventListener();
-    private final Map<String, String> jobTokens = new ConcurrentHashMap<>();
 
     public MCPToolAsyncJobManager(MCPJobManager jobManager, AsyncJobManager delegate) {
         this.jobManager = jobManager;
@@ -48,10 +51,11 @@ public class MCPToolAsyncJobManager {
      * Return completed result if present and valid, or null.
      */
     public MCPToolResult getCached(String jobId) {
-        if (!cachingListener.isComplete(jobId)) {
+        var scopeState = getScopeState();
+        if (!scopeState.cachingListener.isComplete(jobId)) {
             return null;
         }
-        var page = cachingListener.getPage(jobId, 0, Integer.MAX_VALUE);
+        var page = scopeState.cachingListener.getPage(jobId, 0, Integer.MAX_VALUE);
         var builder = MCPToolResult.builder()
             .exitCode(page.getExitCode())
             .stderr(page.getStderr())
@@ -64,7 +68,7 @@ public class MCPToolAsyncJobManager {
     }
 
     public String getJobToken(String jobId) {
-        return jobTokens.get(jobId);
+        return getScopeState().jobTokens.get(jobId);
     }
 
     /**
@@ -73,32 +77,30 @@ public class MCPToolAsyncJobManager {
      * background job is in progress or was just started.
      */
     public InProgressEntry getOrStartBackground(String jobId, boolean refresh, IAsyncTask task) {
-        if (!refresh && cachingListener.isComplete(jobId)) {
+        var scopeState = getScopeState();
+        if (!refresh && scopeState.cachingListener.isComplete(jobId)) {
             return null;
         }
         if (refresh) {
-            cachingListener.remove(jobId);
-            jobTokens.remove(jobId);
+            scopeState.cachingListener.remove(jobId);
+            scopeState.jobTokens.remove(jobId);
         }
         if (delegate.isRunning(jobId)) {
-            return new InProgressEntry(jobId, cachingListener, jobTokens.get(jobId));
+            return new InProgressEntry(jobId, scopeState.cachingListener, scopeState.jobTokens.get(jobId));
         }
-        // Start new background job with the semantic jobId
-        var transientSessionDescriptors = Map.copyOf(FcliExecutionContextHolder.current().getTransientSessionDescriptors());
         delegate.startBackground(AsyncJobManager.TaskDescriptor.builder()
             .jobId(jobId)
             .task(task)
-            .listener(cachingListener)
+            .listener(scopeState.cachingListener)
             .description("mcp:" + jobId)
-            .executionContextConfigurer(ctx -> transientSessionDescriptors.values().forEach(ctx::setTransientSessionDescriptor))
             .build());
         var future = delegate.getFuture(jobId);
         if (future != null) {
             var jobToken = jobManager.trackFuture("async_job", future,
-                    () -> cachingListener.getLoadedCount(jobId));
-            jobTokens.put(jobId, jobToken);
+                    () -> scopeState.cachingListener.getLoadedCount(jobId));
+            scopeState.jobTokens.put(jobId, jobToken);
         }
-        return new InProgressEntry(jobId, cachingListener, jobTokens.get(jobId));
+        return new InProgressEntry(jobId, scopeState.cachingListener, scopeState.jobTokens.get(jobId));
     }
 
     /** Cancel a background async job if running. */
@@ -109,6 +111,10 @@ public class MCPToolAsyncJobManager {
     /** Shutdown background executor gracefully. */
     public void shutdown() {
         delegate.shutdown();
+    }
+
+    private ScopeState getScopeState() {
+        return FcliExecutionContextHolder.current().getIsolationScope().getOrCreateScopedState(ScopeState.class, ScopeState::new);
     }
 
     /** Thin wrapper giving access to background collection state via CachingJobEventListener. */

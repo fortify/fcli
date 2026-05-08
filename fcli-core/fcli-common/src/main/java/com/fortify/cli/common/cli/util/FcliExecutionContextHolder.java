@@ -21,6 +21,11 @@ import com.fortify.cli.common.session.helper.ISessionDescriptor;
  * Explicit holder for the current thread's execution context stack.
  * Use push()/pop() to manage nested execution contexts. No implicit
  * inheritance to child threads is performed; propagation must be explicit.
+ *
+ * <p>A context must always be pushed explicitly before any code that calls
+ * {@link #current()} — typically at the entry point of each execution path
+ * (plain CLI via {@link FcliExecutionStrategy}, MCP request handlers, RPC
+ * request dispatch). Callers should never rely on automatic context creation.</p>
  */
 public final class FcliExecutionContextHolder {
     private static final ThreadLocal<Deque<FcliExecutionContext>> HOLDER = ThreadLocal.withInitial(ArrayDeque::new);
@@ -30,10 +35,16 @@ public final class FcliExecutionContextHolder {
     /** Push the given context onto the current thread's context stack. */
     public static void push(FcliExecutionContext ctx) { HOLDER.get().push(ctx); }
 
-    /** Push a fresh, empty context and return it. */
+    /**
+     * Push a fresh execution frame, inheriting the current isolation scope when
+     * a parent context is present so nested invocations remain within the same
+     * isolation boundary while still receiving a fresh action state.
+     */
     public static FcliExecutionContext pushNew() { 
-        HOLDER.get().push(new FcliExecutionContext()); 
-        return HOLDER.get().peek(); 
+        var stack = HOLDER.get();
+        var context = stack.isEmpty() ? new FcliExecutionContext() : stack.peek().createChild();
+        stack.push(context);
+        return context; 
     }
 
     /** Pop the current context and return it; returns null if none present. */
@@ -46,13 +57,19 @@ public final class FcliExecutionContextHolder {
     }
 
     /**
-     * Return the current (top) context. If none is present a default
-     * top-level context is created and pushed so this method never returns
-     * null and callers may safely assume a non-null result.
+     * Return the current (top) context.
+     *
+     * @throws IllegalStateException if no context has been pushed on the current thread,
+     *         which indicates a missing push at an execution entry point.
      */
     public static FcliExecutionContext current() { 
-        var stack = HOLDER.get(); 
-        if ( stack.isEmpty() ) { stack.push(new FcliExecutionContext()); } 
+        var stack = HOLDER.get();
+        if ( stack.isEmpty() ) {
+            throw new IllegalStateException(
+                "No FcliExecutionContext on the current thread. "
+                + "Ensure a context is pushed at every execution entry point "
+                + "(CLI command, MCP request, RPC request).");
+        }
         return stack.peek(); 
     }
 
@@ -61,23 +78,11 @@ public final class FcliExecutionContextHolder {
      * through the current thread's execution-context stack.
      */
     public static ISessionDescriptor getTransientSessionDescriptor(String type) {
-        for ( var context : HOLDER.get() ) {
-            var descriptor = context.getTransientSessionDescriptor(type);
-            if ( descriptor != null ) {
-                return descriptor;
-            }
-        }
-        return null;
+        return current().getIsolationScope().getTransientSessionDescriptor(type);
     }
 
     public static String getMcpRequestAuthScopeKey() {
-        for ( var context : HOLDER.get() ) {
-            var authScopeKey = context.getMcpRequestAuthScopeKey();
-            if ( authScopeKey != null ) {
-                return authScopeKey;
-            }
-        }
-        return null;
+        return current().getIsolationScope().getMcpRequestAuthScopeKey();
     }
     
     /** Return the current stack depth. Useful for logging/troubleshooting. */

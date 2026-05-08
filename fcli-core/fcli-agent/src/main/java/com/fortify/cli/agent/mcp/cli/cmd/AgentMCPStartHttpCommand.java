@@ -26,6 +26,8 @@ import com.fortify.cli.agent.mcp.helper.http.JdkHttpServerMcpStatelessTransport;
 import com.fortify.cli.agent.mcp.helper.http.MCPServerHttpConfigLoader;
 import com.fortify.cli.agent.mcp.helper.http.MCPServerHttpSessionDescriptorResolver;
 import com.fortify.cli.common.cli.cmd.AbstractRunnableCommand;
+import com.fortify.cli.common.cli.util.FcliActionState;
+import com.fortify.cli.common.cli.util.FcliExecutionContext;
 import com.fortify.cli.common.cli.util.FcliExecutionContextHolder;
 import com.fortify.cli.common.concurrent.job.AsyncJobManager;
 import com.fortify.cli.common.exception.FcliSimpleException;
@@ -137,12 +139,9 @@ public class AgentMCPStartHttpCommand extends AbstractRunnableCommand {
             MCPServerHttpSessionDescriptorResolver sessionDescriptorResolver,
             Supplier<T> supplier)
     {
-        var executionContext = FcliExecutionContextHolder.pushNew();
+        var isolationScope = sessionDescriptorResolver.getOrCreateIsolationScope(transportContext);
+        FcliExecutionContextHolder.push(new FcliExecutionContext(isolationScope, new FcliActionState()));
         try {
-            // HTTP MCP is stateless, so per-request auth/session data must be attached here
-            // for downstream session resolution and paged/background job isolation.
-            executionContext.setMcpRequestAuthScopeKey(sessionDescriptorResolver.getAuthScopeKey(transportContext));
-            executionContext.setTransientSessionDescriptor(sessionDescriptorResolver.getOrCreateSessionDescriptor(transportContext));
             return supplier.get();
         } finally {
             FcliExecutionContextHolder.pop();

@@ -22,11 +22,18 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fortify.cli.agent.mcp.helper.MCPJobManager;
+import com.fortify.cli.common.cli.util.FcliActionState;
+import com.fortify.cli.common.cli.util.FcliExecutionContext;
+import com.fortify.cli.common.cli.util.FcliExecutionContextHolder;
+import com.fortify.cli.common.cli.util.FcliIsolationScope;
 import com.fortify.cli.common.concurrent.job.AsyncJobManager;
 
+import io.modelcontextprotocol.spec.McpSchema.CallToolRequest;
 import io.modelcontextprotocol.spec.McpSchema.CallToolResult;
+import io.modelcontextprotocol.spec.McpSchema.TextContent;
 
 /**
  * Unit tests for {@link MCPJobManager}. Tests basic job lifecycle management,
@@ -44,11 +51,13 @@ class MCPJobManagerTest {
         // Create job manager with short timeout for testing
         jobManager = new MCPJobManager(4, 2, 500, 100, new AsyncJobManager());
         objectMapper = new ObjectMapper();
+        // Tests run outside of a server request, so push a fresh root context.
+        FcliExecutionContextHolder.pushNew();
     }
     
     @AfterEach
     void tearDown() {
-        // Job manager doesn't need explicit shutdown for these tests
+        FcliExecutionContextHolder.pop();
     }
     
     @Test
@@ -230,5 +239,59 @@ class MCPJobManagerTest {
         assertFalse(result.isError());
         // Ticking strategy should have incremented the counter during progress updates
         // Note: The exact count depends on timing, but should be > 0
+    }
+
+    @Test
+    void jobToolShouldOnlySeeJobsFromCurrentIsolationScope() throws Exception {
+        var scopeOne = new FcliIsolationScope();
+        var scopeTwo = new FcliIsolationScope();
+        var jobToken = withIsolationScope(scopeOne,
+                () -> jobManager.trackFuture("scoped_test_tool",
+                        CompletableFuture.completedFuture("done"),
+                        MCPJobManager.recordCounter(new AtomicInteger())));
+
+        var scopeTwoStatus = withIsolationScope(scopeTwo, () -> getJobStatus(jobToken));
+        assertEquals("not_found", scopeTwoStatus.path("status").asText());
+        assertEquals(jobToken, scopeTwoStatus.path("job_token").asText());
+
+        var scopeOneStatus = withIsolationScope(scopeOne, () -> getJobStatus(jobToken));
+        assertNotEquals("not_found", scopeOneStatus.path("status").asText());
+        assertEquals(jobToken, scopeOneStatus.path("job_token").asText());
+        assertEquals("scoped_test_tool", scopeOneStatus.path("tool").asText());
+    }
+
+    private JsonNode getJobStatus(String jobToken) {
+        var request = new CallToolRequest(MCPJobManager.JOB_TOOL_NAME,
+                java.util.Map.of("operation", "status", "job_token", jobToken));
+        var result = jobManager.getJobToolSpecification().callHandler().apply(null, request);
+        return parseToolResult(result);
+    }
+
+    private JsonNode parseToolResult(CallToolResult result) {
+        var text = result.content().stream()
+                .filter(TextContent.class::isInstance)
+                .map(TextContent.class::cast)
+                .map(TextContent::text)
+                .findFirst()
+                .orElseThrow();
+        try {
+            return objectMapper.readTree(text);
+        } catch (Exception e) {
+            throw new RuntimeException("Error parsing MCP job tool result", e);
+        }
+    }
+
+    private <T> T withIsolationScope(FcliIsolationScope isolationScope, ThrowingSupplier<T> supplier) throws Exception {
+        FcliExecutionContextHolder.push(new FcliExecutionContext(isolationScope, new FcliActionState()));
+        try {
+            return supplier.get();
+        } finally {
+            FcliExecutionContextHolder.pop();
+        }
+    }
+
+    @FunctionalInterface
+    private interface ThrowingSupplier<T> {
+        T get() throws Exception;
     }
 }

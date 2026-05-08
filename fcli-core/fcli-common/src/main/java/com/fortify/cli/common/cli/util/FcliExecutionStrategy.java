@@ -54,13 +54,17 @@ public final class FcliExecutionStrategy implements IExecutionStrategy {
     public int execute(ParseResult parseResult) throws CommandLine.ExecutionException {
         var leaf = getLeafParseResult(parseResult);
         var leafSpec = leaf.commandSpec();
-        var execCtx = FcliExecutionContextHolder.current();
+        // Push a context for this command execution. pushNew() inherits the current
+        // isolation scope when called from inside a server request (MCP/RPC), or
+        // creates a fresh root context for plain CLI invocations.
+        var execCtx = FcliExecutionContextHolder.pushNew();
         try {
             log.debug("Starting command execution; execInfo={} command={}", execCtx.info(), leafSpec.qualifiedName());
             initializeCommand(leafSpec);
             return delegate.execute(parseResult);
         } finally {
             log.debug("Finished command execution; execInfo={} command={}", execCtx.info(), leafSpec.qualifiedName());
+            FcliExecutionContextHolder.pop();
         }
     }
 

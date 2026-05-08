@@ -20,6 +20,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
@@ -49,8 +50,11 @@ import com.fortify.cli.common.action.model.ActionFunction;
 import com.fortify.cli.common.action.model.ActionMcpIncludeExclude;
 import com.fortify.cli.common.action.runner.ActionFunctionExecutor;
 import com.fortify.cli.common.cli.cmd.AbstractRunnableCommand;
+import com.fortify.cli.common.cli.util.FcliActionState;
 import com.fortify.cli.common.cli.util.FcliCommandSpecHelper;
 import com.fortify.cli.common.cli.util.FcliExecutionContext;
+import com.fortify.cli.common.cli.util.FcliExecutionContextHolder;
+import com.fortify.cli.common.cli.util.FcliIsolationScope;
 import com.fortify.cli.common.cli.util.StdioHelper;
 import com.fortify.cli.common.concurrent.job.AsyncJobManager;
 import com.fortify.cli.common.concurrent.job.cli.mixin.AsyncJobManagerMixin;
@@ -94,7 +98,8 @@ public class AgentMCPStartStdioCommand extends AbstractRunnableCommand {
     @Mixin private AsyncJobManagerMixin asyncJobManagerMixin;
     private static final AsyncJobManager.Config MCP_ASYNC_DEFAULTS = AsyncJobManager.Config.builder().build();
     private static final DateTimePeriodHelper PERIOD_HELPER = DateTimePeriodHelper.byRange(Period.MILLISECONDS, Period.MINUTES);
-    private final FcliExecutionContext sharedFunctionContext = new FcliExecutionContext();
+    private final FcliIsolationScope sharedIsolationScope = new FcliIsolationScope();
+    private final FcliExecutionContext sharedFunctionContext = new FcliExecutionContext(sharedIsolationScope, new FcliActionState());
     private MCPJobManager jobManager;
 
     @Override
@@ -178,6 +183,7 @@ public class AgentMCPStartStdioCommand extends AbstractRunnableCommand {
             result.addAll(module.getSubcommandsStream()
                     .filter(spec->!FcliCommandSpecHelper.isMcpIgnored(spec))
                     .map(this::createCommandToolSpec)
+                    .map(this::wrapToolSpec)
                     .peek(s->log.debug("Registering cmd tool: {}", s.tool().name()))
                     .toList());
             if ( module.hasActionCmd() ) {
@@ -192,7 +198,7 @@ public class AgentMCPStartStdioCommand extends AbstractRunnableCommand {
             }
         }
         // Job management tool
-        result.add(jobManager.getJobToolSpecification());
+        result.add(wrapToolSpec(jobManager.getJobToolSpecification()));
         return result;
     }
 
@@ -204,7 +210,7 @@ public class AgentMCPStartStdioCommand extends AbstractRunnableCommand {
                 result.addAll(createImportedFunctionResourceTemplateSpecs(action));
             }
         }
-        return result;
+        return result.stream().map(this::wrapResourceTemplateSpec).toList();
     }
 
     private List<SyncToolSpecification> createActionToolSpecs() {
@@ -212,7 +218,7 @@ public class AgentMCPStartStdioCommand extends AbstractRunnableCommand {
         var validationHandler = ActionValidationHandler.WARN;
         return ActionLoaderHelper.streamAsActions(actionSources, validationHandler)
                 .filter(this::includeActionAsMcpTool)
-                .map(a->new ActionToolSpecHelper(module.toString(), a).createToolSpec())
+            .map(a->wrapToolSpec(new ActionToolSpecHelper(module.toString(), a).createToolSpec()))
                 .peek(s->log.debug("Registering action tool: {}", s.tool().name()))
                 .toList();
     }
@@ -228,6 +234,27 @@ public class AgentMCPStartStdioCommand extends AbstractRunnableCommand {
 
     private SyncToolSpecification createCommandToolSpec(CommandSpec spec) {
         return new CommandToolSpecHelper(spec).createToolSpec();
+    }
+
+    private SyncToolSpecification wrapToolSpec(SyncToolSpecification specification) {
+        return McpServerFeatures.SyncToolSpecification.builder()
+                .tool(specification.tool())
+                .callHandler((ctx, request) -> withSharedExecutionContext(() -> specification.callHandler().apply(ctx, request)))
+                .build();
+    }
+
+    private SyncResourceTemplateSpecification wrapResourceTemplateSpec(SyncResourceTemplateSpecification specification) {
+        return new SyncResourceTemplateSpecification(specification.resourceTemplate(),
+                (ctx, request) -> withSharedExecutionContext(() -> specification.readHandler().apply(ctx, request)));
+    }
+
+    private <T> T withSharedExecutionContext(Supplier<T> supplier) {
+        FcliExecutionContextHolder.push(new FcliExecutionContext(sharedIsolationScope, new FcliActionState()));
+        try {
+            return supplier.get();
+        } finally {
+            FcliExecutionContextHolder.pop();
+        }
     }
 
     private Action loadImportedAction(String importFile) {

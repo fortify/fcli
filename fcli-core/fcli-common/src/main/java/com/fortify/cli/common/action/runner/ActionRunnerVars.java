@@ -67,7 +67,7 @@ public final class ActionRunnerVars {
     public ActionRunnerVars(IConfigurableSpelEvaluator spelEvaluator, ObjectNode cliOptions) {
         this.spelEvaluator = spelEvaluator;
         this.values = objectMapper.createObjectNode();
-        this.globalActionValues = FcliExecutionContextHolder.current().getGlobalActionValues();
+        this.globalActionValues = FcliExecutionContextHolder.current().getActionState().getGlobalActionValues();
         this.values.set(GLOBAL_VAR_NAME, this.globalActionValues);
         this.values.set(CLI_OPTIONS_VAR_NAME, cliOptions);
         this.parent = null;

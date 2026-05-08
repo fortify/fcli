@@ -24,6 +24,7 @@ import com.fortify.cli.common.action.helper.ActionLoaderHelper.ActionValidationH
 import com.fortify.cli.common.action.runner.ActionRunner;
 import com.fortify.cli.common.action.runner.ActionRunnerConfig;
 import com.fortify.cli.common.action.runner.processor.ActionCliOptionsProcessor.ActionOptionHelper;
+import com.fortify.cli.common.cli.util.FcliExecutionContextHolder;
 import com.fortify.cli.common.cli.util.SimpleOptionsParser.OptionsParseResult;
 import com.fortify.cli.common.progress.helper.ProgressWriterI18n;
 import com.fortify.cli.common.progress.helper.ProgressWriterType;
@@ -60,7 +61,12 @@ public class RunBuildTimeFcliAction {
                     .progressWriter(progressWriter)
                     .onValidationErrors(RunBuildTimeFcliAction::onValidationErrors)
                     .build();
-            new ActionRunner(config).run(actionArgs);
+            FcliExecutionContextHolder.pushNew();
+            try {
+                new ActionRunner(config).run(actionArgs);
+            } finally {
+                FcliExecutionContextHolder.pop();
+            }
         }
     }
     

@@ -42,7 +42,7 @@ public class FcliConcurrencyTest {
                 var cli = JsonHelper.getObjectMapper().createObjectNode();
                 var vars = new ActionRunnerVars(null, cli);
                 vars.set("global.foo", new TextNode("v1"));
-                return FcliExecutionContextHolder.current().getGlobalActionValues().get("foo").asText();
+                return FcliExecutionContextHolder.current().getActionState().getGlobalActionValues().get("foo").asText();
             } finally {
                 FcliExecutionContextHolder.pop();
             }
@@ -53,7 +53,7 @@ public class FcliConcurrencyTest {
                 var cli = JsonHelper.getObjectMapper().createObjectNode();
                 var vars = new ActionRunnerVars(null, cli);
                 vars.set("global.foo", new TextNode("v2"));
-                return FcliExecutionContextHolder.current().getGlobalActionValues().get("foo").asText();
+                return FcliExecutionContextHolder.current().getActionState().getGlobalActionValues().get("foo").asText();
             } finally {
                 FcliExecutionContextHolder.pop();
             }

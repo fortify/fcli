@@ -29,6 +29,9 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fortify.cli.common.cli.util.FcliActionState;
+import com.fortify.cli.common.cli.util.FcliExecutionContext;
+import com.fortify.cli.common.cli.util.FcliExecutionContextHolder;
 import com.fortify.cli.common.json.JsonHelper;
 
 import lombok.extern.slf4j.Slf4j;
@@ -220,7 +223,13 @@ public final class RPCServer {
         }
         
         try {
-            JsonNode result = handler.execute(request.params());
+            FcliExecutionContextHolder.push(new FcliExecutionContext(registry.getIsolationScope(), new FcliActionState()));
+            JsonNode result;
+            try {
+                result = handler.execute(request.params());
+            } finally {
+                FcliExecutionContextHolder.pop();
+            }
             return RPCResponse.success(request.id(), result);
         } catch (RPCMethodException e) {
             return RPCResponse.error(request.id(), e.toJsonRpcError());

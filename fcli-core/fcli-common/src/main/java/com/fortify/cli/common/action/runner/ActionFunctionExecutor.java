@@ -77,7 +77,7 @@ public final class ActionFunctionExecutor {
      *         For streaming functions: an IActionStepForEachProcessor.
      */
     public Object execute(ObjectNode argsNode) {
-        FcliExecutionContextHolder.push(contextSupplier.get());
+        FcliExecutionContextHolder.push(contextSupplier.get().createChildWithSharedActionState());
         try {
             var config = ActionRunnerConfig.builder()
                     .action(action)

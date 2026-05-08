@@ -17,7 +17,6 @@ import java.util.Optional;
 
 import com.fortify.cli.agent.mcp.helper.MCPJobManager;
 import com.fortify.cli.agent.mcp.helper.arg.MCPToolArgHandlerPaging;
-import com.fortify.cli.common.cli.util.FcliExecutionContextHolder;
 
 import io.modelcontextprotocol.spec.McpSchema.CallToolRequest;
 import io.modelcontextprotocol.spec.McpSchema.CallToolResult;
@@ -29,10 +28,9 @@ import lombok.extern.slf4j.Slf4j;
  * Callers supply a {@link BackgroundStarter} that encapsulates how to start or resume
  * background record collection; this class owns the cache-check, wait, and result assembly.
  * <p>
- * In HTTP mode, paged/background execution must be isolated per request auth context.
- * This helper enforces that boundary by scoping semantic job IDs with the hashed auth
- * scope stored in the current {@link FcliExecutionContextHolder} context before any cache
- * or background-job lookup occurs.
+ * Paged/background execution is isolated through the current execution context's
+ * shared isolation scope. Callers use semantic job IDs directly; cache and job
+ * registry lookups are already partitioned by the active scope.
  *
  * @author Ruud Senden
  */
@@ -70,36 +68,22 @@ final class MCPToolFcliPagedHelper {
      * resuming background collection via the supplied {@link BackgroundStarter}.
      */
     CallToolResult run(String jobId, PageParams pageParams, BackgroundStarter starter) {
-        var scopedJobId = scopeJobId(jobId);
         try {
-            return tryGetCachedResult(scopedJobId, pageParams)
+            return tryGetCachedResult(jobId, pageParams)
                 .or(() -> {
                     try {
-                        return tryGetInProgressResult(scopedJobId, pageParams, starter);
+                        return tryGetInProgressResult(jobId, pageParams, starter);
                     } catch (InterruptedException e) {
                         Thread.currentThread().interrupt();
                         throw new RuntimeException("Interrupted while waiting for records", e);
                     }
                 })
-                .orElseThrow(() -> new IllegalStateException("No result path succeeded for: " + scopedJobId));
+                .orElseThrow(() -> new IllegalStateException("No result path succeeded for: " + jobId));
         } catch (Exception e) {
             log.warn("Paged helper failed jobId='{}' offset={} limit={} error={}",
-                scopedJobId, pageParams.offset, pageParams.limit, e.toString());
+                jobId, pageParams.offset, pageParams.limit, e.toString());
             return MCPToolResult.fromError(e).asCallToolResult();
         }
-    }
-
-    /**
-     * Scope a semantic job ID by the current request auth context when present.
-     *
-     * In stateless HTTP MCP mode, two clients may invoke the same tool with identical
-     * arguments but different credentials. Using an auth-scoped key prevents those
-     * requests from sharing cached pages or background job state. Callers that interact
-     * with paged/background async state must use the scoped key consistently.
-     */
-    static String scopeJobId(String jobId) {
-        var authScopeKey = FcliExecutionContextHolder.getMcpRequestAuthScopeKey();
-        return authScopeKey == null ? jobId : authScopeKey + "|" + jobId;
     }
 
     private Optional<CallToolResult> tryGetCachedResult(String jobId, PageParams params) {

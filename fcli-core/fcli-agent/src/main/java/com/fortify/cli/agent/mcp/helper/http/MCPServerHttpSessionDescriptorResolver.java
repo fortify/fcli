@@ -26,7 +26,9 @@ import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
 
+import com.fortify.cli.common.cli.util.FcliActionState;
 import com.fortify.cli.common.cli.util.FcliExecutionContext;
+import com.fortify.cli.common.cli.util.FcliIsolationScope;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.rest.unirest.config.UrlConfig;
 import com.fortify.cli.common.session.helper.ISessionDescriptor;
@@ -71,14 +73,21 @@ public final class MCPServerHttpSessionDescriptorResolver {
             return size() > MAX_SESSION_DESCRIPTOR_CACHE_SIZE;
         }
     };
-    private final Map<String, FcliExecutionContext> functionContextCache = new LinkedHashMap<>(16, 0.75f, true) {
+    private final Map<String, FcliIsolationScope> isolationScopeCache = new LinkedHashMap<>(16, 0.75f, true) {
         private static final long serialVersionUID = 1L;
 
         @Override
-        protected boolean removeEldestEntry(Map.Entry<String, FcliExecutionContext> eldest) {
+        protected boolean removeEldestEntry(Map.Entry<String, FcliIsolationScope> eldest) {
             return size() > MAX_SESSION_DESCRIPTOR_CACHE_SIZE;
         }
     };
+    private static final class FunctionContextState {
+        private final FcliExecutionContext context;
+
+        private FunctionContextState(FcliIsolationScope isolationScope) {
+            this.context = new FcliExecutionContext(isolationScope, new FcliActionState());
+        }
+    }
 
     public ISessionDescriptor getOrCreateSessionDescriptor(McpTransportContext transportContext) {
         var cacheKey = createAuthCacheKey(transportContext);
@@ -93,13 +102,37 @@ public final class MCPServerHttpSessionDescriptorResolver {
      * {@code global.*} action variables are not shared across different callers.
      */
     public FcliExecutionContext getOrCreateFunctionContext(String authScopeKey) {
-        synchronized (functionContextCache) {
-            return functionContextCache.computeIfAbsent(authScopeKey, ignored -> new FcliExecutionContext());
+        var isolationScope = getOrCreateIsolationScope(authScopeKey);
+        return isolationScope.getOrCreateScopedState(FunctionContextState.class,
+                () -> new FunctionContextState(isolationScope)).context;
+    }
+
+    public FcliIsolationScope getOrCreateIsolationScope(McpTransportContext transportContext) {
+        var authScopeKey = createAuthCacheKey(transportContext);
+        synchronized (isolationScopeCache) {
+            return isolationScopeCache.computeIfAbsent(authScopeKey, ignored -> createIsolationScope(authScopeKey, transportContext));
         }
     }
 
     public String getAuthScopeKey(McpTransportContext transportContext) {
         return createAuthCacheKey(transportContext);
+    }
+
+    private FcliIsolationScope getOrCreateIsolationScope(String authScopeKey) {
+        synchronized (isolationScopeCache) {
+            var result = isolationScopeCache.get(authScopeKey);
+            if ( result == null ) {
+                throw new IllegalStateException("No isolation scope found for auth scope key");
+            }
+            return result;
+        }
+    }
+
+    private FcliIsolationScope createIsolationScope(String authScopeKey, McpTransportContext transportContext) {
+        var result = new FcliIsolationScope();
+        result.setMcpRequestAuthScopeKey(authScopeKey);
+        result.setTransientSessionDescriptor(getOrCreateSessionDescriptor(transportContext));
+        return result;
     }
 
     String createAuthCacheKey(McpTransportContext transportContext) {
