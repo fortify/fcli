@@ -12,6 +12,7 @@
  */
 package com.fortify.cli.app.runner.util;
 
+import java.net.Socket;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -23,10 +24,13 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLEngine;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
+import javax.net.ssl.X509ExtendedTrustManager;
 import javax.net.ssl.X509TrustManager;
 
 import org.apache.commons.lang3.StringUtils;
@@ -96,24 +100,29 @@ public final class FortifyCLIStaticInitializer {
     }
 
     private void initializePlatformTrustStore() {
+        if ("true".equalsIgnoreCase(System.getenv("FCLI_DISABLE_OS_TRUSTSTORE"))
+                || "1".equals(System.getenv("FCLI_DISABLE_OS_TRUSTSTORE"))) {
+            log.debug("OS trust store merge disabled via FCLI_DISABLE_OS_TRUSTSTORE");
+            return;
+        }
         KeyStore platformKeyStore = loadPlatformKeyStore();
         if (platformKeyStore == null) {
             return; // No OS trust store available on this platform or in this runtime
         }
 
         List<X509TrustManager> managers = new ArrayList<>();
-        addTrustManagerFromKeyStore(managers, null); // null = read from javax.net.ssl.trustStore system props
+        addTrustManagerFromKeyStore(managers, null); // null = use javax.net.ssl.trustStore system props
         addTrustManagerFromKeyStore(managers, platformKeyStore);
 
         if (managers.size() < 2) {
-            return; // Nothing new to composite
+            return; // Nothing new to add; skip installing a composite context
         }
 
         try {
             SSLContext ctx = SSLContext.getInstance("TLS");
             ctx.init(null, new TrustManager[]{new CompositeX509TrustManager(managers)}, null);
             SSLContext.setDefault(ctx);
-            log.debug("Composite SSL context installed: configured trust store + OS trust store");
+            log.info("Composite SSL context installed: configured trust store + OS trust store");
         } catch (GeneralSecurityException e) {
             log.warn("Could not install composite SSL context with OS trust store: " + e.getMessage());
         }
@@ -200,7 +209,7 @@ public final class FortifyCLIStaticInitializer {
         Locale.setDefault(LanguageHelper.getConfiguredLanguageDescriptor().getLocale());
     }
 
-    private static final class CompositeX509TrustManager implements X509TrustManager {
+    private static final class CompositeX509TrustManager extends X509ExtendedTrustManager {
         private final List<X509TrustManager> delegates;
 
         CompositeX509TrustManager(List<X509TrustManager> delegates) {
@@ -209,29 +218,67 @@ public final class FortifyCLIStaticInitializer {
 
         @Override
         public void checkClientTrusted(X509Certificate[] chain, String authType) throws CertificateException {
-            CertificateException last = null;
-            for (X509TrustManager tm : delegates) {
-                try { tm.checkClientTrusted(chain, authType); return; }
-                catch (CertificateException e) { last = e; }
-            }
-            if (last != null) throw last;
+            tryEach(tm -> tm.checkClientTrusted(chain, authType));
         }
 
         @Override
         public void checkServerTrusted(X509Certificate[] chain, String authType) throws CertificateException {
-            CertificateException last = null;
-            for (X509TrustManager tm : delegates) {
-                try { tm.checkServerTrusted(chain, authType); return; }
-                catch (CertificateException e) { last = e; }
-            }
-            if (last != null) throw last;
+            tryEach(tm -> tm.checkServerTrusted(chain, authType));
+        }
+
+        @Override
+        public void checkClientTrusted(X509Certificate[] chain, String authType, Socket socket) throws CertificateException {
+            tryEach(tm -> {
+                if (tm instanceof X509ExtendedTrustManager ext) { ext.checkClientTrusted(chain, authType, socket); }
+                else { tm.checkClientTrusted(chain, authType); }
+            });
+        }
+
+        @Override
+        public void checkClientTrusted(X509Certificate[] chain, String authType, SSLEngine engine) throws CertificateException {
+            tryEach(tm -> {
+                if (tm instanceof X509ExtendedTrustManager ext) { ext.checkClientTrusted(chain, authType, engine); }
+                else { tm.checkClientTrusted(chain, authType); }
+            });
+        }
+
+        @Override
+        public void checkServerTrusted(X509Certificate[] chain, String authType, Socket socket) throws CertificateException {
+            tryEach(tm -> {
+                if (tm instanceof X509ExtendedTrustManager ext) { ext.checkServerTrusted(chain, authType, socket); }
+                else { tm.checkServerTrusted(chain, authType); }
+            });
+        }
+
+        @Override
+        public void checkServerTrusted(X509Certificate[] chain, String authType, SSLEngine engine) throws CertificateException {
+            tryEach(tm -> {
+                if (tm instanceof X509ExtendedTrustManager ext) { ext.checkServerTrusted(chain, authType, engine); }
+                else { tm.checkServerTrusted(chain, authType); }
+            });
         }
 
         @Override
         public X509Certificate[] getAcceptedIssuers() {
             return delegates.stream()
-                .flatMap(tm -> Arrays.stream(tm.getAcceptedIssuers()))
+                .map(X509TrustManager::getAcceptedIssuers)
+                .filter(Objects::nonNull)
+                .flatMap(Arrays::stream)
                 .toArray(X509Certificate[]::new);
+        }
+
+        private void tryEach(TrustCheckFactory check) throws CertificateException {
+            CertificateException last = null;
+            for (X509TrustManager tm : delegates) {
+                try { check.check(tm); return; }
+                catch (CertificateException e) { last = e; }
+            }
+            if (last != null) throw last;
+        }
+
+        @FunctionalInterface
+        private interface TrustCheckFactory {
+            void check(X509TrustManager tm) throws CertificateException;
         }
     }
 }
