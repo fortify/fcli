@@ -56,6 +56,27 @@ class AbstractSessionDescriptorSupplierMixinTest {
         }
     }
 
+    @Test
+    void transientSessionDescriptorIsFoundInNestedParentContext() {
+        var supplier = new DummySessionDescriptorSupplier();
+        var transientDescriptor = new DummySessionDescriptor("transient");
+        FcliExecutionContextHolder.pushNew();
+        try {
+            FcliExecutionContextHolder.current().setTransientSessionDescriptor(transientDescriptor);
+            FcliExecutionContextHolder.pushNew();
+            try {
+                var result = supplier.getSessionDescriptor();
+
+                assertSame(transientDescriptor, result);
+                assertEquals(0, supplier.lookupCount);
+            } finally {
+                FcliExecutionContextHolder.pop();
+            }
+        } finally {
+            FcliExecutionContextHolder.pop();
+        }
+    }
+
     private static final class DummySessionDescriptorSupplier extends AbstractSessionDescriptorSupplierMixin<DummySessionDescriptor> {
         private int lookupCount;
 

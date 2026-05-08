@@ -29,7 +29,7 @@ public abstract class AbstractSessionDescriptorSupplierMixin<D extends ISessionD
 
     @SuppressWarnings("unchecked")
     private D getTransientSessionDescriptor() {
-        return (D)FcliExecutionContextHolder.current().getTransientSessionDescriptor(getSessionDescriptorType());
+        return (D)FcliExecutionContextHolder.getTransientSessionDescriptor(getSessionDescriptorType());
     }
     
     public abstract ISessionNameSupplier getSessionNameSupplier();

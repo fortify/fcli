@@ -22,9 +22,14 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.exception.FcliSimpleException;
+import com.fortify.cli.common.rest.unirest.config.IConnectionConfig;
+import com.fortify.cli.common.util.DateTimePeriodHelper;
+import com.fortify.cli.common.util.DateTimePeriodHelper.Period;
 import com.fortify.cli.util._common.helper.AsyncJobManager;
 
+import kong.unirest.Config;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 @Data @NoArgsConstructor @Reflectable
@@ -49,15 +54,51 @@ public class MCPServerHttpConfig {
 
     @Data @NoArgsConstructor @Reflectable
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public static class SscConfig {
-        private String url;
-        private String scSastClientAuthToken;
+    public abstract static class ConnectionConfig implements IConnectionConfig {
+        private static final DateTimePeriodHelper PERIOD_HELPER = DateTimePeriodHelper.byRange(Period.SECONDS, Period.MINUTES);
+
+        private Boolean insecureModeEnabled = false;
+        private String socketTimeout;
+        private String connectTimeout;
+
+        @Override
+        public int getConnectTimeoutInMillis() {
+            return StringUtils.isBlank(connectTimeout)
+                    ? Config.DEFAULT_CONNECT_TIMEOUT
+                    : (int)PERIOD_HELPER.parsePeriodToMillis(connectTimeout);
+        }
+
+        @Override
+        public int getSocketTimeoutInMillis() {
+            return StringUtils.isBlank(socketTimeout)
+                    ? getDefaultSocketTimeoutInMillis()
+                    : (int)PERIOD_HELPER.parsePeriodToMillis(socketTimeout);
+        }
+
+        protected abstract int getDefaultSocketTimeoutInMillis();
     }
 
-    @Data @NoArgsConstructor @Reflectable
+    @Data @NoArgsConstructor @Reflectable @EqualsAndHashCode(callSuper = true)
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public static class FoDConfig {
+    public static class SscConfig extends ConnectionConfig {
         private String url;
+        private String scSastClientAuthToken;
+
+        @Override
+        protected int getDefaultSocketTimeoutInMillis() {
+            return 600000;
+        }
+    }
+
+    @Data @NoArgsConstructor @Reflectable @EqualsAndHashCode(callSuper = true)
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class FoDConfig extends ConnectionConfig {
+        private String url;
+
+        @Override
+        protected int getDefaultSocketTimeoutInMillis() {
+            return 600000;
+        }
     }
 
     public void validate(Path configPath) {
@@ -117,6 +158,8 @@ public class MCPServerHttpConfig {
         if ( StringUtils.isBlank(ssc.getUrl()) ) {
             throw new FcliSimpleException("HTTP MCP config ssc.url must be specified");
         }
+        ssc.getConnectTimeoutInMillis();
+        ssc.getSocketTimeoutInMillis();
     }
 
     private void validateFoDConfig() {
@@ -126,5 +169,7 @@ public class MCPServerHttpConfig {
         if ( StringUtils.isBlank(fod.getUrl()) ) {
             throw new FcliSimpleException("HTTP MCP config fod.url must be specified");
         }
+        fod.getConnectTimeoutInMillis();
+        fod.getSocketTimeoutInMillis();
     }
 }

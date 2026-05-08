@@ -15,6 +15,8 @@ package com.fortify.cli.common.cli.util;
 import java.util.ArrayDeque;
 import java.util.Deque;
 
+import com.fortify.cli.common.session.helper.ISessionDescriptor;
+
 /**
  * Explicit holder for the current thread's execution context stack.
  * Use push()/pop() to manage nested execution contexts. No implicit
@@ -52,6 +54,20 @@ public final class FcliExecutionContextHolder {
         var stack = HOLDER.get(); 
         if ( stack.isEmpty() ) { stack.push(new FcliExecutionContext()); } 
         return stack.peek(); 
+    }
+
+    /**
+     * Look up a transient session descriptor by type, searching from top to bottom
+     * through the current thread's execution-context stack.
+     */
+    public static ISessionDescriptor getTransientSessionDescriptor(String type) {
+        for ( var context : HOLDER.get() ) {
+            var descriptor = context.getTransientSessionDescriptor(type);
+            if ( descriptor != null ) {
+                return descriptor;
+            }
+        }
+        return null;
     }
     
     /** Return the current stack depth. Useful for logging/troubleshooting. */

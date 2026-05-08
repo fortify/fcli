@@ -17,6 +17,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.common.cli.util.FcliExecutionContextHolder;
 import com.fortify.cli.util._common.helper.AsyncJobManager;
 import com.fortify.cli.util._common.helper.CachingJobEventListener;
 import com.fortify.cli.util._common.helper.IAsyncTask;
@@ -73,11 +74,13 @@ public class MCPToolAsyncJobManager {
             return new InProgressEntry(jobId, cachingListener, jobTokens.get(jobId));
         }
         // Start new background job with the semantic jobId
+        var transientSessionDescriptors = Map.copyOf(FcliExecutionContextHolder.current().getTransientSessionDescriptors());
         delegate.startBackground(AsyncJobManager.TaskDescriptor.builder()
             .jobId(jobId)
             .task(task)
             .listener(cachingListener)
             .description("mcp:" + jobId)
+            .executionContextConfigurer(ctx -> transientSessionDescriptors.values().forEach(ctx::setTransientSessionDescriptor))
             .build());
         var future = delegate.getFuture(jobId);
         if (future != null) {
