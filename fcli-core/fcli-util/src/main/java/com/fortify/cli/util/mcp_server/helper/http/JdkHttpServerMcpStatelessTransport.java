@@ -28,11 +28,13 @@ import io.modelcontextprotocol.server.McpStatelessServerHandler;
 import io.modelcontextprotocol.spec.McpError;
 import io.modelcontextprotocol.spec.McpSchema;
 import io.modelcontextprotocol.spec.McpStatelessServerTransport;
+import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Mono;
 
 /**
  * JDK {@link HttpServer}-based MCP stateless transport implementation.
  */
+@Slf4j
 public class JdkHttpServerMcpStatelessTransport implements McpStatelessServerTransport {
     private static final String APPLICATION_JSON = "application/json";
     private static final String TEXT_EVENT_STREAM = "text/event-stream";
@@ -121,8 +123,9 @@ public class JdkHttpServerMcpStatelessTransport implements McpStatelessServerTra
                     .message("Invalid message format")
                     .build());
         } catch (Exception e) {
+            log.error("Unexpected error while handling MCP HTTP request", e);
             sendMcpError(exchange, 500, McpError.builder(McpSchema.ErrorCodes.INTERNAL_ERROR)
-                    .message("Unexpected error: " + e.getMessage())
+                    .message("Unexpected server error")
                     .build());
         }
     }
