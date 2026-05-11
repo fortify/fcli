@@ -55,6 +55,7 @@ import com.fortify.cli.common.cli.util.FcliCommandSpecHelper;
 import com.fortify.cli.common.cli.util.FcliExecutionContext;
 import com.fortify.cli.common.cli.util.FcliExecutionContextHolder;
 import com.fortify.cli.common.cli.util.FcliIsolationScope;
+import com.fortify.cli.common.cli.util.IFcliExecutionContextManager;
 import com.fortify.cli.common.cli.util.StdioHelper;
 import com.fortify.cli.common.concurrent.job.AsyncJobManager;
 import com.fortify.cli.common.concurrent.job.cli.mixin.AsyncJobManagerMixin;
@@ -87,7 +88,7 @@ import picocli.CommandLine.Option;
 @Command(name = "start-stdio")
 @MCPExclude // Doesn't make sense to allow mcp-server start command to be called from MCP server
 @Slf4j
-public class AgentMCPStartStdioCommand extends AbstractRunnableCommand {
+public class AgentMCPStartStdioCommand extends AbstractRunnableCommand implements IFcliExecutionContextManager {
     @Option(names={"--module", "-m"}, required = false) private McpModule module;
     @DisableTest(TestType.MULTI_OPT_PLURAL_NAME)
     @Option(names={"--import"}, split=",") private List<String> importFiles;
@@ -99,7 +100,9 @@ public class AgentMCPStartStdioCommand extends AbstractRunnableCommand {
     private static final AsyncJobManager.Config MCP_ASYNC_DEFAULTS = AsyncJobManager.Config.builder().build();
     private static final DateTimePeriodHelper PERIOD_HELPER = DateTimePeriodHelper.byRange(Period.MILLISECONDS, Period.MINUTES);
     private final FcliIsolationScope sharedIsolationScope = new FcliIsolationScope();
-    private final FcliExecutionContext sharedFunctionContext = new FcliExecutionContext(sharedIsolationScope, new FcliActionState());
+    private final FcliActionState sharedFunctionActionState = new FcliActionState();
+    private final Supplier<FcliExecutionContextHolder.ContextFrame> sharedFunctionFrameSupplier =
+            () -> FcliExecutionContextHolder.push(new FcliExecutionContext(sharedIsolationScope, sharedFunctionActionState));
     private MCPJobManager jobManager;
 
     @Override
@@ -249,11 +252,8 @@ public class AgentMCPStartStdioCommand extends AbstractRunnableCommand {
     }
 
     private <T> T withSharedExecutionContext(Supplier<T> supplier) {
-        FcliExecutionContextHolder.push(new FcliExecutionContext(sharedIsolationScope, new FcliActionState()));
-        try {
+        try (var frame = FcliExecutionContextHolder.push(new FcliExecutionContext(sharedIsolationScope, new FcliActionState()))) {
             return supplier.get();
-        } finally {
-            FcliExecutionContextHolder.pop();
         }
     }
 
@@ -269,7 +269,7 @@ public class AgentMCPStartStdioCommand extends AbstractRunnableCommand {
             var function = entry.getValue();
             if (!function.isExported()) { continue; }
             if (hasMcpResourceMeta(function)) { continue; } // Resources handled separately
-            var executor = new ActionFunctionExecutor(action, function, sharedFunctionContext);
+            var executor = new ActionFunctionExecutor(action, function, sharedFunctionFrameSupplier);
             var toolName = "fcli_fn_" + function.getKey().replace('-', '_');
             var schema = buildFunctionArgsSchema(function);
             var description = function.getDescription() != null ? function.getDescription() : function.getKey();
@@ -289,7 +289,7 @@ public class AgentMCPStartStdioCommand extends AbstractRunnableCommand {
                     .build();
             result.add(McpServerFeatures.SyncToolSpecification.builder()
                     .tool(tool)
-                    .callHandler(runner::run)
+                    .callHandler((ctx, request) -> withSharedExecutionContext(() -> runner.run(ctx, request)))
                     .build());
             log.debug("Registering function tool: {} (streaming={})", toolName, function.isStreaming());
         }
@@ -307,7 +307,7 @@ public class AgentMCPStartStdioCommand extends AbstractRunnableCommand {
             if (uriTemplate == null) { continue; }
             var name = getMetaString(resourceMeta, "name");
             var mimeType = getMetaString(resourceMeta, "mime-type");
-            var executor = new ActionFunctionExecutor(action, function, sharedFunctionContext);
+            var executor = new ActionFunctionExecutor(action, function, sharedFunctionFrameSupplier);
             var template = ResourceTemplate.builder()
                     .uriTemplate(uriTemplate)
                     .name(name != null ? name : function.getKey())

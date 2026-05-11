@@ -15,6 +15,7 @@ package com.fortify.cli.util.rpc_server.helper;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.function.Supplier;
 
 import com.fortify.cli.common.action.helper.ActionLoaderHelper;
 import com.fortify.cli.common.action.helper.ActionLoaderHelper.ActionSource;
@@ -22,6 +23,7 @@ import com.fortify.cli.common.action.helper.ActionLoaderHelper.ActionValidationH
 import com.fortify.cli.common.action.runner.ActionFunctionExecutor;
 import com.fortify.cli.common.cli.util.FcliActionState;
 import com.fortify.cli.common.cli.util.FcliExecutionContext;
+import com.fortify.cli.common.cli.util.FcliExecutionContextHolder;
 import com.fortify.cli.common.cli.util.FcliIsolationScope;
 import com.fortify.cli.common.concurrent.job.AsyncJobManager;
 import com.fortify.cli.common.concurrent.job.CachingJobEventListener;
@@ -99,7 +101,9 @@ public final class RPCMethodHandlerRegistry {
     public static final class Builder {
         private final AsyncJobManager asyncJobManager;
         private final FcliIsolationScope sharedIsolationScope = new FcliIsolationScope();
-        private final FcliExecutionContext sharedFunctionContext = new FcliExecutionContext(sharedIsolationScope, new FcliActionState());
+        private final FcliActionState sharedFunctionActionState = new FcliActionState();
+        private final Supplier<FcliExecutionContextHolder.ContextFrame> sharedFunctionFrameSupplier =
+                () -> FcliExecutionContextHolder.push(new FcliExecutionContext(sharedIsolationScope, sharedFunctionActionState));
         private final Map<String, IRPCMethodHandler> handlers = new LinkedHashMap<>();
         private final Map<String, ActionFunctionExecutor> importedFunctions = new LinkedHashMap<>();
 
@@ -123,7 +127,7 @@ public final class RPCMethodHandlerRegistry {
             for (var entry : action.getFunctions().entrySet()) {
                 var function = entry.getValue();
                 if (!function.isExported()) { continue; }
-                var executor = new ActionFunctionExecutor(action, function, sharedFunctionContext);
+                var executor = new ActionFunctionExecutor(action, function, sharedFunctionFrameSupplier);
                 importedFunctions.put(function.getKey(), executor);
                 log.debug("Imported exported function for fn.call: {}", function.getKey());
             }

@@ -109,11 +109,8 @@ public class MCPJobManager {
         // the same isolation scope (auth scope key, transient sessions) when executing the work.
         var parentContext = FcliExecutionContextHolder.current();
         CompletableFuture<CallToolResult> future = CompletableFuture.supplyAsync(() -> {
-            FcliExecutionContextHolder.push(parentContext.createChild());
-            try {
+            try (var frame = FcliExecutionContextHolder.push(parentContext.createChild())) {
                 return executeWork(exchange, exec, work, sendNotifications);
-            } finally {
-                FcliExecutionContextHolder.pop();
             }
         }, workExecutor)
             .whenComplete((res, t) -> handleJobCompletion(exchange, exec, res, t, sendNotifications));

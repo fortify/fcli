@@ -17,6 +17,7 @@ import java.io.OutputStream;
 import java.util.List;
 
 import com.fortify.cli.common.cli.cmd.AbstractRunnableCommand;
+import com.fortify.cli.common.cli.util.IFcliExecutionContextManager;
 import com.fortify.cli.common.cli.util.StdioHelper;
 import com.fortify.cli.common.concurrent.job.AsyncJobManager;
 import com.fortify.cli.common.concurrent.job.cli.mixin.AsyncJobManagerMixin;
@@ -42,7 +43,7 @@ import picocli.CommandLine.Option;
 @Command(name = OutputHelperMixins.Start.CMD_NAME)
 @MCPExclude
 @Slf4j
-public class RPCServerStartCommand extends AbstractRunnableCommand {
+public class RPCServerStartCommand extends AbstractRunnableCommand implements IFcliExecutionContextManager {
     // Stream overrides for functional tests (RPCServerHelper) that run the server
     // in-process via reflective invocation, where System streams cannot be replaced.
     private static volatile InputStream inputOverride;

@@ -26,33 +26,63 @@ import com.fortify.cli.common.session.helper.ISessionDescriptor;
  * {@link #current()} — typically at the entry point of each execution path
  * (plain CLI via {@link FcliExecutionStrategy}, MCP request handlers, RPC
  * request dispatch). Callers should never rely on automatic context creation.</p>
+ *
+ * <p>The preferred idiom for managing context lifetime is try-with-resources
+ * using the {@link ContextFrame} returned by {@link #push} and {@link #pushNew}:</p>
+ * <pre>{@code
+ * try (var frame = FcliExecutionContextHolder.push(ctx)) {
+ *     // use frame.context() if needed
+ * } // automatically pops and closes
+ * }</pre>
  */
 public final class FcliExecutionContextHolder {
     private static final ThreadLocal<Deque<FcliExecutionContext>> HOLDER = ThreadLocal.withInitial(ArrayDeque::new);
 
     private FcliExecutionContextHolder() {}
 
-    /** Push the given context onto the current thread's context stack. */
-    public static void push(FcliExecutionContext ctx) { HOLDER.get().push(ctx); }
-
     /**
-     * Push a fresh execution frame, inheriting the current isolation scope when
-     * a parent context is present so nested invocations remain within the same
-     * isolation boundary while still receiving a fresh action state.
+     * Handle returned by {@link #push} and {@link #pushNew}.
+     * Closing this frame pops the associated context from the stack and closes it,
+     * releasing any resources it holds (e.g. cached Unirest connections).
      */
-    public static FcliExecutionContext pushNew() { 
-        var stack = HOLDER.get();
-        var context = stack.isEmpty() ? new FcliExecutionContext() : stack.peek().createChild();
-        stack.push(context);
-        return context; 
+    public record ContextFrame(FcliExecutionContext context) implements AutoCloseable {
+        @Override public void close() { pop(); }
     }
 
-    /** Pop the current context and return it; returns null if none present. */
+    /** Push the given context onto the current thread's context stack and return a closeable frame. */
+    public static ContextFrame push(FcliExecutionContext ctx) {
+        HOLDER.get().push(ctx);
+        return new ContextFrame(ctx);
+    }
+
+    /**
+     * Push a brand-new execution frame with its own isolation scope and action state.
+     *
+     * <p>Always creates a completely fresh {@link FcliExecutionContext} regardless of
+     * whether a parent context is present on the stack. Use this at top-level entry points
+     * (plain CLI via {@link FcliExecutionStrategy}, build-time actions) where no inherited
+     * state is desired.</p>
+     *
+     * <p>Worker threads that need to share the parent's isolation scope should instead call
+     * {@link #push(FcliExecutionContext)} with {@code parentContext.createChild()}.</p>
+     */
+    public static ContextFrame pushNew() {
+        var stack = HOLDER.get();
+        var context = new FcliExecutionContext();
+        stack.push(context);
+        return new ContextFrame(context);
+    }
+
+    /**
+     * Pop the current context, close it, and return it.
+     * Returns {@code null} if no context is present.
+     */
     public static FcliExecutionContext pop() {
         var stack = HOLDER.get();
         if ( stack.isEmpty() ) { return null; }
         var result = stack.pop();
         if ( stack.isEmpty() ) { HOLDER.remove(); }
+        result.close();
         return result;
     }
 

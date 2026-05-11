@@ -20,11 +20,26 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.Getter;
 
 /**
- * Mutable state shared by related action or function invocations.
+ * Mutable bag of {@code global.*} action variables shared by related action invocations.
  *
- * <p>This state intentionally lives outside {@link FcliExecutionContext} so that
- * callers can share {@code global.*} values across imported function invocations
- * while still creating a fresh execution frame for each invocation.</p>
+ * <p>Instances of this class are deliberately decoupled from {@link FcliExecutionContext}
+ * so that the sharing rules for {@code global.*} variables can be configured independently
+ * from the sharing rules for other per-execution resources:
+ *
+ * <ul>
+ *   <li><b>External CLI invocation</b> — a fresh {@code FcliActionState} is created for every
+ *       top-level command, so {@code global.*} variables cannot leak from one CLI call to the
+ *       next.</li>
+ *   <li><b>MCP / RPC tool call (non-imported)</b> — each tool call also gets a fresh
+ *       {@code FcliActionState}, keeping calls independent.</li>
+ *   <li><b>Imported action functions</b> (MCP stdio / RPC) — all invocations within the same
+ *       server instance share one {@code FcliActionState} instance. This is the mechanism that
+ *       lets one exported function set a {@code global.*} variable that a subsequent call to a
+ *       different exported function can read back.</li>
+ *   <li><b>{@code run.fcli} sub-commands</b> — executed within the parent's existing
+ *       {@link FcliExecutionContext}, so they see and can mutate the same
+ *       {@code FcliActionState} as the calling action step.</li>
+ * </ul>
  */
 public final class FcliActionState {
     @Getter private final ObjectNode globalActionValues = new ObjectNode(JsonNodeFactory.instance, new ConcurrentHashMap<>());

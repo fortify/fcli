@@ -12,7 +12,6 @@
  */
 package com.fortify.cli.common.cli.util;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
@@ -28,43 +27,45 @@ import com.fortify.cli.common.session.helper.ISessionDescriptor;
 class FcliExecutionContextTest {
     @Test
     void transientSessionDescriptorsCanBeStoredByTypeAndCleared() {
-        var context = new FcliExecutionContext();
-        var sscDescriptor = new DummySessionDescriptor("SSC");
-        var fodDescriptor = new DummySessionDescriptor("FoD");
+        try (var context = new FcliExecutionContext()) {
+            var sscDescriptor = new DummySessionDescriptor("SSC");
+            var fodDescriptor = new DummySessionDescriptor("FoD");
 
-        assertTrue(context.getIsolationScope().getTransientSessionDescriptors().isEmpty());
-        assertNull(context.getIsolationScope().getTransientSessionDescriptor("SSC"));
-        assertFalse(context.info().contains("transientSessions=1"));
+            assertTrue(context.getIsolationScope().getTransientSessionDescriptors().isEmpty());
+            assertNull(context.getIsolationScope().getTransientSessionDescriptor("SSC"));
+            assertFalse(context.info().contains("transientSessions=1"));
 
-        context.getIsolationScope().setTransientSessionDescriptor(sscDescriptor);
-        context.getIsolationScope().setTransientSessionDescriptor(fodDescriptor);
+            context.getIsolationScope().setTransientSessionDescriptor(sscDescriptor);
+            context.getIsolationScope().setTransientSessionDescriptor(fodDescriptor);
 
-        assertSame(sscDescriptor, context.getIsolationScope().getTransientSessionDescriptor("SSC"));
-        assertSame(fodDescriptor, context.getIsolationScope().getTransientSessionDescriptor("FoD"));
-        assertTrue(context.info().contains("transientSessions=2"));
+            assertSame(sscDescriptor, context.getIsolationScope().getTransientSessionDescriptor("SSC"));
+            assertSame(fodDescriptor, context.getIsolationScope().getTransientSessionDescriptor("FoD"));
+            assertTrue(context.info().contains("transientSessions=2"));
 
-        context.getIsolationScope().clearTransientSessionDescriptor("SSC");
+            context.getIsolationScope().clearTransientSessionDescriptor("SSC");
 
-        assertNull(context.getIsolationScope().getTransientSessionDescriptor("SSC"));
-        assertSame(fodDescriptor, context.getIsolationScope().getTransientSessionDescriptor("FoD"));
+            assertNull(context.getIsolationScope().getTransientSessionDescriptor("SSC"));
+            assertSame(fodDescriptor, context.getIsolationScope().getTransientSessionDescriptor("FoD"));
 
-        context.getIsolationScope().clearTransientSessionDescriptors();
+            context.getIsolationScope().clearTransientSessionDescriptors();
 
-        assertTrue(context.getIsolationScope().getTransientSessionDescriptors().isEmpty());
+            assertTrue(context.getIsolationScope().getTransientSessionDescriptors().isEmpty());
+        }
     }
 
     @Test
     void transientSessionDescriptorConvenienceSetterIndexesByType() {
-        var context = new FcliExecutionContext();
-        var descriptor = new DummySessionDescriptor("dummy");
+        try (var context = new FcliExecutionContext()) {
+            var descriptor = new DummySessionDescriptor("dummy");
 
-        context.getIsolationScope().setTransientSessionDescriptor(descriptor);
+            context.getIsolationScope().setTransientSessionDescriptor(descriptor);
 
-        assertSame(descriptor, context.getIsolationScope().getTransientSessionDescriptor("dummy"));
+            assertSame(descriptor, context.getIsolationScope().getTransientSessionDescriptor("dummy"));
+        }
     }
 
     @Test
-    void pushNewInheritsIsolationScopeButCreatesFreshActionState() {
+    void pushNewAlwaysCreatesAFreshContext() {
         FcliExecutionContextHolder.pushNew();
         try {
             var parent = FcliExecutionContextHolder.current();
@@ -72,8 +73,10 @@ class FcliExecutionContextTest {
             FcliExecutionContextHolder.pushNew();
             try {
                 var child = FcliExecutionContextHolder.current();
-                assertEquals("ssc|abc123", FcliExecutionContextHolder.getMcpRequestAuthScopeKey());
-                assertSame(parent.getIsolationScope(), child.getIsolationScope());
+                // pushNew always creates a completely new context, so isolation scope is NOT inherited
+                var childScopeKey = child.getIsolationScope().getMcpRequestAuthScopeKey();
+                assertTrue(childScopeKey == null || childScopeKey.isEmpty());
+                assertFalse(parent.getIsolationScope() == child.getIsolationScope());
                 assertTrue(child.getActionState().getGlobalActionValues().isEmpty());
             } finally {
                 FcliExecutionContextHolder.pop();
@@ -84,15 +87,11 @@ class FcliExecutionContextTest {
     }
 
     @Test
-    void childContextsCanChooseFreshOrSharedActionState() {
-        var parent = new FcliExecutionContext();
-        var freshChild = parent.createChild();
-        var sharedChild = parent.createChildWithSharedActionState();
-
-        assertSame(parent.getIsolationScope(), freshChild.getIsolationScope());
-        assertSame(parent.getIsolationScope(), sharedChild.getIsolationScope());
-        assertTrue(freshChild.getActionState().getGlobalActionValues().isEmpty());
-        assertSame(parent.getActionState(), sharedChild.getActionState());
+    void createChildInheritsIsolationScopeAndCreatesFreshActionState() {
+        try (var parent = new FcliExecutionContext(); var child = parent.createChild()) {
+            assertSame(parent.getIsolationScope(), child.getIsolationScope());
+            assertTrue(child.getActionState().getGlobalActionValues().isEmpty());
+        }
     }
 
     @Test

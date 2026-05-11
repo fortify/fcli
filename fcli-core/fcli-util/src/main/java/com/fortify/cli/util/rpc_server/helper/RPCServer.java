@@ -223,12 +223,9 @@ public final class RPCServer {
         }
         
         try {
-            FcliExecutionContextHolder.push(new FcliExecutionContext(registry.getIsolationScope(), new FcliActionState()));
             JsonNode result;
-            try {
+            try (var frame = FcliExecutionContextHolder.push(new FcliExecutionContext(registry.getIsolationScope(), new FcliActionState()))) {
                 result = handler.execute(request.params());
-            } finally {
-                FcliExecutionContextHolder.pop();
             }
             return RPCResponse.success(request.id(), result);
         } catch (RPCMethodException e) {

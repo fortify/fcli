@@ -21,13 +21,28 @@ import com.fortify.cli.common.session.helper.ISessionDescriptor;
 import lombok.Getter;
 
 /**
- * Shared isolation boundary for request, auth, session, and cache scoped state.
+ * Shared isolation boundary grouping related invocations under the same auth/session context.
  *
- * <p>Execution frames represented by {@link FcliExecutionContext} may be created
- * and discarded frequently, but related invocations can still share the same
- * isolation scope. This allows nested command invocations and background jobs to
- * resolve the same request/auth scoped caches and transient session descriptors
- * without reusing the same execution frame.</p>
+ * <p>An isolation scope lives longer than a single {@link FcliExecutionContext}: many execution
+ * frames can be created and destroyed while still referring to the same scope, allowing nested
+ * commands and background jobs to resolve the same request-scoped caches and transient session
+ * descriptors without sharing a single execution frame.</p>
+ *
+ * <p>Scope assignment per execution model:</p>
+ * <ul>
+ *   <li><b>Plain CLI command</b> — one brand-new scope per invocation; discarded when the
+ *       command exits.</li>
+ *   <li><b>MCP stdio server</b> — one scope for the entire server lifetime, shared by all
+ *       tool calls. Every tool call gets its own {@link FcliExecutionContext} (fresh
+ *       {@link com.fortify.cli.common.rest.unirest.UnirestContext}) but they all share the
+ *       same transient sessions and scope-scoped state.</li>
+ *   <li><b>MCP HTTP server</b> — one scope <em>per authenticated identity</em>. The HTTP
+ *       transport carries credentials with every request; the server resolves the corresponding
+ *       scope via {@code MCPServerHttpSessionDescriptorResolver}, so that two clients using
+ *       different credentials are fully isolated from each other even when served by the same
+ *       JVM.</li>
+ *   <li><b>RPC server</b> — one scope for the entire server lifetime, similar to MCP stdio.</li>
+ * </ul>
  */
 public final class FcliIsolationScope {
     @Getter private volatile String mcpRequestAuthScopeKey;

@@ -18,7 +18,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.action.model.Action;
 import com.fortify.cli.common.action.model.ActionFunction;
-import com.fortify.cli.common.cli.util.FcliExecutionContext;
 import com.fortify.cli.common.cli.util.FcliExecutionContextHolder;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.progress.helper.ProgressWriterI18n;
@@ -26,38 +25,34 @@ import com.fortify.cli.common.progress.helper.ProgressWriterType;
 
 /**
  * Thread-safe executor for a single action function. Creates a fresh
- * {@link ActionRunnerContextLocal} per invocation, builds the args ObjectNode,
- * and delegates to {@link ActionFunctionSpelFunctions#call(String, Object...)}.
- * <p>
- * A {@link Supplier} of {@link FcliExecutionContext} is evaluated on each invocation
- * to determine which context to push. For RPC/stdio servers this supplier typically
- * returns the same shared instance (so {@code globalActionValues} persist across
- * invocations). For HTTP servers the supplier can return a per-auth-scope context
- * so that different auth identities have isolated {@code globalActionValues}.
- * <p>
+ * {@link ActionRunnerContextLocal} per invocation and delegates to
+ * {@link ActionFunctionSpelFunctions#call(String, Object...)}.
+ *
+ * <p>The caller supplies a {@code Supplier<ContextFrame>} that is responsible for
+ * pushing the correct {@link com.fortify.cli.common.cli.util.FcliExecutionContext}
+ * onto the thread-local stack and returning the associated
+ * {@link FcliExecutionContextHolder.ContextFrame}. Typical patterns:</p>
+ * <ul>
+ *   <li><b>MCP stdio / RPC server</b> — the supplier captures a shared
+ *       {@link com.fortify.cli.common.cli.util.FcliActionState} and pushes a new
+ *       {@code FcliExecutionContext} (fresh {@code UnirestContext}) each call, so
+ *       connections are always clean while {@code global.*} variables persist across
+ *       calls within the same server instance.</li>
+ *   <li><b>MCP HTTP server</b> — the supplier resolves the per-auth-scope action state
+ *       and isolation scope at call time, providing full isolation between different
+ *       authenticated identities.</li>
+ * </ul>
  * Used by MCP/RPC server implementations to invoke exported functions.
  */
 public final class ActionFunctionExecutor {
     private final Action action;
     private final ActionFunction function;
-    private final Supplier<FcliExecutionContext> contextSupplier;
+    private final Supplier<FcliExecutionContextHolder.ContextFrame> frameSupplier;
 
-    /**
-     * Create an executor that resolves its execution context via a supplier on
-     * each invocation.
-     */
-    public ActionFunctionExecutor(Action action, ActionFunction function, Supplier<FcliExecutionContext> contextSupplier) {
+    public ActionFunctionExecutor(Action action, ActionFunction function, Supplier<FcliExecutionContextHolder.ContextFrame> frameSupplier) {
         this.action = action;
         this.function = function;
-        this.contextSupplier = contextSupplier;
-    }
-
-    /**
-     * Convenience constructor that wraps a fixed, shared {@link FcliExecutionContext}
-     * so that all invocations use the same context (original behaviour for RPC/stdio).
-     */
-    public ActionFunctionExecutor(Action action, ActionFunction function, FcliExecutionContext sharedContext) {
-        this(action, function, () -> sharedContext);
+        this.frameSupplier = frameSupplier;
     }
 
     public Action getAction() {
@@ -77,8 +72,7 @@ public final class ActionFunctionExecutor {
      *         For streaming functions: an IActionStepForEachProcessor.
      */
     public Object execute(ObjectNode argsNode) {
-        FcliExecutionContextHolder.push(contextSupplier.get().createChildWithSharedActionState());
-        try {
+        try (var frame = frameSupplier.get()) {
             var config = ActionRunnerConfig.builder()
                     .action(action)
                     .progressWriter(new ProgressWriterI18n(ProgressWriterType.none, null))
@@ -89,8 +83,6 @@ public final class ActionFunctionExecutor {
                 var fnSpel = new ActionFunctionSpelFunctions(ctx);
                 return fnSpel.call(function.getKey(), argsNode);
             }
-        } finally {
-            FcliExecutionContextHolder.pop();
         }
     }
 

@@ -10,14 +10,12 @@
  * herein. The information contained herein is subject to change
  * without notice.
  */
-/*
- * Copyright 2021-2026 Open Text.
- */
 package com.fortify.cli.common.cli.util;
 
 import java.nio.file.Path;
 import java.security.SecureRandom;
 import java.util.Base64;
+import java.util.Objects;
 import java.util.Set;
 
 import com.fortify.cli.common.crypto.helper.EncryptionHelper;
@@ -26,16 +24,42 @@ import com.fortify.cli.common.rest.unirest.UnirestContext;
 import lombok.Getter;
 
 /**
- * Execution-frame local state for a single invocation.
+ * Per-invocation execution frame holding the three components of execution state:
  *
- * <p>Each execution context owns resources that must not be shared across
- * independent invocations, such as the per-execution {@link UnirestContext} and
- * ephemeral encryption state. Longer-lived isolation concerns like request/auth
- * scoped caches and transient session descriptors are kept in the associated
- * {@link FcliIsolationScope}, while shared action variables live in the
- * associated {@link FcliActionState}.</p>
+ * <ul>
+ *   <li><b>{@link UnirestContext}</b> — always fresh for every external entry point (plain CLI
+ *       command, MCP tool call, RPC method call). A fresh context ensures that Unirest
+ *       connection pools created in one invocation are shut down before the next one begins,
+ *       so that any session changes made between invocations (login/logout, credential rotation,
+ *       URL change) are always picked up rather than silently reused from a stale connection.
+ *       Inner sub-commands executed via {@code run.fcli} reuse the parent's UnirestContext
+ *       because they run within the same execution frame.</li>
+ *
+ *   <li><b>{@link FcliActionState}</b> — holds {@code global.*} action variables. Isolation
+ *       rules vary by call site:
+ *       <ul>
+ *         <li>Each external CLI invocation and each top-level MCP/RPC tool call starts with a
+ *             fresh {@code FcliActionState}, so {@code global.*} variables never leak between
+ *             independent calls.</li>
+ *         <li>Imported functions (e.g. exported action functions served as MCP/RPC tools) share
+ *             the same {@code FcliActionState} across calls within the lifetime of the same server instance, so
+ *             that one function can set a variable that a later function call reads back.</li>
+ *         <li>Inner action invocations triggered via {@code run.fcli} inherit the parent frame's
+ *             {@code FcliActionState}, giving them read/write access to the same
+ *             {@code global.*} map as their caller.</li>
+ *       </ul></li>
+ *
+ *   <li><b>{@link FcliIsolationScope}</b> — groups related invocations that share the same
+ *       auth/session boundary. See {@link FcliIsolationScope} for details.
+ * </ul>
+ *
+ * <p>The preferred way to manage context lifetime is through
+ * {@link FcliExecutionContextHolder#push} / {@link FcliExecutionContextHolder#pushNew},
+ * which return a {@link FcliExecutionContextHolder.ContextFrame} that can be used with
+ * try-with-resources. Closing the frame pops the context from the stack and calls
+ * {@link #close()}, which shuts down the owned {@link UnirestContext}.</p>
  */
-public final class FcliExecutionContext {
+public final class FcliExecutionContext implements AutoCloseable {
     @Getter private final FcliIsolationScope isolationScope;
     @Getter private final FcliActionState actionState;
     @Getter private final UnirestContext unirestContext = new UnirestContext();
@@ -49,24 +73,30 @@ public final class FcliExecutionContext {
     }
 
     public FcliExecutionContext(FcliIsolationScope isolationScope, FcliActionState actionState) {
-        this.isolationScope = isolationScope == null ? new FcliIsolationScope() : isolationScope;
-        this.actionState = actionState == null ? new FcliActionState() : actionState;
+        this.isolationScope = Objects.requireNonNull(isolationScope, "isolationScope");
+        this.actionState = Objects.requireNonNull(actionState, "actionState");
     }
 
     /**
-     * Create a child execution frame that inherits the current isolation scope
-     * while starting with a fresh action state.
+     * Create a child execution frame that inherits the current isolation scope but
+     * starts with a <em>fresh</em> {@link FcliActionState}.
+     *
+     * <p>Used when the child must share the same auth/session boundary as its parent
+     * (e.g. worker threads in {@code MCPJobManager} and {@code AsyncJobManager}) but
+     * must not see or mutate the parent's {@code global.*} action variables.</p>
      */
     public FcliExecutionContext createChild() {
         return new FcliExecutionContext(isolationScope, new FcliActionState());
     }
 
     /**
-     * Create a child execution frame that inherits both the isolation scope and
-     * shared action state.
+     * Releases resources held by this execution context, specifically shutting down
+     * all cached {@link UnirestContext} connections. Should be called by the entry
+     * point that pushed this context once execution is complete.
      */
-    public FcliExecutionContext createChildWithSharedActionState() {
-        return new FcliExecutionContext(isolationScope, actionState);
+    @Override
+    public void close() {
+        unirestContext.close();
     }
 
     public String info() {

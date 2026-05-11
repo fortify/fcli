@@ -18,6 +18,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import com.fortify.cli.common.cli.cmd.AbstractRunnableCommand;
 import com.fortify.cli.common.cli.util.FcliCommandExecutorFactory;
+import com.fortify.cli.common.cli.util.IFcliExecutionContextManager;
 import com.fortify.cli.common.mcp.MCPExclude;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.util.OutputHelper.OutputType;
@@ -29,7 +30,7 @@ import picocli.CommandLine.Unmatched;
 @Command(name = OutputHelperMixins.Start.CMD_NAME)
 @MCPExclude
 @Slf4j
-public class MCPServerStartDeprecatedCommand extends AbstractRunnableCommand {
+public class MCPServerStartDeprecatedCommand extends AbstractRunnableCommand implements IFcliExecutionContextManager {
     @Unmatched private List<String> delegatedArgs;
 
     @Override
@@ -43,7 +44,6 @@ public class MCPServerStartDeprecatedCommand extends AbstractRunnableCommand {
                 .cmd(cmd)
             .stdoutOutputType(OutputType.show)
             .stderrOutputType(OutputType.show)
-                .createInvocationContext(true)
                 .onFail(r -> {})
                 .build().create().execute();
         if ( result.getExitCode() != 0 && StringUtils.isNotBlank(result.getErr()) ) {

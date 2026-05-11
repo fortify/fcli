@@ -65,7 +65,6 @@ public final class FcliCommandExecutorFactory {
     private final Consumer<Result> onSuccess; // Executed after onResult, if 0 exit code
     private final Consumer<Result> onFail; // Executed after onResult, if non-zero exit code
     private final Consumer<Throwable> onException;
-    @Builder.Default private final boolean createInvocationContext = false;
     public final String progressOptionValueIfNotPresent; // TODO Should we integrate this into defaultOptionsIfNotPresent?
     public final Map<String, String> defaultOptionsIfNotPresent;
     
@@ -122,26 +121,17 @@ public final class FcliCommandExecutorFactory {
 
         private Result call(Callable<Integer> f) {
             Result result = null;
-            boolean pushed = false;
             try {
-                if ( createInvocationContext ) {
-                    FcliExecutionContextHolder.pushNew();
-                    pushed = true;
+                result = OutputHelper.builder()
+                        .stderrType(stderrOutputType)
+                        .stdoutType(resolveStdoutOutputType())
+                        .build().call(f);
+            } catch ( Throwable t ) {
+                if ( t instanceof ExecutionException ) {
+                    t = t.getCause();
                 }
-                try {
-                    result = OutputHelper.builder()
-                            .stderrType(stderrOutputType)
-                            .stdoutType(resolveStdoutOutputType())
-                            .build().call(f);
-                } catch ( Throwable t ) {
-                    if ( t instanceof ExecutionException ) {
-                        t = t.getCause();
-                    }
-                    consume(t, onException, this::rethrowAsRuntimeException);
-                    return new Result(999, "", "");
-                }
-            } finally {
-                if ( pushed ) { FcliExecutionContextHolder.pop(); }
+                consume(t, onException, this::rethrowAsRuntimeException);
+                return new Result(999, "", "");
             }
             // We want result processing to be outside of the try/catch block above,
             // as any of these may throw an exception that we don't want to catch in

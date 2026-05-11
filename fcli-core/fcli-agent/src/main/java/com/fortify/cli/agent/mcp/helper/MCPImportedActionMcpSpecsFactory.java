@@ -27,7 +27,7 @@ import com.fortify.cli.common.action.helper.ActionLoaderHelper.ActionSource;
 import com.fortify.cli.common.action.helper.ActionLoaderHelper.ActionValidationHandler;
 import com.fortify.cli.common.action.model.ActionFunction;
 import com.fortify.cli.common.action.runner.ActionFunctionExecutor;
-import com.fortify.cli.common.cli.util.FcliExecutionContext;
+import com.fortify.cli.common.cli.util.FcliExecutionContextHolder;
 
 import io.modelcontextprotocol.server.McpStatelessServerFeatures;
 import io.modelcontextprotocol.server.McpStatelessServerFeatures.SyncResourceTemplateSpecification;
@@ -40,7 +40,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class MCPImportedActionMcpSpecsFactory {
     private final MCPJobManager jobManager;
-    private final Supplier<FcliExecutionContext> functionContextSupplier;
+    private final Supplier<FcliExecutionContextHolder.ContextFrame> frameSupplier;
 
     public ImportedSpecs create(Path importFile) {
         var action = ActionLoaderHelper.load(
@@ -66,7 +66,7 @@ public class MCPImportedActionMcpSpecsFactory {
     }
 
     private SyncToolSpecification createToolSpec(com.fortify.cli.common.action.model.Action action, String functionName, ActionFunction function) {
-        var executor = new ActionFunctionExecutor(action, function, functionContextSupplier);
+        var executor = new ActionFunctionExecutor(action, function, frameSupplier);
         var toolName = "fcli_fn_" + functionName.replace('-', '_');
         var schema = buildFunctionArgsSchema(function);
         var description = function.getDescription() != null ? function.getDescription() : functionName;
@@ -96,7 +96,7 @@ public class MCPImportedActionMcpSpecsFactory {
         var uriTemplate = getMetaString(resourceMeta, "uri-template");
         var name = getMetaString(resourceMeta, "name");
         var mimeType = getMetaString(resourceMeta, "mime-type");
-        var executor = new ActionFunctionExecutor(action, function, functionContextSupplier);
+        var executor = new ActionFunctionExecutor(action, function, frameSupplier);
         var template = ResourceTemplate.builder()
                 .uriTemplate(uriTemplate)
                 .name(name != null ? name : functionName)

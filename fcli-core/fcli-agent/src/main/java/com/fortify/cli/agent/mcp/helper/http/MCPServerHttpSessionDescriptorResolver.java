@@ -28,6 +28,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import com.fortify.cli.common.cli.util.FcliActionState;
 import com.fortify.cli.common.cli.util.FcliExecutionContext;
+import com.fortify.cli.common.cli.util.FcliExecutionContextHolder;
 import com.fortify.cli.common.cli.util.FcliIsolationScope;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.rest.unirest.config.UrlConfig;
@@ -82,11 +83,7 @@ public final class MCPServerHttpSessionDescriptorResolver {
         }
     };
     private static final class FunctionContextState {
-        private final FcliExecutionContext context;
-
-        private FunctionContextState(FcliIsolationScope isolationScope) {
-            this.context = new FcliExecutionContext(isolationScope, new FcliActionState());
-        }
+        private final FcliActionState actionState = new FcliActionState();
     }
 
     public ISessionDescriptor getOrCreateSessionDescriptor(McpTransportContext transportContext) {
@@ -97,14 +94,16 @@ public final class MCPServerHttpSessionDescriptorResolver {
     }
 
     /**
-     * Returns the {@link FcliExecutionContext} for the given auth scope key, creating one
-     * on first use. Each distinct auth identity gets its own context so that
-     * {@code global.*} action variables are not shared across different callers.
+     * Pushes a new {@link FcliExecutionContext} (fresh {@code UnirestContext}) for the given
+     * auth scope key and returns the associated {@link FcliExecutionContextHolder.ContextFrame}.
+     * The per-auth-scope {@link FcliActionState} is reused across calls so that
+     * {@code global.*} action variables persist within the same authenticated identity.
      */
-    public FcliExecutionContext getOrCreateFunctionContext(String authScopeKey) {
+    public FcliExecutionContextHolder.ContextFrame getOrCreateFunctionFrame(String authScopeKey) {
         var isolationScope = getOrCreateIsolationScope(authScopeKey);
-        return isolationScope.getOrCreateScopedState(FunctionContextState.class,
-                () -> new FunctionContextState(isolationScope)).context;
+        var actionState = isolationScope.getOrCreateScopedState(FunctionContextState.class,
+                FunctionContextState::new).actionState;
+        return FcliExecutionContextHolder.push(new FcliExecutionContext(isolationScope, actionState));
     }
 
     public FcliIsolationScope getOrCreateIsolationScope(McpTransportContext transportContext) {

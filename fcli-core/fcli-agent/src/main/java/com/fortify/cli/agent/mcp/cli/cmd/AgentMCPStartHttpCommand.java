@@ -29,6 +29,7 @@ import com.fortify.cli.common.cli.cmd.AbstractRunnableCommand;
 import com.fortify.cli.common.cli.util.FcliActionState;
 import com.fortify.cli.common.cli.util.FcliExecutionContext;
 import com.fortify.cli.common.cli.util.FcliExecutionContextHolder;
+import com.fortify.cli.common.cli.util.IFcliExecutionContextManager;
 import com.fortify.cli.common.concurrent.job.AsyncJobManager;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.mcp.MCPExclude;
@@ -48,7 +49,7 @@ import picocli.CommandLine.Option;
 @Command(name = "start-http")
 @MCPExclude
 @Slf4j
-public class AgentMCPStartHttpCommand extends AbstractRunnableCommand {
+public class AgentMCPStartHttpCommand extends AbstractRunnableCommand implements IFcliExecutionContextManager {
     private static final DateTimePeriodHelper PERIOD_HELPER = DateTimePeriodHelper.byRange(Period.MILLISECONDS, Period.MINUTES);
 
     @Option(names = {"--config", "-c"}, required = true)
@@ -78,7 +79,7 @@ public class AgentMCPStartHttpCommand extends AbstractRunnableCommand {
 
         var sessionDescriptorResolver = new MCPServerHttpSessionDescriptorResolver(config);
         var importSpecsFactory = new MCPImportedActionMcpSpecsFactory(jobManager,
-                () -> sessionDescriptorResolver.getOrCreateFunctionContext(FcliExecutionContextHolder.getMcpRequestAuthScopeKey()));
+                () -> sessionDescriptorResolver.getOrCreateFunctionFrame(FcliExecutionContextHolder.getMcpRequestAuthScopeKey()));
         var toolSpecs = new ArrayList<McpStatelessServerFeatures.SyncToolSpecification>();
         var resourceTemplateSpecs = new ArrayList<McpStatelessServerFeatures.SyncResourceTemplateSpecification>();
         for ( var importPath : config.getResolvedImportPaths() ) {
@@ -140,11 +141,8 @@ public class AgentMCPStartHttpCommand extends AbstractRunnableCommand {
             Supplier<T> supplier)
     {
         var isolationScope = sessionDescriptorResolver.getOrCreateIsolationScope(transportContext);
-        FcliExecutionContextHolder.push(new FcliExecutionContext(isolationScope, new FcliActionState()));
-        try {
+        try (var frame = FcliExecutionContextHolder.push(new FcliExecutionContext(isolationScope, new FcliActionState()))) {
             return supplier.get();
-        } finally {
-            FcliExecutionContextHolder.pop();
         }
     }
 

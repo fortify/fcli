@@ -106,38 +106,37 @@ public class AsyncJobManager {
 
         var future = CompletableFuture.runAsync(() -> {
             entry.thread = Thread.currentThread();
-            FcliExecutionContextHolder.push(executionContextSupplier != null ? executionContextSupplier.get() : parentContext.createChild());
-            // Register per-thread progress callback so that progress writer
-            // messages are forwarded to the job event listener as notifications.
-            // Masking is applied by StdioHelper before invoking the callback.
-            StdioHelper.setProgressCallback(msg ->
-                listener.onProgress(jobId, msg));
-            try {
-                var result = task.run(record -> {
+            try (var frame = FcliExecutionContextHolder.push(executionContextSupplier != null ? executionContextSupplier.get() : parentContext.createChild())) {
+                // Register per-thread progress callback so that progress writer
+                // messages are forwarded to the job event listener as notifications.
+                // Masking is applied by StdioHelper before invoking the callback.
+                StdioHelper.setProgressCallback(msg -> listener.onProgress(jobId, msg));
+                try {
+                    var result = task.run(record -> {
+                        if (!Thread.currentThread().isInterrupted()) {
+                            listener.onRecord(jobId, record);
+                        }
+                    });
                     if (!Thread.currentThread().isInterrupted()) {
-                        listener.onRecord(jobId, record);
+                        int exitCode = result.getExitCode();
+                        String stderr = result.getErr();
+                        String stdout = result.getOut();
+                        if (stdout != null && !stdout.isBlank()) {
+                            entry.stdout = stdout;
+                        }
+                        entry.exitCode = exitCode;
+                        entry.stderr = stderr;
+                        listener.onJobComplete(jobId, exitCode, stderr, stdout);
                     }
-                });
-                if (!Thread.currentThread().isInterrupted()) {
-                    int exitCode = result.getExitCode();
-                    String stderr = result.getErr();
-                    String stdout = result.getOut();
-                    if (stdout != null && !stdout.isBlank()) {
-                        entry.stdout = stdout;
-                    }
-                    entry.exitCode = exitCode;
-                    entry.stderr = stderr;
-                    listener.onJobComplete(jobId, exitCode, stderr, stdout);
+                } catch (Exception e) {
+                    log.error("Async job failed: jobId={}", jobId, e);
+                    entry.exitCode = 999;
+                    entry.stderr = e.getMessage() != null ? e.getMessage() : "Async job failed";
+                    listener.onJobComplete(jobId, 999, entry.stderr, null);
+                } finally {
+                    StdioHelper.clearProgressCallback();
+                    entry.completed = true;
                 }
-            } catch (Exception e) {
-                log.error("Async job failed: jobId={}", jobId, e);
-                entry.exitCode = 999;
-                entry.stderr = e.getMessage() != null ? e.getMessage() : "Async job failed";
-                listener.onJobComplete(jobId, 999, entry.stderr, null);
-            } finally {
-                StdioHelper.clearProgressCallback();
-                entry.completed = true;
-                FcliExecutionContextHolder.pop();
             }
         }, backgroundExecutor);
 

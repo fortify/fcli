@@ -61,11 +61,8 @@ public class RunBuildTimeFcliAction {
                     .progressWriter(progressWriter)
                     .onValidationErrors(RunBuildTimeFcliAction::onValidationErrors)
                     .build();
-            FcliExecutionContextHolder.pushNew();
-            try {
+            try (var frame = FcliExecutionContextHolder.pushNew()) {
                 new ActionRunner(config).run(actionArgs);
-            } finally {
-                FcliExecutionContextHolder.pop();
             }
         }
     }

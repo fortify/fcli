@@ -45,7 +45,6 @@ public class FcliRunnerHelper {
             .cmd(fullCmd)
             .stdoutOutputType(OutputType.collect)
             .stderrOutputType(OutputType.collect)
-            .createInvocationContext(true)
             .onFail(r -> {});
         
         if (defaultOptions != null) {
@@ -71,7 +70,6 @@ public class FcliRunnerHelper {
             .stdoutOutputTypeIfRecordCollectionSupported(OutputType.suppress)
             .stdoutOutputTypeIfRecordCollectionNotSupported(OutputType.collect)
             .stderrOutputType(OutputType.collect)
-            .createInvocationContext(true)
             .recordConsumer(recordConsumer)
             .onFail(r -> {});
         
