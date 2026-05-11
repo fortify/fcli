@@ -47,7 +47,7 @@ class MCPHttpServerTestHelper {
     static void waitForServerStartup(Process process, int port) {
         def deadline = System.currentTimeMillis() + 30_000
         while ( System.currentTimeMillis() < deadline ) {
-            if ( !process.alive() ) {
+            if ( !process.isAlive() ) {
                 throw new RuntimeException("HTTP MCP server exited before startup completed (exit code ${process.exitValue()})")
             }
             if ( isPortOpen(port) ) {

@@ -93,8 +93,9 @@ class SSCMCPServerHttpSpec extends FcliBaseSpec {
         def password = System.getProperty("ft.ssc.password")
         def tokenName = "HttpMcpFtest-${System.currentTimeMillis()}"
         def result = Fcli.run([
-            "ssc", "ac", "create-token", tokenName,
+            "ssc", "ac", "create-token", "UnifiedLoginToken",
             "--expire-in=5m",
+            "--description=${tokenName}",
             "--user=${user}",
             "--password=${password}",
             "-o", "json"

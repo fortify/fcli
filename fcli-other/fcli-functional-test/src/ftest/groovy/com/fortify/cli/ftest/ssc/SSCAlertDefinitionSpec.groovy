@@ -50,7 +50,7 @@ class SSCAlertDefinitionSpec extends FcliBaseSpec {
     
     def "get.byId"() {
         
-            def args = "ssc alert getdef ::alertdefinitions::get(0).id"
+            def args = "ssc alert get-definition ::alertdefinitions::get(0).id"
             when:
                 if(!definitionsExist) {return;}
                 def result = Fcli.run(args)
