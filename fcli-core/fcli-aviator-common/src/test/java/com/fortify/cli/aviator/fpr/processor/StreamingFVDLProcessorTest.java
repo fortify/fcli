@@ -14,6 +14,7 @@ package com.fortify.cli.aviator.fpr.processor;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -27,6 +28,7 @@ import org.junit.jupiter.api.Test;
 
 import com.fortify.cli.aviator.fpr.Vulnerability;
 import com.fortify.cli.aviator.fpr.filter.VulnerabilityFilterer;
+import com.fortify.cli.aviator.fpr.model.FVDLMetadata;
 import com.fortify.cli.aviator.util.FprHandle;
 
 class StreamingFVDLProcessorTest {
@@ -160,6 +162,66 @@ class StreamingFVDLProcessorTest {
         assertEquals(0.58, vulnerability.getMinVirtualCallConfidence());
         assertEquals(1, VulnerabilityFilterer.filter(processor.getVulnerabilities(), "virtconf:0.58").size());
         assertEquals(1, VulnerabilityFilterer.filter(processor.getVulnerabilities(), "maxVirtConf:0.60").size());
+    }
+
+    @Test
+    void testParseBuildSourceFilesTypeMetadata() throws Exception {
+        String xml = """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <FVDL>
+                  <Build>
+                    <SourceFiles>
+                      <File type="PLSQL"><Name>db/t1.sql</Name></File>
+                      <File type="JAVA"><Name>src/Test.java</Name></File>
+                      <File type="PLSQL"><Name>pkg/spec.pks</Name></File>
+                      <File type="TSQL"><Name>db/other.sql</Name></File>
+                    </SourceFiles>
+                  </Build>
+                </FVDL>
+                """;
+
+        createTestFpr(xml);
+
+        StreamingFVDLProcessor processor = new StreamingFVDLProcessor(fprHandle);
+        try (ZipFile zipFile = new ZipFile(tempFprFile.toFile())) {
+            processor.parse(zipFile, "audit.fvdl");
+        }
+
+        FVDLMetadata metadata = processor.getFvdlMetadata();
+        assertEquals("PLSQL", metadata.findSourceFileTypeForFileName("db/t1.sql"));
+        assertEquals("PLSQL", metadata.findSourceFileTypeForFileName("t1.sql"));
+        assertEquals("JAVA", metadata.findSourceFileTypeForFileName("src/Test.java"));
+        assertNull(metadata.findSourceFileTypeForExtension(".sql"));
+        assertEquals("PLSQL", metadata.findSourceFileTypeForExtension(".pks"));
+    }
+
+    @Test
+    void testParseBuildSourceFilesKeepsExactCaseMappingsAndTreatsFoldedCaseAsAmbiguous() throws Exception {
+        String xml = """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <FVDL>
+                  <Build>
+                    <SourceFiles>
+                      <File type="PLSQL"><Name>db/Case.sql</Name></File>
+                      <File type="TSQL"><Name>db/case.sql</Name></File>
+                    </SourceFiles>
+                  </Build>
+                </FVDL>
+                """;
+
+        createTestFpr(xml);
+
+        StreamingFVDLProcessor processor = new StreamingFVDLProcessor(fprHandle);
+        try (ZipFile zipFile = new ZipFile(tempFprFile.toFile())) {
+            processor.parse(zipFile, "audit.fvdl");
+        }
+
+        FVDLMetadata metadata = processor.getFvdlMetadata();
+        assertEquals("PLSQL", metadata.findSourceFileTypeForFileName("db/Case.sql"));
+        assertEquals("TSQL", metadata.findSourceFileTypeForFileName("db/case.sql"));
+        assertNull(metadata.findSourceFileTypeForFileName("db/CASE.sql"));
+        assertNull(metadata.findSourceFileTypeForFileName("CASE.sql"));
+        assertNull(metadata.findSourceFileTypeForExtension(".sql"));
     }
 
       @Test

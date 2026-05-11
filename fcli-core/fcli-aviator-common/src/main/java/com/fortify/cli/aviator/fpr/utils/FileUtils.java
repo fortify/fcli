@@ -32,6 +32,7 @@ import com.fortify.cli.aviator.util.FileTypeLanguageMapperUtil;
 import com.fortify.cli.aviator.util.FileUtil;
 import com.fortify.cli.aviator.util.FprHandle;
 import com.fortify.cli.aviator.util.LanguageCommentMapperUtil;
+import com.fortify.cli.aviator.util.StringUtil;
 
 public class FileUtils {
     private static final Logger logger = LoggerFactory.getLogger(FileUtils.class);
@@ -143,8 +144,13 @@ public class FileUtils {
     }
 
     public String appendLineNumbers(String content, String fileName, int startLineNo) {
-        String fileExtension = FileUtil.getFileExtension(fileName);
-        String language = FileTypeLanguageMapperUtil.getProgrammingLanguage(fileExtension);
+        return appendLineNumbers(content, fileName, startLineNo, null);
+    }
+
+    public String appendLineNumbers(String content, String fileName, int startLineNo, String resolvedLanguage) {
+        String language = StringUtil.isEmpty(resolvedLanguage) || "Unknown".equalsIgnoreCase(resolvedLanguage)
+                ? FileTypeLanguageMapperUtil.getProgrammingLanguage(FileUtil.getFileExtension(fileName))
+                : resolvedLanguage;
         String commentSymbol = LanguageCommentMapperUtil.getProgrammingLanguageComment(language);
         if(commentSymbol.equals("Unknown")) {
             logger.warn("No Comment symbol is there so line numbers not appended");

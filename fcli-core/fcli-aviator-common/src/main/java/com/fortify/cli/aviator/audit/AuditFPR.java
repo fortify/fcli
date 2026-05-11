@@ -108,6 +108,9 @@ public class AuditFPR {
             ParsedFprData parsedData, IAviatorLogger logger,
             String token, String appVersion, String url, String sscAppName, String sscAppVersion,
             Map<String, AuditResponse> auditResponsesToFill, FilterSelection filterSelection, FprHandle fprHandle, List<String> folderPriorityOrder) {
+        SourceLanguageResolver sourceLanguageResolver =
+            new SourceLanguageResolver(parsedData.streamingFVDLProcessor.getFvdlMetadata());
+        parsedData.streamingFVDLProcessor.getFvdlMetadata().clearSourceFileTypeIndexes();
 
         IssueAuditor issueAuditor = new IssueAuditor(
                 parsedData.vulnerabilities,
@@ -118,7 +121,8 @@ public class AuditFPR {
                 sscAppVersion,
                 filterSelection,
                 logger,
-                folderPriorityOrder
+                folderPriorityOrder,
+                sourceLanguageResolver
         );
         return issueAuditor.performAudit(
                 auditResponsesToFill, token, appVersion, parsedData.fprInfo.getBuildId(), url, fprHandle

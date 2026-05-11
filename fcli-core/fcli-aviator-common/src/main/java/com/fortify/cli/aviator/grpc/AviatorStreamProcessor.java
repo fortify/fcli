@@ -50,8 +50,6 @@ import com.fortify.cli.aviator.audit.model.UserPrompt;
 import com.fortify.cli.aviator.config.IAviatorLogger;
 import com.fortify.cli.aviator.fpr.utils.SourceCodeEnricher;
 import com.fortify.cli.aviator.util.Constants;
-import com.fortify.cli.aviator.util.FileTypeLanguageMapperUtil;
-import com.fortify.cli.aviator.util.FileUtil;
 import com.fortify.cli.aviator.util.FprHandle;
 import com.fortify.cli.aviator.util.StringUtil;
 
@@ -717,7 +715,6 @@ class AviatorStreamProcessor implements AutoCloseable {
                 List<com.fortify.cli.aviator.audit.model.File> sourceCodeFiles  = new ArrayList<>(enrichedFiles.values());
 
                 wrapper.userPrompt.getFiles().addAll(sourceCodeFiles);
-                wrapper.userPrompt.getProgrammingLanguages().addAll(programmingLanguages(sourceCodeFiles));
 
                 logger.info("Size of files {}", wrapper.userPrompt.getFiles().size());
                 logger.info("Size of programming language {}", wrapper.userPrompt.getProgrammingLanguages().size());
@@ -794,20 +791,6 @@ class AviatorStreamProcessor implements AutoCloseable {
         logger.info("Processing queue loop completed. Queue size: {}, Processed: {}/{}, Outstanding: {}",
                 processingQueue.size(), processedRequests.get(), totalRequests, outstandingRequests.get());
     }
-
-    private Set<String> programmingLanguages(List<com.fortify.cli.aviator.audit.model.File> sourceCodeFiles){
-        Set<String> programmingLanguages = new HashSet<>();
-        for (com.fortify.cli.aviator.audit.model.File file : sourceCodeFiles) {
-            String fileExtension = FileUtil.getFileExtension(file.getName());
-            String language = FileTypeLanguageMapperUtil.getProgrammingLanguage(fileExtension);
-            if (language != null) {
-                programmingLanguages.add(language);
-            }
-        }
-        return programmingLanguages;
-    }
-
-
 
     private void handleServerBusy(String requestId, int totalRequests, AtomicInteger processedRequests, Map<String, AuditResponse> responses, CompletableFuture<Map<String, AuditResponse>> resultFuture, CountDownLatch streamLatch) {
         RequestWrapper wrapperToRetry = inflightRequests.remove(requestId);
