@@ -12,16 +12,23 @@
  */
 package com.fortify.cli.aviator.ssc.helper;
 
-public final class AviatorSSCAttributeDefs {
+/**
+ * Attribute definitions used by the SAST-DAST correlation feature.
+ *
+ * <p>These are SSC application-version attributes (not per-issue custom tags).
+ * The definition is created by the {@code aviator ssc prepare} command and
+ * the value is written by {@code aviator ssc correlate-sast-dast}.
+ */
+public final class AviatorSSCCorrelationAttributeDefs {
 
-    private AviatorSSCAttributeDefs() {}
+    private AviatorSSCCorrelationAttributeDefs() {}
 
     /**
      * Descriptor for a custom SSC attribute definition managed by the Aviator module.
      *
      * @param guid        Fixed GUID — must never change once deployed to an SSC instance.
      * @param name        Attribute name as it appears in SSC (used for lookup and write).
-     * @param category    SSC attribute category (e.g. {@code "Technical"}).
+     * @param category    SSC attribute category (e.g. {@code "TECHNICAL"}).
      * @param type        SSC attribute type string (e.g. {@code "TEXT"}, {@code "DATE"}).
      * @param description Human-readable description stored in SSC.
      */
@@ -46,9 +53,9 @@ public final class AviatorSSCAttributeDefs {
      * comparison with artifact {@code lastScanDate} values.
      */
     public static final AttributeDefinition LAST_CORRELATION_ATTR = new AttributeDefinition(
-        "B2C3D4E5-F6A7-8901-BCDE-F12345678901",  // not sent on POST; used only for reference
+        "B2C3D4E5-F6A7-8901-BCDE-F12345678901",
         "last_correlation",
-        "TECHNICAL",   // must be UPPERCASE — SSC rejects "Technical" (HTTP 400)
+        "TECHNICAL",
         "TEXT",
         "Timestamp of the last successful SAST-DAST correlation run (ISO-8601 UTC). Written by fcli aviator ssc correlate-sast-dast."
     );

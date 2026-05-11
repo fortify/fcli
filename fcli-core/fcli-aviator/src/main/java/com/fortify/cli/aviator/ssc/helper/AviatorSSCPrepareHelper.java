@@ -84,7 +84,7 @@ public class AviatorSSCPrepareHelper {
             }
 
             progress.writeProgress("Synchronizing Aviator custom attributes...");
-            new AviatorSSCAttributeHelper(unirest, AviatorSSCAttributeDefs.LAST_CORRELATION_ATTR)
+            new AviatorSSCCorrelationAttributeHelper(unirest, AviatorSSCCorrelationAttributeDefs.LAST_CORRELATION_ATTR)
                 .synchronize(result);
 
             // Build required tags list — include dastCorrTag only if successfully synchronized

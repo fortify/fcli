@@ -21,7 +21,7 @@ import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fortify.cli.aviator.ssc.helper.AviatorSSCAttributeDefs.AttributeDefinition;
+import com.fortify.cli.aviator.ssc.helper.AviatorSSCCorrelationAttributeDefs.AttributeDefinition;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.rest.unirest.UnexpectedHttpResponseException;
@@ -32,25 +32,30 @@ import kong.unirest.UnirestInstance;
 import lombok.RequiredArgsConstructor;
 
 /**
- * Manages SSC attribute definitions used by the Aviator module.
+ * Manages the SSC attribute definitions used by the SAST-DAST correlation feature.
  *
- * <p>Mirrors the pattern in {@link AviatorSSCCustomTagHelper} but operates on
- * per-application-version attributes ({@code /api/v1/attributeDefinitions} +
- * {@code /api/v1/projectVersions/{id}/attributes}) rather than per-issue
- * custom tags.
+ * <p>The attribute definition is created by {@code aviator ssc prepare} (admin-only).
+ * The attribute value is written per application version by
+ * {@code aviator ssc correlate-sast-dast} (non-admin).
+ *
+ * <p>This is distinct from the generic SSC attribute helpers in the SSC module
+ * ({@code SSCAttributeHelper}, {@code SSCAttributeDefinitionHelper}) which
+ * handle reading/updating existing attributes. This class also handles
+ * <em>creating</em> attribute definitions specific to correlation.
  */
 @RequiredArgsConstructor
-public class AviatorSSCAttributeHelper {
+public class AviatorSSCCorrelationAttributeHelper {
 
-    private static final Logger LOG = LoggerFactory.getLogger(AviatorSSCAttributeHelper.class);
+    private static final Logger LOG = LoggerFactory.getLogger(AviatorSSCCorrelationAttributeHelper.class);
     private final UnirestInstance unirest;
     private final AttributeDefinition attrDef;
 
     /**
      * Ensures the attribute definition exists on the SSC instance.
+     * Called by {@code aviator ssc prepare} which requires admin privileges.
      *
      * <ul>
-     *   <li>If already present (matched by GUID): logs VERIFIED and returns.
+     *   <li>If already present (matched by name): logs VERIFIED and returns.
      *   <li>If absent: creates it via {@code POST /api/v1/attributeDefinitions}.
      * </ul>
      *
@@ -73,7 +78,7 @@ public class AviatorSSCAttributeHelper {
             LOG.error("Error synchronizing attribute definition '{}': {}", attrDef.name(), e.getMessage());
             result.addEntry("Attribute Definition", "WARNING",
                 "Failed to synchronize attribute definition '" + attrDef.name() + "': " + e.getMessage()
-                    + ". The correlate-sast-dast command will attempt to create it on first use.");
+                    + ". Run 'fcli aviator ssc prepare' with admin privileges to create it.");
         }
     }
 
@@ -81,21 +86,19 @@ public class AviatorSSCAttributeHelper {
      * Writes the current UTC timestamp to the {@code last_correlation} attribute on
      * the given application version.
      *
-     * <p>If the attribute definition does not yet exist (e.g. {@code prepare} was never
-     * run), this method automatically creates it before writing.
+     * <p>This method assumes the attribute definition already exists — it must have
+     * been created by a prior {@code aviator ssc prepare} run. If the definition
+     * does not exist, SSC will reject the update and an error is thrown.
      *
      * @param unirest   active SSC session
      * @param versionId SSC project version ID
      */
     public static void writeLastCorrelationTimestamp(UnirestInstance unirest, String versionId) {
-        var helper = new AviatorSSCAttributeHelper(unirest, AviatorSSCAttributeDefs.LAST_CORRELATION_ATTR);
-        helper.ensureDefinitionExists();
-
         String timestamp = Instant.now().toString();
         LOG.debug("Writing last_correlation timestamp '{}' to app version {}", timestamp, versionId);
 
         new SSCAttributeUpdateBuilder(unirest)
-            .add(Map.of(AviatorSSCAttributeDefs.LAST_CORRELATION_ATTR.name(), timestamp))
+            .add(Map.of(AviatorSSCCorrelationAttributeDefs.LAST_CORRELATION_ATTR.name(), timestamp))
             .buildRequest(versionId)
             .asObject(JsonNode.class);
 
@@ -108,8 +111,6 @@ public class AviatorSSCAttributeHelper {
 
     /**
      * Returns the attribute definition node matched by name, or {@code null} if absent.
-     * SSC auto-generates the GUID on create (it is not part of the POST request body),
-     * so name is the only stable lookup key.
      */
     private JsonNode findDefinition() {
         JsonNode responseBody = unirest.get(SSCUrls.ATTRIBUTE_DEFINITIONS + "?limit=-1")
@@ -131,24 +132,13 @@ public class AviatorSSCAttributeHelper {
             .getBody();
     }
 
-    /** Ensures the definition exists — used by {@link #writeLastCorrelationTimestamp}. */
-    private void ensureDefinitionExists() {
-        if (findDefinition() == null) {
-            LOG.info("Attribute definition '{}' not found — creating before write.", attrDef.name());
-            createDefinition();
-        }
-    }
-
     private ObjectNode buildCreatePayload() {
         ObjectNode node = JsonHelper.getObjectMapper().createObjectNode();
-        // Exact fields validated against SSC UI capture — see comments for each.
-        // guid: NOT sent — SSC auto-generates it; sending a custom guid causes HTTP 500.
-        // options: NOT sent — null in SSC response for TEXT type; empty array causes HTTP 500.
         node.put("name",          attrDef.name());
         node.put("description",   attrDef.description());
-        node.put("category",      attrDef.category());   // must be UPPERCASE, e.g. "TECHNICAL"
+        node.put("category",      attrDef.category());
         node.put("type",          attrDef.type());
-        node.put("appEntityType", "PROJECT_VERSION");     // required discriminator — missing this causes HTTP 500
+        node.put("appEntityType", "PROJECT_VERSION");
         return node;
     }
 }
