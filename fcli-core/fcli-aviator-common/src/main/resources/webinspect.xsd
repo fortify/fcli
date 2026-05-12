@@ -1,0 +1,366 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema" version="2.0">
+  <xs:element name="Sessions" type="SessionsType" />
+  <xs:complexType name="CookiesType">
+    <xs:sequence>
+      <xs:element type="CookieType" name="Cookie" maxOccurs="unbounded" minOccurs="0" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="IssuesType">
+    <xs:sequence>
+      <xs:element type="IssueType" name="Issue" maxOccurs="unbounded" minOccurs="0" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="QueryType">
+    <xs:sequence>
+      <xs:element type="xs:string" name="Name" minOccurs="0"/>
+      <xs:element type="xs:string" name="Value" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="ResponseType">
+    <xs:sequence>
+      <xs:element type="xs:string" name="HTTPVersion" minOccurs="0"/>
+      <xs:element type="xs:short" name="StatusCode" nillable="true" minOccurs="0" default="0"/>
+      <xs:element type="xs:string" name="StatusDescription" minOccurs="0"/>
+      <xs:element type="xs:string" name="SetCookie" minOccurs="0"/>
+      <xs:element name="ResponseBody" minOccurs="0">
+        <xs:complexType>
+          <xs:simpleContent>
+            <xs:extension base="xs:string">
+              <xs:attribute type="xs:byte" name="binary" use="optional"/>
+            </xs:extension>
+          </xs:simpleContent>
+        </xs:complexType>
+      </xs:element>
+      <xs:element  ref="Headers" minOccurs="0"/>
+      <xs:element type="SetCookiesType" name="SetCookies" minOccurs="0"/>
+      <xs:element name="Forms" minOccurs="0">
+        <xs:complexType >
+          <xs:sequence>
+            <xs:element type="FormType" name="Form" maxOccurs="unbounded" minOccurs="0" />
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+      <xs:any namespace="##other" processContents="skip" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+    <xs:anyAttribute processContents="skip"/>
+  </xs:complexType>
+  <xs:complexType name="SetCookiesType" >
+    <xs:sequence>
+      <xs:element type="SetCookieType" name="SetCookie" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="SetCookieType">
+    <xs:sequence>
+      <xs:element type="xs:string" name="Name" minOccurs="0"/>
+      <xs:element name="Value" type="xs:string" minOccurs="0"/>
+      <xs:element type="xs:string" name="Domain" minOccurs="0"/>
+      <xs:element type="xs:string" name="Expires" minOccurs="0"/>
+      <xs:element type="xs:string" name="Path" minOccurs="0"/>
+      <xs:element type="xs:string" name="Secure" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="SelectFieldsType">
+    <xs:sequence>
+      <xs:element type="SelectFieldType" name="SelectField" maxOccurs="unbounded" minOccurs="0" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="OptionsType">
+    <xs:sequence>
+      <xs:element name="Option" maxOccurs="unbounded" minOccurs="0" type="xs:string"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="SelectFieldType">
+    <xs:sequence>
+      <xs:element name="Name" type="xs:string" minOccurs="0"/>
+      <xs:element type="xs:string" name="Class" minOccurs="0"/>
+      <xs:element type="OptionsType" name="Options" minOccurs="0"/>
+      <xs:any namespace="##other" processContents="skip" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:element name="Headers">
+      <xs:complexType>
+          <xs:sequence>
+              <xs:element type="HeaderType" name="Header" maxOccurs="unbounded" minOccurs="0"
+                          />
+          </xs:sequence>
+      </xs:complexType>
+
+  </xs:element>
+  <xs:complexType name="CookieType">
+    <xs:sequence>
+      <xs:element name="Name" type="xs:string" minOccurs="0"/>
+      <xs:element type="xs:string" name="Value" minOccurs="0"/>
+      <xs:element type="xs:string" name="Domain" minOccurs="0"/>
+      <xs:element type="xs:string" name="Path" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="InputFieldsType">
+    <xs:sequence>
+      <xs:element type="InputFieldType" name="InputField" maxOccurs="unbounded" minOccurs="0" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="SessionsType">
+    <xs:sequence>
+      <xs:element ref="Session"  maxOccurs="unbounded" minOccurs="0" />
+    </xs:sequence>
+    <xs:attribute name="version" type="xs:string" use="optional"/>
+    <xs:attribute name="appVersion" type="xs:string" use="optional"/>
+    <xs:anyAttribute namespace="##other" processContents="skip"/>
+  </xs:complexType>
+  <xs:complexType name="RawResponseType">
+    <xs:simpleContent>
+      <xs:extension base="xs:string">
+        <xs:attribute type="xs:byte" name="binary" use="optional"/>
+      </xs:extension>
+    </xs:simpleContent>
+  </xs:complexType>
+  <xs:complexType name="FormsType">
+    <xs:sequence>
+      <xs:element type="FormType" name="Form" maxOccurs="unbounded" minOccurs="0" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="FormType">
+    <xs:sequence>
+      <xs:element type="xs:string" name="Action" minOccurs="0"/>
+      <xs:element type="xs:string" name="Method" minOccurs="0"/>
+      <xs:element type="xs:string" name="Name" minOccurs="0"/>
+      <xs:element name="OnSubmit" type="xs:string" minOccurs="0"/>
+      <xs:element type="InputFieldsType" name="InputFields" minOccurs="0"/>
+      <xs:element name="TextAreas" type="TextAreasType" minOccurs="0"/>
+      <xs:element name="SelectFields" type="SelectFieldsType" minOccurs="0"/>
+      <xs:any namespace="##other" processContents="skip" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="ResponseBodyType">
+    <xs:simpleContent>
+      <xs:extension base="xs:string">
+        <xs:attribute type="xs:byte" name="binary" use="optional"/>
+      </xs:extension>
+    </xs:simpleContent>
+  </xs:complexType>
+  <xs:complexType name="InputFieldType">
+    <xs:sequence>
+      <xs:element type="xs:string" name="Name" minOccurs="0"/>
+      <xs:element type="xs:string" name="Value" minOccurs="0"/>
+      <xs:element type="xs:string" name="Size" minOccurs="0"/>
+      <xs:element type="xs:string" name="MaxLength" minOccurs="0"/>
+      <xs:element type="xs:string" name="sType" minOccurs="0"/>
+      <xs:element type="xs:string" name="Class" minOccurs="0"/>
+      <xs:any namespace="##other" processContents="skip" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="TextAreaType">
+    <xs:sequence>
+      <xs:element type="xs:string" name="Name" minOccurs="0"/>
+      <xs:element type="xs:string" name="Value" minOccurs="0"/>
+      <xs:element type="xs:string" name="MaxLength" minOccurs="0"/>
+      <xs:element type="xs:string" name="Class" minOccurs="0"/>
+      <xs:any namespace="##other" processContents="skip" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="TextAreasType">
+    <xs:sequence>
+      <xs:element type="TextAreaType" name="TextArea" minOccurs="0" />
+    </xs:sequence>
+  </xs:complexType>
+	<xs:complexType name="IssueType">
+		<xs:sequence>
+			<xs:element name="CheckTypeID" type="xs:string"/>
+			<xs:element type="xs:string" name="EngineType"/>
+			<xs:element type="xs:string" name="AttackHTTPRequest" minOccurs="0"/>
+			<xs:element type="xs:string" name="VulnerabilityID"/>
+			<xs:element type="xs:byte" name="Severity"/>
+			<xs:element type="xs:string" name="Name"/>
+			<xs:element name="Classifications" type="ClassificationsType" minOccurs="0"/>
+			<xs:element name="DetectionSelection" type="SelectionLocationsType" minOccurs="0"/>
+			<xs:element name="ReproSteps" type="ReproStepsType" minOccurs="0"/>
+			<xs:element name="SecurityScope" type="SecurityScopeType" minOccurs="0"/>
+			<xs:element type="ReportSectionType" name="ReportSection" maxOccurs="unbounded" minOccurs="0" />
+			<xs:element name="ExternalFindings" type="ExternalFindingsType" minOccurs="0" />
+			<xs:any namespace="##other" processContents="skip" minOccurs="0" maxOccurs="unbounded"/>
+		</xs:sequence>
+		<xs:attribute name="manualIssue" type="xs:boolean" use="optional"/>
+		<xs:attribute name="id" type="xs:string" use="optional"/>
+	</xs:complexType>
+	<xs:complexType name="ExternalFindingType">
+		<xs:sequence>
+			<xs:element name="OriginID" type="xs:string"/>
+			<xs:element name="OriginFindingID" type="xs:string"/>
+			<xs:element name="OriginDateTime" type="xs:dateTime" minOccurs="0"/>
+			<xs:element name="OriginFindingData" type="xs:string" minOccurs="0"/>
+			<xs:any namespace="##other" processContents="skip" minOccurs="0" maxOccurs="unbounded"/>
+		</xs:sequence>
+		<xs:attribute name="Origin" type="xs:string" use="required"/>
+	</xs:complexType>
+	<xs:complexType name="ExternalFindingsType">
+		<xs:sequence>
+			<xs:element name="ExternalFinding" type="ExternalFindingType" maxOccurs="unbounded" minOccurs="0"/>		
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="SelectionLocationsType">
+		<xs:sequence>
+			<xs:element name="Location" minOccurs="0" maxOccurs="unbounded">
+				<xs:complexType>
+					<xs:attribute name="offset" type="xs:int"/>
+					<xs:attribute name="length" type="xs:int"/>
+				</xs:complexType>
+			</xs:element>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="ClassificationsType">
+		<xs:sequence>
+			<xs:element name="Classification" type="ClassificationType" minOccurs="0" maxOccurs="unbounded"/>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="ClassificationType">
+		<xs:simpleContent>
+			<xs:extension base="xs:string">
+				<xs:attribute name="href" type="xs:anyURI" use="optional"/>
+				<xs:attribute name="identifier" type="xs:string" use="required"/>
+				<xs:attribute name="kind" type="xs:string" use="required"/>
+			</xs:extension>
+		</xs:simpleContent>
+	</xs:complexType>
+  <xs:complexType name="QueriesType">
+    <xs:sequence>
+      <xs:element type="QueryType" name="Query" maxOccurs="unbounded" minOccurs="0" />
+    </xs:sequence>
+  </xs:complexType>
+    <xs:element name="Host">
+        <xs:complexType>
+          <xs:simpleContent>
+            <xs:extension base="xs:string"/>
+        </xs:simpleContent>
+    </xs:complexType>
+    </xs:element>
+  <xs:element name="Session">
+      <xs:complexType>
+          <xs:sequence>
+              <xs:element type="xs:anyURI" name="URL" minOccurs="0"/>
+              <xs:element type="xs:string" name="Scheme" minOccurs="0"/>
+              <xs:element ref="Host" minOccurs="0"/>
+              <xs:element type="xs:short" name="Port" nillable="true" minOccurs="0" default="0"/>
+              <xs:element type="xs:string" name="AttackParamDescriptor" minOccurs="0"/>
+              <xs:element name="AttackSelection" type="SelectionLocationsType" minOccurs="0"/>
+              <xs:element name="Issues" minOccurs="0">
+                  <xs:complexType >
+                      <xs:sequence>
+                          <xs:element type="IssueType" name="Issue" maxOccurs="unbounded" minOccurs="0"/>
+                      </xs:sequence>
+                  </xs:complexType>
+              </xs:element>
+              <xs:element name="RawRequest" minOccurs="0">
+                  <xs:complexType>
+                      <xs:simpleContent>
+                          <xs:extension base="xs:string">
+                              <xs:attribute type="xs:string" name="id" use="optional"/>
+                              <xs:attribute type="xs:byte" name="binary" use="optional"/>
+                          </xs:extension>
+                      </xs:simpleContent>
+                  </xs:complexType>
+              </xs:element>
+              <xs:element name="RawResponse" minOccurs="0">
+                  <xs:complexType>
+                      <xs:simpleContent>
+                          <xs:extension base="xs:string">
+                              <xs:attribute type="xs:byte" name="binary" use="optional"/>
+                          </xs:extension>
+                      </xs:simpleContent>
+                  </xs:complexType>
+              </xs:element>
+              <xs:element type="RequestType" name="Request" minOccurs="0"/>
+              <xs:element type="ResponseType" name="Response" minOccurs="0" />
+              <xs:any namespace="##other" processContents="skip" minOccurs="0" maxOccurs="unbounded"/>
+          </xs:sequence>
+          <xs:attribute name="requestId" type="xs:string" use="optional"/>
+      </xs:complexType>
+
+  </xs:element>
+  <xs:complexType name="RequestType">
+    <xs:sequence>
+      <xs:element type="xs:string" name="Method" minOccurs="0"/>
+      <xs:element type="xs:string" name="Path" minOccurs="0"/>
+      <xs:element type="xs:string" name="File" minOccurs="0"/>
+      <xs:element type="xs:string" name="Ext" minOccurs="0"/>
+      <xs:element type="xs:string" name="PageMark" minOccurs="0"/>
+      <xs:element type="xs:string" name="HTTPVersion" minOccurs="0"/>
+      <xs:element type="xs:string" name="FullQuery" minOccurs="0"/>
+      <xs:element type="xs:string" name="FullPostData" minOccurs="0"/>
+      <xs:element name="XMLPostData" type="xs:string" minOccurs="0"/>
+      <xs:element name="MultiPartPostData" minOccurs="0">
+        <xs:complexType>
+          <xs:simpleContent>
+            <xs:extension base="xs:string">
+              <xs:attribute type="xs:byte" name="binary" use="optional"/>
+            </xs:extension>
+          </xs:simpleContent>
+        </xs:complexType>
+      </xs:element>
+      <xs:element name="RawASCIIPostData" minOccurs="0">
+        <xs:complexType>
+          <xs:simpleContent>
+            <xs:extension base="xs:string">
+              <xs:attribute type="xs:byte" name="binary" use="optional"/>
+            </xs:extension>
+          </xs:simpleContent>
+        </xs:complexType>
+      </xs:element>
+      <xs:element type="xs:string" name="Cookie" minOccurs="0"/>
+      <xs:element name="Queries" minOccurs="0">
+        <xs:complexType >
+          <xs:sequence>
+            <xs:element type="QueryType" name="Query" maxOccurs="unbounded" minOccurs="0" />
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+      <xs:element  ref="Headers" minOccurs="0"/>
+      <xs:element type="CookiesType" name="Cookies" minOccurs="0"/>
+      <xs:any namespace="##other" processContents="skip" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+    <xs:attribute name="id" type="xs:string"/>
+  </xs:complexType>
+  <xs:complexType name="ReportSectionType">
+    <xs:sequence>
+      <xs:element type="xs:string" name="Name" minOccurs="0"/>
+      <xs:element type="xs:string" name="SectionText" minOccurs="0"/>
+      <xs:any namespace="##other" processContents="skip" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="HeaderType">
+    <xs:sequence>
+      <xs:element type="xs:string" name="Name" minOccurs="0"/>
+      <xs:element type="xs:string" name="Value" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="ReproStepType">
+    <xs:sequence>
+      <xs:element name="Url" type="xs:string" minOccurs="0"/>
+      <xs:element name="PostParams" type="xs:string" minOccurs="0"/>
+      <xs:element name="Source" type="xs:string" minOccurs="0"/>
+      <xs:any namespace="##other" processContents="skip" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="ReproStepsType">
+    <xs:sequence>
+      <xs:element name="ReproStep" type="ReproStepType" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="SecurityScopeType">
+    <xs:sequence>
+      <xs:element name="SinkStack" type="xs:string" minOccurs="0"/>
+      <xs:element name="SourceStacks" type="StackListType" minOccurs="0"/>
+      <xs:element name="Category" type="xs:string" minOccurs="0"/>
+      <xs:element name="CWE" type="xs:string" minOccurs="0"/>
+      <xs:element name="Trigger" type="xs:string" minOccurs="0"/>
+      <xs:element name="Location" type="xs:string" minOccurs="0"/>
+      <xs:element name="UserContext" type="xs:string" minOccurs="0"/>
+      <xs:any namespace="##other" processContents="skip" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="StackListType">
+    <xs:sequence>
+      <xs:element name="Stack" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+</xs:schema>

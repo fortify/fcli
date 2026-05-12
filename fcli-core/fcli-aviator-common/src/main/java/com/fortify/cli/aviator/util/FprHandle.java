@@ -75,7 +75,9 @@ public final class FprHandle implements AutoCloseable {
         } catch (IOException e) {
             throw new AviatorTechnicalException("Failed to open FPR as a zip file system: " + fprPath, e);
         }
-        this.sourceFileMap = loadSourceFileMap();
+        this.sourceFileMap = Files.exists(zipfs.getPath("/webinspect.xml"))
+            ? new ConcurrentHashMap<>()
+            : loadSourceFileMap();
     }
 
     /**
