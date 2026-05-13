@@ -30,6 +30,7 @@ import com.fortify.cli.common.cli.util.FcliActionState;
 import com.fortify.cli.common.cli.util.FcliExecutionContext;
 import com.fortify.cli.common.cli.util.FcliExecutionContextHolder;
 import com.fortify.cli.common.cli.util.IFcliExecutionContextManager;
+import com.fortify.cli.common.cli.util.StdioHelper;
 import com.fortify.cli.common.concurrent.job.AsyncJobManager;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.mcp.MCPExclude;
@@ -57,6 +58,11 @@ public class AgentMCPStartHttpCommand extends AbstractRunnableCommand implements
 
     @Override
     public Integer call() throws Exception {
+        // Suppress progress output — HTTP server has no stdio protocol channel to protect,
+        // so progress messages on stdout/stderr are unwanted console noise
+        StdioHelper.setProgressOut(null);
+        StdioHelper.setProgressErr(null);
+
         var config = MCPServerHttpConfigLoader.load(configPath);
 
         var safeReturnMillis = PERIOD_HELPER.parsePeriodToMillis(config.getJobSafeReturn());
