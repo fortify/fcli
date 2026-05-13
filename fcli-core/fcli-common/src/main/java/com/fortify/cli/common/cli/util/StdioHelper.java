@@ -23,6 +23,8 @@ import org.slf4j.LoggerFactory;
 import com.fortify.cli.common.log.LogMaskHelper;
 import com.fortify.cli.common.output.transform.mask.MaskingPrintStream;
 
+import picocli.CommandLine.Help.Ansi;
+
 /**
  * Central manager for fcli stdio delegation, masking, and progress streams.
  *
@@ -58,6 +60,7 @@ public final class StdioHelper {
     private static final ThreadLocal<Consumer<String>> progressCallback = new ThreadLocal<>();
 
     private static volatile boolean installed = false;
+    private static volatile Ansi ansi = Ansi.AUTO;
     private static PrintStream rawOut = System.out;
     private static PrintStream rawErr = System.err;
     private static PrintStream maskedOut = System.out;
@@ -71,6 +74,9 @@ public final class StdioHelper {
      */
     public static synchronized void install() {
         if ( installed ) return;
+        // Detect ANSI capability before replacing streams: the delegating/masking
+        // wrappers installed below can interfere with terminal-based ANSI probing.
+        ansi = Ansi.AUTO.enabled() ? Ansi.ON : Ansi.AUTO;
         rawOut = System.out;
         rawErr = System.err;
         LOG.trace("Installing delegating streams; rawOut={}, rawErr={}",
@@ -104,6 +110,13 @@ public final class StdioHelper {
         System.setErr(rawErr);
         installed = false;
     }
+
+    /**
+     * Return the resolved ANSI mode, detected before streams were replaced.
+     * Always returns {@link Ansi#ON} or {@link Ansi#AUTO} (never {@link Ansi#OFF}
+     * unless the terminal reported no ANSI support before installation).
+     */
+    public static Ansi getAnsi() { return ansi; }
 
     /**
      * Return the raw, unmasked {@code System.out} captured before installation.
