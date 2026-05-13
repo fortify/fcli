@@ -337,7 +337,7 @@ public class AuditProcessor {
                     tagMappingConfig, issueCategoryLookup);
         }
 
-        updateOrAddTag(issueElement, Constants.AVIATOR_STATUS_TAG_ID, Constants.PROCESSED_BY_AVIATOR);
+        updateOrAddTag(issueElement, Constants.AVIATOR_STATUS_TAG_ID, resolveAviatorStatusValue(response));
 
         if (response.getAuditResult() != null) {
             commentTimestamp = updateOrAddComment(issueElement, response.getAuditResult().comment);
@@ -346,6 +346,20 @@ public class AuditProcessor {
         updateClientAuditTrail(issueElement, response, tagMappingConfig, suppressedHistoryValue);
 
         return commentTimestamp;
+    }
+
+    /**
+     * Returns {@code PROCESSED_BY_AVIATOR_WITH_REMEDIATION} if the audit response
+     * contains non-empty auto-remediation changes, otherwise {@code PROCESSED_BY_AVIATOR}.
+     */
+    private String resolveAviatorStatusValue(AuditResponse response) {
+        if (response != null && response.getAuditResult() != null
+                && response.getAuditResult().getAutoremediation() != null
+                && response.getAuditResult().getAutoremediation().getChanges() != null
+                && !response.getAuditResult().getAutoremediation().getChanges().isEmpty()) {
+            return Constants.PROCESSED_BY_AVIATOR_WITH_REMEDIATION;
+        }
+        return Constants.PROCESSED_BY_AVIATOR;
     }
 
     private void updateClientAuditTrail(Element issueElement, AuditResponse response, TagMappingConfig tagMappingConfig, Boolean suppressedHistoryValue) {
@@ -381,7 +395,7 @@ public class AuditProcessor {
                 addTagHistory(clientAuditTrail, Constants.SUPPRESSED_TAG_ID, suppressedHistoryValue.toString());
             }
         }
-        addTagHistory(clientAuditTrail, Constants.AVIATOR_STATUS_TAG_ID, Constants.PROCESSED_BY_AVIATOR);
+        addTagHistory(clientAuditTrail, Constants.AVIATOR_STATUS_TAG_ID, resolveAviatorStatusValue(response));
     }
 
     private Boolean applySuppressionDecision(Element issueElement, String instanceId, TagMappingConfig.Result resultConfig,
@@ -557,7 +571,7 @@ public class AuditProcessor {
             suppressedHistoryValue = applySuppressionDecision(newIssue, instanceId, resultConfig, tagMappingConfig, issueCategoryLookup);
         }
 
-        updateOrAddTag(newIssue, Constants.AVIATOR_STATUS_TAG_ID, Constants.PROCESSED_BY_AVIATOR);
+        updateOrAddTag(newIssue, Constants.AVIATOR_STATUS_TAG_ID, resolveAviatorStatusValue(response));
 
         if (response != null && response.getAuditResult() != null) {
             commentTimestamp = updateOrAddComment(newIssue, response.getAuditResult().comment);

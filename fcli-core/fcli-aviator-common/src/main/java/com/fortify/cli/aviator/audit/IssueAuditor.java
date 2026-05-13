@@ -136,7 +136,7 @@ public class IssueAuditor {
         String name = "Aviator status";
         String id = "FB7B0462-2C2E-46D9-811A-DCC1F3C83051";
 
-        List<String> values = List.of(Constants.PROCESSED_BY_AVIATOR);
+        List<String> values = List.of(Constants.PROCESSED_BY_AVIATOR, Constants.PROCESSED_BY_AVIATOR_WITH_REMEDIATION);
         return new TagDefinition(name, id, values, false);
     }
 
@@ -243,8 +243,8 @@ public class IssueAuditor {
         if (aviatorStatusTag != null) {
             String issueId = userPrompt.getIssueData().getInstanceID();
             String status = Optional.ofNullable(auditIssueMap.get(issueId)).map(AuditIssue::getTags).map(tags -> tags.get("FB7B0462-2C2E-46D9-811A-DCC1F3C83051")).orElse(null);
-            if (!StringUtil.isEmpty(status) && Constants.PROCESSED_BY_AVIATOR.equalsIgnoreCase(status)) {
-                LOG.debug("Skipping already PROCESSED_BY_AVIATOR: {}", issueId);
+            if (!StringUtil.isEmpty(status) && status.startsWith("PROCESSED_BY_AVIATOR")) {
+                LOG.debug("Skipping already processed by Aviator: {}", issueId);
                 return false;
             }
         }
