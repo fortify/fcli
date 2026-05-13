@@ -18,7 +18,7 @@ import java.util.Map;
 
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.json.JsonNodeHolder;
-import com.fortify.cli.fod.attribute.helper.FoDAttributeValueDescriptor;
+import com.fortify.cli.fod.attribute.helper.FoDAttributeDescriptor;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -31,13 +31,13 @@ public class FoDAppDescriptor extends JsonNodeHolder {
     private String applicationName;
     private String applicationDescription;
     private String businessCriticalityType;
-    private ArrayList<FoDAttributeValueDescriptor> attributes;
+    private ArrayList<FoDAttributeDescriptor> attributes;
     private String emailList;
     private boolean hasMicroservices;
 
     public Map<Integer, String> attributesAsMap() {
         Map<Integer, String> attrMap = new HashMap<>();
-        for (FoDAttributeValueDescriptor attr : attributes) {
+        for (FoDAttributeDescriptor attr : attributes) {
             attrMap.put(attr.getId(), attr.getValue());
         }
         return  attrMap;

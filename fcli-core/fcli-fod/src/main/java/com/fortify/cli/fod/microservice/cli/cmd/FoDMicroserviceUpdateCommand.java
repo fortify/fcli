@@ -16,13 +16,15 @@ import java.util.ArrayList;
 import java.util.Map;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.fod._common.cli.mixin.FoDDelimiterMixin;
 import com.fortify.cli.fod._common.output.cli.cmd.AbstractFoDJsonNodeOutputCommand;
+import com.fortify.cli.fod._common.util.FoDEnums;
 import com.fortify.cli.fod.attribute.cli.mixin.FoDAttributeUpdateOptions;
-import com.fortify.cli.fod.attribute.helper.FoDAttributeDefinitionHelper;
-import com.fortify.cli.fod.attribute.helper.FoDAttributeValueDescriptor;
+import com.fortify.cli.fod.attribute.helper.FoDAttributeDescriptor;
+import com.fortify.cli.fod.attribute.helper.FoDAttributeHelper;
 import com.fortify.cli.fod.microservice.cli.mixin.FoDMicroserviceByQualifiedNameResolverMixin;
 import com.fortify.cli.fod.microservice.helper.FoDMicroserviceDescriptor;
 import com.fortify.cli.fod.microservice.helper.FoDMicroserviceHelper;
@@ -37,6 +39,7 @@ import picocli.CommandLine.Option;
 @Command(name = OutputHelperMixins.Update.CMD_NAME)
 public class FoDMicroserviceUpdateCommand extends AbstractFoDJsonNodeOutputCommand implements IActionCommandResultSupplier {
     @Getter @Mixin private OutputHelperMixins.Update outputHelper;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Mixin private FoDDelimiterMixin delimiterMixin; // Is automatically injected in resolver mixins
     @Mixin private FoDMicroserviceByQualifiedNameResolverMixin.PositionalParameter microserviceResolver;
@@ -49,18 +52,20 @@ public class FoDMicroserviceUpdateCommand extends AbstractFoDJsonNodeOutputComma
     @Override
     public JsonNode getJsonNode(UnirestInstance unirest) {
         FoDMicroserviceDescriptor msDescriptor = microserviceResolver.getMicroserviceDescriptor(unirest, true);
-        ArrayList<FoDAttributeValueDescriptor> msAttrsCurrent = msDescriptor.getAttributes();
+        ArrayList<FoDAttributeDescriptor> msAttrsCurrent = msDescriptor.getAttributes();
         Map<String, String> attributeUpdates = msAttrsUpdate.getAttributes();
-        JsonNode jsonAttrs;
+        JsonNode jsonAttrs = objectMapper.createArrayNode();
         if (attributeUpdates != null && !attributeUpdates.isEmpty()) {
-            jsonAttrs = new FoDAttributeDefinitionHelper(unirest).mergeAttributesNode(msAttrsCurrent, attributeUpdates);
+            jsonAttrs = FoDAttributeHelper.mergeAttributesNode(unirest, FoDEnums.AttributeTypes.Microservice,
+                    msAttrsCurrent, attributeUpdates);
         } else {
-            jsonAttrs = FoDAttributeDefinitionHelper.attributeValuesToNode(msAttrsCurrent);
+            jsonAttrs = FoDAttributeHelper.getAttributesNode(FoDEnums.AttributeTypes.Microservice, msAttrsCurrent);
         }
+        FoDMicroserviceDescriptor appMicroserviceDescriptor = microserviceResolver.getMicroserviceDescriptor(unirest, true);
         FoDMicroserviceUpdateRequest msUpdateRequest = FoDMicroserviceUpdateRequest.builder()
                 .microserviceName(microserviceName)
                 .attributes(jsonAttrs).build();
-        return FoDMicroserviceHelper.updateMicroservice(unirest, msDescriptor, msUpdateRequest).asJsonNode();
+        return FoDMicroserviceHelper.updateMicroservice(unirest, appMicroserviceDescriptor, msUpdateRequest).asJsonNode();
     }
 
     @Override
