@@ -19,7 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.mcp.MCPInclude;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
@@ -31,6 +31,7 @@ import com.fortify.cli.fod._common.util.FoDEnums.VulnerabilitySeverityType;
 import com.fortify.cli.fod.attribute.cli.mixin.FoDAttributeUpdateOptions;
 import com.fortify.cli.fod.issue.helper.FoDBulkIssueUpdateRequest;
 import com.fortify.cli.fod.issue.helper.FoDBulkIssueUpdateResponse;
+import com.fortify.cli.fod.issue.helper.FoDIssueAttributeHelper;
 import com.fortify.cli.fod.issue.helper.FoDIssueHelper;
 import com.fortify.cli.fod.release.cli.mixin.FoDReleaseByQualifiedNameOrIdResolverMixin;
 import com.fortify.cli.fod.release.helper.FoDReleaseDescriptor;
@@ -55,7 +56,6 @@ public class FoDIssueUpdateCommand extends AbstractFoDJsonNodeOutputCommand impl
     @Mixin private FoDDelimiterMixin delimiterMixin; // Is automatically injected in resolver mixins
     @Mixin private FoDReleaseByQualifiedNameOrIdResolverMixin.RequiredOption releaseResolver;
     @Mixin private FoDAttributeUpdateOptions.OptionalAttrOption issueAttrsUpdate;
-    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Option(names = {"--user"}, required = true)
     protected String user;
@@ -82,8 +82,9 @@ public class FoDIssueUpdateCommand extends AbstractFoDJsonNodeOutputCommand impl
         FoDReleaseDescriptor releaseDescriptor = releaseResolver.getReleaseDescriptor(unirest);
 
         Map<String, String> attributeUpdates = issueAttrsUpdate.getAttributes();
-        JsonNode jsonAttrs = FoDIssueHelper.buildIssueAttributesNode(unirest, attributeUpdates);
-        ResolvedStatuses resolvedStatuses = resolveStatuses(unirest);
+        var issueAttrHelper = new FoDIssueAttributeHelper(unirest);
+        JsonNode jsonAttrs = issueAttrHelper.buildAttributesNode(attributeUpdates);
+        ResolvedStatuses resolvedStatuses = resolveStatuses(issueAttrHelper);
 
         if (vulnSelection.includeAllVulnerabilities) {
             FoDBulkIssueUpdateRequest issueUpdateRequest = buildIssueUpdateRequest(unirest, resolvedStatuses.developerStatusValue(), resolvedStatuses.auditorStatusValue(), jsonAttrs, null, true);
@@ -124,7 +125,7 @@ public class FoDIssueUpdateCommand extends AbstractFoDJsonNodeOutputCommand impl
         lastSkippedCount = skippedCount;
         lastErrorCount = 0;
         lastUpdateCount = issueUpdateCount;
-        return objectMapper.createObjectNode()
+        return JsonHelper.getObjectMapper().createObjectNode()
             .put("totalCount", totalCount)
             .put("skippedCount", skippedCount)
             .put("errorCount", 0)
@@ -133,16 +134,16 @@ public class FoDIssueUpdateCommand extends AbstractFoDJsonNodeOutputCommand impl
 
     private record ResolvedStatuses(String developerStatusValue, String auditorStatusValue) {}
 
-    private ResolvedStatuses resolveStatuses(UnirestInstance unirest) {
+    private ResolvedStatuses resolveStatuses(FoDIssueAttributeHelper issueAttrHelper) {
         String auditorStatusValue = null;
         if ( auditorStatus != null && !auditorStatus.isBlank() ) {
-            auditorStatusValue = FoDIssueHelper.resolveStatusValue(unirest, auditorStatus, new String[]{
+            auditorStatusValue = issueAttrHelper.resolveStatusValue(auditorStatus, new String[]{
                 "Auditor Status (Non suppressed)", "Auditor Status (Suppressed)"
             }, "auditor-status", AuditorStatusType.values());
         }
         String developerStatusValue = null;
         if ( developerStatus != null && !developerStatus.isBlank() ) {
-            developerStatusValue = FoDIssueHelper.resolveStatusValue(unirest, developerStatus, new String[]{
+            developerStatusValue = issueAttrHelper.resolveStatusValue(developerStatus, new String[]{
                 "Developer Status (Open)", "Developer Status (Closed)"
             }, "developer-status", DeveloperStatusType.values());
         }

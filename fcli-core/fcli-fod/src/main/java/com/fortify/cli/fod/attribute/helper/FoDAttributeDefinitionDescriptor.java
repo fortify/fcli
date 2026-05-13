@@ -23,9 +23,9 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 @Data @EqualsAndHashCode(callSuper = true)
-@Reflectable @NoArgsConstructor 
-@JsonIgnoreProperties(ignoreUnknown = true) // Fix for FoD 26.2+ where the API returns additional fields that are not mapped to this class (e.g. "isMultiSelect")
-public class FoDAttributeDescriptor extends JsonNodeHolder {
+@Reflectable @NoArgsConstructor
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class FoDAttributeDefinitionDescriptor extends JsonNodeHolder {
     private Integer id;
     private String name;
     private Integer attributeTypeId;
@@ -35,6 +35,5 @@ public class FoDAttributeDescriptor extends JsonNodeHolder {
     private Boolean isRequired;
     private Boolean isRestricted;
     private ArrayList<FoDPickListDescriptor> picklistValues;
-    private String value;
     private String defaultValue;
 }
