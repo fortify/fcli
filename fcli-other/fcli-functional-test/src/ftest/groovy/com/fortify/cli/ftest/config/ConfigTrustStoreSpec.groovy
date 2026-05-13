@@ -37,7 +37,7 @@ class ConfigTrustStoreSpec extends FcliBaseSpec {
     }
     
     def "set"() {
-        def args = "config truststore set -f ${dummyStore}"
+        def args = "config truststore set -f ${dummyStore} --no-os-truststore"
         when:
             def result = Fcli.run(args)
         then:
@@ -52,7 +52,7 @@ class ConfigTrustStoreSpec extends FcliBaseSpec {
             def result = Fcli.run(args)
         then:
             verifyAll(result.stdout) {
-                // TODO
+                it.any { it == "useOsTrustStore: false" }
             }
     }
     

@@ -37,6 +37,7 @@ import com.fortify.cli.fod.release.helper.FoDReleaseDescriptor;
 
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
+import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
@@ -66,41 +67,67 @@ public class FoDIssueUpdateCommand extends AbstractFoDJsonNodeOutputCommand impl
     protected VulnerabilitySeverityType severity;
     @Option(names = {"--comment"}, required = false)
     protected String comment;
-    @Option(names = {"--vuln-ids"}, required = true, split=",")
-    protected ArrayList<String> vulnIds;
+    @ArgGroup(exclusive = true, multiplicity = "1")
+    private VulnSelectionArgs vulnSelection;
+
+    static class VulnSelectionArgs {
+        @Option(names = {"--vuln-ids", "--issue-ids"}, required = true, split=",")
+        ArrayList<String> vulnIds;
+        @Option(names = {"--include-all", "--all"}, required = true)
+        boolean includeAllVulnerabilities;
+    }
 
     @Override
     public JsonNode getJsonNode(UnirestInstance unirest) {
         FoDReleaseDescriptor releaseDescriptor = releaseResolver.getReleaseDescriptor(unirest);
 
-        // If vulnIds are provided, filter them against the release vulnerabilities using a helper.
-        int issueUpdateCount = 0;
-        int totalCount = 0;
-        int skippedCount = 0;
-        if ( vulnIds != null && !vulnIds.isEmpty() ) {
-            var vulnFilterResult = FoDIssueHelper.filterRequestedVulnIds(unirest, releaseDescriptor.getReleaseId(), vulnIds);
-            totalCount = vulnFilterResult.totalCount();
-            issueUpdateCount = vulnFilterResult.kept().size();
-            skippedCount = vulnFilterResult.skipped().size();
-            vulnIds = new ArrayList<>(vulnFilterResult.kept());
+        Map<String, String> attributeUpdates = issueAttrsUpdate.getAttributes();
+        JsonNode jsonAttrs = FoDIssueHelper.buildIssueAttributesNode(unirest, attributeUpdates);
+        ResolvedStatuses resolvedStatuses = resolveStatuses(unirest);
+
+        if (vulnSelection.includeAllVulnerabilities) {
+            FoDBulkIssueUpdateRequest issueUpdateRequest = buildIssueUpdateRequest(unirest, resolvedStatuses.developerStatusValue(), resolvedStatuses.auditorStatusValue(), jsonAttrs, null, true);
+            FoDBulkIssueUpdateResponse resp = performUpdate(unirest, releaseDescriptor.getReleaseId(), issueUpdateRequest, 0, 0, 0, null);
+            int updateCount = (int) resp.getIssueCount();
+            lastTotalCount = updateCount;
+            lastUpdateCount = updateCount;
+            return resp.asObjectNode()
+                .put("totalCount", updateCount)
+                .put("skippedCount", 0)
+                .put("errorCount", lastErrorCount)
+                .put("updateCount", updateCount);
+        } else {
+            var vulnFilterResult = FoDIssueHelper.filterRequestedVulnIds(unirest, releaseDescriptor.getReleaseId(), vulnSelection.vulnIds);
+            int totalCount = vulnFilterResult.totalCount();
+            int issueUpdateCount = vulnFilterResult.kept().size();
+            int skippedCount = vulnFilterResult.skipped().size();
+            ArrayList<String> effectiveVulnIds = new ArrayList<>(vulnFilterResult.kept());
             if (!vulnFilterResult.skipped().isEmpty()) {
                 LOG.debug("Skipped vulnerabilities: {}", vulnFilterResult.skipped());
                 vulnFilterResult.skipped().forEach(vid -> LOG.warn("Vulnerability {} not found in release {}, skipping", vid, releaseDescriptor.getReleaseId()));
             }
+            if (effectiveVulnIds.isEmpty()) {
+                return createNoOpResponse(totalCount, skippedCount, issueUpdateCount);
+            }
+            FoDBulkIssueUpdateRequest issueUpdateRequest = buildIssueUpdateRequest(unirest, resolvedStatuses.developerStatusValue(), resolvedStatuses.auditorStatusValue(), jsonAttrs, effectiveVulnIds, false);
+            FoDBulkIssueUpdateResponse resp = performUpdate(unirest, releaseDescriptor.getReleaseId(), issueUpdateRequest, totalCount, skippedCount, issueUpdateCount, effectiveVulnIds);
+            return resp.asObjectNode()
+                .put("totalCount", totalCount)
+                .put("skippedCount", skippedCount)
+                .put("errorCount", lastErrorCount)
+                .put("updateCount", issueUpdateCount);
         }
+    }
 
-        Map<String, String> attributeUpdates = issueAttrsUpdate.getAttributes();
-        JsonNode jsonAttrs = FoDIssueHelper.buildIssueAttributesNode(unirest, attributeUpdates);
-
-        // Validate auditor and developer status values against attribute picklists
-        ResolvedStatuses resolvedStatuses = resolveStatuses(unirest);
-
-        FoDBulkIssueUpdateRequest issueUpdateRequest = buildIssueUpdateRequest(unirest, resolvedStatuses.developerStatusValue(), resolvedStatuses.auditorStatusValue(), jsonAttrs);
-        FoDBulkIssueUpdateResponse resp = performUpdate(unirest, releaseDescriptor.getReleaseId(), issueUpdateRequest, totalCount, skippedCount, issueUpdateCount);
-        return resp.asObjectNode()
+    private JsonNode createNoOpResponse(int totalCount, int skippedCount, int issueUpdateCount) {
+        lastTotalCount = totalCount;
+        lastSkippedCount = skippedCount;
+        lastErrorCount = 0;
+        lastUpdateCount = issueUpdateCount;
+        return objectMapper.createObjectNode()
             .put("totalCount", totalCount)
             .put("skippedCount", skippedCount)
-            .put("errorCount", lastErrorCount)
+            .put("errorCount", 0)
             .put("updateCount", issueUpdateCount);
     }
 
@@ -122,20 +149,21 @@ public class FoDIssueUpdateCommand extends AbstractFoDJsonNodeOutputCommand impl
         return new ResolvedStatuses(developerStatusValue, auditorStatusValue);
     }
 
-    private FoDBulkIssueUpdateRequest buildIssueUpdateRequest(UnirestInstance unirest, String developerStatusValue, String auditorStatusValue, JsonNode jsonAttrs) {
+    private FoDBulkIssueUpdateRequest buildIssueUpdateRequest(UnirestInstance unirest, String developerStatusValue, String auditorStatusValue, JsonNode jsonAttrs, ArrayList<String> effectiveVulnIds, boolean includeAllVulnerabilities) {
         return FoDBulkIssueUpdateRequest.builder()
             .user(unirest, user)
             .developerStatus(developerStatusValue)
             .auditorStatus(auditorStatusValue)
             .severity(severity != null ? severity.toString() : null)
             .comment(comment)
-            .vulnerabilityIds(vulnIds)
+            .vulnerabilityIds(effectiveVulnIds)
+            .includeAllVulnerabilities(includeAllVulnerabilities ? true : null)
             .attributes(jsonAttrs)
             .build().validate();
     }
 
-    private FoDBulkIssueUpdateResponse performUpdate(UnirestInstance unirest, String releaseId, FoDBulkIssueUpdateRequest request, int totalCount, int skippedCount, int issueUpdateCount) {
-        LOG.debug("Updating issues: {}", vulnIds);
+    private FoDBulkIssueUpdateResponse performUpdate(UnirestInstance unirest, String releaseId, FoDBulkIssueUpdateRequest request, int totalCount, int skippedCount, int issueUpdateCount, ArrayList<String> effectiveVulnIds) {
+        if (effectiveVulnIds != null) { LOG.debug("Updating issues: {}", effectiveVulnIds); }
         FoDBulkIssueUpdateResponse resp = FoDIssueHelper.updateIssues(unirest, releaseId, request);
         long errorCount = resp.getResults().stream().filter(r -> r.getErrorCode() != 0).count();
         resp.setIssueCount(resp.getResults().size());
