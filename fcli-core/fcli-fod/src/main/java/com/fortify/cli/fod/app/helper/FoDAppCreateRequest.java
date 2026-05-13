@@ -34,7 +34,7 @@ import com.fortify.cli.fod.access_control.helper.FoDUserHelper;
 import com.fortify.cli.fod.app.cli.mixin.FoDAppTypeOptions.FoDAppType;
 import com.fortify.cli.fod.app.cli.mixin.FoDCriticalityTypeOptions.FoDCriticalityType;
 import com.fortify.cli.fod.app.cli.mixin.FoDSdlcStatusTypeOptions.FoDSdlcStatusType;
-import com.fortify.cli.fod.attribute.helper.FoDAttributeHelper;
+import com.fortify.cli.fod.attribute.helper.FoDAttributeDefinitionHelper;
 import com.fortify.cli.fod.release.helper.FoDQualifiedReleaseNameDescriptor;
 
 import kong.unirest.UnirestInstance;
@@ -111,7 +111,7 @@ public class FoDAppCreateRequest {
         }
         
         public FoDAppCreateRequestBuilder autoAttributes(UnirestInstance unirest, Map<String, String> attributes, boolean autoRequiredAttrs) {
-            return attributes(FoDAttributeHelper.getAttributesNode(unirest, FoDEnums.AttributeTypes.All, attributes, autoRequiredAttrs));
+            return attributes(new FoDAttributeDefinitionHelper(unirest).buildAttributesNode(FoDEnums.AttributeTypes.All, attributes, autoRequiredAttrs));
         }
         
         public FoDAppCreateRequestBuilder businessCriticality(FoDCriticalityType businessCriticalityType) {

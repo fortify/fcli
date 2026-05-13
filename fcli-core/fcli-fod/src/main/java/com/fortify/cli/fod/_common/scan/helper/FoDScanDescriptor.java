@@ -22,7 +22,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.json.JsonNodeHolder;
-import com.fortify.cli.fod.attribute.helper.FoDAttributeDescriptor;
+import com.fortify.cli.fod.attribute.helper.FoDAttributeValueDescriptor;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -40,7 +40,7 @@ public class FoDScanDescriptor extends JsonNodeHolder {
     private String microserviceName;
     private String analysisStatusType;
     private String status;
-    private ArrayList<FoDAttributeDescriptor> attributes;
+    private ArrayList<FoDAttributeValueDescriptor> attributes;
 
     @JsonIgnore
     public String getReleaseAndScanId() {
@@ -57,7 +57,7 @@ public class FoDScanDescriptor extends JsonNodeHolder {
             return Collections.emptyMap();
         }
         Map<Integer, String> attrMap = new HashMap<>();
-        for (FoDAttributeDescriptor attr : attributes) {
+        for (FoDAttributeValueDescriptor attr : attributes) {
             attrMap.put(attr.getId(), attr.getValue());
         }
         return Collections.unmodifiableMap(attrMap);

@@ -22,10 +22,15 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
+/**
+ * Describes an FoD attribute definition — the schema record returned by the /api/v3/attributes
+ * endpoint. Contains metadata (type, data type, picklist values, required/restricted flags) but
+ * no entity-specific value. For entity attribute values see {@link FoDAttributeValueDescriptor}.
+ */
 @Data @EqualsAndHashCode(callSuper = true)
-@Reflectable @NoArgsConstructor 
-@JsonIgnoreProperties(ignoreUnknown = true) // Fix for FoD 26.2+ where the API returns additional fields that are not mapped to this class (e.g. "isMultiSelect")
-public class FoDAttributeDescriptor extends JsonNodeHolder {
+@Reflectable @NoArgsConstructor
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class FoDAttributeDefinitionDescriptor extends JsonNodeHolder {
     private Integer id;
     private String name;
     private Integer attributeTypeId;
@@ -35,6 +40,5 @@ public class FoDAttributeDescriptor extends JsonNodeHolder {
     private Boolean isRequired;
     private Boolean isRestricted;
     private ArrayList<FoDPickListDescriptor> picklistValues;
-    private String value;
     private String defaultValue;
 }

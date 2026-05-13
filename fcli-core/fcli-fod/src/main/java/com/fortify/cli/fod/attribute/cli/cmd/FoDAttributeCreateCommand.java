@@ -22,7 +22,7 @@ import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.fod._common.output.cli.cmd.AbstractFoDJsonNodeOutputCommand;
 import com.fortify.cli.fod.attribute.cli.mixin.FoDAttributeOptionCandidates;
 import com.fortify.cli.fod.attribute.helper.FoDAttributeCreateRequest;
-import com.fortify.cli.fod.attribute.helper.FoDAttributeHelper;
+import com.fortify.cli.fod.attribute.helper.FoDAttributeDefinitionHelper;
 import com.fortify.cli.fod.attribute.helper.FoDPicklistSortedValue;
 
 import kong.unirest.UnirestInstance;
@@ -70,7 +70,7 @@ public class FoDAttributeCreateCommand extends AbstractFoDJsonNodeOutputCommand 
                 .isRestricted(isRestricted)
                 .picklistValues(getPicklistValues())
                 .build();
-        return FoDAttributeHelper.createAttribute(unirest, attributeCreateRequest).asJsonNode();
+        return new FoDAttributeDefinitionHelper(unirest).createDefinition(attributeCreateRequest).asJsonNode();
     }
 
     @Override
