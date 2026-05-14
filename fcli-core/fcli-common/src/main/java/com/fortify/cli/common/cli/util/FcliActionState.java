@@ -32,10 +32,14 @@ import lombok.Getter;
  *       next.</li>
  *   <li><b>MCP / RPC tool call (non-imported)</b> — each tool call also gets a fresh
  *       {@code FcliActionState}, keeping calls independent.</li>
- *   <li><b>Imported action functions</b> (MCP stdio / RPC) — all invocations within the same
+ *   <li><b>Imported action functions (MCP stdio / RPC stdio)</b> — all invocations within the same
  *       server instance share one {@code FcliActionState} instance. This is the mechanism that
  *       lets one exported function set a {@code global.*} variable that a subsequent call to a
  *       different exported function can read back.</li>
+ *   <li><b>Imported action functions (MCP HTTP server)</b> — each distinct authenticated identity
+ *       (credentials hash) has its own {@code FcliActionState}, scoped to the same
+ *       {@link FcliIsolationScope} as its transient session descriptor. {@code global.*} variables
+ *       therefore persist across calls from the same user but are never shared with other users.</li>
  *   <li><b>{@code run.fcli} sub-commands</b> — executed within the parent's existing
  *       {@link FcliExecutionContext}, so they see and can mutate the same
  *       {@code FcliActionState} as the calling action step.</li>

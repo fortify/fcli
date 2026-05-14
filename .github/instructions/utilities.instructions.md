@@ -160,8 +160,9 @@ Groups related invocations under the same auth/session boundary.
 ### `FcliActionState`
 Mutable bag of `global.*` action variables.
 
-- Each external CLI call and MCP/RPC tool call gets a **fresh** `FcliActionState` (no cross-call leakage)
-- Imported action functions in MCP stdio/RPC share one instance across the server lifetime
+- Each external CLI call and non-imported MCP/RPC tool call gets a **fresh** `FcliActionState` (no cross-call leakage)
+- Imported action functions in **MCP stdio / RPC stdio** share one `FcliActionState` instance for the server lifetime
+- Imported action functions in **MCP HTTP server** get a per-credentials-hash `FcliActionState` stored in the per-auth-scope `FcliIsolationScope` — persists across calls from the same user, isolated from other users
 - `run.fcli` sub-commands inherit and mutate the parent's state
 
 ## Log Masking

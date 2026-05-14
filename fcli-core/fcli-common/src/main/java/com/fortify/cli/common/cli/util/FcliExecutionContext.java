@@ -41,9 +41,13 @@ import lombok.Getter;
  *         <li>Each external CLI invocation and each top-level MCP/RPC tool call starts with a
  *             fresh {@code FcliActionState}, so {@code global.*} variables never leak between
  *             independent calls.</li>
- *         <li>Imported functions (e.g. exported action functions served as MCP/RPC tools) share
- *             the same {@code FcliActionState} across calls within the lifetime of the same server instance, so
- *             that one function can set a variable that a later function call reads back.</li>
+         *         <li>Imported functions in MCP stdio / RPC stdio share the same {@code FcliActionState}
+ *             across all calls within the lifetime of the same server instance, so that one function
+ *             can set a variable that a later function call reads back.</li>
+ *         <li>Imported functions in the MCP HTTP server use a per-credentials-hash
+ *             {@code FcliActionState} stored in the per-auth-scope {@link FcliIsolationScope},
+ *             so {@code global.*} variables persist across calls from the same authenticated
+ *             identity but are isolated from other users.</li>
  *         <li>Inner action invocations triggered via {@code run.fcli} inherit the parent frame's
  *             {@code FcliActionState}, giving them read/write access to the same
  *             {@code global.*} map as their caller.</li>
