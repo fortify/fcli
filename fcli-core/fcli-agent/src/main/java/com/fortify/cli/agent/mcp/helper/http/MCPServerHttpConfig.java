@@ -35,12 +35,15 @@ import lombok.NoArgsConstructor;
 @Data @NoArgsConstructor @Reflectable
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class MCPServerHttpConfig {
+    private static final DateTimePeriodHelper TTL_PERIOD_HELPER = DateTimePeriodHelper.byRange(Period.SECONDS, Period.HOURS);
+
     private int port = 8080;
     private int workThreads = 10;
     private int progressThreads = 4;
     private int asyncBgThreads = AsyncJobManager.DEFAULT_BG_THREADS;
     private String jobSafeReturn = "25s";
     private String progressInterval = "5s";
+    private String isolationScopeTtl = "4h";
     private List<String> imports = new ArrayList<>();
     private SscConfig ssc;
     private FoDConfig fod;
@@ -107,10 +110,18 @@ public class MCPServerHttpConfig {
             throw new FcliSimpleException("HTTP MCP config must specify at least one imports entry");
         }
         imports.forEach(this::validateImportPath);
+        getIsolationScopeTtlInMillis(); // validates isolationScopeTtl period string
         switch ( getProduct() ) {
         case ssc -> validateSscConfig();
         case fod -> validateFoDConfig();
         }
+    }
+
+    @JsonIgnore
+    public long getIsolationScopeTtlInMillis() {
+        return StringUtils.isBlank(isolationScopeTtl)
+                ? 4 * 3600_000L
+                : TTL_PERIOD_HELPER.parsePeriodToMillis(isolationScopeTtl);
     }
 
     @JsonIgnore

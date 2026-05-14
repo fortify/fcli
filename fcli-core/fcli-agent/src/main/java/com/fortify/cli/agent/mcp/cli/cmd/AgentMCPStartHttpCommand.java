@@ -16,6 +16,8 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.function.Supplier;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -84,6 +86,9 @@ public class AgentMCPStartHttpCommand extends AbstractRunnableCommand implements
         );
 
         var sessionDescriptorResolver = new MCPServerHttpSessionDescriptorResolver(config);
+        var scopeCleanupScheduler = Executors.newSingleThreadScheduledExecutor(
+                r -> new Thread(r, "mcp-http-scope-cleanup"));
+        sessionDescriptorResolver.scheduleCleanup(config.getIsolationScopeTtlInMillis(), scopeCleanupScheduler);
         var importSpecsFactory = new MCPImportedActionMcpSpecsFactory(jobManager,
                 () -> sessionDescriptorResolver.getOrCreateFunctionFrame(FcliExecutionContextHolder.getMcpRequestAuthScopeKey()));
         var toolSpecs = new ArrayList<McpStatelessServerFeatures.SyncToolSpecification>();
@@ -136,6 +141,7 @@ public class AgentMCPStartHttpCommand extends AbstractRunnableCommand implements
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             transport.close();
             asyncJobManager.shutdown();
+            scopeCleanupScheduler.shutdown();
             latch.countDown();
         }, "mcp-http-shutdown-hook"));
         latch.await();

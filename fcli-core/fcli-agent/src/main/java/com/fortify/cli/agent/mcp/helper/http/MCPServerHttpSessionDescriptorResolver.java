@@ -23,6 +23,9 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -44,6 +47,7 @@ import com.fortify.cli.ssc._common.session.helper.ISSCAndScanCentralCredentialsC
 import com.fortify.cli.ssc._common.session.helper.ISSCAndScanCentralUrlConfig;
 import com.fortify.cli.ssc._common.session.helper.ISSCUserCredentialsConfig;
 import com.fortify.cli.ssc._common.session.helper.SSCAndScanCentralSessionDescriptor;
+import com.fortify.cli.ssc._common.session.helper.SSCSessionValidationHelper;
 import com.fortify.cli.ssc.access_control.helper.SSCTokenGetOrCreateResponse.SSCTokenData;
 
 import io.modelcontextprotocol.common.McpTransportContext;
@@ -62,35 +66,31 @@ public final class MCPServerHttpSessionDescriptorResolver {
     private static final String FOD_CLIENT_ID_KEY = "client-id";
     private static final String FOD_CLIENT_SECRET_KEY = "client-secret";
 
-    private static final int MAX_SESSION_DESCRIPTOR_CACHE_SIZE = 256;
     private static final String[] DEFAULT_FOD_SCOPES = new String[] {"api-tenant"};
 
     private final MCPServerHttpConfig config;
-    private final Map<String, ISessionDescriptor> sessionDescriptorCache = new LinkedHashMap<>(16, 0.75f, true) {
-        private static final long serialVersionUID = 1L;
+    private final ConcurrentHashMap<String, IsolationScopeEntry> isolationScopeCache = new ConcurrentHashMap<>();
 
-        @Override
-        protected boolean removeEldestEntry(Map.Entry<String, ISessionDescriptor> eldest) {
-            return size() > MAX_SESSION_DESCRIPTOR_CACHE_SIZE;
-        }
-    };
-    private final Map<String, FcliIsolationScope> isolationScopeCache = new LinkedHashMap<>(16, 0.75f, true) {
-        private static final long serialVersionUID = 1L;
+    private static final class IsolationScopeEntry {
+        final FcliIsolationScope scope;
+        volatile long lastAccessTime;
 
-        @Override
-        protected boolean removeEldestEntry(Map.Entry<String, FcliIsolationScope> eldest) {
-            return size() > MAX_SESSION_DESCRIPTOR_CACHE_SIZE;
+        IsolationScopeEntry(FcliIsolationScope scope) {
+            this.scope = scope;
+            this.lastAccessTime = System.currentTimeMillis();
         }
-    };
-    private static final class FunctionContextState {
-        private final FcliActionState actionState = new FcliActionState();
+
+        void updateLastAccess() {
+            lastAccessTime = System.currentTimeMillis();
+        }
+
+        boolean isExpired(long ttlMillis) {
+            return System.currentTimeMillis() - lastAccessTime > ttlMillis;
+        }
     }
 
-    public ISessionDescriptor getOrCreateSessionDescriptor(McpTransportContext transportContext) {
-        var cacheKey = createAuthCacheKey(transportContext);
-        synchronized (sessionDescriptorCache) {
-            return sessionDescriptorCache.computeIfAbsent(cacheKey, ignored -> createSessionDescriptor(transportContext));
-        }
+    private static final class FunctionContextState {
+        private final FcliActionState actionState = new FcliActionState();
     }
 
     /**
@@ -100,38 +100,108 @@ public final class MCPServerHttpSessionDescriptorResolver {
      * {@code global.*} action variables persist within the same authenticated identity.
      */
     public FcliExecutionContextHolder.ContextFrame getOrCreateFunctionFrame(String authScopeKey) {
-        var isolationScope = getOrCreateIsolationScope(authScopeKey);
+        var isolationScope = getExistingIsolationScope(authScopeKey);
         var actionState = isolationScope.getOrCreateScopedState(FunctionContextState.class,
                 FunctionContextState::new).actionState;
         return FcliExecutionContextHolder.push(new FcliExecutionContext(isolationScope, actionState));
     }
 
+    /**
+     * Gets or creates the {@link FcliIsolationScope} for the request's authenticated identity,
+     * then validates and refreshes the session token before returning.
+     * For FoD, a new OAuth token is obtained if the cached token has expired.
+     * For SSC, the token is actively validated against SSC on every request; a
+     * {@link com.fortify.cli.common.exception.FcliSimpleException} is thrown if the token
+     * is invalid or has been revoked.
+     */
     public FcliIsolationScope getOrCreateIsolationScope(McpTransportContext transportContext) {
         var authScopeKey = createAuthCacheKey(transportContext);
-        synchronized (isolationScopeCache) {
-            return isolationScopeCache.computeIfAbsent(authScopeKey, ignored -> createIsolationScope(authScopeKey, transportContext));
+        var entry = isolationScopeCache.get(authScopeKey);
+        if ( entry == null ) {
+            var newEntry = new IsolationScopeEntry(createIsolationScope(authScopeKey, transportContext));
+            var existing = isolationScopeCache.putIfAbsent(authScopeKey, newEntry);
+            entry = existing != null ? existing : newEntry;
         }
+        entry.updateLastAccess();
+        validateAndRefreshSession(entry, transportContext);
+        return entry.scope;
     }
 
     public String getAuthScopeKey(McpTransportContext transportContext) {
         return createAuthCacheKey(transportContext);
     }
 
-    private FcliIsolationScope getOrCreateIsolationScope(String authScopeKey) {
-        synchronized (isolationScopeCache) {
-            var result = isolationScopeCache.get(authScopeKey);
-            if ( result == null ) {
-                throw new IllegalStateException("No isolation scope found for auth scope key");
-            }
-            return result;
+    /**
+     * Schedules periodic eviction of isolation scopes that have not been accessed within
+     * {@code ttlMillis}. The cleanup interval is {@code max(1 minute, ttlMillis / 4)}.
+     */
+    public void scheduleCleanup(long ttlMillis, ScheduledExecutorService scheduler) {
+        var periodMillis = Math.max(60_000L, ttlMillis / 4);
+        scheduler.scheduleWithFixedDelay(
+                () -> evictExpiredScopes(ttlMillis),
+                periodMillis, periodMillis, TimeUnit.MILLISECONDS);
+    }
+
+    private void evictExpiredScopes(long ttlMillis) {
+        isolationScopeCache.entrySet().removeIf(e -> e.getValue().isExpired(ttlMillis));
+    }
+
+    private FcliIsolationScope getExistingIsolationScope(String authScopeKey) {
+        var entry = isolationScopeCache.get(authScopeKey);
+        if ( entry == null ) {
+            throw new IllegalStateException("No isolation scope found for auth scope key");
         }
+        return entry.scope;
     }
 
     private FcliIsolationScope createIsolationScope(String authScopeKey, McpTransportContext transportContext) {
         var result = new FcliIsolationScope();
         result.setMcpRequestAuthScopeKey(authScopeKey);
-        result.setTransientSessionDescriptor(getOrCreateSessionDescriptor(transportContext));
+        result.setTransientSessionDescriptor(createSessionDescriptor(transportContext));
         return result;
+    }
+
+    /**
+     * Validates and if necessary refreshes the session token for the given entry.
+     * Synchronized on the entry to prevent concurrent refreshes for the same user.
+     */
+    private void validateAndRefreshSession(IsolationScopeEntry entry, McpTransportContext transportContext) {
+        synchronized (entry) {
+            var descriptors = entry.scope.getTransientSessionDescriptors();
+            if ( descriptors.isEmpty() ) {
+                return;
+            }
+            var descriptor = descriptors.values().iterator().next();
+            if ( descriptor instanceof FoDSessionDescriptor fodDescriptor ) {
+                refreshFoDTokenIfExpired(fodDescriptor, transportContext);
+            } else if ( descriptor instanceof SSCAndScanCentralSessionDescriptor sscDescriptor ) {
+                validateSscToken(sscDescriptor);
+            }
+        }
+    }
+
+    private void refreshFoDTokenIfExpired(FoDSessionDescriptor descriptor, McpTransportContext transportContext) {
+        if ( descriptor.hasActiveCachedTokenResponse() ) {
+            return;
+        }
+        var auth = parseAuthHeader(transportContext);
+        var fodConfig = config.getFod();
+        var urlConfig = UrlConfig.builderFromConnectionConfig(fodConfig)
+                .url(FoDProductHelper.INSTANCE.getApiUrl(fodConfig.getUrl()))
+                .build();
+        descriptor.setCachedTokenResponse(createFoDTokenResponse(auth, urlConfig));
+    }
+
+    private void validateSscToken(SSCAndScanCentralSessionDescriptor descriptor) {
+        var token = descriptor.getActiveSSCToken();
+        if ( token == null ) {
+            throw new FcliSimpleException("SSC session token has expired; please provide a valid token in the %s header", HEADER_AUTH_SSC);
+        }
+        var status = SSCSessionValidationHelper.checkTokenStatus(descriptor.getSscUrlConfig(), token);
+        if ( !status.valid() ) {
+            throw new FcliSimpleException("SSC session token is invalid or has been revoked; please provide a valid token in the %s header", HEADER_AUTH_SSC);
+        }
+        descriptor.setSscTokenData(status.tokenData());
     }
 
     String createAuthCacheKey(McpTransportContext transportContext) {
