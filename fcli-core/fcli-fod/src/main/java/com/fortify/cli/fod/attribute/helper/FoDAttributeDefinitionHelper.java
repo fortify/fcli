@@ -18,6 +18,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
@@ -102,7 +103,7 @@ public class FoDAttributeDefinitionHelper {
         ArrayNode attrArray = JsonHelper.getObjectMapper().createArrayNode();
         for (Map.Entry<String, String> attr : effectiveMap.entrySet()) {
             var def = getDefinition(attr.getKey(), true);
-            if (attrType.getValue() == 0 || def.getAttributeTypeId() == attrType.getValue()) {
+            if (Objects.equals(attrType.getValue(), 0) || Objects.equals(def.getAttributeTypeId(), attrType.getValue())) {
                 ObjectNode attrObj = JsonHelper.getObjectMapper().createObjectNode();
                 attrObj.put("id", def.getId());
                 attrObj.put("value", attr.getValue());
