@@ -50,7 +50,7 @@ public class MCPServerHttpConfig {
     private static final DateTimePeriodHelper TTL_PERIOD_HELPER = DateTimePeriodHelper.byRange(Period.SECONDS, Period.HOURS);
 
     private int port = 8080;
-    private int workThreads = 10;
+    private int workThreads = 20;
     private int progressThreads = 4;
     private int asyncBgThreads = AsyncJobManager.DEFAULT_BG_THREADS;
     private String jobSafeReturn = "25s";
