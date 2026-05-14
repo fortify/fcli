@@ -29,6 +29,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.formkiq.graalvm.annotations.Reflectable;
+import com.fortify.cli.common.cli.util.FcliExecutionContextHolder;
 import com.fortify.cli.common.crypto.helper.EncryptionHelper;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonHelper;
@@ -63,6 +64,12 @@ public final class FcliVariableHelper {
     }
     
     public static final Path getVariablesPath() {
+        if ( FcliExecutionContextHolder.stackDepth() > 0 ) {
+            var scopedVarsPath = FcliExecutionContextHolder.current().getIsolationScope().getScopedVarsPath();
+            if ( scopedVarsPath != null ) {
+                return scopedVarsPath;
+            }
+        }
         return FcliDataHelper.getFcliStatePath().resolve("vars");
     }
     

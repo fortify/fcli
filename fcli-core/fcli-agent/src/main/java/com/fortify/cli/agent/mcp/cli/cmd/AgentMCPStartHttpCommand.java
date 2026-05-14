@@ -142,6 +142,7 @@ public class AgentMCPStartHttpCommand extends AbstractRunnableCommand implements
             transport.close();
             asyncJobManager.shutdown();
             scopeCleanupScheduler.shutdown();
+            sessionDescriptorResolver.shutdown();
             latch.countDown();
         }, "mcp-http-shutdown-hook"));
         latch.await();

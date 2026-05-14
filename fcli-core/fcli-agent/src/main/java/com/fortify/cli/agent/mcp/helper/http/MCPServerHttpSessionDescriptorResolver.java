@@ -13,6 +13,8 @@
 package com.fortify.cli.agent.mcp.helper.http;
 
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
@@ -36,6 +38,8 @@ import com.fortify.cli.common.cli.util.FcliIsolationScope;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.rest.unirest.config.UrlConfig;
 import com.fortify.cli.common.session.helper.ISessionDescriptor;
+import com.fortify.cli.common.util.FcliDataHelper;
+import com.fortify.cli.common.util.FileUtils;
 import com.fortify.cli.fod._common.rest.helper.FoDProductHelper;
 import com.fortify.cli.fod._common.session.helper.FoDSessionDescriptor;
 import com.fortify.cli.fod._common.session.helper.oauth.FoDOAuthHelper;
@@ -52,8 +56,10 @@ import com.fortify.cli.ssc.access_control.helper.SSCTokenGetOrCreateResponse.SSC
 
 import io.modelcontextprotocol.common.McpTransportContext;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @RequiredArgsConstructor
+@Slf4j
 public final class MCPServerHttpSessionDescriptorResolver {
     public static final String HEADER_AUTH_SSC = "X-AUTH-SSC";
     public static final String HEADER_AUTH_FOD = "X-AUTH-FOD";
@@ -69,6 +75,7 @@ public final class MCPServerHttpSessionDescriptorResolver {
     private static final String[] DEFAULT_FOD_SCOPES = new String[] {"api-tenant"};
 
     private final MCPServerHttpConfig config;
+    private final Path mcpScopedVarsRootPath = FcliDataHelper.getFcliStatePath().resolve("mcp-http-vars");
     private final ConcurrentHashMap<String, IsolationScopeEntry> isolationScopeCache = new ConcurrentHashMap<>();
 
     private static final class IsolationScopeEntry {
@@ -142,8 +149,24 @@ public final class MCPServerHttpSessionDescriptorResolver {
                 periodMillis, periodMillis, TimeUnit.MILLISECONDS);
     }
 
+    /**
+     * Shuts down the resolver: deletes all per-scope variable directories and the shared
+     * root directory. Should be called from the server shutdown hook.
+     */
+    public void shutdown() {
+        isolationScopeCache.values().forEach(e -> deleteDirQuietly(e.scope.getScopedVarsPath()));
+        isolationScopeCache.clear();
+        deleteDirQuietly(mcpScopedVarsRootPath);
+    }
+
     private void evictExpiredScopes(long ttlMillis) {
-        isolationScopeCache.entrySet().removeIf(e -> e.getValue().isExpired(ttlMillis));
+        isolationScopeCache.entrySet().removeIf(e -> {
+            if ( e.getValue().isExpired(ttlMillis) ) {
+                deleteDirQuietly(e.getValue().scope.getScopedVarsPath());
+                return true;
+            }
+            return false;
+        });
     }
 
     private FcliIsolationScope getExistingIsolationScope(String authScopeKey) {
@@ -158,6 +181,7 @@ public final class MCPServerHttpSessionDescriptorResolver {
         var result = new FcliIsolationScope();
         result.setMcpRequestAuthScopeKey(authScopeKey);
         result.setTransientSessionDescriptor(createSessionDescriptor(transportContext));
+        result.setScopedVarsPath(mcpScopedVarsRootPath.resolve(authScopeKey.replace("|", "_")));
         return result;
     }
 
@@ -202,6 +226,17 @@ public final class MCPServerHttpSessionDescriptorResolver {
             throw new FcliSimpleException("SSC session token is invalid or has been revoked; please provide a valid token in the %s header", HEADER_AUTH_SSC);
         }
         descriptor.setSscTokenData(status.tokenData());
+    }
+
+    private void deleteDirQuietly(Path absolutePath) {
+        if ( absolutePath == null || !Files.exists(absolutePath) ) {
+            return;
+        }
+        try {
+            FileUtils.deleteRecursive(absolutePath);
+        } catch ( Exception e ) {
+            log.warn("Failed to delete scoped vars directory {}: {}", absolutePath, e.getMessage());
+        }
     }
 
     String createAuthCacheKey(McpTransportContext transportContext) {

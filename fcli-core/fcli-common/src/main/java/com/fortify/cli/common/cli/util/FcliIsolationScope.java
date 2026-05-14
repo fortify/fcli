@@ -12,6 +12,7 @@
  */
 package com.fortify.cli.common.cli.util;
 
+import java.nio.file.Path;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
@@ -46,6 +47,7 @@ import lombok.Getter;
  */
 public final class FcliIsolationScope {
     @Getter private volatile String mcpRequestAuthScopeKey;
+    @Getter private volatile Path scopedVarsPath;
     @Getter private final Map<String, ISessionDescriptor> transientSessionDescriptors = new ConcurrentHashMap<>();
     private final Map<Class<?>, Object> scopedStates = new ConcurrentHashMap<>();
 
@@ -71,6 +73,10 @@ public final class FcliIsolationScope {
 
     public void setMcpRequestAuthScopeKey(String mcpRequestAuthScopeKey) {
         this.mcpRequestAuthScopeKey = mcpRequestAuthScopeKey;
+    }
+
+    public void setScopedVarsPath(Path scopedVarsPath) {
+        this.scopedVarsPath = scopedVarsPath;
     }
 
     @SuppressWarnings("unchecked")
