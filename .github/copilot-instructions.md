@@ -29,19 +29,41 @@ Fcli is a modular CLI tool for interacting with Fortify products (FoD, SSC, Scan
 - Short methods (~20 lines max); extract helpers or use Streams for clarity
 - No change-tracking comments (e.g., "New ...", "Updated ..."); only explanatory comments when code is complex
 
-## Maintaining Instructions
+## Agent Behavior
 
-**If you detect discrepancies between these instructions and the actual implementation**, or discover patterns/features not documented here:
+**Think and work as a senior/expert developer** on every task:
+- Apply SOLID principles, proper separation of concerns, and established design patterns
+- Treat code quality and security as non-negotiable, not optional extras
+- Never guess or make assumptions about how existing code works — analyze first:
+  1. Use `semantic_search`, `grep_search`, and `read_file` to trace through related code
+  2. Find all callers of anything you change (`vscode_listCodeUsages`)
+  3. Understand the design intent before writing a single line
+- Identify and use the most appropriate existing abstraction instead of creating a new one
+- If a request is ambiguous, surface the design trade-offs and ask; do not silently pick one
 
-1. **Notify the user** about the discrepancy or missing documentation
-2. **Suggest specific updates** to the relevant instruction file(s)
-3. **Verify against current code** before making changes based on outdated instructions
+## Self-Learning Instructions
 
-This applies to:
-- Main instructions (this file)
-- Specific instruction files in `.github/instructions/`
-- Examples that no longer match current patterns
-- Missing documentation for new features or utilities
+**Automatically update these instruction files** when you learn or implement something new that would help in future sessions. Do not just notify the user — make the edit as part of completing the task.
+
+Update the file that best scopes the knowledge:
+- `copilot-instructions.md` — project-wide workflow facts and agent behavior rules
+- `.github/instructions/java.instructions.md` — Java patterns, architecture, APIs
+- `.github/instructions/style.instructions.md` — naming, formatting, AI assistant rules
+- `.github/instructions/utilities.instructions.md` — utility class discoveries
+
+Rules for self-updating:
+- Only add content that is **reusable and non-obvious** (things a smart developer wouldn't know without reading the source)
+- Keep additions **concise** — bullet points and short examples, not prose explanations; no introductory paragraphs
+- A method signature + one-liner purpose is enough; omit obvious behaviour
+- Correct or remove instructions that turn out to be wrong
+- Never duplicate existing content; prefer extending an existing section
+- Verify the change compiles/is consistent before updating instructions
+
+**If you detect discrepancies** between these instructions and the actual implementation:
+1. **Fix the instruction** to match reality (or fix the code if it's a bug)
+2. **Verify against current code** before proceeding — never rely on stale instructions
+
+This applies to all instruction files in `.github/instructions/`.
 
 ## Context-Specific Instructions
 

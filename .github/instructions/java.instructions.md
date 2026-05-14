@@ -10,9 +10,9 @@ applyTo: 'fcli/**/*.java'
 
 **If you detect discrepancies** between these instructions and the actual implementation, or discover patterns/features not documented here:
 
-1. **Notify the user** about the discrepancy or missing documentation
-2. **Suggest specific updates** to this instruction file
-3. **Verify against current code** before proceeding with changes based on potentially outdated instructions
+1. **Automatically update this file** to reflect the correct pattern or add the missing information
+2. **Verify against current code** before documenting — never guess at intent
+3. Only add content that is **reusable and non-obvious**; keep additions concise
 
 ## Architecture Overview
 
@@ -128,6 +128,49 @@ if (StringUtils.isBlank(name)) throw new FcliSimpleException("--name must be spe
 try { parse(json); } catch (JsonProcessingException e) { throw new FcliTechnicalException("Error processing JSON", e); }
 default -> throw new FcliBugException("Unexpected status: "+status);
 ```
+
+## Design Patterns in fcli
+
+Fcli uses several established patterns consistently. Before creating new abstractions, identify whether one of these already covers your need:
+
+### Template Method
+Abstract base classes define the algorithm skeleton; subclasses fill in the steps.
+- `AbstractRunnableCommand.call()` orchestrates option validation → execution → output
+- `AbstractSessionLoginCommand` handles session lifecycle; subclasses provide credentials and connection logic
+- **Rule:** Override the narrowest hook method, not the full template
+
+### Strategy (via Interfaces + Mixins)
+Behavior is injected at the call-site rather than baked into the consumer.
+- `IOutputConfigSupplier` lets commands declare default format/columns without knowing the writer
+- `IRecordWriter` implementations (CSV, JSON, table, …) are selected at runtime by `RecordWriterFactory`
+- `UnirestInstanceSupplierMixin` injects an HTTP client configured for the active session
+- **Rule:** When a class needs pluggable behavior, define an interface and inject it via `@Mixin` or constructor; avoid `if/else` type-switches
+
+### Factory / Registry
+Creation and type selection are centralized.
+- `RecordWriterFactory` enum maps output format → writer implementation
+- `OutputHelperMixins` inner classes pair a command name with its default output config
+- **Rule:** Add new variants by extending the factory/enum, not by modifying consumer code (Open/Closed)
+
+### Composite (Command Tree)
+Picocli's subcommand tree is a composite: container commands own leaf commands.
+- **Rule:** Container commands contain only `@Command` metadata and subcommand registration; zero business logic
+
+### Mixin / Decorator (Picocli `@Mixin`)
+Cross-cutting CLI concerns (output, session, pagination, …) are composed in, not inherited.
+- `OutputHelperMixins.List` brings `--output`, `--query`, `--store` to any list command
+- **Rule:** Prefer mixins over base-class inheritance for optional/composable features
+
+### Builder (Unirest fluent API)
+HTTP requests are assembled step-by-step.
+- Always use `headerReplace()` not `header()` / `accept()` / `contentType()` (see Unirest section)
+
+### Separation of Concerns checklist
+Before committing, verify:
+- Command class: only option fields, `@Mixin` injections, and a short `call()` that delegates
+- Helper/service class: business logic; no Picocli annotations, no direct I/O
+- Writer/formatter class: output shaping only; no HTTP calls, no business logic
+- Session descriptor: data only (record or simple POJO); no network code
 
 ## Common Utility Classes
 
