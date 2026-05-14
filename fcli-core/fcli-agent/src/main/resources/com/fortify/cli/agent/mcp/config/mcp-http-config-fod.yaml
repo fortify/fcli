@@ -1,6 +1,16 @@
 port: 8080
 imports:
   - actions/http-fod.yaml
+
+# Optional settings (shown with default values):
+# workThreads: 10          # Number of threads for handling MCP tool call requests
+# progressThreads: 4       # Number of threads for streaming progress updates
+# asyncBgThreads: 2        # Number of background threads for async job processing
+# jobSafeReturn: 25s       # Max time to wait for a job result before returning a job ID
+# progressInterval: 5s     # Interval between progress update checks
+# isolationScopeTtl: 4h    # Idle timeout for per-user session/variable state; state is
+#                          # discarded and variables are deleted after this period of inactivity
+
 fod:
   url: https://api.ams.fortify.com
   connectTimeout: 30s

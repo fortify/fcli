@@ -32,6 +32,18 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
+/**
+ * Configuration for the HTTP MCP server, loaded from a YAML file.
+ *
+ * <p><b>IMPORTANT — keep sample configs in sync:</b> whenever a field is added, renamed,
+ * removed, or has its default value changed, update <em>both</em> sample templates:
+ * <ul>
+ *   <li>{@code src/main/resources/com/fortify/cli/agent/mcp/config/mcp-http-config-ssc.yaml}</li>
+ *   <li>{@code src/main/resources/com/fortify/cli/agent/mcp/config/mcp-http-config-fod.yaml}</li>
+ * </ul>
+ * Optional fields should appear as commented-out lines showing the default value and a brief
+ * description. Required fields (e.g. {@code url}) should appear uncommented with a placeholder.
+ */
 @Data @NoArgsConstructor @Reflectable
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class MCPServerHttpConfig {
