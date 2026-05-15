@@ -44,12 +44,15 @@ public class FoDBulkIssueUpdateRequest {
     private String severity;
     private String comment;
     private ArrayList<String> vulnerabilityIds;
+    private Boolean includeAllVulnerabilities;
     private JsonNode attributes;
 
     @JsonIgnore
     public final FoDBulkIssueUpdateRequest validate(Consumer<List<String>> validationMessageConsumer) {
         var messages = new ArrayList<String>();
-        validateRequired(messages, vulnerabilityIds, "Vulnerability Ids not specified");
+        if (!Boolean.TRUE.equals(includeAllVulnerabilities)) {
+            validateRequired(messages, vulnerabilityIds, "Vulnerability Ids not specified");
+        }
         if ( !messages.isEmpty() ) {
             validationMessageConsumer.accept(messages);
         }
@@ -58,11 +61,11 @@ public class FoDBulkIssueUpdateRequest {
 
     @JsonIgnore
     public final FoDBulkIssueUpdateRequest validate() {
-        return validate(messages->{throw new FcliSimpleException("Unable to update issues:\n\t"+String.join("\n\t", messages)); });
+        return validate(messages -> { throw new FcliSimpleException("Unable to update issues:\n\t"+String.join("\n\t", messages)); });
     }
 
     @JsonIgnore
-    private final void validateRequired(List<String> messages, Object obj, String message) {
+    private void validateRequired(List<String> messages, Object obj, String message) {
         if ( obj==null || (obj instanceof String && StringUtils.isBlank((String)obj)) ) {
             messages.add(message);
         }

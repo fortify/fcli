@@ -1,5 +1,22 @@
 # Changelog
 
+## [3.19.0](https://github.com/fortify/fcli/compare/v3.18.0...v3.19.0) (2026-05-11)
+
+
+### Features
+
+* `fcli aviator ssc audit`: Add suppression exclusions in tag mapping configuration ([#991](https://github.com/fortify/fcli/issues/991)) ([8400aff](https://github.com/fortify/fcli/commit/8400aff83f134a1e2c03f699db8c74f6cc83c7bf))
+* `fcli fod app/release update`: Add `--auto-required-attrs` option to automatically set required attributes that were not set before ([d172ce6](https://github.com/fortify/fcli/commit/d172ce664ab9a21978ab58cabeac470f2b519033))
+* `fcli fod issue update`: Add `--all`/`--include-all` option for updating all issues for a release ([0d0d7a5](https://github.com/fortify/fcli/commit/0d0d7a5954cbbe010456f76a9ed3127e98fffb35))
+* Load trusted certificates from system trust store if available, in addition to existing Java trust store configuration ([786e345](https://github.com/fortify/fcli/commit/786e345d214b2caaf1dbce1e3358b863cd778c2e))
+
+
+### Bug Fixes
+
+* `fcli fod issue update`: Add `--issue-ids` alias for `--vuln-ids` for consistency ([0d0d7a5](https://github.com/fortify/fcli/commit/0d0d7a5954cbbe010456f76a9ed3127e98fffb35))
+* `fcli fod issue update`: Correct description of `--user` option ([0d0d7a5](https://github.com/fortify/fcli/commit/0d0d7a5954cbbe010456f76a9ed3127e98fffb35))
+* `fcli fod issue update`: Update descriptions to use issues (vulnerabilities) consistently ([0d0d7a5](https://github.com/fortify/fcli/commit/0d0d7a5954cbbe010456f76a9ed3127e98fffb35))
+
 ## [3.18.0](https://github.com/fortify/fcli/compare/v3.17.0...v3.18.0) (2026-04-22)
 
 

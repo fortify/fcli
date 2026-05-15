@@ -5,6 +5,11 @@ tag_id: "87f2364f-dcd4-49e6-861d-f8d3f351686b"
 # that by default are suppressed automatically. “tier_2” are the remaining issues.
 # “value” is a String attribute that maps to a tag value in SSC. It may be omitted.
 # “suppress” is a Boolean attribute that defaults to “false”
+# Optional: Issues matching these exclusions are never auto-suppressed by Aviator.
+# Matching is exact and case-insensitive.
+# suppression_exclusions:
+#   - categories:
+#       - "Privacy Violation"
 mapping:
   tier_1:
     fp:
