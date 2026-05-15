@@ -41,6 +41,7 @@ public class Constants {
     public static final String AVIATOR_STATUS_TAG_ID = "FB7B0462-2C2E-46D9-811A-DCC1F3C83051";
     public static final String AVIATOR_EXPECTED_OUTCOME_TAG_ID = "013cc66f-8651-4e39-bacb-beb918c5ef65";
     public static final String ANALYSIS_TAG_ID = "87f2364f-dcd4-49e6-861d-f8d3f351686b";
+    public static final String SUPPRESSED_TAG_ID = "22222222-2222-2222-2222-222222222222";
     public static final String AUDITOR_STATUS_TAG_ID = "ACB05E55-E74D-468C-8501-52E1FDC27D71";
     public static final String FOD_TAG_ID = "604f0fbe-b5fe-47cd-a9cb-587ad8ebe93a";
 
