@@ -13,6 +13,7 @@
 package com.fortify.cli.aviator.audit;
 
 import java.io.File;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -54,6 +55,9 @@ public class AuditFPR {
         // --- STAGE 1: PARSING ---
         ParsedFprData parsedData = prepareAndParseFpr(options.getFprHandle());
         TagMappingConfig tagMappingConfig = loadTagMappingConfig(options.getTagMappingPath());
+        Map<String, String> issueCategoryLookup = tagMappingConfig.requiresCategoryForSuppressionEvaluation()
+            ? buildIssueCategoryLookup(parsedData.vulnerabilities)
+            : Map.of();
 
         // --- STAGE 2: FILTER SELECTION (DELEGATED) ---
         FilterSelection filterSelection = FilterSetSelector.select(
@@ -71,7 +75,7 @@ public class AuditFPR {
         // --- STAGE 4: FINALIZATION ---
         return finalizeFprAudit(
                 auditOutcome, auditResponses, parsedData.auditProcessor,
-                tagMappingConfig, parsedData.fprInfo
+            tagMappingConfig, issueCategoryLookup, parsedData.fprInfo
         );
     }
 
@@ -95,13 +99,28 @@ public class AuditFPR {
     }
 
     private static TagMappingConfig loadTagMappingConfig(String tagMappingFilePath) {
+        TagMappingConfig tagMappingConfig;
         if (tagMappingFilePath != null && !tagMappingFilePath.trim().isEmpty()) {
             LOG.info("Loading user-provided tag mapping from: {}", tagMappingFilePath);
-            return ResourceUtil.loadYamlFile(new File(tagMappingFilePath), TagMappingConfig.class);
+            tagMappingConfig = ResourceUtil.loadYamlFile(new File(tagMappingFilePath), TagMappingConfig.class);
         } else {
             LOG.info("Using default tag mapping configuration.");
-            return AviatorConfigManager.getInstance().getDefaultTagMappingConfig();
+            tagMappingConfig = AviatorConfigManager.getInstance().getDefaultTagMappingConfig();
         }
+
+        tagMappingConfig.validate();
+        return tagMappingConfig;
+    }
+
+    private static Map<String, String> buildIssueCategoryLookup(List<Vulnerability> vulnerabilities) {
+        Map<String, String> issueCategoryLookup = new HashMap<>();
+        for (Vulnerability vulnerability : vulnerabilities) {
+            String instanceId = vulnerability.getInstanceID();
+            if (instanceId != null && !instanceId.isBlank()) {
+                issueCategoryLookup.putIfAbsent(instanceId, vulnerability.getCategory());
+            }
+        }
+        return issueCategoryLookup;
     }
 
     private static AuditOutcome performAviatorAudit(
@@ -128,7 +147,7 @@ public class AuditFPR {
     private static FPRAuditResult finalizeFprAudit(
             AuditOutcome auditOutcome, Map<String, AuditResponse> auditResponses,
             AuditProcessor auditProcessor, TagMappingConfig tagMappingConfig,
-            FPRInfo fprInfo) {
+            Map<String, String> issueCategoryLookup, FPRInfo fprInfo) {
 
         int totalIssuesToAudit = auditOutcome.getTotalIssuesToAudit();
         if (auditResponses.isEmpty()) {
@@ -168,7 +187,8 @@ public class AuditFPR {
 
         File updatedFile = null;
         if (issuesSuccessfullyAudited > 0) {
-            updatedFile = auditProcessor.updateAndSaveAuditAndRemediationsXml(auditResponses, tagMappingConfig, fprInfo);
+            updatedFile = auditProcessor.updateAndSaveAuditAndRemediationsXml(
+                    auditResponses, tagMappingConfig, issueCategoryLookup, fprInfo);
         }
 
         LOG.info("FPR audit process completed with status: {}", status);

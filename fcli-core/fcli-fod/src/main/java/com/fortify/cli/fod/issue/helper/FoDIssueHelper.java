@@ -366,6 +366,38 @@ public class FoDIssueHelper {
     }
 
     /**
+     * Returns the numeric {@code id} for every vulnerability in the release, with no duplicates.
+     * Unlike {@link #getVulnIdsForRelease}, which collects both {@code id} and {@code vulnId} per
+     * item (needed for user-supplied identifier matching), this method collects only the canonical
+     * numeric id so that the result count matches the actual vulnerability count and the bulk-edit
+     * API is not sent duplicate identifiers.
+     */
+    public static List<String> getAllVulnNumericIdsForRelease(UnirestInstance unirest, String releaseId) {
+        var result = new ArrayList<String>();
+        try {
+            var request = unirest.get(FoDUrls.VULNERABILITIES)
+                    .routeParam("relId", releaseId)
+                    .queryString("fields", "id")
+                    .queryString("includeFixed", "true")
+                    .queryString("includeSuppressed", "true");
+            var stream = FoDPagingHelper.pagedRequest(request).stream()
+                .map(HttpResponse::getBody)
+                .map(FoDInputTransformer::getItems)
+                .filter(items -> items != null && items.isArray())
+                .map(ArrayNode.class::cast)
+                .flatMap(JsonHelper::stream);
+            for ( JsonNode item : (Iterable<JsonNode>)stream::iterator ) {
+                if ( item.has("id") && !item.get("id").isNull() ) {
+                    result.add(item.get("id").asText().trim());
+                }
+            }
+        } catch (Exception e) {
+            throw new FcliTechnicalException("Error retrieving vulnerabilities for release", e);
+        }
+        return result;
+    }
+
+    /**
      * Resolve a status value (developer/auditor) against one or more FoD attribute picklists.
      * Returns the canonical picklist name when found, or throws a FcliSimpleException listing allowed values.
      */

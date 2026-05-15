@@ -188,71 +188,50 @@ public class CategoryGrouper {
      * Prints the mixed categories as a formatted table to the log.
      */
     private void printMixedCategoriesTable(List<CategoryBucket> mixed) {
-        // First, check if any buckets have different SAST/DAST categories
-        boolean hasEquivalentCategories = false;
-        for (CategoryBucket bucket : mixed) {
-            if (bucket.hasDifferentCategories()) {
-                hasEquivalentCategories = true;
-                break;
-            }
-        }
+        List<String> categoryDisplays = buildCategoryDisplayNames(mixed);
+        int categoryWidth = Math.max("Category".length(),
+            categoryDisplays.stream().mapToInt(String::length).max().orElse(0));
 
-        // Build display strings and calculate column widths
-        List<String> categoryDisplays = new ArrayList<>();
-        int categoryWidth = "Category".length();
-        for (CategoryBucket bucket : mixed) {
-            String display;
-            if (bucket.hasDifferentCategories()) {
-                display = bucket.getSastCategoryDisplay() + " / " + bucket.getDastCategoryDisplay();
-            } else {
-                display = bucket.getCategory();
-            }
-            categoryDisplays.add(display);
-            categoryWidth = Math.max(categoryWidth, display.length());
-        }
+        String rowFormat = "| %-" + categoryWidth + "s | %6d | %6d | %7d |";
+        String headerFormat = "| %-" + categoryWidth + "s | %6s | %6s | %7s |";
+        String separator = buildSeparator(categoryWidth, 6, 6, 7);
 
-        int sastWidth = 6;  // "SAST" + padding
-        int dastWidth = 6;  // "DAST" + padding
-        int totalWidth = 7; // "Total" + padding
-
-        // Build format strings
-        String rowFormat = "| %-" + categoryWidth + "s | %" + sastWidth + "d | %" + dastWidth + "d | %" + totalWidth + "d |";
-        String headerFormat = "| %-" + categoryWidth + "s | %" + sastWidth + "s | %" + dastWidth + "s | %" + totalWidth + "s |";
-
-        // Build separator line
-        StringBuilder separator = new StringBuilder("+");
-        separator.append("-".repeat(categoryWidth + 2));
-        separator.append("+");
-        separator.append("-".repeat(sastWidth + 2));
-        separator.append("+");
-        separator.append("-".repeat(dastWidth + 2));
-        separator.append("+");
-        separator.append("-".repeat(totalWidth + 2));
-        separator.append("+");
-
-        // Calculate totals
-        int totalSast = 0;
-        int totalDast = 0;
-        for (CategoryBucket bucket : mixed) {
-            totalSast += bucket.getSastCount();
-            totalDast += bucket.getDastCount();
-        }
-
+        boolean hasEquivalent = mixed.stream().anyMatch(CategoryBucket::hasDifferentCategories);
         LOG.info("Mixed categories (correlation candidates):");
-        if (hasEquivalentCategories) {
+        if (hasEquivalent) {
             LOG.info("(Categories shown as 'SAST category / DAST category' where they differ)");
         }
-        LOG.info(separator.toString());
+
+        LOG.info(separator);
         LOG.info(String.format(headerFormat, "Category", "SAST", "DAST", "Total"));
-        LOG.info(separator.toString());
-        int i = 0;
-        for (CategoryBucket bucket : mixed) {
-            int rowTotal = bucket.getSastCount() + bucket.getDastCount();
-            LOG.info(String.format(rowFormat, categoryDisplays.get(i), bucket.getSastCount(), bucket.getDastCount(), rowTotal));
-            i++;
+        LOG.info(separator);
+        for (int i = 0; i < mixed.size(); i++) {
+            var bucket = mixed.get(i);
+            LOG.info(String.format(rowFormat, categoryDisplays.get(i),
+                bucket.getSastCount(), bucket.getDastCount(), bucket.getSastCount() + bucket.getDastCount()));
         }
-        LOG.info(separator.toString());
+        LOG.info(separator);
+        int totalSast = mixed.stream().mapToInt(CategoryBucket::getSastCount).sum();
+        int totalDast = mixed.stream().mapToInt(CategoryBucket::getDastCount).sum();
         LOG.info(String.format(rowFormat, "TOTAL", totalSast, totalDast, totalSast + totalDast));
-        LOG.info(separator.toString());
+        LOG.info(separator);
+    }
+
+    private List<String> buildCategoryDisplayNames(List<CategoryBucket> buckets) {
+        List<String> displays = new ArrayList<>();
+        for (CategoryBucket bucket : buckets) {
+            displays.add(bucket.hasDifferentCategories()
+                ? bucket.getSastCategoryDisplay() + " / " + bucket.getDastCategoryDisplay()
+                : bucket.getCategory());
+        }
+        return displays;
+    }
+
+    private String buildSeparator(int... columnWidths) {
+        var sb = new StringBuilder("+");
+        for (int width : columnWidths) {
+            sb.append("-".repeat(width + 2)).append("+");
+        }
+        return sb.toString();
     }
 }

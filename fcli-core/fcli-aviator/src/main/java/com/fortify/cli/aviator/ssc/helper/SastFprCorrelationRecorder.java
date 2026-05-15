@@ -134,14 +134,8 @@ public final class SastFprCorrelationRecorder {
             return;
         }
 
-        // Build incoming results map: sastId → (dastId → newStatus)
         Map<String, Map<String, String>> incoming = buildIncomingMap(confirmedPairs, rejectedPairs);
-
-        LOG.info("writeCorrelationTags: incoming map has {} SAST entries", incoming.size());
-        incoming.forEach((sastId, dastMap) -> {
-            LOG.info("  SAST instanceId: {}", sastId);
-            dastMap.forEach((dastId, status) -> LOG.info("    {} = {}", dastId, status));
-        });
+        logIncomingMap(incoming);
 
         try (FprHandle fprHandle = new FprHandle(sastFprPath)) {
             Path auditPath = fprHandle.getPath("/audit.xml");
@@ -151,82 +145,88 @@ public final class SastFprCorrelationRecorder {
             }
 
             Document doc = parseXml(auditPath);
-            NodeList issueNodes = doc.getElementsByTagNameNS(NS_AUDIT, "Issue");
-            LOG.info("writeCorrelationTags: found {} existing <Issue> nodes in audit.xml", issueNodes.getLength());
-
-            // Track which incoming instanceIds are already in audit.xml
-            Set<String> existingInstanceIds = new HashSet<>();
-            int patchedCount = 0;
-
-            for (int i = 0; i < issueNodes.getLength(); i++) {
-                if (!(issueNodes.item(i) instanceof Element issue)) continue;
-                String instanceId = issue.getAttribute("instanceId");
-                if (instanceId == null || instanceId.isEmpty()) continue;
-                existingInstanceIds.add(instanceId);
-
-                Map<String, String> newEntries = incoming.get(instanceId);
-                if (newEntries == null || newEntries.isEmpty()) continue;
-
-                String existingValue = findCorrelationTagValue(issue);
-                Map<String, String> merged = parseTagValue(existingValue);
-                mergeEntries(merged, newEntries);
-
-                String newValue = buildTagValue(merged);
-                if (newValue.length() > MAX_TAG_VALUE_LENGTH) {
-                    LOG.warn("DAST_CORRELATION_STATUS tag value for SAST {} exceeds {} chars; truncating. " +
-                        "Excess DAST IDs will be retried on the next run.", instanceId, MAX_TAG_VALUE_LENGTH);
-                    newValue = truncateTagValue(merged);
-                }
-
-                upsertCorrelationTag(doc, issue, newValue);
-                LOG.info("writeCorrelationTags: patched existing <Issue> instanceId='{}' → value='{}'", instanceId, newValue);
-                patchedCount++;
-            }
-
-            // Create new <Issue> entries for SAST findings that have no existing audit record.
-            // An issue appears in audit.xml only if it was previously audited (has tags/comments).
-            // For brand-new findings never touched in the SSC UI, we must add the <Issue> element.
-            int createdCount = 0;
-            // Try namespace-aware lookup first; fall back to no-namespace for un-audited FPRs
-            // whose audit.xml uses the default (null) namespace.
-            Element issueList = (Element) doc.getElementsByTagNameNS(NS_AUDIT, "IssueList").item(0);
-            if (issueList == null) {
-                issueList = (Element) doc.getElementsByTagName("IssueList").item(0);
-            }
-
-            for (var entry : incoming.entrySet()) {
-                String instanceId = entry.getKey();
-                if (existingInstanceIds.contains(instanceId)) continue; // already patched above
-
-                if (issueList == null) {
-                    LOG.warn("writeCorrelationTags: <IssueList> not found in audit.xml; cannot create entry for instanceId='{}'", instanceId);
-                    continue;
-                }
-
-                Map<String, String> newEntries = entry.getValue();
-                String newValue = buildTagValue(newEntries);
-                if (newValue.length() > MAX_TAG_VALUE_LENGTH) {
-                    newValue = truncateTagValue(newEntries);
-                }
-
-                // Match the namespace of the parent <IssueList> element
-                String ns = issueList.getNamespaceURI();
-                Element newIssue = (ns != null)
-                    ? doc.createElementNS(ns, "Issue")
-                    : doc.createElement("Issue");
-                newIssue.setAttribute("instanceId", instanceId);
-                newIssue.setAttribute("revision", "0");
-                newIssue.setAttribute("suppressed", "false");
-                upsertCorrelationTag(doc, newIssue, newValue);
-                issueList.appendChild(newIssue);
-                LOG.info("writeCorrelationTags: created new <Issue> instanceId='{}' → value='{}'", instanceId, newValue);
-                createdCount++;
-            }
+            Set<String> patchedIds = patchExistingIssues(doc, incoming);
+            int createdCount = createNewIssueEntries(doc, incoming, patchedIds);
 
             writeXml(doc, auditPath);
             LOG.info("writeCorrelationTags complete: patched={} existing, created={} new <Issue> entries (incoming={})",
-                patchedCount, createdCount, incoming.size());
+                patchedIds.size(), createdCount, incoming.size());
         }
+    }
+
+    private static void logIncomingMap(Map<String, Map<String, String>> incoming) {
+        LOG.info("writeCorrelationTags: incoming map has {} SAST entries", incoming.size());
+        incoming.forEach((sastId, dastMap) -> {
+            LOG.info("  SAST instanceId: {}", sastId);
+            dastMap.forEach((dastId, status) -> LOG.info("    {} = {}", dastId, status));
+        });
+    }
+
+    private static Set<String> patchExistingIssues(Document doc, Map<String, Map<String, String>> incoming) {
+        NodeList issueNodes = doc.getElementsByTagNameNS(NS_AUDIT, "Issue");
+        LOG.info("writeCorrelationTags: found {} existing <Issue> nodes in audit.xml", issueNodes.getLength());
+
+        Set<String> patchedIds = new HashSet<>();
+        for (int i = 0; i < issueNodes.getLength(); i++) {
+            if (!(issueNodes.item(i) instanceof Element issue)) continue;
+            String instanceId = issue.getAttribute("instanceId");
+            if (instanceId == null || instanceId.isEmpty()) continue;
+            patchedIds.add(instanceId);
+
+            Map<String, String> newEntries = incoming.get(instanceId);
+            if (newEntries == null || newEntries.isEmpty()) continue;
+
+            String newValue = mergeAndBuildTagValue(instanceId, findCorrelationTagValue(issue), newEntries);
+            upsertCorrelationTag(doc, issue, newValue);
+            LOG.info("writeCorrelationTags: patched existing <Issue> instanceId='{}' → value='{}'", instanceId, newValue);
+        }
+        return patchedIds;
+    }
+
+    private static int createNewIssueEntries(Document doc, Map<String, Map<String, String>> incoming,
+                                              Set<String> existingInstanceIds) {
+        Element issueList = (Element) doc.getElementsByTagNameNS(NS_AUDIT, "IssueList").item(0);
+        if (issueList == null) {
+            issueList = (Element) doc.getElementsByTagName("IssueList").item(0);
+        }
+
+        int createdCount = 0;
+        for (var entry : incoming.entrySet()) {
+            String instanceId = entry.getKey();
+            if (existingInstanceIds.contains(instanceId)) continue;
+            if (issueList == null) {
+                LOG.warn("writeCorrelationTags: <IssueList> not found in audit.xml; cannot create entry for instanceId='{}'", instanceId);
+                continue;
+            }
+
+            String newValue = mergeAndBuildTagValue(instanceId, null, entry.getValue());
+            Element newIssue = createIssueElement(doc, issueList, instanceId);
+            upsertCorrelationTag(doc, newIssue, newValue);
+            issueList.appendChild(newIssue);
+            LOG.info("writeCorrelationTags: created new <Issue> instanceId='{}' → value='{}'", instanceId, newValue);
+            createdCount++;
+        }
+        return createdCount;
+    }
+
+    private static String mergeAndBuildTagValue(String instanceId, String existingValue, Map<String, String> newEntries) {
+        Map<String, String> merged = parseTagValue(existingValue);
+        mergeEntries(merged, newEntries);
+        String value = buildTagValue(merged);
+        if (value.length() > MAX_TAG_VALUE_LENGTH) {
+            LOG.warn("DAST_CORRELATION_STATUS tag value for SAST {} exceeds {} chars; truncating.", instanceId, MAX_TAG_VALUE_LENGTH);
+            value = truncateTagValue(merged);
+        }
+        return value;
+    }
+
+    private static Element createIssueElement(Document doc, Element issueList, String instanceId) {
+        String ns = issueList.getNamespaceURI();
+        Element issue = (ns != null) ? doc.createElementNS(ns, "Issue") : doc.createElement("Issue");
+        issue.setAttribute("instanceId", instanceId);
+        issue.setAttribute("revision", "0");
+        issue.setAttribute("suppressed", "false");
+        return issue;
     }
 
     // ─── Merge helpers ─────────────────────────────────────────────────────────

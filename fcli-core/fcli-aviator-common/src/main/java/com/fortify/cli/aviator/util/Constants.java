@@ -60,6 +60,7 @@ public class Constants {
 
     // Operation constants for error messages
     public static final String OP_CREATE_APP = "application creation";
+    public static final String OP_ADD_APP_ENTITLEMENT = "application entitlement increment";
     public static final String OP_UPDATE_APP = "application update";
     public static final String OP_DELETE_APP = "application deletion";
     public static final String OP_GET_APP = "retrieving application";

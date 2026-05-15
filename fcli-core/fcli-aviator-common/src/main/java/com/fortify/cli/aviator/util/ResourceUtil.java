@@ -23,10 +23,12 @@ import org.yaml.snakeyaml.LoaderOptions;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.Constructor;
 import org.yaml.snakeyaml.error.YAMLException;
+import org.yaml.snakeyaml.introspector.BeanAccess;
 
 import com.fortify.cli.aviator._common.exception.AviatorBugException;
 import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
 import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
+import com.fortify.cli.aviator.config.TagMappingConfig;
 
 public class ResourceUtil {
     private static final Logger LOG = LoggerFactory.getLogger(ResourceUtil.class);
@@ -39,6 +41,9 @@ public class ResourceUtil {
         options.setAllowDuplicateKeys(false);
         options.setAllowRecursiveKeys(true);
         Constructor constructor = new Constructor(configClass, options);
+        if (TagMappingConfig.class.equals(configClass)) {
+            constructor.getPropertyUtils().setBeanAccess(BeanAccess.FIELD);
+        }
         Yaml yaml = new Yaml(constructor);
         T loadedConfig = yaml.load(inputStream);
         if (loadedConfig == null) {
