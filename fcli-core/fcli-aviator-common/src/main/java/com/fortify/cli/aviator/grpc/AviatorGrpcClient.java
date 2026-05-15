@@ -181,6 +181,11 @@ public class AviatorGrpcClient implements AutoCloseable {
         return GrpcUtil.executeGrpcCall(blockingStub, ApplicationServiceGrpc.ApplicationServiceBlockingStub::updateApplication, request, Constants.OP_UPDATE_APP);
     }
 
+    public Application addEntitlement(String projectId, String signature, String message, String tenantName) {
+        ApplicationById request = ApplicationById.newBuilder().setId(Long.parseLong(projectId)).setSignature(signature).setMessage(message).setTenantName(tenantName).build();
+        return GrpcUtil.executeGrpcCall(blockingStub, ApplicationServiceGrpc.ApplicationServiceBlockingStub::addEntitlement, request, Constants.OP_ADD_APP_ENTITLEMENT);
+    }
+
     public ApplicationResponseMessage deleteApplication(String projectId, String signature, String message, String tenantName) {
         ApplicationById request = ApplicationById.newBuilder().setId(Long.parseLong(projectId)).setSignature(signature).setMessage(message).setTenantName(tenantName).build();
         return GrpcUtil.executeGrpcCall(blockingStub, ApplicationServiceGrpc.ApplicationServiceBlockingStub::deleteApplication, request, Constants.OP_DELETE_APP);
