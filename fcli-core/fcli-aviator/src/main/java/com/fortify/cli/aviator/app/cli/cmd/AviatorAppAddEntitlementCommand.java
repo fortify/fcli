@@ -33,7 +33,7 @@ import picocli.CommandLine.Parameters;
 @Command(name = "add-entitlement")
 public class AviatorAppAddEntitlementCommand extends AbstractAviatorAdminSessionOutputCommand implements IActionCommandResultSupplier {
     @Getter @Mixin private OutputHelperMixins.TableNoQuery outputHelper;
-    @Parameters(index = "0") private Long applicationId;
+    @Parameters(index = "0", descriptionKey = "fcli.aviator.app.add-entitlement.applicationId") private Long applicationId;
 
     @Override
     protected JsonNode getJsonNode(AviatorAdminConfigDescriptor configDescriptor) throws AviatorSimpleException, AviatorTechnicalException {
