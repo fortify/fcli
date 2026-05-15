@@ -114,7 +114,7 @@ public class AviatorSSCCustomTagHelper {
         ObjectNode tagNode = JsonHelper.getObjectMapper().createObjectNode();
         tagNode.put("name", tagDef.getName());
         tagNode.put("guid", tagDef.getGuid());
-        tagNode.put("description", "Custom tag for Fortify Aviator.");
+        tagNode.put("description", "Custom tag for Fortify Remediation Aviator.");
         tagNode.put("valueType", tagDef.getValueType());
         tagNode.put("customTagType", "CUSTOM");
         // LIST tags need a populated valueList; TEXT tags use an empty array

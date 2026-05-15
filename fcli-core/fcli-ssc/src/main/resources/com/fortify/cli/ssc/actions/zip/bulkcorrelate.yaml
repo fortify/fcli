@@ -2,7 +2,7 @@
 
 author: Fortify
 usage:
-  header: (PREVIEW) Perform SAST-DAST correlation of SSC application versions in bulk.
+  header: (PREVIEW) Perform Fortify Aviator SAST-DAST correlation for SSC application versions in bulk.
   description: |
     This action identifies SSC application versions that have both a processed
     SAST FPR and a processed DAST FPR, determines whether the scan data has
@@ -14,13 +14,13 @@ usage:
     compares the most recent scan date with the SSC `last_correlation` custom
     attribute written by the correlation command.
 
-    For application versions that don't already exist in Aviator, the action
+    For application versions that don't already exist in Fortify Aviator, the action
     will automatically create them before correlation.
 
     By default (--aviator-app-mapping=app), SSC project versions map to a
-    single Aviator application per SSC project. Set
+    single Fortify Aviator application per SSC project. Set
     --aviator-app-mapping=version to map each SSC project version to its own
-    Aviator application (project_name__version_name).
+    Fortify Aviator application (project_name__version_name).
 
     Before running correlation, the action automatically runs
     `fcli aviator ssc prepare` for each selected application version so the
@@ -28,11 +28,11 @@ usage:
 
     If entitlement is exhausted while creating applications, the action
     suppresses further create attempts and continues processing versions that
-    already have a matching Aviator application.
+    already have a matching Fortify Aviator application.
 
-    This action assumes active sessions with SSC, Aviator user access for
-    prepare and correlation, and Aviator admin access for application listing
-    and creation.
+    This action assumes active sessions with SSC, Fortify Aviator user access
+    for prepare and correlation, and Fortify Aviator admin access for
+    application listing and creation.
 
 config:
   output: immediate
@@ -50,7 +50,7 @@ cli.options:
     type: int
   aviator-app-mapping:
     names: --aviator-app-mapping
-    description: "Controls how SSC project versions map to Aviator applications. 'app' (default) maps one Aviator app per SSC project; 'version' maps one Aviator app per SSC project version (using project_name__version_name)."
+    description: "Controls how SSC project versions map to Fortify Aviator applications. 'app' (default) maps one Fortify Aviator app per SSC project; 'version' maps one Fortify Aviator app per SSC project version (using project_name__version_name)."
     required: false
     default: app
   filter:
@@ -65,7 +65,7 @@ cli.options:
     default: ""
   dry-run:
     names: --dry-run, -n
-    description: "Show what Aviator commands would be executed without actually running them. Default: false"
+    description: "Show what aviator commands would be executed without actually running them. Default: false"
     required: false
     default: false
     type: boolean
@@ -89,9 +89,9 @@ steps:
   - if: ${!(cli['aviator-app-mapping'] matches 'app|version')}
     throw: "Invalid --aviator-app-mapping value '${cli['aviator-app-mapping']}'. Valid values are: app, version"
 
-  - log.progress: "Using Aviator app mapping: ${cli['aviator-app-mapping']}"
+  - log.progress: "Using Fortify Aviator app mapping: ${cli['aviator-app-mapping']}"
 
-  - log.progress: Retrieving existing Aviator applications...
+  - log.progress: Retrieving existing Fortify Aviator applications...
   - run.fcli:
       aviator_apps:
         cmd: aviator app ls -o json
@@ -324,7 +324,7 @@ steps:
                     - var.set:
                         stats.would_create_count: ${stats.would_create_count + 1}
                         known_aviator_app_names..: ${project.aviator_app_name}
-                - log.info: Would prepare Aviator tags and attributes for ${project.project_name}:${project.version_name}
+                - log.info: Would prepare Fortify Aviator tags and attributes for ${project.project_name}:${project.version_name}
                 - log.info: Would correlate ${project.project_name}:${project.version_name}
             - if: ${!cli['dry-run']}
               do:
@@ -370,7 +370,7 @@ steps:
                     stats.create_skipped_due_to_entitlement: ${stats.create_skipped_due_to_entitlement + 1}
                 - if: ${app_ready}
                   do:
-                    - log.progress: Preparing Aviator tags and attributes for ${project.project_name}:${project.version_name}
+                    - log.progress: Preparing Fortify Aviator tags and attributes for ${project.project_name}:${project.version_name}
                     - run.fcli:
                         prepare_version:
                           cmd: aviator ssc prepare --av "${project.id}"
@@ -379,7 +379,7 @@ steps:
                       do:
                         - var.set:
                             stats.prepare_failures: ${stats.prepare_failures + 1}
-                        - log.warn: Aviator preparation failed for ${project.project_name}:${project.version_name}
+                        - log.warn: Fortify Aviator preparation failed for ${project.project_name}:${project.version_name}
                     - var.set:
                         stats.correlation_attempts: ${stats.correlation_attempts + 1}
                     - run.fcli:
