@@ -67,16 +67,30 @@ public class AviatorSSCPrepareHelper {
 
             progress.writeProgress("Synchronizing Aviator custom tags...");
             var tagHelperPrediction = new AviatorSSCCustomTagHelper(unirest, AviatorSSCTagDefs.AVIATOR_PREDICTION_TAG);
-            var tagHelperStatus = new AviatorSSCCustomTagHelper(unirest, AviatorSSCTagDefs.AVIATOR_STATUS_TAG);
+            var tagHelperStatus     = new AviatorSSCCustomTagHelper(unirest, AviatorSSCTagDefs.AVIATOR_STATUS_TAG);
+            var tagHelperDastCorr   = new AviatorSSCCustomTagHelper(unirest, AviatorSSCTagDefs.DAST_CORRELATION_STATUS_TAG);
 
-            JsonNode predictionTag = tagHelperPrediction.synchronize(result);
-            JsonNode statusTag = tagHelperStatus.synchronize(result);
+            JsonNode predictionTag  = tagHelperPrediction.synchronize(result);
+            JsonNode statusTag      = tagHelperStatus.synchronize(result);
+            JsonNode dastCorrTag    = tagHelperDastCorr.synchronize(result);
 
             if (predictionTag == null || statusTag == null) {
                 result.addEntry("Global", "HALTED", "Failed to synchronize one or more required Aviator custom tags.");
                 return result;
             }
-            List<JsonNode> requiredTags = List.of(predictionTag, statusTag);
+            if (dastCorrTag == null) {
+                result.addEntry("DAST Correlation Tag", "WARNING",
+                    "Failed to synchronize 'DAST correlation status' tag. SAST-DAST correlation feature may not be fully visible in SSC UI.");
+            }
+
+            progress.writeProgress("Synchronizing Aviator custom attributes...");
+            new AviatorSSCCorrelationAttributeHelper(unirest, AviatorSSCCorrelationAttributeDefs.LAST_CORRELATION_ATTR)
+                .synchronize(result);
+
+            // Build required tags list — include dastCorrTag only if successfully synchronized
+            List<JsonNode> requiredTags = dastCorrTag != null
+                ? List.of(predictionTag, statusTag, dastCorrTag)
+                : List.of(predictionTag, statusTag);
 
             if (options.isAllIssueTemplates() || options.getIssueTemplateNameOrId() != null) {
                 new AviatorSSCTemplateUpdater(unirest).process(options, result, requiredTags, progress);

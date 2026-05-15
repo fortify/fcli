@@ -59,8 +59,25 @@ public class AviatorSSCCustomTagHelper {
     private JsonNode verifyAndUpdateExistingTag(AviatorSSCPrepareHelper.PrepareResult result, JsonNode existingTag) {
         LOG.debug("Found existing tag '{}'. Verifying values.", tagDef.getName());
         JsonNode fullTagDetails = unirest.get(SSCUrls.CUSTOM_TAG(existingTag.get("id").asText())).asObject(JsonNode.class).getBody().get("data");
-        Set<String> existingValues = JsonHelper.stream((ArrayNode) fullTagDetails.get("valueList")).map(v -> v.get("lookupValue").asText()).collect(Collectors.toSet());
-        List<String> missingValues = tagDef.getValues().stream().filter(v -> !existingValues.contains(v)).collect(Collectors.toList());
+
+        // TEXT-type tags have no predefined valueList — nothing to verify or update
+        if ("TEXT".equals(tagDef.getValueType())) {
+            LOG.info("Custom tag '{}' is a TEXT type tag — no value list to verify.", tagDef.getName());
+            result.addEntry("Custom Tag", "VERIFIED", "'" + tagDef.getName() + "' (TEXT type) is already present.");
+            return fullTagDetails;
+        }
+
+        JsonNode valueListNode = fullTagDetails.get("valueList");
+        ArrayNode valueListArray = (valueListNode != null && valueListNode.isArray())
+            ? (ArrayNode) valueListNode
+            : JsonHelper.getObjectMapper().createArrayNode();
+
+        Set<String> existingValues = JsonHelper.stream(valueListArray)
+            .map(v -> v.get("lookupValue").asText())
+            .collect(Collectors.toSet());
+        List<String> missingValues = tagDef.getValues().stream()
+            .filter(v -> !existingValues.contains(v))
+            .collect(Collectors.toList());
 
         if (missingValues.isEmpty()) {
             LOG.info("Custom tag '{}' is already configured correctly.", tagDef.getName());
@@ -98,13 +115,16 @@ public class AviatorSSCCustomTagHelper {
         tagNode.put("name", tagDef.getName());
         tagNode.put("guid", tagDef.getGuid());
         tagNode.put("description", "Custom tag for Fortify Aviator.");
-        tagNode.put("valueType", "LIST");
+        tagNode.put("valueType", tagDef.getValueType());
         tagNode.put("customTagType", "CUSTOM");
+        // LIST tags need a populated valueList; TEXT tags use an empty array
         ArrayNode values = tagNode.putArray("valueList");
-        for (int i = 0; i < tagDef.getValues().size(); i++) {
-            values.add(JsonHelper.getObjectMapper().createObjectNode()
-                    .put("lookupValue", tagDef.getValues().get(i))
-                    .put("deletable", true).put("hidden", false).put("seqNumber", i));
+        if (!"TEXT".equals(tagDef.getValueType())) {
+            for (int i = 0; i < tagDef.getValues().size(); i++) {
+                values.add(JsonHelper.getObjectMapper().createObjectNode()
+                        .put("lookupValue", tagDef.getValues().get(i))
+                        .put("deletable", true).put("hidden", false).put("seqNumber", i));
+            }
         }
         return tagNode;
     }
