@@ -19,6 +19,10 @@ message Application {
   string legalTermsOfService=7;
   string quota_last_updated=8;
   int64 quota=9;
+  int64 entitlement_multiplier = 10;
+  int64 entitlements_consumed = 11;
+  int64 effective_initial_quota = 12;
+  int64 effective_monthly_quota = 13;
 }
 
 message CreateApplicationRequest {
@@ -77,6 +81,7 @@ service ApplicationService {
   rpc CreateApplication(CreateApplicationRequest) returns (Application) {}
   rpc GetApplication(ApplicationById) returns (Application) {}
   rpc UpdateApplication(UpdateApplicationRequest) returns (Application) {}
+  rpc AddEntitlement(ApplicationById) returns (Application) {}
   rpc DeleteApplication(ApplicationById) returns (ApplicationResponseMessage) {}
   rpc ListApplications(ApplicationByTenantName) returns (ApplicationList) {}
   rpc ListApplicationsByEntitlement(ApplicationById) returns (ApplicationList) {}

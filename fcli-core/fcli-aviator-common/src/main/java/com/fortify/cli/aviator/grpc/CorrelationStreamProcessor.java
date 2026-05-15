@@ -240,7 +240,7 @@ public class CorrelationStreamProcessor implements AutoCloseable {
                 resultFuture.complete(new CorrelationResult(
                     new ArrayList<>(state.confirmedPairs),
                     new ArrayList<>(state.rejectedPairs),
-                    state.receivedCorrelations.get()
+                    state.successfulCorrelations.get()
                 ));
             }
             requestHandler.complete();
@@ -314,7 +314,7 @@ public class CorrelationStreamProcessor implements AutoCloseable {
                 resultFuture.complete(new CorrelationResult(
                     new ArrayList<>(state.confirmedPairs),
                     new ArrayList<>(state.rejectedPairs),
-                    state.receivedCorrelations.get()
+                    state.successfulCorrelations.get()
                 ));
             }
             streamLatch.countDown();
@@ -346,6 +346,7 @@ public class CorrelationStreamProcessor implements AutoCloseable {
         logger.progress("Correlating " + received + " of " + state.totalCorrelationRequests + " SAST findings");
 
         if ("OK".equalsIgnoreCase(resp.getStatus()) || "SUCCESS".equalsIgnoreCase(resp.getStatus())) {
+            state.successfulCorrelations.incrementAndGet();
             for (CorrelationCandidateMatch match : resp.getMatchesList()) {
                 state.candidateMatches.add(new CandidateMatch(
                     resp.getSastId(),
@@ -409,7 +410,7 @@ public class CorrelationStreamProcessor implements AutoCloseable {
                 resultFuture.complete(new CorrelationResult(
                     new ArrayList<>(state.confirmedPairs),
                     new ArrayList<>(state.rejectedPairs),
-                    state.receivedCorrelations.get()
+                    state.successfulCorrelations.get()
                 ));
             }
             requestHandler.complete();
