@@ -59,7 +59,8 @@ class FoDMCPServerHttpSpec extends FcliBaseSpec {
         def port = MCPHttpServerTestHelper.getFreePort()
         def configPath = Path.of(tempDir, "mcp-http-fod-${port}.yaml")
         def config = """
-            port: ${port}
+            server:
+              port: ${port}
             imports:
               - ${commonImportActionPath}
               - ${fodImportActionPath}
