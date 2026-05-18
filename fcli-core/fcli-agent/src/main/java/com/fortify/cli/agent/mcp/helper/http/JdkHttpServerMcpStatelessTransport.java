@@ -17,6 +17,7 @@ import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 import com.sun.net.httpserver.HttpExchange;
@@ -48,6 +49,7 @@ public class JdkHttpServerMcpStatelessTransport implements McpStatelessServerTra
 
     public JdkHttpServerMcpStatelessTransport(int port, String mcpEndpoint, McpJsonMapper jsonMapper) throws IOException {
         this.httpServer = HttpServer.create(new InetSocketAddress(port), 0);
+        this.httpServer.setExecutor(Executors.newCachedThreadPool());
         this.mcpEndpoint = normalizeEndpoint(mcpEndpoint);
         this.jsonMapper = jsonMapper;
         this.httpServer.createContext(this.mcpEndpoint, this::handleExchange);
