@@ -12,6 +12,7 @@
  */
 package com.fortify.cli.agent.mcp.helper.http;
 
+import java.net.InetSocketAddress;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -47,15 +48,8 @@ import lombok.NoArgsConstructor;
 @Data @NoArgsConstructor @Reflectable
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class MCPServerHttpConfig {
-    private static final DateTimePeriodHelper TTL_PERIOD_HELPER = DateTimePeriodHelper.byRange(Period.SECONDS, Period.HOURS);
-
-    private int port = 8080;
-    private int workThreads = 20;
-    private int progressThreads = 4;
-    private int asyncBgThreads = AsyncJobManager.DEFAULT_BG_THREADS;
-    private String jobSafeReturn = "25s";
-    private String progressInterval = "5s";
-    private String isolationScopeTtl = "4h";
+    private ServerConfig server = new ServerConfig();
+    private JobsConfig jobs = new JobsConfig();
     private List<String> imports = new ArrayList<>();
     private SscConfig ssc;
     private FoDConfig fod;
@@ -65,6 +59,58 @@ public class MCPServerHttpConfig {
     public enum Product {
         ssc,
         fod
+    }
+
+    @Data @NoArgsConstructor @Reflectable
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class ServerConfig {
+        private int port = 8080;
+        private String bindAddress;
+        private long maxRequestBodyBytes = -1;
+        private TlsConfig tls;
+
+        @JsonIgnore
+        public InetSocketAddress getInetSocketAddress() {
+            if ( StringUtils.isBlank(bindAddress) ) {
+                return new InetSocketAddress(port);
+            }
+            return new InetSocketAddress(bindAddress, port);
+        }
+    }
+
+    @Data @NoArgsConstructor @Reflectable
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class TlsConfig {
+        private Path keystoreFile;
+        private String keystorePassword;
+        private String keyPassword;
+        private String keystoreType = "PKCS12";
+
+        @JsonIgnore
+        public char[] getEffectiveKeyPassword() {
+            var pwd = keyPassword != null ? keyPassword : keystorePassword;
+            return pwd != null ? pwd.toCharArray() : new char[0];
+        }
+    }
+
+    @Data @NoArgsConstructor @Reflectable
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class JobsConfig {
+        private static final DateTimePeriodHelper TTL_PERIOD_HELPER = DateTimePeriodHelper.byRange(Period.SECONDS, Period.HOURS);
+
+        private int workThreads = 20;
+        private int progressThreads = 4;
+        private int asyncBgThreads = AsyncJobManager.DEFAULT_BG_THREADS;
+        private String safeReturn = "25s";
+        private String progressInterval = "5s";
+        private String isolationScopeTtl = "4h";
+
+        @JsonIgnore
+        public long getIsolationScopeTtlInMillis() {
+            return StringUtils.isBlank(isolationScopeTtl)
+                    ? 4 * 3600_000L
+                    : TTL_PERIOD_HELPER.parsePeriodToMillis(isolationScopeTtl);
+        }
     }
 
     @Data @NoArgsConstructor @Reflectable
@@ -118,22 +164,16 @@ public class MCPServerHttpConfig {
 
     public void validate(Path configPath) {
         this.configPath = configPath;
+        validateServerConfig();
         if ( imports == null || imports.isEmpty() ) {
             throw new FcliSimpleException("HTTP MCP config must specify at least one imports entry");
         }
         imports.forEach(this::validateImportPath);
-        getIsolationScopeTtlInMillis(); // validates isolationScopeTtl period string
+        jobs.getIsolationScopeTtlInMillis(); // validates isolationScopeTtl period string
         switch ( getProduct() ) {
         case ssc -> validateSscConfig();
         case fod -> validateFoDConfig();
         }
-    }
-
-    @JsonIgnore
-    public long getIsolationScopeTtlInMillis() {
-        return StringUtils.isBlank(isolationScopeTtl)
-                ? 4 * 3600_000L
-                : TTL_PERIOD_HELPER.parsePeriodToMillis(isolationScopeTtl);
     }
 
     @JsonIgnore
@@ -167,11 +207,30 @@ public class MCPServerHttpConfig {
     }
 
     private Path resolveImportPath(String importPath) {
-        var path = Path.of(importPath);
+        return resolveRelativePath(Path.of(importPath));
+    }
+
+    private Path resolveRelativePath(Path path) {
         if ( path.isAbsolute() ) {
             return path.normalize();
         }
         return configPath.getParent().resolve(path).normalize();
+    }
+
+    private void validateServerConfig() {
+        var tls = server.getTls();
+        if ( tls == null ) { return; }
+        if ( tls.getKeystoreFile() == null ) {
+            throw new FcliSimpleException("HTTP MCP config server.tls.keystoreFile must be specified");
+        }
+        var resolvedKeystoreFile = resolveRelativePath(tls.getKeystoreFile());
+        if ( !resolvedKeystoreFile.toFile().isFile() ) {
+            throw new FcliSimpleException("HTTP MCP config server.tls.keystoreFile not found: " + resolvedKeystoreFile);
+        }
+        tls.setKeystoreFile(resolvedKeystoreFile);
+        if ( StringUtils.isBlank(tls.getKeystorePassword()) ) {
+            throw new FcliSimpleException("HTTP MCP config server.tls.keystorePassword must be specified");
+        }
     }
 
     private void validateSscConfig() {

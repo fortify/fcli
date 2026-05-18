@@ -13,15 +13,26 @@
 package com.fortify.cli.agent.mcp.helper.http;
 
 import java.io.IOException;
-import java.net.InetSocketAddress;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.security.GeneralSecurityException;
+import java.security.KeyStore;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.SSLContext;
+
+import com.fortify.cli.agent.mcp.helper.http.MCPServerHttpConfig.ServerConfig;
+import com.fortify.cli.agent.mcp.helper.http.MCPServerHttpConfig.TlsConfig;
+import com.fortify.cli.common.exception.FcliSimpleException;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
+import com.sun.net.httpserver.HttpsConfigurator;
+import com.sun.net.httpserver.HttpsServer;
 
 import io.modelcontextprotocol.common.McpTransportContext;
 import io.modelcontextprotocol.json.McpJsonMapper;
@@ -44,11 +55,21 @@ public class JdkHttpServerMcpStatelessTransport implements McpStatelessServerTra
     private final HttpServer httpServer;
     private final String mcpEndpoint;
     private final McpJsonMapper jsonMapper;
+    private final long maxRequestBodyBytes;
     private volatile McpStatelessServerHandler mcpHandler;
     private volatile boolean closing;
 
-    public JdkHttpServerMcpStatelessTransport(int port, String mcpEndpoint, McpJsonMapper jsonMapper) throws IOException {
-        this.httpServer = HttpServer.create(new InetSocketAddress(port), 0);
+    public JdkHttpServerMcpStatelessTransport(ServerConfig serverConfig, String mcpEndpoint, McpJsonMapper jsonMapper) throws IOException {
+        this.maxRequestBodyBytes = serverConfig.getMaxRequestBodyBytes();
+        var address = serverConfig.getInetSocketAddress();
+        var tls = serverConfig.getTls();
+        if ( tls != null ) {
+            var httpsServer = HttpsServer.create(address, 0);
+            httpsServer.setHttpsConfigurator(new HttpsConfigurator(buildSslContext(tls)));
+            this.httpServer = httpsServer;
+        } else {
+            this.httpServer = HttpServer.create(address, 0);
+        }
         this.httpServer.setExecutor(Executors.newCachedThreadPool());
         this.mcpEndpoint = normalizeEndpoint(mcpEndpoint);
         this.jsonMapper = jsonMapper;
@@ -104,7 +125,9 @@ public class JdkHttpServerMcpStatelessTransport implements McpStatelessServerTra
                 "headers", exchange.getRequestHeaders().entrySet().stream()
                         .collect(Collectors.toUnmodifiableMap(Map.Entry::getKey, e -> List.copyOf(e.getValue())))));
         try {
-            var body = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
+            var bodyBytes = readRequestBody(exchange);
+            if ( bodyBytes == null ) { return; } // response already sent (body too large)
+            var body = new String(bodyBytes, StandardCharsets.UTF_8);
             var message = McpSchema.deserializeJsonRpcMessage(jsonMapper, body);
             if ( message instanceof McpSchema.JSONRPCRequest request ) {
                 var response = mcpHandler.handleRequest(transportContext, request)
@@ -134,6 +157,36 @@ public class JdkHttpServerMcpStatelessTransport implements McpStatelessServerTra
             sendMcpError(exchange, 500, McpError.builder(McpSchema.ErrorCodes.INTERNAL_ERROR)
                     .message("Unexpected server error")
                     .build());
+        }
+    }
+
+    private byte[] readRequestBody(HttpExchange exchange) throws IOException {
+        if ( maxRequestBodyBytes <= 0 ) {
+            return exchange.getRequestBody().readAllBytes();
+        }
+        // Read one extra byte to detect oversized bodies without loading them fully
+        var limit = (int) Math.min(maxRequestBodyBytes + 1, Integer.MAX_VALUE);
+        var bytes = exchange.getRequestBody().readNBytes(limit);
+        if ( bytes.length > maxRequestBodyBytes ) {
+            sendPlainError(exchange, 413, "Request entity too large");
+            return null;
+        }
+        return bytes;
+    }
+
+    private static SSLContext buildSslContext(TlsConfig tls) {
+        try {
+            var keyStore = KeyStore.getInstance(tls.getKeystoreType());
+            try ( InputStream is = Files.newInputStream(tls.getKeystoreFile()) ) {
+                keyStore.load(is, tls.getKeystorePassword().toCharArray());
+            }
+            var kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+            kmf.init(keyStore, tls.getEffectiveKeyPassword());
+            var sslContext = SSLContext.getInstance("TLS");
+            sslContext.init(kmf.getKeyManagers(), null, null);
+            return sslContext;
+        } catch (GeneralSecurityException | IOException e) {
+            throw new FcliSimpleException("Failed to initialize TLS from keystore: " + e.getMessage(), e);
         }
     }
 

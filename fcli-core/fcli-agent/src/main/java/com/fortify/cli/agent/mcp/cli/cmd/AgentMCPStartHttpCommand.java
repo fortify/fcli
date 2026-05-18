@@ -66,8 +66,8 @@ public class AgentMCPStartHttpCommand extends AbstractRunnableCommand implements
 
         var config = MCPServerHttpConfigLoader.load(configPath);
 
-        var safeReturnMillis = PERIOD_HELPER.parsePeriodToMillis(config.getJobSafeReturn());
-        var progressIntervalMillis = PERIOD_HELPER.parsePeriodToMillis(config.getProgressInterval());
+        var safeReturnMillis = PERIOD_HELPER.parsePeriodToMillis(config.getJobs().getSafeReturn());
+        var progressIntervalMillis = PERIOD_HELPER.parsePeriodToMillis(config.getJobs().getProgressInterval());
         if ( safeReturnMillis <= 0 ) {
             safeReturnMillis = 25000;
         }
@@ -75,10 +75,10 @@ public class AgentMCPStartHttpCommand extends AbstractRunnableCommand implements
             progressIntervalMillis = 500;
         }
 
-        var asyncJobManager = new AsyncJobManager(AsyncJobManager.Config.builder().bgThreads(config.getAsyncBgThreads()).build());
+        var asyncJobManager = new AsyncJobManager(AsyncJobManager.Config.builder().bgThreads(config.getJobs().getAsyncBgThreads()).build());
         var jobManager = new MCPJobManager(
-                config.getWorkThreads(),
-                config.getProgressThreads(),
+                config.getJobs().getWorkThreads(),
+                config.getJobs().getProgressThreads(),
                 safeReturnMillis,
                 progressIntervalMillis,
                 asyncJobManager
@@ -87,7 +87,7 @@ public class AgentMCPStartHttpCommand extends AbstractRunnableCommand implements
         var sessionDescriptorResolver = new MCPServerHttpSessionDescriptorResolver(config);
         var scopeCleanupScheduler = Executors.newSingleThreadScheduledExecutor(
                 r -> new Thread(r, "mcp-http-scope-cleanup"));
-        sessionDescriptorResolver.scheduleCleanup(config.getIsolationScopeTtlInMillis(), scopeCleanupScheduler);
+        sessionDescriptorResolver.scheduleCleanup(config.getJobs().getIsolationScopeTtlInMillis(), scopeCleanupScheduler);
         var importSpecsFactory = new MCPImportedActionMcpSpecsFactory(jobManager,
                 () -> sessionDescriptorResolver.getOrCreateFunctionFrame(FcliExecutionContextHolder.getMcpRequestAuthScopeKey()));
         var toolSpecs = new ArrayList<McpStatelessServerFeatures.SyncToolSpecification>();
@@ -118,7 +118,7 @@ public class AgentMCPStartHttpCommand extends AbstractRunnableCommand implements
         }
 
         var objectMapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        var transport = new JdkHttpServerMcpStatelessTransport(config.getPort(), "/mcp", new JacksonMcpJsonMapper(objectMapper));
+        var transport = new JdkHttpServerMcpStatelessTransport(config.getServer(), "/mcp", new JacksonMcpJsonMapper(objectMapper));
 
         var serverBuilder = McpServer.sync(transport)
                 .serverInfo("fcli", FcliBuildProperties.INSTANCE.getFcliVersion())
@@ -133,8 +133,8 @@ public class AgentMCPStartHttpCommand extends AbstractRunnableCommand implements
         log.debug("Initialized HTTP MCP server instance: {}", mcpServer);
 
         transport.start();
-        log.info("Fcli HTTP MCP server running on port {} for product {}", config.getPort(), config.getProduct());
-        System.err.println("Fcli HTTP MCP server running on port " + config.getPort() + " endpoint /mcp. Hit Ctrl-C to exit.");
+        log.info("Fcli HTTP MCP server running on port {} for product {}", config.getServer().getPort(), config.getProduct());
+        System.err.println("Fcli HTTP MCP server running on port " + config.getServer().getPort() + " endpoint /mcp. Hit Ctrl-C to exit.");
 
         var latch = new CountDownLatch(1);
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {

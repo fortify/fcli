@@ -49,7 +49,7 @@ class MCPServerHttpConfigLoaderTest {
             MCPServerHttpConfig config = MCPServerHttpConfigLoader.load(configFile);
 
             assertEquals(MCPServerHttpConfig.Product.ssc, config.getProduct());
-            assertEquals(8080, config.getPort());
+            assertEquals(8080, config.getServer().getPort());
             assertEquals("https://ssc.example.com", config.getSsc().getUrl());
             assertEquals("secret-token", config.getSsc().getScSastClientAuthToken());
             assertEquals(importFile.toAbsolutePath().normalize(), config.getResolvedImportPaths().get(0));
