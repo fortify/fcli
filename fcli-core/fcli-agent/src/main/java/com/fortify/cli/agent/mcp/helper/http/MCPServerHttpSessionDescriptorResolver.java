@@ -188,32 +188,35 @@ public final class MCPServerHttpSessionDescriptorResolver {
     /**
      * Validates and if necessary refreshes the session token for the given entry.
      * Synchronized on the entry to prevent concurrent refreshes for the same user.
+     * A new descriptor instance is published into the scope rather than mutating the existing one,
+     * keeping the descriptor classes free of concurrency concerns.
      */
     private void validateAndRefreshSession(IsolationScopeEntry entry, McpTransportContext transportContext) {
         synchronized (entry) {
-            var descriptors = entry.scope.getTransientSessionDescriptors();
-            if ( descriptors.isEmpty() ) {
-                return;
-            }
-            var descriptor = descriptors.values().iterator().next();
-            if ( descriptor instanceof FoDSessionDescriptor fodDescriptor ) {
-                refreshFoDTokenIfExpired(fodDescriptor, transportContext);
-            } else if ( descriptor instanceof SSCAndScanCentralSessionDescriptor sscDescriptor ) {
-                validateSscToken(sscDescriptor);
+            for ( var descriptor : entry.scope.getTransientSessionDescriptors().values() ) {
+                if ( descriptor instanceof FoDSessionDescriptor fodDescriptor ) {
+                    // OAuth tokens expire; replace the descriptor with one carrying a fresh token if needed
+                    entry.scope.setTransientSessionDescriptor(refreshFoDTokenIfExpired(fodDescriptor, transportContext));
+                } else if ( descriptor instanceof SSCAndScanCentralSessionDescriptor sscDescriptor ) {
+                    // Client always provides its own token; just validate it — no descriptor replacement needed
+                    // If we every add support for user/pwd-based SSC auth, we may need to add token refresh
+                    // logic here as well
+                    validateSscToken(sscDescriptor);
+                }
             }
         }
     }
 
-    private void refreshFoDTokenIfExpired(FoDSessionDescriptor descriptor, McpTransportContext transportContext) {
+    private FoDSessionDescriptor refreshFoDTokenIfExpired(FoDSessionDescriptor descriptor, McpTransportContext transportContext) {
         if ( descriptor.hasActiveCachedTokenResponse() ) {
-            return;
+            return descriptor;
         }
         var auth = parseAuthHeader(transportContext);
         var fodConfig = config.getFod();
         var urlConfig = UrlConfig.builderFromConnectionConfig(fodConfig)
                 .url(FoDProductHelper.INSTANCE.getApiUrl(fodConfig.getUrl()))
                 .build();
-        descriptor.setCachedTokenResponse(createFoDTokenResponse(auth, urlConfig));
+        return descriptor.withCachedTokenResponse(createFoDTokenResponse(auth, urlConfig));
     }
 
     private void validateSscToken(SSCAndScanCentralSessionDescriptor descriptor) {
@@ -225,7 +228,6 @@ public final class MCPServerHttpSessionDescriptorResolver {
         if ( !status.valid() ) {
             throw new FcliSimpleException("SSC session token is invalid or has been revoked; please provide a valid token in the %s header", HEADER_AUTH_SSC);
         }
-        descriptor.setSscTokenData(status.tokenData());
     }
 
     private void deleteDirQuietly(Path absolutePath) {
