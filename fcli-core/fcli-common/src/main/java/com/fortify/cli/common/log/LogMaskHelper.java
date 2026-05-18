@@ -12,16 +12,12 @@
  */
 package com.fortify.cli.common.log;
 
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.BiConsumer;
 import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
 
 import com.fortify.cli.common.exception.FcliBugException;
-import com.fortify.cli.common.regex.MultiPatternReplacer;
 import com.fortify.cli.common.util.JavaHelper;
 
 import lombok.AccessLevel;
@@ -32,21 +28,23 @@ import lombok.Setter;
  * This class provides methods for registering values and patterns to be masked in the
  * fcli log file, and applying those masks to log messages.
  *
+ * <p>Registration always targets {@link LogMaskContext#activeContext()}: the GLOBAL context
+ * in plain CLI mode, the pre-scope capture context during MCP HTTP request setup, or the
+ * current scope's context during tool execution.  Masking is applied in two phases:
+ * {@link LogMaskContext#GLOBAL} first, then the active context (if different), so that
+ * globally-registered patterns catch values that are then re-registered scope-locally.</p>
+ *
  * @author Ruud Senden
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class LogMaskHelper {
     /** Singleton instance of this class. */
     public static final LogMaskHelper INSTANCE = new LogMaskHelper();
-    
+
     /** The log mask level to apply to logging entries. This is set by FortifyCLIDynamicInitializer based
-     *  on the value of the generic fcli <pre>--log-mask</pre> option. */ 
+     *  on the value of the generic fcli <pre>--log-mask</pre> option. */
     @Setter private LogMaskLevel logMaskLevel;
-    private final Map<LogMessageType, MultiPatternReplacer> multiPatternReplacers = new ConcurrentHashMap<>();
-    
-    /** Global pattern replacer for stdio masking (applies to all output regardless of message type) */
-    private final MultiPatternReplacer stdioPatternReplacer = new MultiPatternReplacer();
-    
+
     /**
      * Register a value to be masked, based on the semantics as described in {@link MaskValue}. If
      * {@link MaskValue} is <code>null</code>, the given value will not be registered for masking.
@@ -57,7 +55,7 @@ public final class LogMaskHelper {
         }
         return this;
     }
-    
+
     /**
      * Register a value to be masked, based on the semantics as described in {@link MaskValue}. If
      * {@link MaskValueDescriptor} is <code>null</code>, the given value will not be registered for masking.
@@ -68,7 +66,7 @@ public final class LogMaskHelper {
         }
         return this;
     }
-    
+
     /**
      * Register a value to be masked, based on the same semantics as described in {@link MaskValue} but passing
      * each attribute of that annotation as a separate method argument.
@@ -86,136 +84,125 @@ public final class LogMaskHelper {
         }
         return registerValue(sensitivityLevel, valueString, String.format("<REDACTED %s (%s)>", description.toUpperCase(), source));
     }
-    
+
     private final String valueAsString(Object value) {
         return JavaHelper.as(value, String.class).orElseGet(
             ()->JavaHelper.as(value, char[].class).map(ca->String.valueOf(ca))
             .orElseThrow(()->new FcliBugException("MaskValue annotation can only be used on String or char[] fields, actual type: "+value.getClass().getSimpleName())));
     }
-    
+
     /**
-     * Register a value to be masked with the given {@link LogSensitivityLevel}, for the given log 
-     * message type(s). If no log message types are provided, the mask will be applied to all log 
-     * message types. Automatically also registers the value for stdio masking since any value
-     * sensitive enough to mask in logs should also be masked in console output.
-     * See {@link MultiPatternReplacer#registerValue(String, String)} for details.
+     * Register a value to be masked with the given {@link LogSensitivityLevel}, for the given log
+     * message type(s). Delegates to {@link LogMaskContext#activeContext()}.
      */
     public final LogMaskHelper registerValue(LogSensitivityLevel sensitivityLevel, String valueToMask, String replacement, LogMessageType... logMessageTypes) {
-        if ( isMaskingNeeded(sensitivityLevel, valueToMask) ) {
-            var encodedValue = URLEncoder.encode(valueToMask, StandardCharsets.UTF_8);
-            for ( var logMessageType : getLogMessageTypesOrDefault(logMessageTypes) ) {
-                getMultiPatternReplacer(logMessageType)
-                    .registerValue(valueToMask, replacement)
-                    .registerValue(encodedValue, replacement);
-            }
-            // Also register for stdio masking - any value sensitive enough to mask in logs should be masked in console output
-            stdioPatternReplacer
-                .registerValue(valueToMask, replacement)
-                .registerValue(encodedValue, replacement);
-        }
+        LogMaskContext.activeContext().registerValue(sensitivityLevel, valueToMask, replacement, logMessageTypes);
         return this;
     }
-    
+
     /**
-     * Register a value to be masked in stdio (stdout/stderr), with sensitivity level checking.
-     * This is specifically for user-provided data and CLI options that should be masked in console output.
+     * Register a value to be masked in stdio (stdout/stderr) only. Delegates to {@link LogMaskContext#activeContext()}.
      */
     public final LogMaskHelper registerStdioValue(LogSensitivityLevel sensitivityLevel, String valueToMask, String replacement) {
-        if ( isMaskingNeeded(sensitivityLevel, valueToMask) ) {
-            stdioPatternReplacer.registerValue(valueToMask, replacement);
-        }
+        LogMaskContext.activeContext().registerStdioValue(sensitivityLevel, valueToMask, replacement);
         return this;
     }
-    
+
     /**
-     * Register a pattern that describes one or more values to be masked, with the given sensitivity 
-     * level and for the given log message type(s). If no log message types are provided, the pattern
-     * will be registered for all log message types. See {@link MultiPatternReplacer#registerPattern(String, String)}
-     * for details.
+     * Register a pattern that describes one or more values to be masked. Delegates to {@link LogMaskContext#activeContext()}.
      */
     public final LogMaskHelper registerPattern(LogSensitivityLevel sensitivityLevel, String patternString, String replacement, LogMessageType... logMessageTypes) {
-        if ( isMaskingNeededForSensitivityLevel(sensitivityLevel) ) {
-            for ( var logMessageType : getLogMessageTypesOrDefault(logMessageTypes) ) {
-                getMultiPatternReplacer(logMessageType).registerPattern(patternString, replacement);
-            }
-        }
+        LogMaskContext.activeContext().registerPattern(sensitivityLevel, patternString, replacement, logMessageTypes);
         return this;
     }
-    
-
 
     /**
-     * Return either the given log message types, or all log message types if no log message types given.
+     * Register a pattern into {@link LogMaskContext#GLOBAL}, for patterns that must persist
+     * across all execution contexts (e.g. startup-time HTTP header/response patterns registered
+     * by {@code FortifyCLIDynamicInitializer}). Unlike {@link #registerPattern}, this always
+     * targets GLOBAL regardless of what execution context is current.
      */
-    private LogMessageType[] getLogMessageTypesOrDefault(LogMessageType... logMessageTypes) {
-        return logMessageTypes!=null && logMessageTypes.length!=0 ? logMessageTypes : LogMessageType.all();
+    public final LogMaskHelper registerGlobalPattern(LogSensitivityLevel sensitivityLevel, String patternString, String replacement, LogMessageType... logMessageTypes) {
+        LogMaskContext.GLOBAL.registerPattern(sensitivityLevel, patternString, replacement, logMessageTypes);
+        return this;
     }
-    
+
     /**
-     * Get the {@link MultiPatternReplacer} instance for the given {@link LogMessageType}.
+     * Mask the given log message.  Applied in two phases: {@link LogMaskContext#GLOBAL} first,
+     * then the active context if it differs from GLOBAL.  The BiConsumer for discovered values
+     * routes back through {@link #registerValue} so that newly-found values land in
+     * {@link LogMaskContext#activeContext()} rather than always in GLOBAL.
      */
-    private final MultiPatternReplacer getMultiPatternReplacer(LogMessageType logMessageType) {
-        return multiPatternReplacers.computeIfAbsent(logMessageType, t->new MultiPatternReplacer());
+    public final String mask(LogMessageType logMessageType, String msg) {
+        if ( msg == null ) { return null; }
+        var consumer = discoveredValueConsumer();
+        try {
+            var result = LogMaskContext.GLOBAL.mask(logMessageType, msg, consumer);
+            var active = LogMaskContext.activeContext();
+            if ( active != LogMaskContext.GLOBAL ) {
+                result = active.mask(logMessageType, result, consumer);
+            }
+            return result;
+        } catch ( FcliBugException e ) {
+            return "<MASKED DUE TO FCLI BUG>";
+        }
     }
-    
+
+    /**
+     * Mask the given stdio (stdout/stderr) output.  Applied in two phases like {@link #mask}.
+     */
+    public final String maskStdio(String msg) {
+        if ( StringUtils.isBlank(msg) ) { return msg; }
+        var consumer = discoveredStdioValueConsumer();
+        try {
+            var result = LogMaskContext.GLOBAL.maskStdio(msg, consumer);
+            var active = LogMaskContext.activeContext();
+            if ( active != LogMaskContext.GLOBAL ) {
+                result = active.maskStdio(result, consumer);
+            }
+            return result;
+        } catch ( Exception e ) {
+            return "<MASKED DUE TO ERROR>";
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // Package-visible helpers used by LogMaskContext
+    // -------------------------------------------------------------------------
+
     /**
      * @return true if masking is needed based on comparing the given {@link LogSensitivityLevel}
      * against the configured {@link LogMaskLevel}, and given value is not blank/too short,
      * false otherwise.
      */
-    private final boolean isMaskingNeeded(LogSensitivityLevel sensitivityLevel, String valueToMask) {
+    final boolean isMaskingNeeded(LogSensitivityLevel sensitivityLevel, String valueToMask) {
         return isMaskingNeededForSensitivityLevel(sensitivityLevel)
                 && StringUtils.isNotBlank(valueToMask)
                 && valueToMask.length()>4; // Avoid masking very short values, as these are not considered secure anyway
     }
-    
+
     /**
      * @return true if masking is needed based on comparing the given {@link LogSensitivityLevel}
      * against the configured {@link LogMaskLevel}, false otherwise.
      */
-    private final boolean isMaskingNeededForSensitivityLevel(LogSensitivityLevel sensitivityLevel) {
-        return logMaskLevel.getSensitivityLevels().contains(sensitivityLevel);
+    final boolean isMaskingNeededForSensitivityLevel(LogSensitivityLevel sensitivityLevel) {
+        return logMaskLevel != null && logMaskLevel.getSensitivityLevels().contains(sensitivityLevel);
     }
 
+    // -------------------------------------------------------------------------
+    // Private helpers
+    // -------------------------------------------------------------------------
+
     /**
-     * Mask the given log message using the registered values and patterns for the
-     * given {@link LogMessageType}.
+     * BiConsumer that routes newly-discovered log-masked values to the active context.
+     * We don't know the original sensitivity level here, but if the value was replaced
+     * before it should always be replaced again, so we use sensitivity level 'high'.
      */
-    public final String mask(LogMessageType logMessageType, String msg) {
-        var multiPattern = getMultiPatternReplacer(logMessageType);
-        if ( multiPattern==null ) { return null; }
-        try {
-            return multiPattern.applyReplacements(msg,
-                // We want to register replacement values for all log message types, not just
-                // the log message type on which the replacement was applied. We don't know the
-                // original sensitivity level here, but if the value was replaced before, it should
-                // always be replaced again, hence we use sensitivity level 'high'.        
-                (v,r)->registerValue(LogSensitivityLevel.high, v, r));
-        } catch ( FcliBugException e ) {
-            // Exceptions will be eaten by the logging framework, causing the log message to be lost,
-            // so instead we return a fixed string indicating that an fcli bug occurred.
-            return "<MASKED DUE TO FCLI BUG>";
-        }
-    }
-    
-    /**
-     * Mask the given stdio (stdout/stderr) output using registered stdio patterns and values.
-     * This should only be used for masking console output, not log files.
-     * @param msg the message to mask
-     * @return masked message with sensitive content replaced
-     */
-    public final String maskStdio(String msg) {
-        if ( StringUtils.isBlank(msg) ) {
-            return msg;
-        }
-        try {
-            return stdioPatternReplacer.applyReplacements(msg,
-                // Register discovered values for future stdio masking with high sensitivity
-                (v,r)->registerStdioValue(LogSensitivityLevel.high, v, r));
-        } catch ( Exception e ) {
-            // Never fail masking - return safe fallback
-            return "<MASKED DUE TO ERROR>";
-        }
+    private BiConsumer<String, String> discoveredValueConsumer() {
+        return (v, r) -> registerValue(LogSensitivityLevel.high, v, r);
     }
 
+    private BiConsumer<String, String> discoveredStdioValueConsumer() {
+        return (v, r) -> registerStdioValue(LogSensitivityLevel.high, v, r);
+    }
 }

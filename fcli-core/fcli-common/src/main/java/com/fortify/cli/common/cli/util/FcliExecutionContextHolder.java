@@ -114,6 +114,16 @@ public final class FcliExecutionContextHolder {
     public static String getMcpRequestAuthScopeKey() {
         return current().getIsolationScope().getMcpRequestAuthScopeKey();
     }
+
+    /**
+     * Return the current (top) execution context, or {@code null} if no context is pushed.
+     * Used by {@link com.fortify.cli.common.log.LogMaskContext#activeContext()} for
+     * per-request log masking; must not throw.
+     */
+    public static FcliExecutionContext tryCurrentContext() {
+        var stack = HOLDER.get();
+        return stack.isEmpty() ? null : stack.peek();
+    }
     
     /** Return the current stack depth. Useful for logging/troubleshooting. */
     public static int stackDepth() { return HOLDER.get().size(); }

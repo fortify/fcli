@@ -17,13 +17,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.HexFormat;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledExecutorService;
@@ -54,7 +49,6 @@ import com.fortify.cli.ssc._common.session.helper.SSCAndScanCentralSessionDescri
 import com.fortify.cli.ssc._common.session.helper.SSCSessionValidationHelper;
 import com.fortify.cli.ssc.access_control.helper.SSCTokenGetOrCreateResponse.SSCTokenData;
 
-import io.modelcontextprotocol.common.McpTransportContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -64,13 +58,14 @@ public final class MCPServerHttpSessionDescriptorResolver {
     public static final String HEADER_AUTH_SSC = "X-AUTH-SSC";
     public static final String HEADER_AUTH_FOD = "X-AUTH-FOD";
 
-    private static final String SSC_TOKEN_KEY = "token";
-    private static final String SSC_SC_SAST_CLIENT_AUTH_TOKEN_KEY = "sc-sast-token";
-    private static final String FOD_TENANT_KEY = "tenant";
-    private static final String FOD_USER_KEY = "user";
-    private static final String FOD_PAT_KEY = "pat";
-    private static final String FOD_CLIENT_ID_KEY = "client-id";
-    private static final String FOD_CLIENT_SECRET_KEY = "client-secret";
+    // Package-visible so MCPServerHttpAuthHeaderParser can reference them as constants
+    static final String SSC_TOKEN_KEY = "token";
+    static final String SSC_SC_SAST_CLIENT_AUTH_TOKEN_KEY = "sc-sast-token";
+    static final String FOD_TENANT_KEY = "tenant";
+    static final String FOD_USER_KEY = "user";
+    static final String FOD_PAT_KEY = "pat";
+    static final String FOD_CLIENT_ID_KEY = "client-id";
+    static final String FOD_CLIENT_SECRET_KEY = "client-secret";
 
     private static final String[] DEFAULT_FOD_SCOPES = new String[] {"api-tenant"};
 
@@ -121,21 +116,17 @@ public final class MCPServerHttpSessionDescriptorResolver {
      * {@link com.fortify.cli.common.exception.FcliSimpleException} is thrown if the token
      * is invalid or has been revoked.
      */
-    public FcliIsolationScope getOrCreateIsolationScope(McpTransportContext transportContext) {
-        var authScopeKey = createAuthCacheKey(transportContext);
+    public FcliIsolationScope getOrCreateIsolationScope(ParsedAuthorization auth) {
+        var authScopeKey = createAuthCacheKey(auth);
         var entry = isolationScopeCache.get(authScopeKey);
         if ( entry == null ) {
-            var newEntry = new IsolationScopeEntry(createIsolationScope(authScopeKey, transportContext));
+            var newEntry = new IsolationScopeEntry(createIsolationScope(authScopeKey, auth));
             var existing = isolationScopeCache.putIfAbsent(authScopeKey, newEntry);
             entry = existing != null ? existing : newEntry;
         }
         entry.updateLastAccess();
-        validateAndRefreshSession(entry, transportContext);
+        validateAndRefreshSession(entry, auth);
         return entry.scope;
-    }
-
-    public String getAuthScopeKey(McpTransportContext transportContext) {
-        return createAuthCacheKey(transportContext);
     }
 
     /**
@@ -177,10 +168,10 @@ public final class MCPServerHttpSessionDescriptorResolver {
         return entry.scope;
     }
 
-    private FcliIsolationScope createIsolationScope(String authScopeKey, McpTransportContext transportContext) {
+    private FcliIsolationScope createIsolationScope(String authScopeKey, ParsedAuthorization auth) {
         var result = new FcliIsolationScope();
         result.setMcpRequestAuthScopeKey(authScopeKey);
-        result.setTransientSessionDescriptor(createSessionDescriptor(transportContext));
+        result.setTransientSessionDescriptor(createSessionDescriptor(auth));
         result.setScopedVarsPath(mcpScopedVarsRootPath.resolve(authScopeKey.replace("|", "_")));
         return result;
     }
@@ -191,12 +182,12 @@ public final class MCPServerHttpSessionDescriptorResolver {
      * A new descriptor instance is published into the scope rather than mutating the existing one,
      * keeping the descriptor classes free of concurrency concerns.
      */
-    private void validateAndRefreshSession(IsolationScopeEntry entry, McpTransportContext transportContext) {
+    private void validateAndRefreshSession(IsolationScopeEntry entry, ParsedAuthorization auth) {
         synchronized (entry) {
             for ( var descriptor : entry.scope.getTransientSessionDescriptors().values() ) {
                 if ( descriptor instanceof FoDSessionDescriptor fodDescriptor ) {
                     // OAuth tokens expire; replace the descriptor with one carrying a fresh token if needed
-                    entry.scope.setTransientSessionDescriptor(refreshFoDTokenIfExpired(fodDescriptor, transportContext));
+                    entry.scope.setTransientSessionDescriptor(refreshFoDTokenIfExpired(fodDescriptor, auth));
                 } else if ( descriptor instanceof SSCAndScanCentralSessionDescriptor sscDescriptor ) {
                     // Client always provides its own token; just validate it — no descriptor replacement needed
                     // If we every add support for user/pwd-based SSC auth, we may need to add token refresh
@@ -207,11 +198,10 @@ public final class MCPServerHttpSessionDescriptorResolver {
         }
     }
 
-    private FoDSessionDescriptor refreshFoDTokenIfExpired(FoDSessionDescriptor descriptor, McpTransportContext transportContext) {
+    private FoDSessionDescriptor refreshFoDTokenIfExpired(FoDSessionDescriptor descriptor, ParsedAuthorization auth) {
         if ( descriptor.hasActiveCachedTokenResponse() ) {
             return descriptor;
         }
-        var auth = parseAuthHeader(transportContext);
         var fodConfig = config.getFod();
         var urlConfig = UrlConfig.builderFromConnectionConfig(fodConfig)
                 .url(FoDProductHelper.INSTANCE.getApiUrl(fodConfig.getUrl()))
@@ -241,9 +231,8 @@ public final class MCPServerHttpSessionDescriptorResolver {
         }
     }
 
-    String createAuthCacheKey(McpTransportContext transportContext) {
-        var auth = parseAuthHeader(transportContext);
-        return switch (auth.product()) {
+    String createAuthCacheKey(ParsedAuthorization auth) {
+        return switch ( auth.product() ) {
         case ssc -> createSscAuthCacheKey(auth);
         case fod -> createFoDAuthCacheKey(auth);
         };
@@ -309,9 +298,8 @@ public final class MCPServerHttpSessionDescriptorResolver {
         }
     }
 
-    private ISessionDescriptor createSessionDescriptor(McpTransportContext transportContext) {
-        var auth = parseAuthHeader(transportContext);
-        return switch (auth.product()) {
+    private ISessionDescriptor createSessionDescriptor(ParsedAuthorization auth) {
+        return switch ( auth.product() ) {
         case ssc -> createSscSessionDescriptor(auth);
         case fod -> createFoDSessionDescriptor(auth);
         };
@@ -365,189 +353,6 @@ public final class MCPServerHttpSessionDescriptorResolver {
                 DEFAULT_FOD_SCOPES
         );
     }
-
-    @SuppressWarnings("unchecked")
-    private String getOptionalHeader(McpTransportContext transportContext, String headerName) {
-        var headers = (Map<String, List<String>>)transportContext.get("headers");
-        if ( headers == null || headers.isEmpty() ) {
-            return null;
-        }
-        return headers.entrySet().stream()
-                .filter(entry -> headerName.equalsIgnoreCase(entry.getKey()))
-                .map(Map.Entry::getValue)
-                .filter(values -> values != null && !values.isEmpty())
-                .map(values -> values.get(0))
-                .map(StringUtils::trimToNull)
-                .findFirst().orElse(null);
-    }
-
-    private String getRequiredHeader(McpTransportContext transportContext, String headerName) {
-        var value = getOptionalHeader(transportContext, headerName);
-        if ( StringUtils.isBlank(value) ) {
-            throw new FcliSimpleException("Missing required HTTP header: %s", headerName);
-        }
-        return value;
-    }
-
-    private ParsedAuthorization parseAuthHeader(McpTransportContext transportContext) {
-        var product = config.getProduct();
-        var headerName = getAuthHeaderName(product);
-        var headerValue = getRequiredHeader(transportContext, headerName);
-        var keyValues = parseAuthHeaderKeyValues(headerValue, headerName);
-        return switch (product) {
-        case ssc -> parseSscAuthorization(keyValues);
-        case fod -> parseFoDAuthorization(keyValues);
-        };
-    }
-
-    private String getAuthHeaderName(MCPServerHttpConfig.Product product) {
-        return switch (product) {
-        case ssc -> HEADER_AUTH_SSC;
-        case fod -> HEADER_AUTH_FOD;
-        };
-    }
-
-    private Map<String, String> parseAuthHeaderKeyValues(String valuePart, String headerName) {
-        var result = new LinkedHashMap<String, String>();
-        for ( var segment : splitEscapedSegments(valuePart, headerName) ) {
-            var trimmedSegment = StringUtils.trimToNull(segment);
-            if ( trimmedSegment == null ) {
-                continue;
-            }
-            var separatorIndex = findUnescapedSeparator(trimmedSegment, '=');
-            if ( separatorIndex <= 0 || separatorIndex == trimmedSegment.length() - 1 ) {
-                throw new FcliSimpleException("Invalid %s header segment '%s'; expected key=value", headerName, trimmedSegment);
-            }
-            var key = StringUtils.trimToNull(unescapeHeaderValue(trimmedSegment.substring(0, separatorIndex), headerName));
-            var value = StringUtils.trimToNull(unescapeHeaderValue(trimmedSegment.substring(separatorIndex + 1), headerName));
-            if ( key == null || value == null ) {
-                throw new FcliSimpleException("Invalid %s header segment '%s'; expected key=value", headerName, trimmedSegment);
-            }
-            var normalizedKey = key.toLowerCase(Locale.ROOT);
-            if ( result.containsKey(normalizedKey) ) {
-                throw new FcliSimpleException("Duplicate %s header key: %s", headerName, key);
-            }
-            result.put(normalizedKey, value);
-        }
-        if ( result.isEmpty() ) {
-            throw new FcliSimpleException("%s header doesn't contain any key/value entries", headerName);
-        }
-        return result;
-    }
-
-    private List<String> splitEscapedSegments(String valuePart, String headerName) {
-        var result = new ArrayList<String>();
-        var current = new StringBuilder();
-        var escaping = false;
-        for ( var i = 0; i < valuePart.length(); i++ ) {
-            var c = valuePart.charAt(i);
-            if ( escaping ) {
-                validateEscapeCharacter(c, headerName);
-                current.append('\\').append(c);
-                escaping = false;
-            } else if ( c == '\\' ) {
-                escaping = true;
-            } else if ( c == ';' ) {
-                result.add(current.toString());
-                current.setLength(0);
-            } else {
-                current.append(c);
-            }
-        }
-        if ( escaping ) {
-            throw new FcliSimpleException("Invalid %s header value; trailing escape character", headerName);
-        }
-        result.add(current.toString());
-        return result;
-    }
-
-    private int findUnescapedSeparator(String value, char separator) {
-        var escaping = false;
-        for ( var i = 0; i < value.length(); i++ ) {
-            var c = value.charAt(i);
-            if ( escaping ) {
-                escaping = false;
-            } else if ( c == '\\' ) {
-                escaping = true;
-            } else if ( c == separator ) {
-                return i;
-            }
-        }
-        return -1;
-    }
-
-    private String unescapeHeaderValue(String value, String headerName) {
-        var result = new StringBuilder();
-        var escaping = false;
-        for ( var i = 0; i < value.length(); i++ ) {
-            var c = value.charAt(i);
-            if ( escaping ) {
-                validateEscapeCharacter(c, headerName);
-                result.append(c);
-                escaping = false;
-            } else if ( c == '\\' ) {
-                escaping = true;
-            } else {
-                result.append(c);
-            }
-        }
-        if ( escaping ) {
-            throw new FcliSimpleException("Invalid %s header value; trailing escape character", headerName);
-        }
-        return result.toString();
-    }
-
-    private void validateEscapeCharacter(char c, String headerName) {
-        if ( c != '\\' && c != ';' && c != '=' ) {
-            throw new FcliSimpleException("Invalid %s header escape sequence '\\%s'; supported escapes are \\\\, \\; and \\=", headerName, c);
-        }
-    }
-
-    private ParsedAuthorization parseSscAuthorization(Map<String, String> keyValues) {
-        var token = keyValues.get(SSC_TOKEN_KEY);
-        if ( StringUtils.isBlank(token) ) {
-            throw new FcliSimpleException("%s header requires key '%s'", HEADER_AUTH_SSC, SSC_TOKEN_KEY);
-        }
-        return new ParsedAuthorization(
-                MCPServerHttpConfig.Product.ssc,
-                token,
-                keyValues.get(SSC_SC_SAST_CLIENT_AUTH_TOKEN_KEY),
-                null,
-                null,
-                null,
-                null,
-                null
-        );
-    }
-
-    private ParsedAuthorization parseFoDAuthorization(Map<String, String> keyValues) {
-        var clientId = keyValues.get(FOD_CLIENT_ID_KEY);
-        var clientSecret = keyValues.get(FOD_CLIENT_SECRET_KEY);
-        var tenant = keyValues.get(FOD_TENANT_KEY);
-        var user = keyValues.get(FOD_USER_KEY);
-        var pat = keyValues.get(FOD_PAT_KEY);
-        return new ParsedAuthorization(
-                MCPServerHttpConfig.Product.fod,
-                null,
-                null,
-                clientId,
-                clientSecret,
-                tenant,
-                user,
-                pat
-        );
-    }
-
-    private record ParsedAuthorization(
-            MCPServerHttpConfig.Product product,
-            String sscToken,
-            String scSastClientAuthToken,
-            String fodClientId,
-            String fodClientSecret,
-            String fodTenant,
-            String fodUser,
-            String fodPat
-    ) {}
 
     private static final class HttpMcpFoDClientCredentials implements IFoDClientCredentials {
         private final String clientId;

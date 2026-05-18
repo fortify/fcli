@@ -18,5 +18,5 @@ package com.fortify.cli.common.log;
  * @author Ruud Senden
  */
 public enum LogMaskSource {
-    SESSION, CLI_OPTION, ENV_VAR, HTTP_RESPONSE, GRPC_RESPONSE;
+    SESSION, CLI_OPTION, ENV_VAR, HTTP_RESPONSE, GRPC_RESPONSE, HTTP_AUTH_HEADER;
 }

@@ -101,11 +101,11 @@ public final class FortifyCLIDynamicInitializer {
 
     private void registerDefaultLogMaskPatterns() {
         LogMaskHelper.INSTANCE
-            .registerPattern(LogSensitivityLevel.high, "Authorization: (?:[a-zA-Z]+ )?(.*?)(?:\\Q[\\r]\\E|\\Q[\\n]\\E)*\\\"?$", "<REDACTED>", LogMessageType.HTTP_OUT)
+            .registerGlobalPattern(LogSensitivityLevel.high, "Authorization: (?:[a-zA-Z]+ )?(.*?)(?:\\Q[\\r]\\E|\\Q[\\n]\\E)*\\\"?$", "<REDACTED>", LogMessageType.HTTP_OUT)
             // Match "token" or "access_token" fields, but exclude ScanCentral job token pattern {"token":"...","detailsMessage":null}
             // which contains a non-sensitive job identifier rather than an authentication token.
             // The negative lookahead checks that after the token value, we don't see the ScanCentral-specific trailing pattern.
-            .registerPattern(LogSensitivityLevel.high, "(?:\\\"token\\\"|\\\"access_token\\\"):\\s*\\\"(.*?)\\\"(?!,\\s*\\\"detailsMessage\\\":\\s*null\\s*\\})", "<REDACTED TOKEN (RESPONSE)>", LogMessageType.HTTP_IN);
+            .registerGlobalPattern(LogSensitivityLevel.high, "(?:\\\"token\\\"|\\\"access_token\\\"):\\s*\\\"(.*?)\\\"(?!,\\s*\\\"detailsMessage\\\":\\s*null\\s*\\})", "<REDACTED TOKEN (RESPONSE)>", LogMessageType.HTTP_IN);
     }
 
     @SuppressWarnings("unchecked")

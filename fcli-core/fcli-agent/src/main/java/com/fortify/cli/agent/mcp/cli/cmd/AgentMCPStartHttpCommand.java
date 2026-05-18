@@ -24,17 +24,21 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fortify.cli.agent.mcp.helper.MCPImportedActionMcpSpecsFactory;
 import com.fortify.cli.agent.mcp.helper.MCPJobManager;
 import com.fortify.cli.agent.mcp.helper.http.JdkHttpServerMcpStatelessTransport;
+import com.fortify.cli.agent.mcp.helper.http.MCPServerHttpAuthHeaderParser;
 import com.fortify.cli.agent.mcp.helper.http.MCPServerHttpConfigLoader;
 import com.fortify.cli.agent.mcp.helper.http.MCPServerHttpSessionDescriptorResolver;
 import com.fortify.cli.common.cli.cmd.AbstractRunnableCommand;
 import com.fortify.cli.common.cli.util.FcliActionState;
 import com.fortify.cli.common.cli.util.FcliExecutionContext;
 import com.fortify.cli.common.cli.util.FcliExecutionContextHolder;
+import com.fortify.cli.common.cli.util.FcliIsolationScope;
 import com.fortify.cli.common.cli.util.IFcliExecutionContextManager;
 import com.fortify.cli.common.cli.util.StdioHelper;
 import com.fortify.cli.common.concurrent.job.AsyncJobManager;
 import com.fortify.cli.common.exception.FcliSimpleException;
+import com.fortify.cli.common.log.LogMaskContext;
 import com.fortify.cli.common.mcp.MCPExclude;
+import com.fortify.cli.common.session.helper.AbstractSessionHelper;
 import com.fortify.cli.common.util.DateTimePeriodHelper;
 import com.fortify.cli.common.util.DateTimePeriodHelper.Period;
 import com.fortify.cli.common.util.FcliBuildProperties;
@@ -84,6 +88,7 @@ public class AgentMCPStartHttpCommand extends AbstractRunnableCommand implements
                 asyncJobManager
         );
 
+        var authHeaderParser = new MCPServerHttpAuthHeaderParser(config);
         var sessionDescriptorResolver = new MCPServerHttpSessionDescriptorResolver(config);
         var scopeCleanupScheduler = Executors.newSingleThreadScheduledExecutor(
                 r -> new Thread(r, "mcp-http-scope-cleanup"));
@@ -96,20 +101,20 @@ public class AgentMCPStartHttpCommand extends AbstractRunnableCommand implements
             var importedSpecs = importSpecsFactory.create(importPath);
             importedSpecs.tools().forEach(tool -> toolSpecs.add(McpStatelessServerFeatures.SyncToolSpecification.builder()
                 .tool(tool.tool())
-                .callHandler((ctx, request) -> withRequestExecutionContext(ctx, sessionDescriptorResolver,
+                .callHandler((ctx, request) -> withRequestExecutionContext(ctx, sessionDescriptorResolver, authHeaderParser,
                     () -> tool.callHandler().apply(ctx, request)))
                 .build()));
             importedSpecs.resourceTemplates().forEach(resourceTemplate -> resourceTemplateSpecs.add(
                 new McpStatelessServerFeatures.SyncResourceTemplateSpecification(
                     resourceTemplate.resourceTemplate(),
-                    (ctx, request) -> withRequestExecutionContext(ctx, sessionDescriptorResolver,
+                    (ctx, request) -> withRequestExecutionContext(ctx, sessionDescriptorResolver, authHeaderParser,
                         () -> resourceTemplate.readHandler().apply(ctx, request))
                 )));
         }
         var jobToolSpec = jobManager.getJobToolSpecification();
         toolSpecs.add(McpStatelessServerFeatures.SyncToolSpecification.builder()
             .tool(jobToolSpec.tool())
-            .callHandler((ctx, request) -> withRequestExecutionContext(ctx, sessionDescriptorResolver,
+            .callHandler((ctx, request) -> withRequestExecutionContext(ctx, sessionDescriptorResolver, authHeaderParser,
                 () -> jobToolSpec.callHandler().apply(null, request)))
             .build());
 
@@ -150,11 +155,27 @@ public class AgentMCPStartHttpCommand extends AbstractRunnableCommand implements
 
     private <T> T withRequestExecutionContext(McpTransportContext transportContext,
             MCPServerHttpSessionDescriptorResolver sessionDescriptorResolver,
+            MCPServerHttpAuthHeaderParser authHeaderParser,
             Supplier<T> supplier)
     {
-        var isolationScope = sessionDescriptorResolver.getOrCreateIsolationScope(transportContext);
-        try (var frame = FcliExecutionContextHolder.push(new FcliExecutionContext(isolationScope, new FcliActionState()))) {
-            return supplier.get();
+        var requestLogMaskCtx = new LogMaskContext();
+        // Temp frame: push an empty scope so activeContext() = requestLogMaskCtx.
+        // This ensures X-AUTH credentials and any values discovered by global patterns
+        // (e.g. FoD OAuth token from the token-fetch response) are captured per-request.
+        try (var tempFrame = FcliExecutionContextHolder.push(
+                new FcliExecutionContext(new FcliIsolationScope(), new FcliActionState(), requestLogMaskCtx))) {
+            var auth = authHeaderParser.parseAndRegister(transportContext);
+            var isolationScope = sessionDescriptorResolver.getOrCreateIsolationScope(auth);
+            // Real frame: same requestLogMaskCtx, real isolation scope.
+            try (var frame = FcliExecutionContextHolder.push(
+                    new FcliExecutionContext(isolationScope, new FcliActionState(), requestLogMaskCtx))) {
+                // Register current tokens from transient session descriptor so they are
+                // masked in this request's log output (mirrors AbstractSessionHelper.get() for
+                // disk-backed sessions; needed here because transient sessions bypass that path).
+                isolationScope.getTransientSessionDescriptors().values()
+                        .forEach(AbstractSessionHelper::registerLogMasks);
+                return supplier.get();
+            }
         }
     }
 

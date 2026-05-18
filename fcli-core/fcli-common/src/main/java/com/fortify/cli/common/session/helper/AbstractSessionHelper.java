@@ -51,7 +51,7 @@ public abstract class AbstractSessionHelper<T extends ISessionDescriptor> {
             String sessionDescriptorJson = FcliDataHelper.readSecuredFile(sessionDescriptorPath, failIfUnavailable);
             T sessionDescriptor = sessionDescriptorJson==null ? null : objectMapper.readValue(sessionDescriptorJson, getSessionDescriptorType());
             checkNonExpiredSessionAvailable(sessionName, failIfUnavailable, sessionDescriptor);
-            return registerLogMasks(sessionDescriptor);
+            return registerLogMasksAndReturn(sessionDescriptor);
         } catch ( Exception e ) {
             FcliDataHelper.deleteFile(sessionDescriptorPath, false);
             conditionalThrow(failIfUnavailable, ()->new FcliTechnicalException("Error reading session descriptor, please try logging in again", e));
@@ -61,14 +61,28 @@ public abstract class AbstractSessionHelper<T extends ISessionDescriptor> {
         }
     }
     
-    private final T registerLogMasks(T sessionDescriptor) {
-        visitFields(sessionDescriptor.getClass(), sessionDescriptor);
+    private final T registerLogMasksAndReturn(T sessionDescriptor) {
+        registerLogMasks(sessionDescriptor);
         return sessionDescriptor;
     }
-    
+
+    /**
+     * Registers log masks for all {@link MaskValue}-annotated fields in the given session
+     * descriptor (and any nested objects from the {@code com.fortify} package). Delegates
+     * to {@link LogMaskHelper#registerValue}, so values are registered into
+     * {@link com.fortify.cli.common.log.LogMaskContext#activeContext()} at call time.
+     *
+     * <p>Called automatically when a session descriptor is loaded from disk via {@link #get}.
+     * Must be called explicitly for transient session descriptors (e.g. in the MCP HTTP server)
+     * after the per-request execution context has been pushed.</p>
+     */
+    public static void registerLogMasks(ISessionDescriptor sessionDescriptor) {
+        visitFields(sessionDescriptor.getClass(), sessionDescriptor);
+    }
+
     // TODO Remove code duplication in Action::visitFields?
     // TODO Ideally, this should be done during descriptor deserialization instead
-    private void visitFields(Class<?> clazz, Object o) {
+    private static void visitFields(Class<?> clazz, Object o) {
         if ( clazz!=null && o!=null ) {
             // Visit fields provided by any superclasses of the given class.
             visitFields(clazz.getSuperclass(), o);
@@ -80,7 +94,7 @@ public abstract class AbstractSessionHelper<T extends ISessionDescriptor> {
     }
 
     @SneakyThrows
-    private void visitField(Field f, Object o) {
+    private static void visitField(Field f, Object o) {
         var value = f.get(o);
         if ( value!=null ) {
             var maskAnnotation = f.getAnnotation(MaskValue.class);

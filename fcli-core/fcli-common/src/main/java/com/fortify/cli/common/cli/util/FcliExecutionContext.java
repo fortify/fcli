@@ -19,6 +19,7 @@ import java.util.Objects;
 import java.util.Set;
 
 import com.fortify.cli.common.crypto.helper.EncryptionHelper;
+import com.fortify.cli.common.log.LogMaskContext;
 import com.fortify.cli.common.rest.unirest.UnirestContext;
 
 import lombok.Getter;
@@ -66,6 +67,7 @@ import lombok.Getter;
 public final class FcliExecutionContext implements AutoCloseable {
     @Getter private final FcliIsolationScope isolationScope;
     @Getter private final FcliActionState actionState;
+    @Getter private final LogMaskContext logMaskContext;
     @Getter private final UnirestContext unirestContext = new UnirestContext();
     // Encryption helper used for encrypt/decrypt in this execution. Default to global DEFAULT.
     private volatile EncryptionHelper encryptionHelper = EncryptionHelper.DEFAULT;
@@ -73,12 +75,17 @@ public final class FcliExecutionContext implements AutoCloseable {
     private final Set<Path> ephemeralEncryptedFiles = java.util.concurrent.ConcurrentHashMap.newKeySet();
 
     public FcliExecutionContext() {
-        this(new FcliIsolationScope(), new FcliActionState());
+        this(new FcliIsolationScope(), new FcliActionState(), new LogMaskContext());
     }
 
     public FcliExecutionContext(FcliIsolationScope isolationScope, FcliActionState actionState) {
+        this(isolationScope, actionState, new LogMaskContext());
+    }
+
+    public FcliExecutionContext(FcliIsolationScope isolationScope, FcliActionState actionState, LogMaskContext logMaskContext) {
         this.isolationScope = Objects.requireNonNull(isolationScope, "isolationScope");
         this.actionState = Objects.requireNonNull(actionState, "actionState");
+        this.logMaskContext = Objects.requireNonNull(logMaskContext, "logMaskContext");
     }
 
     /**
@@ -90,7 +97,7 @@ public final class FcliExecutionContext implements AutoCloseable {
      * must not see or mutate the parent's {@code global.*} action variables.</p>
      */
     public FcliExecutionContext createChild() {
-        return new FcliExecutionContext(isolationScope, new FcliActionState());
+        return new FcliExecutionContext(isolationScope, new FcliActionState(), logMaskContext);
     }
 
     /**
