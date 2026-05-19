@@ -97,12 +97,16 @@ public class AviatorSSCCorrelationAttributeHelper {
         String timestamp = Instant.now().toString();
         LOG.debug("Writing last_correlation timestamp '{}' to app version {}", timestamp, versionId);
 
-        new SSCAttributeUpdateBuilder(unirest)
-            .add(Map.of(AviatorSSCCorrelationAttributeDefs.LAST_CORRELATION_ATTR.name(), timestamp))
-            .buildRequest(versionId)
-            .asObject(JsonNode.class);
+        try {
+            new SSCAttributeUpdateBuilder(unirest)
+                .add(Map.of(AviatorSSCCorrelationAttributeDefs.LAST_CORRELATION_ATTR.name(), timestamp))
+                .buildRequest(versionId)
+                .asObject(JsonNode.class);
 
-        LOG.info("last_correlation timestamp '{}' written to app version {}", timestamp, versionId);
+            LOG.info("last_correlation timestamp '{}' written to app version {}", timestamp, versionId);
+        } catch (FcliSimpleException e) {
+            LOG.warn("WARN: Could not write last_correlation timestamp. Run 'fcli aviator ssc prepare' to create the attribute definition.");
+        }
     }
 
     // -------------------------------------------------------------------------
