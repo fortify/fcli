@@ -58,9 +58,6 @@ public final class AviatorSSCCorrelateFprParser {
     public static ParseResult parseSastFpr(Path sastfpr) {
         try (FprHandle fprHandle = new FprHandle(sastfpr)) {
             fprHandle.validate();
-            if (!Files.exists(fprHandle.getPath("/audit.xml"))) {
-                throw new FcliSimpleException("SAST FPR does not contain audit.xml");
-            }
             AuditProcessor auditProcessor = new AuditProcessor(fprHandle);
             Map<String, AuditIssue> auditIssueMap = auditProcessor.processAuditXML();
             StreamingFVDLProcessor fvdlProcessor = new StreamingFVDLProcessor(fprHandle);
@@ -90,9 +87,6 @@ public final class AviatorSSCCorrelateFprParser {
         try (FprHandle fprHandle = new FprHandle(dastfpr)) {
             if (!Files.exists(fprHandle.getPath("/webinspect.xml"))) {
                 throw new FcliSimpleException("DAST FPR does not contain webinspect.xml");
-            }
-            if (!Files.exists(fprHandle.getPath("/audit.xml"))) {
-                throw new FcliSimpleException("DAST FPR does not contain audit.xml");
             }
             AuditProcessor auditProcessor = new AuditProcessor(fprHandle);
             Map<String, AuditIssue> auditIssueMap = auditProcessor.processAuditXML();
