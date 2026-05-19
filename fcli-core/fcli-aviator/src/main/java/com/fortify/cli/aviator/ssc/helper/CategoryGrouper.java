@@ -13,7 +13,7 @@
 package com.fortify.cli.aviator.ssc.helper;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -30,7 +30,7 @@ public class CategoryGrouper {
 
     private static final Logger LOG = LoggerFactory.getLogger(CategoryGrouper.class);
 
-    private final Map<String, CategoryBucket> buckets = new HashMap<>();
+    private final Map<String, CategoryBucket> buckets = new LinkedHashMap<>();
 
     /**
      * Groups all SAST and DAST findings by their category.
