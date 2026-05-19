@@ -689,7 +689,7 @@ class AviatorStreamProcessor implements AutoCloseable {
                 }
 
                 if (!requestSemaphore.tryAcquire(1, 10, TimeUnit.SECONDS)) {
-                    LOG.warn("WARN: Timed out waiting for semaphore permit. Will retry.");
+                    LOG.debug("Timed out waiting for semaphore permit. Will retry.");
                     continue;
                 }
 
