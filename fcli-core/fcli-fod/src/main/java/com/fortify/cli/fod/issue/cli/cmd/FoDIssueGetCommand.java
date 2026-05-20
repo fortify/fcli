@@ -15,7 +15,6 @@ package com.fortify.cli.fod.issue.cli.cmd;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.exception.FcliSimpleException;
-import com.fortify.cli.common.exception.FcliTechnicalException;
 import com.fortify.cli.common.json.producer.IObjectNodeProducer;
 import com.fortify.cli.common.json.producer.ObjectNodeProducerApplyFrom;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
@@ -70,11 +69,8 @@ public class FoDIssueGetCommand extends AbstractFoDOutputCommand {
                 .routeParam("relId", releaseId)
                 .queryString("filters", "vulnId:" + vulnId)
                 .queryString("limit", "2");
-        var response = includeMixin.updateRequest(request).asObject(JsonNode.class);
-        if ( response.getStatus() >= 400 ) {
-            throw new FcliTechnicalException(String.format("FoD API returned HTTP %d while searching for vulnerability '%s'", response.getStatus(), vulnId));
-        }
-        JsonNode items = FoDInputTransformer.getItems(response.getBody());
+        JsonNode body = includeMixin.updateRequest(request).asObject(JsonNode.class).getBody();
+        JsonNode items = FoDInputTransformer.getItems(body);
         if ( items==null || !items.isArray() ) { return null; }
         if ( items.size()>1 ) {
             throw new FcliSimpleException(String.format("Multiple vulnerabilities found for vulnId '%s'; please check your input", vulnId));
