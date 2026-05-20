@@ -41,6 +41,10 @@ public class FoDSastScanStartCommand extends AbstractFoDScanStartCommand {
 
     @Option(names = {"--notes"})
     private String notes;
+    @Option(names = {"--in-progress-action"}, descriptionKey = "fcli.fod.sast-scan.start.in-progress-action")
+    private FoDEnums.InProgressScanActionType inProgressScanActionType;
+    @Option(names = {"--entitlement-preference"}, descriptionKey = "fcli.fod.scan.entitlement-preference")
+    private FoDEnums.EntitlementPreferenceType entitlementPreferenceType;
     @Mixin private CommonOptionMixins.RequiredFile scanFileMixin;
 
     @Mixin private FoDRemediationScanPreferenceTypeMixins.OptionalOption remediationScanType;
@@ -49,27 +53,37 @@ public class FoDSastScanStartCommand extends AbstractFoDScanStartCommand {
     @Override
     protected FoDScanDescriptor startScan(UnirestInstance unirest, FoDReleaseDescriptor releaseDescriptor) {
         String relId = releaseDescriptor.getReleaseId();
-        Boolean isRemediation = false;
-
-        // if we have requested remediation scan use it to find appropriate assessment type
-        if (remediationScanType != null && remediationScanType.getRemediationScanPreferenceType() != null) {
-            if (remediationScanType.getRemediationScanPreferenceType().equals(FoDEnums.RemediationScanPreferenceType.RemediationScanIfAvailable) ||
-                    remediationScanType.getRemediationScanPreferenceType().equals(FoDEnums.RemediationScanPreferenceType.RemediationScanOnly)) {
-                isRemediation = true;
-            }
-        }
 
         validateScanSetup(unirest, relId);
 
-        FoDScanSastStartRequest startScanRequest = FoDScanSastStartRequest.builder()
-                .isRemediationScan(isRemediation)
+        FoDEnums.RemediationScanPreferenceType remediationPref = remediationScanType.getRemediationScanPreferenceType();
+
+        boolean useAdvanced = entitlementPreferenceType != null || inProgressScanActionType != null;
+
+        FoDScanSastStartRequest.FoDScanSastStartRequestBuilder requestBuilder = FoDScanSastStartRequest.builder()
                 .scanMethodType("Other")
                 .notes(notes != null && !notes.isEmpty() ? notes : "")
                 .scanTool(FcliBuildProperties.INSTANCE.getFcliProjectName())
-                .scanToolVersion(FcliBuildProperties.INSTANCE.getFcliVersion())
-                .build();
+                .scanToolVersion(FcliBuildProperties.INSTANCE.getFcliVersion());
 
         try (IProgressWriter progressWriter = progressWriterFactory.create()) {
+            if (useAdvanced) {
+                FoDEnums.InProgressScanActionType inProgressAction = inProgressScanActionType != null
+                        ? inProgressScanActionType : FoDEnums.InProgressScanActionType.Queue;
+                FoDScanSastStartRequest startScanRequest = requestBuilder
+                        .entitlementPreferenceType(entitlementPreferenceType != null ? entitlementPreferenceType.name() : null)
+                        .purchaseEntitlement(false)
+                        .remdiationScanPreferenceType(remediationPref != null ? remediationPref.name() : null)
+                        .inProgressScanActionType(inProgressAction.name())
+                        .build();
+                return FoDScanSastHelper.startScanAdvanced(unirest, releaseDescriptor, startScanRequest, scanFileMixin.getFile(), progressWriter);
+            }
+            boolean isRemediation = remediationPref != null
+                    && (remediationPref.equals(FoDEnums.RemediationScanPreferenceType.RemediationScanIfAvailable)
+                            || remediationPref.equals(FoDEnums.RemediationScanPreferenceType.RemediationScanOnly));
+            FoDScanSastStartRequest startScanRequest = requestBuilder
+                    .isRemediationScan(isRemediation)
+                    .build();
             return FoDScanSastHelper.startScanWithDefaults(unirest, releaseDescriptor, startScanRequest, scanFileMixin.getFile(), progressWriter);
         }
     }
