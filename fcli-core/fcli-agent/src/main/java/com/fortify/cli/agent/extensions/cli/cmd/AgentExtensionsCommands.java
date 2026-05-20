@@ -10,24 +10,20 @@
  * herein. The information contained herein is subject to change
  * without notice.
  */
-package com.fortify.cli.agent._main.cli.cmd;
+package com.fortify.cli.agent.extensions.cli.cmd;
 
-import static com.fortify.cli.common.cli.util.FcliModuleCategories.UTIL;
-
-import com.fortify.cli.agent.extensions.cli.cmd.AgentExtensionsCommands;
-import com.fortify.cli.agent.mcp.cli.cmd.AgentMCPCommands;
 import com.fortify.cli.common.cli.cmd.AbstractContainerCommand;
-import com.fortify.cli.common.cli.util.FcliModuleCategory;
 
 import picocli.CommandLine.Command;
 
-@FcliModuleCategory(UTIL)
 @Command(
-        name = "agent",
-        resourceBundle = "com.fortify.cli.agent.i18n.AgentMessages",
+        name = "extensions",
+        aliases = {"ext"},
         subcommands = {
-            AgentExtensionsCommands.class,
-            AgentMCPCommands.class
+            AgentExtensionsInstallCommand.class,
+            AgentExtensionsUninstallCommand.class,
+            AgentExtensionsUpdateCommand.class,
+            AgentExtensionsStatusCommand.class
         }
 )
-public class AgentCommands extends AbstractContainerCommand {}
+public class AgentExtensionsCommands extends AbstractContainerCommand {}
