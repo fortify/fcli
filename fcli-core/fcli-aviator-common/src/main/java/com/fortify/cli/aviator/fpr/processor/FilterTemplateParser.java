@@ -128,7 +128,7 @@ public class FilterTemplateParser {
         Node lastTagDefNode = tagDefNodes.getLength() > 0 ? tagDefNodes.item(tagDefNodes.getLength() - 1) : null;
 
         boolean needsUpdate = ensureTagDefinitionPresent(filterTemplate, Constants.AVIATOR_PREDICTION_TAG_ID, "Aviator prediction", Arrays.asList(Constants.AVIATOR_NOT_AN_ISSUE, Constants.AVIATOR_REMEDIATION_REQUIRED, Constants.AVIATOR_UNSURE, Constants.AVIATOR_EXCLUDED, Constants.AVIATOR_LIKELY_TP, Constants.AVIATOR_LIKELY_FP), doc, namespaceURI, lastTagDefNode);
-        needsUpdate |= ensureTagDefinitionPresent(filterTemplate, Constants.AVIATOR_STATUS_TAG_ID, "Aviator status", Arrays.asList(Constants.PROCESSED_BY_AVIATOR, Constants.PROCESSED_BY_AVIATOR_WITH_REMEDIATION), doc, namespaceURI, lastTagDefNode);
+        needsUpdate |= ensureTagDefinitionPresent(filterTemplate, Constants.AVIATOR_STATUS_TAG_ID, "Aviator status", Arrays.asList(Constants.PROCESSED_BY_AVIATOR), doc, namespaceURI, lastTagDefNode);
         needsUpdate |= ensureTagDefinitionPresent(filterTemplate, Constants.FOD_TAG_ID, "FoD", Arrays.asList(Constants.PENDING_REVIEW, Constants.FALSE_POSITIVE, Constants.EXPLOITABLE, Constants.SUSPICIOUS, Constants.SANITIZED), doc, namespaceURI, lastTagDefNode);
         needsUpdate |= ensureTagDefinitionPresent(filterTemplate, Constants.AUDITOR_STATUS_TAG_ID, "Auditor Status", Arrays.asList(Constants.PENDING_REVIEW, Constants.NOT_AN_ISSUE, Constants.UNSURE, Constants.REMEDIATION_REQUIRED, Constants.PROPOSED_NOT_AN_ISSUE, Constants.SUSPICIOUS), doc, namespaceURI, lastTagDefNode);
 

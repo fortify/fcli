@@ -32,7 +32,6 @@ public class Constants {
     public static final String AVIATOR_LIKELY_TP = "AVIATOR:Suspicious";
     public static final String AVIATOR_LIKELY_FP = "AVIATOR:Proposed Not an Issue";
     public static final String PROCESSED_BY_AVIATOR = "PROCESSED_BY_AVIATOR";
-    public static final String PROCESSED_BY_AVIATOR_WITH_REMEDIATION = "PROCESSED_BY_AVIATOR_WITH_REMEDIATION";
     public static final String REMEDIATION_REQUIRED = "Remediation Required";
     public static final String PROPOSED_NOT_AN_ISSUE = "Proposed Not an Issue";
     public static final String UNSURE = "Unsure";
