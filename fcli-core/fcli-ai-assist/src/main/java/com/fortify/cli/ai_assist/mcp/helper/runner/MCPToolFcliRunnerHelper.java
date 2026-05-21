@@ -1,0 +1,70 @@
+/*
+ * Copyright 2021-2026 Open Text.
+ *
+ * The only warranties for products and services of Open Text
+ * and its affiliates and licensors ("Open Text") are as may
+ * be set forth in the express warranty statements accompanying
+ * such products and services. Nothing herein should be construed
+ * as constituting an additional warranty. Open Text shall not be
+ * liable for technical or editorial errors or omissions contained
+ * herein. The information contained herein is subject to change
+ * without notice.
+ */
+package com.fortify.cli.ai_assist.mcp.helper.runner;
+
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.function.Consumer;
+
+import org.apache.commons.lang3.StringUtils;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fortify.cli.common.concurrent.job.exec.FcliRunnerHelper;
+import com.fortify.cli.common.mcp.MCPDefaultValue;
+import com.fortify.cli.common.util.OutputHelper.Result;
+import com.fortify.cli.common.util.ReflectionHelper;
+
+import picocli.CommandLine.Model.CommandSpec;
+
+/**
+ * Helper methods for running a given fcli command, collecting either records or stdout.
+ * Delegates to {@link FcliRunnerHelper} for command execution, adding MCP-specific default
+ * option resolution from {@link MCPDefaultValue} annotations on the given {@link CommandSpec}.
+ * 
+ * @author Ruud Senden
+ */
+class MCPToolFcliRunnerHelper {
+    static final Result collectStdout(String fullCmd, CommandSpec spec) {
+        return FcliRunnerHelper.collectStdout(fullCmd, collectMcpDefaultOptions(spec));
+    }
+    
+    static final Result collectRecords(String fullCmd, Consumer<ObjectNode> recordConsumer, CommandSpec spec) {
+        return FcliRunnerHelper.collectRecords(fullCmd, recordConsumer, collectMcpDefaultOptions(spec));
+    }
+    
+    static final MCPToolResult collectRecords(String fullCmd, CommandSpec spec) {
+        var records = new ArrayList<JsonNode>();
+        var result = collectRecords(fullCmd, records::add, spec);
+        return MCPToolResult.fromRecords(result, records);
+    }
+    
+    static final Map<String,String> collectMcpDefaultOptions(CommandSpec spec) {
+        if ( spec==null ) {
+            return Map.of();
+        }
+        var result = new LinkedHashMap<String,String>();
+        spec.options().forEach(o->{
+            var defVal = ReflectionHelper.getAnnotationValue(o.userObject(), MCPDefaultValue.class, MCPDefaultValue::value, ()->null);
+            if ( StringUtils.isBlank(defVal) ) {
+                return;
+            }
+            var name = o.longestName();
+            if ( name!=null ) {
+                result.put(name, defVal);
+            }
+        });
+        return result;
+    }
+}

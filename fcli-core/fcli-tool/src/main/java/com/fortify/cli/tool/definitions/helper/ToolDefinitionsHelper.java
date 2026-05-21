@@ -16,20 +16,19 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.FileTime;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
@@ -47,8 +46,6 @@ import com.fortify.cli.common.util.EnvHelper;
 import com.fortify.cli.common.util.FcliBuildProperties;
 import com.fortify.cli.common.util.FcliDataHelper;
 import com.fortify.cli.common.util.FileUtils;
-import com.fortify.cli.tool._common.helper.Tool;
-import com.fortify.cli.tool._common.helper.ToolDependency;
 
 import lombok.SneakyThrows;
 
@@ -174,14 +171,14 @@ public final class ToolDefinitionsHelper {
         if (!Files.exists(zipPath)) {
             return false;
         }
-        Set<String> requiredYamlFiles = getRequiredYamlFileNames();
+        Set<String> requiredFiles = getRequiredFileNames();
         try (ZipFile zipFile = new ZipFile(zipPath.toFile())) {
             Enumeration<? extends ZipEntry> entries = zipFile.entries();
             while (entries.hasMoreElements()) {
                 ZipEntry entry = entries.nextElement();
                 if (!entry.isDirectory()) {
                     String name = Path.of(entry.getName()).getFileName().toString();
-                    if (requiredYamlFiles.contains(name)) {
+                    if (requiredFiles.contains(name)) {
                         return true; // At least one required file found
                     }
                 }
@@ -257,7 +254,7 @@ public final class ToolDefinitionsHelper {
             throw new FcliSimpleException("ZIP file not found: " + sourcePath);
         }
 
-        Set<String> requiredYamlFiles = getRequiredYamlFileNames();
+        Set<String> requiredFiles = getRequiredFileNames();
         boolean foundAtLeastOne = false;
 
         try (ZipFile zipFile = new ZipFile(sourcePath.toFile())) {
@@ -266,7 +263,7 @@ public final class ToolDefinitionsHelper {
                 ZipEntry entry = entries.nextElement();
                 if (!entry.isDirectory()) {
                     String name = Path.of(entry.getName()).getFileName().toString();
-                    if (requiredYamlFiles.contains(name)) {
+                    if (requiredFiles.contains(name)) {
                         foundAtLeastOne = true;
                         break; // Found at least one, that's enough
                     }
@@ -279,43 +276,34 @@ public final class ToolDefinitionsHelper {
         if (!foundAtLeastOne) {
             throw new FcliSimpleException(
                     "ZIP file does not contain any expected tool definition files. Expected files: "
-                            + String.join(", ", requiredYamlFiles));
+                            + String.join(", ", requiredFiles));
         }
     }
 
     private static void createMergedZipFile(Path dest, String source, Path existingStateZip) throws IOException {
         try (ZipOutputStream zos = new ZipOutputStream(Files.newOutputStream(dest))) {
-            for (String yamlFileName : getRequiredYamlFileNames()) {
-                copyYamlFileFromFirstAvailableSource(yamlFileName, source, existingStateZip, zos);
+            for (String fileName : getRequiredFileNames()) {
+                copyFileFromFirstAvailableSource(fileName, source, existingStateZip, zos);
             }
         }
     }
 
-    private static void copyYamlFileFromFirstAvailableSource(String yamlFileName, String userSource,
+    private static void copyFileFromFirstAvailableSource(String fileName, String userSource,
             Path existingStateZip, ZipOutputStream zos) throws IOException {
         // Try user-provided source first
-        if (StringUtils.isNotBlank(userSource) && copyYamlFromZipToZip(Path.of(userSource), yamlFileName, zos)) {
+        if (StringUtils.isNotBlank(userSource) && copyEntryFromZipToZip(Path.of(userSource), fileName, zos)) {
             return;
         }
         // Fall back to existing state ZIP (if provided)
         if (existingStateZip != null && Files.exists(existingStateZip)
-                && copyYamlFromZipToZip(existingStateZip, yamlFileName, zos)) {
+                && copyEntryFromZipToZip(existingStateZip, fileName, zos)) {
             return;
         }
         // Fall back to internal resource
-        copyYamlFromResourceZipToZip(DEFINITIONS_INTERNAL_ZIP, yamlFileName, zos);
+        copyEntryFromResourceZipToZip(DEFINITIONS_INTERNAL_ZIP, fileName, zos);
     }
 
-    /**
-     * Copies a specific YAML file from a ZIP file to an output ZIP stream.
-     * 
-     * @param zipPath      the source ZIP file path
-     * @param yamlFileName the name of the YAML file to copy
-     * @param zos          the destination ZIP output stream
-     * @return true if the file was found and copied, false if not found
-     * @throws IOException if an I/O error occurs during reading or writing
-     */
-    private static boolean copyYamlFromZipToZip(Path zipPath, String yamlFileName, ZipOutputStream zos)
+    private static boolean copyEntryFromZipToZip(Path zipPath, String fileName, ZipOutputStream zos)
             throws IOException {
         if (!Files.exists(zipPath)) {
             return false;
@@ -324,8 +312,8 @@ public final class ToolDefinitionsHelper {
             Enumeration<? extends ZipEntry> entries = zipFile.entries();
             while (entries.hasMoreElements()) {
                 ZipEntry entry = entries.nextElement();
-                if (!entry.isDirectory() && Path.of(entry.getName()).getFileName().toString().equals(yamlFileName)) {
-                    ZipEntry newEntry = new ZipEntry(yamlFileName);
+                if (!entry.isDirectory() && Path.of(entry.getName()).getFileName().toString().equals(fileName)) {
+                    ZipEntry newEntry = new ZipEntry(fileName);
                     if (entry.getLastModifiedTime() != null) {
                         newEntry.setLastModifiedTime(entry.getLastModifiedTime());
                     }
@@ -341,24 +329,14 @@ public final class ToolDefinitionsHelper {
         return false;
     }
 
-    /**
-     * Copies a specific YAML file from an internal resource ZIP to an output ZIP
-     * stream.
-     * 
-     * @param resourceZip  the resource path of the internal ZIP file
-     * @param yamlFileName the name of the YAML file to copy
-     * @param zos          the destination ZIP output stream
-     * @return true if the file was found and copied, false if not found
-     * @throws IOException if an I/O error occurs during reading or writing
-     */
-    private static boolean copyYamlFromResourceZipToZip(String resourceZip, String yamlFileName,
+    private static boolean copyEntryFromResourceZipToZip(String resourceZip, String fileName,
             ZipOutputStream zos) throws IOException {
         try (InputStream is = FileUtils.getResourceInputStream(resourceZip);
                 ZipInputStream zis = new ZipInputStream(is)) {
             ZipEntry entry;
             while ((entry = zis.getNextEntry()) != null) {
-                if (!entry.isDirectory() && Path.of(entry.getName()).getFileName().toString().equals(yamlFileName)) {
-                    ZipEntry newEntry = new ZipEntry(yamlFileName);
+                if (!entry.isDirectory() && Path.of(entry.getName()).getFileName().toString().equals(fileName)) {
+                    ZipEntry newEntry = new ZipEntry(fileName);
                     if (entry.getLastModifiedTime() != null) {
                         newEntry.setLastModifiedTime(entry.getLastModifiedTime());
                     }
@@ -405,9 +383,108 @@ public final class ToolDefinitionsHelper {
         }
     }
 
+    /**
+     * Read a non-YAML extra file from the tool-definitions zip as a string.
+     * These are files placed in the extra-files/ directory of the tool-definitions
+     * repo and included in the published zip alongside tool definition YAMLs.
+     */
+    public static final String readExtraFile(String fileName) {
+        try (InputStream is = getToolDefinitionsInputStream(); ZipInputStream zis = new ZipInputStream(is)) {
+            ZipEntry entry;
+            while ((entry = zis.getNextEntry()) != null) {
+                if (fileName.equals(entry.getName())) {
+                    return new String(zis.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
+                }
+            }
+            throw new FcliSimpleException("Extra file not found in tool definitions: " + fileName);
+        } catch (IOException e) {
+            throw new FcliSimpleException("Error reading extra file from tool definitions: " + fileName, e);
+        }
+    }
+
+    /**
+     * Open an embedded zip file from tool-definitions.yaml.zip as a {@link FileSystem},
+     * allowing its contents to be read using standard {@link Files} APIs. The returned
+     * {@link CloseableZipFileSystem} is auto-closeable and handles all cleanup.
+     * <p>
+     * Uses nested zip {@link FileSystem} instances directly on the state zip —
+     * no temp files needed. If the state zip doesn't exist yet, the internal
+     * resource is copied to the state directory first.
+     */
+    public static final CloseableZipFileSystem openEmbeddedZipFileSystem(String zipFileName) {
+        var stateZip = ensureStateZipExists();
+        try {
+            var outerFs = FileSystems.newFileSystem(stateZip);
+            try {
+                var innerZipPath = outerFs.getPath(zipFileName);
+                if (!Files.exists(innerZipPath)) {
+                    outerFs.close();
+                    throw new FcliSimpleException(
+                        "Embedded zip not found in tool definitions: " + zipFileName);
+                }
+                var innerFs = FileSystems.newFileSystem(innerZipPath);
+                return new CloseableZipFileSystem(innerFs, outerFs);
+            } catch (FcliSimpleException e) {
+                throw e;
+            } catch (Exception e) {
+                try { outerFs.close(); } catch (IOException ignored) {}
+                throw e;
+            }
+        } catch (IOException e) {
+            throw new FcliSimpleException(
+                "Error opening embedded zip from tool definitions: " + zipFileName, e);
+        }
+    }
+
+    /**
+     * An auto-closeable wrapper around a nested zip {@link FileSystem}.
+     * Closing this instance closes the inner filesystem, then the outer filesystem.
+     */
+    public static final class CloseableZipFileSystem implements AutoCloseable {
+        private final FileSystem innerFs;
+        private final FileSystem outerFs;
+
+        CloseableZipFileSystem(FileSystem innerFs, FileSystem outerFs) {
+            this.innerFs = innerFs;
+            this.outerFs = outerFs;
+        }
+
+        /** Get the root path of the zip file system. */
+        public Path getRoot() {
+            return innerFs.getPath("/");
+        }
+
+        /** Resolve a path within the zip file system. */
+        public Path getPath(String path) {
+            return innerFs.getPath(path);
+        }
+
+        @Override
+        public void close() {
+            try { innerFs.close(); } catch (Exception e) { /* ignore */ }
+            try { outerFs.close(); } catch (Exception e) { /* ignore */ }
+        }
+    }
+
+    /**
+     * Ensure the state zip exists on disk. If it doesn't, copy the internal
+     * resource to the state directory so all downstream code can work with
+     * a file on disk.
+     */
+    @SneakyThrows
+    private static Path ensureStateZipExists() {
+        if (!Files.exists(DEFINITIONS_STATE_ZIP)) {
+            createDefinitionsStateDir(DEFINITIONS_STATE_DIR);
+            try (InputStream is = FileUtils.getResourceInputStream(DEFINITIONS_INTERNAL_ZIP)) {
+                Files.copy(is, DEFINITIONS_STATE_ZIP);
+            }
+        }
+        return DEFINITIONS_STATE_ZIP;
+    }
+
     private static final InputStream getToolDefinitionsInputStream() throws IOException {
-        return Files.exists(DEFINITIONS_STATE_ZIP) ? Files.newInputStream(DEFINITIONS_STATE_ZIP)
-                : FileUtils.getResourceInputStream(DEFINITIONS_INTERNAL_ZIP);
+        ensureStateZipExists();
+        return Files.newInputStream(DEFINITIONS_STATE_ZIP);
     }
 
     private static final void addZipOutputDescriptor(List<ToolDefinitionsOutputDescriptor> result) {
@@ -434,11 +511,20 @@ public final class ToolDefinitionsHelper {
         return shouldUpdate ? "UPDATED" : "SKIPPED_BY_AGE";
     }
 
-    private static Set<String> getRequiredYamlFileNames() {
-        var toolNames = Stream.concat(
-                Arrays.stream(Tool.values()).map(Tool::getToolName),
-                Arrays.stream(ToolDependency.values()).map(ToolDependency::getToolName));
-        return toolNames.map(s -> s + ".yaml").collect(Collectors.toSet());
+    private static Set<String> getRequiredFileNames() {
+        Set<String> names = new HashSet<>();
+        try (InputStream is = FileUtils.getResourceInputStream(DEFINITIONS_INTERNAL_ZIP);
+             ZipInputStream zis = new ZipInputStream(is)) {
+            ZipEntry entry;
+            while ((entry = zis.getNextEntry()) != null) {
+                if (!entry.isDirectory()) {
+                    names.add(Path.of(entry.getName()).getFileName().toString());
+                }
+            }
+        } catch (IOException e) {
+            throw new FcliSimpleException("Error reading internal tool definitions", e);
+        }
+        return names;
     }
 
     private static final void addYamlOutputDescriptors(List<ToolDefinitionsOutputDescriptor> result) {
@@ -456,26 +542,26 @@ public final class ToolDefinitionsHelper {
 
     private static final void addYamlOutputDescriptors(List<ToolDefinitionsOutputDescriptor> result, String source,
             boolean shouldUpdate) {
-        Set<String> requiredYamlNames = getRequiredYamlFileNames();
+        Set<String> requiredNames = getRequiredFileNames();
         if (!shouldUpdate) {
-            addYamlDescriptor(result, requiredYamlNames, "SKIPPED_BY_AGE");
+            addYamlDescriptor(result, requiredNames, "SKIPPED_BY_AGE");
         } else if (source != null && source.contains("https://")) {
-            addYamlDescriptor(result, requiredYamlNames, "UPDATED");
+            addYamlDescriptor(result, requiredNames, "UPDATED");
         } else {
-            Set<String> foundYamlNames = new HashSet<>();
+            Set<String> foundNames = new HashSet<>();
             String zipPathOnly = source != null
                     ? Path.of(source).getFileName().toString()
                     : null;
             if (source != null) {
-                updateActionResultForUserFile(result, requiredYamlNames, foundYamlNames, zipPathOnly, source);
+                updateActionResultForUserFile(result, requiredNames, foundNames, zipPathOnly, source);
             }
 
-            updateActionResultForMissingFiles(result, requiredYamlNames, foundYamlNames);
+            updateActionResultForMissingFiles(result, requiredNames, foundNames);
         }
     }
 
     private static void updateActionResultForUserFile(List<ToolDefinitionsOutputDescriptor> result,
-            Set<String> requiredYamlNames, Set<String> foundYamlNames, String zipPathOnly, String source) {
+            Set<String> requiredNames, Set<String> foundNames, String zipPathOnly, String source) {
         Path zipPath = Path.of(source);
 
         if (!Files.exists(zipPath)) {
@@ -486,7 +572,7 @@ public final class ToolDefinitionsHelper {
             while (entries.hasMoreElements()) {
                 ZipEntry entry = entries.nextElement();
                 if (!entry.isDirectory()) {
-                    processUserZipEntry(entry, result, requiredYamlNames, foundYamlNames, zipPathOnly);
+                    processUserZipEntry(entry, result, requiredNames, foundNames, zipPathOnly);
                 }
             }
         } catch (IOException e) {
@@ -495,13 +581,13 @@ public final class ToolDefinitionsHelper {
     }
 
     private static void processUserZipEntry(ZipEntry entry, List<ToolDefinitionsOutputDescriptor> result,
-            Set<String> requiredYamlNames, Set<String> foundYamlNames, String zipPathOnly) {
+            Set<String> requiredNames, Set<String> foundNames, String zipPathOnly) {
         String name = Path.of(entry.getName()).getFileName().toString();
         Date lastModified = getEntryLastModified(entry);
 
-        if (requiredYamlNames.contains(name)) {
+        if (requiredNames.contains(name)) {
             result.add(new ToolDefinitionsOutputDescriptor(name, zipPathOnly, lastModified, "UPDATED"));
-            foundYamlNames.add(name);
+            foundNames.add(name);
         } else {
             result.add(new ToolDefinitionsOutputDescriptor(name, zipPathOnly, lastModified, "IGNORED"));
         }
@@ -514,9 +600,9 @@ public final class ToolDefinitionsHelper {
     }
 
     private static void updateActionResultForMissingFiles(
-            List<ToolDefinitionsOutputDescriptor> result, Set<String> requiredYamlNames, Set<String> foundYamlNames) {
-        for (String required : requiredYamlNames) {
-            if (!foundYamlNames.contains(required)) {
+            List<ToolDefinitionsOutputDescriptor> result, Set<String> requiredNames, Set<String> foundNames) {
+        for (String required : requiredNames) {
+            if (!foundNames.contains(required)) {
                 addMissingFileDescriptor(result, required);
             }
         }
@@ -540,12 +626,12 @@ public final class ToolDefinitionsHelper {
     }
 
     private static void addYamlDescriptor(List<ToolDefinitionsOutputDescriptor> result,
-            Set<String> requiredYamlNames, String action) {
+            Set<String> requiredNames, String action) {
         try (InputStream is = getToolDefinitionsInputStream(); ZipInputStream zis = new ZipInputStream(is)) {
             ZipEntry entry;
             while ((entry = zis.getNextEntry()) != null) {
                 String name = Path.of(entry.getName()).getFileName().toString();
-                if (requiredYamlNames.contains(name)) {
+                if (requiredNames.contains(name)) {
                     result.add(new ToolDefinitionsOutputDescriptor(name, ZIP_FILE_NAME, getEntryLastModified(entry),
                             action));
                 }

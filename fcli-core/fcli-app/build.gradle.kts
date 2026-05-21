@@ -7,7 +7,7 @@ plugins {
 
 // Inter-project dependencies
 val refs = listOf(
-    "fcliCommonRef","fcliActionRef","fcliAgentRef","fcliAviatorRef","fcliConfigRef","fcliFoDRef","fcliSSCRef","fcliSCSastRef","fcliSCDastRef","fcliToolRef","fcliLicenseRef","fcliUtilRef"
+    "fcliCommonRef","fcliActionRef","fcliAiAssistRef","fcliAviatorRef","fcliConfigRef","fcliFoDRef","fcliSSCRef","fcliSCSastRef","fcliSCDastRef","fcliToolRef","fcliLicenseRef","fcliUtilRef"
 )
 references@ for (r in refs) {
     val p = project.findProperty(r) as String? ?: continue@references
@@ -43,7 +43,7 @@ val generateMCPReflectConfig = tasks.register<JavaExec>("generateMCPReflectConfi
     inputs.files(configurations.runtimeClasspath, sourceSets.main.get().runtimeClasspath)
     outputs.file(outputFile)
     classpath(configurations.runtimeClasspath, sourceSets.main.get().runtimeClasspath)
-    mainClass.set("com.fortify.cli.agent.mcp.helper.MCPReflectConfigGenerator")
+    mainClass.set("com.fortify.cli.ai_assist.mcp.helper.MCPReflectConfigGenerator")
     args(outputFile.get().asFile.absolutePath)
 }
 
