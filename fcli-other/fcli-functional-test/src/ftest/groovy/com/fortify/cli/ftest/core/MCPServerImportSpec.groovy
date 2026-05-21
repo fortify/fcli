@@ -26,7 +26,11 @@ class MCPServerImportSpec extends FcliBaseSpec {
     @Shared @TestResource("runtime/actions/server-global-vars.yaml") String globalVarsActionPath
 
     private McpSyncClient createMcpClient(String extraArgs = "") {
-        def serverArgs = ["ai-assist", "mcp", "start-stdio", "--import", importActionPath]
+        // Using the deprecated 'fcli util mcp-server start' command instead of 'fcli ai-assist mcp start-stdio'
+        // because the deprecated command is a wrapper that calls the non-deprecated command, so this way
+        // we effectively test both the deprecated and non-deprecated command instead of testing only the
+        // non-deprecated command.
+        def serverArgs = ["util", "mcp-server", "start", "--import", importActionPath]
         if (extraArgs) {
             serverArgs.addAll(extraArgs.split(" ").toList())
         }
