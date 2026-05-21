@@ -35,11 +35,11 @@ public class MCPServerStartDeprecatedCommand extends AbstractRunnableCommand imp
 
     @Override
     public Integer call() {
-        var cmd = "fcli agent mcp start-stdio";
+        var cmd = "fcli ai-assist mcp start-stdio";
         if ( delegatedArgs != null && !delegatedArgs.isEmpty() ) {
             cmd += " " + String.join(" ", delegatedArgs);
         }
-        log.warn("The 'fcli util mcp-server start' command is deprecated; please use 'fcli agent mcp start-stdio'");
+        log.warn("The 'fcli util mcp-server start' command is deprecated; please use 'fcli ai-assist mcp start-stdio'");
         var result = FcliCommandExecutorFactory.builder()
                 .cmd(cmd)
             .stdoutOutputType(OutputType.show)

@@ -26,7 +26,7 @@ class MCPServerImportSpec extends FcliBaseSpec {
     @Shared @TestResource("runtime/actions/server-global-vars.yaml") String globalVarsActionPath
 
     private McpSyncClient createMcpClient(String extraArgs = "") {
-        def serverArgs = ["util", "mcp-server", "start", "--import", importActionPath]
+        def serverArgs = ["ai-assist", "mcp", "start-stdio", "--import", importActionPath]
         if (extraArgs) {
             serverArgs.addAll(extraArgs.split(" ").toList())
         }

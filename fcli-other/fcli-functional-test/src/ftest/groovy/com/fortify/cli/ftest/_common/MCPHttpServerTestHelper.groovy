@@ -36,7 +36,7 @@ class MCPHttpServerTestHelper {
     }
 
     static Process startHttpServer(HttpServerConfig config) {
-        def cmd = Fcli.buildExternalCommand(["agent", "mcp", "start-http", "--config", config.path.toString()])
+        def cmd = Fcli.buildExternalCommand(["ai-assist", "mcp", "start-http", "--config", config.path.toString()])
         def process = new ProcessBuilder(cmd)
             .redirectErrorStream(true)
             .start()
