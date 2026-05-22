@@ -404,15 +404,15 @@ public class ActionLoaderHelper {
         
         @SneakyThrows
         private static final Supplier<InputStream> customActionsInputStreamSupplier(String type) {
-            return ()->FileUtils.getInputStream(customActionsZipPath(type));
+            return ()->FileUtils.openInputStream(customActionsZipPath(type));
         }
         
         private static final Supplier<InputStream> builtinActionsInputStreamSupplier(String type) {
-            return ()->FileUtils.getResourceInputStream(builtinActionsResourceZip(type));
+            return ()->FileUtils.openResourceInputStream(builtinActionsResourceZip(type));
         }
         
         private static final Supplier<InputStream> commonActionsInputStreamSupplier() {
-            return ()->FileUtils.getResourceInputStream(commonActionsResourceZip());
+            return ()->FileUtils.openResourceInputStream(commonActionsResourceZip());
         }
     }
     

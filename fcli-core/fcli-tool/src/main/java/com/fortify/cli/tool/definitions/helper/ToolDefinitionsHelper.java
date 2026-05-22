@@ -331,7 +331,7 @@ public final class ToolDefinitionsHelper {
 
     private static boolean copyEntryFromResourceZipToZip(String resourceZip, String fileName,
             ZipOutputStream zos) throws IOException {
-        try (InputStream is = FileUtils.getResourceInputStream(resourceZip);
+        try (InputStream is = FileUtils.openResourceInputStream(resourceZip);
                 ZipInputStream zis = new ZipInputStream(is)) {
             ZipEntry entry;
             while ((entry = zis.getNextEntry()) != null) {
@@ -475,7 +475,7 @@ public final class ToolDefinitionsHelper {
     private static Path ensureStateZipExists() {
         if (!Files.exists(DEFINITIONS_STATE_ZIP)) {
             createDefinitionsStateDir(DEFINITIONS_STATE_DIR);
-            try (InputStream is = FileUtils.getResourceInputStream(DEFINITIONS_INTERNAL_ZIP)) {
+            try (InputStream is = FileUtils.openResourceInputStream(DEFINITIONS_INTERNAL_ZIP)) {
                 Files.copy(is, DEFINITIONS_STATE_ZIP);
             }
             // Set epoch timestamp so the age check treats this as stale and triggers
@@ -516,7 +516,7 @@ public final class ToolDefinitionsHelper {
 
     private static Set<String> getRequiredFileNames() {
         Set<String> names = new HashSet<>();
-        try (InputStream is = FileUtils.getResourceInputStream(DEFINITIONS_INTERNAL_ZIP);
+        try (InputStream is = FileUtils.openResourceInputStream(DEFINITIONS_INTERNAL_ZIP);
              ZipInputStream zis = new ZipInputStream(is)) {
             ZipEntry entry;
             while ((entry = zis.getNextEntry()) != null) {
@@ -645,7 +645,7 @@ public final class ToolDefinitionsHelper {
     }
 
     private static Date getInternalResourceZipEntryLastModified(String fileName) {
-        try (InputStream is = FileUtils.getResourceInputStream(DEFINITIONS_INTERNAL_ZIP);
+        try (InputStream is = FileUtils.openResourceInputStream(DEFINITIONS_INTERNAL_ZIP);
                 ZipInputStream zis = new ZipInputStream(is)) {
             ZipEntry entry;
             while ((entry = zis.getNextEntry()) != null) {

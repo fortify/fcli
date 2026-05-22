@@ -55,11 +55,11 @@ public final class FileUtils {
     private FileUtils() {}
     
     @SneakyThrows
-    public static final InputStream getInputStream(Path path) {
+    public static final InputStream openInputStream(Path path) {
         return !Files.exists(path) ? null : Files.newInputStream(path);
     }
     
-    public static final InputStream getResourceInputStream(String resourcePath) {
+    public static final InputStream openResourceInputStream(String resourcePath) {
         return Thread.currentThread().getContextClassLoader().getResourceAsStream(resourcePath);
     }
     
@@ -87,7 +87,7 @@ public final class FileUtils {
     
     @SneakyThrows
     public static final byte[] readResourceAsBytes(String resourcePath) {
-        try ( InputStream in = getResourceInputStream(resourcePath) ) {
+        try ( InputStream in = openResourceInputStream(resourcePath) ) {
             return in.readAllBytes();
         }
     }
@@ -119,7 +119,7 @@ public final class FileUtils {
         } catch (IOException e) {
             throw new FcliSimpleException(String.format("Error creating directory %s", parent), e);
         }
-        try ( InputStream in = getResourceInputStream(resourcePath) ) {
+        try ( InputStream in = openResourceInputStream(resourcePath) ) {
             Files.copy( in, destinationFilePath, options);
         } catch ( IOException e ) {
             throw new FcliSimpleException(String.format("Error copying resource %s to %s", resourcePath, destinationFilePath), e);
