@@ -172,6 +172,8 @@ steps:
   - if: ${candidate_versions != null && candidate_versions.size() > 0 && cli['exclude-filter'] != ''}
     do:
       - log.progress: Resolving exclusion filter scope...
+      - var.set:
+          excluded_version_lookup: null
       - rest.call:
           excluded_versions:
             uri: /api/v1/issueaging
@@ -183,7 +185,7 @@ steps:
               record.var-name: excluded_version
               do:
                 - var.set:
-                    excluded_ids..: ${excluded_version.id}
+                    excluded_version_lookup.${excluded_version.id}: true
 
       - var.set:
           filtered_versions: null
@@ -195,7 +197,7 @@ steps:
           do:
             - var.set:
                 should_exclude: false
-            - if: ${excluded_ids != null && excluded_ids.contains(candidate.id)}
+            - if: ${excluded_version_lookup != null && excluded_version_lookup[candidate.id.toString()] != null}
               var.set:
                 should_exclude: true
             - if: ${should_exclude}
