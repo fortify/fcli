@@ -123,17 +123,18 @@ class AiAssistExtensionsSpec extends FcliBaseSpec {
             }
     }
 
-    def "uninstall-no-state"() {
-        // Uninstall finds nothing because --dir mode doesn't register installations in fcli state
+    def "uninstall-dir"() {
+        def targetDir = "${baseDir}/skills"
         when:
-            def result = Fcli.run("ai-assist extensions uninstall --content-types skills -y",
+            def result = Fcli.run("ai-assist extensions uninstall --dir ${targetDir} --content-types skills -y",
                 {it.expectZeroExitCode()})
         then:
             verifyAll(result.stdout) {
-                size() == 1
-                it[0].trim() == "No data"
+                size() > 0
+                it[0].replace(' ', '').equals("ContenttypeTargetdirFilecountAction")
+                it[1].contains("REMOVED")
             }
-            // Manifest should still exist since uninstall didn't know about this dir
-            Files.exists(Path.of("${baseDir}/skills", ".fortify-extensions.skills.json"))
+            // Manifest should be gone
+            !Files.exists(Path.of(targetDir, ".fortify-extensions.skills.json"))
     }
 }

@@ -128,15 +128,19 @@ public final class AiAssistExtensionsInstaller {
     // ──────────────────────────── Uninstall ────────────────────────────
 
     /**
-     * Uninstall extensions from all known target directories. Scans the union
-     * of dirs from the distribution descriptor and fcli state to find manifests.
+     * Uninstall extensions from target directories. When {@code customDir} is
+     * specified, only that directory is scanned. Otherwise, scans the union of
+     * dirs from the distribution descriptor and fcli state.
      *
      * @param contentTypeFilter optional content type filter, or null for all
+     * @param customDir         specific directory to uninstall from, or null for all known dirs
      * @param dryRun            if true, report only without deleting
      */
     public static List<AiAssistExtensionsOutputDescriptor> uninstall(
-            Set<String> contentTypeFilter, boolean dryRun) {
-        var targetDirs = collectAllKnownTargetDirs();
+            Set<String> contentTypeFilter, String customDir, boolean dryRun) {
+        var targetDirs = customDir != null
+            ? Set.of(Path.of(customDir).toAbsolutePath().normalize())
+            : collectAllKnownTargetDirs();
         var results = new ArrayList<AiAssistExtensionsOutputDescriptor>();
 
         for (var dir : targetDirs) {
@@ -164,7 +168,7 @@ public final class AiAssistExtensionsInstaller {
             }
         }
 
-        if (!dryRun) {
+        if (!dryRun && customDir == null) {
             clearInstallationsState(contentTypeFilter);
         }
         return results;

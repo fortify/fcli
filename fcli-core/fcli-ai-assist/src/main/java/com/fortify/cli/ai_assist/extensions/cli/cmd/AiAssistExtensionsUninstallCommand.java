@@ -36,6 +36,10 @@ public class AiAssistExtensionsUninstallCommand extends AbstractOutputCommand
         descriptionKey = "fcli.ai-assist.extensions.content-types")
     private Set<String> contentTypeFilter;
 
+    @Option(names = {"--dir"}, paramLabel = "<path>",
+        descriptionKey = "fcli.ai-assist.extensions.uninstall.dir")
+    private String customDir;
+
     @Option(names = {"-y", "--confirm"},
         descriptionKey = "fcli.ai-assist.extensions.confirm")
     private boolean confirm;
@@ -47,7 +51,7 @@ public class AiAssistExtensionsUninstallCommand extends AbstractOutputCommand
     @Override
     public JsonNode getJsonNode() {
         return JsonHelper.getObjectMapper().valueToTree(
-            AiAssistExtensionsInstaller.uninstall(contentTypeFilter, dryRun));
+            AiAssistExtensionsInstaller.uninstall(contentTypeFilter, customDir, dryRun));
     }
 
     @Override
