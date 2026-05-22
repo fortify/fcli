@@ -95,7 +95,7 @@ class AiAssistExtensionsSpec extends FcliBaseSpec {
             }
             // Files should exist now
             Files.exists(Path.of(targetDir))
-            Files.exists(Path.of(targetDir, ".fortify-extensions.json"))
+            Files.exists(Path.of(targetDir, ".fortify-extensions.skills.json"))
     }
 
     def "list-installed-after-setup"() {
@@ -134,6 +134,6 @@ class AiAssistExtensionsSpec extends FcliBaseSpec {
                 it[0].trim() == "No data"
             }
             // Manifest should still exist since uninstall didn't know about this dir
-            Files.exists(Path.of("${baseDir}/skills", ".fortify-extensions.json"))
+            Files.exists(Path.of("${baseDir}/skills", ".fortify-extensions.skills.json"))
     }
 }

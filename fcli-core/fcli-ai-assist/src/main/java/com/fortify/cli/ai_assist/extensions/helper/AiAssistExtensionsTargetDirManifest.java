@@ -24,15 +24,32 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * Manifest stored as {@code .fortify-extensions.json} in each target directory.
- * Tracks what was installed in that directory (files, version, content type)
- * without recording which assistants use this directory. This allows
- * recovery of installation state even if the fcli state is reset.
+ * Manifest stored as {@code .fortify-extensions.<contentType>.json} in each
+ * target directory. Tracks what was installed in that directory (files, version,
+ * content type) without recording which assistants use this directory. This
+ * allows recovery of installation state even if the fcli state is reset.
+ * <p>
+ * Each content type gets its own manifest file, so multiple content types can
+ * coexist in the same target directory without overwriting each other.
  */
 @JsonIgnoreProperties(ignoreUnknown=true)
 @Reflectable @NoArgsConstructor @AllArgsConstructor @Builder(toBuilder = true) @Data
 public class AiAssistExtensionsTargetDirManifest {
-    public static final String MANIFEST_FILENAME = ".fortify-extensions.json";
+    private static final String MANIFEST_PREFIX = ".fortify-extensions.";
+    private static final String MANIFEST_SUFFIX = ".json";
+    private static final String MANIFEST_GLOB = MANIFEST_PREFIX + "*" + MANIFEST_SUFFIX;
+
+    public static String manifestFilename(String contentType) {
+        return MANIFEST_PREFIX + sanitize(contentType) + MANIFEST_SUFFIX;
+    }
+
+    public static String manifestGlob() {
+        return MANIFEST_GLOB;
+    }
+
+    static String sanitize(String contentType) {
+        return contentType.replaceAll("[^a-zA-Z0-9_-]", "_");
+    }
 
     @JsonProperty("schema-version")
     private int schemaVersion;

@@ -49,7 +49,7 @@ import com.fortify.cli.tool.definitions.helper.ToolDefinitionsHelper;
  *       lightweight registry of which assistants were set up and their resolved
  *       target directories. Used by {@code list-installed} and {@code uninstall}
  *       to work without the distribution descriptor.</li>
- *   <li><b>Target-dir manifest</b> ({@code .fortify-extensions.json} in each target dir):
+ *   <li><b>Target-dir manifest</b> ({@code .fortify-extensions.<contentType>.json} in each target dir):
  *       records content type, version, and file list. Enables diff-based updates
  *       and state recovery after fcli state reset.</li>
  * </ul>
@@ -140,28 +140,28 @@ public final class AiAssistExtensionsInstaller {
         var results = new ArrayList<AiAssistExtensionsOutputDescriptor>();
 
         for (var dir : targetDirs) {
-            var manifest = readTargetDirManifest(dir);
-            if (manifest == null) { continue; }
-            if (!matchesContentTypeFilter(manifest.getContentType(), contentTypeFilter)) {
-                continue;
-            }
-
-            var files = manifest.getFiles() != null ? manifest.getFiles() : List.<String>of();
-            if (!dryRun) {
-                for (var file : files) {
-                    deleteTargetFile(dir.resolve(file));
+            for (var manifest : readAllTargetDirManifests(dir)) {
+                if (!matchesContentTypeFilter(manifest.getContentType(), contentTypeFilter)) {
+                    continue;
                 }
-                deleteManifestFile(dir);
+
+                var files = manifest.getFiles() != null ? manifest.getFiles() : List.<String>of();
+                if (!dryRun) {
+                    for (var file : files) {
+                        deleteTargetFile(dir.resolve(file));
+                    }
+                    deleteManifestFile(dir, manifest.getContentType());
+                }
+                results.add(AiAssistExtensionsOutputDescriptor.builder()
+                    .contentType(manifest.getContentType())
+                    .targetDir(dir.toString())
+                    .fileCount(files.size())
+                    .sourceVersion(manifest.getVersion())
+                    .files(files.toArray(String[]::new))
+                    .filesString(String.join(", ", files))
+                    .actionResult("REMOVED")
+                    .build());
             }
-            results.add(AiAssistExtensionsOutputDescriptor.builder()
-                .contentType(manifest.getContentType())
-                .targetDir(dir.toString())
-                .fileCount(files.size())
-                .sourceVersion(manifest.getVersion())
-                .files(files.toArray(String[]::new))
-                .filesString(String.join(", ", files))
-                .actionResult("REMOVED")
-                .build());
         }
 
         if (!dryRun) {
@@ -182,7 +182,7 @@ public final class AiAssistExtensionsInstaller {
             for (var targetEntry : installation.getTargets().entrySet()) {
                 var contentType = targetEntry.getKey();
                 var targetDir = Path.of(targetEntry.getValue());
-                var manifest = readTargetDirManifest(targetDir);
+                var manifest = readTargetDirManifest(targetDir, contentType);
                 var files = manifest != null && manifest.getFiles() != null
                     ? manifest.getFiles() : List.<String>of();
                 var version = manifest != null ? manifest.getVersion() : null;
@@ -244,8 +244,8 @@ public final class AiAssistExtensionsInstaller {
             String installedVersion = null;
             if (installed) {
                 // Read version from first target dir manifest
-                installedVersion = assistantInstallation.getTargets().values().stream()
-                    .map(dir -> readTargetDirManifest(Path.of(dir)))
+                installedVersion = assistantInstallation.getTargets().entrySet().stream()
+                    .map(e -> readTargetDirManifest(Path.of(e.getValue()), e.getKey()))
                     .filter(m -> m != null)
                     .map(AiAssistExtensionsTargetDirManifest::getVersion)
                     .findFirst().orElse(null);
@@ -355,7 +355,7 @@ public final class AiAssistExtensionsInstaller {
                 }
 
                 // Read existing manifest from target dir for diff
-                var existingManifest = readTargetDirManifest(resolvedDir);
+                var existingManifest = readTargetDirManifest(resolvedDir, contentType);
                 var existingFiles = existingManifest != null && existingManifest.getFiles() != null
                     ? new HashSet<>(existingManifest.getFiles()) : Set.<String>of();
 
@@ -434,7 +434,7 @@ public final class AiAssistExtensionsInstaller {
             if (!matchesContentTypeFilter(contentType, contentTypeFilter)) { continue; }
 
             var ctDesc = ctEntry.getValue();
-            var existingManifest = readTargetDirManifest(resolvedDir);
+            var existingManifest = readTargetDirManifest(resolvedDir, contentType);
             var existingFiles = existingManifest != null && existingManifest.getFiles() != null
                 ? new HashSet<>(existingManifest.getFiles()) : Set.<String>of();
 
@@ -699,13 +699,14 @@ public final class AiAssistExtensionsInstaller {
 
     private static void executeSetupPlan(List<PlanEntry> plan,
             AiAssistExtensionsSourceHandler sourceHandler) {
-        // Group by target dir to write one manifest per dir
-        var byTargetDir = plan.stream()
+        // Group by (target dir, content type) to write one manifest per combo
+        var byDirAndType = plan.stream()
             .filter(e -> !"EXISTING".equals(e.action()))
-            .collect(Collectors.groupingBy(PlanEntry::targetDir,
+            .collect(Collectors.groupingBy(
+                e -> e.targetDir() + "\0" + e.contentType(),
                 LinkedHashMap::new, Collectors.toList()));
 
-        for (var dirEntries : byTargetDir.values()) {
+        for (var dirEntries : byDirAndType.values()) {
             for (var entry : dirEntries) {
                 switch (entry.action()) {
                     case "INSTALLED", "UPDATED" -> installFile(sourceHandler, entry);
@@ -713,7 +714,7 @@ public final class AiAssistExtensionsInstaller {
                 }
             }
 
-            // Write manifest for this target dir
+            // Write manifest for this (target dir, content type) pair
             var first = dirEntries.get(0);
             var installedFiles = dirEntries.stream()
                 .filter(e -> !"REMOVED".equals(e.action()))
@@ -749,7 +750,8 @@ public final class AiAssistExtensionsInstaller {
             .timestamp(Instant.now().toString())
             .files(files)
             .build();
-        var manifestPath = targetDir.resolve(AiAssistExtensionsTargetDirManifest.MANIFEST_FILENAME);
+        var manifestPath = targetDir.resolve(
+            AiAssistExtensionsTargetDirManifest.manifestFilename(contentType));
         try {
             Files.createDirectories(targetDir);
             var json = JsonHelper.getObjectMapper().writerWithDefaultPrettyPrinter()
@@ -760,9 +762,30 @@ public final class AiAssistExtensionsInstaller {
         }
     }
 
-    static AiAssistExtensionsTargetDirManifest readTargetDirManifest(Path targetDir) {
-        var manifestPath = targetDir.resolve(AiAssistExtensionsTargetDirManifest.MANIFEST_FILENAME);
+    static AiAssistExtensionsTargetDirManifest readTargetDirManifest(
+            Path targetDir, String contentType) {
+        var manifestPath = targetDir.resolve(
+            AiAssistExtensionsTargetDirManifest.manifestFilename(contentType));
         if (!Files.isRegularFile(manifestPath)) { return null; }
+        return readManifestFile(manifestPath);
+    }
+
+    static List<AiAssistExtensionsTargetDirManifest> readAllTargetDirManifests(Path targetDir) {
+        if (!Files.isDirectory(targetDir)) { return List.of(); }
+        var glob = AiAssistExtensionsTargetDirManifest.manifestGlob();
+        var result = new ArrayList<AiAssistExtensionsTargetDirManifest>();
+        try (var stream = Files.newDirectoryStream(targetDir, glob)) {
+            for (var path : stream) {
+                var manifest = readManifestFile(path);
+                if (manifest != null) { result.add(manifest); }
+            }
+        } catch (IOException e) {
+            LOG.warn("Error listing manifests in: {}", targetDir, e);
+        }
+        return result;
+    }
+
+    private static AiAssistExtensionsTargetDirManifest readManifestFile(Path manifestPath) {
         try {
             var content = Files.readString(manifestPath);
             return JsonHelper.getObjectMapper()
@@ -773,8 +796,9 @@ public final class AiAssistExtensionsInstaller {
         }
     }
 
-    private static void deleteManifestFile(Path targetDir) {
-        var manifestPath = targetDir.resolve(AiAssistExtensionsTargetDirManifest.MANIFEST_FILENAME);
+    private static void deleteManifestFile(Path targetDir, String contentType) {
+        var manifestPath = targetDir.resolve(
+            AiAssistExtensionsTargetDirManifest.manifestFilename(contentType));
         try {
             Files.deleteIfExists(manifestPath);
         } catch (IOException e) {
@@ -907,12 +931,9 @@ public final class AiAssistExtensionsInstaller {
 
                 var resolvedDirs = AiAssistExtensionsPathResolver.resolveAll(target.getTargetDirs());
                 var dirsWithManifest = resolvedDirs.stream()
-                    .filter(dir -> readTargetDirManifest(dir) != null
+                    .filter(dir -> readTargetDirManifest(dir, contentType) != null
                         || selectedAssistants.containsKey(assistantId))
-                    .filter(dir -> {
-                        var m = readTargetDirManifest(dir);
-                        return m != null && contentType.equals(m.getContentType());
-                    })
+                    .filter(dir -> readTargetDirManifest(dir, contentType) != null)
                     .toList();
 
                 if (dirsWithManifest.size() > 1) {
