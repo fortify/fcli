@@ -27,6 +27,10 @@ import lombok.NoArgsConstructor;
 public class AiAssistExtensionsAssistantDescriptor {
     @JsonProperty("display-name")
     private String displayName;
+    // Typed as Object to support recursive condition structures (maps for
+    // operators like any-of/all-of/not, strings for leaf values). This
+    // allows instanceof-based dispatch in AiAssistExtensionsConditionEvaluator
+    // and graceful warning on unknown condition types instead of parse failures.
     @JsonProperty("if")
     private Object ifCondition;
     private List<AiAssistExtensionsTargetDescriptor> targets;

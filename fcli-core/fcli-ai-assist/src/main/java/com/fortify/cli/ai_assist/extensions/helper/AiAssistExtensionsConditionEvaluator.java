@@ -18,7 +18,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
@@ -27,7 +26,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Evaluates declarative conditions from the extensions-distribution.yaml descriptor.
- * Supports simple conditions (dir-exists, command-exists) and
+ * Supports simple conditions (dir-exists, glob-exists, command-exists) and
  * logical operators (any-of, all-of, not).
  */
 public final class AiAssistExtensionsConditionEvaluator {
@@ -44,7 +43,7 @@ public final class AiAssistExtensionsConditionEvaluator {
         if (condition instanceof Map<?, ?> map) {
             return evaluateMap((Map<String, Object>) map);
         }
-        LOG.warn("Unknown condition type: {}", condition.getClass().getName());
+        LOG.warn("WARN: Unknown condition type: {}", condition.getClass().getName());
         return false;
     }
 
@@ -60,8 +59,6 @@ public final class AiAssistExtensionsConditionEvaluator {
                     return evaluateGlobExists(value);
                 case "command-exists":
                     return evaluateCommandExists((String) value);
-                case "command-succeeds":
-                    return evaluateCommandSucceeds((String) value);
                 case "any-of":
                     return evaluateAnyOf((java.util.List<Object>) value);
                 case "all-of":
@@ -69,7 +66,7 @@ public final class AiAssistExtensionsConditionEvaluator {
                 case "not":
                     return !evaluate(value);
                 default:
-                    LOG.warn("Unknown condition type '{}', treating as false", key);
+                    LOG.warn("WARN: Unknown condition type '{}', treating as false", key);
                     return false;
             }
         }
@@ -138,42 +135,44 @@ public final class AiAssistExtensionsConditionEvaluator {
         }
     }
 
+    /**
+     * Check if a command exists on the system PATH by scanning PATH directories
+     * for matching executables. On Windows, also checks PATHEXT extensions.
+     * Does not spawn external processes (no which/where).
+     */
     private boolean evaluateCommandExists(String command) {
         if (StringUtils.isBlank(command)) { return false; }
-        var cmd = SystemUtils.IS_OS_WINDOWS
-            ? new String[]{"where", command}
-            : new String[]{"which", command};
-        return runProcessSucceeds(cmd, command);
-    }
-
-    /**
-     * Run an arbitrary command line and check for exit code 0.
-     * The value is split on whitespace. A 5-second timeout prevents hangs.
-     */
-    private boolean evaluateCommandSucceeds(String commandLine) {
-        if (StringUtils.isBlank(commandLine)) { return false; }
-        var parts = commandLine.trim().split("\\s+");
-        return runProcessSucceeds(parts, commandLine);
-    }
-
-    private boolean runProcessSucceeds(String[] cmd, String label) {
-        try {
-            var pb = new ProcessBuilder(cmd);
-            pb.redirectErrorStream(true);
-            var process = pb.start();
-            // Drain output to prevent blocking
-            process.getInputStream().transferTo(java.io.OutputStream.nullOutputStream());
-            boolean finished = process.waitFor(5, TimeUnit.SECONDS);
-            if (!finished) {
-                process.destroyForcibly();
-                LOG.debug("Command timed out: {}", label);
-                return false;
+        var pathEnv = System.getenv("PATH");
+        if (StringUtils.isBlank(pathEnv)) { return false; }
+        var pathSep = System.getProperty("path.separator");
+        var dirs = pathEnv.split(pathSep);
+        // On Windows, try command as-is plus each PATHEXT extension
+        var extensions = SystemUtils.IS_OS_WINDOWS
+            ? getWindowsPathExtensions()
+            : new String[]{""};
+        for (var dir : dirs) {
+            var dirPath = Path.of(dir);
+            for (var ext : extensions) {
+                var candidate = dirPath.resolve(command + ext);
+                if (Files.isRegularFile(candidate)) {
+                    return true;
+                }
             }
-            return process.exitValue() == 0;
-        } catch (IOException | InterruptedException e) {
-            LOG.debug("Error running command '{}': {}", label, e.getMessage());
-            return false;
         }
+        return false;
+    }
+
+    private static String[] getWindowsPathExtensions() {
+        var pathExt = System.getenv("PATHEXT");
+        if (StringUtils.isBlank(pathExt)) {
+            return new String[]{"", ".exe", ".cmd", ".bat", ".com"};
+        }
+        // Prepend empty string so bare name is checked first
+        var exts = pathExt.split(";");
+        var result = new String[exts.length + 1];
+        result[0] = "";
+        System.arraycopy(exts, 0, result, 1, exts.length);
+        return result;
     }
 
     private boolean evaluateAnyOf(List<Object> conditions) {

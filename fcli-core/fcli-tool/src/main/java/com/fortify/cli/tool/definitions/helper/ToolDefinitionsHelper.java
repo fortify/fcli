@@ -478,6 +478,9 @@ public final class ToolDefinitionsHelper {
             try (InputStream is = FileUtils.getResourceInputStream(DEFINITIONS_INTERNAL_ZIP)) {
                 Files.copy(is, DEFINITIONS_STATE_ZIP);
             }
+            // Set epoch timestamp so the age check treats this as stale and triggers
+            // a real update on the next 'tool definitions update' invocation.
+            Files.setLastModifiedTime(DEFINITIONS_STATE_ZIP, FileTime.fromMillis(0));
         }
         return DEFINITIONS_STATE_ZIP;
     }
