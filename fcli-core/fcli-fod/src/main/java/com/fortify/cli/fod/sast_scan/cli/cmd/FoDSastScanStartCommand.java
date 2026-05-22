@@ -70,11 +70,14 @@ public class FoDSastScanStartCommand extends AbstractFoDScanStartCommand {
             if (useAdvanced) {
                 FoDEnums.InProgressScanActionType inProgressAction = inProgressScanActionType != null
                         ? inProgressScanActionType : FoDEnums.InProgressScanActionType.Queue;
+                // FoD's start-scan-advanced expects 'CancelInProgressScan' rather than the enum's 'CancelScanInProgress'
+                String inProgressApiValue = inProgressAction == FoDEnums.InProgressScanActionType.CancelScanInProgress
+                        ? "CancelInProgressScan" : inProgressAction.name();
                 FoDScanSastStartRequest startScanRequest = requestBuilder
                         .entitlementPreferenceType(entitlementPreferenceType != null ? entitlementPreferenceType.name() : null)
                         .purchaseEntitlement(false)
                         .remdiationScanPreferenceType(remediationPref != null ? remediationPref.name() : null)
-                        .inProgressScanActionType(inProgressAction.name())
+                        .inProgressScanActionType(inProgressApiValue)
                         .build();
                 return FoDScanSastHelper.startScanAdvanced(unirest, releaseDescriptor, startScanRequest, scanFileMixin.getFile(), progressWriter);
             }
