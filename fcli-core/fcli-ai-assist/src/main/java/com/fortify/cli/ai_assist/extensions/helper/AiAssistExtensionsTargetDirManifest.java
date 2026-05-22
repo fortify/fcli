@@ -14,6 +14,7 @@ package com.fortify.cli.ai_assist.extensions.helper;
 
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.formkiq.graalvm.annotations.Reflectable;
 
@@ -23,23 +24,21 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * State descriptor stored per (assistantId, contentType) under the fcli state directory.
- * Tracks what was installed, where, and from which source version.
+ * Manifest stored as {@code .fortify-extensions.json} in each target directory.
+ * Tracks what was installed in that directory (files, version, content type)
+ * without recording which assistants use this directory. This allows
+ * recovery of installation state even if the fcli state is reset.
  */
+@JsonIgnoreProperties(ignoreUnknown=true)
 @Reflectable @NoArgsConstructor @AllArgsConstructor @Builder(toBuilder = true) @Data
-public class AiAssistExtensionsStateDescriptor {
-    private String assistant;
-    private String assistantId;
-    private String contentType;
-    private String targetDir;
-    private String sourceVersion;
-    @JsonProperty("timestamp")
-    private String timestamp;
-    private List<FileEntry> files;
+public class AiAssistExtensionsTargetDirManifest {
+    public static final String MANIFEST_FILENAME = ".fortify-extensions.json";
 
-    @Reflectable @NoArgsConstructor @AllArgsConstructor @Builder @Data
-    public static class FileEntry {
-        private String source;
-        private String target;
-    }
+    @JsonProperty("schema-version")
+    private int schemaVersion;
+    @JsonProperty("content-type")
+    private String contentType;
+    private String version;
+    private String timestamp;
+    private List<String> files;
 }

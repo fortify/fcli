@@ -20,9 +20,8 @@ import picocli.CommandLine.Command;
         name = "extensions",
         aliases = {"ext"},
         subcommands = {
-            AiAssistExtensionsInstallCommand.class,
+            AiAssistExtensionsSetupCommand.class,
             AiAssistExtensionsUninstallCommand.class,
-            AiAssistExtensionsUpdateCommand.class,
             AiAssistExtensionsListInstalledCommand.class,
             AiAssistExtensionsListVersionsCommand.class,
             AiAssistExtensionsListAssistantsCommand.class

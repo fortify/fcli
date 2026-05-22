@@ -12,8 +12,9 @@
  */
 package com.fortify.cli.ai_assist.extensions.cli.cmd;
 
+import java.util.Set;
+
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.ai_assist.extensions.cli.mixin.AiAssistExtensionsAssistantFilterMixin;
 import com.fortify.cli.ai_assist.extensions.helper.AiAssistExtensionsInstaller;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.cli.cmd.AbstractOutputCommand;
@@ -30,7 +31,10 @@ import picocli.CommandLine.Option;
 public class AiAssistExtensionsUninstallCommand extends AbstractOutputCommand
         implements IJsonNodeSupplier, IActionCommandResultSupplier {
     @Mixin @Getter private OutputHelperMixins.Uninstall outputHelper;
-    @Mixin private AiAssistExtensionsAssistantFilterMixin assistantFilter;
+
+    @Option(names = {"--content-types"}, split = ",", paramLabel = "<type>",
+        descriptionKey = "fcli.ai-assist.extensions.content-types")
+    private Set<String> contentTypeFilter;
 
     @Option(names = {"-y", "--confirm"},
         descriptionKey = "fcli.ai-assist.extensions.confirm")
@@ -43,10 +47,7 @@ public class AiAssistExtensionsUninstallCommand extends AbstractOutputCommand
     @Override
     public JsonNode getJsonNode() {
         return JsonHelper.getObjectMapper().valueToTree(
-            AiAssistExtensionsInstaller.uninstall(
-                assistantFilter.getAssistants(),
-                assistantFilter.getExcludeAssistants(),
-                dryRun));
+            AiAssistExtensionsInstaller.uninstall(contentTypeFilter, dryRun));
     }
 
     @Override

@@ -13,16 +13,15 @@
 package com.fortify.cli.ai_assist.extensions.helper;
 
 import java.io.IOException;
-import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.SimpleFileVisitor;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -31,8 +30,8 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fortify.cli.ai_assist.extensions.helper.AiAssistExtensionsInstallationsDescriptor.AssistantInstallation;
 import com.fortify.cli.ai_assist.extensions.helper.AiAssistExtensionsSourceHandler.DigestMismatchAction;
-import com.fortify.cli.ai_assist.extensions.helper.AiAssistExtensionsStateDescriptor.FileEntry;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.exception.FcliTechnicalException;
 import com.fortify.cli.common.json.JsonHelper;
@@ -42,12 +41,23 @@ import com.fortify.cli.tool.definitions.helper.ToolDefinitionVersionDescriptor;
 import com.fortify.cli.tool.definitions.helper.ToolDefinitionsHelper;
 
 /**
- * Core install/update/uninstall/list logic for AI assistant extensions.
- * Output is grouped by (assistant, contentType, targetDir).
+ * Core setup/uninstall/list logic for AI assistant extensions.
+ * <p>
+ * State is managed in two tiers:
+ * <ul>
+ *   <li><b>fcli state</b> ({@code state/ai-assist/extensions/installations.json}):
+ *       lightweight registry of which assistants were set up and their resolved
+ *       target directories. Used by {@code list-installed} and {@code uninstall}
+ *       to work without the distribution descriptor.</li>
+ *   <li><b>Target-dir manifest</b> ({@code .fortify-extensions.json} in each target dir):
+ *       records content type, version, and file list. Enables diff-based updates
+ *       and state recovery after fcli state reset.</li>
+ * </ul>
  */
 public final class AiAssistExtensionsInstaller {
     private static final Logger LOG = LoggerFactory.getLogger(AiAssistExtensionsInstaller.class);
-    private static final Path STATE_BASE_PATH = Path.of("state", "ai-assist", "extensions");
+    private static final Path INSTALLATIONS_STATE_PATH =
+        Path.of("state", "ai-assist", "extensions", "installations.json");
 
     private AiAssistExtensionsInstaller() {}
 
@@ -62,57 +72,54 @@ public final class AiAssistExtensionsInstaller {
         return getToolDefinitions().getVersionOrDefault(version);
     }
 
-    // ──────────────────────────── Install ────────────────────────────
+    // ──────────────────────────── Setup (idempotent install/update) ────────────────────────────
 
-    public static List<AiAssistExtensionsOutputDescriptor> install(
+    /**
+     * Idempotent setup: installs if new, updates if already present
+     * (adds new files, updates changed files, removes obsolete files).
+     *
+     * @param source           local zip/dir override, or null for tool-definitions
+     * @param version          version string (default "latest")
+     * @param assistants       explicit assistant IDs, or null
+     * @param autoDetect       true to auto-detect assistants
+     * @param contentTypeFilter filter by content type, or null for all
+     * @param customDir        custom target directory (mutually exclusive with assistants/autoDetect)
+     * @param onDigestMismatch action on signature mismatch
+     * @param dryRun           if true, plan only without executing
+     */
+    public static List<AiAssistExtensionsOutputDescriptor> setup(
             String source, String version,
-            Set<String> assistantFilter, Set<String> excludeAssistants,
+            Set<String> assistants, boolean autoDetect,
             Set<String> contentTypeFilter, String customDir,
             DigestMismatchAction onDigestMismatch, boolean dryRun) {
 
         try (var sourceHandler = resolveSource(source, version, onDigestMismatch)) {
             var contentManifest = sourceHandler.readContentManifest();
-            var distribution = AiAssistExtensionsSourceHandler
-                .readDistributionDescriptor(source == null);
-            var conditionEvaluator = new AiAssistExtensionsConditionEvaluator();
-            var planContext = new AiAssistExtensionsInstallPlanContext();
 
-            var assistants = detectAssistants(distribution, conditionEvaluator,
-                assistantFilter, excludeAssistants);
-            var plan = buildInstallPlan(contentManifest, distribution, assistants,
-                sourceHandler, planContext, contentTypeFilter, customDir,
-                sourceHandler.getVersion());
-
-            if (!dryRun) {
-                executePlan(plan, sourceHandler);
+            if (customDir != null) {
+                // --dir mode: install content types directly to custom directory,
+                // bypassing assistant selection entirely
+                var plan = buildCustomDirPlan(contentManifest, sourceHandler,
+                    contentTypeFilter, customDir, sourceHandler.getVersion());
+                if (!dryRun) {
+                    executeSetupPlan(plan, sourceHandler);
+                }
+                return toOutputDescriptors(plan);
             }
-            return toOutputDescriptors(plan);
-        }
-    }
 
-    // ──────────────────────────── Update ────────────────────────────
-
-    public static List<AiAssistExtensionsOutputDescriptor> update(
-            String source, String version,
-            Set<String> assistantFilter, Set<String> excludeAssistants,
-            Set<String> contentTypeFilter, String customDir,
-            DigestMismatchAction onDigestMismatch, boolean dryRun) {
-
-        try (var sourceHandler = resolveSource(source, version, onDigestMismatch)) {
-            var contentManifest = sourceHandler.readContentManifest();
             var distribution = AiAssistExtensionsSourceHandler
                 .readDistributionDescriptor(source == null);
-            var conditionEvaluator = new AiAssistExtensionsConditionEvaluator();
+            var selectedAssistants = selectAssistants(distribution, assistants, autoDetect);
             var planContext = new AiAssistExtensionsInstallPlanContext();
-
-            var assistants = detectAssistants(distribution, conditionEvaluator,
-                assistantFilter, excludeAssistants);
-            var plan = buildUpdatePlan(contentManifest, distribution, assistants,
-                sourceHandler, planContext, contentTypeFilter, customDir,
+            var plan = buildSetupPlan(contentManifest, distribution, selectedAssistants,
+                sourceHandler, planContext, contentTypeFilter,
                 sourceHandler.getVersion());
 
+            warnDuplicateContentDirs(distribution, selectedAssistants, contentTypeFilter);
+
             if (!dryRun) {
-                executeUpdatePlan(plan, sourceHandler);
+                executeSetupPlan(plan, sourceHandler);
+                saveInstallationsState(selectedAssistants, distribution, plan);
             }
             return toOutputDescriptors(plan);
         }
@@ -120,34 +127,78 @@ public final class AiAssistExtensionsInstaller {
 
     // ──────────────────────────── Uninstall ────────────────────────────
 
+    /**
+     * Uninstall extensions from all known target directories. Scans the union
+     * of dirs from the distribution descriptor and fcli state to find manifests.
+     *
+     * @param contentTypeFilter optional content type filter, or null for all
+     * @param dryRun            if true, report only without deleting
+     */
     public static List<AiAssistExtensionsOutputDescriptor> uninstall(
-            Set<String> assistantFilter, Set<String> excludeAssistants,
-            boolean dryRun) {
-        var stateEntries = loadAllStateDescriptors();
+            Set<String> contentTypeFilter, boolean dryRun) {
+        var targetDirs = collectAllKnownTargetDirs();
         var results = new ArrayList<AiAssistExtensionsOutputDescriptor>();
 
-        for (var state : stateEntries) {
-            if (!matchesFilter(state.getAssistantId(), assistantFilter, excludeAssistants)) {
+        for (var dir : targetDirs) {
+            var manifest = readTargetDirManifest(dir);
+            if (manifest == null) { continue; }
+            if (!matchesContentTypeFilter(manifest.getContentType(), contentTypeFilter)) {
                 continue;
             }
+
+            var files = manifest.getFiles() != null ? manifest.getFiles() : List.<String>of();
             if (!dryRun) {
-                for (var file : state.getFiles()) {
-                    deleteTargetFile(Path.of(file.getTarget()));
+                for (var file : files) {
+                    deleteTargetFile(dir.resolve(file));
                 }
-                deleteStateDescriptor(state.getAssistantId(), state.getContentType());
+                deleteManifestFile(dir);
             }
-            results.add(stateToOutput(state, "REMOVED"));
+            results.add(AiAssistExtensionsOutputDescriptor.builder()
+                .contentType(manifest.getContentType())
+                .targetDir(dir.toString())
+                .fileCount(files.size())
+                .sourceVersion(manifest.getVersion())
+                .files(files.toArray(String[]::new))
+                .filesString(String.join(", ", files))
+                .actionResult("REMOVED")
+                .build());
         }
-        if (!dryRun) { cleanEmptyStateDirs(); }
+
+        if (!dryRun) {
+            clearInstallationsState(contentTypeFilter);
+        }
         return results;
     }
 
     // ──────────────────────────── List installed ────────────────────────────
 
     public static List<AiAssistExtensionsOutputDescriptor> listInstalled() {
-        return loadAllStateDescriptors().stream()
-            .map(s -> stateToOutput(s, null))
-            .toList();
+        var installations = loadInstallationsState();
+        var results = new ArrayList<AiAssistExtensionsOutputDescriptor>();
+
+        for (var entry : installations.getAssistants().entrySet()) {
+            var assistantId = entry.getKey();
+            var installation = entry.getValue();
+            for (var targetEntry : installation.getTargets().entrySet()) {
+                var contentType = targetEntry.getKey();
+                var targetDir = Path.of(targetEntry.getValue());
+                var manifest = readTargetDirManifest(targetDir);
+                var files = manifest != null && manifest.getFiles() != null
+                    ? manifest.getFiles() : List.<String>of();
+                var version = manifest != null ? manifest.getVersion() : null;
+                results.add(AiAssistExtensionsOutputDescriptor.builder()
+                    .assistant(installation.getDisplayName())
+                    .assistantId(assistantId)
+                    .contentType(contentType)
+                    .targetDir(targetDir.toString())
+                    .fileCount(files.size())
+                    .sourceVersion(version)
+                    .files(files.toArray(String[]::new))
+                    .filesString(String.join(", ", files))
+                    .build());
+            }
+        }
+        return results;
     }
 
     // ──────────────────────────── List versions ────────────────────────────
@@ -172,9 +223,7 @@ public final class AiAssistExtensionsInstaller {
         if (distribution.getAssistants() == null) { return Collections.emptyList(); }
 
         var conditionEvaluator = detect ? new AiAssistExtensionsConditionEvaluator() : null;
-        var installedState = loadAllStateDescriptors();
-        var installedByAssistant = installedState.stream()
-            .collect(Collectors.groupingBy(AiAssistExtensionsStateDescriptor::getAssistantId));
+        var installations = loadInstallationsState();
 
         var result = new ArrayList<AiAssistExtensionsAssistantOutputDescriptor>();
         for (var entry : distribution.getAssistants().entrySet()) {
@@ -186,18 +235,21 @@ public final class AiAssistExtensionsInstaller {
                     .toArray(String[]::new)
                 : new String[0];
 
-            String detected;
-            if (conditionEvaluator != null) {
-                detected = String.valueOf(conditionEvaluator.evaluate(assistant.getIfCondition()));
-            } else {
-                detected = "N/A";
-            }
+            String detected = conditionEvaluator != null
+                ? String.valueOf(conditionEvaluator.evaluate(assistant.getIfCondition()))
+                : "N/A";
 
-            var assistantStates = installedByAssistant.getOrDefault(id, Collections.emptyList());
-            var installed = !assistantStates.isEmpty();
-            var installedVersion = assistantStates.stream()
-                .map(AiAssistExtensionsStateDescriptor::getSourceVersion)
-                .findFirst().orElse(null);
+            var assistantInstallation = installations.getAssistants().get(id);
+            var installed = assistantInstallation != null;
+            String installedVersion = null;
+            if (installed) {
+                // Read version from first target dir manifest
+                installedVersion = assistantInstallation.getTargets().values().stream()
+                    .map(dir -> readTargetDirManifest(Path.of(dir)))
+                    .filter(m -> m != null)
+                    .map(AiAssistExtensionsTargetDirManifest::getVersion)
+                    .findFirst().orElse(null);
+            }
 
             result.add(AiAssistExtensionsAssistantOutputDescriptor.builder()
                 .id(id)
@@ -223,53 +275,55 @@ public final class AiAssistExtensionsInstaller {
         return AiAssistExtensionsSourceHandler.fromToolDefinitions(versionDesc, onDigestMismatch);
     }
 
-    // ──────────────────────────── Assistant detection ────────────────────────────
+    // ──────────────────────────── Assistant selection ────────────────────────────
 
-    private static Map<String, AiAssistExtensionsAssistantDescriptor> detectAssistants(
+    private static Map<String, AiAssistExtensionsAssistantDescriptor> selectAssistants(
             AiAssistExtensionsDistributionDescriptor distribution,
-            AiAssistExtensionsConditionEvaluator evaluator,
-            Set<String> assistantFilter, Set<String> excludeAssistants) {
+            Set<String> explicitAssistants, boolean autoDetect) {
         var result = new LinkedHashMap<String, AiAssistExtensionsAssistantDescriptor>();
         if (distribution.getAssistants() == null) { return result; }
 
-        for (var entry : distribution.getAssistants().entrySet()) {
-            var id = entry.getKey();
-            var assistant = entry.getValue();
-            if (!matchesFilter(id, assistantFilter, excludeAssistants)) { continue; }
-            boolean explicitlySelected = assistantFilter != null && !assistantFilter.isEmpty();
-            if (explicitlySelected || evaluator.evaluate(assistant.getIfCondition())) {
+        if (explicitAssistants != null && !explicitAssistants.isEmpty()) {
+            for (var id : explicitAssistants) {
+                var assistant = distribution.getAssistants().get(id);
+                if (assistant == null) {
+                    throw new FcliSimpleException(
+                        "Unknown assistant: " + id + ". Available: "
+                        + String.join(", ", distribution.getAssistants().keySet()));
+                }
                 result.put(id, assistant);
+            }
+        } else if (autoDetect) {
+            var evaluator = new AiAssistExtensionsConditionEvaluator();
+            for (var entry : distribution.getAssistants().entrySet()) {
+                if (evaluator.evaluate(entry.getValue().getIfCondition())) {
+                    result.put(entry.getKey(), entry.getValue());
+                }
             }
         }
         return result;
     }
 
-    private static boolean matchesFilter(String id, Set<String> include, Set<String> exclude) {
-        if (include != null && !include.isEmpty() && !include.contains(id)) { return false; }
-        if (exclude != null && exclude.contains(id)) { return false; }
-        return true;
-    }
-
     // ──────────────────────────── Internal plan entry ────────────────────────────
 
-    /**
-     * Internal per-file plan entry used during plan construction.
-     * Aggregated into grouped output descriptors after planning.
-     */
     private record PlanEntry(
         String assistant, String assistantId, String contentType,
-        String targetDir, String sourceFile, String targetPath,
-        String sourceVersion, String action) {}
+        String targetDir, String sourceFile, String targetRelPath,
+        String targetAbsPath, String sourceVersion, String action) {}
 
-    // ──────────────────────────── Install plan ────────────────────────────
+    // ──────────────────────────── Setup plan ────────────────────────────
 
-    private static List<PlanEntry> buildInstallPlan(
+    /**
+     * Build a setup plan that is idempotent: installs new files, updates changed
+     * files, removes obsolete files, and reports unchanged files.
+     */
+    private static List<PlanEntry> buildSetupPlan(
             AiAssistExtensionsContentManifestDescriptor contentManifest,
             AiAssistExtensionsDistributionDescriptor distribution,
             Map<String, AiAssistExtensionsAssistantDescriptor> assistants,
             AiAssistExtensionsSourceHandler sourceHandler,
             AiAssistExtensionsInstallPlanContext planContext,
-            Set<String> contentTypeFilter, String customDir,
+            Set<String> contentTypeFilter,
             String sourceVersion) {
         var plan = new ArrayList<PlanEntry>();
 
@@ -282,9 +336,7 @@ public final class AiAssistExtensionsInstaller {
                 var contentType = target.getContentType();
                 if (!matchesContentTypeFilter(contentType, contentTypeFilter)) { continue; }
 
-                var resolvedDirs = customDir != null
-                    ? List.of(Path.of(customDir).toAbsolutePath().normalize())
-                    : AiAssistExtensionsPathResolver.resolveAll(target.getTargetDirs());
+                var resolvedDirs = AiAssistExtensionsPathResolver.resolveAll(target.getTargetDirs());
                 if (resolvedDirs.isEmpty()) { continue; }
 
                 var coveredDir = planContext.findCoveredDir(resolvedDirs, contentType);
@@ -295,85 +347,125 @@ public final class AiAssistExtensionsInstaller {
                     planContext.markCovered(resolvedDir, contentType);
                 }
 
+                if (isExisting) {
+                    // Another assistant already handles this dir in this run
+                    addExistingEntries(plan, assistant, assistantId, contentType,
+                        resolvedDir, contentManifest, target, sourceHandler, sourceVersion);
+                    continue;
+                }
+
+                // Read existing manifest from target dir for diff
+                var existingManifest = readTargetDirManifest(resolvedDir);
+                var existingFiles = existingManifest != null && existingManifest.getFiles() != null
+                    ? new HashSet<>(existingManifest.getFiles()) : Set.<String>of();
+
                 var sourceFiles = discoverSourceFiles(contentManifest, target, sourceHandler);
+                var handledRelPaths = new HashSet<String>();
                 for (var sourceFile : sourceFiles) {
                     var targetRelPath = getTargetRelativePath(contentManifest, target, sourceFile);
-                    var targetPath = resolvedDir.resolve(targetRelPath).toString();
+                    var targetAbsPath = resolvedDir.resolve(targetRelPath).toString();
+                    handledRelPaths.add(targetRelPath);
+
+                    String action;
+                    if (!existingFiles.contains(targetRelPath)) {
+                        action = "INSTALLED";
+                    } else if (hasFileChanged(sourceHandler, sourceFile, Path.of(targetAbsPath))) {
+                        action = "UPDATED";
+                    } else {
+                        action = "UNCHANGED";
+                    }
                     plan.add(new PlanEntry(
                         assistant.getDisplayName(), assistantId, contentType,
-                        resolvedDir.toString(), sourceFile, targetPath,
-                        sourceVersion, isExisting ? "EXISTING" : "INSTALLED"));
+                        resolvedDir.toString(), sourceFile, targetRelPath,
+                        targetAbsPath, sourceVersion, action));
+                }
+
+                // Files in existing manifest but not in source → REMOVED
+                for (var existingFile : existingFiles) {
+                    if (!handledRelPaths.contains(existingFile)) {
+                        plan.add(new PlanEntry(
+                            assistant.getDisplayName(), assistantId, contentType,
+                            resolvedDir.toString(), null, existingFile,
+                            resolvedDir.resolve(existingFile).toString(),
+                            sourceVersion, "REMOVED"));
+                    }
                 }
             }
         }
         return plan;
     }
 
-    // ──────────────────────────── Update plan ────────────────────────────
-
-    private static List<PlanEntry> buildUpdatePlan(
+    private static void addExistingEntries(
+            List<PlanEntry> plan,
+            AiAssistExtensionsAssistantDescriptor assistant, String assistantId,
+            String contentType, Path resolvedDir,
             AiAssistExtensionsContentManifestDescriptor contentManifest,
-            AiAssistExtensionsDistributionDescriptor distribution,
-            Map<String, AiAssistExtensionsAssistantDescriptor> assistants,
+            AiAssistExtensionsTargetDescriptor target,
+            AiAssistExtensionsSourceHandler sourceHandler, String sourceVersion) {
+        var sourceFiles = discoverSourceFiles(contentManifest, target, sourceHandler);
+        for (var sourceFile : sourceFiles) {
+            var targetRelPath = getTargetRelativePath(contentManifest, target, sourceFile);
+            plan.add(new PlanEntry(
+                assistant.getDisplayName(), assistantId, contentType,
+                resolvedDir.toString(), sourceFile, targetRelPath,
+                resolvedDir.resolve(targetRelPath).toString(),
+                sourceVersion, "EXISTING"));
+        }
+    }
+
+    // ──────────────────────────── Custom-dir plan ────────────────────────────
+
+    /**
+     * Build a setup plan for --dir mode: installs content types directly to
+     * a custom directory, bypassing assistant selection. Content is discovered
+     * from the content manifest without relying on assistant-specific config.
+     */
+    private static List<PlanEntry> buildCustomDirPlan(
+            AiAssistExtensionsContentManifestDescriptor contentManifest,
             AiAssistExtensionsSourceHandler sourceHandler,
-            AiAssistExtensionsInstallPlanContext planContext,
             Set<String> contentTypeFilter, String customDir,
             String sourceVersion) {
-        var installPlan = buildInstallPlan(contentManifest, distribution, assistants,
-            sourceHandler, planContext, contentTypeFilter, customDir, sourceVersion);
-
-        var existingState = loadAllStateDescriptors();
-        // Build lookup: "assistantId:contentType:sourceFile" → target path
-        var existingByKey = new LinkedHashMap<String, String>();
-        for (var state : existingState) {
-            for (var file : state.getFiles()) {
-                existingByKey.put(state.getAssistantId() + ":" + state.getContentType()
-                    + ":" + file.getSource(), file.getTarget());
-            }
-        }
-
         var plan = new ArrayList<PlanEntry>();
-        var handledKeys = new java.util.HashSet<String>();
+        var resolvedDir = Path.of(customDir).toAbsolutePath().normalize();
+        if (contentManifest.getContentTypes() == null) { return plan; }
 
-        for (var entry : installPlan) {
-            var key = entry.assistantId() + ":" + entry.contentType()
-                + ":" + entry.sourceFile();
-            handledKeys.add(key);
+        for (var ctEntry : contentManifest.getContentTypes().entrySet()) {
+            var contentType = ctEntry.getKey();
+            if (!matchesContentTypeFilter(contentType, contentTypeFilter)) { continue; }
 
-            if ("EXISTING".equals(entry.action())) {
-                plan.add(entry);
-                continue;
+            var ctDesc = ctEntry.getValue();
+            var existingManifest = readTargetDirManifest(resolvedDir);
+            var existingFiles = existingManifest != null && existingManifest.getFiles() != null
+                ? new HashSet<>(existingManifest.getFiles()) : Set.<String>of();
+
+            var sourceFiles = discoverSourceFilesForContentType(ctDesc, sourceHandler);
+            var handledRelPaths = new HashSet<String>();
+            for (var sourceFile : sourceFiles) {
+                var targetRelPath = getTargetRelativePathForContentType(ctDesc, sourceFile);
+                var targetAbsPath = resolvedDir.resolve(targetRelPath).toString();
+                handledRelPaths.add(targetRelPath);
+
+                String action;
+                if (!existingFiles.contains(targetRelPath)) {
+                    action = "INSTALLED";
+                } else if (hasFileChanged(sourceHandler, sourceFile, Path.of(targetAbsPath))) {
+                    action = "UPDATED";
+                } else {
+                    action = "UNCHANGED";
+                }
+                plan.add(new PlanEntry(
+                    null, null, contentType,
+                    resolvedDir.toString(), sourceFile, targetRelPath,
+                    targetAbsPath, sourceVersion, action));
             }
 
-            var existingTarget = existingByKey.get(key);
-            if (existingTarget == null) {
-                plan.add(new PlanEntry(entry.assistant(), entry.assistantId(),
-                    entry.contentType(), entry.targetDir(), entry.sourceFile(),
-                    entry.targetPath(), sourceVersion, "INSTALLED"));
-            } else if (hasFileChanged(sourceHandler, entry.sourceFile(), Path.of(existingTarget))) {
-                plan.add(new PlanEntry(entry.assistant(), entry.assistantId(),
-                    entry.contentType(), entry.targetDir(), entry.sourceFile(),
-                    entry.targetPath(), sourceVersion, "UPDATED"));
-            } else {
-                plan.add(new PlanEntry(entry.assistant(), entry.assistantId(),
-                    entry.contentType(), entry.targetDir(), entry.sourceFile(),
-                    entry.targetPath(), sourceVersion, "UNCHANGED"));
-            }
-        }
-
-        // Files in state but not in source → REMOVED
-        for (var state : existingState) {
-            if (!matchesFilter(state.getAssistantId(),
-                    assistants.isEmpty() ? null : assistants.keySet(), null)) {
-                continue;
-            }
-            for (var file : state.getFiles()) {
-                var key = state.getAssistantId() + ":" + state.getContentType()
-                    + ":" + file.getSource();
-                if (!handledKeys.contains(key)) {
-                    plan.add(new PlanEntry(state.getAssistant(), state.getAssistantId(),
-                        state.getContentType(), state.getTargetDir(), file.getSource(),
-                        file.getTarget(), sourceVersion, "REMOVED"));
+            for (var existingFile : existingFiles) {
+                if (!handledRelPaths.contains(existingFile)) {
+                    plan.add(new PlanEntry(
+                        null, null, contentType,
+                        resolvedDir.toString(), null, existingFile,
+                        resolvedDir.resolve(existingFile).toString(),
+                        sourceVersion, "REMOVED"));
                 }
             }
         }
@@ -382,12 +474,7 @@ public final class AiAssistExtensionsInstaller {
 
     // ──────────────────────────── Plan → grouped output ────────────────────────────
 
-    /**
-     * Aggregate per-file plan entries into grouped output descriptors,
-     * one per (assistantId, contentType, targetDir, action).
-     */
     private static List<AiAssistExtensionsOutputDescriptor> toOutputDescriptors(List<PlanEntry> plan) {
-        // Group by (assistantId, contentType, targetDir, action)
         var groups = plan.stream().collect(Collectors.groupingBy(
             e -> e.assistantId() + "\0" + e.contentType() + "\0" + e.targetDir() + "\0" + e.action(),
             LinkedHashMap::new, Collectors.toList()));
@@ -396,7 +483,7 @@ public final class AiAssistExtensionsInstaller {
         for (var entries : groups.values()) {
             var first = entries.get(0);
             var files = entries.stream()
-                .map(e -> targetRelativePath(e.targetDir(), e.targetPath()))
+                .map(PlanEntry::targetRelPath)
                 .toArray(String[]::new);
             result.add(AiAssistExtensionsOutputDescriptor.builder()
                 .assistant(first.assistant())
@@ -411,37 +498,6 @@ public final class AiAssistExtensionsInstaller {
                 .build());
         }
         return result;
-    }
-
-    private static String targetRelativePath(String targetDir, String targetPath) {
-        var dirPath = Path.of(targetDir);
-        var fullPath = Path.of(targetPath);
-        if (fullPath.startsWith(dirPath)) {
-            return dirPath.relativize(fullPath).toString();
-        }
-        return targetPath;
-    }
-
-    // ──────────────────────────── State → output ────────────────────────────
-
-    private static AiAssistExtensionsOutputDescriptor stateToOutput(
-            AiAssistExtensionsStateDescriptor state, String action) {
-        var files = state.getFiles() != null
-            ? state.getFiles().stream()
-                .map(f -> targetRelativePath(state.getTargetDir(), f.getTarget()))
-                .toArray(String[]::new)
-            : new String[0];
-        return AiAssistExtensionsOutputDescriptor.builder()
-            .assistant(state.getAssistant())
-            .assistantId(state.getAssistantId())
-            .contentType(state.getContentType())
-            .targetDir(state.getTargetDir())
-            .fileCount(files.length)
-            .sourceVersion(state.getSourceVersion())
-            .files(files)
-            .filesString(String.join(", ", files))
-            .actionResult(action)
-            .build();
     }
 
     // ──────────────────────────── Content discovery ────────────────────────────
@@ -557,6 +613,83 @@ public final class AiAssistExtensionsInstaller {
         return sourceFile;
     }
 
+    // ──────────────────────────── Custom-dir content discovery ────────────────────────────
+
+    /**
+     * Discover source files for a content type without assistant-specific target config.
+     * For directory/files modes, behaves identically to the target-aware variant.
+     * For explicit mode, discovers all entries defined in the content type.
+     */
+    private static List<String> discoverSourceFilesForContentType(
+            AiAssistExtensionsContentTypeDescriptor ctDesc,
+            AiAssistExtensionsSourceHandler sourceHandler) {
+        var discoverMode = ctDesc.getDiscover();
+
+        if ("explicit".equals(discoverMode)) {
+            return discoverAllExplicitEntries(ctDesc, sourceHandler);
+        }
+
+        var sourceDir = ctDesc.getSourceDir();
+        if (sourceDir == null || !sourceHandler.exists(sourceDir)) {
+            return Collections.emptyList();
+        }
+        if ("directory".equals(discoverMode)) {
+            return discoverDirectoryEntries(sourceDir, ctDesc.getEntryMarker(), sourceHandler);
+        } else if ("files".equals(discoverMode)) {
+            return discoverFileEntries(sourceDir, ctDesc.getFilePattern(), sourceHandler);
+        }
+        return Collections.emptyList();
+    }
+
+    /**
+     * Discover all explicit entries defined in the content type descriptor,
+     * without filtering by assistant-specific source-entries.
+     */
+    private static List<String> discoverAllExplicitEntries(
+            AiAssistExtensionsContentTypeDescriptor ctDesc,
+            AiAssistExtensionsSourceHandler sourceHandler) {
+        var entriesMap = ctDesc.getEntries();
+        if (entriesMap == null) { return Collections.emptyList(); }
+        var result = new ArrayList<String>();
+        for (var entryPath : entriesMap.values()) {
+            if (entryPath != null && sourceHandler.exists(entryPath)) {
+                var resolvedPath = sourceHandler.getExtractedDir().resolve(entryPath);
+                if (Files.isDirectory(resolvedPath)) {
+                    sourceHandler.listFiles(entryPath).forEach(f -> result.add(f.toString()));
+                } else {
+                    result.add(entryPath);
+                }
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Compute target-relative path for a source file using only the content type
+     * descriptor (no assistant target). For explicit mode, strips entry path prefix.
+     */
+    private static String getTargetRelativePathForContentType(
+            AiAssistExtensionsContentTypeDescriptor ctDesc, String sourceFile) {
+        var discoverMode = ctDesc.getDiscover();
+        if ("explicit".equals(discoverMode)) {
+            var entriesMap = ctDesc.getEntries();
+            if (entriesMap != null) {
+                for (var entryPath : entriesMap.values()) {
+                    if (entryPath != null && sourceFile.startsWith(entryPath + "/")) {
+                        return sourceFile.substring(entryPath.length() + 1);
+                    } else if (sourceFile.equals(entryPath)) {
+                        return Path.of(sourceFile).getFileName().toString();
+                    }
+                }
+            }
+            return Path.of(sourceFile).getFileName().toString();
+        }
+        if (ctDesc.getSourceDir() != null && sourceFile.startsWith(ctDesc.getSourceDir() + "/")) {
+            return sourceFile.substring(ctDesc.getSourceDir().length() + 1);
+        }
+        return sourceFile;
+    }
+
     private static boolean matchesGlob(String filename, String glob) {
         var regex = glob.replace(".", "\\.").replace("*", ".*");
         return filename.matches(regex);
@@ -564,30 +697,35 @@ public final class AiAssistExtensionsInstaller {
 
     // ──────────────────────────── Plan execution ────────────────────────────
 
-    private static void executePlan(List<PlanEntry> plan,
+    private static void executeSetupPlan(List<PlanEntry> plan,
             AiAssistExtensionsSourceHandler sourceHandler) {
-        for (var entry : plan) {
-            if ("INSTALLED".equals(entry.action())) {
-                installFile(sourceHandler, entry);
-            }
-        }
-        savePlanState(plan);
-    }
+        // Group by target dir to write one manifest per dir
+        var byTargetDir = plan.stream()
+            .filter(e -> !"EXISTING".equals(e.action()))
+            .collect(Collectors.groupingBy(PlanEntry::targetDir,
+                LinkedHashMap::new, Collectors.toList()));
 
-    private static void executeUpdatePlan(List<PlanEntry> plan,
-            AiAssistExtensionsSourceHandler sourceHandler) {
-        for (var entry : plan) {
-            switch (entry.action()) {
-                case "INSTALLED", "UPDATED" -> installFile(sourceHandler, entry);
-                case "REMOVED" -> deleteTargetFile(Path.of(entry.targetPath()));
+        for (var dirEntries : byTargetDir.values()) {
+            for (var entry : dirEntries) {
+                switch (entry.action()) {
+                    case "INSTALLED", "UPDATED" -> installFile(sourceHandler, entry);
+                    case "REMOVED" -> deleteTargetFile(Path.of(entry.targetAbsPath()));
+                }
             }
+
+            // Write manifest for this target dir
+            var first = dirEntries.get(0);
+            var installedFiles = dirEntries.stream()
+                .filter(e -> !"REMOVED".equals(e.action()))
+                .map(PlanEntry::targetRelPath)
+                .toList();
+            writeTargetDirManifest(Path.of(first.targetDir()), first.contentType(),
+                first.sourceVersion(), installedFiles);
         }
-        savePlanState(plan);
-        cleanEmptyStateDirs();
     }
 
     private static void installFile(AiAssistExtensionsSourceHandler sourceHandler, PlanEntry entry) {
-        var targetPath = Path.of(entry.targetPath());
+        var targetPath = Path.of(entry.targetAbsPath());
         var sourceBytes = sourceHandler.readFileBytes(entry.sourceFile());
         if (sourceBytes == null) {
             throw new FcliSimpleException("Source file not found: " + entry.sourceFile());
@@ -600,57 +738,196 @@ public final class AiAssistExtensionsInstaller {
         }
     }
 
-    // ──────────────────────────── State management ────────────────────────────
+    // ──────────────────────────── Target dir manifest ────────────────────────────
+
+    private static void writeTargetDirManifest(Path targetDir, String contentType,
+            String version, List<String> files) {
+        var manifest = AiAssistExtensionsTargetDirManifest.builder()
+            .schemaVersion(1)
+            .contentType(contentType)
+            .version(version)
+            .timestamp(Instant.now().toString())
+            .files(files)
+            .build();
+        var manifestPath = targetDir.resolve(AiAssistExtensionsTargetDirManifest.MANIFEST_FILENAME);
+        try {
+            Files.createDirectories(targetDir);
+            var json = JsonHelper.getObjectMapper().writerWithDefaultPrettyPrinter()
+                .writeValueAsString(manifest);
+            Files.writeString(manifestPath, json);
+        } catch (IOException e) {
+            throw new FcliTechnicalException("Error writing manifest: " + manifestPath, e);
+        }
+    }
+
+    static AiAssistExtensionsTargetDirManifest readTargetDirManifest(Path targetDir) {
+        var manifestPath = targetDir.resolve(AiAssistExtensionsTargetDirManifest.MANIFEST_FILENAME);
+        if (!Files.isRegularFile(manifestPath)) { return null; }
+        try {
+            var content = Files.readString(manifestPath);
+            return JsonHelper.getObjectMapper()
+                .readValue(content, AiAssistExtensionsTargetDirManifest.class);
+        } catch (IOException e) {
+            LOG.warn("Error reading manifest: {}", manifestPath, e);
+            return null;
+        }
+    }
+
+    private static void deleteManifestFile(Path targetDir) {
+        var manifestPath = targetDir.resolve(AiAssistExtensionsTargetDirManifest.MANIFEST_FILENAME);
+        try {
+            Files.deleteIfExists(manifestPath);
+        } catch (IOException e) {
+            LOG.warn("Error deleting manifest: {}", manifestPath, e);
+        }
+    }
+
+    // ──────────────────────────── Installations state (fcli state) ────────────────────────────
+
+    private static AiAssistExtensionsInstallationsDescriptor loadInstallationsState() {
+        var desc = FcliDataHelper.readFile(INSTALLATIONS_STATE_PATH,
+            AiAssistExtensionsInstallationsDescriptor.class, false);
+        return desc != null ? desc : new AiAssistExtensionsInstallationsDescriptor();
+    }
+
+    private static void saveInstallationsState(
+            Map<String, AiAssistExtensionsAssistantDescriptor> selectedAssistants,
+            AiAssistExtensionsDistributionDescriptor distribution,
+            List<PlanEntry> plan) {
+        var existing = loadInstallationsState();
+
+        // Build target dir map from plan for each assistant
+        var planTargets = plan.stream()
+            .filter(e -> !"EXISTING".equals(e.action()) && !"REMOVED".equals(e.action()))
+            .collect(Collectors.groupingBy(PlanEntry::assistantId,
+                LinkedHashMap::new, Collectors.toList()));
+
+        for (var entry : selectedAssistants.entrySet()) {
+            var assistantId = entry.getKey();
+            var assistant = entry.getValue();
+            var entries = planTargets.getOrDefault(assistantId, List.of());
+
+            var targets = new LinkedHashMap<String, String>();
+            for (var planEntry : entries) {
+                targets.putIfAbsent(planEntry.contentType(), planEntry.targetDir());
+            }
+            // Also include targets from EXISTING entries (shared dirs)
+            plan.stream()
+                .filter(e -> "EXISTING".equals(e.action()) && e.assistantId().equals(assistantId))
+                .forEach(e -> targets.putIfAbsent(e.contentType(), e.targetDir()));
+
+            if (!targets.isEmpty()) {
+                existing.getAssistants().put(assistantId, AssistantInstallation.builder()
+                    .displayName(assistant.getDisplayName())
+                    .targets(targets)
+                    .build());
+            }
+        }
+
+        FcliDataHelper.saveFile(INSTALLATIONS_STATE_PATH, existing, true);
+    }
+
+    private static void clearInstallationsState(Set<String> contentTypeFilter) {
+        if (contentTypeFilter == null || contentTypeFilter.isEmpty()) {
+            FcliDataHelper.deleteFile(INSTALLATIONS_STATE_PATH, false);
+            return;
+        }
+        // Partial clear: remove only matching content types from each assistant
+        var state = loadInstallationsState();
+        var toRemove = new ArrayList<String>();
+        for (var entry : state.getAssistants().entrySet()) {
+            entry.getValue().getTargets().keySet().removeAll(contentTypeFilter);
+            if (entry.getValue().getTargets().isEmpty()) {
+                toRemove.add(entry.getKey());
+            }
+        }
+        toRemove.forEach(state.getAssistants()::remove);
+        if (state.getAssistants().isEmpty()) {
+            FcliDataHelper.deleteFile(INSTALLATIONS_STATE_PATH, false);
+        } else {
+            FcliDataHelper.saveFile(INSTALLATIONS_STATE_PATH, state, true);
+        }
+    }
+
+    // ──────────────────────────── Target dir collection ────────────────────────────
 
     /**
-     * Save grouped state descriptors from a plan.
-     * Groups plan entries by (assistantId, contentType) and writes one state file each.
-     * Entries with action REMOVED cause their state file to be deleted.
+     * Collect all known target directories from both the distribution descriptor
+     * (if available) and the fcli installations state.
      */
-    private static void savePlanState(List<PlanEntry> plan) {
-        // Group by (assistantId, contentType)
-        var groups = plan.stream().collect(Collectors.groupingBy(
-            e -> e.assistantId() + "\0" + e.contentType(),
-            LinkedHashMap::new, Collectors.toList()));
+    private static Set<Path> collectAllKnownTargetDirs() {
+        var dirs = new LinkedHashSet<Path>();
 
-        for (var groupEntries : groups.values()) {
-            var first = groupEntries.get(0);
-            // Collect non-removed files
-            var files = groupEntries.stream()
-                .filter(e -> !"REMOVED".equals(e.action()) && !"EXISTING".equals(e.action()))
-                .map(e -> FileEntry.builder()
-                    .source(e.sourceFile())
-                    .target(e.targetPath())
-                    .build())
-                .toList();
+        // From distribution descriptor (if tool-definitions available)
+        try {
+            var distribution = AiAssistExtensionsSourceHandler.readDistributionDescriptor(true);
+            if (distribution.getAssistants() != null) {
+                for (var assistant : distribution.getAssistants().values()) {
+                    if (assistant.getTargets() == null) { continue; }
+                    for (var target : assistant.getTargets()) {
+                        dirs.addAll(AiAssistExtensionsPathResolver.resolveAll(target.getTargetDirs()));
+                    }
+                }
+            }
+        } catch (Exception e) {
+            LOG.debug("Distribution descriptor not available for uninstall scan", e);
+        }
 
-            if (files.isEmpty()) {
-                // All removed or all existing — delete state
-                deleteStateDescriptor(first.assistantId(), first.contentType());
-            } else {
-                var state = AiAssistExtensionsStateDescriptor.builder()
-                    .assistant(first.assistant())
-                    .assistantId(first.assistantId())
-                    .contentType(first.contentType())
-                    .targetDir(first.targetDir())
-                    .sourceVersion(first.sourceVersion())
-                    .timestamp(Instant.now().toString())
-                    .files(files)
-                    .build();
-                var relativePath = STATE_BASE_PATH
-                    .resolve(first.assistantId())
-                    .resolve(first.contentType() + ".json");
-                FcliDataHelper.saveFile(relativePath, state, true);
+        // From fcli state
+        var installations = loadInstallationsState();
+        for (var installation : installations.getAssistants().values()) {
+            for (var dir : installation.getTargets().values()) {
+                dirs.add(Path.of(dir));
+            }
+        }
+
+        return dirs;
+    }
+
+    // ──────────────────────────── Duplicate content warning ────────────────────────────
+
+    /**
+     * Warn when a content type is present in multiple directories that an
+     * assistant reads from, which may cause duplicate entries in that assistant.
+     */
+    private static void warnDuplicateContentDirs(
+            AiAssistExtensionsDistributionDescriptor distribution,
+            Map<String, AiAssistExtensionsAssistantDescriptor> selectedAssistants,
+            Set<String> contentTypeFilter) {
+        if (distribution.getAssistants() == null) { return; }
+
+        for (var entry : distribution.getAssistants().entrySet()) {
+            var assistantId = entry.getKey();
+            var assistant = entry.getValue();
+            if (assistant.getTargets() == null) { continue; }
+
+            for (var target : assistant.getTargets()) {
+                var contentType = target.getContentType();
+                if (!matchesContentTypeFilter(contentType, contentTypeFilter)) { continue; }
+
+                var resolvedDirs = AiAssistExtensionsPathResolver.resolveAll(target.getTargetDirs());
+                var dirsWithManifest = resolvedDirs.stream()
+                    .filter(dir -> readTargetDirManifest(dir) != null
+                        || selectedAssistants.containsKey(assistantId))
+                    .filter(dir -> {
+                        var m = readTargetDirManifest(dir);
+                        return m != null && contentType.equals(m.getContentType());
+                    })
+                    .toList();
+
+                if (dirsWithManifest.size() > 1) {
+                    LOG.warn("Content type '{}' exists in multiple directories accessible by {}: {}. "
+                        + "This may cause duplicate entries in the assistant. Consider running "
+                        + "'uninstall' to clean up before re-running 'setup'.",
+                        contentType, assistant.getDisplayName(),
+                        dirsWithManifest.stream().map(Path::toString)
+                            .collect(Collectors.joining(", ")));
+                }
             }
         }
     }
 
-    private static void deleteStateDescriptor(String assistantId, String contentType) {
-        var relativePath = STATE_BASE_PATH
-            .resolve(assistantId)
-            .resolve(contentType + ".json");
-        FcliDataHelper.deleteFile(relativePath, false);
-    }
+    // ──────────────────────────── File operations ────────────────────────────
 
     private static void deleteTargetFile(Path targetPath) {
         try {
@@ -668,54 +945,6 @@ public final class AiAssistExtensionsInstaller {
             }
         } catch (IOException e) {
             LOG.warn("Error deleting file: {}", targetPath, e);
-        }
-    }
-
-    static List<AiAssistExtensionsStateDescriptor> loadAllStateDescriptors() {
-        var result = new ArrayList<AiAssistExtensionsStateDescriptor>();
-        var basePath = FcliDataHelper.getFcliHomePath().resolve(STATE_BASE_PATH);
-        if (!Files.isDirectory(basePath)) { return result; }
-
-        try {
-            Files.walkFileTree(basePath, new SimpleFileVisitor<Path>() {
-                @Override
-                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
-                    if (file.toString().endsWith(".json")) {
-                        try {
-                            var content = Files.readString(file);
-                            var desc = JsonHelper.getObjectMapper()
-                                .readValue(content, AiAssistExtensionsStateDescriptor.class);
-                            result.add(desc);
-                        } catch (IOException e) {
-                            LOG.warn("Error reading state file: {}", file, e);
-                        }
-                    }
-                    return FileVisitResult.CONTINUE;
-                }
-            });
-        } catch (IOException e) {
-            LOG.warn("Error walking state directory: {}", basePath, e);
-        }
-        return result;
-    }
-
-    private static void cleanEmptyStateDirs() {
-        var basePath = FcliDataHelper.getFcliHomePath().resolve(STATE_BASE_PATH);
-        if (!Files.isDirectory(basePath)) { return; }
-        try {
-            Files.walkFileTree(basePath, new SimpleFileVisitor<Path>() {
-                @Override
-                public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
-                    if (!dir.equals(basePath)) {
-                        try (var stream = Files.list(dir)) {
-                            if (stream.findAny().isEmpty()) { Files.delete(dir); }
-                        }
-                    }
-                    return FileVisitResult.CONTINUE;
-                }
-            });
-        } catch (IOException e) {
-            LOG.debug("Error cleaning empty state dirs", e);
         }
     }
 

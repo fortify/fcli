@@ -35,11 +35,13 @@ public final class AiAssistExtensionsConditionEvaluator {
     public AiAssistExtensionsConditionEvaluator() {}
 
     /**
-     * Evaluate a condition object (may be a map with a single condition or operator).
+     * Evaluate a condition object (may be a map with a single condition or operator,
+     * or a boolean literal for unconditional true/false).
      */
     @SuppressWarnings("unchecked")
     public boolean evaluate(Object condition) {
         if (condition == null) { return true; }
+        if (condition instanceof Boolean b) { return b; }
         if (condition instanceof Map<?, ?> map) {
             return evaluateMap((Map<String, Object>) map);
         }

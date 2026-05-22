@@ -15,9 +15,9 @@ package com.fortify.cli.ai_assist.extensions.cli.cmd;
 import java.util.Set;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.ai_assist.extensions.cli.mixin.AiAssistExtensionsAssistantFilterMixin;
 import com.fortify.cli.ai_assist.extensions.helper.AiAssistExtensionsInstaller;
 import com.fortify.cli.ai_assist.extensions.helper.AiAssistExtensionsSourceHandler.DigestMismatchAction;
+import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.cli.cmd.AbstractOutputCommand;
 import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
@@ -25,15 +25,18 @@ import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 
 import lombok.Getter;
+import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
-@Command(name = OutputHelperMixins.Update.CMD_NAME)
-public class AiAssistExtensionsUpdateCommand extends AbstractOutputCommand
+@Command(name = OutputHelperMixins.Setup.CMD_NAME)
+public class AiAssistExtensionsSetupCommand extends AbstractOutputCommand
         implements IJsonNodeSupplier, IActionCommandResultSupplier {
-    @Mixin @Getter private OutputHelperMixins.Update outputHelper;
-    @Mixin private AiAssistExtensionsAssistantFilterMixin assistantFilter;
+    @Mixin @Getter private OutputHelperMixins.Setup outputHelper;
+
+    @ArgGroup(exclusive = true, multiplicity = "1")
+    private TargetSelectionGroup targetSelection;
 
     @Option(names = {"-v", "--version"}, paramLabel = "<version>",
         descriptionKey = "fcli.ai-assist.extensions.version",
@@ -43,10 +46,6 @@ public class AiAssistExtensionsUpdateCommand extends AbstractOutputCommand
     @Option(names = {"-s", "--source"}, paramLabel = "<zip|dir>",
         descriptionKey = "fcli.ai-assist.extensions.source")
     private String source;
-
-    @Option(names = {"--dir"}, paramLabel = "<path>",
-        descriptionKey = "fcli.ai-assist.extensions.dir")
-    private String customDir;
 
     @Option(names = {"--content-types"}, split = ",", paramLabel = "<type>",
         descriptionKey = "fcli.ai-assist.extensions.content-types")
@@ -67,21 +66,33 @@ public class AiAssistExtensionsUpdateCommand extends AbstractOutputCommand
 
     @Override
     public JsonNode getJsonNode() {
+        var customDir = targetSelection.customDir;
+        if (customDir != null && (contentTypeFilter == null || contentTypeFilter.isEmpty())) {
+            throw new FcliSimpleException("--content-types is required when using --dir");
+        }
         return JsonHelper.getObjectMapper().valueToTree(
-            AiAssistExtensionsInstaller.update(
-                source,
-                version,
-                assistantFilter.getAssistants(),
-                assistantFilter.getExcludeAssistants(),
-                contentTypeFilter,
-                customDir,
-                onDigestMismatch,
-                dryRun));
+            AiAssistExtensionsInstaller.setup(
+                source, version, targetSelection.assistants, targetSelection.autoDetect,
+                contentTypeFilter, customDir, onDigestMismatch, dryRun));
     }
 
     @Override
     public boolean isSingular() { return false; }
 
     @Override
-    public String getActionCommandResult() { return "UPDATED"; }
+    public String getActionCommandResult() { return "SETUP"; }
+
+    static class TargetSelectionGroup {
+        @Option(names = {"--assistants"}, split = ",", paramLabel = "<name>",
+            descriptionKey = "fcli.ai-assist.extensions.assistants")
+        Set<String> assistants;
+
+        @Option(names = {"--auto-detect"},
+            descriptionKey = "fcli.ai-assist.extensions.auto-detect")
+        boolean autoDetect;
+
+        @Option(names = {"--dir"}, paramLabel = "<path>",
+            descriptionKey = "fcli.ai-assist.extensions.dir")
+        String customDir;
+    }
 }
