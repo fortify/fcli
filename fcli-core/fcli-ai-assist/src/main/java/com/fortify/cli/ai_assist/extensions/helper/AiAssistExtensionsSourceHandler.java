@@ -17,7 +17,7 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Comparator;
-import java.util.stream.Stream;
+import java.util.List;
 import java.util.zip.ZipFile;
 
 import org.slf4j.Logger;
@@ -210,7 +210,7 @@ public final class AiAssistExtensionsSourceHandler implements AutoCloseable {
     }
 
     public byte[] readFileBytes(String relativePath) {
-        var filePath = extractedDir.resolve(relativePath);
+        var filePath = safeResolve(relativePath);
         if (!Files.isRegularFile(filePath)) { return null; }
         try {
             return Files.readAllBytes(filePath);
@@ -220,29 +220,39 @@ public final class AiAssistExtensionsSourceHandler implements AutoCloseable {
     }
 
     public boolean exists(String relativePath) {
-        return Files.exists(extractedDir.resolve(relativePath));
+        return Files.exists(safeResolve(relativePath));
     }
 
-    public Stream<Path> listFiles(String relativePath) {
-        var dir = extractedDir.resolve(relativePath);
-        if (!Files.isDirectory(dir)) { return Stream.empty(); }
-        try {
-            return Files.walk(dir)
+    public List<Path> listFiles(String relativePath) {
+        var dir = safeResolve(relativePath);
+        if (!Files.isDirectory(dir)) { return List.of(); }
+        try (var stream = Files.walk(dir)) {
+            return stream
                 .filter(Files::isRegularFile)
-                .map(p -> extractedDir.relativize(p));
+                .map(p -> extractedDir.relativize(p))
+                .toList();
         } catch (IOException e) {
             throw new FcliTechnicalException("Error listing files in: " + relativePath, e);
         }
     }
 
-    public Stream<Path> listDirs(String relativePath) {
-        var dir = extractedDir.resolve(relativePath);
-        if (!Files.isDirectory(dir)) { return Stream.empty(); }
-        try {
-            return Files.list(dir).filter(Files::isDirectory);
+    public List<Path> listDirs(String relativePath) {
+        var dir = safeResolve(relativePath);
+        if (!Files.isDirectory(dir)) { return List.of(); }
+        try (var stream = Files.list(dir)) {
+            return stream.filter(Files::isDirectory).toList();
         } catch (IOException e) {
             throw new FcliTechnicalException("Error listing dirs in: " + relativePath, e);
         }
+    }
+
+    private Path safeResolve(String relativePath) {
+        var resolved = extractedDir.resolve(relativePath).normalize();
+        if (!resolved.startsWith(extractedDir.normalize())) {
+            throw new FcliSimpleException(
+                "Path traversal detected: " + relativePath);
+        }
+        return resolved;
     }
 
     @Override

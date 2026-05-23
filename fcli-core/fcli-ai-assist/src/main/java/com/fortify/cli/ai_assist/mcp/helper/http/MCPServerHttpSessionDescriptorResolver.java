@@ -17,7 +17,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.HashSet;
+import java.util.Arrays;
 import java.util.HexFormat;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -343,15 +343,20 @@ public final class MCPServerHttpSessionDescriptorResolver {
                     DEFAULT_FOD_SCOPES
             );
         }
-        return FoDOAuthHelper.createToken(
-                urlConfig,
-                new HttpMcpFoDUserCredentials(
-                        auth.fodTenant(),
-                        auth.fodUser(),
-                        auth.fodPat().toCharArray()
-                ),
-                DEFAULT_FOD_SCOPES
-        );
+        var pwd = auth.fodPat().toCharArray();
+        try {
+            return FoDOAuthHelper.createToken(
+                    urlConfig,
+                    new HttpMcpFoDUserCredentials(
+                            auth.fodTenant(),
+                            auth.fodUser(),
+                            pwd
+                    ),
+                    DEFAULT_FOD_SCOPES
+            );
+        } finally {
+            Arrays.fill(pwd, '\0');
+        }
     }
 
     private static final class HttpMcpFoDClientCredentials implements IFoDClientCredentials {
@@ -420,7 +425,7 @@ public final class MCPServerHttpSessionDescriptorResolver {
 
         @Override
         public Set<SSCComponentDisable> getDisabledComponents() {
-            return new HashSet<>();
+            return Set.of();
         }
 
         @Override

@@ -132,6 +132,7 @@ public final class FcliExecutionContext implements AutoCloseable {
     public boolean enableEphemeralEncryption() {
         if ( encryptionHelper!=EncryptionHelper.DEFAULT ) { return true; }
         synchronized(this) {
+            if ( encryptionHelper!=EncryptionHelper.DEFAULT ) { return true; }
             var rnd = new byte[32];
             new SecureRandom().nextBytes(rnd);
             String pwd = Base64.getUrlEncoder().withoutPadding().encodeToString(rnd);

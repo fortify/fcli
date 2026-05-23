@@ -66,7 +66,7 @@ public class MCPServerHttpConfig {
     public static class ServerConfig {
         private int port = 8080;
         private String bindAddress;
-        private long maxRequestBodyBytes = -1;
+        private long maxRequestBodyBytes = 10 * 1024 * 1024;
         private TlsConfig tls;
 
         @JsonIgnore

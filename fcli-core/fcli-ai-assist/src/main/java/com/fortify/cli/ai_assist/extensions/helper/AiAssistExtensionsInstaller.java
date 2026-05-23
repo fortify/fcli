@@ -13,6 +13,7 @@
 package com.fortify.cli.ai_assist.extensions.helper;
 
 import java.io.IOException;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
@@ -152,7 +153,7 @@ public final class AiAssistExtensionsInstaller {
                 var files = manifest.getFiles() != null ? manifest.getFiles() : List.<String>of();
                 if (!dryRun) {
                     for (var file : files) {
-                        deleteTargetFile(dir.resolve(file));
+                        deleteTargetFile(safeResolve(dir, file));
                     }
                     deleteManifestFile(dir, manifest.getContentType());
                 }
@@ -367,7 +368,7 @@ public final class AiAssistExtensionsInstaller {
                 var handledRelPaths = new HashSet<String>();
                 for (var sourceFile : sourceFiles) {
                     var targetRelPath = getTargetRelativePath(contentManifest, target, sourceFile);
-                    var targetAbsPath = resolvedDir.resolve(targetRelPath).toString();
+                    var targetAbsPath = safeResolve(resolvedDir, targetRelPath).toString();
                     handledRelPaths.add(targetRelPath);
 
                     String action;
@@ -390,7 +391,7 @@ public final class AiAssistExtensionsInstaller {
                         plan.add(new PlanEntry(
                             assistant.getDisplayName(), assistantId, contentType,
                             resolvedDir.toString(), null, existingFile,
-                            resolvedDir.resolve(existingFile).toString(),
+                            safeResolve(resolvedDir, existingFile).toString(),
                             sourceVersion, "REMOVED"));
                     }
                 }
@@ -412,7 +413,7 @@ public final class AiAssistExtensionsInstaller {
             plan.add(new PlanEntry(
                 assistant.getDisplayName(), assistantId, contentType,
                 resolvedDir.toString(), sourceFile, targetRelPath,
-                resolvedDir.resolve(targetRelPath).toString(),
+                safeResolve(resolvedDir, targetRelPath).toString(),
                 sourceVersion, "EXISTING"));
         }
     }
@@ -446,7 +447,7 @@ public final class AiAssistExtensionsInstaller {
             var handledRelPaths = new HashSet<String>();
             for (var sourceFile : sourceFiles) {
                 var targetRelPath = getTargetRelativePathForContentType(ctDesc, sourceFile);
-                var targetAbsPath = resolvedDir.resolve(targetRelPath).toString();
+                var targetAbsPath = safeResolve(resolvedDir, targetRelPath).toString();
                 handledRelPaths.add(targetRelPath);
 
                 String action;
@@ -468,7 +469,7 @@ public final class AiAssistExtensionsInstaller {
                     plan.add(new PlanEntry(
                         null, null, contentType,
                         resolvedDir.toString(), null, existingFile,
-                        resolvedDir.resolve(existingFile).toString(),
+                        safeResolve(resolvedDir, existingFile).toString(),
                         sourceVersion, "REMOVED"));
                 }
             }
@@ -695,8 +696,8 @@ public final class AiAssistExtensionsInstaller {
     }
 
     private static boolean matchesGlob(String filename, String glob) {
-        var regex = glob.replace(".", "\\.").replace("*", ".*");
-        return filename.matches(regex);
+        var matcher = FileSystems.getDefault().getPathMatcher("glob:" + glob);
+        return matcher.matches(Path.of(filename));
     }
 
     // ──────────────────────────── Plan execution ────────────────────────────
@@ -987,5 +988,14 @@ public final class AiAssistExtensionsInstaller {
 
     private static boolean matchesContentTypeFilter(String contentType, Set<String> filter) {
         return filter == null || filter.isEmpty() || filter.contains(contentType);
+    }
+
+    private static Path safeResolve(Path baseDir, String relativePath) {
+        var resolved = baseDir.resolve(relativePath).normalize();
+        if (!resolved.startsWith(baseDir.normalize())) {
+            throw new FcliSimpleException(
+                "Path traversal detected: " + relativePath);
+        }
+        return resolved;
     }
 }
