@@ -139,7 +139,14 @@ public final class ToolDefinitionsHelper {
 
     private static final ToolDefinitionsStateDescriptor update(String source, Path dest) throws IOException {
         try {
-            UnirestHelper.download("tool", new URL(source).toString(), dest.toFile());
+            var url = new URL(source);
+            Path tempFile = Files.createTempFile("tool-definitions-", ".zip");
+            try {
+                UnirestHelper.download("tool", url.toString(), tempFile.toFile());
+                mergeDefinitionsZip(dest, tempFile.toString());
+            } finally {
+                Files.deleteIfExists(tempFile);
+            }
         } catch (MalformedURLException e) {
             if (!isValidZip(source)) {
                 throw new FcliSimpleException("Invalid tool definitions file", e);
