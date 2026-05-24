@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -32,14 +33,14 @@ import org.slf4j.LoggerFactory;
 public final class AiAssistExtensionsConditionEvaluator {
     private static final Logger LOG = LoggerFactory.getLogger(AiAssistExtensionsConditionEvaluator.class);
 
-    public AiAssistExtensionsConditionEvaluator() {}
+    private AiAssistExtensionsConditionEvaluator() {}
 
     /**
      * Evaluate a condition object (may be a map with a single condition or operator,
      * or a boolean literal for unconditional true/false).
      */
     @SuppressWarnings("unchecked")
-    public boolean evaluate(Object condition) {
+    public static boolean evaluate(Object condition) {
         if (condition == null) { return true; }
         if (condition instanceof Boolean b) { return b; }
         if (condition instanceof Map<?, ?> map) {
@@ -50,7 +51,7 @@ public final class AiAssistExtensionsConditionEvaluator {
     }
 
     @SuppressWarnings("unchecked")
-    private boolean evaluateMap(Map<String, Object> map) {
+    private static boolean evaluateMap(Map<String, Object> map) {
         for (var entry : map.entrySet()) {
             var key = entry.getKey();
             var value = entry.getValue();
@@ -62,9 +63,9 @@ public final class AiAssistExtensionsConditionEvaluator {
                 case "command-exists":
                     return evaluateCommandExists((String) value);
                 case "any-of":
-                    return evaluateAnyOf((java.util.List<Object>) value);
+                    return evaluateAnyOf((List<Object>) value);
                 case "all-of":
-                    return evaluateAllOf((java.util.List<Object>) value);
+                    return evaluateAllOf((List<Object>) value);
                 case "not":
                     return !evaluate(value);
                 default:
@@ -75,7 +76,7 @@ public final class AiAssistExtensionsConditionEvaluator {
         return true;
     }
 
-    private boolean evaluateDirExists(Object value) {
+    private static boolean evaluateDirExists(Object value) {
         if (value instanceof String s) {
             var resolved = AiAssistExtensionsPathResolver.resolvePath(s);
             return resolved != null && Files.isDirectory(resolved);
@@ -92,7 +93,7 @@ public final class AiAssistExtensionsConditionEvaluator {
      * Value may be a plain string or a platform-specific map.
      */
     @SuppressWarnings("unchecked")
-    private boolean evaluateGlobExists(Object value) {
+    private static boolean evaluateGlobExists(Object value) {
         String pattern;
         if (value instanceof String s) {
             pattern = s;
@@ -127,7 +128,7 @@ public final class AiAssistExtensionsConditionEvaluator {
         var parentPath = Path.of(parentBuilder.toString());
         if (!Files.isDirectory(parentPath)) { return false; }
         // Build glob pattern from the remaining segments
-        var globTail = String.join("/", java.util.Arrays.copyOfRange(segments, globStart, segments.length));
+        var globTail = String.join("/", Arrays.copyOfRange(segments, globStart, segments.length));
         var matcher = FileSystems.getDefault().getPathMatcher("glob:" + globTail);
         try (var stream = Files.walk(parentPath, segments.length - globStart)) {
             return stream.anyMatch(p -> matcher.matches(parentPath.relativize(p)));
@@ -142,7 +143,7 @@ public final class AiAssistExtensionsConditionEvaluator {
      * for matching executables. On Windows, also checks PATHEXT extensions.
      * Does not spawn external processes (no which/where).
      */
-    private boolean evaluateCommandExists(String command) {
+    private static boolean evaluateCommandExists(String command) {
         if (StringUtils.isBlank(command)) { return false; }
         var pathEnv = System.getenv("PATH");
         if (StringUtils.isBlank(pathEnv)) { return false; }
@@ -177,13 +178,13 @@ public final class AiAssistExtensionsConditionEvaluator {
         return result;
     }
 
-    private boolean evaluateAnyOf(List<Object> conditions) {
+    private static boolean evaluateAnyOf(List<Object> conditions) {
         if (conditions == null) { return false; }
-        return conditions.stream().anyMatch(this::evaluate);
+        return conditions.stream().anyMatch(AiAssistExtensionsConditionEvaluator::evaluate);
     }
 
-    private boolean evaluateAllOf(List<Object> conditions) {
+    private static boolean evaluateAllOf(List<Object> conditions) {
         if (conditions == null) { return false; }
-        return conditions.stream().allMatch(this::evaluate);
+        return conditions.stream().allMatch(AiAssistExtensionsConditionEvaluator::evaluate);
     }
 }

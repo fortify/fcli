@@ -37,7 +37,6 @@ import com.fortify.cli.common.variable.FcliVariableHelper;
 
 import lombok.Builder;
 import lombok.Data;
-import lombok.NonNull;
 import picocli.CommandLine;
 import picocli.CommandLine.ExecutionException;
 import picocli.CommandLine.Model.CommandSpec;
@@ -46,21 +45,12 @@ import picocli.CommandLine.ParseResult;
 
 @Builder @Data
 public final class FcliCommandExecutorFactory { 
-    @NonNull private final String cmd;
+    private final String[] args;
     private final Consumer<ObjectNode> recordConsumer;
     private final Consumer<ObjectNode> metadataConsumer;
     @Builder.Default private final OutputType stdoutOutputTypeIfRecordCollectionSupported = OutputType.show;
     @Builder.Default private final OutputType stdoutOutputTypeIfRecordCollectionNotSupported = OutputType.show;
     @Builder.Default private final OutputType stderrOutputType = OutputType.show;
-
-    // Partial builder class; Lombok adds the generated field methods to this.
-    public static class FcliCommandExecutorFactoryBuilder {
-        /** Convenience method: sets the same stdout type regardless of whether the command supports record collection. */
-        public FcliCommandExecutorFactoryBuilder stdoutOutputType(OutputType type) {
-            return stdoutOutputTypeIfRecordCollectionSupported(type)
-                    .stdoutOutputTypeIfRecordCollectionNotSupported(type);
-        }
-    }
     private final Consumer<Result> onResult; // Always executed if fcli command didn't throw exception
     private final Consumer<Result> onSuccess; // Executed after onResult, if 0 exit code
     private final Consumer<Result> onFail; // Executed after onResult, if non-zero exit code
@@ -73,10 +63,31 @@ public final class FcliCommandExecutorFactory {
     }
     
     public final FcliCommandExecutor create() {
-        if ( StringUtils.isBlank(cmd) ) {
-            throw new FcliSimpleException("Fcli command to be run may not be blank");
+        if ( args==null || args.length==0 ) {
+            throw new FcliSimpleException("Fcli command args may not be empty");
         }
         return new FcliCommandExecutor();
+    }
+
+    // Partial builder class; Lombok adds the generated field methods to this.
+    public static class FcliCommandExecutorFactoryBuilder {
+        /** Convenience: parse a command string into args. Strips leading {@code fcli} prefix. */
+        public FcliCommandExecutorFactoryBuilder cmd(String cmd) {
+            return args(parseCmd(cmd));
+        }
+        /** Convenience method: sets the same stdout type regardless of whether the command supports record collection. */
+        public FcliCommandExecutorFactoryBuilder stdoutOutputType(OutputType type) {
+            return stdoutOutputTypeIfRecordCollectionSupported(type)
+                    .stdoutOutputTypeIfRecordCollectionNotSupported(type);
+        }
+
+        private static final String[] parseCmd(String cmd) {
+            var cmdWithoutFcli = cmd.replaceFirst("^fcli\s+", "");
+            List<String> argsList = new ArrayList<String>();
+            Matcher m = Pattern.compile("([^\"]\\S*|\".+?\")\\s*").matcher(cmdWithoutFcli);
+            while (m.find()) { argsList.add(m.group(1).replace("\"", "")); }
+            return argsList.toArray(String[]::new);
+        }
     }
     
     public final class FcliCommandExecutor {
@@ -86,7 +97,7 @@ public final class FcliCommandExecutorFactory {
         private Result parseErrorResult = null;
         
         public FcliCommandExecutor() {
-            this.resolvedArgs = FcliVariableHelper.resolveVariables(parseArgs(cmd));
+            this.resolvedArgs = FcliVariableHelper.resolveVariables(args);
             this.replicatedLeafCommandSpec = replicateLeafCommandSpecWithParents(parseArgs(resolvedArgs));
         }
 
@@ -262,12 +273,5 @@ public final class FcliCommandExecutorFactory {
             }
         }
         
-        private static final String[] parseArgs(String args) {
-            var argsWithoutFcli = args.replaceFirst("^fcli\s+", "");
-            List<String> argsList = new ArrayList<String>();
-            Matcher m = Pattern.compile("([^\"]\\S*|\".+?\")\\s*").matcher(argsWithoutFcli);
-            while (m.find()) { argsList.add(m.group(1).replace("\"", "")); }
-            return argsList.toArray(String[]::new);
-        }
     }
 }

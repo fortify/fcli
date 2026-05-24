@@ -80,7 +80,7 @@ public final class StdioHelper {
         if ( installed ) return;
         // Detect ANSI capability before replacing streams: the delegating/masking
         // wrappers installed below can interfere with terminal-based ANSI probing.
-        ansi = Ansi.AUTO.enabled() ? Ansi.ON : Ansi.AUTO;
+        ansi = Ansi.AUTO.enabled() ? Ansi.ON : Ansi.OFF;
         rawOut = System.out;
         rawErr = System.err;
         installThread = Thread.currentThread();
@@ -118,8 +118,8 @@ public final class StdioHelper {
 
     /**
      * Return the resolved ANSI mode, detected before streams were replaced.
-     * Always returns {@link Ansi#ON} or {@link Ansi#AUTO} (never {@link Ansi#OFF}
-     * unless the terminal reported no ANSI support before installation).
+     * Returns {@link Ansi#ON} if the terminal supports ANSI, {@link Ansi#OFF}
+     * otherwise. Before {@link #install()} is called, returns {@link Ansi#AUTO}.
      */
     public static Ansi getAnsi() { return ansi; }
 

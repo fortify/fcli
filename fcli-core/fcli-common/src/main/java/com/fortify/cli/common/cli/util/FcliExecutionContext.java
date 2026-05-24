@@ -17,6 +17,7 @@ import java.security.SecureRandom;
 import java.util.Base64;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import com.fortify.cli.common.crypto.helper.EncryptionHelper;
 import com.fortify.cli.common.log.LogMaskContext;
@@ -72,7 +73,7 @@ public final class FcliExecutionContext implements AutoCloseable {
     // Encryption helper used for encrypt/decrypt in this execution. Default to global DEFAULT.
     private volatile EncryptionHelper encryptionHelper = EncryptionHelper.DEFAULT;
     // Set of absolute file paths that were saved using ephemeral encryption during this execution
-    private final Set<Path> ephemeralEncryptedFiles = java.util.concurrent.ConcurrentHashMap.newKeySet();
+    private final Set<Path> ephemeralEncryptedFiles = ConcurrentHashMap.newKeySet();
 
     public FcliExecutionContext() {
         this(new FcliIsolationScope(), new FcliActionState(), new LogMaskContext());

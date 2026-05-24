@@ -104,8 +104,12 @@ public final class FcliExecutionContextHolder {
     }
 
     /**
-     * Look up a transient session descriptor by type, searching from top to bottom
-     * through the current thread's execution-context stack.
+     * Look up a transient session descriptor by type from the current context's
+     * isolation scope. Since child contexts created via
+     * {@link FcliExecutionContext#createChild()} share the same
+     * {@link FcliIsolationScope} reference as their parent, transient session
+     * descriptors registered in the parent are visible to all children without
+     * requiring stack traversal.
      */
     public static ISessionDescriptor getTransientSessionDescriptor(String type) {
         return current().getIsolationScope().getTransientSessionDescriptor(type);

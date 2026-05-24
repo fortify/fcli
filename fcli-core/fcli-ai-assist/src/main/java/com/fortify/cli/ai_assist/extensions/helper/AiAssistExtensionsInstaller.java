@@ -227,7 +227,6 @@ public final class AiAssistExtensionsInstaller {
         var distribution = AiAssistExtensionsSourceHandler.readDistributionDescriptor(true);
         if (distribution.getAssistants() == null) { return Collections.emptyList(); }
 
-        var conditionEvaluator = detect ? new AiAssistExtensionsConditionEvaluator() : null;
         var installations = loadInstallationsState();
 
         var result = new ArrayList<AiAssistExtensionsAssistantOutputDescriptor>();
@@ -240,8 +239,8 @@ public final class AiAssistExtensionsInstaller {
                     .toArray(String[]::new)
                 : new String[0];
 
-            String detected = conditionEvaluator != null
-                ? String.valueOf(conditionEvaluator.evaluate(assistant.getIfCondition()))
+            String detected = detect
+                ? String.valueOf(AiAssistExtensionsConditionEvaluator.evaluate(assistant.getIfCondition()))
                 : "N/A";
 
             var assistantInstallation = installations.getAssistants().get(id);
@@ -299,9 +298,8 @@ public final class AiAssistExtensionsInstaller {
                 result.put(id, assistant);
             }
         } else if (autoDetect) {
-            var evaluator = new AiAssistExtensionsConditionEvaluator();
             for (var entry : distribution.getAssistants().entrySet()) {
-                if (evaluator.evaluate(entry.getValue().getIfCondition())) {
+                if (AiAssistExtensionsConditionEvaluator.evaluate(entry.getValue().getIfCondition())) {
                     result.put(entry.getKey(), entry.getValue());
                 }
             }

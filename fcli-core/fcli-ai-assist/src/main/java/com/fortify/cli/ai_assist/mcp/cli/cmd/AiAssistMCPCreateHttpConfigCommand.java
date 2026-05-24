@@ -52,7 +52,7 @@ public class AiAssistMCPCreateHttpConfigCommand extends AbstractRunnableCommand 
                     force ? new StandardOpenOption[] {StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING}
                             : new StandardOpenOption[] {StandardOpenOption.CREATE_NEW});
         } catch (IOException e) {
-            throw new FcliSimpleException("Error writing HTTP MCP config file: %s", outputPath);
+            throw new FcliSimpleException("Error writing HTTP MCP config file: " + outputPath, e);
         }
         System.out.printf("Created HTTP MCP config file: %s%n", outputPath);
         return 0;
@@ -69,7 +69,7 @@ public class AiAssistMCPCreateHttpConfigCommand extends AbstractRunnableCommand 
             }
             return new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
         } catch (IOException e) {
-            throw new FcliSimpleException("Error reading HTTP MCP template resource: %s", templateResource);
+            throw new FcliSimpleException("Error reading HTTP MCP template resource: " + templateResource, e);
         }
     }
 

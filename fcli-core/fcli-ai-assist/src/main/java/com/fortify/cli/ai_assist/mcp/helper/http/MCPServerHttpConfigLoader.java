@@ -52,7 +52,7 @@ public final class MCPServerHttpConfigLoader {
         } catch (FcliSimpleException e) {
             throw e;
         } catch (IOException e) {
-            throw new FcliSimpleException("Unable to read HTTP MCP config file: " + normalizedPath);
+            throw new FcliSimpleException("Unable to read HTTP MCP config file: " + normalizedPath, e);
         }
     }
 

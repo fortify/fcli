@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
@@ -400,7 +401,7 @@ public final class ToolDefinitionsHelper {
             ZipEntry entry;
             while ((entry = zis.getNextEntry()) != null) {
                 if (fileName.equals(entry.getName())) {
-                    return new String(zis.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
+                    return new String(zis.readAllBytes(), StandardCharsets.UTF_8);
                 }
             }
             throw new FcliSimpleException("Extra file not found in tool definitions: " + fileName);

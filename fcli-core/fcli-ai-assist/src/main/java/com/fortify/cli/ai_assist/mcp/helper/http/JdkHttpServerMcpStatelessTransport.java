@@ -160,14 +160,14 @@ public class JdkHttpServerMcpStatelessTransport implements McpStatelessServerTra
         }
     }
 
+    private static final long DEFAULT_MAX_REQUEST_BODY_BYTES = 10 * 1024 * 1024; // 10 MB
+
     private byte[] readRequestBody(HttpExchange exchange) throws IOException {
-        if ( maxRequestBodyBytes <= 0 ) {
-            return exchange.getRequestBody().readAllBytes();
-        }
+        var effectiveLimit = maxRequestBodyBytes > 0 ? maxRequestBodyBytes : DEFAULT_MAX_REQUEST_BODY_BYTES;
         // Read one extra byte to detect oversized bodies without loading them fully
-        var limit = (int) Math.min(maxRequestBodyBytes + 1, Integer.MAX_VALUE);
+        var limit = (int) Math.min(effectiveLimit + 1, Integer.MAX_VALUE);
         var bytes = exchange.getRequestBody().readNBytes(limit);
-        if ( bytes.length > maxRequestBodyBytes ) {
+        if ( bytes.length > effectiveLimit ) {
             sendPlainError(exchange, 413, "Request entity too large");
             return null;
         }

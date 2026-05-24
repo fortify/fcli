@@ -12,6 +12,7 @@
  */
 package com.fortify.cli.common.action.runner;
 
+import java.util.Map;
 import java.util.function.Supplier;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -89,7 +90,7 @@ public final class ActionFunctionExecutor {
     /**
      * Execute the function with named arguments from a Map-like structure.
      */
-    public Object execute(java.util.Map<String, Object> args) {
+    public Object execute(Map<String, Object> args) {
         var argsNode = JsonHelper.getObjectMapper().createObjectNode();
         if (args != null) {
             args.forEach((k, v) -> {

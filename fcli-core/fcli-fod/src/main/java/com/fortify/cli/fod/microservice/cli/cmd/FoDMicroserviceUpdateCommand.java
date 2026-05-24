@@ -12,6 +12,7 @@
  */
 package com.fortify.cli.fod.microservice.cli.cmd;
 
+import java.util.ArrayList;
 import java.util.Map;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -49,7 +50,7 @@ public class FoDMicroserviceUpdateCommand extends AbstractFoDJsonNodeOutputComma
     public JsonNode getJsonNode(UnirestInstance unirest) {
         FoDMicroserviceDescriptor msDescriptor = microserviceResolver.getMicroserviceDescriptor(unirest, true);
         var attrHelper = new FoDAttributeDefinitionHelper(unirest);
-        java.util.ArrayList<FoDAttributeValueDescriptor> msAttrsCurrent = msDescriptor.getAttributes();
+        ArrayList<FoDAttributeValueDescriptor> msAttrsCurrent = msDescriptor.getAttributes();
         Map<String, String> attributeUpdates = msAttrsUpdate.getAttributes();
         JsonNode jsonAttrs = attrHelper.buildAttributesNodeForUpdate(null, msAttrsCurrent, attributeUpdates, false);
         FoDMicroserviceUpdateRequest msUpdateRequest = FoDMicroserviceUpdateRequest.builder()

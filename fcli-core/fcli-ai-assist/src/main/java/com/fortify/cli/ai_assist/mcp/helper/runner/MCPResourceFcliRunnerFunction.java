@@ -12,11 +12,13 @@
  */
 package com.fortify.cli.ai_assist.mcp.helper.runner;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fortify.cli.common.action.model.ActionStepRecordsForEach.IActionStepForEachProcessor;
 import com.fortify.cli.common.action.runner.ActionFunctionExecutor;
 import com.fortify.cli.common.json.JsonHelper;
 
@@ -88,7 +90,7 @@ public final class MCPResourceFcliRunnerFunction {
     }
 
     private static List<String> extractParamNames(String uriTemplate) {
-        var result = new java.util.ArrayList<String>();
+        var result = new ArrayList<String>();
         var matcher = URI_TEMPLATE_PARAM.matcher(uriTemplate);
         while (matcher.find()) {
             result.add(matcher.group(1));
@@ -100,8 +102,8 @@ public final class MCPResourceFcliRunnerFunction {
         if (result instanceof JsonNode jn) {
             return jn.toPrettyString();
         }
-        if (result instanceof com.fortify.cli.common.action.model.ActionStepRecordsForEach.IActionStepForEachProcessor processor) {
-            var records = new java.util.ArrayList<JsonNode>();
+        if (result instanceof IActionStepForEachProcessor processor) {
+            var records = new ArrayList<JsonNode>();
             processor.process(node -> {
                 records.add(node);
                 return true;

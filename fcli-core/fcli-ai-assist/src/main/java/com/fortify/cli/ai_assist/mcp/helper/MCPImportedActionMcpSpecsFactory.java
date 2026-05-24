@@ -15,6 +15,7 @@ package com.fortify.cli.ai_assist.mcp.helper;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.function.Supplier;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -25,6 +26,7 @@ import com.fortify.cli.ai_assist.mcp.helper.runner.MCPToolFcliRunnerFunctionStre
 import com.fortify.cli.common.action.helper.ActionLoaderHelper;
 import com.fortify.cli.common.action.helper.ActionLoaderHelper.ActionSource;
 import com.fortify.cli.common.action.helper.ActionLoaderHelper.ActionValidationHandler;
+import com.fortify.cli.common.action.model.Action;
 import com.fortify.cli.common.action.model.ActionFunction;
 import com.fortify.cli.common.action.runner.ActionFunctionExecutor;
 import com.fortify.cli.common.cli.util.FcliExecutionContextHolder;
@@ -65,7 +67,7 @@ public class MCPImportedActionMcpSpecsFactory {
         return new ImportedSpecs(tools, resourceTemplates);
     }
 
-    private SyncToolSpecification createToolSpec(com.fortify.cli.common.action.model.Action action, String functionName, ActionFunction function) {
+    private SyncToolSpecification createToolSpec(Action action, String functionName, ActionFunction function) {
         var executor = new ActionFunctionExecutor(action, function, frameSupplier);
         var toolName = "fcli_fn_" + functionName.replace('-', '_');
         var schema = buildFunctionArgsSchema(function);
@@ -89,7 +91,7 @@ public class MCPImportedActionMcpSpecsFactory {
         return new MCPToolFcliRunnerFunctionStreaming(executor, jobManager, toolName);
     }
 
-    private SyncResourceTemplateSpecification createResourceTemplateSpec(com.fortify.cli.common.action.model.Action action,
+    private SyncResourceTemplateSpecification createResourceTemplateSpec(Action action,
             String functionName, ActionFunction function)
     {
         var resourceMeta = function.getMeta().get("mcp.resource");
@@ -153,7 +155,7 @@ public class MCPImportedActionMcpSpecsFactory {
     }
 
     public record ImportedSpecs(
-            java.util.List<SyncToolSpecification> tools,
-            java.util.List<SyncResourceTemplateSpecification> resourceTemplates
+            List<SyncToolSpecification> tools,
+            List<SyncResourceTemplateSpecification> resourceTemplates
     ) {}
 }

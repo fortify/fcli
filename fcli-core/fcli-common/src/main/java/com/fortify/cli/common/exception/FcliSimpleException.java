@@ -12,6 +12,8 @@
  */
 package com.fortify.cli.common.exception;
 
+import java.io.IOException;
+
 import org.apache.commons.lang3.exception.ExceptionUtils;
 
 import com.formkiq.graalvm.annotations.Reflectable;
@@ -62,10 +64,16 @@ public class FcliSimpleException extends AbstractFcliException {
     private String getCauseAsString() {
         var cause = getCause();
         if ( cause==null ) { return ""; }
-        var causeAsString = (cause instanceof ParameterException || cause instanceof FcliSimpleException) 
+        var causeAsString = isSummarizable(cause)
                 ? getSummary(cause) 
                 : ExceptionUtils.getStackTrace(cause);
         return String.format("\nCaused by: %s", causeAsString);
+    }
+
+    private static boolean isSummarizable(Throwable cause) {
+        return cause instanceof ParameterException
+            || cause instanceof FcliSimpleException
+            || cause instanceof IOException;
     }
     
     private static String getSummary(Throwable e) {

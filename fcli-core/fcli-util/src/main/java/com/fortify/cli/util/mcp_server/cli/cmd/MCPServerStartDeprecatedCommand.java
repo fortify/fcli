@@ -12,7 +12,9 @@
  */
 package com.fortify.cli.util.mcp_server.cli.cmd;
 
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -35,17 +37,17 @@ public class MCPServerStartDeprecatedCommand extends AbstractRunnableCommand imp
 
     @Override
     public Integer call() {
-        var cmd = "fcli ai-assist mcp start-stdio";
-        if ( delegatedArgs != null && !delegatedArgs.isEmpty() ) {
-            cmd += " " + String.join(" ", delegatedArgs);
-        }
+        var baseArgs = new String[]{"ai-assist", "mcp", "start-stdio"};
+        var allArgs = delegatedArgs != null && !delegatedArgs.isEmpty()
+            ? Stream.concat(Arrays.stream(baseArgs), delegatedArgs.stream()).toArray(String[]::new)
+            : baseArgs;
         log.warn("The 'fcli util mcp-server start' command is deprecated; please use 'fcli ai-assist mcp start-stdio'");
         var result = FcliCommandExecutorFactory.builder()
-                .cmd(cmd)
+            .args(allArgs)
             .stdoutOutputType(OutputType.show)
             .stderrOutputType(OutputType.show)
-                .onFail(r -> {})
-                .build().create().execute();
+            .onFail(r -> {})
+            .build().create().execute();
         if ( result.getExitCode() != 0 && StringUtils.isNotBlank(result.getErr()) ) {
             log.debug("Delegated command failed: {}", result.getErr());
         }
