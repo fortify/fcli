@@ -13,10 +13,10 @@
 package com.fortify.cli.common.concurrent.job;
 
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -49,7 +49,7 @@ public final class CachingJobEventListener implements IJobEventListener {
     public void onRecord(String jobId, JsonNode record) {
         var cache = caches.get(jobId);
         if (cache != null) {
-            cache.records.add(record);
+            cache.addRecord(record);
         }
     }
 
@@ -62,52 +62,51 @@ public final class CachingJobEventListener implements IJobEventListener {
     public void onJobComplete(String jobId, int exitCode, String stderr, String stdout) {
         var cache = caches.get(jobId);
         if (cache != null) {
-            cache.exitCode = exitCode;
-            cache.stderr = stderr;
-            cache.stdout = stdout;
-            cache.completed = true;
-            log.debug("Cache completed for job: {} records={} exitCode={}", jobId, cache.records.size(), exitCode);
+            cache.markComplete(exitCode, stderr, stdout);
+            log.debug("Cache completed for job: {} records={} exitCode={}", jobId, cache.recordCount(), exitCode);
         }
     }
 
     /**
-     * Return a page of cached records for the given job.
+     * Return a page of cached records for the given job. Takes a consistent
+     * snapshot of all mutable cache state under synchronization to avoid
+     * TOCTOU races between the writer thread and polling readers.
      */
     public PageResult getPage(String jobId, int offset, int limit) {
         var cache = caches.get(jobId);
         if (cache == null) {
             return PageResult.notFound(jobId);
         }
-        var snapshot = List.copyOf(cache.records);
-        var totalLoaded = snapshot.size();
+        var snap = cache.snapshot();
+        var totalLoaded = snap.records().size();
         var endIndex = Math.min(offset + limit, totalLoaded);
-        var pageRecords = offset >= totalLoaded ? List.<JsonNode>of() : snapshot.subList(offset, endIndex);
-        var hasMore = (offset + limit < totalLoaded) || !cache.completed;
+        var pageRecords = offset >= totalLoaded ? List.<JsonNode>of() : snap.records().subList(offset, endIndex);
+        var hasMore = (offset + limit < totalLoaded) || !snap.completed();
         return PageResult.builder()
                 .jobId(jobId)
-                .status(cache.completed ? (cache.exitCode == 0 ? "complete" : "error") : "loading")
+                .status(snap.completed() ? (snap.exitCode() == 0 ? "complete" : "error") : "loading")
                 .records(pageRecords)
                 .offset(offset)
                 .limit(limit)
                 .loadedCount(totalLoaded)
                 .hasMore(hasMore)
-                .complete(cache.completed)
-                .exitCode(cache.exitCode)
-                .stderr(cache.stderr)
-                .stdout(cache.stdout)
+                .complete(snap.completed())
+                .exitCode(snap.exitCode())
+                .stderr(snap.stderr())
+                .stdout(snap.stdout())
                 .build();
     }
 
     /** Whether a cache exists and is complete for the given job. */
     public boolean isComplete(String jobId) {
         var cache = caches.get(jobId);
-        return cache != null && cache.completed;
+        return cache != null && cache.isCompleted();
     }
 
     /** Number of records loaded so far for the given job. */
     public int getLoadedCount(String jobId) {
         var cache = caches.get(jobId);
-        return cache != null ? cache.records.size() : 0;
+        return cache != null ? cache.recordCount() : 0;
     }
 
     /** Whether a cache exists for the given job. */
@@ -161,17 +160,60 @@ public final class CachingJobEventListener implements IJobEventListener {
         }
     }
 
+    /**
+     * Per-job record cache with synchronized access to ensure consistent
+     * snapshots across records and completion state.
+     */
     private static final class JobRecordCache {
         final String jobId;
-        final CopyOnWriteArrayList<JsonNode> records = new CopyOnWriteArrayList<>();
-        volatile boolean completed;
-        volatile int exitCode;
-        volatile String stderr;
-        volatile String stdout;
+        // All mutable state guarded by 'this'
+        private final List<JsonNode> records = new ArrayList<>();
+        private boolean completed;
+        private int exitCode;
+        private String stderr;
+        private String stdout;
 
         JobRecordCache(String jobId) {
             this.jobId = jobId;
         }
+
+        synchronized void addRecord(JsonNode record) {
+            records.add(record);
+        }
+
+        synchronized void markComplete(int exitCode, String stderr, String stdout) {
+            this.exitCode = exitCode;
+            this.stderr = stderr;
+            this.stdout = stdout;
+            this.completed = true;
+        }
+
+        synchronized int recordCount() {
+            return records.size();
+        }
+
+        synchronized boolean isCompleted() {
+            return completed;
+        }
+
+        /** Take a consistent snapshot of all mutable state. */
+        synchronized CacheSnapshot snapshot() {
+            return new CacheSnapshot(
+                List.copyOf(records),
+                completed,
+                exitCode,
+                stderr,
+                stdout
+            );
+        }
+
+        record CacheSnapshot(
+            List<JsonNode> records,
+            boolean completed,
+            int exitCode,
+            String stderr,
+            String stdout
+        ) {}
     }
 
     /** Result of a page query. */
