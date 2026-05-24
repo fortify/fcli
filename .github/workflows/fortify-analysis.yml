@@ -13,31 +13,14 @@ permissions:
   security-events: write
 
 jobs:
-  check-duplicate:
-    name: Check for duplicate run
-    runs-on: ubuntu-latest
-    outputs:
-      should_skip: ${{ steps.check.outputs.should_skip }}
-    steps:
-      - id: check
-        name: Skip push run if PR exists
-        if: github.event_name == 'push'
-        run: |
-          pr_count=$(gh api repos/${{ github.repository }}/pulls \
-            --jq '[.[] | select(.head.ref == "${{ github.ref_name }}" and .state == "open")] | length')
-          if [ "$pr_count" -gt 0 ]; then
-            echo "Open PR found for branch ${{ github.ref_name }}, skipping push-triggered run"
-            echo "should_skip=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "No open PR found for branch ${{ github.ref_name }}, proceeding"
-            echo "should_skip=false" >> "$GITHUB_OUTPUT"
-          fi
-        env:
-          GH_TOKEN: ${{ github.token }}
+  check-duplicate-run:
+    uses: fortify/.github/.github/workflows/check-duplicate-run.yml@main
+    with:
+      workflow_name: Fortify on Demand Scan
 
   FoD-Scan:
-    needs: check-duplicate
-    if: needs.check-duplicate.outputs.should_skip != 'true'
+    needs: check-duplicate-run
+    if: needs.check-duplicate-run.outputs.should_skip != 'true'
     uses: fortify/.github/.github/workflows/fortify-analysis.yml@main
     with:
       java-version: '17'
