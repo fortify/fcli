@@ -12,18 +12,18 @@
  */
 package com.fortify.cli.ai_assist.extensions.helper;
 
-import java.io.IOException;
-import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.SystemUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.fortify.cli.common.util.EnvHelper;
+import com.fortify.cli.common.util.FileUtils;
+import com.fortify.cli.common.util.PlatformHelper;
 
 /**
  * Evaluates declarative conditions from the extensions-distribution.yaml descriptor.
@@ -89,50 +89,19 @@ public final class AiAssistExtensionsConditionEvaluator {
 
     /**
      * Check if a glob pattern (with tilde/env-var expansion) matches at least one
-     * existing directory. Useful for patterns like {@code ~/.vscode/extensions/github.copilot-*}.
+     * existing path. Useful for patterns like {@code ~/.vscode/extensions/github.copilot-*}.
      * Value may be a plain string or a platform-specific map.
      */
-    @SuppressWarnings("unchecked")
     private static boolean evaluateGlobExists(Object value) {
-        String pattern;
-        if (value instanceof String s) {
-            pattern = s;
-        } else if (value instanceof Map<?, ?> map) {
-            var platformKey = SystemUtils.IS_OS_WINDOWS ? "windows"
-                : SystemUtils.IS_OS_MAC ? "darwin" : "linux";
-            pattern = (String) ((Map<String, Object>) map).get(platformKey);
-        } else {
-            return false;
-        }
+        var pattern = resolvePlatformString(value);
         if (pattern == null) { return false; }
         if (pattern.startsWith("~/")) {
-            pattern = System.getProperty("user.home") + pattern.substring(1);
+            pattern = EnvHelper.getUserHome() + pattern.substring(1);
         }
-        // Split into parent dir (no globs) and the glob tail
-        // Walk segments to find where the first glob char appears
-        var segments = pattern.split("/");
-        var parentBuilder = new StringBuilder();
-        int globStart = -1;
-        for (int i = 0; i < segments.length; i++) {
-            if (segments[i].contains("*") || segments[i].contains("?") || segments[i].contains("[")) {
-                globStart = i;
-                break;
-            }
-            if (i > 0) { parentBuilder.append('/'); }
-            parentBuilder.append(segments[i]);
-        }
-        if (globStart < 0) {
-            // No glob chars — just check directory existence
-            return Files.isDirectory(Path.of(pattern));
-        }
-        var parentPath = Path.of(parentBuilder.toString());
-        if (!Files.isDirectory(parentPath)) { return false; }
-        // Build glob pattern from the remaining segments
-        var globTail = String.join("/", Arrays.copyOfRange(segments, globStart, segments.length));
-        var matcher = FileSystems.getDefault().getPathMatcher("glob:" + globTail);
-        try (var stream = Files.walk(parentPath, segments.length - globStart)) {
-            return stream.anyMatch(p -> matcher.matches(parentPath.relativize(p)));
-        } catch (IOException e) {
+        try {
+            return FileUtils.processGlobPathStream(pattern, p -> true,
+                    stream -> stream.findAny().isPresent());
+        } catch (Exception e) {
             LOG.debug("Error evaluating glob '{}': {}", value, e.getMessage());
             return false;
         }
@@ -150,7 +119,7 @@ public final class AiAssistExtensionsConditionEvaluator {
         var pathSep = System.getProperty("path.separator");
         var dirs = pathEnv.split(pathSep);
         // On Windows, try command as-is plus each PATHEXT extension
-        var extensions = SystemUtils.IS_OS_WINDOWS
+        var extensions = PlatformHelper.isWindows()
             ? getWindowsPathExtensions()
             : new String[]{""};
         for (var dir : dirs) {
@@ -186,5 +155,14 @@ public final class AiAssistExtensionsConditionEvaluator {
     private static boolean evaluateAllOf(List<Object> conditions) {
         if (conditions == null) { return false; }
         return conditions.stream().allMatch(AiAssistExtensionsConditionEvaluator::evaluate);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static String resolvePlatformString(Object value) {
+        if (value instanceof String s) { return s; }
+        if (value instanceof Map<?, ?> map) {
+            return (String) ((Map<String, Object>) map).get(PlatformHelper.getOSString());
+        }
+        return null;
     }
 }

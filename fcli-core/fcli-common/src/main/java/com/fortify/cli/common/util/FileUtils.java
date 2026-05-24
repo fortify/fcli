@@ -35,7 +35,6 @@ import java.util.Comparator;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
-import java.util.regex.Pattern;
 import java.util.stream.Stream;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.ZipEntry;
@@ -292,135 +291,57 @@ public final class FileUtils {
     }
     
     /**
-     * Process files matching an Ant-style glob pattern using a stream processor function.
-     * Pattern supports:
-     * - {@code *} matches any characters within a single path segment
-     * - {@code **} matches zero or more directory levels
-     * Example: {@code "lib/*.jar"} matches all JARs in lib, {@code "**\/*.jar"} matches all JARs recursively
-     * 
-     * The stream is automatically closed after the processor function completes.
-     * Only regular files are included in the stream.
+     * Process files matching a glob pattern using a stream processor function.
+     * Uses Java NIO {@link java.nio.file.PathMatcher} glob syntax:
+     * {@code *} matches within a single path segment, {@code **} matches across directories.
      * 
      * @param <R> Return type of the processor function
      * @param baseDir Base directory to search from
-     * @param globPattern Ant-style glob pattern
+     * @param globPattern Glob pattern relative to baseDir
      * @param maxDepth Maximum directory depth to search
      * @param streamProcessor Function to process the stream of matching paths
      * @return Result from the stream processor function
-     * @throws IOException if directory traversal fails
      */
     @SneakyThrows
     public static final <R> R processMatchingFileStream(Path baseDir, String globPattern, int maxDepth, 
             Function<Stream<Path>, R> streamProcessor) {
-        var pattern = compileAntGlobPattern(globPattern);
-        return processMatchingFileStream(baseDir, pattern, maxDepth, streamProcessor);
+        return processMatchingStream(baseDir, globPattern, maxDepth, Files::isRegularFile, streamProcessor);
     }
     
     /**
-     * Process files matching a compiled Pattern using a stream processor function.
-     * Only regular files are included in the stream.
-     * 
-     * The stream is automatically closed after the processor function completes.
+     * Process directories matching a glob pattern using a stream processor function.
+     * Uses Java NIO {@link java.nio.file.PathMatcher} glob syntax.
      * 
      * @param <R> Return type of the processor function
      * @param baseDir Base directory to search from
-     * @param pattern Compiled pattern to match against relative paths
+     * @param globPattern Glob pattern relative to baseDir
      * @param maxDepth Maximum directory depth to search
      * @param streamProcessor Function to process the stream of matching paths
      * @return Result from the stream processor function
-     * @throws IOException if directory traversal fails
-     */
-    @SneakyThrows
-    public static final <R> R processMatchingFileStream(Path baseDir, Pattern pattern, int maxDepth,
-            Function<Stream<Path>, R> streamProcessor) {
-        return processMatchingStream(baseDir, pattern, maxDepth, Files::isRegularFile, streamProcessor);
-    }
-    
-    /**
-     * Process directories matching an Ant-style glob pattern using a stream processor function.
-     * Pattern supports:
-     * - {@code *} matches any characters within a single path segment
-     * - {@code **} matches zero or more directory levels
-     * 
-     * The stream is automatically closed after the processor function completes.
-     * Only directories are included in the stream.
-     * 
-     * @param <R> Return type of the processor function
-     * @param baseDir Base directory to search from
-     * @param globPattern Ant-style glob pattern
-     * @param maxDepth Maximum directory depth to search
-     * @param streamProcessor Function to process the stream of matching paths
-     * @return Result from the stream processor function
-     * @throws IOException if directory traversal fails
      */
     @SneakyThrows
     public static final <R> R processMatchingDirStream(Path baseDir, String globPattern, int maxDepth,
             Function<Stream<Path>, R> streamProcessor) {
-        var pattern = compileAntGlobPattern(globPattern);
-        return processMatchingDirStream(baseDir, pattern, maxDepth, streamProcessor);
+        return processMatchingStream(baseDir, globPattern, maxDepth, Files::isDirectory, streamProcessor);
     }
     
     /**
-     * Process directories matching a compiled Pattern using a stream processor function.
-     * Only directories are included in the stream.
-     * 
-     * The stream is automatically closed after the processor function completes.
-     * 
-     * @param <R> Return type of the processor function
-     * @param baseDir Base directory to search from
-     * @param pattern Compiled pattern to match against relative paths
-     * @param maxDepth Maximum directory depth to search
-     * @param streamProcessor Function to process the stream of matching paths
-     * @return Result from the stream processor function
-     * @throws IOException if directory traversal fails
-     */
-    @SneakyThrows
-    public static final <R> R processMatchingDirStream(Path baseDir, Pattern pattern, int maxDepth,
-            Function<Stream<Path>, R> streamProcessor) {
-        return processMatchingStream(baseDir, pattern, maxDepth, Files::isDirectory, streamProcessor);
-    }
-    
-    /**
-     * Process paths matching an Ant-style glob pattern using a stream processor function.
-     * Pattern supports:
-     * - {@code *} matches any characters within a single path segment
-     * - {@code **} matches zero or more directory levels
-     * 
-     * The stream is automatically closed after the processor function completes.
+     * Process paths matching a glob pattern using a stream processor function.
+     * Uses Java NIO {@link java.nio.file.PathMatcher} glob syntax:
+     * {@code *} matches within a single path segment, {@code **} matches across directories,
+     * {@code ?} matches a single character, {@code [...]} matches character classes,
+     * {@code {...}} matches alternatives.
      * 
      * @param <R> Return type of the processor function
      * @param baseDir Base directory to search from
-     * @param globPattern Ant-style glob pattern
+     * @param globPattern Glob pattern relative to baseDir
      * @param maxDepth Maximum directory depth to search
      * @param pathFilter Predicate to filter paths (e.g., Files::isRegularFile, Files::isDirectory)
      * @param streamProcessor Function to process the stream of matching paths
      * @return Result from the stream processor function
-     * @throws IOException if directory traversal fails
      */
     @SneakyThrows
     public static final <R> R processMatchingStream(Path baseDir, String globPattern, int maxDepth,
-            Predicate<Path> pathFilter, Function<Stream<Path>, R> streamProcessor) {
-        var pattern = compileAntGlobPattern(globPattern);
-        return processMatchingStream(baseDir, pattern, maxDepth, pathFilter, streamProcessor);
-    }
-    
-    /**
-     * Process paths matching a compiled Pattern using a stream processor function.
-     * 
-     * The stream is automatically closed after the processor function completes.
-     * Paths are matched as relative paths from baseDir with forward slashes.
-     * 
-     * @param <R> Return type of the processor function
-     * @param baseDir Base directory to search from
-     * @param pattern Compiled pattern to match against relative paths
-     * @param maxDepth Maximum directory depth to search
-     * @param pathFilter Predicate to filter paths (e.g., Files::isRegularFile, Files::isDirectory)
-     * @param streamProcessor Function to process the stream of matching paths
-     * @return Result from the stream processor function
-     * @throws IOException if directory traversal fails
-     */
-    @SneakyThrows
-    public static final <R> R processMatchingStream(Path baseDir, Pattern pattern, int maxDepth,
             Predicate<Path> pathFilter, Function<Stream<Path>, R> streamProcessor) {
         if (baseDir == null || !Files.isDirectory(baseDir)) {
             throw new FcliSimpleException("Base directory must be a valid directory");
@@ -428,13 +349,13 @@ public final class FileUtils {
         if (pathFilter == null) {
             throw new FcliSimpleException("Path filter must not be null");
         }
-        
+        var pathMatcher = baseDir.getFileSystem().getPathMatcher("glob:" + normalizeGlobForRootMatch(globPattern));
         try (Stream<Path> paths = Files.walk(baseDir, maxDepth)) {
             Stream<Path> filtered = paths
                 .filter(p -> !p.equals(baseDir))
                 .filter(pathFilter)
                 .map(baseDir::relativize)
-                .filter(p -> pattern.matcher(pathToString(p, '/')).matches())
+                .filter(pathMatcher::matches)
                 .map(baseDir::resolve);
             
             return streamProcessor.apply(filtered);
@@ -442,54 +363,73 @@ public final class FileUtils {
     }
     
     /**
-     * Convert an Ant-style glob pattern to a compiled regex Pattern.
-     * Supports:
-     * - {@code *} matches any characters within a single path segment (does not match /)
-     * - {@code **} matches zero or more directory levels
+     * Process paths matching a glob path that may contain glob characters at any position.
+     * Automatically splits the path into a base directory (the longest prefix without
+     * glob characters) and a glob pattern, then walks the base directory matching against
+     * the glob pattern.
+     * <p>
+     * If the path contains no glob characters, checks if the exact path exists and matches
+     * the filter. Returns an empty stream (not an exception) if the base directory does
+     * not exist.
+     * <p>
+     * Glob characters are: {@code *}, {@code ?}, {@code [}, <code>&#123;</code>.
+     * If the glob contains {@code **}, traversal depth is unlimited; otherwise it
+     * is limited to the number of path segments in the glob tail.
      * 
-     * @param globPattern Ant-style glob pattern (e.g., "lib/*.jar", "**{@literal /}*.jar")
-     * @return Compiled Pattern
+     * @param <R> Return type of the processor function
+     * @param globPath Absolute or relative path that may contain glob characters
+     * @param pathFilter Predicate to filter paths (e.g., Files::isRegularFile, Files::isDirectory)
+     * @param streamProcessor Function to process the stream of matching paths
+     * @return Result from the stream processor function
      */
-    private static Pattern compileAntGlobPattern(String globPattern) {
-        if (globPattern == null || globPattern.isEmpty()) {
-            throw new FcliSimpleException("Glob pattern cannot be null or empty");
+    @SneakyThrows
+    public static final <R> R processGlobPathStream(String globPath,
+            Predicate<Path> pathFilter, Function<Stream<Path>, R> streamProcessor) {
+        if (globPath == null || globPath.isBlank()) {
+            throw new FcliSimpleException("Glob path cannot be null or empty");
         }
-        
-        // Normalize path separators to forward slash
-        String normalized = globPattern.replace('\\', '/');
-        
-        // Build regex manually by processing character by character
-        StringBuilder regex = new StringBuilder();
-        int length = normalized.length();
-        
-        for (int i = 0; i < length; i++) {
-            char c = normalized.charAt(i);
-            
-            if (c == '*') {
-                if (i + 1 < length && normalized.charAt(i + 1) == '*') {
-                    // Found **
-                    if (i + 2 < length && normalized.charAt(i + 2) == '/') {
-                        // **/ matches zero or more path segments
-                        regex.append("(?:.*/)?");
-                        i += 2; // Skip the ** and /
-                    } else {
-                        // ** matches anything
-                        regex.append(".*");
-                        i++; // Skip the second *
-                    }
-                } else {
-                    // Single * matches anything except /
-                    regex.append("[^/]*");
-                }
-            } else {
-                // Escape regex special characters except * which we already handled
-                if (".^$+?()[]{}|\\".indexOf(c) >= 0) {
-                    regex.append('\\');
-                }
-                regex.append(c);
+        var normalized = globPath.replace('\\', '/');
+        int firstGlob = indexOfFirstGlobChar(normalized);
+        if (firstGlob < 0) {
+            // No glob characters — check exact path
+            var path = Path.of(globPath);
+            return streamProcessor.apply(
+                Files.exists(path) && pathFilter.test(path)
+                    ? Stream.of(path) : Stream.empty());
+        }
+        int lastSep = normalized.lastIndexOf('/', firstGlob);
+        var baseDirStr = lastSep > 0 ? normalized.substring(0, lastSep)
+            : lastSep == 0 ? "/" : ".";
+        var baseDir = Path.of(baseDirStr);
+        if (!Files.isDirectory(baseDir)) {
+            return streamProcessor.apply(Stream.empty());
+        }
+        var globTail = normalized.substring(lastSep + 1);
+        int maxDepth = globTail.contains("**")
+            ? Integer.MAX_VALUE
+            : (int) globTail.chars().filter(c -> c == '/').count() + 1;
+        return processMatchingStream(baseDir, globTail, maxDepth, pathFilter, streamProcessor);
+    }
+    
+    private static int indexOfFirstGlobChar(String path) {
+        for (int i = 0; i < path.length(); i++) {
+            if ("*?[{".indexOf(path.charAt(i)) >= 0) {
+                return i;
             }
         }
-        
-        return Pattern.compile(regex.toString());
+        return -1;
+    }
+    
+    /**
+     * NIO PathMatcher's {@code **}{@code /X} requires at least one directory level
+     * before X, unlike common glob conventions where {@code **}{@code /} can match zero
+     * levels. This wraps such patterns with an alternation so root-level paths also match.
+     * For example, {@code **}{@code /*.jar} becomes <code>{*.jar,**&#47;*.jar}</code>.
+     */
+    private static String normalizeGlobForRootMatch(String globPattern) {
+        if (globPattern.startsWith("**/")) {
+            return "{" + globPattern.substring(3) + "," + globPattern + "}";
+        }
+        return globPattern;
     }
 }

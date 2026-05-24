@@ -19,9 +19,9 @@ import java.util.Map;
 import java.util.Objects;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.SystemUtils;
 
 import com.fortify.cli.common.util.EnvHelper;
+import com.fortify.cli.common.util.PlatformHelper;
 
 /**
  * Resolves target-dir values from the descriptor: tilde expansion,
@@ -100,8 +100,6 @@ public final class AiAssistExtensionsPathResolver {
     }
 
     static String getPlatformKey() {
-        if (SystemUtils.IS_OS_WINDOWS) { return "windows"; }
-        if (SystemUtils.IS_OS_MAC) { return "darwin"; }
-        return "linux";
+        return PlatformHelper.getOSString();
     }
 }
