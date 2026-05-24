@@ -13,6 +13,7 @@
 package com.fortify.cli.aviator.ssc.helper;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertIterableEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
@@ -151,6 +152,26 @@ class CategoryGrouperTest {
         var mixedBucket = grouper.getMixedBuckets().get(0);
         assertEquals(2, mixedBucket.getSastCount());
         assertEquals(1, mixedBucket.getDastCount());
+    }
+
+    @Test
+    void testGroupFindings_preservesMixedBucketEncounterOrder() {
+        var grouper = new CategoryGrouper();
+        List<Vulnerability> sast = List.of(
+            createVuln("INST-1", "Path Traversal", null),
+            createVuln("INST-2", "SQL Injection", null)
+        );
+        List<DastIssue> dast = List.of(
+            createDastIssue("DAST-1", "Path Traversal"),
+            createDastIssue("DAST-2", "SQL Injection")
+        );
+
+        grouper.groupFindings(sast, dast);
+
+        assertIterableEquals(
+            List.of("Path Traversal", "SQL Injection"),
+            grouper.getMixedBuckets().stream().map(CategoryBucket::getCategory).toList()
+        );
     }
 
     @Test

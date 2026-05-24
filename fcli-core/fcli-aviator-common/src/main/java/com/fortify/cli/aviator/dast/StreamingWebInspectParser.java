@@ -292,7 +292,6 @@ public class StreamingWebInspectParser {
             }
         }
 
-        applyFallbackCategory(issue);
         return issue;
     }
 

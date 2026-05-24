@@ -14,7 +14,6 @@ package com.fortify.cli.aviator.ssc.helper;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -63,7 +62,9 @@ class AviatorSSCCorrelateHelperTest {
         assertEquals(4, correlate.get("succeeded").asInt());
         assertEquals(1, correlate.get("skipped").asInt());
         assertEquals(2, correlate.get("correlated").asInt());
-        assertNotNull(correlate.get("message").asText());
+        assertEquals(
+            "5 SAST findings submitted, 2 correlated pairs confirmed",
+            correlate.get("message").asText());
     }
 
     @Test

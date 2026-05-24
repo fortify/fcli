@@ -13,7 +13,8 @@
 package com.fortify.cli.aviator.grpc;
 
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -558,7 +559,7 @@ public class CorrelationStreamProcessor implements AutoCloseable {
 
         for (Object bucketObj : mixedBuckets) {
             if (bucketObj instanceof CorrelationBucketData data) {
-                Set<String> dastUrls = new HashSet<>();
+                Set<String> dastUrls = new LinkedHashSet<>();
                 for (var dastIssue : data.dastFindings()) {
                     if (dastIssue.getSessionUrl() != null && !dastIssue.getSessionUrl().isEmpty()) {
                         dastUrls.add(dastIssue.getSessionUrl());
@@ -613,7 +614,7 @@ public class CorrelationStreamProcessor implements AutoCloseable {
 
     @SuppressWarnings("unchecked")
     private Map<String, List<DastIssue>> buildUrlToDastMap(List<? extends Object> mixedBuckets) {
-        var map = new java.util.HashMap<String, List<DastIssue>>();
+        Map<String, List<DastIssue>> map = new LinkedHashMap<>();
         for (Object bucketObj : mixedBuckets) {
             if (bucketObj instanceof CorrelationBucketData data) {
                 for (DastIssue issue : data.dastFindings()) {
