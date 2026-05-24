@@ -1,6 +1,6 @@
 ---
 title: 'Action Documentation: <a href="manpage/fcli-ssc-action.html"><code>fcli ssc action</code></a>'
-fcli_version: 0.20260515.125504-dev_feat.v3.x.aviator.26.3
+fcli_version: 0.20260524.130959-dev_feat.v3.x.aviator.26.3
 ---
 
 <!DOCTYPE html>
@@ -17,13 +17,13 @@ fcli_version: 0.20260515.125504-dev_feat.v3.x.aviator.26.3
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260515.125504-dev_feat.v3.x.aviator.26.3" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260524.130959-dev_feat.v3.x.aviator.26.3" %}
 
 
 <div id="header">
 <h1>Action Documentation: <a href="manpage/fcli-ssc-action.html"><code>fcli ssc action</code></a></h1>
 <div class="details">
-<span id="revnumber">version 0.20260515.125504-dev_feat.v3.x.aviator.26.3</span>
+<span id="revnumber">version 0.20260524.130959-dev_feat.v3.x.aviator.26.3</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -357,7 +357,7 @@ With the --publish option, results are automatically uploaded to BitBucket pipel
 <h2 id="_bulkaudit"><a class="anchor" href="#_bulkaudit"></a>bulkaudit</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>(PREVIEW) Perform SAST Aviator audits of SSC application versions in bulk.</p>
+<p>(PREVIEW) Perform Fortify Remediation Aviator audits of SSC application versions in bulk.</p>
 </div>
 <div class="sect2">
 <h3 id="_synopsis_4"><a class="anchor" href="#_synopsis_4"></a>Synopsis</h3>
@@ -369,18 +369,18 @@ With the --publish option, results are automatically uploaded to BitBucket pipel
 <h3 id="_description_4"><a class="anchor" href="#_description_4"></a>Description</h3>
 <div class="paragraph">
 <p>This action identifies SSC application versions with pending audit issues and
-automatically submits them for auditing by Fortify SAST Aviator. The action
+automatically submits them for auditing by Fortify Remediation Aviator. The action
 intelligently filters to only process versions with actual pending audit issues,
 while ignoring versions for which audit information needs to be refreshed.</p>
 </div>
 <div class="paragraph">
-<p>For application versions that don&#8217;t already exist in Aviator, the action will
+<p>For application versions that don&#8217;t already exist in Fortify Aviator, the action will
 automatically create them before submitting for audit.</p>
 </div>
 <div class="paragraph">
 <p>By default (--aviator-app-mapping=app), SSC project versions map to a single
-Aviator application per SSC project. Set --aviator-app-mapping=version to map
-each SSC project version to its own Aviator application (project_name__version_name).</p>
+Fortify Aviator application per SSC project. Set --aviator-app-mapping=version to map
+each SSC project version to its own Fortify Aviator application (project_name__version_name).</p>
 </div>
 <div class="paragraph">
 <p>When quota limits are exceeded for any application, issues are prioritized by
@@ -391,12 +391,12 @@ order is applied to all audited versions in the bulk operation.</p>
 <div class="paragraph">
 <p>Either --tag-mapping or --add-aviator-tags must be specified. The default tag
 mapping leaves unsure issues unaudited, causing indefinite reselection. Use
-a custom mapping file or 'fcli ssc aviator prepare' to configure Aviator-specific
+a custom mapping file or 'fcli ssc aviator prepare' to configure Fortify Remediation Aviator-specific
 issue templates.</p>
 </div>
 <div class="paragraph">
-<p>This action assumes active sessions with SSC, Aviator (user role for auditing),
-and Aviator (admin role for application listing and creation).</p>
+<p>This action assumes active sessions with SSC, Fortify Remediation Aviator (user role for auditing),
+and Fortify Aviator (admin role for application listing and creation).</p>
 </div>
 </div>
 <div class="sect2">
@@ -409,7 +409,7 @@ and Aviator (admin role for application listing and creation).</p>
 </dd>
 <dt class="hdlist1">--aviator-app-mapping</dt>
 <dd>
-<p>Controls how SSC project versions map to Aviator applications. 'app' (default) maps one Aviator app per SSC project; 'version' maps one Aviator app per SSC project version (using project_name__version_name).</p>
+<p>Controls how SSC project versions map to Fortify Aviator applications. 'app' (default) maps one Fortify Aviator app per SSC project; 'version' maps one Fortify Aviator app per SSC project version (using project_name__version_name).</p>
 </dd>
 <dt class="hdlist1">--filter, -f</dt>
 <dd>
@@ -425,7 +425,7 @@ and Aviator (admin role for application listing and creation).</p>
 </dd>
 <dt class="hdlist1">--tag-mapping, -t</dt>
 <dd>
-<p>Path to tag mapping YAML file. This custom mapping ensures that SAST Aviator 'Unsure' audit results are properly handled. Required unless --add-aviator-tags is specified.</p>
+<p>Path to tag mapping YAML file. This custom mapping ensures that Fortify Remediation Aviator 'Unsure' audit results are properly handled. Required unless --add-aviator-tags is specified.</p>
 </dd>
 <dt class="hdlist1">--add-aviator-tags</dt>
 <dd>
@@ -441,11 +441,11 @@ and Aviator (admin role for application listing and creation).</p>
 </dd>
 <dt class="hdlist1">--skip-if-exceeding-quota</dt>
 <dd>
-<p>Skip audit if the number of open issues exceeds the available Aviator quota. When skipped, a summary with top unaudited categories is shown. Default: false</p>
+<p>Skip audit if the number of open issues exceeds the available Fortify Remediation Aviator quota. When skipped, a summary with top unaudited categories is shown. Default: false</p>
 </dd>
 <dt class="hdlist1">--test-exceeding-quota</dt>
 <dd>
-<p>Check whether the number of open issues exceeds the available Aviator quota and report the result without performing an audit. Default: false</p>
+<p>Check whether the number of open issues exceeds the available Fortify Remediation Aviator quota and report the result without performing an audit. Default: false</p>
 </dd>
 <dt class="hdlist1">--folder-priority-order</dt>
 <dd>
@@ -460,7 +460,7 @@ and Aviator (admin role for application listing and creation).</p>
 <h2 id="_bulkcorrelate"><a class="anchor" href="#_bulkcorrelate"></a>bulkcorrelate</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>(PREVIEW) Perform SAST-DAST correlation of SSC application versions in bulk.</p>
+<p>(PREVIEW) Perform Fortify Aviator SAST-DAST correlation for SSC application versions in bulk.</p>
 </div>
 <div class="sect2">
 <h3 id="_synopsis_5"><a class="anchor" href="#_synopsis_5"></a>Synopsis</h3>
@@ -483,14 +483,14 @@ compares the most recent scan date with the SSC <code>last_correlation</code> cu
 attribute written by the correlation command.</p>
 </div>
 <div class="paragraph">
-<p>For application versions that don&#8217;t already exist in Aviator, the action
+<p>For application versions that don&#8217;t already exist in Fortify Aviator, the action
 will automatically create them before correlation.</p>
 </div>
 <div class="paragraph">
 <p>By default (--aviator-app-mapping=app), SSC project versions map to a
-single Aviator application per SSC project. Set
+single Fortify Aviator application per SSC project. Set
 --aviator-app-mapping=version to map each SSC project version to its own
-Aviator application (project_name__version_name).</p>
+Fortify Aviator application (project_name__version_name).</p>
 </div>
 <div class="paragraph">
 <p>Before running correlation, the action automatically runs
@@ -500,12 +500,12 @@ required SSC custom tags and <code>last_correlation</code> attribute are availab
 <div class="paragraph">
 <p>If entitlement is exhausted while creating applications, the action
 suppresses further create attempts and continues processing versions that
-already have a matching Aviator application.</p>
+already have a matching Fortify Aviator application.</p>
 </div>
 <div class="paragraph">
-<p>This action assumes active sessions with SSC, Aviator user access for
-prepare and correlation, and Aviator admin access for application listing
-and creation.</p>
+<p>This action assumes active sessions with SSC, Fortify Aviator user access
+for prepare and correlation, and Fortify Aviator admin access for
+application listing and creation.</p>
 </div>
 </div>
 <div class="sect2">
@@ -518,7 +518,7 @@ and creation.</p>
 </dd>
 <dt class="hdlist1">--aviator-app-mapping</dt>
 <dd>
-<p>Controls how SSC project versions map to Aviator applications. 'app' (default) maps one Aviator app per SSC project; 'version' maps one Aviator app per SSC project version (using project_name__version_name).</p>
+<p>Controls how SSC project versions map to Fortify Aviator applications. 'app' (default) maps one Fortify Aviator app per SSC project; 'version' maps one Fortify Aviator app per SSC project version (using project_name__version_name).</p>
 </dd>
 <dt class="hdlist1">--filter, -f</dt>
 <dd>
@@ -530,7 +530,7 @@ and creation.</p>
 </dd>
 <dt class="hdlist1">--dry-run, -n</dt>
 <dd>
-<p>Show what Aviator commands would be executed without actually running them. Default: false</p>
+<p>Show what aviator commands would be executed without actually running them. Default: false</p>
 </dd>
 </dl>
 </div>
@@ -1693,8 +1693,8 @@ appropriate option values and setup commands to run.</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20260515.125504-dev_feat.v3.x.aviator.26.3<br>
-Last updated 2026-05-15 12:58:08 UTC
+Version 0.20260524.130959-dev_feat.v3.x.aviator.26.3<br>
+Last updated 2026-05-24 13:13:02 UTC
 </div>
 </div>
 </body>

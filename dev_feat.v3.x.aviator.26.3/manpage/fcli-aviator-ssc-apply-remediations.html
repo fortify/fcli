@@ -17,7 +17,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260515.125504-dev_feat.v3.x.aviator.26.3" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260524.130959-dev_feat.v3.x.aviator.26.3" %}
 
 
 <div id="header">
@@ -35,7 +35,7 @@ fcli_version:
 </div>
 <h2>Name</h2>
 <div class="sectionbody">
-<p>fcli-aviator-ssc-apply-remediations - Apply auto-remediations from an Aviator-processed artifact to source code.</p>
+<p>fcli-aviator-ssc-apply-remediations - Apply auto-remediations from a Fortify Remediation Aviator-processed artifact to source code.</p>
 </div>
 </div>
 <div id="content">
@@ -65,7 +65,7 @@ fcli_version:
 <h2 id="_description"><a class="anchor" href="#_description"></a>Description</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Downloads FPR artifact(s) and applies Aviator-generated remediations to the specified source directory. Exactly one of --artifact-id, --latest, or --all must be specified. This command requires an active user session. Use 'fcli aviator session login' to create a session.</p>
+<p>Downloads FPR artifact(s) and applies Fortify Remediation Aviator-generated remediations to the specified source directory. Exactly one of --artifact-id, --latest, or --all must be specified. This command requires an active user session. Use 'fcli aviator session login' to create a session.</p>
 </div>
 <div class="paragraph">
 <p>Examples:</p>
@@ -78,7 +78,7 @@ fcli_version:
 </div>
 <div class="literalblock">
 <div class="content">
-<pre>Apply remediations from the latest Aviator-processed artifact for an application version:
+<pre>Apply remediations from the latest Fortify Remediation Aviator-processed artifact for an application version:
   fcli aviator ssc apply-remediations --av "MyApp:1.0" --latest</pre>
 </div>
 </div>
@@ -90,7 +90,7 @@ fcli_version:
 </div>
 <div class="literalblock">
 <div class="content">
-<pre>Apply remediations across all Aviator-processed artifacts for an application version:
+<pre>Apply remediations across all Fortify Remediation Aviator-processed artifacts for an application version:
   fcli aviator ssc apply-remediations --av "MyApp:1.0" --all</pre>
 </div>
 </div>
@@ -115,7 +115,7 @@ fcli_version:
 <dl>
 <dt class="hdlist1"><strong>--all</strong></dt>
 <dd>
-<p>Apply remediations from all Aviator-processed artifacts for the given application version, in chronological order. Aggregates remediation statistics across all artifacts. Requires --av/--appversion. Mutually exclusive with --artifact-id and --latest.</p>
+<p>Apply remediations from all Fortify Remediation Aviator-processed artifacts for the given application version, in chronological order. Aggregates remediation statistics across all artifacts. Requires --av/--appversion. Mutually exclusive with --artifact-id and --latest.</p>
 </dd>
 <dt class="hdlist1"><strong>--artifact-id</strong>=<em>&lt;artifactId&gt;</em></dt>
 <dd>
@@ -131,7 +131,7 @@ fcli_version:
 </dd>
 <dt class="hdlist1"><strong>--latest</strong></dt>
 <dd>
-<p>Automatically select the most recent Aviator-processed artifact. Requires --av/--appversion. Mutually exclusive with --artifact-id and --all.</p>
+<p>Automatically select the most recent Fortify Remediation Aviator-processed artifact. Requires --av/--appversion. Mutually exclusive with --artifact-id and --all.</p>
 </dd>
 <dt class="hdlist1"><strong>--progress</strong>=<em>&lt;type&gt;</em></dt>
 <dd>
@@ -225,7 +225,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2026-05-15 12:57:40 UTC
+Last updated 2026-05-24 13:12:36 UTC
 </div>
 </div>
 </body>
