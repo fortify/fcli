@@ -96,7 +96,7 @@ public class AviatorSSCAuditCommand extends AbstractSSCJsonNodeOutputCommand imp
 
             refreshMetricsIfNeeded(unirest, av, logger);
 
-            long auditableIssueCount = AviatorSSCAuditHelper.getAuditableIssueCount(unirest, av, logger, noFilterSet, filterSetOptions, folderNames);
+            long auditableIssueCount = AviatorSSCAuditHelper.getAuditableIssueCount(unirest, av, logger, isNoFilterSet(), getFilterSetTitleOrId(), folderNames);
             if (auditableIssueCount == 0) {
                 logger.progress("Audit skipped - no auditable issues found matching the specified filters.");
                 ObjectNode result = AviatorSSCAuditHelper.buildResultNode(av, null, "SKIPPED");
@@ -126,6 +126,14 @@ public class AviatorSSCAuditCommand extends AbstractSSCJsonNodeOutputCommand imp
                 Files.deleteIfExists(downloadedFprPath);
             }
         }
+    }
+
+    String getFilterSetTitleOrId() {
+        return filterSetOptions.getFilterSetTitleOrId();
+    }
+
+    boolean isNoFilterSet() {
+        return noFilterSet;
     }
 
     private void refreshMetricsIfNeeded(UnirestInstance unirest, SSCAppVersionDescriptor av, AviatorLoggerImpl logger) {
@@ -251,8 +259,8 @@ public class AviatorSSCAuditCommand extends AbstractSSCJsonNodeOutputCommand imp
                     .sscAppVersion(av.getVersionName())
                     .logger(logger)
                     .tagMappingPath(tagMapping)
-                    .filterSetNameOrId(filterSetOptions.getFilterSetTitleOrId())
-                    .noFilterSet(noFilterSet)
+                    .filterSetNameOrId(getFilterSetTitleOrId())
+                    .noFilterSet(isNoFilterSet())
                     .folderNames(folderNames)
                     .folderPriorityOrder(folderPriorityOrder)
                     .build());

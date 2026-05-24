@@ -38,7 +38,6 @@ import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.rest.unirest.UnexpectedHttpResponseException;
 import com.fortify.cli.ssc._common.rest.ssc.SSCUrls;
 import com.fortify.cli.ssc.appversion.helper.SSCAppVersionDescriptor;
-import com.fortify.cli.ssc.issue.cli.mixin.SSCIssueFilterSetOptionMixin;
 import com.fortify.cli.ssc.issue.helper.SSCIssueFilterHelper;
 import com.fortify.cli.ssc.issue.helper.SSCIssueFilterSetDescriptor;
 import com.fortify.cli.ssc.issue.helper.SSCIssueFilterSetHelper;
@@ -193,23 +192,28 @@ public final class AviatorSSCAuditHelper {
     /**
      * Queries SSC to get the number of auditable issues for a given application version.
      */
-    public static long getAuditableIssueCount(UnirestInstance unirest, SSCAppVersionDescriptor av, AviatorLoggerImpl logger, boolean noFilterSet, SSCIssueFilterSetOptionMixin filterSetOptions, List<String> folderNames) {
+    public static long getAuditableIssueCount(UnirestInstance unirest, SSCAppVersionDescriptor av, AviatorLoggerImpl logger, boolean noFilterSet, String filterSetTitleOrId, List<String> folderNames) {
         logger.progress("Status: Checking for auditable issues...");
 
         LOG.debug("Starting auditable issue count for SSC version {} (application='{}', version='{}') with pageLimit={}, noFilterSet={}",
                 av.getVersionId(), av.getApplicationName(), av.getVersionName(), PAGE_LIMIT, noFilterSet);
 
+        String effectiveFilterSetTitleOrId = filterSetTitleOrId != null && !filterSetTitleOrId.isBlank()
+                ? filterSetTitleOrId
+                : null;
+        boolean effectiveNoFilterSet = noFilterSet && effectiveFilterSetTitleOrId == null;
+
         // Apply filter set if specified
         SSCIssueFilterSetDescriptor filterSetDescriptor = null;
         String filterSetGuid = null;
-        if (!noFilterSet) {
+        if (!effectiveNoFilterSet) {
             SSCIssueFilterSetHelper filterSetHelper = new SSCIssueFilterSetHelper(unirest, av.getVersionId());
-            filterSetDescriptor = filterSetHelper.getDescriptorByTitleOrId(filterSetOptions.getFilterSetTitleOrId(), false);
+            filterSetDescriptor = filterSetHelper.getDescriptorByTitleOrId(effectiveFilterSetTitleOrId, false);
             if (filterSetDescriptor != null) {
                 logger.progress("Status: Applying filter set '%s' for issue count check", filterSetDescriptor.getTitle());
-            filterSetGuid = filterSetDescriptor.getGuid();
+                filterSetGuid = filterSetDescriptor.getGuid();
                 LOG.debug("Applied SSC filter set '{}' with guid {} while counting auditable issues for version {}",
-                filterSetDescriptor.getTitle(), filterSetGuid, av.getVersionId());
+                        filterSetDescriptor.getTitle(), filterSetGuid, av.getVersionId());
             } else {
                 LOG.debug("No SSC filter set resolved from options while counting auditable issues for version {}",
                         av.getVersionId());
@@ -219,7 +223,7 @@ public final class AviatorSSCAuditHelper {
         // Apply folder filter if specified
         String folderFilter = null;
         if (folderNames != null && !folderNames.isEmpty()) {
-            folderFilter = getFolderFilter(noFilterSet, filterSetDescriptor, folderNames);
+            folderFilter = getFolderFilter(effectiveNoFilterSet, filterSetDescriptor, folderNames);
             logger.progress("Status: Applying folder filter for: %s", String.join(", ", folderNames));
             LOG.debug("Applied folder filter '{}' for folders {} while counting auditable issues for version {}",
                     folderFilter, folderNames, av.getVersionId());
@@ -237,6 +241,9 @@ public final class AviatorSSCAuditHelper {
                         .queryString("qm", "issues")
                         .queryString("q", "audited:false")
                         .queryString("start", start);
+                if (effectiveNoFilterSet) {
+                    request.queryString("showhidden", "true");
+                }
                 if (filterSetGuid != null) {
                     request.queryString("filterset", filterSetGuid);
                 }
