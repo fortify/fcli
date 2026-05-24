@@ -17,12 +17,14 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.function.Supplier;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fortify.cli.ai_assist.mcp.helper.MCPImportedActionMcpSpecsFactory;
 import com.fortify.cli.ai_assist.mcp.helper.MCPJobManager;
+import com.fortify.cli.ai_assist.mcp.helper.http.MCPServerHttpConfig;
 import com.fortify.cli.ai_assist.mcp.helper.http.JdkHttpServerMcpStatelessTransport;
 import com.fortify.cli.ai_assist.mcp.helper.http.MCPServerHttpAuthHeaderParser;
 import com.fortify.cli.ai_assist.mcp.helper.http.MCPServerHttpConfigLoader;
@@ -63,41 +65,60 @@ public class AiAssistMCPStartHttpCommand extends AbstractRunnableCommand impleme
 
     @Override
     public Integer call() throws Exception {
-        // Suppress progress output — HTTP server has no stdio protocol channel to protect,
-        // so progress messages on stdout/stderr are unwanted console noise
-        StdioHelper.setProgressOut(null);
-        StdioHelper.setProgressErr(null);
-
+        suppressProgressOutput();
         var config = MCPServerHttpConfigLoader.load(configPath);
-
-        var safeReturnMillis = PERIOD_HELPER.parsePeriodToMillis(config.getJobs().getSafeReturn());
-        var progressIntervalMillis = PERIOD_HELPER.parsePeriodToMillis(config.getJobs().getProgressInterval());
-        if ( safeReturnMillis <= 0 ) {
-            safeReturnMillis = 25000;
-        }
-        if ( progressIntervalMillis <= 0 ) {
-            progressIntervalMillis = 500;
-        }
-
-        var asyncJobManager = new AsyncJobManager(AsyncJobManager.Config.builder().bgThreads(config.getJobs().getAsyncBgThreads()).build());
-        var jobManager = new MCPJobManager(
-                config.getJobs().getWorkThreads(),
-                config.getJobs().getProgressThreads(),
-                safeReturnMillis,
-                progressIntervalMillis,
-                asyncJobManager
-        );
-
+        var asyncJobManager = new AsyncJobManager(AsyncJobManager.Config.builder()
+                .bgThreads(config.getJobs().getAsyncBgThreads()).build());
+        var jobManager = createJobManager(config, asyncJobManager);
         var authHeaderParser = new MCPServerHttpAuthHeaderParser(config);
         var sessionDescriptorResolver = new MCPServerHttpSessionDescriptorResolver(config);
-        var scopeCleanupScheduler = Executors.newSingleThreadScheduledExecutor(
+        var scopeCleanupScheduler = scheduleScopeCleanup(config, sessionDescriptorResolver);
+        var specs = collectMcpSpecs(config, jobManager, sessionDescriptorResolver, authHeaderParser);
+        var transport = createTransport(config);
+        buildAndStartServer(config, transport, specs);
+        awaitShutdown(transport, asyncJobManager, scopeCleanupScheduler, sessionDescriptorResolver);
+        return 0;
+    }
+
+    private void suppressProgressOutput() {
+        StdioHelper.setProgressOut(null);
+        StdioHelper.setProgressErr(null);
+    }
+
+    private MCPJobManager createJobManager(MCPServerHttpConfig config, AsyncJobManager asyncJobManager) {
+        var jobsConfig = config.getJobs();
+        var safeReturnMillis = PERIOD_HELPER.parsePeriodToMillis(jobsConfig.getSafeReturn());
+        var progressIntervalMillis = PERIOD_HELPER.parsePeriodToMillis(jobsConfig.getProgressInterval());
+        if (safeReturnMillis <= 0) { safeReturnMillis = 25000; }
+        if (progressIntervalMillis <= 0) { progressIntervalMillis = 500; }
+        return new MCPJobManager(
+                jobsConfig.getWorkThreads(),
+                jobsConfig.getProgressThreads(),
+                safeReturnMillis,
+                progressIntervalMillis,
+                asyncJobManager);
+    }
+
+    private ScheduledExecutorService scheduleScopeCleanup(MCPServerHttpConfig config,
+            MCPServerHttpSessionDescriptorResolver sessionDescriptorResolver) {
+        var scheduler = Executors.newSingleThreadScheduledExecutor(
                 r -> new Thread(r, "mcp-http-scope-cleanup"));
-        sessionDescriptorResolver.scheduleCleanup(config.getJobs().getIsolationScopeTtlInMillis(), scopeCleanupScheduler);
+        sessionDescriptorResolver.scheduleCleanup(config.getJobs().getIsolationScopeTtlInMillis(), scheduler);
+        return scheduler;
+    }
+
+    private record McpSpecs(
+            ArrayList<McpStatelessServerFeatures.SyncToolSpecification> tools,
+            ArrayList<McpStatelessServerFeatures.SyncResourceTemplateSpecification> resourceTemplates) {}
+
+    private McpSpecs collectMcpSpecs(MCPServerHttpConfig config, MCPJobManager jobManager,
+            MCPServerHttpSessionDescriptorResolver sessionDescriptorResolver,
+            MCPServerHttpAuthHeaderParser authHeaderParser) {
         var importSpecsFactory = new MCPImportedActionMcpSpecsFactory(jobManager,
                 () -> sessionDescriptorResolver.getOrCreateFunctionFrame(FcliExecutionContextHolder.getMcpRequestAuthScopeKey()));
         var toolSpecs = new ArrayList<McpStatelessServerFeatures.SyncToolSpecification>();
         var resourceTemplateSpecs = new ArrayList<McpStatelessServerFeatures.SyncResourceTemplateSpecification>();
-        for ( var importPath : config.getResolvedImportPaths() ) {
+        for (var importPath : config.getResolvedImportPaths()) {
             var importedSpecs = importSpecsFactory.create(importPath);
             importedSpecs.tools().forEach(tool -> toolSpecs.add(McpStatelessServerFeatures.SyncToolSpecification.builder()
                 .tool(tool.tool())
@@ -117,30 +138,39 @@ public class AiAssistMCPStartHttpCommand extends AbstractRunnableCommand impleme
             .callHandler((ctx, request) -> withRequestExecutionContext(ctx, sessionDescriptorResolver, authHeaderParser,
                 () -> jobToolSpec.callHandler().apply(null, request)))
             .build());
-
-        if ( toolSpecs.size() == 1 ) {
+        if (toolSpecs.size() == 1) {
             throw new FcliSimpleException("HTTP MCP config imports did not produce any exported functions");
         }
+        return new McpSpecs(toolSpecs, resourceTemplateSpecs);
+    }
 
+    private JdkHttpServerMcpStatelessTransport createTransport(MCPServerHttpConfig config) {
         var objectMapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        var transport = new JdkHttpServerMcpStatelessTransport(config.getServer(), "/mcp", new JacksonMcpJsonMapper(objectMapper));
+        return new JdkHttpServerMcpStatelessTransport(config.getServer(), "/mcp", new JacksonMcpJsonMapper(objectMapper));
+    }
 
+    private void buildAndStartServer(MCPServerHttpConfig config,
+            JdkHttpServerMcpStatelessTransport transport, McpSpecs specs) {
         var serverBuilder = McpServer.sync(transport)
                 .serverInfo("fcli", FcliBuildProperties.INSTANCE.getFcliVersion())
                 .requestTimeout(Duration.ofSeconds(120))
                 .instructions("HTTP MCP server exposing imported fcli action functions")
-                .capabilities(getServerCapabilities(!resourceTemplateSpecs.isEmpty()))
-                .tools(toolSpecs);
-        if ( !resourceTemplateSpecs.isEmpty() ) {
-            serverBuilder.resourceTemplates(resourceTemplateSpecs);
+                .capabilities(getServerCapabilities(!specs.resourceTemplates().isEmpty()))
+                .tools(specs.tools());
+        if (!specs.resourceTemplates().isEmpty()) {
+            serverBuilder.resourceTemplates(specs.resourceTemplates());
         }
         var mcpServer = serverBuilder.build();
         log.debug("Initialized HTTP MCP server instance: {}", mcpServer);
-
         transport.start();
         log.info("Fcli HTTP MCP server running on port {} for product {}", config.getServer().getPort(), config.getProduct());
         System.err.println("Fcli HTTP MCP server running on port " + config.getServer().getPort() + " endpoint /mcp. Hit Ctrl-C to exit.");
+    }
 
+    private void awaitShutdown(JdkHttpServerMcpStatelessTransport transport,
+            AsyncJobManager asyncJobManager,
+            ScheduledExecutorService scopeCleanupScheduler,
+            MCPServerHttpSessionDescriptorResolver sessionDescriptorResolver) throws InterruptedException {
         var latch = new CountDownLatch(1);
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             transport.close();
@@ -150,7 +180,6 @@ public class AiAssistMCPStartHttpCommand extends AbstractRunnableCommand impleme
             latch.countDown();
         }, "mcp-http-shutdown-hook"));
         latch.await();
-        return 0;
     }
 
     private <T> T withRequestExecutionContext(McpTransportContext transportContext,

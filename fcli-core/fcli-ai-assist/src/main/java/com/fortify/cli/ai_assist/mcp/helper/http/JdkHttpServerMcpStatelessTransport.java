@@ -94,55 +94,56 @@ public class JdkHttpServerMcpStatelessTransport implements McpStatelessServerTra
     }
 
     private void handleExchange(HttpExchange exchange) throws IOException {
-        if ( closing ) {
-            sendPlainError(exchange, 503, "Server is shutting down");
-            return;
-        }
-        if ( !exchange.getRequestURI().getPath().equals(mcpEndpoint) ) {
-            sendPlainError(exchange, 404, "Not found");
-            return;
-        }
-        if ( !"POST".equalsIgnoreCase(exchange.getRequestMethod()) ) {
-            sendPlainError(exchange, 405, "Method not allowed");
-            return;
-        }
-        if ( mcpHandler == null ) {
-            sendPlainError(exchange, 503, "MCP handler not initialized");
-            return;
-        }
+        if (!validateRequest(exchange)) { return; }
+        var transportContext = buildTransportContext(exchange);
+        dispatchMessage(exchange, transportContext);
+    }
 
+    private boolean validateRequest(HttpExchange exchange) throws IOException {
+        if (closing) {
+            sendPlainError(exchange, 503, "Server is shutting down");
+            return false;
+        }
+        if (!exchange.getRequestURI().getPath().equals(mcpEndpoint)) {
+            sendPlainError(exchange, 404, "Not found");
+            return false;
+        }
+        if (!"POST".equalsIgnoreCase(exchange.getRequestMethod())) {
+            sendPlainError(exchange, 405, "Method not allowed");
+            return false;
+        }
+        if (mcpHandler == null) {
+            sendPlainError(exchange, 503, "MCP handler not initialized");
+            return false;
+        }
         var accept = getFirstHeader(exchange, "Accept");
-        if ( accept == null || !(accept.contains(APPLICATION_JSON) && accept.contains(TEXT_EVENT_STREAM)) ) {
+        if (accept == null || !(accept.contains(APPLICATION_JSON) && accept.contains(TEXT_EVENT_STREAM))) {
             sendMcpError(exchange, 400, McpError.builder(McpSchema.ErrorCodes.METHOD_NOT_FOUND)
                     .message("Both application/json and text/event-stream required in Accept header")
                     .build());
-            return;
+            return false;
         }
+        return true;
+    }
 
-        var transportContext = McpTransportContext.create(Map.of(
+    private McpTransportContext buildTransportContext(HttpExchange exchange) {
+        return McpTransportContext.create(Map.of(
                 "method", exchange.getRequestMethod(),
                 "path", exchange.getRequestURI().getPath(),
                 "headers", exchange.getRequestHeaders().entrySet().stream()
                         .collect(Collectors.toUnmodifiableMap(Map.Entry::getKey, e -> List.copyOf(e.getValue())))));
+    }
+
+    private void dispatchMessage(HttpExchange exchange, McpTransportContext transportContext) throws IOException {
         try {
             var bodyBytes = readRequestBody(exchange);
-            if ( bodyBytes == null ) { return; } // response already sent (body too large)
+            if (bodyBytes == null) { return; }
             var body = new String(bodyBytes, StandardCharsets.UTF_8);
             var message = McpSchema.deserializeJsonRpcMessage(jsonMapper, body);
-            if ( message instanceof McpSchema.JSONRPCRequest request ) {
-                var response = mcpHandler.handleRequest(transportContext, request)
-                        .contextWrite(ctx -> ctx.put(McpTransportContext.KEY, transportContext))
-                        .block();
-                sendJson(exchange, 200, response);
-            } else if ( message instanceof McpSchema.JSONRPCNotification notification ) {
-                if ( INITIALIZED_NOTIFICATION_METHOD.equals(notification.method()) ) {
-                    log.debug("Ignoring MCP initialized notification");
-                } else {
-                    mcpHandler.handleNotification(transportContext, notification)
-                            .contextWrite(ctx -> ctx.put(McpTransportContext.KEY, transportContext))
-                            .block();
-                }
-                sendEmpty(exchange, 202);
+            if (message instanceof McpSchema.JSONRPCRequest request) {
+                handleJsonRpcRequest(exchange, transportContext, request);
+            } else if (message instanceof McpSchema.JSONRPCNotification notification) {
+                handleJsonRpcNotification(exchange, transportContext, notification);
             } else {
                 sendMcpError(exchange, 400, McpError.builder(McpSchema.ErrorCodes.INVALID_REQUEST)
                         .message("The server accepts either requests or notifications")
@@ -158,6 +159,26 @@ public class JdkHttpServerMcpStatelessTransport implements McpStatelessServerTra
                     .message("Unexpected server error")
                     .build());
         }
+    }
+
+    private void handleJsonRpcRequest(HttpExchange exchange, McpTransportContext transportContext,
+            McpSchema.JSONRPCRequest request) throws IOException {
+        var response = mcpHandler.handleRequest(transportContext, request)
+                .contextWrite(ctx -> ctx.put(McpTransportContext.KEY, transportContext))
+                .block();
+        sendJson(exchange, 200, response);
+    }
+
+    private void handleJsonRpcNotification(HttpExchange exchange, McpTransportContext transportContext,
+            McpSchema.JSONRPCNotification notification) throws IOException {
+        if (INITIALIZED_NOTIFICATION_METHOD.equals(notification.method())) {
+            log.debug("Ignoring MCP initialized notification");
+        } else {
+            mcpHandler.handleNotification(transportContext, notification)
+                    .contextWrite(ctx -> ctx.put(McpTransportContext.KEY, transportContext))
+                    .block();
+        }
+        sendEmpty(exchange, 202);
     }
 
     private static final long DEFAULT_MAX_REQUEST_BODY_BYTES = 10 * 1024 * 1024; // 10 MB
