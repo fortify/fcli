@@ -28,8 +28,8 @@ env:
 jobs:
   check-duplicate-run:
     uses: fortify/.github/.github/workflows/check-duplicate-run.yml@main
-    with:
-      workflow_name: Build and release
+    permissions:
+      actions: write
 
   create-release:
     name: create-release

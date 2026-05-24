@@ -15,8 +15,8 @@ permissions:
 jobs:
   check-duplicate-run:
     uses: fortify/.github/.github/workflows/check-duplicate-run.yml@main
-    with:
-      workflow_name: Fortify on Demand Scan
+    permissions:
+      actions: write
 
   FoD-Scan:
     needs: check-duplicate-run
