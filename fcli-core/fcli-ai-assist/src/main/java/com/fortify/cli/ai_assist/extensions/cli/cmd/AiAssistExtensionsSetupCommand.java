@@ -15,7 +15,7 @@ package com.fortify.cli.ai_assist.extensions.cli.cmd;
 import java.util.Set;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.ai_assist.extensions.helper.AiAssistExtensionsInstaller;
+import com.fortify.cli.ai_assist.extensions.helper.AiAssistExtensionsHelper;
 import com.fortify.cli.ai_assist.extensions.helper.AiAssistExtensionsSourceHandler.DigestMismatchAction;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonHelper;
@@ -67,7 +67,7 @@ public class AiAssistExtensionsSetupCommand extends AbstractOutputCommand
             throw new FcliSimpleException("--content-types is required when using --dir");
         }
         return JsonHelper.getObjectMapper().valueToTree(
-            AiAssistExtensionsInstaller.setup(
+            AiAssistExtensionsHelper.setup(
                 source, version, targetSelection.assistants, targetSelection.autoDetect,
                 contentTypeFilter, customDir, onDigestMismatch, dryRun));
     }

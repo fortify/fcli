@@ -12,6 +12,7 @@
  */
 package com.fortify.cli.ai_assist.mcp.cli.cmd;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -24,9 +25,9 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fortify.cli.ai_assist.mcp.helper.MCPImportedActionMcpSpecsFactory;
 import com.fortify.cli.ai_assist.mcp.helper.MCPJobManager;
-import com.fortify.cli.ai_assist.mcp.helper.http.MCPServerHttpConfig;
 import com.fortify.cli.ai_assist.mcp.helper.http.JdkHttpServerMcpStatelessTransport;
 import com.fortify.cli.ai_assist.mcp.helper.http.MCPServerHttpAuthHeaderParser;
+import com.fortify.cli.ai_assist.mcp.helper.http.MCPServerHttpConfig;
 import com.fortify.cli.ai_assist.mcp.helper.http.MCPServerHttpConfigLoader;
 import com.fortify.cli.ai_assist.mcp.helper.http.MCPServerHttpSessionDescriptorResolver;
 import com.fortify.cli.common.cli.cmd.AbstractRunnableCommand;
@@ -144,7 +145,7 @@ public class AiAssistMCPStartHttpCommand extends AbstractRunnableCommand impleme
         return new McpSpecs(toolSpecs, resourceTemplateSpecs);
     }
 
-    private JdkHttpServerMcpStatelessTransport createTransport(MCPServerHttpConfig config) {
+    private JdkHttpServerMcpStatelessTransport createTransport(MCPServerHttpConfig config) throws IOException {
         var objectMapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         return new JdkHttpServerMcpStatelessTransport(config.getServer(), "/mcp", new JacksonMcpJsonMapper(objectMapper));
     }

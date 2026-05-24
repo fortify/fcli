@@ -13,7 +13,7 @@
 package com.fortify.cli.ai_assist.extensions.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.ai_assist.extensions.helper.AiAssistExtensionsInstaller;
+import com.fortify.cli.ai_assist.extensions.helper.AiAssistExtensionsHelper;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.cli.cmd.AbstractOutputCommand;
 import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
@@ -31,7 +31,7 @@ public class AiAssistExtensionsListInstalledCommand extends AbstractOutputComman
     @Override
     public JsonNode getJsonNode() {
         return JsonHelper.getObjectMapper().valueToTree(
-            AiAssistExtensionsInstaller.listInstalled());
+            AiAssistExtensionsHelper.listInstalled());
     }
 
     @Override
