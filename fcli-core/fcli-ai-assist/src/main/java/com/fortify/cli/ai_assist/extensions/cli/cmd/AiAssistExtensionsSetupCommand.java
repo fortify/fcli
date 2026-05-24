@@ -56,10 +56,6 @@ public class AiAssistExtensionsSetupCommand extends AbstractOutputCommand
         defaultValue = "fail")
     private DigestMismatchAction onDigestMismatch;
 
-    @Option(names = {"-y", "--confirm"},
-        descriptionKey = "fcli.ai-assist.extensions.confirm")
-    private boolean confirm;
-
     @Option(names = {"--dry-run"},
         descriptionKey = "fcli.ai-assist.extensions.dry-run")
     private boolean dryRun;

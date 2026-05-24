@@ -49,7 +49,7 @@ class AiAssistExtensionsSpec extends FcliBaseSpec {
 
     def "setup-no-target"() {
         when:
-            def result = Fcli.run("ai-assist extensions setup --dry-run -y",
+            def result = Fcli.run("ai-assist extensions setup --dry-run",
                 {it.expectSuccess(false)})
         then:
             verifyAll(result.stderr) {
@@ -59,7 +59,7 @@ class AiAssistExtensionsSpec extends FcliBaseSpec {
 
     def "setup-unknown-assistant"() {
         when:
-            def result = Fcli.run("ai-assist extensions setup --assistants unknown-assistant --dry-run -y",
+            def result = Fcli.run("ai-assist extensions setup --assistants unknown-assistant --dry-run",
                 {it.expectSuccess(false)})
         then:
             verifyAll(result.stderr) {
@@ -70,7 +70,7 @@ class AiAssistExtensionsSpec extends FcliBaseSpec {
     def "setup-dry-run"() {
         def targetDir = "${baseDir}/skills-dry-run"
         when:
-            def result = Fcli.run("ai-assist extensions setup --dir ${targetDir} --content-types skills --dry-run -y",
+            def result = Fcli.run("ai-assist extensions setup --dir ${targetDir} --content-types skills --dry-run",
                 {it.expectZeroExitCode()})
         then:
             verifyAll(result.stdout) {
@@ -85,7 +85,7 @@ class AiAssistExtensionsSpec extends FcliBaseSpec {
     def "setup-install"() {
         def targetDir = "${baseDir}/skills"
         when:
-            def result = Fcli.run("ai-assist extensions setup --dir ${targetDir} --content-types skills -y",
+            def result = Fcli.run("ai-assist extensions setup --dir ${targetDir} --content-types skills",
                 {it.expectZeroExitCode()})
         then:
             verifyAll(result.stdout) {
@@ -112,7 +112,7 @@ class AiAssistExtensionsSpec extends FcliBaseSpec {
     def "setup-idempotent"() {
         def targetDir = "${baseDir}/skills"
         when:
-            def result = Fcli.run("ai-assist extensions setup --dir ${targetDir} --content-types skills -y",
+            def result = Fcli.run("ai-assist extensions setup --dir ${targetDir} --content-types skills",
                 {it.expectZeroExitCode()})
         then:
             verifyAll(result.stdout) {
@@ -126,7 +126,7 @@ class AiAssistExtensionsSpec extends FcliBaseSpec {
     def "uninstall-dir"() {
         def targetDir = "${baseDir}/skills"
         when:
-            def result = Fcli.run("ai-assist extensions uninstall --dir ${targetDir} --content-types skills -y",
+            def result = Fcli.run("ai-assist extensions uninstall --dir ${targetDir} --content-types skills",
                 {it.expectZeroExitCode()})
         then:
             verifyAll(result.stdout) {

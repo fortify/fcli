@@ -40,10 +40,6 @@ public class AiAssistExtensionsUninstallCommand extends AbstractOutputCommand
         descriptionKey = "fcli.ai-assist.extensions.uninstall.dir")
     private String customDir;
 
-    @Option(names = {"-y", "--confirm"},
-        descriptionKey = "fcli.ai-assist.extensions.confirm")
-    private boolean confirm;
-
     @Option(names = {"--dry-run"},
         descriptionKey = "fcli.ai-assist.extensions.dry-run")
     private boolean dryRun;

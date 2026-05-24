@@ -60,8 +60,8 @@ public class AiAssistMCPCreateHttpConfigCommand extends AbstractRunnableCommand 
 
     private String loadTemplate() {
         var templateResource = switch (type) {
-        case ssc -> "/com/fortify/cli/agent/mcp/config/mcp-http-config-ssc.yaml";
-        case fod -> "/com/fortify/cli/agent/mcp/config/mcp-http-config-fod.yaml";
+        case ssc -> "/com/fortify/cli/ai_assist/mcp/config/mcp-http-config-ssc.yaml";
+        case fod -> "/com/fortify/cli/ai_assist/mcp/config/mcp-http-config-fod.yaml";
         };
         try ( var inputStream = getClass().getResourceAsStream(templateResource) ) {
             if ( inputStream == null ) {
