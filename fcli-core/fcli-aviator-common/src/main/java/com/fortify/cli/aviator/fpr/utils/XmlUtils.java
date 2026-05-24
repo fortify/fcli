@@ -14,6 +14,13 @@ package com.fortify.cli.aviator.fpr.utils;
 
 import java.math.BigDecimal;
 
+import javax.xml.XMLConstants;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.TransformerConfigurationException;
+import javax.xml.transform.TransformerFactory;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -138,5 +145,67 @@ public class XmlUtils {
             }
         }
         return metaInfo;
+    }
+
+    /**
+     * Creates a {@link DocumentBuilderFactory} pre-configured to prevent XXE attacks.
+     * Disables external general/parameter entities, external DTD loading, and XInclude,
+     * and enables {@code FEATURE_SECURE_PROCESSING}.
+     *
+     * @param namespaceAware whether the factory should be namespace-aware
+     * @return a hardened {@link DocumentBuilderFactory}
+     * @throws IllegalStateException if the JDK does not support the required security features
+     */
+    public static DocumentBuilderFactory secureDocumentBuilderFactory(boolean namespaceAware) {
+        try {
+            DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+            dbf.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
+            dbf.setFeature("http://xml.org/sax/features/external-general-entities", false);
+            dbf.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+            dbf.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
+            dbf.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+            dbf.setXIncludeAware(false);
+            dbf.setExpandEntityReferences(false);
+            dbf.setNamespaceAware(namespaceAware);
+            return dbf;
+        } catch (ParserConfigurationException e) {
+            throw new IllegalStateException("Failed to configure secure XML DocumentBuilderFactory", e);
+        }
+    }
+
+    /**
+     * Creates a {@link DocumentBuilder} pre-configured to prevent XXE attacks.
+     * Convenience method combining {@link #secureDocumentBuilderFactory(boolean)}
+     * and {@link DocumentBuilderFactory#newDocumentBuilder()}.
+     *
+     * @param namespaceAware whether the builder should be namespace-aware
+     * @return a hardened {@link DocumentBuilder}
+     * @throws IllegalStateException if the JDK does not support the required security features
+     */
+    public static DocumentBuilder secureDocumentBuilder(boolean namespaceAware) {
+        try {
+            return secureDocumentBuilderFactory(namespaceAware).newDocumentBuilder();
+        } catch (ParserConfigurationException e) {
+            throw new IllegalStateException("Failed to create secure XML DocumentBuilder", e);
+        }
+    }
+
+    /**
+     * Creates a {@link TransformerFactory} pre-configured to prevent XXE attacks.
+     * Restricts access to external DTDs and stylesheets and enables {@code FEATURE_SECURE_PROCESSING}.
+     *
+     * @return a hardened {@link TransformerFactory}
+     * @throws IllegalStateException if the JDK does not support the required security features
+     */
+    public static TransformerFactory secureTransformerFactory() {
+        try {
+            TransformerFactory tf = TransformerFactory.newInstance();
+            tf.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
+            tf.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
+            tf.setAttribute(XMLConstants.ACCESS_EXTERNAL_STYLESHEET, "");
+            return tf;
+        } catch (TransformerConfigurationException e) {
+            throw new IllegalStateException("Failed to configure secure XML TransformerFactory", e);
+        }
     }
 }

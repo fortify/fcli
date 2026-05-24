@@ -31,6 +31,8 @@ public class AuditIssue {
     private int revision;
     @Builder.Default private Map<String, String> tags = new HashMap<>();
     @Builder.Default private List<Comment> threadedComments = new ArrayList<>();
+    @Builder.Default private List<TagHistoryEntry> tagHistory = new ArrayList<>();
+    private String assignedUser;
 
     public void addTag(String tagId, String tagValue) {
         if (tagId != null) {
@@ -51,5 +53,15 @@ public class AuditIssue {
         private String content;
         private String username;
         private String timestamp;
+    }
+
+    @Getter
+    @Builder
+    @Reflectable
+    public static class TagHistoryEntry {
+        private String tagId;
+        private String tagValue;
+        private String editTime;
+        private String username;
     }
 }
