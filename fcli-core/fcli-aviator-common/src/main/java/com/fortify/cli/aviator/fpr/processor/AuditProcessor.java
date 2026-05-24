@@ -348,6 +348,7 @@ public class AuditProcessor {
         return commentTimestamp;
     }
 
+
     private void updateClientAuditTrail(Element issueElement, AuditResponse response, TagMappingConfig tagMappingConfig, Boolean suppressedHistoryValue) {
         Element clientAuditTrail = getClientAuditTrailElement(issueElement);
 

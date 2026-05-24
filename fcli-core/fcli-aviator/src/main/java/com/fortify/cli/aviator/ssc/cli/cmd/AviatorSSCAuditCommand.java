@@ -16,21 +16,27 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fortify.cli.aviator._common.config.AviatorConfigManager;
 import com.fortify.cli.aviator._common.session.user.cli.mixin.AviatorUserSessionDescriptorSupplier;
 import com.fortify.cli.aviator._common.session.user.helper.AviatorUserSessionDescriptor;
 import com.fortify.cli.aviator.audit.AuditFPR;
 import com.fortify.cli.aviator.audit.model.AuditFprOptions;
 import com.fortify.cli.aviator.audit.model.FPRAuditResult;
 import com.fortify.cli.aviator.config.AviatorLoggerImpl;
+import com.fortify.cli.aviator.config.TagMappingConfig;
 import com.fortify.cli.aviator.ssc.helper.AviatorSSCAuditHelper;
+import com.fortify.cli.aviator.ssc.helper.AviatorSSCTagValidator;
 import com.fortify.cli.aviator.util.FprHandle;
+import com.fortify.cli.aviator.util.ResourceUtil;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.progress.cli.mixin.ProgressWriterFactoryMixin;
@@ -262,6 +268,7 @@ public class AviatorSSCAuditCommand extends AbstractSSCJsonNodeOutputCommand imp
 
         String artifactId = null;
         if (auditResult.getUpdatedFile() != null && !"SKIPPED".equals(action) && !"FAILED".equals(action)) {
+            validateSSCTagsBeforeUpload(unirest, av, logger);
             try {
                 artifactId = uploadAuditedFprToSSC(unirest, auditResult.getUpdatedFile(), av);
             } catch (Exception e) {
@@ -273,6 +280,46 @@ public class AviatorSSCAuditCommand extends AbstractSSCJsonNodeOutputCommand imp
         ObjectNode result = AviatorSSCAuditHelper.buildResultNode(av, artifactId, action);
         AviatorSSCAuditHelper.setAuditStats(result, auditResult);
         return result;
+    }
+
+    /**
+     * Validates that SSC has the required custom tags and Analysis tag values
+     * before uploading the audited FPR. Emits warnings for any missing tags or
+     * values so the user can take corrective action.
+     */
+    private void validateSSCTagsBeforeUpload(UnirestInstance unirest, SSCAppVersionDescriptor av,
+            AviatorLoggerImpl logger) {
+        LOG.info("Starting SSC tag validation before FPR upload for app version id={}.", av.getVersionId());
+        TagMappingConfig tagMappingConfig = loadTagMappingForValidation();
+        LOG.debug("Tag mapping config loaded: tag_id='{}', mapping={}", tagMappingConfig.getTag_id(), tagMappingConfig.getMapping());
+        Set<String> analysisTagValues = extractAnalysisTagValues(tagMappingConfig);
+        LOG.info("Analysis tag values to validate: {}", analysisTagValues);
+        List<String> warnings = AviatorSSCTagValidator.validatePreUpload(
+            unirest, av.getVersionId(), tagMappingConfig.getTag_id(), analysisTagValues, logger);
+        LOG.info("Tag validation complete. {} warning(s) found.", warnings.size());
+    }
+
+    private TagMappingConfig loadTagMappingForValidation() {
+        if (tagMapping != null && !tagMapping.isBlank()) {
+            return ResourceUtil.loadYamlFile(new java.io.File(tagMapping), TagMappingConfig.class);
+        }
+        return AviatorConfigManager.getInstance().getDefaultTagMappingConfig();
+    }
+
+    private Set<String> extractAnalysisTagValues(TagMappingConfig config) {
+        Set<String> values = new LinkedHashSet<>();
+        if (config.getMapping() != null) {
+            addTierValues(values, config.getMapping().getTier_1());
+            addTierValues(values, config.getMapping().getTier_2());
+        }
+        return values;
+    }
+
+    private void addTierValues(Set<String> values, TagMappingConfig.Tier tier) {
+        if (tier == null) return;
+        if (tier.getFp() != null && tier.getFp().getValue() != null) values.add(tier.getFp().getValue());
+        if (tier.getTp() != null && tier.getTp().getValue() != null) values.add(tier.getTp().getValue());
+        if (tier.getUnsure() != null && tier.getUnsure().getValue() != null) values.add(tier.getUnsure().getValue());
     }
 
     private Path downloadFpr(UnirestInstance unirest, SSCAppVersionDescriptor av, AviatorLoggerImpl logger) throws IOException {
