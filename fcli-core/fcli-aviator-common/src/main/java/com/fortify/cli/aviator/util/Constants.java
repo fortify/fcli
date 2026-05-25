@@ -72,6 +72,7 @@ public class Constants {
     public static final String OP_DELETE_TOKEN = "deleting token";
     public static final String OP_VALIDATE_TOKEN = "validating token";
     public static final String OP_VALIDATE_USER_TOKEN = "validating user token";
+    public static final String OP_VALIDATE_ADMIN_SESSION = "admin session validation";
     public static final String OP_LIST_ENTITLEMENTS = "listing entitlements";
     public static final String OP_LIST_DAST_ENTITLEMENTS = "listing DAST entitlements";
     public static final String OP_GET_APP_BY_TOKEN = "retrieving application by token";
