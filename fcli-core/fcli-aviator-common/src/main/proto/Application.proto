@@ -53,6 +53,12 @@ message ApplicationByTenantName {
   string message = 3;
 }
 
+message ValidateAdminSessionRequest {
+  string tenantName = 1;
+  string signature = 2;
+  string message = 3;
+}
+
 message ApplicationList {
   repeated Application applications = 1;
 }
@@ -83,6 +89,7 @@ service ApplicationService {
   rpc UpdateApplication(UpdateApplicationRequest) returns (Application) {}
   rpc AddEntitlement(ApplicationById) returns (Application) {}
   rpc DeleteApplication(ApplicationById) returns (ApplicationResponseMessage) {}
+  rpc ValidateAdminSession(ValidateAdminSessionRequest) returns (google.protobuf.Empty) {}
   rpc ListApplications(ApplicationByTenantName) returns (ApplicationList) {}
   rpc ListApplicationsByEntitlement(ApplicationById) returns (ApplicationList) {}
   rpc GetApplicationByToken(GetApplicationByTokenRequest) returns (Application) {}

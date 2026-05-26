@@ -36,6 +36,7 @@ import com.fortify.aviator.application.GetApplicationByTokenRequest;
 import com.fortify.aviator.application.GetDefaultQuotaRequest;
 import com.fortify.aviator.application.GetDefaultQuotaResponse;
 import com.fortify.aviator.application.UpdateApplicationRequest;
+import com.fortify.aviator.application.ValidateAdminSessionRequest;
 import com.fortify.aviator.dastentitlement.DastEntitlement;
 import com.fortify.aviator.dastentitlement.DastEntitlementServiceGrpc;
 import com.fortify.aviator.dastentitlement.ListDastEntitlementsByTenantRequest;
@@ -215,6 +216,19 @@ public class AviatorGrpcClient implements AutoCloseable {
             ApplicationServiceGrpc.ApplicationServiceBlockingStub::getDefaultQuota,
             request, Constants.OP_GET_DEFAULT_QUOTA);
         return response.getDefaultQuota();
+    }
+
+    public void validateAdminSession(String tenantName, String signature, String message) {
+        ValidateAdminSessionRequest request = ValidateAdminSessionRequest.newBuilder()
+            .setTenantName(tenantName)
+            .setSignature(signature)
+            .setMessage(message)
+            .build();
+        GrpcUtil.executeGrpcCall(
+            blockingStub,
+            ApplicationServiceGrpc.ApplicationServiceBlockingStub::validateAdminSession,
+            request,
+            Constants.OP_VALIDATE_ADMIN_SESSION);
     }
 
     public List<Application> listApplication(String tenantName, String signature, String message) {
