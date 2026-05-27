@@ -16,11 +16,12 @@ import java.time.Duration;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fortify.cli.common.cli.util.FcliExecutionContextHolder;
+import com.fortify.cli.common.concurrent.job.CachingJobEventListener;
+import com.fortify.cli.common.concurrent.job.CompositeJobEventListener;
+import com.fortify.cli.common.concurrent.job.IJobEventListener;
 import com.fortify.cli.common.util.DateTimePeriodHelper;
 import com.fortify.cli.common.util.DateTimePeriodHelper.Period;
-import com.fortify.cli.util._common.helper.CachingJobEventListener;
-import com.fortify.cli.util._common.helper.CompositeJobEventListener;
-import com.fortify.cli.util._common.helper.IJobEventListener;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -48,13 +49,10 @@ final class RPCJobEventListenerFactory {
     private static final DateTimePeriodHelper PERIOD_HELPER =
             DateTimePeriodHelper.byRange(Period.SECONDS, Period.DAYS);
 
-    private final CachingJobEventListener cachingListener;
     private volatile RPCServer.RPCOutputWriter outputWriter;
     private volatile RPCPushJobEventListener pushListener;
 
-    RPCJobEventListenerFactory(CachingJobEventListener cachingListener) {
-        this.cachingListener = cachingListener;
-    }
+    RPCJobEventListenerFactory() {}
 
     void setOutputWriter(RPCServer.RPCOutputWriter writer) {
         this.outputWriter = writer;
@@ -145,7 +143,7 @@ final class RPCJobEventListenerFactory {
         var pushListener = push ? resolvePushListener() : null;
         IJobEventListener caching = null;
         if (cacheConfig != null) {
-            caching = withTtlEviction(cachingListener, cacheConfig.ttl());
+            caching = withTtlEviction(getCachingListener(), cacheConfig.ttl());
         }
         if (caching != null && pushListener != null) {
             return new CompositeJobEventListener(caching, pushListener);
@@ -193,8 +191,13 @@ final class RPCJobEventListenerFactory {
             @Override
             public void onJobComplete(String jobId, int exitCode, String stderr, String stdout) {
                 delegate.onJobComplete(jobId, exitCode, stderr, stdout);
-                cachingListener.scheduleEviction(jobId, ttl);
+                getCachingListener().scheduleEviction(jobId, ttl);
             }
         };
+    }
+
+    private CachingJobEventListener getCachingListener() {
+        return FcliExecutionContextHolder.current().getIsolationScope()
+                .getOrCreateScopedState(CachingJobEventListener.class, CachingJobEventListener::new);
     }
 }

@@ -7,7 +7,10 @@ plugins {
 
 // Inter-project dependencies
 val refs = listOf(
-    "fcliCommonRef","fcliActionRef","fcliAviatorRef","fcliConfigRef","fcliFoDRef","fcliSSCRef","fcliSCSastRef","fcliSCDastRef","fcliToolRef","fcliLicenseRef","fcliUtilRef"
+    "fcliCommonRef","fcliCommonThirdpartyRef","fcliCommonCiRef","fcliCommonActionRef","fcliCommonToolRef",
+    "fcliActionRef","fcliAiAssistRef","fcliAviatorRef","fcliConfigRef",
+    "fcliFoDRef","fcliSSCRef","fcliSCSastRef","fcliSCDastRef",
+    "fcliToolRef","fcliLicenseRef","fcliUtilRef"
 )
 references@ for (r in refs) {
     val p = project.findProperty(r) as String? ?: continue@references
@@ -18,6 +21,7 @@ references@ for (r in refs) {
 dependencies {
     runtimeOnly("org.slf4j:jcl-over-slf4j")
     runtimeOnly("org.fusesource.jansi:jansi")
+    annotationProcessor("info.picocli:picocli-codegen")
 }
 
 // Picocli reflect config generation
@@ -43,7 +47,7 @@ val generateMCPReflectConfig = tasks.register<JavaExec>("generateMCPReflectConfi
     inputs.files(configurations.runtimeClasspath, sourceSets.main.get().runtimeClasspath)
     outputs.file(outputFile)
     classpath(configurations.runtimeClasspath, sourceSets.main.get().runtimeClasspath)
-    mainClass.set("com.fortify.cli.util.mcp_server.helper.mcp.MCPReflectConfigGenerator")
+    mainClass.set("com.fortify.cli.ai_assist.mcp.helper.MCPReflectConfigGenerator")
     args(outputFile.get().asFile.absolutePath)
 }
 

@@ -17,10 +17,10 @@ import java.util.Map;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.action.runner.ActionFunctionExecutor;
+import com.fortify.cli.common.concurrent.job.AsyncJobManager;
+import com.fortify.cli.common.concurrent.job.CollectingJobEventListener;
+import com.fortify.cli.common.concurrent.job.task.AsyncTaskActionFunction;
 import com.fortify.cli.common.json.JsonHelper;
-import com.fortify.cli.util._common.helper.AsyncJobManager;
-import com.fortify.cli.util._common.helper.AsyncTaskActionFunction;
-import com.fortify.cli.util._common.helper.CollectingJobEventListener;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -84,7 +84,11 @@ public final class RPCMethodHandlerFnCall implements IRPCMethodHandler {
             var argsNode = buildArgsNode(params);
             var task = new AsyncTaskActionFunction(executor, argsNode);
             var description = "fn:" + name;
-            var jobId = asyncJobManager.startBackground(task, effectiveListener, description);
+            var jobId = asyncJobManager.startBackground(AsyncJobManager.TaskDescriptor.builder()
+                    .task(task)
+                    .listener(effectiveListener)
+                    .description(description)
+                    .build());
 
             if (collector != null) {
                 return RPCWaitHelper.awaitOrFallback(collector, waitConfig, jobId, "records", cacheConfig, true);

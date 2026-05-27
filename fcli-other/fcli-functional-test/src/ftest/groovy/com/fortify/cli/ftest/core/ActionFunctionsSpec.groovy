@@ -10,6 +10,8 @@ import spock.lang.Shared
 @Prefix("core.action.functions")
 class ActionFunctionsSpec extends FcliBaseSpec {
     @Shared @TestResource("runtime/actions/functions.yaml") String functionsActionPath
+    @Shared @TestResource("runtime/actions/run-fcli-shared-state-parent.yaml") String runFcliSharedStateParentActionPath
+    @Shared @TestResource("runtime/actions/run-fcli-shared-state-child.yaml") String runFcliSharedStateChildActionPath
     
     def "fn-call-spel"() {
         when:
@@ -49,6 +51,22 @@ class ActionFunctionsSpec extends FcliBaseSpec {
         then:
             verifyAll(result.stdout) {
                 it.any { it.contains("internal-value") }
+            }
+    }
+
+    def "run.fcli reuses parent action state"() {
+        when:
+            def result = Fcli.run([
+                "action", "run", runFcliSharedStateParentActionPath,
+                "--progress=none",
+                "--on-unsigned=ignore",
+                "--on-invalid-version=ignore",
+                "--child-action-path", runFcliSharedStateChildActionPath
+            ])
+        then:
+            verifyAll(result.stdout) {
+                it.any { it.contains("before=red") }
+                it.any { it.contains("after=blue") }
             }
     }
 }

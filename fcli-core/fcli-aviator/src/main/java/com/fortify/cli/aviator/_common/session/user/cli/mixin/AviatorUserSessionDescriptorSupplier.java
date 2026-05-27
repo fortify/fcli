@@ -27,4 +27,9 @@ public class AviatorUserSessionDescriptorSupplier extends AbstractSessionDescrip
     public final AviatorUserSessionDescriptor getSessionDescriptor(String sessionName) {
         return AviatorUserSessionHelper.instance().get(sessionName, true);
     }
+
+    @Override
+    protected String getSessionDescriptorType() {
+        return AviatorUserSessionHelper.instance().getType();
+    }
 }

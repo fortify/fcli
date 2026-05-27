@@ -1,0 +1,24 @@
+# yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-dev-2.x.json
+
+author: ftest
+usage:
+  header: Ftest server import HTTP functions (SSC)
+  description: Session-backed SSC function for HTTP MCP functional tests
+
+functions:
+  sscRestCount:
+    description: Run an SSC REST call through with.product using the transient HTTP session
+    return: ${_result}
+    steps:
+      - with.product:
+          name: ssc
+          do:
+            - rest.call:
+                versions:
+                  target: ssc
+                  uri: /api/v1/projectVersions?limit=1
+                  on.success:
+                    - var.set:
+                        _result: ${'SSC-REST-OK count=' + versions_raw.count}
+
+steps: []

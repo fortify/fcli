@@ -32,7 +32,7 @@ import com.fortify.cli.fod.app.helper.FoDAppDescriptor;
 import com.fortify.cli.fod.app.helper.FoDAppHelper;
 import com.fortify.cli.fod.app.helper.FoDAppUpdateRequest;
 import com.fortify.cli.fod.attribute.cli.mixin.FoDAttributeUpdateOptions;
-import com.fortify.cli.fod.attribute.helper.FoDAttributeHelper;
+import com.fortify.cli.fod.attribute.helper.FoDAttributeDefinitionHelper;
 
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
@@ -60,7 +60,7 @@ public class FoDAppUpdateCommand extends AbstractFoDJsonNodeOutputCommand implem
     public JsonNode getJsonNode(UnirestInstance unirest) {
         FoDAppDescriptor appDescriptor = FoDAppHelper.getAppDescriptor(unirest, appResolver.getAppNameOrId(), true);
         FoDCriticalityTypeOptions.FoDCriticalityType appCriticalityNew = criticalityTypeUpdate.getCriticalityType();
-        JsonNode jsonAttrs = FoDAttributeHelper.getAttributesNodeForUpdate(unirest, FoDEnums.AttributeTypes.Application,
+        JsonNode jsonAttrs = new FoDAttributeDefinitionHelper(unirest).buildAttributesNodeForUpdate(FoDEnums.AttributeTypes.Application,
                 appDescriptor.getAttributes(), appAttrsUpdate.getAttributes(), autoRequiredAttrsOption.isAutoRequiredAttrs());
         String appEmailListNew = FoDAppHelper.getEmailList(notificationsUpdate);
 

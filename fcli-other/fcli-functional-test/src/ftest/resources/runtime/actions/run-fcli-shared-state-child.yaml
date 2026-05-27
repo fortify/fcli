@@ -1,0 +1,13 @@
+# yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-dev-2.x.json
+
+author: ftest
+usage:
+  header: Ftest run.fcli child action state sharing
+  description: Child action for verifying run.fcli context/state sharing
+
+steps:
+  - out.write:
+      stdout: before=${global.color}
+
+  - var.set:
+      global.color: blue

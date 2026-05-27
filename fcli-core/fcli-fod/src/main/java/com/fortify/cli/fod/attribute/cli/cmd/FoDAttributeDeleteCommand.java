@@ -18,8 +18,8 @@ import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.fod._common.output.cli.cmd.AbstractFoDJsonNodeOutputCommand;
 import com.fortify.cli.fod._common.rest.FoDUrls;
 import com.fortify.cli.fod.attribute.cli.mixin.FoDAttributeResolverMixin;
-import com.fortify.cli.fod.attribute.helper.FoDAttributeDescriptor;
-import com.fortify.cli.fod.attribute.helper.FoDAttributeHelper;
+import com.fortify.cli.fod.attribute.helper.FoDAttributeDefinitionDescriptor;
+import com.fortify.cli.fod.attribute.helper.FoDAttributeDefinitionHelper;
 
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
@@ -33,7 +33,7 @@ public class FoDAttributeDeleteCommand extends AbstractFoDJsonNodeOutputCommand 
 
     @Override
     public JsonNode getJsonNode (UnirestInstance unirest){
-        FoDAttributeDescriptor attrDescriptor = FoDAttributeHelper.getAttributeDescriptor(unirest, attributeResolver.getAttributeId(), true);
+        FoDAttributeDefinitionDescriptor attrDescriptor = new FoDAttributeDefinitionHelper(unirest).getDefinition(attributeResolver.getAttributeId(), true);
         unirest.delete(FoDUrls.ATTRIBUTE)
                 .routeParam("attributeId", String.valueOf(attrDescriptor.getId()))
                 .asObject(JsonNode.class).getBody();

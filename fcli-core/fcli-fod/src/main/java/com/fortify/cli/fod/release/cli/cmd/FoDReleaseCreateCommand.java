@@ -40,7 +40,7 @@ import com.fortify.cli.fod.app.helper.FoDAppCreateRequest;
 import com.fortify.cli.fod.app.helper.FoDAppDescriptor;
 import com.fortify.cli.fod.app.helper.FoDAppHelper;
 import com.fortify.cli.fod.attribute.cli.mixin.FoDAttributeUpdateOptions;
-import com.fortify.cli.fod.attribute.helper.FoDAttributeHelper;
+import com.fortify.cli.fod.attribute.helper.FoDAttributeDefinitionHelper;
 import com.fortify.cli.fod.microservice.helper.FoDMicroserviceDescriptor;
 import com.fortify.cli.fod.microservice.helper.FoDMicroserviceHelper;
 import com.fortify.cli.fod.release.cli.mixin.FoDReleaseByQualifiedNameOrIdResolverMixin;
@@ -150,7 +150,7 @@ public class FoDReleaseCreateCommand extends AbstractFoDJsonNodeOutputCommand im
                 .releaseName(simpleReleaseName)
                 .releaseDescription(description)
                 .sdlcStatusType(sdlcStatus.getSdlcStatusType().name())
-                .attributes(FoDAttributeHelper.getAttributesNode(unirest, FoDEnums.AttributeTypes.Release, 
+                .attributes(new FoDAttributeDefinitionHelper(unirest).buildAttributesNode(FoDEnums.AttributeTypes.Release, 
                     relAttrs.getAttributes(), autoRequiredAttrsOption.isAutoRequiredAttrs()));
         requestBuilder = addMicroservice(microserviceDescriptor, requestBuilder);
         requestBuilder = addCopyFrom(unirest, appDescriptor, requestBuilder);

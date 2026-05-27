@@ -15,14 +15,18 @@ package com.fortify.cli.util.rpc_server.helper;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.function.Supplier;
 
 import com.fortify.cli.common.action.helper.ActionLoaderHelper;
 import com.fortify.cli.common.action.helper.ActionLoaderHelper.ActionSource;
 import com.fortify.cli.common.action.helper.ActionLoaderHelper.ActionValidationHandler;
 import com.fortify.cli.common.action.runner.ActionFunctionExecutor;
+import com.fortify.cli.common.cli.util.FcliActionState;
 import com.fortify.cli.common.cli.util.FcliExecutionContext;
-import com.fortify.cli.util._common.helper.AsyncJobManager;
-import com.fortify.cli.util._common.helper.CachingJobEventListener;
+import com.fortify.cli.common.cli.util.FcliExecutionContextHolder;
+import com.fortify.cli.common.cli.util.FcliIsolationScope;
+import com.fortify.cli.common.concurrent.job.AsyncJobManager;
+import com.fortify.cli.common.concurrent.job.CachingJobEventListener;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -45,16 +49,16 @@ import lombok.extern.slf4j.Slf4j;
 public final class RPCMethodHandlerRegistry {
     private final Map<String, IRPCMethodHandler> handlers;
     private final AsyncJobManager asyncJobManager;
-    private final CachingJobEventListener cachingListener;
+    private final FcliIsolationScope isolationScope;
     private final RPCJobEventListenerFactory listenerFactory;
 
     private RPCMethodHandlerRegistry(Map<String, IRPCMethodHandler> handlers,
                                      AsyncJobManager asyncJobManager,
-                                     CachingJobEventListener cachingListener,
+                                     FcliIsolationScope isolationScope,
                                      RPCJobEventListenerFactory listenerFactory) {
         this.handlers = handlers;
         this.asyncJobManager = asyncJobManager;
-        this.cachingListener = cachingListener;
+        this.isolationScope = isolationScope;
         this.listenerFactory = listenerFactory;
     }
 
@@ -71,7 +75,11 @@ public final class RPCMethodHandlerRegistry {
     }
 
     public CachingJobEventListener getCachingListener() {
-        return cachingListener;
+        return isolationScope.getOrCreateScopedState(CachingJobEventListener.class, CachingJobEventListener::new);
+    }
+
+    FcliIsolationScope getIsolationScope() {
+        return isolationScope;
     }
 
     /**
@@ -92,8 +100,10 @@ public final class RPCMethodHandlerRegistry {
     @Slf4j
     public static final class Builder {
         private final AsyncJobManager asyncJobManager;
-        private final CachingJobEventListener cachingListener = new CachingJobEventListener();
-        private final FcliExecutionContext sharedFunctionContext = new FcliExecutionContext();
+        private final FcliIsolationScope sharedIsolationScope = new FcliIsolationScope();
+        private final FcliActionState sharedFunctionActionState = new FcliActionState();
+        private final Supplier<FcliExecutionContextHolder.ContextFrame> sharedFunctionFrameSupplier =
+                () -> FcliExecutionContextHolder.push(new FcliExecutionContext(sharedIsolationScope, sharedFunctionActionState));
         private final Map<String, IRPCMethodHandler> handlers = new LinkedHashMap<>();
         private final Map<String, ActionFunctionExecutor> importedFunctions = new LinkedHashMap<>();
 
@@ -117,7 +127,7 @@ public final class RPCMethodHandlerRegistry {
             for (var entry : action.getFunctions().entrySet()) {
                 var function = entry.getValue();
                 if (!function.isExported()) { continue; }
-                var executor = new ActionFunctionExecutor(action, function, sharedFunctionContext);
+                var executor = new ActionFunctionExecutor(action, function, sharedFunctionFrameSupplier);
                 importedFunctions.put(function.getKey(), executor);
                 log.debug("Imported exported function for fn.call: {}", function.getKey());
             }
@@ -132,23 +142,23 @@ public final class RPCMethodHandlerRegistry {
         }
 
         public RPCMethodHandlerRegistry build() {
-            var listenerFactory = new RPCJobEventListenerFactory(cachingListener);
+            var listenerFactory = new RPCJobEventListenerFactory();
 
             register("rpc.listMethods", new RPCMethodHandlerListMethods(handlers));
             register("fcli.buildInfo", new RPCMethodHandlerFcliInfo());
             register("fcli.execute", new RPCMethodHandlerFcliExecute(asyncJobManager, listenerFactory));
             register("fcli.listCommands", new RPCMethodHandlerFcliListCommands());
             register("fcli.getCommandDetails", new RPCMethodHandlerFcliGetCommandDetails());
-            register("job.getPage", new RPCMethodHandlerJobGetPage(cachingListener));
-            register("job.getStatus", new RPCMethodHandlerJobGetStatus(asyncJobManager, cachingListener));
+                register("job.getPage", new RPCMethodHandlerJobGetPage());
+                register("job.getStatus", new RPCMethodHandlerJobGetStatus(asyncJobManager));
             register("job.cancel", new RPCMethodHandlerJobCancel(asyncJobManager));
-            register("job.remove", new RPCMethodHandlerJobRemove(asyncJobManager, cachingListener));
+                register("job.remove", new RPCMethodHandlerJobRemove(asyncJobManager));
             register("job.list", new RPCMethodHandlerJobList(asyncJobManager));
             register("fn.call", new RPCMethodHandlerFnCall(importedFunctions, asyncJobManager, listenerFactory));
             register("fn.list", new RPCMethodHandlerFnList(importedFunctions));
 
             return new RPCMethodHandlerRegistry(
-                    Collections.unmodifiableMap(handlers), asyncJobManager, cachingListener, listenerFactory);
+                    Collections.unmodifiableMap(handlers), asyncJobManager, sharedIsolationScope, listenerFactory);
         }
     }
 }

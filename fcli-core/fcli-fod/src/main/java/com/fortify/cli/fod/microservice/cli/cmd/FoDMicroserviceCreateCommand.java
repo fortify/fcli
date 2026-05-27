@@ -21,7 +21,7 @@ import com.fortify.cli.fod._common.output.cli.cmd.AbstractFoDJsonNodeOutputComma
 import com.fortify.cli.fod._common.util.FoDEnums;
 import com.fortify.cli.fod.app.helper.FoDAppDescriptor;
 import com.fortify.cli.fod.attribute.cli.mixin.FoDAttributeUpdateOptions;
-import com.fortify.cli.fod.attribute.helper.FoDAttributeHelper;
+import com.fortify.cli.fod.attribute.helper.FoDAttributeDefinitionHelper;
 import com.fortify.cli.fod.microservice.cli.mixin.FoDMicroserviceByQualifiedNameResolverMixin;
 import com.fortify.cli.fod.microservice.helper.FoDMicroserviceDescriptor;
 import com.fortify.cli.fod.microservice.helper.FoDMicroserviceHelper;
@@ -54,7 +54,7 @@ public class FoDMicroserviceCreateCommand extends AbstractFoDJsonNodeOutputComma
         FoDQualifiedMicroserviceNameDescriptor qualifiedMicroserviceNameDescriptor = qualifiedMicroserviceNameResolver.getQualifiedMicroserviceNameDescriptor();
         FoDMicroserviceUpdateRequest msCreateRequest = FoDMicroserviceUpdateRequest.builder()
                 .microserviceName(qualifiedMicroserviceNameDescriptor.getMicroserviceName())
-                .attributes(FoDAttributeHelper.getAttributesNode(unirest, FoDEnums.AttributeTypes.Microservice,
+                .attributes(new FoDAttributeDefinitionHelper(unirest).buildAttributesNode(FoDEnums.AttributeTypes.Microservice,
                                 msAttrs.getAttributes(), autoRequiredAttrsOption.isAutoRequiredAttrs()))
                 .build();
         return FoDMicroserviceHelper.createMicroservice(unirest, appDescriptor, msCreateRequest).asJsonNode();

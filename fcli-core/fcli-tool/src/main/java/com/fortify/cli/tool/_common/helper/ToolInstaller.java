@@ -36,12 +36,12 @@ import com.fortify.cli.common.exception.FcliTechnicalException;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.progress.helper.IProgressWriterI18n;
 import com.fortify.cli.common.rest.unirest.UnirestHelper;
+import com.fortify.cli.common.tool.definitions.helper.ToolDefinitionArtifactDescriptor;
+import com.fortify.cli.common.tool.definitions.helper.ToolDefinitionRootDescriptor;
+import com.fortify.cli.common.tool.definitions.helper.ToolDefinitionVersionDescriptor;
+import com.fortify.cli.common.tool.definitions.helper.ToolDefinitionsHelper;
 import com.fortify.cli.common.util.FileUtils;
 import com.fortify.cli.common.util.PlatformHelper;
-import com.fortify.cli.tool.definitions.helper.ToolDefinitionArtifactDescriptor;
-import com.fortify.cli.tool.definitions.helper.ToolDefinitionRootDescriptor;
-import com.fortify.cli.tool.definitions.helper.ToolDefinitionVersionDescriptor;
-import com.fortify.cli.tool.definitions.helper.ToolDefinitionsHelper;
 
 import lombok.Builder;
 import lombok.Data;

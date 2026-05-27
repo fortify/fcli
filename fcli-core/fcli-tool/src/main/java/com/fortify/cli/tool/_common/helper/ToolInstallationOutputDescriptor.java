@@ -20,8 +20,8 @@ import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
 
 import com.formkiq.graalvm.annotations.Reflectable;
-import com.fortify.cli.tool.definitions.helper.ToolDefinitionArtifactDescriptor;
-import com.fortify.cli.tool.definitions.helper.ToolDefinitionVersionDescriptor;
+import com.fortify.cli.common.tool.definitions.helper.ToolDefinitionArtifactDescriptor;
+import com.fortify.cli.common.tool.definitions.helper.ToolDefinitionVersionDescriptor;
 
 import lombok.Data;
 

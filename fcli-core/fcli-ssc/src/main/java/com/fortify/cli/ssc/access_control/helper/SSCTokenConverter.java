@@ -21,7 +21,7 @@ import com.fortify.cli.common.exception.FcliSimpleException;
 
 
 public final class SSCTokenConverter {
-    private static Pattern applicationTokenPattern = Pattern.compile("^[\\da-f]{8}(?:-[\\da-f]{4}){3}-[\\da-f]{12}$");
+    private static final Pattern applicationTokenPattern = Pattern.compile("^[\\da-f]{8}(?:-[\\da-f]{4}){3}-[\\da-f]{12}$");
     private SSCTokenConverter() {}
     
     public static final String toApplicationToken(String token) {

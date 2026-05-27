@@ -19,18 +19,14 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.exception.FcliTechnicalException;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.json.transform.fields.RenameFieldsTransformer;
@@ -38,97 +34,14 @@ import com.fortify.cli.fod._common.rest.FoDUrls;
 import com.fortify.cli.fod._common.rest.helper.FoDInputTransformer;
 import com.fortify.cli.fod._common.rest.helper.FoDPagingHelper;
 import com.fortify.cli.fod._common.rest.helper.FoDProductHelper;
-import com.fortify.cli.fod._common.util.FoDEnums;
-import com.fortify.cli.fod.attribute.helper.FoDAttributeDescriptor;
-import com.fortify.cli.fod.attribute.helper.FoDAttributeHelper;
 
 import kong.unirest.HttpResponse;
 import kong.unirest.UnirestInstance;
 import lombok.Builder;
 import lombok.Data;
-import lombok.Getter;
 
 public class FoDIssueHelper {
     private static final Logger LOG = LoggerFactory.getLogger(FoDIssueHelper.class);
-    @Getter private static ObjectMapper objectMapper = new ObjectMapper();
-
-    // Local cache for attribute descriptors used during bulk issue updates. Populated by loadAllAttributes().
-    private static final ConcurrentHashMap<String, FoDAttributeDescriptor> ATTR_CACHE_BY_NAME = new ConcurrentHashMap<>();
-    private static final ConcurrentHashMap<Integer, FoDAttributeDescriptor> ATTR_CACHE_BY_ID = new ConcurrentHashMap<>();
-    private static volatile boolean attributesPrefetched = false;
-
-    /**
-     * Prefetch all attributes from FoD and populate the local cache. Safe to call multiple times; will perform
-     * the fetch only once per JVM unless clearAttributesCache() is called.
-     */
-    public static synchronized void loadAllAttributes(UnirestInstance unirest) {
-        if ( attributesPrefetched ) return;
-        // Use local temporary maps to build the cache so a failed fetch/parse doesn't leave partial data
-        var tmpById = new HashMap<Integer, FoDAttributeDescriptor>();
-        var tmpByName = new HashMap<String, FoDAttributeDescriptor>();
-        try {
-            var request = unirest.get(FoDUrls.ATTRIBUTES);
-            var body = request.asObject(ObjectNode.class).getBody();
-            var items = body.get("items");
-            if ( items!=null && items.isArray() ) {
-                for (var item : items) {
-                    FoDAttributeDescriptor desc = JsonHelper.treeToValue(item, FoDAttributeDescriptor.class);
-                    if ( desc!=null ) {
-                        tmpById.putIfAbsent(desc.getId(), desc);
-                        if ( desc.getName()!=null ) {
-                            tmpByName.putIfAbsent(desc.getName(), desc);
-                            tmpByName.putIfAbsent(desc.getName().trim(), desc);
-                        }
-                    }
-                }
-            }
-            // Merge into the concurrent caches; preserve any existing descriptors using putIfAbsent
-            for ( var e : tmpById.entrySet() ) {
-                ATTR_CACHE_BY_ID.putIfAbsent(e.getKey(), e.getValue());
-            }
-            for ( var e : tmpByName.entrySet() ) {
-                ATTR_CACHE_BY_NAME.putIfAbsent(e.getKey(), e.getValue());
-            }
-            attributesPrefetched = true; // set only after successful population
-        } catch (kong.unirest.UnirestException e) {
-            throw new FcliTechnicalException("Error loading attribute descriptors", e);
-        } catch (Exception e) {
-            throw new FcliTechnicalException("Error processing attribute descriptors", e);
-        }
-    }
-
-    public static void clearAttributesCache() {
-        ATTR_CACHE_BY_ID.clear();
-        ATTR_CACHE_BY_NAME.clear();
-        attributesPrefetched = false;
-    }
-
-    /**
-     * Resolve an attribute descriptor from the local cache. If not prefetched yet, will call loadAllAttributes.
-     */
-    public static FoDAttributeDescriptor getAttributeDescriptorFromCache(UnirestInstance unirest, String nameOrId, boolean failIfNotFound) {
-        if ( !attributesPrefetched ) {
-            loadAllAttributes(unirest);
-        }
-        if ( nameOrId==null ) {
-            if ( failIfNotFound ) throw new FcliSimpleException("No attribute found for name or id: null");
-            return null;
-        }
-        try {
-            int id = Integer.parseInt(nameOrId);
-            var desc = ATTR_CACHE_BY_ID.get(id);
-            if ( desc==null && failIfNotFound ) throw new FcliSimpleException("No attribute found for name or id: " + nameOrId);
-            return desc;
-        } catch (NumberFormatException nfe) {
-            var desc = ATTR_CACHE_BY_NAME.get(nameOrId);
-            if ( desc==null ) {
-                // try trimmed
-                desc = ATTR_CACHE_BY_NAME.get(nameOrId.trim());
-            }
-            if ( desc==null && failIfNotFound ) throw new FcliSimpleException("No attribute found for name or id: " + nameOrId);
-            return desc;
-        }
-    }
 
     public static final JsonNode transformRecord(JsonNode record) {
         return new RenameFieldsTransformer(new String[]{}).transform(record);
@@ -212,7 +125,7 @@ public class FoDIssueHelper {
     }
 
     public static final FoDBulkIssueUpdateResponse updateIssues(UnirestInstance unirest, String releaseId, FoDBulkIssueUpdateRequest issueUpdateRequest) {
-        ObjectNode body = objectMapper.valueToTree(issueUpdateRequest);
+        ObjectNode body = JsonHelper.getObjectMapper().valueToTree(issueUpdateRequest);
         var result = unirest.post(FoDUrls.VULNERABILITIES + "/bulk-edit")
             .routeParam("relId", releaseId)
             .body(body).asObject(JsonNode.class).getBody();
@@ -398,80 +311,6 @@ public class FoDIssueHelper {
     }
 
     /**
-     * Resolve a status value (developer/auditor) against one or more FoD attribute picklists.
-     * Returns the canonical picklist name when found, or throws a FcliSimpleException listing allowed values.
-     */
-    public static String resolveStatusValue(UnirestInstance unirest, String providedValue, String[] attributeNames, String optionName) {
-        // Maintain compatibility by delegating to the generic overload; try to infer enum when optionName indicates developer/auditor
-        FoDEnums.DeveloperStatusType[] devEnum = FoDEnums.DeveloperStatusType.values();
-        FoDEnums.AuditorStatusType[] audEnum = FoDEnums.AuditorStatusType.values();
-        if ( optionName!=null && optionName.toLowerCase().contains("developer") ) {
-            return resolveStatusValue(unirest, providedValue, attributeNames, optionName, devEnum);
-        } else if ( optionName!=null && optionName.toLowerCase().contains("auditor") ) {
-            return resolveStatusValue(unirest, providedValue, attributeNames, optionName, audEnum);
-        }
-        return resolveStatusValue(unirest, providedValue, attributeNames, optionName, (FoDEnums.DeveloperStatusType[])null);
-    }
-
-    public static <T extends Enum<T> & FoDEnums.IFoDEnumValueSupplier<String>> String resolveStatusValue(UnirestInstance unirest, String providedValue, String[] attributeNames, String optionName, T[] enumValues) {
-        if ( providedValue==null || providedValue.isBlank() ) { return null; }
-        String originalProvided = providedValue;
-        String candidate = providedValue.trim();
-        try {
-            if ( enumValues!=null ) {
-                var resolved = FoDEnums.IFoDEnumValueSupplier.resolveEnumValue(candidate, enumValues);
-                if ( resolved.isPresent() ) { candidate = resolved.get(); }
-            }
-        } catch (Exception e) {
-            LOG.debug("Error resolving enum-style status value for {}: {}", optionName, e.getMessage());
-        }
-
-        String attrResolved = tryResolveAgainstAttributes(unirest, attributeNames, candidate);
-        if ( attrResolved!=null ) return attrResolved;
-
-        var allowed = collectAllowedAttributeValues(unirest, attributeNames);
-        throw new FcliSimpleException(String.format("Invalid %s '%s'. Allowed values: %s", optionName, originalProvided, String.join(", ", allowed)));
-    }
-
-    private static String tryResolveAgainstAttributes(UnirestInstance unirest, String[] attributeNames, String candidate) {
-        for (String attrName: attributeNames) {
-            var desc = FoDAttributeHelper.getAttributeDescriptor(unirest, attrName, false);
-            if ( desc==null ) continue;
-            var picklist = desc.getPicklistValues();
-            if ( picklist==null || picklist.isEmpty() ) continue;
-            for (var pv : picklist) {
-                if ( pv.getName()!=null && pv.getName().equalsIgnoreCase(candidate) ) {
-                    return pv.getName();
-                }
-            }
-            // if provided value looks like an id, try matching by id
-            try {
-                int providedId = Integer.parseInt(candidate);
-                for (var pv : picklist) {
-                    if ( Objects.equals(pv.getId(), providedId) ) {
-                        return pv.getName();
-                    }
-                }
-            } catch (NumberFormatException ignored) {}
-        }
-        return null;
-    }
-
-    private static List<String> collectAllowedAttributeValues(UnirestInstance unirest, String[] attributeNames) {
-        var allowed = new ArrayList<String>();
-        for (String attrName: attributeNames) {
-            var desc = FoDAttributeHelper.getAttributeDescriptor(unirest, attrName, false);
-            if ( desc==null ) continue;
-            var picklist = desc.getPicklistValues();
-            if ( picklist==null ) continue;
-            for (var pv: picklist) {
-                allowed.add(pv.getName());
-            }
-        }
-        return allowed;
-    }
-
-    /**
      * Result carrier for vuln filtering: kept (normalized ids to update), skipped (original values skipped), totalCount
      */
     public static record VulnFilterResult(List<String> kept, List<String> skipped, int totalCount) {}
@@ -521,31 +360,5 @@ public class FoDIssueHelper {
             }
         }
         return v.isEmpty() ? null : v;
-    }
-
-    /**
-     * Build an ArrayNode of attribute objects (id/value) for Issue attribute updates using the localized
-     * attribute cache. Will prefetch attributes if necessary.
-     */
-    public static ArrayNode buildIssueAttributesNode(UnirestInstance unirest, Map<String, String> attributeUpdates) {
-        ArrayNode attrArray = JsonHelper.getObjectMapper().createArrayNode();
-        if ( attributeUpdates==null || attributeUpdates.isEmpty() ) return attrArray;
-        // Ensure local cache populated
-        loadAllAttributes(unirest);
-        for ( Map.Entry<String,String> e : attributeUpdates.entrySet() ) {
-            String attrName = e.getKey();
-            String value = e.getValue();
-            FoDAttributeDescriptor attributeDescriptor = getAttributeDescriptorFromCache(unirest, attrName, true);
-            // Only include attributes that are Issue-scoped (AttributeTypes.Issue)
-            if ( attributeDescriptor!=null && attributeDescriptor.getAttributeTypeId() == FoDEnums.AttributeTypes.Issue.getValue() ) {
-                var obj = JsonHelper.getObjectMapper().createObjectNode();
-                obj.put("id", attributeDescriptor.getId());
-                obj.put("value", value);
-                attrArray.add(obj);
-            } else {
-                LOG.debug("Skipping attribute '{}' as it is not an Issue attribute", attributeDescriptor.getName());
-            }
-        }
-        return attrArray;
     }
 }
