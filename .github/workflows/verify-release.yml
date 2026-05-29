@@ -1,0 +1,173 @@
+name: Verify Release
+
+on:
+  workflow_dispatch:
+    inputs: 
+      runId: # Accessible through ${{ inputs.runId }}
+        description: 'Required "Build and release" workflow run id (see id in browser URL for selected run) from which to get artifacts to be tested'
+        required: true
+        type: number
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  check-run-id:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Validate run-id belongs to this repo
+        shell: bash
+        run: |
+          run_info=$(curl -s -H "Authorization: Bearer ${GITHUB_TOKEN}" -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/runs/${RUN_ID}")
+          owner=$(echo "$run_info" | jq -r .repository.full_name)
+          if [ "$owner" != "${GITHUB_REPOSITORY}" ]; then
+            echo "Provided run id does not belong to this repository; aborting." >&2
+            exit 1
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RUN_ID: ${{ inputs.runId }}
+
+  ft-core:
+    needs: check-run-id
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        type: [jar, native]
+    
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      # Java is required for running the functional tests
+      - name: Setup Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Download release artifact
+        uses: actions/download-artifact@v8
+        with:
+          run-id: ${{ inputs.runId }}
+          name: ${{ matrix.type == 'jar' && 'fcli-jar' || matrix.os == 'ubuntu-latest' && 'fcli-linux' || matrix.os == 'windows-latest' && 'fcli-windows' || 'fcli-mac' }}
+          path: ./artifacts
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Download fcli-ftest.jar
+        uses: actions/download-artifact@v8
+        with:
+          run-id: ${{ inputs.runId }}
+          name: fcli-ftest-jar
+          path: ./artifacts
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: Run Tests
+        shell: bash
+        run: |
+          find ./artifacts -type f -exec mv {} . \;
+          case "${{ matrix.type }}" in
+            "jar" )
+              java -jar fcli-ftest.jar -Dft.fcli=fcli.jar -Dft.run=core,config,tool ;;
+            "native" )
+              case "${{ matrix.os }}" in
+                "ubuntu-latest" ) 
+                  tar -zxvf fcli-linux.tgz
+                  java -jar fcli-ftest.jar -Dft.fcli=./fcli -Dft.run=core,config,tool ;;
+                "windows-latest" )
+                  7z e fcli-windows.zip
+                  java -jar fcli-ftest.jar -Dft.fcli=fcli.exe -Dft.run=core,config,tool ;;
+                "macos-latest" )
+                  tar -zxvf fcli-mac.tgz
+                  java -jar fcli-ftest.jar -Dft.fcli=./fcli -Dft.run=core,config,tool ;;
+              esac ;;
+          esac 
+            
+      - name: Rename test log
+        if: always()
+        shell: bash
+        run: mv test.log "test-${{ matrix.os }}-${{ matrix.type }}.log"
+        
+      - name: Publish test logs
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: test-log-${{ matrix.os }}-${{ matrix.type }}
+          path: test-*.log
+          retention-days: 2
+          
+  ft-product:
+    needs: check-run-id
+    strategy:
+      fail-fast: false
+      matrix:
+        type: [fod, ssc, sc-sast, sc-dast, report]
+    
+    runs-on: ubuntu-latest
+
+    steps:
+      # Java is required for running the functional tests
+      - name: Setup Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Download fcli-linux.tgz
+        uses: actions/download-artifact@v8
+        with:
+          run-id: ${{ inputs.runId }}
+          name: fcli-linux
+          path: ./artifacts
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Download fcli-ftest.jar
+        uses: actions/download-artifact@v8
+        with:
+          run-id: ${{ inputs.runId }}
+          name: fcli-ftest-jar
+          path: ./artifacts
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: Run Tests
+        shell: bash
+        run: |
+          find ./artifacts -type f -exec mv {} . \;
+          tar -zxvf fcli-linux.tgz
+          # Although we only run the current matrix entry type, we pass connection
+          # options for all session types, as some SC-SAST/SC-DAST tests may also
+          # require an SSC session.
+          java -jar fcli-ftest.jar -Dft.fcli=./fcli -Dft.run=$type \
+            -Dft.fod.url=$fod_url -Dft.fod.tenant=$fod_tenant -Dft.fod.user=$fod_user -Dft.fod.password=$fod_pwd \
+            -Dft.ssc.url=$ssc_url -Dft.ssc.user=$ssc_user -Dft.ssc.password=$ssc_pwd -Dft.ssc.client-auth-token=$scsast_token
+        env:
+          type: ${{ matrix.type }}
+          fod_url: ${{ secrets.FCLI_FT_FOD_URL }}
+          fod_tenant: ${{ secrets.FCLI_FT_FOD_TENANT }}
+          fod_user: ${{ secrets.FCLI_FT_FOD_USER }}
+          fod_pwd: ${{ secrets.FCLI_FT_FOD_PWD }}
+          ssc_url: ${{ secrets.FCLI_FT_SSC_URL }}
+          ssc_user: ${{ secrets.FCLI_FT_SSC_USER }}
+          ssc_pwd: ${{ secrets.FCLI_FT_SSC_PWD }}
+          scsast_token: ${{ secrets.FCLI_FT_SCSAST_TOKEN }}
+          # Pass GitHub and GitLab tokens for use by NCD license report tests
+          FCLI_FT_GITHUB_TOKEN: ${{ secrets.FCLI_FT_GITHUB_TOKEN }}
+          FCLI_FT_GITLAB_TOKEN: ${{ secrets.FCLI_FT_GITLAB_TOKEN }}
+            
+      - name: Rename test log
+        if: always()
+        shell: bash
+        run: mv test.log "test-${{ matrix.type }}.log"
+        
+      - name: Publish test logs
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: test-log-${{ matrix.type }}
+          path: test-*.log
+          retention-days: 2
+          
+                   

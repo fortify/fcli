@@ -1,0 +1,44 @@
+server:
+  port: 8080
+  # bindAddress: ""           # Network interface to bind; empty = all interfaces (0.0.0.0)
+  # maxRequestBodyBytes: 10485760  # Maximum request body in bytes; default 10MB
+  # tls:                     # Omit entire section to use plain HTTP
+  #   keystoreFile: keystore.p12          # Path to Java keystore (relative to config or absolute)
+  #   keystorePassword: ${#env('KEYSTORE_PASSWORD')}  # Keystore password
+  #   keyPassword: ${#env('KEY_PASSWORD')}  # Private-key password; defaults to keystorePassword
+  #   keystoreType: PKCS12                # Keystore type (PKCS12 or JKS; default: PKCS12)
+
+imports:
+  - actions/http-ssc.yaml
+
+# Optional jobs settings (shown with default values):
+# jobs:
+#
+#   # THREAD POOLS
+#   # workThreads handles MCP tool call requests. Each simultaneous tool call from any user
+#   # occupies one work thread for its full duration. Size to:
+#   #   expected_concurrent_users * max_parallel_tool_calls_per_user
+#   workThreads: 20
+#
+#   # progressThreads polls progress for long-running jobs at regular intervals.
+#   # One thread is consumed per active long-running job during each poll cycle.
+#   # 4 threads is sufficient for most deployments.
+#   progressThreads: 4
+#
+#   # asyncBgThreads runs background async streaming jobs (e.g. run.fcli steps with
+#   # streaming output). Each active async streaming job occupies one background thread.
+#   # Increase if actions make heavy use of async streaming.
+#   asyncBgThreads: 2
+#
+#   # JOB TIMING / LIFECYCLE
+#   safeReturn: 25s        # Max time to wait for a job result before returning a job ID
+#   progressInterval: 5s   # Interval between progress update checks
+#   isolationScopeTtl: 4h  # Idle timeout for per-user session/variable state; state is
+#                          # discarded and variables are deleted after this period of inactivity
+
+ssc:
+  url: https://ssc.example.com
+  connectTimeout: 30s
+  socketTimeout: 10m
+  insecureModeEnabled: false
+  scSastClientAuthToken: ${#env('SSC_SAST_CLIENT_AUTH_TOKEN')}

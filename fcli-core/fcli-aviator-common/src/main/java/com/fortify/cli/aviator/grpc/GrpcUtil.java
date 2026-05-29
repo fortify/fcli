@@ -35,8 +35,6 @@ import com.fortify.cli.aviator.audit.model.StackTraceElement;
 import com.fortify.cli.aviator.audit.model.UserPrompt;
 import com.fortify.cli.aviator.fpr.utils.SourceCodeEnricher;
 import com.fortify.cli.aviator.util.Constants;
-import com.fortify.cli.aviator.util.FileTypeLanguageMapperUtil;
-import com.fortify.cli.aviator.util.FileUtil;
 
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
@@ -146,12 +144,9 @@ class GrpcUtil {
             builder.setLastStackTraceElement(convertToStackTraceElement(userPrompt.getLastStackTraceElement()));
         }
 
-        //We are setting list of files later for lazy loading that's why programming language will be unavailable
-        if(userPrompt.getFiles()!=null)
-         builder.addAllProgrammingLanguages(programmingLanguages(userPrompt.getFiles()));
-        /*if (userPrompt.getProgrammingLanguages() != null) {
+        if (userPrompt.getProgrammingLanguages() != null) {
             builder.addAllProgrammingLanguages(userPrompt.getProgrammingLanguages());
-        }*/
+        }
         builder.setFileExtension(userPrompt.getFileExtension() == null ? "" : userPrompt.getFileExtension());
         builder.setLanguage(userPrompt.getLanguage() == null ? "" : userPrompt.getLanguage());
         builder.setCategory(userPrompt.getCategory() == null ? "" : userPrompt.getCategory());
@@ -167,19 +162,6 @@ class GrpcUtil {
 
         return builder.build();
     }
-
-    private static Set<String> programmingLanguages(List<com.fortify.cli.aviator.audit.model.File> sourceCodeFiles){
-        Set<String> programmingLanguages = new HashSet<>();
-        for (com.fortify.cli.aviator.audit.model.File file : sourceCodeFiles) {
-            String fileExtension = FileUtil.getFileExtension(file.getName());
-            String language = FileTypeLanguageMapperUtil.getProgrammingLanguage(fileExtension);
-            if (language != null) {
-                programmingLanguages.add(language);
-            }
-        }
-        return programmingLanguages;
-    }
-
     private static com.fortify.aviator.grpc.StackTraceElement convertToStackTraceElement(StackTraceElement element) {
         if (element == null) return com.fortify.aviator.grpc.StackTraceElement.getDefaultInstance();
 

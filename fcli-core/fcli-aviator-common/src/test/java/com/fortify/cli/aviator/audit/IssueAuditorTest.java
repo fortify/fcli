@@ -40,6 +40,7 @@ import com.fortify.cli.aviator.fpr.filter.Filter;
 import com.fortify.cli.aviator.fpr.filter.FilterSet;
 import com.fortify.cli.aviator.fpr.filter.FilterTemplate;
 import com.fortify.cli.aviator.fpr.model.FPRInfo;
+import com.fortify.cli.aviator.fpr.model.FVDLMetadata;
 import com.fortify.cli.aviator.util.FprHandle;
 
 
@@ -160,7 +161,8 @@ class IssueAuditorTest {
 
         IssueAuditor auditor = new IssueAuditor(
             inputList, null, new HashMap<>(), fprInfo,
-            "TestApp", "1.0", selection, dummyLogger, null
+            "TestApp", "1.0", selection, dummyLogger, null,
+            new SourceLanguageResolver(new FVDLMetadata())
         );
 
         Method filterMethod = IssueAuditor.class.getDeclaredMethod("filterVulnerabilities", List.class, FilterSet.class);

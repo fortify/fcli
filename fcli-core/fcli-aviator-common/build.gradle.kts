@@ -12,7 +12,7 @@ java {
 tasks.withType<JavaCompile>().configureEach { dependsOn("generateProto") }
 
 dependencies {
-    implementation(project(":fcli-core:fcli-common"))
+    implementation(project(":fcli-core:fcli-common-core"))
     implementation("org.yaml:snakeyaml:2.3")
 
     // JAXB for XML object marshalling (used in FVDLProcessor legacy parser)

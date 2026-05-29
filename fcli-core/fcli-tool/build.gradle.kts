@@ -3,6 +3,11 @@ plugins {
     id("de.undercouch.download")
 }
 
+dependencies {
+    val commonToolRef = project.findProperty("fcliCommonToolRef") as String
+    implementation(project(commonToolRef))
+}
+
 // Generate tool definitions & resource-config entry
 val toolDefinitionsSource = "https://github.com/fortify/tool-definitions/releases/download/v1/tool-definitions.yaml.zip"
 val toolDefinitionsFile = "tool-definitions.yaml.zip"

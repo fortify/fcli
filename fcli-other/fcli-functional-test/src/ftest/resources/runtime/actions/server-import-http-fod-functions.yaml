@@ -1,0 +1,24 @@
+# yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-dev-2.x.json
+
+author: ftest
+usage:
+  header: Ftest server import HTTP functions (FoD)
+  description: Session-backed FoD function for HTTP MCP functional tests
+
+functions:
+  fodRestCount:
+    description: Run a FoD REST call through with.product using the transient HTTP session
+    return: ${_result}
+    steps:
+      - with.product:
+          name: fod
+          do:
+            - rest.call:
+                apps:
+                  target: fod
+                  uri: /api/v3/applications?limit=1
+                  on.success:
+                    - var.set:
+                        _result: ${'FOD-REST-OK count=' + apps_raw.totalCount}
+
+steps: []

@@ -38,6 +38,7 @@ import com.fortify.cli.common.output.cli.cmd.AbstractOutputCommand;
 import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.progress.cli.mixin.ProgressWriterFactoryMixin;
+import com.fortify.cli.common.tool.definitions.helper.ToolDefinitionVersionDescriptor;
 import com.fortify.cli.common.util.DisableTest;
 import com.fortify.cli.common.util.DisableTest.TestType;
 import com.fortify.cli.common.util.EnvHelper;
@@ -51,7 +52,6 @@ import com.fortify.cli.tool._common.helper.ToolInstaller.DigestMismatchAction;
 import com.fortify.cli.tool._common.helper.ToolInstaller.ToolInstallationResult;
 import com.fortify.cli.tool._common.helper.ToolRegistrationHelper;
 import com.fortify.cli.tool._common.helper.ToolUninstaller;
-import com.fortify.cli.tool.definitions.helper.ToolDefinitionVersionDescriptor;
 
 import lombok.Getter;
 import lombok.SneakyThrows;

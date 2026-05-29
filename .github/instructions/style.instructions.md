@@ -10,9 +10,9 @@ applyTo: 'fcli/**/*'
 
 **If you detect discrepancies** between these instructions and the actual codebase patterns, or discover conventions not documented here:
 
-1. **Notify the user** about the discrepancy or missing documentation
-2. **Suggest specific updates** to this instruction file
-3. **Consider whether the discrepancy represents an intentional exception** (clarity over rules) or an outdated instruction
+1. **Automatically update this file** to reflect the correct pattern
+2. **Consider whether the discrepancy represents** an intentional exception (clarity over rules) or an outdated instruction
+3. **Verify against current code** before documenting — never guess at intent
 
 ## General
 
@@ -26,6 +26,18 @@ applyTo: 'fcli/**/*'
 - Target Java 17 features: records (where immutable data carriers), `var` for obvious local types, text blocks for multi-line strings, pattern matching for `instanceof` when it clarifies code.
 - Use Streams for clear transformations/filtering, but favor simple for-loops if they are more readable or avoid unnecessary allocations.
 - Use `Optional` sparingly (avoid in hot inner loops or for simple nullable fields inside DTOs).
+
+## Lombok Usage
+
+Always prefer Lombok annotations over hand-written boilerplate. Key rules beyond the obvious:
+
+- **`@Getter(lazy = true)`** — for expensive fields computed once on first access (thread-safe).
+- **`@Getter(value = AccessLevel.PRIVATE)`** — restrict getter visibility; combine with `@Accessors(fluent = true)` for fluent data-holder APIs.
+- **`@Builder` + `@RequiredArgsConstructor(access = AccessLevel.PRIVATE)`** — enforces construction via builder only; use `@Builder.Default` for non-null field defaults.
+- **Jackson-deserialized descriptors (`@Reflectable`)** — do NOT add `@Builder`; use `@NoArgsConstructor` + `@Data` / `@Getter` (Jackson requires a no-arg constructor).
+- **`@Data` with inheritance** — always add `@EqualsAndHashCode(callSuper = true)` explicitly.
+- **`@Slf4j`** — preferred for new code; older code uses `LoggerFactory.getLogger(getClass())`.
+- **Avoid** `@Value` (use Java `record`), `@With`, `@SuperBuilder` — not currently in use.
 
 ## Imports & Formatting
 
@@ -77,13 +89,29 @@ applyTo: 'fcli/**/*'
 - Record producers should remain side-effect free except for streaming output records.
 - Avoid static mutable state; prefer instance-level control (see recent refactor removing static collectors).
 
+## Security Mindset
+
+Apply OWASP principles defensively — even in a CLI tool that processes data from trusted sources:
+
+- **Injection:** Although injecting user input into shell commands, file paths, SpEL/template expression is fairly common in fcli, always verify the potential security impact and apply proper safeguards if appropriate.
+- **Isolation:** Avoid static mutable state that could be manipulated across command executions; prefer instance-level state or thread confinement. For multi-user server scenarios like MCP HTTP server, ensure proper data isolation.
+- **Sensitive data exposure:** Don't log or print credentials, tokens, or secrets; use `saveSecuredFile()` / `readSecuredFile()` for persisted session credentials, and make sure that log masking is applied (see `LogMaskHelper`)
+- **Path traversal:** Always resolve user-supplied paths against an expected root; use `FileUtils`'s zip-slip-protected extraction methods rather than raw `ZipEntry.getName()`
+- **Deserialization:** Prefer Jackson with explicit type constraints; avoid `ObjectMapper.enableDefaultTyping()` or polymorphic `@JsonTypeInfo` with user-controlled type names
+- **Dependency hygiene:** Don't add new dependencies without reviewing their transitive impact; prefer well-maintained libraries already on the classpath
+
 ## AI Assistant Expectations
 
-- Before large edits: scan related files (search by symbol) to avoid breaking contracts.
-- After edits: run compile, address warnings if feasible.
-- Never introduce commented-out code blocks; remove instead.
-- Provide incremental, minimal diffs; do not reformat unrelated code.
-- If refactoring signature changes, update all usages in same change.
+- **Analyze before implementing:** Trace through existing abstractions with `semantic_search`, `grep_search`, and `vscode_listCodeUsages` before writing a single line. Understand the design intent, not just the surface syntax.
+- **Reuse, don't reinvent:** Identify the most appropriate existing base class, mixin, or utility before creating new abstractions. Fcli has rich shared infrastructure — use it.
+- **Apply SOLID principles:** Single Responsibility (each class does one thing), Open/Closed (extend via interfaces/abstractions, not modification), Liskov Substitution (subtypes must honor contracts), Interface Segregation (small focused interfaces), Dependency Inversion (depend on abstractions).
+- **Separation of concerns:** Commands parse options and orchestrate; helpers/services contain business logic; writers handle output. Don't embed formatting in commands or business logic in writers.
+- **Before large edits:** Scan related files (search by symbol) to avoid breaking contracts.
+- **After edits:** Run `get_errors`, address any issues; build with Gradle if appropriate.
+- **Never introduce commented-out code blocks;** remove instead.
+- **Provide incremental, minimal diffs;** do not reformat unrelated code.
+- **If refactoring changes a signature,** update all usages in the same change.
+- **Self-update these instructions** when you discover a pattern, pitfall, or convention not yet documented here — make the edit immediately as part of the task.
 
 ## Pull Request Hygiene
 

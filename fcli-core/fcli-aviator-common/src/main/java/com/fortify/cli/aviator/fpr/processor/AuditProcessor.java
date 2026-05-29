@@ -93,20 +93,20 @@ public class AuditProcessor {
             if (!Files.exists(auditPath)) {
                 logger.debug("audit.xml not found. Creating a default audit.xml.");
                 auditDoc = createDefaultAuditXml();
-            }
+            } else {
+                DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+                factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
+                factory.setFeature("http://xml.org/sax/features/external-general-entities", false);
+                factory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+                factory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
+                factory.setXIncludeAware(false);
+                factory.setExpandEntityReferences(false);
+                factory.setNamespaceAware(true);
+                DocumentBuilder builder = factory.newDocumentBuilder();
 
-            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-            factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
-            factory.setFeature("http://xml.org/sax/features/external-general-entities", false);
-            factory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
-            factory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
-            factory.setXIncludeAware(false);
-            factory.setExpandEntityReferences(false);
-            factory.setNamespaceAware(true);
-            DocumentBuilder builder = factory.newDocumentBuilder();
-
-            try (InputStream auditStream = Files.newInputStream(auditPath)) {
-                auditDoc = builder.parse(auditStream);
+                try (InputStream auditStream = Files.newInputStream(auditPath)) {
+                    auditDoc = builder.parse(auditStream);
+                }
             }
             NodeList issueNodes = auditDoc.getElementsByTagNameNS(AUDIT_NAMESPACE_URI, "Issue");
             for (int i = 0; i < issueNodes.getLength(); i++) {
@@ -305,6 +305,7 @@ public class AuditProcessor {
         int revision = Integer.parseInt(issueElement.getAttribute("revision"));
         issueElement.setAttribute("revision", String.valueOf(++revision));
         String commentTimestamp = null;
+        Boolean suppressedHistoryValue = null;
 
         if (response != null && response.getAuditResult() != null) {
             String tagValue = response.getAuditResult().tagValue;
@@ -332,7 +333,8 @@ public class AuditProcessor {
             if (resultConfig != null && resultConfig.getValue() != null && !resultConfig.getValue().isEmpty()) {
                 updateOrAddTag(issueElement, tagMappingConfig.getTag_id(), resultConfig.getValue());
             }
-            applySuppressionDecision(issueElement, issueElement.getAttribute("instanceId"), resultConfig, tagMappingConfig, issueCategoryLookup);
+            suppressedHistoryValue = applySuppressionDecision(issueElement, issueElement.getAttribute("instanceId"), resultConfig,
+                    tagMappingConfig, issueCategoryLookup);
         }
 
         updateOrAddTag(issueElement, Constants.AVIATOR_STATUS_TAG_ID, Constants.PROCESSED_BY_AVIATOR);
@@ -341,13 +343,13 @@ public class AuditProcessor {
             commentTimestamp = updateOrAddComment(issueElement, response.getAuditResult().comment);
         }
 
-        updateClientAuditTrail(issueElement, response, tagMappingConfig, issueCategoryLookup);
+        updateClientAuditTrail(issueElement, response, tagMappingConfig, suppressedHistoryValue);
 
         return commentTimestamp;
     }
 
-    private void updateClientAuditTrail(Element issueElement, AuditResponse response, TagMappingConfig tagMappingConfig,
-            Map<String, String> issueCategoryLookup) throws AviatorTechnicalException {
+
+    private void updateClientAuditTrail(Element issueElement, AuditResponse response, TagMappingConfig tagMappingConfig, Boolean suppressedHistoryValue) {
         Element clientAuditTrail = getClientAuditTrailElement(issueElement);
 
         if (response != null && response.getAuditResult() != null) {
@@ -376,16 +378,20 @@ public class AuditProcessor {
             if (resultConfig != null && resultConfig.getValue() != null && !resultConfig.getValue().isEmpty()) {
                 addTagHistory(clientAuditTrail, tagMappingConfig.getTag_id(), resultConfig.getValue());
             }
-            applySuppressionDecision(issueElement, issueElement.getAttribute("instanceId"), resultConfig, tagMappingConfig, issueCategoryLookup);
+            if (suppressedHistoryValue != null) {
+                addTagHistory(clientAuditTrail, Constants.SUPPRESSED_TAG_ID, suppressedHistoryValue.toString());
+            }
         }
         addTagHistory(clientAuditTrail, Constants.AVIATOR_STATUS_TAG_ID, Constants.PROCESSED_BY_AVIATOR);
     }
 
-    private void applySuppressionDecision(Element issueElement, String instanceId, TagMappingConfig.Result resultConfig,
+    private Boolean applySuppressionDecision(Element issueElement, String instanceId, TagMappingConfig.Result resultConfig,
             TagMappingConfig tagMappingConfig, Map<String, String> issueCategoryLookup) throws AviatorTechnicalException {
-        if (shouldSuppress(instanceId, resultConfig, tagMappingConfig, issueCategoryLookup)) {
-            issueElement.setAttribute("suppressed", "true");
+        if (resultConfig == null) {
+            return null;
         }
+
+        return updateSuppressedState(issueElement, shouldSuppress(instanceId, resultConfig, tagMappingConfig, issueCategoryLookup));
     }
 
     private boolean shouldSuppress(String instanceId, TagMappingConfig.Result resultConfig,
@@ -442,7 +448,7 @@ public class AuditProcessor {
         tagHistory.appendChild(editTime);
 
         Element username = auditDoc.createElementNS(AUDIT_NAMESPACE_URI, "Username");
-        username.setTextContent("Fortify Aviator");
+        username.setTextContent(Constants.USER_NAME);
         tagHistory.appendChild(username);
 
         clientAuditTrail.appendChild(tagHistory);
@@ -496,7 +502,7 @@ public class AuditProcessor {
         commentElement.appendChild(contentElement);
 
         Element usernameElement = auditDoc.createElementNS(AUDIT_NAMESPACE_URI, "Username");
-        usernameElement.setTextContent("Fortify Aviator");
+        usernameElement.setTextContent(Constants.USER_NAME);
         commentElement.appendChild(usernameElement);
 
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
@@ -521,6 +527,7 @@ public class AuditProcessor {
         newIssue.setAttribute("instanceId", instanceId);
         newIssue.setAttribute("revision", "0");
         String commentTimestamp = null;
+        Boolean suppressedHistoryValue = null;
 
         if (response != null && response.getAuditResult() != null) {
             String tagValue = response.getAuditResult().tagValue;
@@ -548,7 +555,7 @@ public class AuditProcessor {
             if (resultConfig != null && resultConfig.getValue() != null && !resultConfig.getValue().isEmpty()) {
                 updateOrAddTag(newIssue, tagMappingConfig.getTag_id(), resultConfig.getValue());
             }
-            applySuppressionDecision(newIssue, instanceId, resultConfig, tagMappingConfig, issueCategoryLookup);
+            suppressedHistoryValue = applySuppressionDecision(newIssue, instanceId, resultConfig, tagMappingConfig, issueCategoryLookup);
         }
 
         updateOrAddTag(newIssue, Constants.AVIATOR_STATUS_TAG_ID, Constants.PROCESSED_BY_AVIATOR);
@@ -557,10 +564,21 @@ public class AuditProcessor {
             commentTimestamp = updateOrAddComment(newIssue, response.getAuditResult().comment);
         }
 
-        updateClientAuditTrail(newIssue, response, tagMappingConfig, issueCategoryLookup);
+        updateClientAuditTrail(newIssue, response, tagMappingConfig, suppressedHistoryValue);
 
         issueList.appendChild(newIssue);
         return commentTimestamp;
+    }
+
+    private Boolean updateSuppressedState(Element issueElement, Boolean suppressed) {
+        if (suppressed == null) {
+            return null;
+        }
+
+        boolean currentSuppressed = Boolean.parseBoolean(issueElement.getAttribute("suppressed"));
+        issueElement.setAttribute("suppressed", Boolean.toString(suppressed));
+
+        return currentSuppressed == suppressed ? null : suppressed;
     }
 
     public void addCommentToIssueXml(String instanceId, String commentText, String username) {

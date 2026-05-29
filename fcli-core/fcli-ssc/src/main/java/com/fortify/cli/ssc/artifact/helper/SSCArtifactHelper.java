@@ -187,6 +187,92 @@ public final class SSCArtifactHelper {
         }
     }
 
+    /**
+     * Get the latest SAST artifact for an application version.
+     * Identifies SAST artifacts by checking embedded scan type "SCA".
+     *
+     * @param unirest      UnirestInstance
+     * @param appVersionId Application version ID
+     * @return SSCArtifactDescriptor of the most recent SAST artifact
+     * @throws FcliSimpleException if no SAST artifacts found
+     */
+    public static final SSCArtifactDescriptor getLatestSASTArtifact(UnirestInstance unirest, String appVersionId) {
+        return getLatestArtifactByScanType(unirest, appVersionId, "SCA", "SAST");
+    }
+
+    /**
+     * Get the latest DAST artifact for an application version.
+     * Identifies DAST artifacts by checking embedded scan type "WEBINSPECT".
+     *
+     * @param unirest      UnirestInstance
+     * @param appVersionId Application version ID
+     * @return SSCArtifactDescriptor of the most recent DAST artifact
+     * @throws FcliSimpleException if no DAST artifacts found
+     */
+    public static final SSCArtifactDescriptor getLatestDASTArtifact(UnirestInstance unirest, String appVersionId) {
+        return getLatestArtifactByScanType(unirest, appVersionId, "WEBINSPECT", "DAST");
+    }
+
+    /**
+     * Get the latest artifact for an application version matching the given scan type.
+     * Artifacts are fetched in DESC order by uploadDate and scanned for a matching
+     * embedded scan type. The first matching artifact is returned.
+     *
+     * @param unirest       UnirestInstance
+     * @param appVersionId  Application version ID
+     * @param scanType      SSC scan type value (e.g., "SCA", "WEBINSPECT")
+     * @param displayLabel  Human-readable label for error messages (e.g., "SAST", "DAST")
+     * @return SSCArtifactDescriptor of the most recent matching artifact
+     * @throws FcliSimpleException if no matching artifacts found
+     */
+    private static SSCArtifactDescriptor getLatestArtifactByScanType(UnirestInstance unirest, String appVersionId,
+                                                                      String scanType, String displayLabel) {
+        int start = 0;
+        int pageSize = 50;
+
+        while (true) {
+            JsonNode response = unirest.get(SSCUrls.PROJECT_VERSION_ARTIFACTS(appVersionId))
+                    .queryString("orderby", "uploadDate DESC")
+                    .queryString("start", start)
+                    .queryString("limit", pageSize)
+                    .queryString("embed", "scans")
+                    .asObject(JsonNode.class)
+                    .getBody();
+
+            JsonNode data = response.get("data");
+            if (data == null || !data.isArray() || data.isEmpty()) { break; }
+
+            for (JsonNode artifact : data) {
+                if (hasEmbeddedScanType(artifact, scanType)) {
+                    return getDescriptor(artifact);
+                }
+            }
+
+            int totalCount = response.path("count").asInt(0);
+            start += pageSize;
+            if (start >= totalCount) { break; }
+        }
+
+        throw new FcliSimpleException(
+                "No " + displayLabel + " artifacts found for application version ID: " + appVersionId);
+    }
+
+    /**
+     * Check if an artifact has an embedded scan of the given type.
+     * SSC embeds scan metadata under _embed.scans[]; each scan has a "type" field
+     * with values like "SCA" (SAST), "WEBINSPECT" (DAST), "SECURITYSCOPE" (Runtime).
+     */
+    private static boolean hasEmbeddedScanType(JsonNode artifact, String scanType) {
+        JsonNode scans = artifact.path("_embed").path("scans");
+        if (!scans.isArray()) { return false; }
+        for (JsonNode scan : scans) {
+            if (scanType.equalsIgnoreCase(scan.path("type").asText(""))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private static String buildNoArtifactsMessage(String appVersionId, OffsetDateTime sinceDate) {
         String base = "No Aviator-processed artifacts found for application version ID: " + appVersionId;
         if (sinceDate != null) {

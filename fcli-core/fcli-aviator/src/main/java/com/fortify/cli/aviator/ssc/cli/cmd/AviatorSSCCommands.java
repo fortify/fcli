@@ -21,7 +21,8 @@ import picocli.CommandLine;
         subcommands = {
                 AviatorSSCAuditCommand.class,
                 AviatorSSCPrepareCommand.class,
-                AviatorSSCApplyRemediationsCommand.class
+                AviatorSSCApplyRemediationsCommand.class,
+                AviatorSSCCorrelateSastDastCommand.class
         }
 
 )

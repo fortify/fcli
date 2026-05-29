@@ -36,6 +36,7 @@ import com.fortify.aviator.application.GetApplicationByTokenRequest;
 import com.fortify.aviator.application.GetDefaultQuotaRequest;
 import com.fortify.aviator.application.GetDefaultQuotaResponse;
 import com.fortify.aviator.application.UpdateApplicationRequest;
+import com.fortify.aviator.application.ValidateAdminSessionRequest;
 import com.fortify.aviator.dastentitlement.DastEntitlement;
 import com.fortify.aviator.dastentitlement.DastEntitlementServiceGrpc;
 import com.fortify.aviator.dastentitlement.ListDastEntitlementsByTenantRequest;
@@ -45,6 +46,7 @@ import com.fortify.aviator.entitlement.EntitlementServiceGrpc;
 import com.fortify.aviator.entitlement.ListEntitlementsByTenantRequest;
 import com.fortify.aviator.entitlement.ListEntitlementsByTenantResponse;
 import com.fortify.aviator.grpc.AuditorServiceGrpc;
+import com.fortify.aviator.grpc.CorrelationServiceGrpc;
 import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
 import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
 import com.fortify.cli.aviator.audit.model.AuditResponse;
@@ -81,6 +83,7 @@ public class AviatorGrpcClient implements AutoCloseable {
     private final TokenServiceGrpc.TokenServiceBlockingStub tokenServiceBlockingStub;
     private final EntitlementServiceGrpc.EntitlementServiceBlockingStub entitlementServiceBlockingStub;
     private final DastEntitlementServiceGrpc.DastEntitlementServiceBlockingStub dastEntitlementServiceBlockingStub;
+    private final CorrelationServiceGrpc.CorrelationServiceStub correlationAsyncStub;
     private final long defaultTimeoutSeconds;
     private final java.util.concurrent.ExecutorService processingExecutor;
     private final long pingIntervalSeconds;
@@ -96,6 +99,7 @@ public class AviatorGrpcClient implements AutoCloseable {
         this.tokenServiceBlockingStub = TokenServiceGrpc.newBlockingStub(channel).withCompression("gzip").withMaxInboundMessageSize(Constants.MAX_MESSAGE_SIZE).withMaxOutboundMessageSize(Constants.MAX_MESSAGE_SIZE).withWaitForReady();
         this.entitlementServiceBlockingStub = EntitlementServiceGrpc.newBlockingStub(channel).withCompression("gzip").withMaxInboundMessageSize(Constants.MAX_MESSAGE_SIZE).withMaxOutboundMessageSize(Constants.MAX_MESSAGE_SIZE).withWaitForReady();
         this.dastEntitlementServiceBlockingStub = DastEntitlementServiceGrpc.newBlockingStub(channel).withCompression("gzip").withMaxInboundMessageSize(Constants.MAX_MESSAGE_SIZE).withMaxOutboundMessageSize(Constants.MAX_MESSAGE_SIZE).withWaitForReady();
+        this.correlationAsyncStub = CorrelationServiceGrpc.newStub(channel).withCompression("gzip").withMaxInboundMessageSize(Constants.MAX_MESSAGE_SIZE).withMaxOutboundMessageSize(Constants.MAX_MESSAGE_SIZE).withWaitForReady();
         this.defaultTimeoutSeconds = defaultTimeoutSeconds;
         this.processingExecutor = Executors.newFixedThreadPool(4, r -> {
             Thread t = new Thread(r, "aviator-client-processing-" + r.hashCode());
@@ -181,6 +185,11 @@ public class AviatorGrpcClient implements AutoCloseable {
         return GrpcUtil.executeGrpcCall(blockingStub, ApplicationServiceGrpc.ApplicationServiceBlockingStub::updateApplication, request, Constants.OP_UPDATE_APP);
     }
 
+    public Application addEntitlement(String projectId, String signature, String message, String tenantName) {
+        ApplicationById request = ApplicationById.newBuilder().setId(Long.parseLong(projectId)).setSignature(signature).setMessage(message).setTenantName(tenantName).build();
+        return GrpcUtil.executeGrpcCall(blockingStub, ApplicationServiceGrpc.ApplicationServiceBlockingStub::addEntitlement, request, Constants.OP_ADD_APP_ENTITLEMENT);
+    }
+
     public ApplicationResponseMessage deleteApplication(String projectId, String signature, String message, String tenantName) {
         ApplicationById request = ApplicationById.newBuilder().setId(Long.parseLong(projectId)).setSignature(signature).setMessage(message).setTenantName(tenantName).build();
         return GrpcUtil.executeGrpcCall(blockingStub, ApplicationServiceGrpc.ApplicationServiceBlockingStub::deleteApplication, request, Constants.OP_DELETE_APP);
@@ -207,6 +216,19 @@ public class AviatorGrpcClient implements AutoCloseable {
             ApplicationServiceGrpc.ApplicationServiceBlockingStub::getDefaultQuota,
             request, Constants.OP_GET_DEFAULT_QUOTA);
         return response.getDefaultQuota();
+    }
+
+    public void validateAdminSession(String tenantName, String signature, String message) {
+        ValidateAdminSessionRequest request = ValidateAdminSessionRequest.newBuilder()
+            .setTenantName(tenantName)
+            .setSignature(signature)
+            .setMessage(message)
+            .build();
+        GrpcUtil.executeGrpcCall(
+            blockingStub,
+            ApplicationServiceGrpc.ApplicationServiceBlockingStub::validateAdminSession,
+            request,
+            Constants.OP_VALIDATE_ADMIN_SESSION);
     }
 
     public List<Application> listApplication(String tenantName, String signature, String message) {
@@ -264,5 +286,21 @@ public class AviatorGrpcClient implements AutoCloseable {
         ListDastEntitlementsByTenantRequest request = ListDastEntitlementsByTenantRequest.newBuilder().setTenantName(tenantName).setSignature(signature).setMessage(message).build();
         ListDastEntitlementsByTenantResponse response = GrpcUtil.executeGrpcCall(dastEntitlementServiceBlockingStub, DastEntitlementServiceGrpc.DastEntitlementServiceBlockingStub::listDastEntitlementsByTenant, request, Constants.OP_LIST_DAST_ENTITLEMENTS);
         return response.getEntitlementsList();
+    }
+
+    public CorrelationServiceGrpc.CorrelationServiceStub getCorrelationAsyncStub() {
+        return correlationAsyncStub;
+    }
+
+    public java.util.concurrent.ScheduledExecutorService getPingScheduler() {
+        return pingScheduler;
+    }
+
+    public long getPingIntervalSeconds() {
+        return pingIntervalSeconds;
+    }
+
+    public long getDefaultTimeoutSeconds() {
+        return defaultTimeoutSeconds;
     }
 }

@@ -8,8 +8,10 @@ plugins {
 
 dependencies {
     val commonRef = project.findProperty("fcliCommonRef") as String
+    val commonActionRef = project.findProperty("fcliCommonActionRef") as String
     val appRef = project.findProperty("fcliAppRef") as String
     implementation(project(commonRef))
+    implementation(project(commonActionRef))
     implementation(project(appRef))
     runtimeOnly("info.picocli:picocli-codegen")
     implementation("com.github.victools:jsonschema-generator:4.38.0")

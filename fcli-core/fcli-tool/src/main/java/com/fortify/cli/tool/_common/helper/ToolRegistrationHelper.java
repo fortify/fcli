@@ -19,10 +19,10 @@ import java.util.Arrays;
 import java.util.List;
 
 import com.fortify.cli.common.exception.FcliSimpleException;
+import com.fortify.cli.common.tool.definitions.helper.ToolDefinitionRootDescriptor;
+import com.fortify.cli.common.tool.definitions.helper.ToolDefinitionVersionDescriptor;
+import com.fortify.cli.common.tool.definitions.helper.ToolDefinitionsHelper;
 import com.fortify.cli.common.util.FcliDataHelper;
-import com.fortify.cli.tool.definitions.helper.ToolDefinitionRootDescriptor;
-import com.fortify.cli.tool.definitions.helper.ToolDefinitionVersionDescriptor;
-import com.fortify.cli.tool.definitions.helper.ToolDefinitionsHelper;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

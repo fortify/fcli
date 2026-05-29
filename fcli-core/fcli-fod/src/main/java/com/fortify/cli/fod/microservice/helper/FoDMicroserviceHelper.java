@@ -26,7 +26,7 @@ import com.fortify.cli.fod._common.util.FoDEnums;
 import com.fortify.cli.fod.app.helper.FoDAppDescriptor;
 import com.fortify.cli.fod.app.helper.FoDAppHelper;
 import com.fortify.cli.fod.attribute.cli.mixin.FoDAttributeUpdateOptions;
-import com.fortify.cli.fod.attribute.helper.FoDAttributeHelper;
+import com.fortify.cli.fod.attribute.helper.FoDAttributeDefinitionHelper;
 
 import kong.unirest.UnirestInstance;
 
@@ -99,7 +99,7 @@ public class FoDMicroserviceHelper {
                                                                     boolean autoRequiredAttrs) {
         var request = FoDMicroserviceUpdateRequest.builder()
                 .microserviceName(microserviceName)
-                .attributes(FoDAttributeHelper.getAttributesNode(unirest, FoDEnums.AttributeTypes.Microservice,
+                .attributes(new FoDAttributeDefinitionHelper(unirest).buildAttributesNode(FoDEnums.AttributeTypes.Microservice,
                         msAttrs.getAttributes(), autoRequiredAttrs))
                 .build();
         return createMicroservice(unirest, appDescriptor, request);

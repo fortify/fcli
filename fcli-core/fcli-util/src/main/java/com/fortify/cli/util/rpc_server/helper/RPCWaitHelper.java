@@ -14,8 +14,8 @@ package com.fortify.cli.util.rpc_server.helper;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fortify.cli.common.concurrent.job.CollectingJobEventListener;
 import com.fortify.cli.common.json.JsonHelper;
-import com.fortify.cli.util._common.helper.CollectingJobEventListener;
 
 import lombok.extern.slf4j.Slf4j;
 

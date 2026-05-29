@@ -15,10 +15,10 @@ package com.fortify.cli.util.rpc_server.helper;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fortify.cli.common.cli.util.FcliExecutionContextHolder;
+import com.fortify.cli.common.concurrent.job.CachingJobEventListener;
 import com.fortify.cli.common.json.JsonHelper;
-import com.fortify.cli.util._common.helper.CachingJobEventListener;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -42,10 +42,7 @@ import lombok.extern.slf4j.Slf4j;
  * @author Ruud Senden
  */
 @Slf4j
-@RequiredArgsConstructor
 public final class RPCMethodHandlerJobGetPage implements IRPCMethodHandler {
-    private final CachingJobEventListener cachingListener;
-
     @Override
     public String description() {
         return "Retrieve a page of records by jobId from the cache; works for all async jobs";
@@ -73,8 +70,13 @@ public final class RPCMethodHandlerJobGetPage implements IRPCMethodHandler {
 
         log.debug("Getting page: jobId={} offset={} limit={}", jobId, offset, limit);
 
-        var pageResult = cachingListener.getPage(jobId, offset, limit);
+        var pageResult = getCachingListener().getPage(jobId, offset, limit);
         return toResponse(pageResult);
+    }
+
+    private CachingJobEventListener getCachingListener() {
+        return FcliExecutionContextHolder.current().getIsolationScope()
+                .getOrCreateScopedState(CachingJobEventListener.class, CachingJobEventListener::new);
     }
 
     private ObjectNode toResponse(CachingJobEventListener.PageResult page) {

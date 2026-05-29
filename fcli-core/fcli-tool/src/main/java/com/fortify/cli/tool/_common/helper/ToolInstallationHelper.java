@@ -15,9 +15,9 @@ package com.fortify.cli.tool._common.helper;
 import java.nio.file.Path;
 import java.util.Set;
 
+import com.fortify.cli.common.tool.definitions.helper.ToolDefinitionVersionDescriptor;
 import com.fortify.cli.common.util.FcliDataHelper;
 import com.fortify.cli.common.util.SemVer;
-import com.fortify.cli.tool.definitions.helper.ToolDefinitionVersionDescriptor;
 
 public final class ToolInstallationHelper {
     public static final String getResourcePath(String subPath) {

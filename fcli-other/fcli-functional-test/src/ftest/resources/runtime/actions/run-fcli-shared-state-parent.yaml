@@ -1,0 +1,23 @@
+# yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-dev-2.x.json
+
+author: ftest
+usage:
+  header: Ftest run.fcli parent action state sharing
+  description: Parent action for verifying run.fcli context/state sharing
+
+cli.options:
+  childActionPath:
+    names: --child-action-path
+    description: Absolute path to the child action file
+    required: true
+
+steps:
+  - var.set:
+      global.color: red
+
+  - run.fcli:
+      runChild:
+        cmd: action run "${cli.childActionPath}" --progress none --on-unsigned ignore --on-invalid-version ignore
+
+  - out.write:
+      stdout: after=${global.color}

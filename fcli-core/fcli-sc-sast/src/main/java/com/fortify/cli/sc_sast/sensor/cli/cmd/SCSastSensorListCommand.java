@@ -52,7 +52,7 @@ public class SCSastSensorListCommand extends AbstractSSCOutputCommand {
         
         if (poolResolver.hasValue() || appVersionResolver.getAppVersionNameOrId() != null || latestOnly) {
             return StreamingObjectNodeProducer.builder()
-                .streamSupplier(() -> streamCompatibleVersions(unirest))
+                .streamSupplier(() -> streamFilteredSensors(unirest))
                 .build();
         }
         
@@ -63,7 +63,7 @@ public class SCSastSensorListCommand extends AbstractSSCOutputCommand {
     
     @Override
     public boolean isSingular() {
-        return latestOnly;
+        return false;
     }
     
     private void validateMutualExclusivity() {
@@ -72,10 +72,15 @@ public class SCSastSensorListCommand extends AbstractSSCOutputCommand {
         }
     }
     
-    private Stream<ObjectNode> streamCompatibleVersions(UnirestInstance unirest) {
-        SCSastSensorCompatibleVersionHelper helper = buildHelper(unirest);
-        Stream<ObjectNode> stream = helper.streamCompatibleVersions();
-        return latestOnly ? stream.limit(1) : stream;
+    private Stream<ObjectNode> streamFilteredSensors(UnirestInstance unirest) {
+        var helper = buildHelper(unirest);
+        Stream<ObjectNode> stream = helper.streamSensors();
+        if (latestOnly) {
+            var latestVersion = helper.getLatestCompatibleVersion();
+            stream = stream.filter(s -> latestVersion.equals(
+                s.path("compatibleClientVersion").asText()));
+        }
+        return stream;
     }
     
     private Stream<ObjectNode> streamAllSensors(UnirestInstance unirest) {
@@ -85,7 +90,8 @@ public class SCSastSensorListCommand extends AbstractSSCOutputCommand {
             .get("data");
         
         return StreamSupport.stream(dataArray.spliterator(), false)
-            .map(node -> (ObjectNode) node);
+            .map(node -> SCSastSensorCompatibleVersionHelper
+                .enrichWithCompatibleVersion((ObjectNode) node));
     }
     
     private SCSastSensorCompatibleVersionHelper buildHelper(UnirestInstance unirest) {

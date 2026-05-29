@@ -19,7 +19,7 @@ import picocli.CommandLine.Command;
 @Command(
         name = "mcp-server",
         subcommands = {
-            MCPServerStartCommand.class
+            MCPServerStartDeprecatedCommand.class
         }
 )
 public class MCPServerCommands extends AbstractContainerCommand {}

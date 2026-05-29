@@ -12,9 +12,9 @@ The `fcli-common` module provides utility classes in `com.fortify.cli.common.uti
 
 **If you discover utility classes, methods, or patterns** in `fcli-common/src/main/java/com/fortify/cli/common/util/` that are not documented here, or if documented utilities appear outdated/incorrect:
 
-1. **Notify the user** about the missing or outdated documentation
-2. **Suggest specific additions/updates** to this section
-3. **Verify the utility's purpose and usage** in the codebase before documenting
+1. **Automatically update this file** with the correct or missing documentation
+2. **Verify the utility's purpose and usage** in the codebase before documenting
+3. Keep additions concise — method signatures and a one-liner purpose are enough
 
 ## Environment & Configuration
 
@@ -129,6 +129,51 @@ Terminal detection and width.
 Global debug flag.
 
 - `isDebugEnabled()`, `setDebugEnabled()`
+
+## Execution Context & Isolation
+
+These classes are in `com.fortify.cli.common.cli.util`, not `util/`, but are essential infrastructure.
+
+### `FcliExecutionContext`
+Per-invocation execution frame. Always created/closed via `FcliExecutionContextHolder`.
+
+- Holds `UnirestContext` (fresh per external entry point), `FcliActionState`, and `FcliIsolationScope`
+- Use try-with-resources: `try (var frame = FcliExecutionContextHolder.pushNew()) { ... }`
+- `run.fcli` sub-commands reuse the parent frame; do not call `pushNew()` inside them
+
+### `FcliExecutionContextHolder`
+Thread-local stack for nested execution frames.
+
+- `pushNew()` — creates a completely fresh context; use at top-level entry points (CLI, MCP, RPC)
+- `push(ctx)` — pushes an existing context (e.g. child frames that share the parent's isolation scope)
+- `current()` — returns the active context; throws if none is present
+- Closing the returned `ContextFrame` pops and closes the context automatically
+
+### `FcliIsolationScope`
+Groups related invocations under the same auth/session boundary.
+
+- Plain CLI: one new scope per invocation
+- MCP stdio / RPC server: one scope for the server lifetime (all tool calls share sessions)
+- MCP HTTP server: one scope **per authenticated identity** (full isolation between clients)
+- Holds `transientSessionDescriptors` — in-memory sessions that are not persisted to disk
+
+### `FcliActionState`
+Mutable bag of `global.*` action variables.
+
+- Each external CLI call and non-imported MCP/RPC tool call gets a **fresh** `FcliActionState` (no cross-call leakage)
+- Imported action functions in **MCP stdio / RPC stdio** share one `FcliActionState` instance for the server lifetime
+- Imported action functions in **MCP HTTP server** get a per-credentials-hash `FcliActionState` stored in the per-auth-scope `FcliIsolationScope` — persists across calls from the same user, isolated from other users
+- `run.fcli` sub-commands inherit and mutate the parent's state
+
+## Log Masking
+
+### `LogMaskHelper` (`com.fortify.cli.common.log`)
+Singleton for registering values/patterns to mask in logs and stdio.
+
+- `LogMaskHelper.INSTANCE.registerValue(maskAnnotation, source, value)` — register a sensitive value using `@MaskValue` annotation semantics
+- `registerPattern(level, pattern, replacement, types...)` — register a regex pattern for masking
+- Session credentials are registered automatically by `AbstractSessionHelper`; CLI option values are registered by `FcliExecutionStrategy` when the field carries `@MaskValue`
+- Do NOT log or print secrets directly; annotate sensitive option fields with `@MaskValue` instead
 
 ## Usage Principles
 

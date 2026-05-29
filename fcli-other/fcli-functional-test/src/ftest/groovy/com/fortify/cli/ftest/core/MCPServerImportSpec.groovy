@@ -23,8 +23,13 @@ import io.modelcontextprotocol.spec.McpSchema
 @Prefix("core.mcp-server.import")
 class MCPServerImportSpec extends FcliBaseSpec {
     @Shared @TestResource("runtime/actions/server-import-functions.yaml") String importActionPath
+    @Shared @TestResource("runtime/actions/server-global-vars.yaml") String globalVarsActionPath
 
     private McpSyncClient createMcpClient(String extraArgs = "") {
+        // Using the deprecated 'fcli util mcp-server start' command instead of 'fcli ai-assist mcp start-stdio'
+        // because the deprecated command is a wrapper that calls the non-deprecated command, so this way
+        // we effectively test both the deprecated and non-deprecated command instead of testing only the
+        // non-deprecated command.
         def serverArgs = ["util", "mcp-server", "start", "--import", importActionPath]
         if (extraArgs) {
             serverArgs.addAll(extraArgs.split(" ").toList())
@@ -123,5 +128,33 @@ class MCPServerImportSpec extends FcliBaseSpec {
             capabilities.tools() != null
         cleanup:
             client?.closeGracefully()
+    }
+
+    def "imported functions share global vars across invocations"() {
+        given:
+            def client = createMcpClient("--import ${globalVarsActionPath}")
+        when:
+            def r1 = client.callTool(new McpSchema.CallToolRequest("fcli_fn_setAndGetGlobal", [key: "color", value: "red"]))
+            def t1 = asText(r1)
+            def r2 = client.callTool(new McpSchema.CallToolRequest("fcli_fn_setAndGetGlobal", [key: "color", value: "blue"]))
+            def t2 = asText(r2)
+            def r3 = client.callTool(new McpSchema.CallToolRequest("fcli_fn_getGlobal", [key: "color"]))
+            def t3 = asText(r3)
+        then:
+            !r1.isError()
+            !r2.isError()
+            !r3.isError()
+            t1.contains("old=,new=red")
+            t2.contains("old=red,new=blue")
+            t3.contains("blue")
+        cleanup:
+            client?.closeGracefully()
+    }
+
+    private static String asText(McpSchema.CallToolResult result) {
+        return result.content()
+            .findAll { it instanceof McpSchema.TextContent }
+            .collect { ((McpSchema.TextContent) it).text() }
+            .join("")
     }
 }

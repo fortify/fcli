@@ -23,7 +23,9 @@ import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -46,7 +48,7 @@ public class RemediationProcessor {
 
     private final FprHandle fprHandle;
     private final String sourceCodeDirectory;
-    public record RemediationMetric(int totalRemediations, int appliedRemediations, int skippedRemediations){}
+    public record RemediationMetric(int totalRemediations, int appliedRemediations, int skippedRemediations, Set<String> modifiedFiles){}
 
     public RemediationProcessor(FprHandle fprHandle, String sourceCodeDirectory) {
         this.fprHandle = fprHandle;
@@ -58,10 +60,11 @@ public class RemediationProcessor {
         Document remediationDoc;
         int totalRemediations;
         int appliedRemediations;
+        Set<String> modifiedFiles = new LinkedHashSet<>();
 
         // Sanitize and normalize the base source directory path once.
         String trimmedSourceDir = sourceCodeDirectory.trim();
-        if (trimmedSourceDir.length() > 1 && 
+        if (trimmedSourceDir.length() > 1 &&
             ((trimmedSourceDir.startsWith("\"") && trimmedSourceDir.endsWith("\"")) ||
              (trimmedSourceDir.startsWith("'") && trimmedSourceDir.endsWith("'")))) {
             trimmedSourceDir = trimmedSourceDir.substring(1, trimmedSourceDir.length() - 1);
@@ -158,7 +161,8 @@ public class RemediationProcessor {
                         updatedLines.addAll(newCodeLines);
                         updatedLines.addAll(originalLines.subList(lineTo, originalLines.size()));
                         Files.write(filePath, updatedLines);
-                        logger.info("Remediation applied for {}", instanceId);
+                        modifiedFiles.add(filename);
+                        logger.info("Remediation applied for {} in file {}", instanceId, filename);
                         if(!remediationAppliedOnIssue) {
                             remediationAppliedOnIssue = true;
                             appliedRemediations++;
@@ -177,7 +181,7 @@ public class RemediationProcessor {
             logger.error("Unexpected error processing remediation.xml: {}", remediationPath, e);
             throw new AviatorTechnicalException("Unexpected error processing remediations.xml.", e);
         }
-        return new RemediationMetric(totalRemediations, appliedRemediations, totalRemediations-appliedRemediations);
+        return new RemediationMetric(totalRemediations, appliedRemediations, totalRemediations-appliedRemediations, modifiedFiles);
     }
 
     private boolean isFilePresent(Path path) {

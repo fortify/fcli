@@ -15,8 +15,6 @@ package com.fortify.cli.app;
 import com.fortify.cli.app.runner.DefaultFortifyCLIRunner;
 import com.fortify.cli.common.util.ConsoleHelper;
 
-import picocli.CommandLine.Help.Ansi;
-
 /**
  * <p>This class provides the {@link #main(String[])} entrypoint into the application,
  * and also registers some GraalVM features, allowing the application to run properly 
@@ -36,9 +34,6 @@ public class FortifyCLI {
     private static final int execute(String[] args) {
         try {
             ConsoleHelper.installJAnsiConsole();
-            // ANSI detection must happen before StdioHelper.install(), as masking
-            // may interfere with ANSI capability detection
-            DefaultFortifyCLIRunner.ANSI = Ansi.AUTO.enabled() ? Ansi.ON : Ansi.AUTO;
             return DefaultFortifyCLIRunner.run(args);
         } finally {
             ConsoleHelper.uninstallJAnsiConsole();

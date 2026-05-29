@@ -46,6 +46,17 @@ public class SCSastSensorCompatibleVersionHelper {
     private final JsonNode sensorData = fetchSensorData();
     
     /**
+     * Stream active sensor objects enriched with {@code compatibleClientVersion}.
+     * 
+     * @return Stream of full sensor ObjectNodes with compatible version added
+     */
+    public Stream<ObjectNode> streamSensors() {
+        return StreamSupport.stream(getSensorData().spliterator(), false)
+            .filter(this::isActiveSensor)
+            .map(sensor -> enrichWithCompatibleVersion((ObjectNode) sensor));
+    }
+    
+    /**
      * Stream all compatible versions sorted in descending order (newest first).
      * 
      * @return Stream of compatible version information as ObjectNodes
@@ -86,6 +97,19 @@ public class SCSastSensorCompatibleVersionHelper {
                         ? "No active sensors found for the application version's sensor pool"
                         : "No active sensors found in any sensor pool"
             ));
+    }
+    
+    /**
+     * Enrich a sensor ObjectNode with {@code compatibleClientVersion} computed from its {@code scaVersion}.
+     */
+    public static ObjectNode enrichWithCompatibleVersion(ObjectNode sensor) {
+        var scaVersion = sensor.path("scaVersion").asText("");
+        if (StringUtils.isNotBlank(scaVersion)) {
+            var semVer = new SemVer(scaVersion);
+            sensor.put("compatibleClientVersion",
+                semVer.isProperSemver() ? semVer.getMajorMinor().orElse("") : "");
+        }
+        return sensor;
     }
     
     private boolean isActiveSensor(JsonNode sensor) {

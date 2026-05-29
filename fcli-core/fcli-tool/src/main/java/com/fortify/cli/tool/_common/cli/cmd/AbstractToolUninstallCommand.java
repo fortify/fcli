@@ -28,13 +28,13 @@ import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.progress.cli.mixin.ProgressWriterFactoryMixin;
 import com.fortify.cli.common.progress.helper.IProgressWriterI18n;
+import com.fortify.cli.common.tool.definitions.helper.ToolDefinitionRootDescriptor;
+import com.fortify.cli.common.tool.definitions.helper.ToolDefinitionVersionDescriptor;
+import com.fortify.cli.common.tool.definitions.helper.ToolDefinitionsHelper;
 import com.fortify.cli.tool._common.helper.Tool;
 import com.fortify.cli.tool._common.helper.ToolInstallationDescriptor;
 import com.fortify.cli.tool._common.helper.ToolInstallationHelper;
 import com.fortify.cli.tool._common.helper.ToolUninstaller;
-import com.fortify.cli.tool.definitions.helper.ToolDefinitionRootDescriptor;
-import com.fortify.cli.tool.definitions.helper.ToolDefinitionVersionDescriptor;
-import com.fortify.cli.tool.definitions.helper.ToolDefinitionsHelper;
 
 import lombok.Getter;
 import lombok.SneakyThrows;

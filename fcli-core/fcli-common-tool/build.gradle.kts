@@ -1,0 +1,1 @@
+plugins { id("fcli.module-conventions") }

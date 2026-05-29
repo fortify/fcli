@@ -33,11 +33,11 @@ import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.progress.cli.mixin.ProgressWriterFactoryMixin;
 import com.fortify.cli.common.progress.helper.IProgressWriterI18n;
+import com.fortify.cli.common.tool.definitions.helper.ToolDefinitionsHelper;
 import com.fortify.cli.common.util.EnvHelper;
 import com.fortify.cli.common.util.OutputHelper;
 import com.fortify.cli.common.util.OutputHelper.OutputType;
 import com.fortify.cli.tool._common.helper.Tool;
-import com.fortify.cli.tool.definitions.helper.ToolDefinitionsHelper;
 import com.fortify.cli.tool.env.cli.mixin.ToolEnvInitMixin;
 import com.fortify.cli.tool.env.cli.mixin.ToolEnvInitMixin.ToolSetupSpec;
 

@@ -21,9 +21,9 @@ import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
 
-import com.fortify.cli.tool.definitions.helper.ToolDefinitionRootDescriptor;
-import com.fortify.cli.tool.definitions.helper.ToolDefinitionVersionDescriptor;
-import com.fortify.cli.tool.definitions.helper.ToolDefinitionsHelper;
+import com.fortify.cli.common.tool.definitions.helper.ToolDefinitionRootDescriptor;
+import com.fortify.cli.common.tool.definitions.helper.ToolDefinitionVersionDescriptor;
+import com.fortify.cli.common.tool.definitions.helper.ToolDefinitionsHelper;
 
 /**
  * Helper for resolving tool installation descriptors together with their

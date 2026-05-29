@@ -1,4 +1,5 @@
 name: Fortify on Demand Scan
+run-name: "Fortify on Demand Scan (${{ github.event_name }})"
 
 on:
   workflow_dispatch:
@@ -13,7 +14,12 @@ permissions:
   security-events: write
 
 jobs:
+  check-duplicate-run:
+    uses: fortify/.github/.github/workflows/check-duplicate-run.yml@main
+
   FoD-Scan:
+    needs: check-duplicate-run
+    if: needs.check-duplicate-run.outputs.should_skip != 'true'
     uses: fortify/.github/.github/workflows/fortify-analysis.yml@main
     with:
       java-version: '17'

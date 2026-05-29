@@ -277,7 +277,7 @@ public class StreamingFVDLProcessor {
      * - UnifiedTracePool (trace definitions)
     * - ContextPool (context definitions)
     * - Description (vulnerability descriptions)
-     * - Build (skipped)
+    * - Build (source file typing and basic build metadata)
      *
      * Skipped sections:
      * - Vulnerabilities (will be parsed in Pass 2)
@@ -307,8 +307,8 @@ public class StreamingFVDLProcessor {
                             parseRuntimeConfiguration(reader);
                             break;
                         case "Build":
-                            logger.debug("Pass 1: Skipping Build");
-                            // Build is already skipped in parseEngineData
+                            logger.debug("Pass 1: Parsing Build");
+                            parseBuild(reader);
                             break;
                         case "UnifiedNodePool":
                             logger.debug("Pass 1: Parsing UnifiedNodePool");
@@ -412,6 +412,63 @@ public class StreamingFVDLProcessor {
         if (analysisType != null && !analysisType.isBlank()) {
             fvdlMetadata.setAnalysisType(analysisType.trim());
         }
+    }
+
+    private void parseBuild(XMLStreamReader reader) throws XMLStreamException {
+        while (reader.hasNext()) {
+            int event = reader.next();
+
+            if (event == XMLStreamConstants.START_ELEMENT) {
+                String localName = reader.getLocalName();
+                switch (localName) {
+                    case "BuildID":
+                        fvdlMetadata.setBuildId(readElementText(reader));
+                        continue;
+                    case "Project":
+                        fvdlMetadata.setProjectName(readElementText(reader));
+                        continue;
+                    case "Version":
+                        fvdlMetadata.setProjectVersion(readElementText(reader));
+                        continue;
+                    case "SourceFiles":
+                        parseSourceFiles(reader);
+                        continue;
+                    default:
+                        break;
+                }
+            } else if (event == XMLStreamConstants.END_ELEMENT && "Build".equals(reader.getLocalName())) {
+                return;
+            }
+        }
+    }
+
+    private void parseSourceFiles(XMLStreamReader reader) throws XMLStreamException {
+        while (reader.hasNext()) {
+            int event = reader.next();
+
+            if (event == XMLStreamConstants.START_ELEMENT && "File".equals(reader.getLocalName())) {
+                parseSourceFile(reader);
+            } else if (event == XMLStreamConstants.END_ELEMENT && "SourceFiles".equals(reader.getLocalName())) {
+                return;
+            }
+        }
+    }
+
+    private void parseSourceFile(XMLStreamReader reader) throws XMLStreamException {
+        String fileType = reader.getAttributeValue(null, "type");
+        String fileName = null;
+
+        while (reader.hasNext()) {
+            int event = reader.next();
+
+            if (event == XMLStreamConstants.START_ELEMENT && "Name".equals(reader.getLocalName())) {
+                fileName = readElementText(reader);
+            } else if (event == XMLStreamConstants.END_ELEMENT && "File".equals(reader.getLocalName())) {
+                break;
+            }
+        }
+
+        fvdlMetadata.registerSourceFileType(fileName, fileType);
     }
 
     /**
