@@ -17,7 +17,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260528.135456-dev_v3.x" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260529.121808-dev_v3.x" %}
 
 
 <div id="header">
@@ -45,12 +45,13 @@ fcli_version:
 <div class="sectionbody">
 <div class="paragraph">
 <p><strong>fcli fod session login</strong> [<strong>-k</strong>] [<strong>--connect-timeout</strong>=<em>&lt;connectTimeout&gt;</em>]
-                       [<strong>--socket-timeout</strong>=<em>&lt;socketTimeout&gt;</em>] <strong>--url</strong>=<em>&lt;url&gt;</em> [[<strong>-h</strong>]
-                       [<strong>--env-prefix</strong>=<em>&lt;prefix&gt;</em>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
-                       [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>] [<strong>--log-mask</strong>=<em>&lt;level&gt;</em>] [<strong>--debug</strong>]]
-                       [[<strong>-o</strong>=<em>&lt;type+args&gt;</em>] [<strong>--style*<em>=&lt;style&gt;,&#8230;&#8203;</em>]&#8230;&#8203; <em class="</strong>--store*=_&lt;var&gt;_
-                  _     [:&lt;prop&gt;">] [<strong>--to-file</strong>=</em>&lt;outputFile&gt;_]] ([<strong>--scopes</strong>=<em>&lt;scopes&gt;</em>
-                       [,<em>&lt;scopes&gt;</em>&#8230;&#8203;]]&#8230;&#8203; <strong>-u</strong>=<em>&lt;user&gt;</em> <strong>-p</strong>[=<em>&lt;password&gt;</em>]                        <strong>-t</strong>=<em>&lt;tenant&gt;</em>) | (<strong>--client-id</strong>=<em>&lt;clientId&gt;</em> <strong>--client-secret</strong>                        [=<em>&lt;clientSecret&gt;</em>]) [[<strong>--fod-session</strong>=<em>&lt;sessionName&gt;</em>]]</p>
+                       [<strong>--socket-timeout</strong>=<em>&lt;socketTimeout&gt;</em>] <strong>--url</strong>=<em>&lt;url&gt;</em>
+                       [<strong>-H</strong>=<em>&lt;headers&gt;</em>]&#8230;&#8203; [[<strong>-h</strong>] [<strong>--env-prefix</strong>=<em>&lt;prefix&gt;</em>]
+                       [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>] [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]
+                       [<strong>--log-mask</strong>=<em>&lt;level&gt;</em>] [<strong>--debug</strong>]] [[<strong>-o</strong>=<em>&lt;type+args&gt;</em>]
+                       [<strong>--style*<em>=&lt;style&gt;,&#8230;&#8203;</em>]&#8230;&#8203; <em class="</strong>--store*=_&lt;var&gt;[:&lt;prop&gt;">]
+                       [<strong>--to-file</strong>=</em>&lt;outputFile&gt;_]] ([<strong>--scopes</strong>=<em>&lt;scopes&gt;</em>[,
+                       <em>&lt;scopes&gt;</em>&#8230;&#8203;]]&#8230;&#8203; <strong>-u</strong>=<em>&lt;user&gt;</em> <strong>-p</strong>[=<em>&lt;password&gt;</em>]                        <strong>-t</strong>=<em>&lt;tenant&gt;</em>) | (<strong>--client-id</strong>=<em>&lt;clientId&gt;</em> <strong>--client-secret</strong>                        [=<em>&lt;clientSecret&gt;</em>]) [[<strong>--fod-session</strong>=<em>&lt;sessionName&gt;</em>]]</p>
 </div>
 </div>
 </div>
@@ -100,6 +101,10 @@ fcli_version:
 <dt class="hdlist1"><strong>--url</strong>=<em>&lt;url&gt;</em></dt>
 <dd>
 <p>FoD URL, for example <a href="https://emea.fortify.com/" class="bare">https://emea.fortify.com/</a>.</p>
+</dd>
+<dt class="hdlist1"><strong>-H</strong>, <strong>--header</strong>=<em>&lt;headers&gt;</em></dt>
+<dd>
+<p>Repeatable option to add custom HTTP headers in requests to FoD for this session, in format <code>NAME: VALUE</code>.</p>
 </dd>
 <dt class="hdlist1"><strong>-k</strong>, <strong>--insecure</strong></dt>
 <dd>
@@ -193,7 +198,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2026-05-28 13:57:39 UTC
+Last updated 2026-05-29 12:20:49 UTC
 </div>
 </div>
 </body>
