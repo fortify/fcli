@@ -128,6 +128,12 @@ steps:
       - log.progress: "ERROR: --dry-run and --skip-if-exceeding-quota cannot be used together. --dry-run prevents server interaction, but --skip-if-exceeding-quota requires quota retrieval."
       - throw: "--dry-run and --skip-if-exceeding-quota cannot be used together. --dry-run prevents server interaction, but --skip-if-exceeding-quota requires quota retrieval."
 
+  # Validate that --skip-if-exceeding-quota and --folder-priority-order are not used together
+  - if: ${cli['skip-if-exceeding-quota'] && cli['folder-priority-order'] != null && cli['folder-priority-order'] != ''}
+    do:
+      - log.progress: "ERROR: --skip-if-exceeding-quota and --folder-priority-order cannot be used together. --skip-if-exceeding-quota skips the audit when quota is insufficient, while --folder-priority-order only applies when auditing within quota constraints."
+      - throw: "--skip-if-exceeding-quota and --folder-priority-order cannot be used together. --skip-if-exceeding-quota skips the audit when quota is insufficient, while --folder-priority-order only applies when auditing within quota constraints."
+
   - log.progress: "Using Aviator app mapping: ${cli['aviator-app-mapping']}"
 
   # Get existing Aviator applications
