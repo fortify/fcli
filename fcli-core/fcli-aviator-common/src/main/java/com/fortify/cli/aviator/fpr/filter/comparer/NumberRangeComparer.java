@@ -18,6 +18,8 @@ import java.util.regex.Pattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
+
 public class NumberRangeComparer implements SearchComparer {
     private static final Logger logger = LoggerFactory.getLogger(NumberRangeComparer.class);
 
@@ -35,7 +37,7 @@ public class NumberRangeComparer implements SearchComparer {
 
         String trimmed = rangeTerm.trim();
         if (trimmed.length() < 3) { // Must be at least 3 chars like (1,2)
-            throw new IllegalArgumentException("Invalid range format: " + rangeTerm);
+            throw new AviatorSimpleException("Invalid range format: " + rangeTerm);
         }
 
         // Determine inclusiveness from the start and end characters
@@ -52,7 +54,7 @@ public class NumberRangeComparer implements SearchComparer {
         }
 
         if (sep == -1) {
-            throw new IllegalArgumentException("Invalid range format (missing separator ',' or '-'): " + rangeTerm);
+            throw new AviatorSimpleException("Invalid range format (missing separator ',' or '-'): " + rangeTerm);
         }
 
         try {
@@ -60,7 +62,7 @@ public class NumberRangeComparer implements SearchComparer {
             this.upperBound = new BigDecimal(inner.substring(sep + 1).trim());
         } catch (NumberFormatException e) {
             logger.error("Error parsing number in range term '{}'", rangeTerm, e);
-            throw new IllegalArgumentException("Invalid number in range format: " + rangeTerm);
+            throw new AviatorSimpleException("Invalid number in range format: " + rangeTerm, e);
         }
     }
 

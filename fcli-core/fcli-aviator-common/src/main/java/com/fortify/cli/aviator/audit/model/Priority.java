@@ -12,6 +12,7 @@
  */
 package com.fortify.cli.aviator.audit.model;
 
+import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
 
 public enum Priority {
     Critical,
@@ -21,13 +22,13 @@ public enum Priority {
 
     public static Priority fromString(String value) {
         if (value == null) {
-            throw new IllegalArgumentException("Priority value cannot be null.");
+            throw new AviatorSimpleException("Priority value cannot be null.");
         }
         for (Priority p : values()) {
             if (p.name().equalsIgnoreCase(value)) {
                 return p;
             }
         }
-        throw new IllegalArgumentException("No Priority constant with name '" + value + "' found.");
+        throw new AviatorSimpleException("No Priority constant with name '" + value + "' found.");
     }
 }
