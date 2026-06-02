@@ -14,12 +14,15 @@ package com.fortify.cli.aviator.ssc.helper;
 
 import java.util.List;
 
+import com.formkiq.graalvm.annotations.Reflectable;
+
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
 public final class AviatorSSCTagDefs {
     @Getter
     @RequiredArgsConstructor
+    @Reflectable
     public static final class TagDefinition {
         private final String guid;
         private final String name;
