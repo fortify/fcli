@@ -107,7 +107,8 @@ public final class AviatorSSCTagValidator {
      */
     private static void emitWarnings(List<String> warnings, IAviatorLogger logger) {
         for (String warning : warnings) {
-            logger.progress(warning);
+            logger.warn(warning);
+            //logger.progress(warning);
         }
     }
 
