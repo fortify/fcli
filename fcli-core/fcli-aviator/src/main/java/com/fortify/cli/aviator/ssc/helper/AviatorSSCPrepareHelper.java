@@ -14,9 +14,11 @@ package com.fortify.cli.aviator.ssc.helper;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.formkiq.graalvm.annotations.Reflectable;
+import com.fortify.cli.aviator.ssc.helper.AviatorSSCCustomTagHelper.SynchronizationResult;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.progress.helper.IProgressWriter;
 import com.fortify.cli.common.progress.helper.ProgressWriterType;
@@ -70,27 +72,40 @@ public class AviatorSSCPrepareHelper {
             var tagHelperStatus     = new AviatorSSCCustomTagHelper(unirest, AviatorSSCTagDefs.AVIATOR_STATUS_TAG);
             var tagHelperDastCorr   = new AviatorSSCCustomTagHelper(unirest, AviatorSSCTagDefs.DAST_CORRELATION_STATUS_TAG);
 
-            JsonNode predictionTag  = tagHelperPrediction.synchronize(result);
-            JsonNode statusTag      = tagHelperStatus.synchronize(result);
-            JsonNode dastCorrTag    = tagHelperDastCorr.synchronize(result);
+            SynchronizationResult predictionResult = tagHelperPrediction.synchronize(result);
+            SynchronizationResult statusResult     = tagHelperStatus.synchronize(result);
+            SynchronizationResult dastCorrResult   = tagHelperDastCorr.synchronize(result);
 
-            if (predictionTag == null || statusTag == null) {
+            // Required Aviator tags must succeed (either as custom or system-managed)
+            if (!predictionResult.isSuccessful() || !statusResult.isSuccessful()) {
                 result.addEntry("Global", "HALTED", "Failed to synchronize one or more required Aviator custom tags.");
                 return result;
             }
-            if (dastCorrTag == null) {
+            // DAST correlation tag is optional - just warn if it fails
+            if (!dastCorrResult.isSuccessful()) {
                 result.addEntry("DAST Correlation Tag", "WARNING",
                     "Failed to synchronize 'DAST correlation status' tag. SAST-DAST correlation feature may not be fully visible in SSC UI.");
             }
 
+            // Always synchronize attributes (before any early return)
             progress.writeProgress("Synchronizing Aviator custom attributes...");
             new AviatorSSCCorrelationAttributeHelper(unirest, AviatorSSCCorrelationAttributeDefs.LAST_CORRELATION_ATTR)
                 .synchronize(result);
 
-            // Build required tags list — include dastCorrTag only if successfully synchronized
-            List<JsonNode> requiredTags = dastCorrTag != null
-                ? List.of(predictionTag, statusTag, dastCorrTag)
-                : List.of(predictionTag, statusTag);
+            // Build list of tags requiring manual association (excludes system-managed tags)
+            List<SynchronizationResult> allResults = List.of(predictionResult, statusResult, dastCorrResult);
+            List<JsonNode> requiredTags = allResults.stream()
+                    .filter(SynchronizationResult::requiresAssociation)
+                    .map(SynchronizationResult::getTag)
+                    .collect(Collectors.toList());
+
+            // If all Aviator tags are system-managed (SSC 26.2+), skip template/version association
+            if (requiredTags.isEmpty()) {
+                result.addEntry("Global", "INFO",
+                        "All Aviator tags are system-managed (SSC 26.2+). No manual template/version association required.");
+                progress.writeInfo("All Aviator tags are system-managed by SSC. No manual association needed.");
+                return result;
+            }
 
             if (options.isAllIssueTemplates() || options.getIssueTemplateNameOrId() != null) {
                 new AviatorSSCTemplateUpdater(unirest).process(options, result, requiredTags, progress);

@@ -22,12 +22,14 @@ import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.aviator.ssc.helper.AviatorSSCTagDefs.TagDefinition;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.rest.unirest.UnexpectedHttpResponseException;
 import com.fortify.cli.ssc._common.rest.ssc.SSCUrls;
 
 import kong.unirest.UnirestInstance;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
@@ -36,7 +38,42 @@ public class AviatorSSCCustomTagHelper {
     private final UnirestInstance unirest;
     private final TagDefinition tagDef;
 
-    public JsonNode synchronize(AviatorSSCPrepareHelper.PrepareResult result) {
+    /**
+     * Result of tag synchronization, indicating whether the tag was found/created
+     * and whether it's system-managed (SSC 26.2+ built-in) or requires manual association.
+     */
+    @Getter @RequiredArgsConstructor @Reflectable
+    public static final class SynchronizationResult {
+        private final JsonNode tag;
+        private final boolean successful;
+        private final boolean systemManaged;
+
+        /**
+         * Returns true if the tag was successfully synchronized and requires manual
+         * association with issue templates/app versions. System-managed tags (SSC 26.2+
+         * built-in Aviator tags) are automatically associated and don't need manual setup.
+         */
+        public boolean requiresAssociation() {
+            return successful && !systemManaged;
+        }
+
+        public static SynchronizationResult success(JsonNode tag, boolean systemManaged) {
+            return new SynchronizationResult(tag, true, systemManaged);
+        }
+
+        public static SynchronizationResult failure() {
+            return new SynchronizationResult(null, false, false);
+        }
+    }
+
+    /**
+     * Synchronizes the custom tag with SSC. For Aviator built-in tags (prediction/status),
+     * also checks the /internalCustomTags endpoint to detect SSC 26.2+ system-managed tags.
+     *
+     * @param result the prepare result to record status entries
+     * @return SynchronizationResult indicating success/failure and whether system-managed
+     */
+    public SynchronizationResult synchronize(AviatorSSCPrepareHelper.PrepareResult result) {
         try {
             LOG.debug("Searching for custom tag '{}' (GUID: {})", tagDef.getName(), tagDef.getGuid());
             ArrayNode customTags = (ArrayNode) unirest.get(SSCUrls.CUSTOM_TAGS).asObject(JsonNode.class).getBody().get("data");
@@ -45,13 +82,63 @@ public class AviatorSSCCustomTagHelper {
                     .findFirst().orElse(null);
 
             if (existingTag != null) {
-                return verifyAndUpdateExistingTag(result, existingTag);
-            } else {
-                return createNewTag(result);
+                JsonNode updatedTag = verifyAndUpdateExistingTag(result, existingTag);
+                return SynchronizationResult.success(updatedTag, false);
             }
+
+            // Tag not found in /customTags - check if it's a system-managed Aviator tag
+            if (isAviatorBuiltInTag()) {
+                JsonNode internalTag = findInInternalCustomTags();
+                if (internalTag != null) {
+                    LOG.info("Tag '{}' found as system-managed internal tag (SSC 26.2+). Configure through SSC.",
+                            tagDef.getName());
+                    result.addEntry("Custom Tag", "SYSTEM_MANAGED",
+                            "'" + tagDef.getName() + "' is a built-in SSC tag (SSC 26.2+). Configure through SSC.");
+                    return SynchronizationResult.success(internalTag, true);
+                }
+            }
+
+            // Tag not found anywhere - create it
+            JsonNode createdTag = createNewTag(result);
+            return createdTag != null
+                    ? SynchronizationResult.success(createdTag, false)
+                    : SynchronizationResult.failure();
         } catch (UnexpectedHttpResponseException e) {
             LOG.error("Error synchronizing custom tag '{}': {}", tagDef.getName(), e.getMessage());
             result.addEntry("Custom Tag", "FAILED", "Error synchronizing tag '" + tagDef.getName() + "': " + e.getMessage());
+            return SynchronizationResult.failure();
+        }
+    }
+
+    /**
+     * Returns true if this tag is an Aviator built-in tag that may be system-managed in SSC 26.2+.
+     * DAST correlation tag is NOT an Aviator built-in - it's always a custom tag created by fcli.
+     */
+    private boolean isAviatorBuiltInTag() {
+        return tagDef == AviatorSSCTagDefs.AVIATOR_PREDICTION_TAG
+                || tagDef == AviatorSSCTagDefs.AVIATOR_STATUS_TAG;
+    }
+
+    /**
+     * Queries the /internalCustomTags endpoint to find system-managed Aviator tags.
+     * Returns null if the endpoint doesn't exist (older SSC) or tag not found.
+     */
+    private JsonNode findInInternalCustomTags() {
+        try {
+            LOG.debug("Checking /internalCustomTags for system-managed tag '{}'", tagDef.getName());
+            JsonNode response = unirest.get(SSCUrls.INTERNAL_CUSTOM_TAGS)
+                    .asObject(JsonNode.class).getBody();
+            JsonNode data = response.get("data");
+            if (data == null || !data.isArray()) {
+                LOG.debug("No data array in /internalCustomTags response");
+                return null;
+            }
+            return JsonHelper.stream((ArrayNode) data)
+                    .filter(tag -> tagDef.getGuid().equalsIgnoreCase(tag.path("guid").asText()))
+                    .findFirst().orElse(null);
+        } catch (UnexpectedHttpResponseException e) {
+            // Endpoint may not exist in older SSC versions - this is expected
+            LOG.debug("Could not query /internalCustomTags (may not exist in this SSC version): {}", e.getMessage());
             return null;
         }
     }
