@@ -197,7 +197,7 @@ public class RemediationProcessor {
             hash = Base64.getEncoder().encodeToString(digest);
             return hash;
         } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException(algorithm + " algorithm not found", e);
+            throw new AviatorTechnicalException("Hashing algorithm not available: " + algorithm, e);
         }
     }
 

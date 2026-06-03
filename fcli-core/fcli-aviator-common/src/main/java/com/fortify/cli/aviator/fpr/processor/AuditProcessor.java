@@ -915,7 +915,7 @@ public class AuditProcessor {
             byte[] digest = md.digest(content.getBytes(StandardCharsets.UTF_8));
             return Base64.getEncoder().encodeToString(digest);
         } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException(algorithm + " algorithm not found", e);
+            throw new AviatorTechnicalException("Hashing algorithm not available: " + algorithm, e);
         }
     }
 
