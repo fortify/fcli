@@ -58,6 +58,7 @@ import com.fortify.cli.ssc.system_state.helper.SSCJobHelper;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import lombok.SneakyThrows;
+import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
@@ -75,15 +76,18 @@ public class AviatorSSCAuditCommand extends AbstractSSCJsonNodeOutputCommand imp
     @Option(names = {"--tag-mapping"}) private String tagMapping;
     @Option(names = {"--no-filterset"}) private boolean noFilterSet;
     @Option(names = {"--folder"}, split = ",") @DisableTest(DisableTest.TestType.MULTI_OPT_PLURAL_NAME) private List<String> folderNames;
-    @Option(names = {"--skip-if-exceeding-quota"}) private boolean skipIfExceedingQuota;
+    @ArgGroup(exclusive = true, multiplicity = "0..1") private QuotaHandlingArgGroup quotaHandlingArgGroup = new QuotaHandlingArgGroup();
     @Option(names = {"--test-exceeding-quota"}) private boolean testExceedingQuota;
     @Option(names = {"--default-quota-fallback"}) private boolean defaultQuotaFallback;
-    @Option(names = {"--folder-priority-order"}, split = ",",
-            description = "Custom priority order by folder (comma-separated, highest first). Example: Critical,High,Medium,Low")
-    @DisableTest(DisableTest.TestType.MULTI_OPT_PLURAL_NAME)
-    private List<String> folderPriorityOrder;
     private static final Logger LOG = LoggerFactory.getLogger(AviatorSSCAuditCommand.class);
     private Long checkedQuotaBefore;
+
+    private static final class QuotaHandlingArgGroup {
+        @Option(names = {"--skip-if-exceeding-quota"}) private boolean skipIfExceedingQuota;
+        @Option(names = {"--folder-priority-order"}, split = ",")
+        @DisableTest(DisableTest.TestType.MULTI_OPT_PLURAL_NAME)
+        private List<String> folderPriorityOrder;
+    }
 
     @Override
     @SneakyThrows
@@ -147,6 +151,14 @@ public class AviatorSSCAuditCommand extends AbstractSSCJsonNodeOutputCommand imp
         }
     }
 
+    private boolean isSkipIfExceedingQuota() {
+        return quotaHandlingArgGroup.skipIfExceedingQuota;
+    }
+
+    private List<String> getFolderPriorityOrder() {
+        return quotaHandlingArgGroup.folderPriorityOrder;
+    }
+
     /**
      * Checks quota constraints when --skip-if-exceeding-quota or --test-exceeding-quota is active.
      * @return a result JsonNode if the audit should be skipped/reported, or null if the audit should proceed.
@@ -154,7 +166,7 @@ public class AviatorSSCAuditCommand extends AbstractSSCJsonNodeOutputCommand imp
     private JsonNode checkQuota(UnirestInstance unirest, SSCAppVersionDescriptor av,
             AviatorUserSessionDescriptor sessionDescriptor,
             long auditableIssueCount, AviatorLoggerImpl logger) {
-        if (!skipIfExceedingQuota && !testExceedingQuota) {
+        if (!isSkipIfExceedingQuota() && !testExceedingQuota) {
             return null;
         }
 
@@ -262,7 +274,7 @@ public class AviatorSSCAuditCommand extends AbstractSSCJsonNodeOutputCommand imp
                     .filterSetNameOrId(getFilterSetTitleOrId())
                     .noFilterSet(isNoFilterSet())
                     .folderNames(folderNames)
-                    .folderPriorityOrder(folderPriorityOrder)
+                    .folderPriorityOrder(getFolderPriorityOrder())
                     .build());
         } catch (Exception e) {
             LOG.error("FPR audit failed for {}:{}: {}", av.getApplicationName(), av.getVersionName(), e.getMessage(), e);
