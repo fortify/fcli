@@ -14,7 +14,6 @@ package com.fortify.cli.ssc.custom_tag.helper;
 
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Stream;
@@ -133,9 +132,18 @@ public class SSCCustomTagDefinitionHelper {
 
     public int addValueToListTag(String tagGuid, String newValue) {
         SSCCustomTagDescriptor desc = getDescriptorByCustomTagSpec(tagGuid, true);
-        ObjectNode body = (ObjectNode) desc.asJsonNode().deepCopy();
+        return addValueToListTagInternal(desc.getId(), (ObjectNode) desc.asJsonNode().deepCopy(), newValue);
+    }
+
+    public int addValueToListTagById(String tagNumericId, String newValue) {
+        JsonNode response = unirest.get(SSCUrls.CUSTOM_TAG(tagNumericId)).asObject(JsonNode.class).getBody();
+        ObjectNode body = (ObjectNode) response.get("data").deepCopy();
+        return addValueToListTagInternal(tagNumericId, body, newValue);
+    }
+
+    private int addValueToListTagInternal(String tagNumericId, ObjectNode body, String newValue) {
         LinkedHashMap<String, ObjectNode> valueMap = buildValueMap(body);
-        if (!valueMap.containsKey(newValue)) {
+        if (valueMap.keySet().stream().noneMatch(k -> k.equalsIgnoreCase(newValue))) {
             valueMap.put(newValue, newValueListEntry(newValue));
         }
         int newLookupIndex = -1;
@@ -151,7 +159,7 @@ public class SSCCustomTagDefinitionHelper {
             idx++;
         }
         body.set("valueList", newValueList);
-        unirest.put(SSCUrls.CUSTOM_TAG(desc.getId()))
+        unirest.put(SSCUrls.CUSTOM_TAG(tagNumericId))
                 .body(body)
                 .asObject(JsonNode.class)
                 .getBody();
@@ -212,7 +220,7 @@ public class SSCCustomTagDefinitionHelper {
         var valueList = body.withArray("valueList");
         LinkedHashMap<String, ObjectNode> valueMap = new LinkedHashMap<>();
         for (JsonNode v : valueList) {
-            String key = v.path("lookupValue").asText().toLowerCase(Locale.ROOT);
+            String key = v.path("lookupValue").asText();
             valueMap.put(key, (ObjectNode)v);
         }
         return valueMap;
@@ -221,13 +229,12 @@ public class SSCCustomTagDefinitionHelper {
     private void addValuesToMap(LinkedHashMap<String, ObjectNode> valueMap, String valuesStr) {
         String[] vals = valuesStr.split(",");
         for (String val : vals) {
-            val = val.trim();
-            if (val.isBlank()) {
+            String trimmed = val.trim();
+            if (trimmed.isBlank()) {
                 continue;
             }
-            String key = val.toLowerCase(Locale.ROOT);
-            if (!valueMap.containsKey(key)) {
-                valueMap.put(key, newValueListEntry(val));
+            if (valueMap.keySet().stream().noneMatch(k -> k.equalsIgnoreCase(trimmed))) {
+                valueMap.put(trimmed, newValueListEntry(trimmed));
             }
         }
     }
@@ -235,11 +242,11 @@ public class SSCCustomTagDefinitionHelper {
     private void removeValuesFromMap(LinkedHashMap<String, ObjectNode> valueMap, String valuesStr) {
         String[] vals = valuesStr.split(",");
         for (String val : vals) {
-            val = val.trim();
-            if (val.isBlank()) {
+            String trimmed = val.trim();
+            if (trimmed.isBlank()) {
                 continue;
             }
-            valueMap.remove(val.toLowerCase(Locale.ROOT));
+            valueMap.keySet().removeIf(k -> k.equalsIgnoreCase(trimmed));
         }
     }
 

@@ -49,6 +49,7 @@ public class SSCIssueCustomTagHelper {
         }
         
         Map<String, CustomTagInfo> tagInfoMap = getCustomTagInfoMap();
+        customTags.forEach((tagName, tagValue) -> validateCustomTagValue(tagName, tagValue, tagInfoMap, extend));
         
         return customTags.entrySet().stream()
                 .map(entry -> {
@@ -61,6 +62,69 @@ public class SSCIssueCustomTagHelper {
                     return createAuditValue(tagName, tagValue, tagInfo, extend);
                 })
                 .collect(Collectors.toList());
+    }
+
+    private void validateCustomTagValue(String tagName, String tagValue, Map<String, CustomTagInfo> tagInfoMap, boolean extend) {
+        CustomTagInfo tagInfo = tagInfoMap.get(tagName.toLowerCase());
+        if (tagInfo == null) {
+            throw new FcliSimpleException("Custom tag '" + tagName + "' is not available for this application version");
+        }
+
+        boolean isUnset = tagValue == null || tagValue.isBlank();
+        switch (tagInfo.getValueType()) {
+            case TEXT:
+                return;
+            case DECIMAL:
+                if (!isUnset) {
+                    validateDecimalValue(tagName, tagValue);
+                }
+                return;
+            case DATE:
+                if (!isUnset) {
+                    processDateValue(tagValue, tagName);
+                }
+                return;
+            case LIST:
+                if (!isUnset) {
+                    validateListValue(tagName, tagValue, tagInfo, extend);
+                }
+                return;
+            default:
+                throw new FcliSimpleException("Unsupported custom tag value type: " + tagInfo.getValueType());
+        }
+    }
+
+    private void validateDecimalValue(String tagName, String value) {
+        try {
+            Double.parseDouble(value);
+        } catch (NumberFormatException e) {
+            throw new FcliSimpleException("Invalid decimal value '" + value + "' for custom tag '" + tagName + "'");
+        }
+    }
+
+    private void validateListValue(String tagName, String value, CustomTagInfo tagInfo, boolean extend) {
+        var valueList = tagInfo.getValueList();
+        if (valueList != null) {
+            for (ValueListItem item : valueList) {
+                if (value.equalsIgnoreCase(item.getLookupValue())) {
+                    return;
+                }
+            }
+        }
+        if (tagInfo.isExtensible() && extend) {
+            return;
+        }
+        String hint = tagInfo.isExtensible()
+                ? " Use --extend to add new values."
+                : " This tag is not extensible.";
+        if (valueList == null || valueList.isEmpty()) {
+            throw new FcliSimpleException("Custom tag '" + tagName + "' has no valid list values configured." + hint);
+        }
+        String validValues = valueList.stream()
+                .map(ValueListItem::getLookupValue)
+                .collect(Collectors.joining(", "));
+        throw new FcliSimpleException("Invalid value '" + value + "' for custom tag '" + tagName + "'."
+                + " Supported values: " + validValues + "." + hint);
     }
     
     public void populateCustomTagUpdates(Map<String,String> customTags, ArrayNode customTagsArray) {
@@ -171,7 +235,7 @@ public class SSCIssueCustomTagHelper {
     }
     
     private int extendTagWithValue(CustomTagInfo tagInfo, String newValue) {
-        int newIndex = new SSCCustomTagDefinitionHelper(unirest).addValueToListTag(tagInfo.getGuid(), newValue);
+        int newIndex = new SSCCustomTagDefinitionHelper(unirest).addValueToListTagById(tagInfo.getId(), newValue);
         ValueListItem newItem = new ValueListItem();
         newItem.setLookupIndex(newIndex);
         newItem.setLookupValue(newValue);
@@ -209,6 +273,7 @@ public class SSCIssueCustomTagHelper {
     private CustomTagInfo parseCustomTagInfo(JsonNode tagNode) {
         CustomTagInfo tagInfo = new CustomTagInfo();
         tagInfo.setGuid(tagNode.get("guid").asText());
+        tagInfo.setId(tagNode.path("id").asText(null));
         tagInfo.setName(tagNode.get("name").asText());
         tagInfo.setValueType(SSCCustomTagValueType.valueOf(tagNode.get("valueType").asText()));
         tagInfo.setExtensible(tagNode.path("extensible").asBoolean(false));
@@ -221,13 +286,13 @@ public class SSCIssueCustomTagHelper {
                 tagInfo.getValueList().add(item);
             }
         }
-        
         return tagInfo;
     }
     
     @Getter @Setter
     public static class CustomTagInfo {
         private String guid;
+        private String id;
         private String name;
         private SSCCustomTagValueType valueType;
         private boolean extensible;
