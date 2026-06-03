@@ -17,7 +17,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260527.081359-dev_feat.v3.x.aviator.26.3" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260603.102142-dev_feat.v3.x.aviator.26.3" %}
 
 
 <div id="header">
@@ -46,20 +46,22 @@ fcli_version:
 <div class="sectionbody">
 <div class="paragraph">
 <p><strong>fcli aviator ssc audit</strong> [<strong>--default-quota-fallback</strong>] [<strong>--no-filterset</strong>] [<strong>--[no-]</strong>
-                *       refresh*] [<strong>--skip-if-exceeding-quota</strong>]
-                       [<strong>--test-exceeding-quota</strong>] [<strong>--app</strong>=<em>&lt;appName&gt;</em>]
+                *       refresh*] [<strong>--test-exceeding-quota</strong>] [<strong>--app</strong>=<em>&lt;appName&gt;</em>]
                        <strong>--av</strong>=<em>&lt;appVersionNameOrId&gt;</em> [<strong>--delim</strong>=<em>&lt;delimiter&gt;</em>]
                        [<strong>--fs</strong>=<em>&lt;filterSetTitleOrId&gt;</em>] [<strong>--progress</strong>=<em>&lt;type&gt;</em>]
                        [<strong>--refresh-timeout</strong>=<em>&lt;timeoutPeriod&gt;</em>]
                        [<strong>--tag-mapping</strong>=<em>&lt;tagMapping&gt;</em>] [<strong>--folder</strong>=<em>&lt;folderNames&gt;</em>[,
-                       <em>&lt;folderNames&gt;</em>&#8230;&#8203;]]&#8230;&#8203;
-                       [<strong>--folder-priority-order</strong>=<em>&lt;folderPriorityOrder&gt;</em>[,
-                       <em>&lt;folderPriorityOrder&gt;</em>&#8230;&#8203;]]&#8230;&#8203; [[<strong>-h</strong>]
-                       [<strong>--env-prefix</strong>=<em>&lt;prefix&gt;</em>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
-                       [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>] [<strong>--log-mask</strong>=<em>&lt;level&gt;</em>] [<strong>--debug</strong>]]
+                       <em>&lt;folderNames&gt;</em>&#8230;&#8203;]]&#8230;&#8203; [[<strong>-h</strong>] [<strong>--env-prefix</strong>=<em>&lt;prefix&gt;</em>]
+                       [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>] [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]
+                       [<strong>--log-mask</strong>=<em>&lt;level&gt;</em>] [<strong>--debug</strong>]]
                        [[<strong>--ssc-session</strong>=<em>&lt;sessionName&gt;</em>]] [[<strong>-o</strong>=<em>&lt;type+args&gt;</em>]
                        [<strong>--style*<em>=&lt;style&gt;,&#8230;&#8203;</em>]&#8230;&#8203; <em class="</strong>--store*=_&lt;var&gt;[:&lt;prop&gt;">]
-                       [<strong>--to-file</strong>=</em>&lt;outputFile&gt;_]] [[<strong>--av-session</strong>=<em>&lt;sessionName&gt;</em>]]</p>
+                       [<strong>--to-file</strong>=</em>&lt;outputFile&gt;_]] [[<strong>--av-session</strong>=<em>&lt;sessionName&gt;</em>]]
+                       [<strong>--skip-if-exceeding-quota</strong> |
+                       <strong>--folder-priority-order</strong>=<em>&lt;folderPriorityOrder&gt;</em>[,
+                       <em>&lt;folderPriorityOrder&gt;</em>&#8230;&#8203;]
+                       [<strong>--folder-priority-order</strong>=<em>&lt;folderPriorityOrder&gt;</em>[,
+                       <em>&lt;folderPriorityOrder&gt;</em>&#8230;&#8203;]]&#8230;&#8203;]</p>
 </div>
 </div>
 </div>
@@ -225,7 +227,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2026-05-27 08:16:56 UTC
+Last updated 2026-06-03 10:24:28 UTC
 </div>
 </div>
 </body>
