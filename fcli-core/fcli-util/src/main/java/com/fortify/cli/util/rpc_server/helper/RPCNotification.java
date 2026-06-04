@@ -18,6 +18,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fortify.cli.common.exception.FcliTechnicalException;
 import com.fortify.cli.common.json.JsonHelper;
 
 /**
@@ -87,7 +88,7 @@ final class RPCNotification {
         try {
             return OM.writeValueAsString(node);
         } catch (Exception e) {
-            throw new IllegalStateException("Failed to serialize notification", e);
+            throw new FcliTechnicalException("Failed to serialize notification", e);
         }
     }
 }

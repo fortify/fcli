@@ -36,6 +36,7 @@ import com.fortify.cli.common.action.helper.ActionLoaderHelper.ActionValidationH
 import com.fortify.cli.common.action.model.Action.ActionMetadata;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
+import com.fortify.cli.common.rest.unirest.RemoteUrlAuthHelper;
 import com.fortify.cli.common.util.Break;
 import com.fortify.cli.common.util.ZipHelper;
 
@@ -67,7 +68,7 @@ public class ActionImportHelper {
     @SneakyThrows
     private static final InputStream createZipFileInputStream(String zip) {
         try {
-            return new URL(zip).openStream();
+            return RemoteUrlAuthHelper.openStream(zip);
         } catch ( MalformedURLException e ) {
             return Files.newInputStream(Path.of(zip));
         }

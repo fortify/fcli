@@ -194,7 +194,7 @@ public class FoDScanHelper {
                 .routeParam("scanId", scanId)
                 .asObject(JsonNode.class).getBody();
         if (cancelResponse.has("success") && !cancelResponse.get("success").asBoolean()) {
-            throw new IllegalStateException("Error cancelling scan " + cancelResponse.get("message").asText());
+            throw new FcliSimpleException("Error cancelling scan " + cancelResponse.get("message").asText());
         }
     }
 

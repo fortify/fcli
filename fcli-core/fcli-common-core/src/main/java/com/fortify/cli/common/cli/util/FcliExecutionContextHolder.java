@@ -15,6 +15,7 @@ package com.fortify.cli.common.cli.util;
 import java.util.ArrayDeque;
 import java.util.Deque;
 
+import com.fortify.cli.common.exception.FcliBugException;
 import com.fortify.cli.common.session.helper.ISessionDescriptor;
 
 /**
@@ -95,7 +96,7 @@ public final class FcliExecutionContextHolder {
     public static FcliExecutionContext current() { 
         var stack = HOLDER.get();
         if ( stack.isEmpty() ) {
-            throw new IllegalStateException(
+            throw new FcliBugException(
                 "No FcliExecutionContext on the current thread. "
                 + "Ensure a context is pushed at every execution entry point "
                 + "(CLI command, MCP request, RPC request).");

@@ -12,9 +12,16 @@
  */
 package com.fortify.cli.common.rest.cli.mixin;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import com.fortify.cli.common.log.LogSensitivityLevel;
+import com.fortify.cli.common.log.MaskValue;
 import com.fortify.cli.common.rest.unirest.config.IConnectionConfig;
 import com.fortify.cli.common.util.DateTimePeriodHelper;
 import com.fortify.cli.common.util.DateTimePeriodHelper.Period;
+import com.fortify.cli.common.util.DisableTest;
+import com.fortify.cli.common.util.DisableTest.TestType;
 
 import kong.unirest.Config;
 import lombok.Getter;
@@ -28,13 +35,18 @@ import picocli.CommandLine.Option;
 public abstract class ConnectionConfigOptions implements IConnectionConfig {
     private static final DateTimePeriodHelper periodHelper = DateTimePeriodHelper.byRange(Period.SECONDS, Period.MINUTES);
     
-    @Option(names = {"--insecure", "-k"}, required = false, defaultValue = "false", order=6)
+    @DisableTest({TestType.MULTI_OPT_PLURAL_NAME, TestType.MULTI_OPT_SPLIT, TestType.OPT_SHORT_NAME})
+    @Option(names = {"--header", "-H"}, required = false, order=6)
+    @MaskValue(sensitivity = LogSensitivityLevel.high, description = "HEADER VALUE", pattern = "[^:]+:\\s*(.+)")
+    @Getter private List<String> headers = new ArrayList<>();
+    
+    @Option(names = {"--insecure", "-k"}, required = false, defaultValue = "false", order=7)
     @Getter private Boolean insecureModeEnabled;
     
-    @Option(names = {"--socket-timeout"}, required = false, order=7)
+    @Option(names = {"--socket-timeout"}, required = false, order=8)
     private String socketTimeout;
     
-    @Option(names = {"--connect-timeout"}, required = false, order=8)
+    @Option(names = {"--connect-timeout"}, required = false, order=9)
     private String connectTimeout;
     
     @Override

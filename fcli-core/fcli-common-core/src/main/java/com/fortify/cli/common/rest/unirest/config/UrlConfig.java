@@ -12,6 +12,8 @@
  */
 package com.fortify.cli.common.rest.unirest.config;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Consumer;
 
 import org.apache.commons.lang3.StringUtils;
@@ -30,6 +32,9 @@ import lombok.NoArgsConstructor;
 public class UrlConfig implements IUrlConfig {
     @MaskValue(sensitivity = LogSensitivityLevel.low, description = "HOST NAME", pattern = MaskValue.URL_HOSTNAME_PATTERN)
     private String  url;
+    @MaskValue(sensitivity = LogSensitivityLevel.high, description = "HEADER VALUE", pattern = "[^:]+:\\s*(.+)")
+    @Builder.Default
+    private List<String> headers = new ArrayList<>();
     private int     socketTimeoutInMillis;
     private int     connectTimeoutInMillis;
     private Boolean insecureModeEnabled;
@@ -50,6 +55,7 @@ public class UrlConfig implements IUrlConfig {
         UrlConfigBuilder builder = other==null ? builderFrom(overrides) : builderFrom(other);
         if ( other!=null && overrides!=null ) {
             override(overrides.getUrl(), builder::url);
+            override(overrides.getHeaders(), builder::headers);
             override(overrides.getInsecureModeEnabled(), builder::insecureModeEnabled);
             builder.connectTimeoutInMillis(overrides.getConnectTimeoutInMillis())
                 .socketTimeoutInMillis(overrides.getSocketTimeoutInMillis());
@@ -61,6 +67,7 @@ public class UrlConfig implements IUrlConfig {
         UrlConfigBuilder builder = UrlConfig.builder();
         if ( other!=null ) {
             builder = builder
+                .headers(other.getHeaders()==null ? new ArrayList<>() : new ArrayList<>(other.getHeaders()))
                 .insecureModeEnabled(other.isInsecureModeEnabled())
                 .connectTimeoutInMillis(other.getConnectTimeoutInMillis())
                 .socketTimeoutInMillis(other.getSocketTimeoutInMillis());
@@ -74,5 +81,11 @@ public class UrlConfig implements IUrlConfig {
     
     private static final <T extends Object> void override(T value, Consumer<T> setter) {
         if ( value!=null ) { setter.accept(value); }
+    }
+
+    private static final void override(List<String> value, Consumer<List<String>> setter) {
+        if ( value!=null && !value.isEmpty() ) {
+            setter.accept(new ArrayList<>(value));
+        }
     }
 }

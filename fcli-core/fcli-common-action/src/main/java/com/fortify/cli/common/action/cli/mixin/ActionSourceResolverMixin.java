@@ -17,6 +17,9 @@ import java.util.List;
 import org.apache.commons.lang3.StringUtils;
 
 import com.fortify.cli.common.action.helper.ActionLoaderHelper.ActionSource;
+import com.fortify.cli.common.log.LogSensitivityLevel;
+import com.fortify.cli.common.log.MaskValue;
+import com.fortify.cli.common.rest.unirest.RemoteUrlAuthHelper;
 
 import lombok.Getter;
 import picocli.CommandLine.Option;
@@ -34,6 +37,7 @@ public class ActionSourceResolverMixin {
     }
     
     public static class OptionalOption extends AbstractActionSourceResolverMixin {
+        @MaskValue(sensitivity = LogSensitivityLevel.high, description = "REMOTE URL AUTH VALUE", pattern = RemoteUrlAuthHelper.URL_USERINFO_AUTH_VALUE_MASK_PATTERN)
         @Option(names={"--from-zip", "-z"}, required = false, descriptionKey = "fcli.action.resolver.from-zip")
         @Getter private String source;
     }

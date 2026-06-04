@@ -20,6 +20,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.formkiq.graalvm.annotations.Reflectable;
+import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.rest.unirest.HttpHeader;
 import com.fortify.cli.common.util.Break;
@@ -97,10 +98,10 @@ public class GitLabProject {
         try {
             var report = JsonHelper.getObjectMapper().readTree(reportContent);
             if (!report.isArray()) {
-                throw new IllegalArgumentException("Code quality report must be a JSON array");
+                throw new FcliSimpleException("Code quality report must be a JSON array");
             }
         } catch (Exception e) {
-            throw new IllegalArgumentException("Invalid JSON in code quality report: " + e.getMessage(), e);
+            throw new FcliSimpleException("Invalid JSON in code quality report: " + e.getMessage(), e);
         }
         
         return unirest

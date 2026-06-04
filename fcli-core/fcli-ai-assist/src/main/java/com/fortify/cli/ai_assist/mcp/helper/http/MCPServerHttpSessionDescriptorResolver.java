@@ -30,6 +30,7 @@ import com.fortify.cli.common.cli.util.FcliActionState;
 import com.fortify.cli.common.cli.util.FcliExecutionContext;
 import com.fortify.cli.common.cli.util.FcliExecutionContextHolder;
 import com.fortify.cli.common.cli.util.FcliIsolationScope;
+import com.fortify.cli.common.exception.FcliBugException;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.rest.unirest.config.UrlConfig;
 import com.fortify.cli.common.session.helper.ISessionDescriptor;
@@ -163,7 +164,7 @@ public final class MCPServerHttpSessionDescriptorResolver {
     private FcliIsolationScope getExistingIsolationScope(String authScopeKey) {
         var entry = isolationScopeCache.get(authScopeKey);
         if ( entry == null ) {
-            throw new IllegalStateException("No isolation scope found for auth scope key");
+            throw new FcliBugException("No isolation scope found for auth scope key");
         }
         return entry.scope;
     }
@@ -294,7 +295,7 @@ public final class MCPServerHttpSessionDescriptorResolver {
         try {
             return MessageDigest.getInstance("SHA-256");
         } catch ( NoSuchAlgorithmException e ) {
-            throw new IllegalStateException("SHA-256 digest algorithm is not available", e);
+            throw new FcliBugException("SHA-256 digest algorithm is not available", e);
         }
     }
 
@@ -441,6 +442,11 @@ public final class MCPServerHttpSessionDescriptorResolver {
         @Override
         public Boolean getInsecureModeEnabled() {
             return config.getInsecureModeEnabled();
+        }
+
+        @Override
+        public java.util.List<String> getHeaders() {
+            return config.getHeaders();
         }
     }
 

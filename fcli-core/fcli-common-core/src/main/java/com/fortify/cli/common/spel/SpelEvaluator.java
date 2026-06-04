@@ -39,6 +39,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.exception.FcliSimpleException;
+import com.fortify.cli.common.exception.FcliTechnicalException;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.spel.fn.SpelFunctionsStandard;
 
@@ -205,7 +206,7 @@ public enum SpelEvaluator implements ISpelEvaluator {
             try {
                 return JsonHelper.getObjectMapper().writeValueAsString(source);
             } catch (Exception e) {
-                throw new RuntimeException("Failed to convert JsonNode to String", e);
+                throw new FcliTechnicalException("Failed to convert JsonNode to String", e);
             }
         }
     }
@@ -216,7 +217,7 @@ public enum SpelEvaluator implements ISpelEvaluator {
             try {
                 return JsonHelper.getObjectMapper().writeValueAsString(source.getRealNode());
             } catch (Exception e) {
-                throw new RuntimeException("Failed to convert JsonNodeWrapper to String", e);
+                throw new FcliTechnicalException("Failed to convert JsonNodeWrapper to String", e);
             }
         }
     }

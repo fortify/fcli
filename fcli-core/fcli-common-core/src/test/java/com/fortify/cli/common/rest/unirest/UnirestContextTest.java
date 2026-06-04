@@ -22,6 +22,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.junit.jupiter.api.Test;
 
+import com.fortify.cli.common.exception.FcliBugException;
+
 class UnirestContextTest {
 
     @Test
@@ -35,7 +37,7 @@ class UnirestContextTest {
         assertEquals(2, context.getCachedInstanceCount());
         context.close();
         // After close, attempting to create/get a new instance should fail
-        assertThrows(IllegalStateException.class, () -> context.getUnirestInstance("c", u->{}));
+        assertThrows(FcliBugException.class, () -> context.getUnirestInstance("c", u->{}));
     }
 
     // With explicit injection design, context isn't implicitly propagated. Verify independent contexts.

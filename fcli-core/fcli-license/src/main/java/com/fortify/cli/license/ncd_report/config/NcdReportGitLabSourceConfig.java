@@ -12,6 +12,8 @@
  */
 package com.fortify.cli.license.ncd_report.config;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 import com.formkiq.graalvm.annotations.Reflectable;
@@ -37,6 +39,7 @@ import lombok.NoArgsConstructor;
 public class NcdReportGitLabSourceConfig extends AbstractNcdReportRepoSelectorConfig implements INcdReportSourceConfig, IUrlConfig {
     private String baseUrl;
     private String tokenExpression;
+    private List<String> headers = new ArrayList<>();
     private int connectTimeoutInMillis = Config.DEFAULT_CONNECT_TIMEOUT;
     private int socketTimeoutInMillis = Config.DEFAULT_SOCKET_TIMEOUT;
     private Boolean insecureModeEnabled;

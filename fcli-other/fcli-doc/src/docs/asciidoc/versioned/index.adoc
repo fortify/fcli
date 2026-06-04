@@ -535,6 +535,25 @@ SpEL expressions may contain various characters that will be interpreted by some
 
 Which one to choose depends on any other characters appearing in the expression. For example, in `bash` you'd usually use single quotes to have everything in-between passed to fcli as-is, unless you want to use specific shell features inside the expression. Note that you can use the `+#env+` function to retrieve environment variable contents, so you don't need to use shell syntax to insert environment variable contents into expressions.
 
+[#authenticated_http_urls]
+=== Authenticated HTTP(S) URLs
+
+Various fcli options and parameters accept either a local file path or a remote HTTP(S) URL. For remote HTTP(S) URLs, fcli also supports providing authentication details through the URL userinfo component.
+
+Supported formats:
+
+* Basic authentication: `+https://user:password@example.com/path+`
+* Bearer token: `+https://bearer:token@example.com/path+`
+* Single custom header: `+https://header:Header-Name=Header%20Value@example.com/path+`
+* Multiple custom headers: `+https://headers:Header-Name=Header%20Value&Other-Header=Other%20Value@example.com/path+`
+
+Notes:
+
+* Any special characters in usernames, passwords, tokens, header names, or header values must be URL-encoded.
+* For Basic authentication, the first `+:+` separates the username from the password; any additional `+:+` characters are treated as part of the password.
+* Fcli strips the userinfo component from the request URL before sending the request and converts the userinfo contents to HTTP request headers.
+* You should only use trusted HTTPS endpoints when loading remote content like actions, public keys, or tool definitions.
+
 == Session Management
 
 Most fcli product modules are session-based, meaning that you need to run a `+session login+` command before you can use most of the other commands provided by a product module, and run a `+session logout+` command when finished, for example:
@@ -753,6 +772,8 @@ Custom actions can be loaded from various sources, like a local or remote YAML f
 * `fcli * action list --from-zip <file|url>`: List available actions from the given zip-file.
 * `fcli * action help|get|run <file|url>`: Load the action from the given file or URL.
 * `fcli * action help|get|run <action> --from-zip <file|url>`: Load the given action from the given zip-file.
+
+For remote HTTP(S) URLs, these commands also support authenticated URLs as described in the link:#authenticated_http_urls[Authenticated HTTP(S) URLs] section.
 
 To allow for easy access, custom actions can also be imported into fcli using the `fcli * action import` command, which allows for importing either a single action YAML file or all action YAML files from a local or remote zip-file. Once imported, these actions can be accessed in the same way as built-in actions. Note that imported custom actions will override built-in actions if they have the same name. You can use the `fcli * action reset` command to remove all previously imported custom actions.
 

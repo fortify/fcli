@@ -15,7 +15,6 @@ package com.fortify.cli.common.action.helper;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
-import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -55,6 +54,7 @@ import com.fortify.cli.common.crypto.helper.SignatureHelper.SignedTextDescriptor
 import com.fortify.cli.common.crypto.helper.impl.SignedTextReader;
 import com.fortify.cli.common.exception.FcliBugException;
 import com.fortify.cli.common.exception.FcliSimpleException;
+import com.fortify.cli.common.rest.unirest.RemoteUrlAuthHelper;
 import com.fortify.cli.common.spel.wrapper.TemplateExpressionKeyDeserializer;
 import com.fortify.cli.common.util.Break;
 import com.fortify.cli.common.util.FcliBuildProperties;
@@ -431,7 +431,7 @@ public class ActionLoaderHelper {
     @SneakyThrows
     private static final InputStream createSourceInputStream(String source, boolean failOnError) {
         try {
-            return new URL(source).openStream();
+            return RemoteUrlAuthHelper.openStream(source);
         } catch (MalformedURLException mue ) {
             try {
                 return Files.newInputStream(Path.of(source));

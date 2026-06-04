@@ -19,13 +19,15 @@ import java.nio.file.StandardOpenOption;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import com.fortify.cli.common.exception.FcliSimpleException;
+
 import io.modelcontextprotocol.spec.McpSchema;
 
 // This class is invoked from /fcli-core/fcli-app/build.gradle
 public class MCPReflectConfigGenerator {
     public static void main(String[] args) throws IOException {
         if ( args.length!=1 ) {
-            throw new IllegalArgumentException("Usage: MCPReflectConfigGenerator <outputfile>");
+            throw new FcliSimpleException("Usage: MCPReflectConfigGenerator <outputfile>");
         }
         new MCPReflectConfigGenerator().generateReflectConfig(Path.of(args[0]));
     }

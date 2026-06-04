@@ -26,6 +26,7 @@ import java.util.zip.ZipOutputStream;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.xml.sax.SAXException;
 
 import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
 
@@ -68,6 +69,22 @@ class FprHandleTest {
     }
 
     @Test
+    @DisplayName("defers malformed source index parsing until source map is requested")
+    void defersMalformedSourceIndexParsingUntilSourceMapIsRequested() throws Exception {
+        Path fprPath = createFpr("""
+            <?xml version="1.0" encoding="UTF-8"?>
+            <index>
+                <entry key="Test.java">src-archive/Test.java</index>
+            """);
+
+        try (FprHandle handle = new FprHandle(fprPath)) {
+            AviatorTechnicalException exception = assertThrows(AviatorTechnicalException.class, handle::getSourceFileMap);
+
+            assertTrue(exception.getCause() instanceof SAXException);
+        }
+    }
+
+    @Test
     @DisplayName("parses Java properties XML with the standard DOCTYPE split across lines")
     void parsesPropertiesXmlWithMultilineStandardDoctype() throws Exception {
         Path fprPath = createFpr("""
@@ -86,6 +103,22 @@ class FprHandleTest {
     }
 
     @Test
+    @DisplayName("validate parses source map after source presence checks")
+    void validateParsesSourceMapAfterSourcePresenceChecks() throws Exception {
+        Path fprPath = createFpr("""
+            <?xml version="1.0" encoding="UTF-8"?>
+            <index>
+                <entry key="Test.java">src-archive/Test.java</index>
+            """);
+
+        try (FprHandle handle = new FprHandle(fprPath)) {
+            AviatorTechnicalException exception = assertThrows(AviatorTechnicalException.class, handle::validate);
+
+            assertTrue(exception.getCause() instanceof SAXException);
+        }
+    }
+
+    @Test
     @DisplayName("rejects unsupported external DOCTYPE declarations")
     void rejectsUnsupportedExternalDoctypeDeclarations() throws Exception {
         Path fprPath = createFpr("""
@@ -96,7 +129,10 @@ class FprHandleTest {
             </properties>
             """);
 
-        AviatorTechnicalException exception = assertThrows(AviatorTechnicalException.class, () -> new FprHandle(fprPath));
+        AviatorTechnicalException exception;
+        try (FprHandle handle = new FprHandle(fprPath)) {
+            exception = assertThrows(AviatorTechnicalException.class, handle::getSourceFileMap);
+        }
 
         assertTrue(exception.getCause() instanceof IOException);
         assertTrue(exception.getCause().getMessage().contains("unsupported DOCTYPE declaration"));
@@ -115,17 +151,39 @@ class FprHandleTest {
             </properties>
             """);
 
-        AviatorTechnicalException exception = assertThrows(AviatorTechnicalException.class, () -> new FprHandle(fprPath));
+        AviatorTechnicalException exception;
+        try (FprHandle handle = new FprHandle(fprPath)) {
+            exception = assertThrows(AviatorTechnicalException.class, handle::getSourceFileMap);
+        }
 
         assertTrue(exception.getCause() instanceof IOException);
         assertTrue(exception.getCause().getMessage().contains("ENTITY declarations"));
     }
 
+    @Test
+    @DisplayName("opens remediation-only FPR without requiring source archive index")
+    void opensRemediationOnlyFprWithoutRequiringSourceArchiveIndex() throws Exception {
+        Path fprPath = createFprWithoutSourceIndex();
+
+        try (FprHandle handle = new FprHandle(fprPath)) {
+            assertTrue(handle.hasRemediations());
+        }
+    }
+
     private Path createFpr(String indexXml) throws IOException {
         Path fprPath = tempDir.resolve("test.fpr");
         try (ZipOutputStream zipOutputStream = new ZipOutputStream(Files.newOutputStream(fprPath))) {
+            writeEntry(zipOutputStream, "audit.fvdl", "<FVDL />");
             writeEntry(zipOutputStream, "src-archive/index.xml", indexXml);
             writeEntry(zipOutputStream, "src-archive/Test.java", "public class Test {}\n");
+        }
+        return fprPath;
+    }
+
+    private Path createFprWithoutSourceIndex() throws IOException {
+        Path fprPath = tempDir.resolve("remediation-only.fpr");
+        try (ZipOutputStream zipOutputStream = new ZipOutputStream(Files.newOutputStream(fprPath))) {
+            writeEntry(zipOutputStream, "remediations.xml", "<Remediations />");
         }
         return fprPath;
     }

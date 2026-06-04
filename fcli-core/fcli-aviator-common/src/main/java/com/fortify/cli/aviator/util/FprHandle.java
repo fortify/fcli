@@ -62,7 +62,7 @@ public final class FprHandle implements AutoCloseable {
      */
     @Getter
     private final Path fprPath;
-    private final Map<String, String> sourceFileMap;
+    private volatile Map<String, String> sourceFileMap;
 
 
     /**
@@ -81,9 +81,6 @@ public final class FprHandle implements AutoCloseable {
         } catch (IOException e) {
             throw new AviatorTechnicalException("Failed to open FPR as a zip file system: " + fprPath, e);
         }
-        this.sourceFileMap = Files.exists(zipfs.getPath("/webinspect.xml"))
-            ? new ConcurrentHashMap<>()
-            : loadSourceFileMap();
     }
 
     /**
@@ -110,6 +107,7 @@ public final class FprHandle implements AutoCloseable {
         if (!hasSource()) {
             throw new AviatorSimpleException("Invalid FPR: Source code is missing or incomplete. The 'src-archive' directory must contain 'index.xml' and at least one source file.");
         }
+        getSourceFileMap();
         LOG.info("FPR validation successful for: {}", this.fprPath);
     }
 
@@ -153,7 +151,12 @@ public final class FprHandle implements AutoCloseable {
      * Returns the map of relative source file paths to their paths within the FPR archive.
      * @return A map of source file paths.
      */
-    public Map<String, String> getSourceFileMap() {
+    public synchronized Map<String, String> getSourceFileMap() {
+        if (sourceFileMap == null) {
+            sourceFileMap = Files.exists(zipfs.getPath("/webinspect.xml"))
+                ? new ConcurrentHashMap<>()
+                : loadSourceFileMap();
+        }
         return sourceFileMap;
     }
 

@@ -12,7 +12,10 @@
  */
 package com.fortify.cli.common.rest.unirest.config;
 
+import java.util.List;
+
 public interface IConnectionConfig {
+    List<String> getHeaders();
     int     getConnectTimeoutInMillis();
     int     getSocketTimeoutInMillis();
     Boolean getInsecureModeEnabled();

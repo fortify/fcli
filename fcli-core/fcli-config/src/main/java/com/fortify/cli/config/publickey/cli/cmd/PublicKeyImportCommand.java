@@ -15,10 +15,13 @@ package com.fortify.cli.config.publickey.cli.cmd;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.cli.mixin.CommonOptionMixins.AbstractTextResolverMixin;
 import com.fortify.cli.common.crypto.helper.SignatureHelper;
+import com.fortify.cli.common.log.LogSensitivityLevel;
+import com.fortify.cli.common.log.MaskValue;
 import com.fortify.cli.common.output.cli.cmd.AbstractOutputCommand;
 import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
+import com.fortify.cli.common.rest.unirest.RemoteUrlAuthHelper;
 
 import lombok.Getter;
 import picocli.CommandLine.Command;
@@ -50,6 +53,7 @@ public class PublicKeyImportCommand extends AbstractOutputCommand implements IJs
     }
     
     private static class PublicKeyResolverMixin extends AbstractTextResolverMixin {
+        @MaskValue(sensitivity = LogSensitivityLevel.high, description = "REMOTE URL AUTH VALUE", pattern = RemoteUrlAuthHelper.URL_USERINFO_AUTH_VALUE_MASK_PATTERN)
         @Getter @Parameters(arity = "1", descriptionKey = "fcli.config.public-key.resolver", paramLabel = "source") private String textSource;
     }
 }

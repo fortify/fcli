@@ -17,6 +17,9 @@ import com.fortify.cli.common.action.helper.ActionLoaderHelper.ActionLoadResult;
 import com.fortify.cli.common.action.helper.ActionLoaderHelper.ActionValidationHandler;
 import com.fortify.cli.common.action.model.Action;
 import com.fortify.cli.common.cli.mixin.CommonOptionMixins.AbstractTextResolverMixin;
+import com.fortify.cli.common.log.LogSensitivityLevel;
+import com.fortify.cli.common.log.MaskValue;
+import com.fortify.cli.common.rest.unirest.RemoteUrlAuthHelper;
 
 import lombok.Getter;
 import picocli.CommandLine.Mixin;
@@ -47,14 +50,17 @@ public class ActionResolverMixin {
     }
     
     public static class RequiredParameter extends AbstractActionResolverMixin {
+        @MaskValue(sensitivity = LogSensitivityLevel.high, description = "REMOTE URL AUTH VALUE", pattern = RemoteUrlAuthHelper.URL_USERINFO_AUTH_VALUE_MASK_PATTERN)
         @Getter @Parameters(arity="1", descriptionKey="fcli.action.nameOrLocation") private String action;
     }
     
     public static class OptionalParameter extends AbstractActionResolverMixin {
+        @MaskValue(sensitivity = LogSensitivityLevel.high, description = "REMOTE URL AUTH VALUE", pattern = RemoteUrlAuthHelper.URL_USERINFO_AUTH_VALUE_MASK_PATTERN)
         @Getter @Parameters(arity="0..1", descriptionKey="fcli.action.nameOrLocation") private String action;
     }
     
     private static class PublicKeyResolverMixin extends AbstractTextResolverMixin {
+        @MaskValue(sensitivity = LogSensitivityLevel.high, description = "REMOTE URL AUTH VALUE", pattern = RemoteUrlAuthHelper.URL_USERINFO_AUTH_VALUE_MASK_PATTERN)
         @Getter @Option(names={"--pubkey"}, required = false, descriptionKey = "fcli.action.resolver.pubkey", paramLabel = "source") private String textSource;
     }
 }

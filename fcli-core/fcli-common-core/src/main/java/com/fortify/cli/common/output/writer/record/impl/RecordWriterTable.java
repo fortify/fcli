@@ -23,6 +23,7 @@ import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fortify.cli.common.exception.FcliTechnicalException;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.writer.record.RecordWriterConfig;
 import com.fortify.cli.common.util.ConsoleHelper;
@@ -123,7 +124,7 @@ public class RecordWriterTable extends AbstractRecordWriter<RecordWriterTable.Ta
                 writer.write('\n');
                 writer.flush();
             } catch ( IOException e ) {
-                throw new RuntimeException("Error writing table segment", e);
+                throw new FcliTechnicalException("Error writing table segment", e);
             }
         }
 

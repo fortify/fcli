@@ -26,6 +26,7 @@ import com.fortify.cli.common.action.runner.ActionRunnerConfig;
 import com.fortify.cli.common.action.runner.processor.ActionCliOptionsProcessor.ActionOptionHelper;
 import com.fortify.cli.common.cli.util.FcliExecutionContextHolder;
 import com.fortify.cli.common.cli.util.SimpleOptionsParser.OptionsParseResult;
+import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.progress.helper.ProgressWriterI18n;
 import com.fortify.cli.common.progress.helper.ProgressWriterType;
 
@@ -41,7 +42,7 @@ import ch.qos.logback.core.encoder.LayoutWrappingEncoder;
 public class RunBuildTimeFcliAction {
     public static void main(String[] args) {
         if ( args.length<2 ) {
-            throw new RuntimeException("Usage: RunBuildTimeFcliAction <log file> <action-path> [action args]");
+            throw new FcliSimpleException("Usage: RunBuildTimeFcliAction <log file> <action-path> [action args]");
         }
         try (var progressWriter = new ProgressWriterI18n(ProgressWriterType.simple, null) ) {
             var logFile = args[0];
@@ -88,6 +89,6 @@ public class RunBuildTimeFcliAction {
         var errorsString = String.join("\n ", optionsParseResult.getValidationErrors());
         var supportedOptionsString = ActionOptionHelper.getSupportedOptionsTable(optionsParseResult.getOptions());
         var msg = String.format("Option errors:\n %s\nSupported options:\n%s\n", errorsString, supportedOptionsString);
-        return new RuntimeException(msg);
+        return new FcliSimpleException(msg);
     }
 }

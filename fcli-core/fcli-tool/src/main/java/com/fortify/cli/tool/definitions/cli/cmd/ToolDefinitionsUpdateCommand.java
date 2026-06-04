@@ -15,10 +15,13 @@ package com.fortify.cli.tool.definitions.cli.cmd;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.json.JsonHelper;
+import com.fortify.cli.common.log.LogSensitivityLevel;
+import com.fortify.cli.common.log.MaskValue;
 import com.fortify.cli.common.output.cli.cmd.AbstractOutputCommand;
 import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
+import com.fortify.cli.common.rest.unirest.RemoteUrlAuthHelper;
 import com.fortify.cli.common.tool.definitions.helper.ToolDefinitionsHelper;
 
 import lombok.Getter;
@@ -30,6 +33,7 @@ import picocli.CommandLine.Option;
 @Command(name=OutputHelperMixins.Update.CMD_NAME)
 public class ToolDefinitionsUpdateCommand extends AbstractOutputCommand implements IJsonNodeSupplier, IActionCommandResultSupplier {
     @Mixin @Getter private OutputHelperMixins.Update outputHelper;
+    @MaskValue(sensitivity = LogSensitivityLevel.high, description = "REMOTE URL AUTH VALUE", pattern = RemoteUrlAuthHelper.URL_USERINFO_AUTH_VALUE_MASK_PATTERN)
     @Getter @Option(names={"-s", "--source"}, required = false, descriptionKey="fcli.tool.definitions.update.definitions-source") 
     private String source = ToolDefinitionsHelper.DEFAULT_TOOL_DEFINITIONS_URL;
     @Reflectable

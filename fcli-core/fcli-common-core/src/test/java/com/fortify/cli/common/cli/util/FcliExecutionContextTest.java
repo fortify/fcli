@@ -22,6 +22,7 @@ import java.util.Date;
 
 import org.junit.jupiter.api.Test;
 
+import com.fortify.cli.common.exception.FcliBugException;
 import com.fortify.cli.common.session.helper.ISessionDescriptor;
 
 class FcliExecutionContextTest {
@@ -97,7 +98,7 @@ class FcliExecutionContextTest {
     @Test
     void currentThrowsWhenNoContextHasBeenPushed() {
         // Verify that current() never silently creates a context — callers must push explicitly.
-        assertThrows(IllegalStateException.class, FcliExecutionContextHolder::current);
+        assertThrows(FcliBugException.class, FcliExecutionContextHolder::current);
     }
 
     private static final class DummySessionDescriptor implements ISessionDescriptor {

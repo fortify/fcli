@@ -23,6 +23,7 @@ import com.fortify.cli.common.ci.ado.AdoEnvironment;
 import com.fortify.cli.common.ci.bitbucket.BitbucketEnvironment;
 import com.fortify.cli.common.ci.github.GitHubEnvironment;
 import com.fortify.cli.common.ci.gitlab.GitLabEnvironment;
+import com.fortify.cli.common.exception.FcliBugException;
 
 import lombok.Getter;
 
@@ -81,7 +82,7 @@ public final class CiEnvironmentTestHelper {
                         target.add(value);
                     }
                 } catch ( IllegalAccessException e ) {
-                    throw new IllegalStateException("Unable to access CI environment field "+field.getName(), e);
+                    throw new FcliBugException("Unable to access CI environment field "+field.getName(), e);
                 }
             }
         }

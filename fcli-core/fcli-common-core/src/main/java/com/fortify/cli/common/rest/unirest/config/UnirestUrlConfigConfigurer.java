@@ -12,6 +12,11 @@
  */
 package com.fortify.cli.common.rest.unirest.config;
 
+import java.util.List;
+
+import org.apache.commons.lang3.StringUtils;
+
+import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.exception.FcliTechnicalException;
 
 import kong.unirest.UnirestInstance;
@@ -31,6 +36,7 @@ public final class UnirestUrlConfigConfigurer {
             .verifySsl(!urlConfig.isInsecureModeEnabled())
             .socketTimeout(urlConfig.getSocketTimeoutInMillis())
             .connectTimeout(urlConfig.getConnectTimeoutInMillis());
+        applyHeaders(unirestInstance, urlConfig.getHeaders());
     }
     
     /**
@@ -48,5 +54,30 @@ public final class UnirestUrlConfigConfigurer {
     private static final String normalizeUrl(String url) {
         // We remove any trailing slashes, assuming that most users will specify relative URL's starting with /
         return url.replaceAll("/+$", "");
+    }
+
+    private static void applyHeaders(UnirestInstance unirestInstance, List<String> headers) {
+        if ( headers==null ) {
+            return;
+        }
+        for ( String header : headers ) {
+            applyHeader(unirestInstance, header);
+        }
+    }
+
+    private static void applyHeader(UnirestInstance unirestInstance, String header) {
+        if ( StringUtils.isBlank(header) ) {
+            throw new FcliSimpleException("HTTP header values must not be blank");
+        }
+        int separatorIndex = header.indexOf(':');
+        if ( separatorIndex < 1 ) {
+            throw new FcliSimpleException("Invalid HTTP header '%s'; expected NAME: VALUE", header);
+        }
+        String name = header.substring(0, separatorIndex).trim();
+        String value = header.substring(separatorIndex + 1).trim();
+        if ( StringUtils.isBlank(name) ) {
+            throw new FcliSimpleException("Invalid HTTP header '%s'; header name must not be blank", header);
+        }
+        unirestInstance.config().setDefaultHeader(name, value);
     }
 }

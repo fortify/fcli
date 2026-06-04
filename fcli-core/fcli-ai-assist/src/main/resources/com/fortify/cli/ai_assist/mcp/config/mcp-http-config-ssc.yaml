@@ -38,6 +38,8 @@ imports:
 
 ssc:
   url: https://ssc.example.com
+  # headers:
+  #   - X-Example-Header: example value   # Repeat for each header; use NAME: VALUE syntax
   connectTimeout: 30s
   socketTimeout: 10m
   insecureModeEnabled: false

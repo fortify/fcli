@@ -16,6 +16,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 
+import com.fortify.cli.common.exception.FcliBugException;
 import com.fortify.cli.common.util.JavaHelper;
 
 import kong.unirest.UnirestInstance;
@@ -58,7 +59,7 @@ public class UnirestContext implements AutoCloseable {
      */
     public UnirestInstance getUnirestInstance(String key, Consumer<UnirestInstance> configurer) {
         if (closed) {
-            throw new IllegalStateException("UnirestContext has been closed");
+            throw new FcliBugException("UnirestContext has been closed");
         }
         return cache.computeIfAbsent(key, k -> {
             log.debug("Creating new Unirest instance for key: {} in {}", key, identity());

@@ -12,6 +12,7 @@
  */
 package com.fortify.cli.common.log;
 
+import java.util.Collection;
 import java.util.function.BiConsumer;
 import java.util.regex.Pattern;
 
@@ -72,6 +73,10 @@ public final class LogMaskHelper {
      * each attribute of that annotation as a separate method argument.
      */
     public final LogMaskHelper registerValue(LogSensitivityLevel sensitivityLevel, LogMaskSource source, String description, Object value, String patternString) {
+        if ( value instanceof Collection<?> collection ) {
+            collection.forEach(item -> registerValue(sensitivityLevel, source, description, item, patternString));
+            return this;
+        }
         var valueString = valueAsString(value);
         if ( StringUtils.isNotBlank(patternString) ) {
             var matcher = Pattern.compile(patternString).matcher(valueString);

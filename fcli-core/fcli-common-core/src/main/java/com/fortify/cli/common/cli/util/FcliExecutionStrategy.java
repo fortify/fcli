@@ -161,6 +161,13 @@ public final class FcliExecutionStrategy implements IExecutionStrategy {
                     .ifPresent(field->registerLogMask(field, value));
             }
         }
+        for ( var positionalParameter : commandSpec.positionalParameters() ) {
+            var value = positionalParameter.getValue();
+            if ( value!=null ) {
+                JavaHelper.as(positionalParameter.userObject(), Field.class)
+                    .ifPresent(field->registerLogMask(field, value));
+            }
+        }
     }
 
     private static void registerLogMask(Field field, Object value) {

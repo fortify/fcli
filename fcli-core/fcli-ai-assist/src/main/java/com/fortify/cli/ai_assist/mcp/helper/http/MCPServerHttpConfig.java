@@ -23,6 +23,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.concurrent.job.AsyncJobManager;
+import com.fortify.cli.common.exception.FcliBugException;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.rest.unirest.config.IConnectionConfig;
 import com.fortify.cli.common.util.DateTimePeriodHelper;
@@ -118,6 +119,7 @@ public class MCPServerHttpConfig {
     public abstract static class ConnectionConfig implements IConnectionConfig {
         private static final DateTimePeriodHelper PERIOD_HELPER = DateTimePeriodHelper.byRange(Period.SECONDS, Period.MINUTES);
 
+        private List<String> headers = new ArrayList<>();
         private Boolean insecureModeEnabled = false;
         private String socketTimeout;
         private String connectTimeout;
@@ -189,7 +191,7 @@ public class MCPServerHttpConfig {
     @JsonIgnore
     public List<Path> getResolvedImportPaths() {
         if ( configPath == null ) {
-            throw new IllegalStateException("Config path has not been set; validate() must be called first");
+            throw new FcliBugException("Config path has not been set; validate() must be called first");
         }
         return imports.stream()
                 .map(this::resolveImportPath)

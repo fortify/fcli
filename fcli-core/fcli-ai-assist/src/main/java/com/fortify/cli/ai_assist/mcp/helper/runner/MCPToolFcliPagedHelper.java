@@ -17,6 +17,8 @@ import java.util.Optional;
 
 import com.fortify.cli.ai_assist.mcp.helper.MCPJobManager;
 import com.fortify.cli.ai_assist.mcp.helper.arg.MCPToolArgHandlerPaging;
+import com.fortify.cli.common.exception.FcliBugException;
+import com.fortify.cli.common.exception.FcliTechnicalException;
 
 import io.modelcontextprotocol.spec.McpSchema.CallToolRequest;
 import io.modelcontextprotocol.spec.McpSchema.CallToolResult;
@@ -75,10 +77,10 @@ final class MCPToolFcliPagedHelper {
                         return tryGetInProgressResult(jobId, pageParams, starter);
                     } catch (InterruptedException e) {
                         Thread.currentThread().interrupt();
-                        throw new RuntimeException("Interrupted while waiting for records", e);
+                        throw new FcliTechnicalException("Interrupted while waiting for records", e);
                     }
                 })
-                .orElseThrow(() -> new IllegalStateException("No result path succeeded for: " + jobId));
+                .orElseThrow(() -> new FcliBugException("No result path succeeded for: " + jobId));
         } catch (Exception e) {
             log.warn("Paged helper failed jobId='{}' offset={} limit={} error={}",
                 jobId, pageParams.offset, pageParams.limit, e.toString());

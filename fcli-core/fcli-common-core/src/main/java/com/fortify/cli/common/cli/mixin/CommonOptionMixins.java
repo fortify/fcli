@@ -13,7 +13,6 @@
 package com.fortify.cli.common.cli.mixin;
 
 import java.io.File;
-import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -28,6 +27,7 @@ import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.log.LogMaskHelper;
 import com.fortify.cli.common.log.LogMaskSource;
 import com.fortify.cli.common.log.MaskValue;
+import com.fortify.cli.common.rest.unirest.RemoteUrlAuthHelper;
 import com.fortify.cli.common.util.EnvHelper;
 
 import lombok.Getter;
@@ -149,7 +149,9 @@ public class CommonOptionMixins {
             
             @SneakyThrows
             private static final String resolveUrl(String url) {
-                return IOUtils.toString(new URL(url), StandardCharsets.US_ASCII);
+                try ( var is = RemoteUrlAuthHelper.openStream(url) ) {
+                    return IOUtils.toString(is, StandardCharsets.US_ASCII);
+                }
             }
             
             private static final String resolveString(String string) {

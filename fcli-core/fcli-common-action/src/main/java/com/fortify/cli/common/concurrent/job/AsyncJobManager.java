@@ -25,6 +25,7 @@ import java.util.function.Supplier;
 import com.fortify.cli.common.cli.util.FcliExecutionContext;
 import com.fortify.cli.common.cli.util.FcliExecutionContextHolder;
 import com.fortify.cli.common.cli.util.StdioHelper;
+import com.fortify.cli.common.exception.FcliBugException;
 
 import lombok.Builder;
 import lombok.Data;
@@ -87,11 +88,11 @@ public class AsyncJobManager {
      */
     public String startBackground(TaskDescriptor descriptor) {
         if ( descriptor == null ) {
-            throw new IllegalArgumentException("TaskDescriptor must be specified");
+            throw new FcliBugException("TaskDescriptor must be specified");
         }
         var task = descriptor.getTask();
         if ( task == null ) {
-            throw new IllegalArgumentException("TaskDescriptor.task must be specified");
+            throw new FcliBugException("TaskDescriptor.task must be specified");
         }
         var jobId = descriptor.getJobId() == null ? UUID.randomUUID().toString() : descriptor.getJobId();
         var listener = descriptor.getListener();
