@@ -1,6 +1,6 @@
 ---
 title: 'Fortify CLI (fcli) Installation &amp; Usage'
-fcli_version: 0.20260603.102142-dev_feat.v3.x.aviator.26.3
+fcli_version: 0.20260604.030308-dev_feat.v3.x.aviator.26.3
 ---
 
 <!DOCTYPE html>
@@ -17,13 +17,13 @@ fcli_version: 0.20260603.102142-dev_feat.v3.x.aviator.26.3
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260603.102142-dev_feat.v3.x.aviator.26.3" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260604.030308-dev_feat.v3.x.aviator.26.3" %}
 
 
 <div id="header">
 <h1>Fortify CLI (fcli) Installation &amp; Usage</h1>
 <div class="details">
-<span id="revnumber">version 0.20260603.102142-dev_feat.v3.x.aviator.26.3</span>
+<span id="revnumber">version 0.20260604.030308-dev_feat.v3.x.aviator.26.3</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -60,6 +60,7 @@ fcli_version: 0.20260603.102142-dev_feat.v3.x.aviator.26.3
 <li><a href="#_progress">--progress</a></li>
 <li><a href="#_q_query">-q | --query</a></li>
 <li><a href="#_option_expressions">Option Expressions</a></li>
+<li><a href="#authenticated_http_urls">Authenticated HTTP(S) URLs</a></li>
 </ul>
 </li>
 <li><a href="#_session_management">Session Management</a>
@@ -1165,6 +1166,50 @@ All commands that automatically generate server-side queries provide the <code>-
 <p>Which one to choose depends on any other characters appearing in the expression. For example, in <code>bash</code> you&#8217;d usually use single quotes to have everything in-between passed to fcli as-is, unless you want to use specific shell features inside the expression. Note that you can use the <code>#env</code> function to retrieve environment variable contents, so you don&#8217;t need to use shell syntax to insert environment variable contents into expressions.</p>
 </div>
 </div>
+<div class="sect2">
+<h3 id="authenticated_http_urls"><a class="anchor" href="#authenticated_http_urls"></a>Authenticated HTTP(S) URLs</h3>
+<div class="paragraph">
+<p>Various fcli options and parameters accept either a local file path or a remote HTTP(S) URL. For remote HTTP(S) URLs, fcli also supports providing authentication details through the URL userinfo component.</p>
+</div>
+<div class="paragraph">
+<p>Supported formats:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Basic authentication: <code>https://user:password@example.com/path</code></p>
+</li>
+<li>
+<p>Bearer token: <code>https://bearer:token@example.com/path</code></p>
+</li>
+<li>
+<p>Single custom header: <code>https://header:Header-Name=Header%20Value@example.com/path</code></p>
+</li>
+<li>
+<p>Multiple custom headers: <code>https://headers:Header-Name=Header%20Value&amp;Other-Header=Other%20Value@example.com/path</code></p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Notes:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Any special characters in usernames, passwords, tokens, header names, or header values must be URL-encoded.</p>
+</li>
+<li>
+<p>For Basic authentication, the first <code>:</code> separates the username from the password; any additional <code>:</code> characters are treated as part of the password.</p>
+</li>
+<li>
+<p>Fcli strips the userinfo component from the request URL before sending the request and converts the userinfo contents to HTTP request headers.</p>
+</li>
+<li>
+<p>You should only use trusted HTTPS endpoints when loading remote content like actions, public keys, or tool definitions.</p>
+</li>
+</ul>
+</div>
+</div>
 </div>
 </div>
 <div class="sect1">
@@ -1583,6 +1628,9 @@ fcli util variable contents myVersions -o 'expr={id}\n' --output-to-file myVersi
 </ul>
 </div>
 <div class="paragraph">
+<p>For remote HTTP(S) URLs, these commands also support authenticated URLs as described in the <a href="#authenticated_http_urls">Authenticated HTTP(S) URLs</a> section.</p>
+</div>
+<div class="paragraph">
 <p>To allow for easy access, custom actions can also be imported into fcli using the <code>fcli * action import</code> command, which allows for importing either a single action YAML file or all action YAML files from a local or remote zip-file. Once imported, these actions can be accessed in the same way as built-in actions. Note that imported custom actions will override built-in actions if they have the same name. You can use the <code>fcli * action reset</code> command to remove all previously imported custom actions.</p>
 </div>
 </div>
@@ -1787,8 +1835,8 @@ may experience any of the following behavior:</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20260603.102142-dev_feat.v3.x.aviator.26.3<br>
-Last updated 2026-06-03 10:24:55 UTC
+Version 0.20260604.030308-dev_feat.v3.x.aviator.26.3<br>
+Last updated 2026-06-04 03:06:43 UTC
 </div>
 </div>
 </body>

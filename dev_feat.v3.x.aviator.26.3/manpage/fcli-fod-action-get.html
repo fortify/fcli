@@ -17,7 +17,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260603.102142-dev_feat.v3.x.aviator.26.3" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260604.030308-dev_feat.v3.x.aviator.26.3" %}
 
 
 <div id="header">
@@ -91,13 +91,13 @@ fcli_version:
 </div>
 <div class="literalblock">
 <div class="content">
-<pre>If no prefix is given, &lt;local file&gt; is assumed. For security reasons, you should only use trusted public keys from a trusted source. Independent of source, contents must be in PEM (base64-encoded) format. For convenience with string: or env: inputs, the 'BEGIN/END PUBLIC KEY' statements and any whitespace (including newline characters) may be omitted, allowing for having a single-line string:&lt;base64 public key contents&gt; for example. Note that the given public key will be ignored if its fingerprint doesn't match the public key fingerprint stored in the action signature. If no (matching) public key is provided, action signature will be verified against public keys previously imported through the 'fcli config public-key import' command.</pre>
+<pre>If no prefix is given, &lt;local file&gt; is assumed. For security reasons, you should only use trusted public keys from a trusted source. Independent of source, contents must be in PEM (base64-encoded) format. For convenience with string: or env: inputs, the 'BEGIN/END PUBLIC KEY' statements and any whitespace (including newline characters) may be omitted, allowing for having a single-line string:&lt;base64 public key contents&gt; for example. Note that the given public key will be ignored if its fingerprint doesn't match the public key fingerprint stored in the action signature. If no (matching) public key is provided, action signature will be verified against public keys previously imported through the 'fcli config public-key import' command. Supports authenticated HTTP(S) URLs.</pre>
 </div>
 </div>
 </dd>
 <dt class="hdlist1"><strong>-z</strong>, <strong>--from-zip</strong>=<em>&lt;source&gt;</em></dt>
 <dd>
-<p>Optional local or remote zip-file from which to load the action if the action is specified as a simple name. For commands that take an action as input (like get, help or run), this option will be ignored if action is specified as local or remote action YAML file location.</p>
+<p>Optional local or remote zip-file from which to load the action if the action is specified as a simple name. For commands that take an action as input (like get, help or run), this option will be ignored if action is specified as local or remote action YAML file location. Supports authenticated HTTP(S) URLs.</p>
 </dd>
 </dl>
 </div>
@@ -143,7 +143,7 @@ fcli_version:
 <dl>
 <dt class="hdlist1"><em>&lt;action&gt;</em></dt>
 <dd>
-<p>The action to load; either simple name or local or remote action YAML file location.</p>
+<p>The action to load; either simple name or local or remote action YAML file location. Supports authenticated HTTP(S) URLs.</p>
 </dd>
 </dl>
 </div>
@@ -154,7 +154,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2026-06-03 10:24:28 UTC
+Last updated 2026-06-04 03:06:15 UTC
 </div>
 </div>
 </body>
