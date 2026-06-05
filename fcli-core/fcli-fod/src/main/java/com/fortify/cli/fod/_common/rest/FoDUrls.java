@@ -40,6 +40,7 @@ public class FoDUrls {
     public static final String SCAN = ApiBase + "/scans/{scanId}";
     public static final String V3_SCAN = "/api/v3scans/{scanId}";
     public static final String APP_SCANS = APPLICATION + "/scans";
+    public static final String APP_USERS = APPLICATION + "/users";
     public static final String RELEASE_SCANS = RELEASE + "/scans";
     public static final String STATIC_SCANS = ApiBase + "/releases/{relId}/static-scans";
     public static final String STATIC_SCANS_IMPORT = STATIC_SCANS + "/import-scan";
