@@ -75,39 +75,73 @@ public class AviatorSSCCustomTagHelper {
      */
     public SynchronizationResult synchronize(AviatorSSCPrepareHelper.PrepareResult result) {
         try {
-            LOG.debug("Searching for custom tag '{}' (GUID: {})", tagDef.getName(), tagDef.getGuid());
-            ArrayNode customTags = (ArrayNode) unirest.get(SSCUrls.CUSTOM_TAGS).asObject(JsonNode.class).getBody().get("data");
-            JsonNode existingTag = JsonHelper.stream(customTags)
-                    .filter(tag -> tagDef.getGuid().equals(tag.get("guid").asText()))
-                    .findFirst().orElse(null);
-
+            JsonNode existingTag = findExistingCustomTag();
             if (existingTag != null) {
-                JsonNode updatedTag = verifyAndUpdateExistingTag(result, existingTag);
-                return SynchronizationResult.success(updatedTag, false);
+                return handleExistingTag(existingTag, result);
             }
 
-            // Tag not found in /customTags - check if it's a system-managed Aviator tag
-            if (isAviatorBuiltInTag()) {
-                JsonNode internalTag = findInInternalCustomTags();
-                if (internalTag != null) {
-                    LOG.info("Tag '{}' found as system-managed internal tag (SSC 26.2+). Configure through SSC.",
-                            tagDef.getName());
-                    result.addEntry("Custom Tag", "SYSTEM_MANAGED",
-                            "'" + tagDef.getName() + "' is a built-in SSC tag (SSC 26.2+). Configure through SSC.");
-                    return SynchronizationResult.success(internalTag, true);
-                }
+            SynchronizationResult systemManagedResult = checkSystemManagedTag(result);
+            if (systemManagedResult != null) {
+                return systemManagedResult;
             }
 
-            // Tag not found anywhere - create it
-            JsonNode createdTag = createNewTag(result);
-            return createdTag != null
-                    ? SynchronizationResult.success(createdTag, false)
-                    : SynchronizationResult.failure();
+            return createTagOrFail(result);
         } catch (UnexpectedHttpResponseException e) {
-            LOG.error("Error synchronizing custom tag '{}': {}", tagDef.getName(), e.getMessage());
-            result.addEntry("Custom Tag", "FAILED", "Error synchronizing tag '" + tagDef.getName() + "': " + e.getMessage());
-            return SynchronizationResult.failure();
+            return handleSynchronizationError(e, result);
         }
+    }
+
+    /** Searches for an existing custom tag by GUID in /customTags endpoint. */
+    private JsonNode findExistingCustomTag() {
+        LOG.debug("Searching for custom tag '{}' (GUID: {})", tagDef.getName(), tagDef.getGuid());
+        ArrayNode customTags = (ArrayNode) unirest.get(SSCUrls.CUSTOM_TAGS)
+                .asObject(JsonNode.class).getBody().get("data");
+        return JsonHelper.stream(customTags)
+                .filter(tag -> tagDef.getGuid().equals(tag.get("guid").asText()))
+                .findFirst().orElse(null);
+    }
+
+    /** Handles an existing custom tag by verifying/updating it. */
+    private SynchronizationResult handleExistingTag(JsonNode existingTag,
+            AviatorSSCPrepareHelper.PrepareResult result) {
+        JsonNode updatedTag = verifyAndUpdateExistingTag(result, existingTag);
+        return SynchronizationResult.success(updatedTag, false);
+    }
+
+    /**
+     * Checks if this is a system-managed Aviator tag (SSC 26.2+).
+     * Returns SynchronizationResult if found, null otherwise.
+     */
+    private SynchronizationResult checkSystemManagedTag(AviatorSSCPrepareHelper.PrepareResult result) {
+        if (!isAviatorBuiltInTag()) {
+            return null;
+        }
+        JsonNode internalTag = findInInternalCustomTags();
+        if (internalTag == null) {
+            return null;
+        }
+        LOG.info("Tag '{}' found as system-managed internal tag (SSC 26.2+). Configure through SSC.",
+                tagDef.getName());
+        result.addEntry("Custom Tag", "SYSTEM_MANAGED",
+                "'" + tagDef.getName() + "' is a built-in SSC tag (SSC 26.2+). Configure through SSC.");
+        return SynchronizationResult.success(internalTag, true);
+    }
+
+    /** Creates a new tag or returns failure if creation fails. */
+    private SynchronizationResult createTagOrFail(AviatorSSCPrepareHelper.PrepareResult result) {
+        JsonNode createdTag = createNewTag(result);
+        return createdTag != null
+                ? SynchronizationResult.success(createdTag, false)
+                : SynchronizationResult.failure();
+    }
+
+    /** Handles synchronization errors by logging and recording the failure. */
+    private SynchronizationResult handleSynchronizationError(UnexpectedHttpResponseException e,
+            AviatorSSCPrepareHelper.PrepareResult result) {
+        LOG.error("Error synchronizing custom tag '{}': {}", tagDef.getName(), e.getMessage());
+        result.addEntry("Custom Tag", "FAILED",
+                "Error synchronizing tag '" + tagDef.getName() + "': " + e.getMessage());
+        return SynchronizationResult.failure();
     }
 
     /**

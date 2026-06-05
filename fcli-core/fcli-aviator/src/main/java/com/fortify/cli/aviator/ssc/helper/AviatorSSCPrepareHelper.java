@@ -63,58 +63,101 @@ public class AviatorSSCPrepareHelper {
         public void incrementSkipped() { this.skipped++; }
     }
 
+    /** Groups the synchronization results of the three Aviator custom tags. */
+    private record TagSynchronizationResults(
+            SynchronizationResult prediction,
+            SynchronizationResult status,
+            SynchronizationResult dastCorrelation
+    ) {}
+
     public PrepareResult prepare(PrepareOptions options) {
         PrepareResult result = new PrepareResult();
         try (IProgressWriter progress = ProgressWriterType.auto.create()) {
+            TagSynchronizationResults tagResults = synchronizeTags(result, progress);
 
-            progress.writeProgress("Synchronizing Aviator custom tags...");
-            var tagHelperPrediction = new AviatorSSCCustomTagHelper(unirest, AviatorSSCTagDefs.AVIATOR_PREDICTION_TAG);
-            var tagHelperStatus     = new AviatorSSCCustomTagHelper(unirest, AviatorSSCTagDefs.AVIATOR_STATUS_TAG);
-            var tagHelperDastCorr   = new AviatorSSCCustomTagHelper(unirest, AviatorSSCTagDefs.DAST_CORRELATION_STATUS_TAG);
-
-            SynchronizationResult predictionResult = tagHelperPrediction.synchronize(result);
-            SynchronizationResult statusResult     = tagHelperStatus.synchronize(result);
-            SynchronizationResult dastCorrResult   = tagHelperDastCorr.synchronize(result);
-
-            // Required Aviator tags must succeed (either as custom or system-managed)
-            if (!predictionResult.isSuccessful() || !statusResult.isSuccessful()) {
-                result.addEntry("Global", "HALTED", "Failed to synchronize one or more required Aviator custom tags.");
+            if (haltIfRequiredTagsFailed(tagResults, result)) {
                 return result;
             }
-            // DAST correlation tag is optional - just warn if it fails
-            if (!dastCorrResult.isSuccessful()) {
-                result.addEntry("DAST Correlation Tag", "WARNING",
-                    "Failed to synchronize 'DAST correlation status' tag. SAST-DAST correlation feature may not be fully visible in SSC UI.");
-            }
+            addOptionalTagWarnings(tagResults, result);
 
-            // Always synchronize attributes (before any early return)
-            progress.writeProgress("Synchronizing Aviator custom attributes...");
-            new AviatorSSCCorrelationAttributeHelper(unirest, AviatorSSCCorrelationAttributeDefs.LAST_CORRELATION_ATTR)
-                .synchronize(result);
+            synchronizeAttributes(result, progress);
 
-            // Build list of tags requiring manual association (excludes system-managed tags)
-            List<SynchronizationResult> allResults = List.of(predictionResult, statusResult, dastCorrResult);
-            List<JsonNode> requiredTags = allResults.stream()
-                    .filter(SynchronizationResult::requiresAssociation)
-                    .map(SynchronizationResult::getTag)
-                    .collect(Collectors.toList());
-
-            // If all Aviator tags are system-managed (SSC 26.2+), skip template/version association
-            if (requiredTags.isEmpty()) {
-                result.addEntry("Global", "INFO",
-                        "All Aviator tags are system-managed (SSC 26.2+). No manual template/version association required.");
-                progress.writeInfo("All Aviator tags are system-managed by SSC. No manual association needed.");
+            List<JsonNode> tagsRequiringAssociation = getTagsRequiringAssociation(tagResults);
+            if (handleNoManualAssociationRequired(tagsRequiringAssociation, result, progress)) {
                 return result;
             }
 
-            if (options.isAllIssueTemplates() || options.getIssueTemplateNameOrId() != null) {
-                new AviatorSSCTemplateUpdater(unirest).process(options, result, requiredTags, progress);
-            }
-
-            if (options.isAllAppVersions() || options.getAppVersionNameOrId() != null) {
-                new AviatorSSCAppVersionUpdater(unirest).process(options, result, requiredTags, progress);
-            }
+            updateTargets(options, result, tagsRequiringAssociation, progress);
         }
         return result;
+    }
+
+    /** Synchronizes all three Aviator custom tags (prediction, status, DAST correlation). */
+    private TagSynchronizationResults synchronizeTags(PrepareResult result, IProgressWriter progress) {
+        progress.writeProgress("Synchronizing Aviator custom tags...");
+        var tagHelperPrediction = new AviatorSSCCustomTagHelper(unirest, AviatorSSCTagDefs.AVIATOR_PREDICTION_TAG);
+        var tagHelperStatus     = new AviatorSSCCustomTagHelper(unirest, AviatorSSCTagDefs.AVIATOR_STATUS_TAG);
+        var tagHelperDastCorr   = new AviatorSSCCustomTagHelper(unirest, AviatorSSCTagDefs.DAST_CORRELATION_STATUS_TAG);
+
+        return new TagSynchronizationResults(
+                tagHelperPrediction.synchronize(result),
+                tagHelperStatus.synchronize(result),
+                tagHelperDastCorr.synchronize(result)
+        );
+    }
+
+    /** Returns true if required Aviator tags failed to synchronize, adding a HALTED entry. */
+    private boolean haltIfRequiredTagsFailed(TagSynchronizationResults tagResults, PrepareResult result) {
+        if (!tagResults.prediction().isSuccessful() || !tagResults.status().isSuccessful()) {
+            result.addEntry("Global", "HALTED", "Failed to synchronize one or more required Aviator custom tags.");
+            return true;
+        }
+        return false;
+    }
+
+    /** Adds warnings for optional tags that failed to synchronize. */
+    private void addOptionalTagWarnings(TagSynchronizationResults tagResults, PrepareResult result) {
+        if (!tagResults.dastCorrelation().isSuccessful()) {
+            result.addEntry("DAST Correlation Tag", "WARNING",
+                "Failed to synchronize 'DAST correlation status' tag. SAST-DAST correlation feature may not be fully visible in SSC UI.");
+        }
+    }
+
+    /** Synchronizes Aviator custom attributes. */
+    private void synchronizeAttributes(PrepareResult result, IProgressWriter progress) {
+        progress.writeProgress("Synchronizing Aviator custom attributes...");
+        new AviatorSSCCorrelationAttributeHelper(unirest, AviatorSSCCorrelationAttributeDefs.LAST_CORRELATION_ATTR)
+            .synchronize(result);
+    }
+
+    /** Returns tags that require manual association (excludes system-managed tags). */
+    private List<JsonNode> getTagsRequiringAssociation(TagSynchronizationResults tagResults) {
+        return List.of(tagResults.prediction(), tagResults.status(), tagResults.dastCorrelation()).stream()
+                .filter(SynchronizationResult::requiresAssociation)
+                .map(SynchronizationResult::getTag)
+                .collect(Collectors.toList());
+    }
+
+    /** Returns true if all tags are system-managed and no manual association is needed. */
+    private boolean handleNoManualAssociationRequired(List<JsonNode> tagsRequiringAssociation,
+            PrepareResult result, IProgressWriter progress) {
+        if (tagsRequiringAssociation.isEmpty()) {
+            result.addEntry("Global", "INFO",
+                    "All Aviator tags are system-managed (SSC 26.2+). No manual template/version association required.");
+            progress.writeInfo("All Aviator tags are system-managed by SSC. No manual association needed.");
+            return true;
+        }
+        return false;
+    }
+
+    /** Updates issue templates and/or app versions based on options. */
+    private void updateTargets(PrepareOptions options, PrepareResult result,
+            List<JsonNode> tagsRequiringAssociation, IProgressWriter progress) {
+        if (options.isAllIssueTemplates() || options.getIssueTemplateNameOrId() != null) {
+            new AviatorSSCTemplateUpdater(unirest).process(options, result, tagsRequiringAssociation, progress);
+        }
+        if (options.isAllAppVersions() || options.getAppVersionNameOrId() != null) {
+            new AviatorSSCAppVersionUpdater(unirest).process(options, result, tagsRequiringAssociation, progress);
+        }
     }
 }
