@@ -12,7 +12,7 @@
  */
 package com.fortify.cli.ssc.attribute.helper;
 
-import java.util.Date;
+import java.time.LocalDate;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
@@ -147,9 +147,9 @@ public final class SSCAttributeUpdateBuilder {
             return options.get(0).get("guid").asText();
         } else {
             switch ( descriptor.getType() ) {
-                case INTEGER: return null;
+                case INTEGER: return "0";
                 case BOOLEAN: return "true";
-                case DATE: return new Date().toString();
+                case DATE: return LocalDate.now().toString();
                 default: return "fcli auto-value";
             }
         }
