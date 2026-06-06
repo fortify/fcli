@@ -170,8 +170,9 @@ public class AviatorSSCCustomTagHelper {
             return JsonHelper.stream((ArrayNode) data)
                     .filter(tag -> tagDef.getGuid().equalsIgnoreCase(tag.path("guid").asText()))
                     .findFirst().orElse(null);
-        } catch (UnexpectedHttpResponseException e) {
-            // Endpoint may not exist in older SSC versions - this is expected
+        } catch (Exception e) {
+            // Endpoint may not exist in older SSC versions - this is expected.
+            // Various exceptions can occur: HTTP 404, JSON parse errors, etc.
             LOG.debug("Could not query /internalCustomTags (may not exist in this SSC version): {}", e.getMessage());
             return null;
         }
