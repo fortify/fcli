@@ -18,13 +18,30 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.io.IOException;
+import java.io.OutputStream;
+import java.net.InetSocketAddress;
+import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.aviator.ssc.helper.AviatorSSCCustomTagHelper.SynchronizationResult;
+import com.fortify.cli.aviator.ssc.helper.AviatorSSCTagDefs.TagDefinition;
+import com.fortify.cli.common.json.JsonHelper;
+import com.fortify.cli.common.rest.unirest.UnirestHelper;
+import com.fortify.cli.common.rest.unirest.config.UnirestJsonHeaderConfigurer;
+import com.sun.net.httpserver.HttpExchange;
+import com.sun.net.httpserver.HttpServer;
+
+import kong.unirest.UnirestInstance;
 
 /**
  * Unit tests for {@link AviatorSSCCustomTagHelper} capability detection
@@ -166,155 +183,138 @@ class AviatorSSCCustomTagHelperTest {
             assertTrue(tag.getValues().isEmpty(), "TEXT tags should have empty value list");
         }
     }
-}
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.net.InetSocketAddress;
-import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
-import java.util.Map;
+    @Nested
+    @DisplayName("Integration tests with mock SSC server")
+    class IntegrationTests {
 
-import org.junit.jupiter.api.Test;
+        @Test
+        void testSynchronizeUsesExistingCustomTag() throws Exception {
+            try (var server = new TestSscServer()) {
+                String tagId = "1001";
+                server.withCustomTags(tagSummary(tagId, AviatorSSCTagDefs.AVIATOR_STATUS_TAG));
+                server.withCustomTagDetails(tagId, tagDetails(tagId, AviatorSSCTagDefs.AVIATOR_STATUS_TAG));
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fortify.cli.aviator.ssc.helper.AviatorSSCTagDefs.TagDefinition;
-import com.fortify.cli.common.json.JsonHelper;
-import com.fortify.cli.common.rest.unirest.UnirestHelper;
-import com.fortify.cli.common.rest.unirest.config.UnirestJsonHeaderConfigurer;
-import com.sun.net.httpserver.HttpExchange;
-import com.sun.net.httpserver.HttpServer;
+                try (var unirest = newUnirest(server)) {
+                    var result = new AviatorSSCPrepareHelper.PrepareResult();
+                    SynchronizationResult syncResult = new AviatorSSCCustomTagHelper(unirest, AviatorSSCTagDefs.AVIATOR_STATUS_TAG)
+                        .synchronize(result);
 
-import kong.unirest.UnirestInstance;
-
-class AviatorSSCCustomTagHelperTest {
-    @Test
-    void testSynchronizeUsesExistingCustomTag() throws Exception {
-        try (var server = new TestSscServer()) {
-            String tagId = "1001";
-            server.withCustomTags(tagSummary(tagId, AviatorSSCTagDefs.AVIATOR_STATUS_TAG));
-            server.withCustomTagDetails(tagId, tagDetails(tagId, AviatorSSCTagDefs.AVIATOR_STATUS_TAG));
-
-            try (var unirest = newUnirest(server)) {
-                var result = new AviatorSSCPrepareHelper.PrepareResult();
-                JsonNode syncResult = new AviatorSSCCustomTagHelper(unirest, AviatorSSCTagDefs.AVIATOR_STATUS_TAG)
-                    .synchronize(result);
-
-                assertNotNull(syncResult);
-                assertEquals(tagId, syncResult.get("id").asText());
-                assertEquals(1, syncResult.withArray("valueList").size());
-                assertEquals(1, server.getCustomTagsGetCount());
-                assertEquals(1, server.getCustomTagDetailsGetCount());
-                assertEquals(0, server.getCustomTagCreateCount());
-                assertEquals(0, server.getCustomTagUpdateCount());
-                assertEquals("VERIFIED", result.toJsonNode().get(0).get("status").asText());
-                assertEquals("'Aviator status' is already configured correctly.",
-                    result.toJsonNode().get(0).get("details").asText());
+                    assertNotNull(syncResult);
+                    assertNotNull(syncResult.getTag());
+                    assertEquals(tagId, syncResult.getTag().get("id").asText());
+                    assertEquals(1, syncResult.getTag().withArray("valueList").size());
+                    assertEquals(1, server.getCustomTagsGetCount());
+                    assertEquals(1, server.getCustomTagDetailsGetCount());
+                    assertEquals(0, server.getCustomTagCreateCount());
+                    assertEquals(0, server.getCustomTagUpdateCount());
+                    assertEquals("VERIFIED", result.toJsonNode().get(0).get("status").asText());
+                    assertEquals("'Aviator status' is already configured correctly.",
+                        result.toJsonNode().get(0).get("details").asText());
+                }
             }
         }
-    }
 
-    @Test
-    void testSynchronizeUpdatesExistingCustomTagWhenValuesAreMissing() throws Exception {
-        try (var server = new TestSscServer()) {
-            String tagId = "1002";
-            TagDefinition tagDefinition = AviatorSSCTagDefs.AVIATOR_PREDICTION_TAG;
-            String existingValue = tagDefinition.getValues().get(0);
-            server.withCustomTags(tagSummary(tagId, tagDefinition));
-            server.withCustomTagDetails(tagId, tagDetails(tagId, tagDefinition, existingValue));
+        @Test
+        void testSynchronizeUpdatesExistingCustomTagWhenValuesAreMissing() throws Exception {
+            try (var server = new TestSscServer()) {
+                String tagId = "1002";
+                TagDefinition tagDefinition = AviatorSSCTagDefs.AVIATOR_PREDICTION_TAG;
+                String existingValue = tagDefinition.getValues().get(0);
+                server.withCustomTags(tagSummary(tagId, tagDefinition));
+                server.withCustomTagDetails(tagId, tagDetails(tagId, tagDefinition, existingValue));
 
-            try (var unirest = newUnirest(server)) {
-                var result = new AviatorSSCPrepareHelper.PrepareResult();
-                JsonNode syncResult = new AviatorSSCCustomTagHelper(unirest, tagDefinition)
-                    .synchronize(result);
+                try (var unirest = newUnirest(server)) {
+                    var result = new AviatorSSCPrepareHelper.PrepareResult();
+                    SynchronizationResult syncResult = new AviatorSSCCustomTagHelper(unirest, tagDefinition)
+                        .synchronize(result);
 
-                assertNotNull(syncResult);
-                assertEquals(tagId, syncResult.get("id").asText());
-                assertEquals(tagDefinition.getValues().size(), syncResult.withArray("valueList").size());
-                assertTrue(hasLookupValue(syncResult.get("valueList"), "AVIATOR:Unsure"));
-                assertEquals(1, server.getCustomTagsGetCount());
-                assertEquals(1, server.getCustomTagDetailsGetCount());
-                assertEquals(0, server.getCustomTagCreateCount());
-                assertEquals(1, server.getCustomTagUpdateCount());
-                assertNotNull(server.getLastUpdatedTag());
-                assertEquals(tagDefinition.getValues().size(), server.getLastUpdatedTag().withArray("valueList").size());
-                assertEquals("UPDATED", result.toJsonNode().get(0).get("status").asText());
-                assertEquals(
-                    "Added 5 missing values to tag 'Aviator prediction'.",
-                    result.toJsonNode().get(0).get("details").asText());
+                    assertNotNull(syncResult);
+                    assertNotNull(syncResult.getTag());
+                    assertEquals(tagId, syncResult.getTag().get("id").asText());
+                    assertEquals(tagDefinition.getValues().size(), syncResult.getTag().withArray("valueList").size());
+                    assertTrue(hasLookupValue(syncResult.getTag().get("valueList"), "AVIATOR:Unsure"));
+                    assertEquals(1, server.getCustomTagsGetCount());
+                    assertEquals(1, server.getCustomTagDetailsGetCount());
+                    assertEquals(0, server.getCustomTagCreateCount());
+                    assertEquals(1, server.getCustomTagUpdateCount());
+                    assertNotNull(server.getLastUpdatedTag());
+                    assertEquals(tagDefinition.getValues().size(), server.getLastUpdatedTag().withArray("valueList").size());
+                    assertEquals("UPDATED", result.toJsonNode().get(0).get("status").asText());
+                    assertEquals(
+                        "Added 5 missing values to tag 'Aviator prediction'.",
+                        result.toJsonNode().get(0).get("details").asText());
+                }
             }
         }
-    }
 
-    @Test
-    void testSynchronizeCreatesTagWhenAbsentFromBothEndpoints() throws Exception {
-        try (var server = new TestSscServer()) {
-            server.withCreateResponse(createdTag("2002", AviatorSSCTagDefs.AVIATOR_STATUS_TAG));
+        @Test
+        void testSynchronizeCreatesTagWhenAbsentFromBothEndpoints() throws Exception {
+            try (var server = new TestSscServer()) {
+                server.withCreateResponse(createdTag("2002", AviatorSSCTagDefs.AVIATOR_STATUS_TAG));
 
-            try (var unirest = newUnirest(server)) {
-                var result = new AviatorSSCPrepareHelper.PrepareResult();
-                JsonNode syncResult = new AviatorSSCCustomTagHelper(unirest, AviatorSSCTagDefs.AVIATOR_STATUS_TAG)
-                    .synchronize(result);
+                try (var unirest = newUnirest(server)) {
+                    var result = new AviatorSSCPrepareHelper.PrepareResult();
+                    SynchronizationResult syncResult = new AviatorSSCCustomTagHelper(unirest, AviatorSSCTagDefs.AVIATOR_STATUS_TAG)
+                        .synchronize(result);
 
-                assertNotNull(syncResult);
-                assertEquals("2002", syncResult.get("id").asText());
-                assertEquals(1, server.getCustomTagsGetCount());
-                assertEquals(0, server.getCustomTagDetailsGetCount());
-                assertEquals(1, server.getCustomTagCreateCount());
-                assertEquals(0, server.getCustomTagUpdateCount());
-                assertEquals("CREATED", result.toJsonNode().get(0).get("status").asText());
-                assertEquals("Tag 'Aviator status' created successfully.",
-                    result.toJsonNode().get(0).get("details").asText());
+                    assertNotNull(syncResult);
+                    assertNotNull(syncResult.getTag());
+                    assertEquals("2002", syncResult.getTag().get("id").asText());
+                    assertEquals(1, server.getCustomTagsGetCount());
+                    assertEquals(0, server.getCustomTagDetailsGetCount());
+                    assertEquals(1, server.getCustomTagCreateCount());
+                    assertEquals(0, server.getCustomTagUpdateCount());
+                    assertEquals("CREATED", result.toJsonNode().get(0).get("status").asText());
+                    assertEquals("Tag 'Aviator status' created successfully.",
+                        result.toJsonNode().get(0).get("details").asText());
+                }
             }
         }
-    }
 
-    private UnirestInstance newUnirest(TestSscServer server) {
-        return UnirestHelper.createUnirestInstance(unirest -> {
-            UnirestJsonHeaderConfigurer.configure(unirest);
-            unirest.config().defaultBaseUrl(server.getBaseUrl());
-        });
-    }
-
-    private static ObjectNode tagSummary(String id, TagDefinition tagDefinition) {
-        return JsonHelper.getObjectMapper().createObjectNode()
-            .put("id", id)
-            .put("guid", tagDefinition.getGuid())
-            .put("name", tagDefinition.getName());
-    }
-
-    private static ObjectNode tagDetails(String id, TagDefinition tagDefinition) {
-        return tagDetails(id, tagDefinition, tagDefinition.getValues().toArray(String[]::new));
-    }
-
-    private static ObjectNode tagDetails(String id, TagDefinition tagDefinition, String... values) {
-        ObjectNode result = tagSummary(id, tagDefinition)
-            .put("valueType", "LIST")
-            .put("customTagType", "CUSTOM");
-        ArrayNode valueList = result.putArray("valueList");
-        for (String value : values) {
-            valueList.add(JsonHelper.getObjectMapper().createObjectNode().put("lookupValue", value));
+        private UnirestInstance newUnirest(TestSscServer server) {
+            return UnirestHelper.createUnirestInstance(unirest -> {
+                UnirestJsonHeaderConfigurer.configure(unirest);
+                unirest.config().defaultBaseUrl(server.getBaseUrl());
+            });
         }
-        return result;
-    }
 
-    private static ObjectNode createdTag(String id, TagDefinition tagDefinition) {
-        return tagSummary(id, tagDefinition)
-            .put("valueType", "LIST")
-            .put("customTagType", "CUSTOM");
-    }
+        private static ObjectNode tagSummary(String id, TagDefinition tagDefinition) {
+            return JsonHelper.getObjectMapper().createObjectNode()
+                .put("id", id)
+                .put("guid", tagDefinition.getGuid())
+                .put("name", tagDefinition.getName());
+        }
 
-    private static boolean hasLookupValue(JsonNode valueList, String lookupValue) {
-        for (JsonNode value : valueList) {
-            if (lookupValue.equals(value.path("lookupValue").asText())) {
-                return true;
+        private static ObjectNode tagDetails(String id, TagDefinition tagDefinition) {
+            return tagDetails(id, tagDefinition, tagDefinition.getValues().toArray(String[]::new));
+        }
+
+        private static ObjectNode tagDetails(String id, TagDefinition tagDefinition, String... values) {
+            ObjectNode result = tagSummary(id, tagDefinition)
+                .put("valueType", "LIST")
+                .put("customTagType", "CUSTOM");
+            ArrayNode valueList = result.putArray("valueList");
+            for (String value : values) {
+                valueList.add(JsonHelper.getObjectMapper().createObjectNode().put("lookupValue", value));
             }
+            return result;
         }
-        return false;
+
+        private static ObjectNode createdTag(String id, TagDefinition tagDefinition) {
+            return tagSummary(id, tagDefinition)
+                .put("valueType", "LIST")
+                .put("customTagType", "CUSTOM");
+        }
+
+        private static boolean hasLookupValue(JsonNode valueList, String lookupValue) {
+            for (JsonNode value : valueList) {
+                if (lookupValue.equals(value.path("lookupValue").asText())) {
+                    return true;
+                }
+            }
+            return false;
+        }
     }
 
     private static final class TestSscServer implements AutoCloseable {
