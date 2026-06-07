@@ -17,7 +17,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260604.030308-dev_feat.v3.x.aviator.26.3" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260607.115513-dev_feat.v3.x.aviator.26.3" %}
 
 
 <div id="header">
@@ -59,7 +59,10 @@ fcli_version:
 <h2 id="_description"><a class="anchor" href="#_description"></a>Description</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>This command ensures that the Fortify Remediation Aviator-specific custom tags ('Aviator prediction',<code>Aviator status</code>) exist in SSC and are associated with the specified issue templates and/or application versions. This is necessary to prevent SSC from stripping Fortify Remediation Aviator audit data from uploaded FPR files. At least one update option must be specified.</p>
+<p>This command ensures that the Fortify Remediation Aviator-specific custom tags ('Aviator prediction', 'Aviator status') exist in SSC and are associated with the specified issue templates and/or application versions. This is necessary to prevent SSC from stripping Fortify Remediation Aviator audit data from uploaded FPR files. For SSC 26.2 and later, Aviator tags are built-in system-managed tags that can be enabled through Administration &#8594; Configuration &#8594; AI Assistant &#8594; Aviator. When enabled, the tags are automatically associated with all issue templates and application versions, and this command will detect them and skip manual association. For older SSC versions, the tags are created as custom tags and must be manually associated.</p>
+</div>
+<div class="paragraph">
+<p>At least one update option must be specified.</p>
 </div>
 <div class="admonitionblock note">
 <table>
@@ -176,7 +179,7 @@ This command is considered preview functionality as it will likely change in a f
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2026-06-04 03:06:14 UTC
+Last updated 2026-06-07 11:58:00 UTC
 </div>
 </div>
 </body>
