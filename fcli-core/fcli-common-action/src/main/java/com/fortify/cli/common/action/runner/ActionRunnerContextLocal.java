@@ -29,6 +29,7 @@ import com.fortify.cli.common.action.helper.ci.bitbucket.ActionBitbucketSpelFunc
 import com.fortify.cli.common.action.helper.ci.github.ActionGitHubSpelFunctions;
 import com.fortify.cli.common.action.helper.ci.gitlab.ActionGitLabSpelFunctions;
 import com.fortify.cli.common.action.helper.fs.ActionFileSystemSpelFunctions;
+import com.fortify.cli.common.action.helper.git.ActionGitSpelFunctions;
 import com.fortify.cli.common.action.model.ActionStepCheckEntry;
 import com.fortify.cli.common.action.model.ActionStepCheckEntry.CheckStatus;
 import com.fortify.cli.common.action.model.FcliActionValidationException;
@@ -237,6 +238,7 @@ public class ActionRunnerContextLocal implements AutoCloseable {
                 registerCiVariables(spelContext, actionRunnerContext);
             }
             spelContext.setVariable("fs", ActionFileSystemSpelFunctions.INSTANCE);
+            spelContext.setVariable("git", ActionGitSpelFunctions.INSTANCE);
             spelContext.setVariable("fcli", FcliCommandsSpelFunctions.INSTANCE);
         }
 

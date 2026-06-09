@@ -1,0 +1,39 @@
+# yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-dev-2.x.json
+author: Fortify
+usage:
+  header: Apply Aviator remediations
+  description: |
+    This action applies Aviator auto-remediation fixes to source code for a given
+    FoD release. It downloads the audited FPR with remediation suggestions and applies
+    the fixes to the local source tree.
+    
+    This action requires:
+    - A FoD session to be active (for downloading the audited FPR with remediations)
+    
+    After running this action, any modified files can be committed and pushed using
+    the `create-pr` action.
+
+config:
+  output: immediate
+  rest.target.default: fod
+  mcp: exclude
+
+steps:
+  - run.fcli:
+      detect-env:
+        group: detect-env
+        cmd: fcli action run detect-env
+        status.check: true
+
+  - var.set:
+      rel: ${#env('FOD_RELEASE')?:global.ci.defaultFortifyRepo}
+  - if: ${rel==null}
+    throw: FoD release must be specified through FOD_RELEASE environment variable
+
+  - var.set:
+      sourceDir: ${global.ci.sourceDir?:'.'}
+
+  - run.fcli:
+      APPLY_REMEDIATIONS:
+        cmd: fod aviator apply-remediations --rel "${rel}" --source-dir "${sourceDir}"
+        status.check: true
