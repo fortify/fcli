@@ -66,6 +66,8 @@ public class FoDScanSastHelper extends FoDScanHelper {
                 .queryString("purchaseEntitlement", Boolean.toString(req.getPurchaseEntitlement()))
                 .queryString("remdiationScanPreferenceType", (req.getRemdiationScanPreferenceType() != null ?
                         FoDEnums.RemediationScanPreferenceType.valueOf(req.getRemdiationScanPreferenceType()) : FoDEnums.RemediationScanPreferenceType.NonRemediationScanOnly))
+                // Raw string is passed (not valueOf) because the caller may supply "CancelInProgressScan",
+                // which differs from the enum name "CancelScanInProgress" used by DAST.
                 .queryString("inProgressScanActionType", (req.getInProgressScanActionType() != null ?
                         req.getInProgressScanActionType() : FoDEnums.InProgressScanActionType.DoNotStartScan.toString()))
                 .queryString("scanTool", req.getScanTool())
