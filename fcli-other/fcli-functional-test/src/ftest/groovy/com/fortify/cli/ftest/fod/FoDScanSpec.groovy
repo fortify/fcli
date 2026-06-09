@@ -337,6 +337,28 @@ class FoDScanSpec extends FcliBaseSpec {
             }
     }
 
+    def "start.sast-scan-advanced-queue"() {
+        def args = "fod sast-scan start --release=fcli-1698140484524:v2 --file=$sastPackage --in-progress-action=Queue --store sastScanAdvQueue"
+        when:
+            def result = Fcli.run(args)
+        then:
+            verifyAll(result.stdout) {
+                size()>=2
+                it.last().contains("STARTED")
+            }
+    }
+
+    def "start.sast-scan-advanced-entitlement-preference"() {
+        def args = "fod sast-scan start --release=fcli-1698140484524:v2 --file=$sastPackage --entitlement-preference=SubscriptionOnly --store sastScanAdvEntPref"
+        when:
+            def result = Fcli.run(args)
+        then:
+            verifyAll(result.stdout) {
+                size()>=2
+                it.last().contains("STARTED")
+            }
+    }
+
     def "wait-for-sast"() {
         def args = "fod sast-scan wait-for ::sastScan:: -i 2s --until=all-match --any-state=Completed,In_Progress,Queued"
         when:
