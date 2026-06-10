@@ -144,7 +144,7 @@ steps:
           - ${SAST_WAIT.dependencySkipReason}                          # Skip if SAST scan/wait was skipped or failed
 
       CREATE_PR:
-        cmd: "${#actionCmd('CREATE_PR', '', 'create-pr')} --progress=none"
+        cmd: "${#actionCmd('CREATE_PR', 'fod', 'create-pr')} --progress=none"
         skip.if-reason:
           - ${#actionCmdSkipFromEnvReason('CREATE_PR', true)}  # Skip unless DO_CREATE_PR==true or CREATE_PR_EXTRA_OPTS defined
           - ${APPLY_REMEDIATIONS.dependencySkipReason}         # Skip if APPLY_REMEDIATIONS was skipped or failed
