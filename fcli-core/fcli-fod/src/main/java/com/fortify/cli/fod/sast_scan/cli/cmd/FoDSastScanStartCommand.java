@@ -19,6 +19,7 @@ import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.progress.cli.mixin.ProgressWriterFactoryMixin;
 import com.fortify.cli.common.progress.helper.IProgressWriter;
+import com.fortify.cli.common.rest.unirest.UnexpectedHttpResponseException;
 import com.fortify.cli.common.util.FcliBuildProperties;
 import com.fortify.cli.fod._common.scan.cli.cmd.AbstractFoDScanStartCommand;
 import com.fortify.cli.fod._common.scan.cli.mixin.FoDRemediationScanPreferenceTypeMixins;
@@ -56,7 +57,8 @@ public class FoDSastScanStartCommand extends AbstractFoDScanStartCommand {
 
         validateScanSetup(unirest, relId);
 
-        FoDEnums.RemediationScanPreferenceType remediationPref = remediationScanType.getRemediationScanPreferenceType();
+        FoDEnums.RemediationScanPreferenceType remediationPref = remediationScanType != null
+                ? remediationScanType.getRemediationScanPreferenceType() : null;
 
         boolean useAdvanced = entitlementPreferenceType != null || inProgressScanActionType != null;
 
@@ -88,7 +90,27 @@ public class FoDSastScanStartCommand extends AbstractFoDScanStartCommand {
                     .isRemediationScan(isRemediation)
                     .build();
             return FoDScanSastHelper.startScanWithDefaults(unirest, releaseDescriptor, startScanRequest, scanFileMixin.getFile(), progressWriter);
+        } catch (Exception e) {
+            throw translateScanInProgressException(e);
         }
+    }
+
+    // FoD returns HTTP 422 (errorCode 2001) when a scan is already in progress and the
+    // in-progress action prevents starting a new one. Translate that into a concise,
+    // actionable message instead of surfacing the raw upload/HTTP exception.
+    private RuntimeException translateScanInProgressException(Exception e) {
+        for (Throwable t = e; t != null; t = t.getCause()) {
+            if (t instanceof UnexpectedHttpResponseException) {
+                UnexpectedHttpResponseException httpException = (UnexpectedHttpResponseException) t;
+                if (httpException.getStatus() == 422 && httpException.getMessage() != null
+                        && httpException.getMessage().toLowerCase().contains("another scan is in progress")) {
+                    return new FcliSimpleException("Cannot start scan: another scan is already in progress for this release. "
+                            + "Use '--in-progress-action=Queue' to queue this scan, or "
+                            + "'--in-progress-action=CancelScanInProgress' to cancel the running scan and start a new one.");
+                }
+            }
+        }
+        return e instanceof RuntimeException ? (RuntimeException) e : new FcliSimpleException(e);
     }
 
     private void validateScanSetup(UnirestInstance unirest, String relId) {

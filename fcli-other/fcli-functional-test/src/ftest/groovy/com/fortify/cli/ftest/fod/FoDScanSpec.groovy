@@ -337,6 +337,42 @@ class FoDScanSpec extends FcliBaseSpec {
             }
     }
 
+    def "start.sast-scan-help-shows-new-options"() {
+        def args = "fod sast-scan start --help"
+        when:
+            def result = Fcli.run(args)
+        then:
+            verifyAll(result.stdout) {
+                it.any { it.contains("--in-progress-action") }
+                it.any { it.contains("--entitlement-preference") }
+                it.any { it.contains("DoNotStartScan") }
+                it.any { it.contains("CancelScanInProgress") }
+                it.any { it.contains("Queue") }
+            }
+    }
+
+    def "start.sast-scan-in-progress-do-not-start"() {
+        // A scan was started above, so DoNotStartScan must be rejected with a friendly message
+        def args = "fod sast-scan start --release=fcli-1698140484524:v2 --file=$sastPackage --in-progress-action=DoNotStartScan"
+        when:
+            Fcli.run(args)
+        then:
+            def e = thrown(UnexpectedFcliResultException)
+            e.result.stderr.any { it.contains("another scan is already in progress") }
+    }
+
+    def "start.sast-scan-advanced-queue"() {
+        // Exercises the start-scan-advanced path; queues behind the in-progress scan
+        def args = "fod sast-scan start --release=fcli-1698140484524:v2 --file=$sastPackage --in-progress-action=Queue"
+        when:
+            def result = Fcli.run(args)
+        then:
+            verifyAll(result.stdout) {
+                size()>=2
+                it.last().contains("STARTED")
+            }
+    }
+
     def "wait-for-sast"() {
         def args = "fod sast-scan wait-for ::sastScan:: -i 2s --until=all-match --any-state=Completed,In_Progress,Queued"
         when:
