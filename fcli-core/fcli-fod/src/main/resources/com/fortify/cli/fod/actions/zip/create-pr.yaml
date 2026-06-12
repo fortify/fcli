@@ -1,4 +1,4 @@
-﻿# yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-dev-2.x.json
+# yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-dev-2.x.json
 author: Fortify
 usage:
   header: Create a pull request from changed files
@@ -27,10 +27,10 @@ steps:
         group: detect-env
         cmd: fcli action run detect-env
         status.check: true
-      on.fail:
-        - log.warn:
-            msg: "CI environment detection failed"
-            cause: ${detect-env_exception}
+    on.fail:
+      - log.warn:
+          msg: "CI environment detection failed"
+          cause: ${detect-env_exception}
 
   - var.set:
       sourceDir: ${#env('SOURCE_DIR')?:global.ci.sourceDir?:'.'}

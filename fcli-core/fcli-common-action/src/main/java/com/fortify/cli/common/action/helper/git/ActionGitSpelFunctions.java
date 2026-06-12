@@ -81,6 +81,7 @@ public class ActionGitSpelFunctions {
         FileRepositoryBuilder builder = new FileRepositoryBuilder().findGitDir(dir);
         if (builder.getGitDir() == null) { return null; }
         try (Repository repo = builder.build()) {
+            log.debug("localRepo: Processing sourceDir={}", sourceDir);
             var mapper = JsonHelper.getObjectMapper();
 
             var remote = selectRemote(repo);
@@ -166,6 +167,7 @@ public class ActionGitSpelFunctions {
             @SpelFunctionParam(name="sourceDir", desc="directory inside a git working tree") String sourceDir) {
         try (var git = openGit(sourceDir)) {
             if (git == null) { return false; }
+            log.debug("hasChanges: Checking for uncommitted changes in sourceDir={}", sourceDir);
             var status = git.status().call();
             return !status.getModified().isEmpty()
                 || !status.getAdded().isEmpty()
@@ -191,6 +193,7 @@ public class ActionGitSpelFunctions {
                 .format(java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss"));
             var branchName = branchPrefix + "/" + timestamp;
             git.checkout().setCreateBranch(true).setName(branchName).call();
+            log.debug("createBranch: Created branch={}", branchName);
             log.info("Created and checked out branch: {}", branchName);
             return branchName;
         } catch (GitAPIException e) {
@@ -208,6 +211,7 @@ public class ActionGitSpelFunctions {
             }
             git.add().addFilepattern(".").call();
             git.add().setUpdate(true).addFilepattern(".").call();
+            log.debug("addAll: Staged all changes in sourceDir={}", sourceDir);
             log.info("Staged all changes in: {}", sourceDir);
             return true;
         } catch (GitAPIException e) {
@@ -229,6 +233,7 @@ public class ActionGitSpelFunctions {
                 .setAuthor("fcli", "fcli@fortify.com")
                 .call();
             var sha = commitResult.getId().getName();
+            log.debug("commit: Committed message={}, sha={}", message, sha);
             log.info("Committed changes: {}", sha);
             return sha;
         } catch (GitAPIException e) {
@@ -257,6 +262,7 @@ public class ActionGitSpelFunctions {
                 pushCommand.setCredentialsProvider(credentialsProvider);
             }
             var results = pushCommand.call();
+            log.debug("push: Successfully pushed branch={} to remote", results);
             var ref = git.getRepository().getFullBranch();
             log.info("Pushed branch to remote: {}", ref);
             return ref;
@@ -271,7 +277,10 @@ public class ActionGitSpelFunctions {
             @SpelFunctionParam(name="sourceDir", desc="directory inside a git working tree") String sourceDir) {
         // GitLab CI provides CI_DEFAULT_BRANCH
         var defaultBranch = EnvHelper.env("CI_DEFAULT_BRANCH");
-        if (StringUtils.isNotBlank(defaultBranch)) { return defaultBranch; }
+        if (StringUtils.isNotBlank(defaultBranch)) {
+            log.debug("defaultBranch: Detected from CI_DEFAULT_BRANCH={}", defaultBranch);
+            return defaultBranch;
+        }
         // Try reading from local git remote HEAD (set by git clone)
         try (var git = openGit(sourceDir)) {
             if (git == null) { return null; }
