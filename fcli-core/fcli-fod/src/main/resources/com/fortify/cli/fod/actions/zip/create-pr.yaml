@@ -141,7 +141,7 @@ steps:
     do:
       - log.debug: "Creating GitHub PR: head=${branchName}, base=${baseBranch}, title=${prTitle}"
       - var.set:
-          pr: ${#_ci.detect().repo().createPullRequest(prTitle, branchName, baseBranch, prBody)}
+          pr: ${#_ci.detect().repo().createPullRequest(prTitle, #_ci.detect().repo().owner + ':' + branchName, baseBranch, prBody)}
         on.fail:
           - log.warn:
               msg: "Failed to create GitHub Pull Request from '${branchName}' to '${baseBranch}'"
