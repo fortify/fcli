@@ -132,8 +132,7 @@ steps:
   - var.set:
       ci.detected: ${#_ci.detect()}
       ci.type: ${ci.detected.type}
-      ci.defaultBranch: ${ci.detected.repo().defaultBranch}
-      baseBranch: "${#env('BASE_BRANCH')?:ci.defaultBranch?:'main'}"
+      baseBranch: "${#env('BASE_BRANCH')?:'main'}"
   - log.debug: "Detected CI system: ${ci.type}"
   - log.debug: "Detected Base Branch: ${baseBranch}"
 
