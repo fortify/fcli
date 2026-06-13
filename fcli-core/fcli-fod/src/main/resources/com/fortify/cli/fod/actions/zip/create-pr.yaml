@@ -140,8 +140,7 @@ steps:
   - if: ${ci.type=='github'}
     do:
       - var.set:
-          repoOwner: ${ci.detected.repo().owner}
-          repoName: ${ci.detected.repo().name}
+          repoOwner: "${#gitRepoInfo.repository.remoteUrl.replaceAll('.*github\\.com[:/]([^/]+)/.*', '$1')}"
           prHead: "${repoOwner}:${branchName}"
       - log.debug: "Creating GitHub PR: head=${prHead}, base=${baseBranch}, title=${prTitle}"
       - var.set:
