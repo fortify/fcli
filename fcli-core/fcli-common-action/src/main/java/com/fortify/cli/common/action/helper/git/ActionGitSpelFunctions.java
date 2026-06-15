@@ -292,15 +292,16 @@ public class ActionGitSpelFunctions {
                 log.debug("PUSH DEBUG: Using credentials provider={}", credentialsProvider.getClass().getName());
             }
 
-            String refSpecStr = "HEAD:refs/heads/" + branchName;
-            var refSpec = new RefSpec(refSpecStr);
+            String fullBranchRef = "refs/heads/" + branchName;
+            var refSpec = new RefSpec(fullBranchRef + ":" + fullBranchRef);
 
-            log.info("PUSH DEBUG: refSpec={}", refSpecStr);
+            log.info("PUSH DEBUG: refSpec={}", fullBranchRef);
 
+            git.fetch().setRemote(remote).call();
+            
             var pushCmd = git.push()
                 .setRemote(remote)
                 .setRefSpecs(refSpec)
-                .setPushAll() // Safe in most CI cases; optional
                 .setTimeout(60);
 
             if (credentialsProvider != null) {
@@ -308,6 +309,13 @@ public class ActionGitSpelFunctions {
             }
 
             var results = pushCmd.call();
+
+            
+            // Set upstream tracking
+            StoredConfig config = git.getRepository().getConfig();
+            config.setString("branch", branchName, "remote", remote);
+            config.setString("branch", branchName, "merge", fullBranchRef);
+            config.save();
 
             boolean success = false;
 
