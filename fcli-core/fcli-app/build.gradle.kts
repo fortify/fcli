@@ -100,6 +100,9 @@ tasks.named<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("shadowJ
     archiveVersion.set("")
     from(generatedReflectConfigDir)
     exclude("META-INF/*.SF", "META-INF/*.DSA", "META-INF/*.RSA")
+    dependencies {
+        exclude(dependency("org.eclipse.jgit:org.eclipse.jgit"))
+    }
 }
 
 // Third-party helper

@@ -274,6 +274,19 @@ public class ActionGitSpelFunctions {
     public String push(
             @SpelFunctionParam(name = "sourceDir", desc = "directory inside a git working tree") String sourceDir,
             @SpelFunctionParam(name = "branchName", desc = "name of the branch to push") String branchName) {
+        
+        log.info("PUSH DEBUG: JGit version = {}",
+            org.eclipse.jgit.lib.Constants.class
+                .getPackage()
+                .getImplementationVersion());
+
+        
+        log.info("PUSH DEBUG: JGit loaded from = {}",
+            org.eclipse.jgit.lib.GcConfig.class
+                .getProtectionDomain()
+                .getCodeSource()
+                .getLocation());
+
         try (var git = openGit(sourceDir)) {
             if (git == null) {
                 throw new FcliSimpleException("Not a git repository: " + sourceDir);
