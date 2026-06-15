@@ -21,6 +21,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.lib.StoredConfig;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.eclipse.jgit.transport.CredentialsProvider;
 import org.eclipse.jgit.transport.RefSpec;
@@ -298,7 +299,7 @@ public class ActionGitSpelFunctions {
             log.info("PUSH DEBUG: refSpec={}", fullBranchRef);
 
             git.fetch().setRemote(remote).call();
-            
+
             var pushCmd = git.push()
                 .setRemote(remote)
                 .setRefSpecs(refSpec)
