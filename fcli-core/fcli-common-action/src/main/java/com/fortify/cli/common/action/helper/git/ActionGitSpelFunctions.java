@@ -265,41 +265,81 @@ public class ActionGitSpelFunctions {
             throw new FcliSimpleException("Failed to commit: " + e.getMessage());
         }
     }
-
-    @SpelFunction(cat=util, desc="Pushes the current branch to the remote repository. Uses token-based authentication from CI environment variables (GITHUB_TOKEN, CI_JOB_TOKEN, SYSTEM_ACCESSTOKEN, BITBUCKET_TOKEN) if available.",
-                returns="The name of the remote ref that was pushed")
+    
+    @SpelFunction(
+        cat = util,
+        desc = "Pushes the current branch to the remote repository. Uses token-based authentication from CI environment variables (GITHUB_TOKEN, CI_JOB_TOKEN, SYSTEM_ACCESSTOKEN, BITBUCKET_TOKEN) if available.",
+        returns = "The name of the remote ref that was pushed"
+    )
     public String push(
-                @SpelFunctionParam(name="sourceDir", desc="directory inside a git working tree") String sourceDir,
-                @SpelFunctionParam(name="branchName", desc="name of the branch to push") String branchName) {
+            @SpelFunctionParam(name = "sourceDir", desc = "directory inside a git working tree") String sourceDir,
+            @SpelFunctionParam(name = "branchName", desc = "name of the branch to push") String branchName) {
         try (var git = openGit(sourceDir)) {
             if (git == null) {
                 throw new FcliSimpleException("Not a git repository: " + sourceDir);
             }
 
             var repo = git.getRepository();
+
+            // ✅ Select remote
             var remote = selectRemote(repo);
             if (remote == null) remote = "origin";
 
+            // ✅ Ensure branch checkout (handles detached HEAD) 
+            try {
+                git.checkout().setName(branchName).call();
+            } catch (Exception e) {
+                // fallback: recreate branch
+                git.checkout()
+                    .setCreateBranch(true)
+                    .setName(branchName)
+                    .setStartPoint("HEAD")
+                    .call();
+            }
+
+            // ✅ Get and fix remote URL
             var remoteUrl = repo.getConfig().getString("remote", remote, "url");
+            if (remoteUrl != null && !remoteUrl.endsWith(".git")) {
+                remoteUrl = remoteUrl + ".git";
+                repo.getConfig().setString("remote", remote, "url", remoteUrl);
+                repo.getConfig().save();
+            }
 
             log.info("PUSH DEBUG: remote={}", remote);
             log.info("PUSH DEBUG: remoteUrl={}", remoteUrl);
             log.info("PUSH DEBUG: branchName={}", branchName);
 
-            var credentialsProvider = detectCredentialsProvider();
-            if (credentialsProvider == null) {
-                log.warn("PUSH DEBUG: No credentials provider detected");
-            } else {
-                log.debug("PUSH DEBUG: Using credentials provider={}", credentialsProvider.getClass().getName());
+            // ✅ Detect credentials
+            CredentialsProvider credentialsProvider = detectCredentialsProvider();
+            // ✅ Force GitHub token explicitly (stronger than relying only on helper)
+            var token = System.getenv("GITHUB_TOKEN");
+            log.info("PUSH DEBUG: GITHUB_TOKEN present={}", token != null);
+
+            if (token != null) {
+                log.info("PUSH DEBUG: Overriding credentials with explicit GITHUB_TOKEN");
+                credentialsProvider = new UsernamePasswordCredentialsProvider("x-access-token", token);
             }
 
+            if (credentialsProvider == null) {
+                log.warn("PUSH DEBUG: No credentials provider detected - push will likely fail");
+            } else {
+                log.info("PUSH DEBUG: Using credentials provider={}", credentialsProvider.getClass().getName());
+            }
+
+            // ✅ Prepare refspec
             String fullBranchRef = "refs/heads/" + branchName;
             var refSpec = new RefSpec(fullBranchRef + ":" + fullBranchRef);
 
             log.info("PUSH DEBUG: refSpec={}", fullBranchRef);
 
-            git.fetch().setRemote(remote).call();
+            // ✅ Fetch with credentials (important for CI consistency)
+            var fetchCmd = git.fetch().setRemote(remote);
+            if (credentialsProvider != null) {
+                fetchCmd.setCredentialsProvider(credentialsProvider);
+            }
+            fetchCmd.call();
 
+            // ✅ Push (NO pushAll)
             var pushCmd = git.push()
                 .setRemote(remote)
                 .setRefSpecs(refSpec)
@@ -311,9 +351,8 @@ public class ActionGitSpelFunctions {
 
             var results = pushCmd.call();
 
-            
-            // Set upstream tracking
-            StoredConfig config = git.getRepository().getConfig();
+            // ✅ Set upstream AFTER successful push
+            StoredConfig config = repo.getConfig();
             config.setString("branch", branchName, "remote", remote);
             config.setString("branch", branchName, "merge", fullBranchRef);
             config.save();
@@ -363,15 +402,26 @@ public class ActionGitSpelFunctions {
             }
 
             if (!success) {
-                throw new FcliSimpleException("Push completed but no refs were updated (likely auth or refspec issue)");
+                throw new FcliSimpleException("Push completed but no refs were updated (likely auth or permission issue)");
             }
 
             log.info("Successfully pushed branch: {}", branchName);
-            return "refs/heads/" + branchName;
+            return fullBranchRef;
 
         } catch (Exception e) {
-            log.error("PUSH DEBUG: Exception occurred during push", e);
-            throw new FcliSimpleException("Failed to push: " + e.getMessage(), e);
+            // ✅ Deep root cause extraction
+            Throwable root = e;
+            while (root.getCause() != null) {
+                root = root.getCause();
+            }
+
+            log.error("PUSH DEBUG: Root cause type={}", root.getClass().getName());
+            log.error("PUSH DEBUG: Root cause message={}", root.getMessage(), root);
+
+            throw new FcliSimpleException(
+                "Failed to push (root cause): " + root.getClass().getName() + " - " + root.getMessage(),
+                e
+            );
         }
     }
 
