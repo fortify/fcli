@@ -14,6 +14,7 @@ package com.fortify.cli.common.action.helper.git;
 
 import static com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunction.SpelFunctionCategory.util;
 
+import java.io.IOException;
 import java.nio.file.Path;
 
 import org.apache.commons.lang3.StringUtils;
@@ -23,7 +24,6 @@ import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.eclipse.jgit.transport.CredentialsProvider;
 import org.eclipse.jgit.transport.RefSpec;
-import org.eclipse.jgit.transport.RemoteRefUpdate;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -86,7 +86,7 @@ public class ActionGitSpelFunctions {
             var mapper = JsonHelper.getObjectMapper();
 
             var remote = selectRemote(repo);
-            var remoteUrl = remote == null ? null : repo.getConfig().getString("remote", remote, "url");
+            var remoteUrl = remote == null ? "origin" : repo.getConfig().getString("remote", remote, "url");
             var names = deriveRepoNames(dir.getName(), remoteUrl);
             var repository = CiRepository.builder()
                 .workspaceDir(repo.getWorkTree().getAbsolutePath())
@@ -159,7 +159,10 @@ public class ActionGitSpelFunctions {
                 root.set("commit", mapper.valueToTree(commit));
             }
             return root;
-        } catch (Exception e) { return null; }
+        } catch (Exception e) { 
+            log.debug("localRepo failed for {}", sourceDir, e);
+            return null; 
+        }
     }
 
     @SpelFunction(cat=util, desc="Checks whether the working tree of the git repository at the given directory has any uncommitted changes (modified, added, or deleted files).",
@@ -170,13 +173,15 @@ public class ActionGitSpelFunctions {
             if (git == null) { return false; }
             log.debug("hasChanges: Checking for uncommitted changes in sourceDir={}", sourceDir);
             var status = git.status().call();
-            return !status.getModified().isEmpty()
+            boolean hasChanges = !status.getModified().isEmpty()
                 || !status.getAdded().isEmpty()
                 || !status.getRemoved().isEmpty()
                 || !status.getUntracked().isEmpty()
                 || !status.getChanged().isEmpty();
+            log.debug("hasChanges: {} → {}", sourceDir, hasChanges);
+            return hasChanges;
         } catch (Exception e) {
-            log.debug("Error checking git status", e);
+            log.debug("hasChanges error for {}", sourceDir, e);
             return false;
         }
     }
@@ -193,11 +198,18 @@ public class ActionGitSpelFunctions {
             var timestamp = java.time.LocalDateTime.now()
                 .format(java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss"));
             var branchName = branchPrefix + "/" + timestamp;
-            git.checkout().setCreateBranch(true).setName(branchName).call();
-            log.debug("createBranch: Created branch={}", branchName);
+            git.checkout()
+                .setCreateBranch(true)
+                .setName(branchName)
+                .call();
+            String current = git.getRepository().getBranch();
+            if (!branchName.equals(current)) {
+                throw new FcliSimpleException("Failed to checkout branch " + branchName);
+            }
+            
             log.info("Created and checked out branch: {}", branchName);
             return branchName;
-        } catch (GitAPIException e) {
+        } catch (GitAPIException | IOException e) {
             throw new FcliSimpleException("Failed to create branch: " + e.getMessage());
         }
     }
@@ -210,9 +222,12 @@ public class ActionGitSpelFunctions {
             if (git == null) {
                 throw new FcliSimpleException("Not a git repository: " + sourceDir);
             }
+            //stage new files
             git.add().addFilepattern(".").call();
+
+            //stage modified files (git add with update=true will stage modifications and deletions, but not new untracked files, which is why we call add twice)
             git.add().setUpdate(true).addFilepattern(".").call();
-            log.debug("addAll: Staged all changes in sourceDir={}", sourceDir);
+
             log.info("Staged all changes in: {}", sourceDir);
             return true;
         } catch (GitAPIException e) {
@@ -229,12 +244,20 @@ public class ActionGitSpelFunctions {
             if (git == null) {
                 throw new FcliSimpleException("Not a git repository: " + sourceDir);
             }
+
+            if (git.status().call().isClean()) {
+                throw new FcliSimpleException("No changes to commit");
+            }
+
+            String name = "fcli-actions[bot]"; //TODO - Check if we can get author info from env or git config
+            String email = "fcli-actions@opentext.com"; //TODO - Check if we can get author info from env or git config
+
             var commitResult = git.commit()
                 .setMessage(message)
-                .setAuthor("fcli", "fcli@fortify.com")
+                .setAuthor(name, email) 
+                .setCommitter(name, email) 
                 .call();
             var sha = commitResult.getId().getName();
-            log.debug("commit: Committed message={}, sha={}", message, sha);
             log.info("Committed changes: {}", sha);
             return sha;
         } catch (GitAPIException e) {
@@ -252,36 +275,94 @@ public class ActionGitSpelFunctions {
                 throw new FcliSimpleException("Not a git repository: " + sourceDir);
             }
 
-            var credentialsProvider = detectCredentialsProvider();
+            var repo = git.getRepository();
+            var remote = selectRemote(repo);
+            if (remote == null) remote = "origin";
 
-            var pushCommand = git.push()
-                .setRemote("origin")
-                .setRefSpecs(new RefSpec("HEAD:refs/heads/" + branchName));
+            var remoteUrl = repo.getConfig().getString("remote", remote, "url");
+
+            log.info("PUSH DEBUG: remote={}", remote);
+            log.info("PUSH DEBUG: remoteUrl={}", remoteUrl);
+            log.info("PUSH DEBUG: branchName={}", branchName);
+
+            var credentialsProvider = detectCredentialsProvider();
+            if (credentialsProvider == null) {
+                log.warn("PUSH DEBUG: No credentials provider detected");
+            } else {
+                log.debug("PUSH DEBUG: Using credentials provider={}", credentialsProvider.getClass().getName());
+            }
+
+            String refSpecStr = "HEAD:refs/heads/" + branchName;
+            var refSpec = new RefSpec(refSpecStr);
+
+            log.info("PUSH DEBUG: refSpec={}", refSpecStr);
+
+            var pushCmd = git.push()
+                .setRemote(remote)
+                .setRefSpecs(refSpec)
+                .setPushAll() // Safe in most CI cases; optional
+                .setTimeout(60);
 
             if (credentialsProvider != null) {
-                pushCommand.setCredentialsProvider(credentialsProvider);
+                pushCmd.setCredentialsProvider(credentialsProvider);
             }
 
-            var results = pushCommand.call();
+            var results = pushCmd.call();
 
-            // ✅ Validate push result
+            boolean success = false;
+
             for (var result : results) {
+                log.info("PUSH DEBUG: --- PushResult Start ---");
+
+                var messages = result.getMessages();
+                if (!StringUtils.isBlank(messages)) {
+                    log.warn("PUSH DEBUG: Remote messages:\n{}", messages);
+                }
+
                 for (var update : result.getRemoteUpdates()) {
                     var status = update.getStatus();
-                    if (status != RemoteRefUpdate.Status.OK &&
-                        status != RemoteRefUpdate.Status.UP_TO_DATE) {
-                        throw new FcliSimpleException(
-                            "Push failed for " + update.getRemoteName() + ": " + status
-                        );
+
+                    log.info("PUSH DEBUG: Update remoteName={}", update.getRemoteName());
+                    log.info("PUSH DEBUG: Update status={}", status);
+                    log.info("PUSH DEBUG: Update srcRef={}", update.getSrcRef());
+                    log.info("PUSH DEBUG: Update dstRef={}", update.getRemoteName());
+                    log.info("PUSH DEBUG: Update message={}", update.getMessage());
+
+                    switch (status) {
+                        case OK:
+                        case UP_TO_DATE:
+                            success = true;
+                            break;
+
+                        case REJECTED_NONFASTFORWARD:
+                        case REJECTED_NODELETE:
+                        case REJECTED_REMOTE_CHANGED:
+                        case REJECTED_OTHER_REASON:
+                        case NON_EXISTING:
+                        case NOT_ATTEMPTED:
+                        default:
+                            throw new FcliSimpleException(
+                                "Push rejected: "
+                                    + "status=" + status
+                                    + ", remote=" + update.getRemoteName()
+                                    + ", message=" + update.getMessage()
+                            );
                     }
                 }
+
+                log.info("PUSH DEBUG: --- PushResult End ---");
             }
 
-            log.info("Successfully pushed branch to remote: {}", branchName);
+            if (!success) {
+                throw new FcliSimpleException("Push completed but no refs were updated (likely auth or refspec issue)");
+            }
+
+            log.info("Successfully pushed branch: {}", branchName);
             return "refs/heads/" + branchName;
 
-        } catch (GitAPIException e) {
-            throw new FcliSimpleException("Failed to push: " + e.getMessage());
+        } catch (Exception e) {
+            log.error("PUSH DEBUG: Exception occurred during push", e);
+            throw new FcliSimpleException("Failed to push: " + e.getMessage(), e);
         }
     }
 
@@ -350,13 +431,12 @@ public class ActionGitSpelFunctions {
 
     private Git openGit(String sourceDir) {
         if (StringUtils.isBlank(sourceDir)) { return null; }
-        var dir = Path.of(sourceDir).toAbsolutePath().normalize().toFile();
-        if (!dir.exists()) { return null; }
-        var builder = new FileRepositoryBuilder().findGitDir(dir);
-        if (builder.getGitDir() == null) { return null; }
         try {
-            var repo = builder.build();
-            return new Git(repo);
+            var dir = Path.of(sourceDir).toAbsolutePath().normalize().toFile();
+            if (!dir.exists()) { return null; }
+            var builder = new FileRepositoryBuilder().findGitDir(dir);
+            if (builder.getGitDir() == null) { return null; }
+            return new Git(builder.build());
         } catch (Exception e) {
             return null;
         }
@@ -390,10 +470,11 @@ public class ActionGitSpelFunctions {
     private static String selectRemote(Repository repo) {
         try {
             var remotes = repo.getRemoteNames();
-            if (remotes == null || remotes.isEmpty()) { return null; }
-            if (remotes.contains("origin")) { return "origin"; }
-            return remotes.iterator().next();
-        } catch (Exception e) { return null; }
+            if (remotes == null || remotes.isEmpty()) return null;
+            return remotes.contains("origin") ? "origin" : remotes.iterator().next();
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     private static String[] deriveRepoNames(String fallbackShort, String remoteUrl) {
