@@ -271,6 +271,39 @@ public class ActionGitSpelFunctions {
         }
     }
 
+
+    @SpelFunction(cat=util, desc="Detects the repository owner from CI environment variables. Checks GITHUB_REPOSITORY_OWNER (GitHub), CI_PROJECT_NAMESPACE (GitLab), BUILD_REPOSITORY_ID (Azure DevOps), or BITBUCKET_WORKSPACE (Bitbucket). Returns null if not running in a supported CI system.",
+            returns="The repository owner/namespace or null if not detectable")
+    public String ciRepositoryOwner() {
+        // GitHub Actions
+        var owner = EnvHelper.env("GITHUB_REPOSITORY_OWNER");
+        if (StringUtils.isNotBlank(owner)) {
+            log.debug("ciRepositoryOwner: Detected from GITHUB_REPOSITORY_OWNER={}", owner);
+            return owner;
+        }
+        // GitLab CI
+        owner = EnvHelper.env("CI_PROJECT_NAMESPACE");
+        if (StringUtils.isNotBlank(owner)) {
+            log.debug("ciRepositoryOwner: Detected from CI_PROJECT_NAMESPACE={}", owner);
+            return owner;
+        }
+        // Azure DevOps
+        var buildRepoId = EnvHelper.env("BUILD_REPOSITORY_ID");
+        owner = EnvHelper.env("SYSTEM_TEAMPROJECT");
+        if (StringUtils.isNotBlank(buildRepoId) && StringUtils.isNotBlank(owner)) {
+            log.debug("ciRepositoryOwner: Detected from Azure DevOps SYSTEM_TEAMPROJECT={}", owner);
+            return owner;
+        }
+        // Bitbucket Pipelines
+        owner = EnvHelper.env("BITBUCKET_WORKSPACE");
+        if (StringUtils.isNotBlank(owner)) {
+            log.debug("ciRepositoryOwner: Detected from BITBUCKET_WORKSPACE={}", owner);
+            return owner;
+        }
+        log.debug("ciRepositoryOwner: No CI environment detected, returning null");
+        return null;
+    }
+
     @SpelFunction(cat=util, desc="Detects the default branch of the remote repository. Checks CI environment variables (CI_DEFAULT_BRANCH for GitLab, looks up via GitHub API env), then falls back to reading refs/remotes/origin/HEAD from the local git config. Returns null if detection fails.",
             returns="The default branch name (e.g. 'main', 'master', 'develop') or null if not detectable")
     public String defaultBranch(

@@ -41,6 +41,10 @@ steps:
   # Log initial git repository information for diagnostics
   - var.set:
       gitRepoInfo: ${#git.localRepo(sourceDir)}
+  - if: ${gitRepoInfo==null}
+    throw: "Source directory '${sourceDir}' is not a git repository. Cannot detect repository information needed for PR creation."
+  - if: ${#isBlank(gitRepoInfo.repository.remoteUrl)}
+    throw: "Git repository has no remote URL configured. Cannot create PR without remote repository access."
   - if: ${gitRepoInfo!=null}
     log.info: "Git repository: workspace=${gitRepoInfo.repository.workspaceDir}, remote=${gitRepoInfo.repository.remoteUrl?:'not configured'}, branch=${gitRepoInfo.branch.short_?:'detached HEAD'}"
 
@@ -140,7 +144,7 @@ steps:
   - if: ${ci.type=='github'}
     do:
       - var.set:
-          repoOwner: "${#gitRepoInfo.repository.remoteUrl.replaceAll('.*github\\.com[:/]([^/]+)/.*', '$1')}"
+          repoOwner: "${#git.ciRepositoryOwner()}"
           prHead: "${repoOwner}:${branchName}"
       - log.debug: "Creating GitHub PR: head=${prHead}, base=${baseBranch}, title=${prTitle}"
       - var.set:
