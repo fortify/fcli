@@ -14,7 +14,6 @@ package com.fortify.cli.common.action.helper.git;
 
 import static com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunction.SpelFunctionCategory.util;
 
-import java.io.IOException;
 import java.nio.file.Path;
 
 import org.apache.commons.lang3.StringUtils;
@@ -23,6 +22,8 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.eclipse.jgit.transport.CredentialsProvider;
+import org.eclipse.jgit.transport.RefSpec;
+import org.eclipse.jgit.transport.RemoteRefUpdate;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -242,35 +243,47 @@ public class ActionGitSpelFunctions {
     }
 
     @SpelFunction(cat=util, desc="Pushes the current branch to the remote repository. Uses token-based authentication from CI environment variables (GITHUB_TOKEN, CI_JOB_TOKEN, SYSTEM_ACCESSTOKEN, BITBUCKET_TOKEN) if available.",
-            returns="The name of the remote ref that was pushed")
+                returns="The name of the remote ref that was pushed")
     public String push(
-            @SpelFunctionParam(name="sourceDir", desc="directory inside a git working tree") String sourceDir) {
+                @SpelFunctionParam(name="sourceDir", desc="directory inside a git working tree") String sourceDir,
+                @SpelFunctionParam(name="branchName", desc="name of the branch to push") String branchName) {
         try (var git = openGit(sourceDir)) {
             if (git == null) {
                 throw new FcliSimpleException("Not a git repository: " + sourceDir);
             }
+
             var credentialsProvider = detectCredentialsProvider();
-            if (credentialsProvider == null) {
-                var remoteUrl = git.getRepository().getConfig().getString("remote", "origin", "url");
-                if (remoteUrl != null && remoteUrl.startsWith("https")) {
-                    throw new FcliSimpleException("No credentials available for push to " + remoteUrl
-                        + ". Set one of: GITHUB_TOKEN, GH_TOKEN, CI_JOB_TOKEN, SYSTEM_ACCESSTOKEN, BITBUCKET_TOKEN");
-                }
-            }
-            var pushCommand = git.push();
+
+            var pushCommand = git.push()
+                .setRemote("origin")
+                .setRefSpecs(new RefSpec("HEAD:refs/heads/" + branchName));
+
             if (credentialsProvider != null) {
                 pushCommand.setCredentialsProvider(credentialsProvider);
             }
+
             var results = pushCommand.call();
-            log.debug("push: Successfully pushed branch={} to remote", results);
-            var ref = git.getRepository().getFullBranch();
-            log.info("Pushed branch to remote: {}", ref);
-            return ref;
-        } catch (GitAPIException | IOException e) {
+
+            // ✅ Validate push result
+            for (var result : results) {
+                for (var update : result.getRemoteUpdates()) {
+                    var status = update.getStatus();
+                    if (status != RemoteRefUpdate.Status.OK &&
+                        status != RemoteRefUpdate.Status.UP_TO_DATE) {
+                        throw new FcliSimpleException(
+                            "Push failed for " + update.getRemoteName() + ": " + status
+                        );
+                    }
+                }
+            }
+
+            log.info("Successfully pushed branch to remote: {}", branchName);
+            return "refs/heads/" + branchName;
+
+        } catch (GitAPIException e) {
             throw new FcliSimpleException("Failed to push: " + e.getMessage());
         }
     }
-
 
     @SpelFunction(cat=util, desc="Detects the repository owner from CI environment variables. Checks GITHUB_REPOSITORY_OWNER (GitHub), CI_PROJECT_NAMESPACE (GitLab), BUILD_REPOSITORY_ID (Azure DevOps), or BITBUCKET_WORKSPACE (Bitbucket). Returns null if not running in a supported CI system.",
             returns="The repository owner/namespace or null if not detectable")

@@ -113,7 +113,7 @@ steps:
 
   # Push branch to remote with detailed error context
   - var.set:
-      pushedRef: ${#git.push(sourceDir)}
+      pushedRef: ${#git.push(sourceDir, branchName)}
     on.fail:
       - var.set:
           errorMsg: "Failed to push branch '${branchName}' to remote"
