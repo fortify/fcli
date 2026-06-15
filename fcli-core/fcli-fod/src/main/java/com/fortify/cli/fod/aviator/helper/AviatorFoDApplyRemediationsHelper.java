@@ -35,8 +35,10 @@ public class AviatorFoDApplyRemediationsHelper {
      */
 
     public static ObjectNode buildResultNode(FoDReleaseDescriptor rd, int totalRemediation, int appliedRemediation, int skippedRemediation, String action) {
-        ObjectNode result = rd.asObjectNode();
+        ObjectNode result = JsonHelper.getObjectMapper().createObjectNode();
         result.put("releaseId", rd.getReleaseId());
+        result.put("applicationName", rd.getApplicationName());
+        result.put("releaseName", rd.getReleaseName());
         result.put("totalRemediation", totalRemediation);
         result.put("appliedRemediation", appliedRemediation);
         result.put("skippedRemediation", skippedRemediation);
@@ -45,17 +47,23 @@ public class AviatorFoDApplyRemediationsHelper {
     }
 
     public static ObjectNode buildResultNode(FoDReleaseDescriptor rd, int totalRemediation, int appliedRemediation, int skippedRemediation, Set<String> modifiedFiles, String action) {
-        ObjectNode result = rd.asObjectNode();
+        ObjectNode result = JsonHelper.getObjectMapper().createObjectNode();
         result.put("releaseId", rd.getReleaseId());
+        result.put("applicationName", rd.getApplicationName());
+        result.put("releaseName", rd.getReleaseName());
         result.put("totalRemediation", totalRemediation);
         result.put("appliedRemediation", appliedRemediation);
         result.put("skippedRemediation", skippedRemediation);
-        ArrayNode array = JsonHelper.getObjectMapper().createArrayNode();
-        if (modifiedFiles != null) {
-            modifiedFiles.forEach(array::add);
-        }
-        result.set("modifiedFiles", array);
+        result.set("modifiedFiles", toArrayNode(modifiedFiles));
         result.put(IActionCommandResultSupplier.actionFieldName, action);
         return result;
+    }
+
+    private static ArrayNode toArrayNode(Set<String> files) {
+        ArrayNode array = JsonHelper.getObjectMapper().createArrayNode();
+        if (files != null) {
+            files.forEach(array::add);
+        }
+        return array;
     }
 }
