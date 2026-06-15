@@ -40,6 +40,7 @@ import lombok.Getter;
  */
 // TODO Properly embed option handling/retrieval in SSCAttributeDefinitionDescriptor
 public final class SSCAttributeDefinitionHelper {
+    private static final String EXTRA_ATTRIBUTE_CATEGORIES = "SCANCENTRAL_DAST";
     private final Set<String> attrDuplicateNames = new HashSet<>();
     private final Set<SSCAttributeDefinitionDescriptor> requiredAttrDefWithoutDefaultValueDescriptors = new HashSet<>();
     private final Map<String, SSCAttributeDefinitionDescriptor> descriptorsById = new HashMap<>();
@@ -70,7 +71,8 @@ public final class SSCAttributeDefinitionHelper {
      * an SSC bulk request.
      */
     public static final HttpRequest<?> getAttributeDefinitionsRequest(UnirestInstance unirest) {
-        return unirest.get("/api/v1/attributeDefinitions?limit=-1&orderby=category,name&fields=id,guid,name,category,type,required,hidden,hasDefault,options");
+        return unirest.get("/api/v1/attributeDefinitions?limit=-1&orderby=category,name&fields=id,guid,name,category,type,required,hidden,hasDefault,options")
+                .queryString("extraCategories", EXTRA_ATTRIBUTE_CATEGORIES);
     }
     
     /**
