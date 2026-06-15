@@ -1,6 +1,6 @@
 ---
 title: 'Fcli Action Development Guide'
-fcli_version: 0.20260609.120837-dev_feat.v3.x.aviator.26.3
+fcli_version: 0.20260615.081544-dev_feat.v3.x.aviator.26.3
 ---
 
 <!DOCTYPE html>
@@ -17,13 +17,13 @@ fcli_version: 0.20260609.120837-dev_feat.v3.x.aviator.26.3
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260609.120837-dev_feat.v3.x.aviator.26.3" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260615.081544-dev_feat.v3.x.aviator.26.3" %}
 
 
 <div id="header">
 <h1>Fcli Action Development Guide</h1>
 <div class="details">
-<span id="revnumber">version 0.20260609.120837-dev_feat.v3.x.aviator.26.3</span>
+<span id="revnumber">version 0.20260615.081544-dev_feat.v3.x.aviator.26.3</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -236,7 +236,7 @@ fcli_version: 0.20260609.120837-dev_feat.v3.x.aviator.26.3
 </thead>
 <tbody>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0.20260609.120837-dev_feat.v3.x.aviator.26.3</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.20260615.081544-dev_feat.v3.x.aviator.26.3</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">2.8.0</p></td>
 </tr>
 </tbody>
@@ -358,7 +358,7 @@ your action YAML file, your IDE or YAML editor may automatically provide support
 YAML files. If not, try closing and re-opening the YAML file, or consult the documentation of your IDE or YAML editor.</p>
 </div>
 <div class="paragraph">
-<p>As shown in the sample schema statements above, the current fcli version 0.20260609.120837-dev_feat.v3.x.aviator.26.3 supports
+<p>As shown in the sample schema statements above, the current fcli version 0.20260615.081544-dev_feat.v3.x.aviator.26.3 supports
 schema version <a href="https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.8.0.json">2.8.0</a>. Other
 fcli versions may support different schema versions. In general, fcli provides backward compatibility for earlier schema
 versions with the same schema major version range, and forward compatibility for later schema patch versions within the
@@ -4440,21 +4440,16 @@ default time zone id will be used.</p>
 <tbody>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #fcli.listCommands(string query)</code></strong></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string query</em> - SpEL filter expression, e.g. "module=='ssc' &amp;&amp; !hidden"</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #fcli.listCommands()</code></strong></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Processor for iterating over matching fcli command descriptors</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Processor for iterating over all available fcli command descriptors</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
 <p>The return value of this function can be passed to a <code>records.for-each::from</code> instruction to \
-iterate over fcli commands matching the given SpEL query expression, similar to the <code>--query</code> \
-option of <code>fcli util all-commands list</code>. Each record produced by the processor will be an \
+iterate over all available fcli commands. Each record produced by the processor will be an \
 ObjectNode with the same same fields as returned by <code>fcli util all-commands list --json</code>.</p>
 </div></div></td>
 </tr>
@@ -4471,16 +4466,21 @@ ObjectNode with the same same fields as returned by <code>fcli util all-commands
 <tbody>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #fcli.listCommands()</code></strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #fcli.listCommands(string query)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string query</em> - SpEL filter expression, e.g. "module=='ssc' &amp;&amp; !hidden"</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Processor for iterating over all available fcli command descriptors</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Processor for iterating over matching fcli command descriptors</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
 <p>The return value of this function can be passed to a <code>records.for-each::from</code> instruction to \
-iterate over all available fcli commands. Each record produced by the processor will be an \
+iterate over fcli commands matching the given SpEL query expression, similar to the <code>--query</code> \
+option of <code>fcli util all-commands list</code>. Each record produced by the processor will be an \
 ObjectNode with the same same fields as returned by <code>fcli util all-commands list --json</code>.</p>
 </div></div></td>
 </tr>
@@ -6571,8 +6571,8 @@ commit: {
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20260609.120837-dev_feat.v3.x.aviator.26.3<br>
-Last updated 2026-06-09 12:11:45 UTC
+Version 0.20260615.081544-dev_feat.v3.x.aviator.26.3<br>
+Last updated 2026-06-15 08:18:53 UTC
 </div>
 </div>
 </body>
