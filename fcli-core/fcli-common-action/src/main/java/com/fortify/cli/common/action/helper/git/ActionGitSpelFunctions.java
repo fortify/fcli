@@ -223,8 +223,8 @@ public class ActionGitSpelFunctions {
             if (git == null) {
                 throw new FcliSimpleException("Not a git repository: " + sourceDir);
             }
-            //stage new files
-            git.add().addFilepattern(".").call();
+            // //stage new files
+            // git.add().addFilepattern(".").call();
 
             //stage modified files (git add with update=true will stage modifications and deletions, but not new untracked files, which is why we call add twice)
             git.add().setUpdate(true).addFilepattern(".").call();
