@@ -78,7 +78,8 @@ public class ActionGitLabProject {
             @SpelFunctionParam(name="description", desc="merge request description (Markdown supported)") String description) {
         return project.createMergeRequest(title, sourceBranch, targetBranch, description);
     }
-            private String requirePipelineId(String operation) {
+    
+    private String requirePipelineId(String operation) {
         var pipelineId = env.pipelineId();
         if (StringUtils.isBlank(pipelineId)) {
             throw new FcliSimpleException(

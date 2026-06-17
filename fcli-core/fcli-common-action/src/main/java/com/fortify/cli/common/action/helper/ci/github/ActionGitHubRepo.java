@@ -77,7 +77,8 @@ public class ActionGitHubRepo {
             @SpelFunctionParam(name="body", desc="pull request description (Markdown supported)") String body) {
         return repo.createPullRequest(title, head, base, body);
     }
-            @SpelFunction(cat=ci, desc="(PREVIEW) Adds a review comment on a specific file and line in the pull request detected from the workflow run. This function is not yet used by any built-in fcli actions; signature and implementation may change in future fcli versions based on new insights as to how to best integrate this functionality into fcli built-in actions.",
+    
+    @SpelFunction(cat=ci, desc="(PREVIEW) Adds a review comment on a specific file and line in the pull request detected from the workflow run. This function is not yet used by any built-in fcli actions; signature and implementation may change in future fcli versions based on new insights as to how to best integrate this functionality into fcli built-in actions.",
             returns="Created review comment object")
     public ObjectNode addReviewComment(
             @SpelFunctionParam(name="path", desc="file path relative to repository root") String path,

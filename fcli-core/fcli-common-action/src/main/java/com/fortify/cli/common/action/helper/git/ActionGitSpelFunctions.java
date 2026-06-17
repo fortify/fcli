@@ -83,9 +83,7 @@ public class ActionGitSpelFunctions {
         FileRepositoryBuilder builder = new FileRepositoryBuilder().findGitDir(dir);
         if (builder.getGitDir() == null) { return null; }
         try (Repository repo = builder.build()) {
-            log.debug("localRepo: Processing sourceDir={}", sourceDir);
             var mapper = JsonHelper.getObjectMapper();
-
             var remote = selectRemote(repo);
             var remoteUrl = remote == null ? "origin" : repo.getConfig().getString("remote", remote, "url");
             var names = deriveRepoNames(dir.getName(), remoteUrl);
@@ -161,7 +159,6 @@ public class ActionGitSpelFunctions {
             }
             return root;
         } catch (Exception e) { 
-            log.debug("localRepo failed for {}", sourceDir, e);
             return null; 
         }
     }
@@ -172,17 +169,14 @@ public class ActionGitSpelFunctions {
             @SpelFunctionParam(name="sourceDir", desc="directory inside a git working tree") String sourceDir) {
         try (var git = openGit(sourceDir)) {
             if (git == null) { return false; }
-            log.debug("hasChanges: Checking for uncommitted changes in sourceDir={}", sourceDir);
             var status = git.status().call();
             boolean hasChanges = !status.getModified().isEmpty()
                 || !status.getAdded().isEmpty()
                 || !status.getRemoved().isEmpty()
                 || !status.getUntracked().isEmpty()
                 || !status.getChanged().isEmpty();
-            log.debug("hasChanges: {} → {}", sourceDir, hasChanges);
             return hasChanges;
         } catch (Exception e) {
-            log.debug("hasChanges error for {}", sourceDir, e);
             return false;
         }
     }
@@ -207,8 +201,6 @@ public class ActionGitSpelFunctions {
             if (!branchName.equals(current)) {
                 throw new FcliSimpleException("Failed to checkout branch " + branchName);
             }
-            
-            log.info("Created and checked out branch: {}", branchName);
             return branchName;
         } catch (GitAPIException | IOException e) {
             throw new FcliSimpleException("Failed to create branch: " + e.getMessage());
@@ -223,13 +215,7 @@ public class ActionGitSpelFunctions {
             if (git == null) {
                 throw new FcliSimpleException("Not a git repository: " + sourceDir);
             }
-            // //stage new files
-            // git.add().addFilepattern(".").call();
-
-            //stage modified files (git add with update=true will stage modifications and deletions, but not new untracked files, which is why we call add twice)
             git.add().setUpdate(true).addFilepattern(".").call();
-
-            log.info("Staged all changes in: {}", sourceDir);
             return true;
         } catch (GitAPIException e) {
             throw new FcliSimpleException("Failed to stage files: " + e.getMessage());
@@ -259,7 +245,6 @@ public class ActionGitSpelFunctions {
                 .setCommitter(name, email) 
                 .call();
             var sha = commitResult.getId().getName();
-            log.info("Committed changes: {}", sha);
             return sha;
         } catch (GitAPIException e) {
             throw new FcliSimpleException("Failed to commit: " + e.getMessage());
@@ -274,35 +259,16 @@ public class ActionGitSpelFunctions {
     public String push(
             @SpelFunctionParam(name = "sourceDir", desc = "directory inside a git working tree") String sourceDir,
             @SpelFunctionParam(name = "branchName", desc = "name of the branch to push") String branchName) {
-        
-        log.info("PUSH DEBUG: JGit version = {}",
-            org.eclipse.jgit.lib.Constants.class
-                .getPackage()
-                .getImplementationVersion());
-
-        
-        log.info("PUSH DEBUG: JGit loaded from = {}",
-            org.eclipse.jgit.lib.GcConfig.class
-                .getProtectionDomain()
-                .getCodeSource()
-                .getLocation());
-
         try (var git = openGit(sourceDir)) {
             if (git == null) {
                 throw new FcliSimpleException("Not a git repository: " + sourceDir);
             }
-
             var repo = git.getRepository();
-
-            // ✅ Select remote
             var remote = selectRemote(repo);
             if (remote == null) remote = "origin";
-
-            // ✅ Ensure branch checkout (handles detached HEAD) 
             try {
                 git.checkout().setName(branchName).call();
             } catch (Exception e) {
-                // fallback: recreate branch
                 git.checkout()
                     .setCreateBranch(true)
                     .setName(branchName)
@@ -310,49 +276,32 @@ public class ActionGitSpelFunctions {
                     .call();
             }
 
-            // ✅ Get and fix remote URL
             var remoteUrl = repo.getConfig().getString("remote", remote, "url");
             if (remoteUrl != null && !remoteUrl.endsWith(".git")) {
                 remoteUrl = remoteUrl + ".git";
                 repo.getConfig().setString("remote", remote, "url", remoteUrl);
                 repo.getConfig().save();
             }
-
-            log.info("PUSH DEBUG: remote={}", remote);
-            log.info("PUSH DEBUG: remoteUrl={}", remoteUrl);
-            log.info("PUSH DEBUG: branchName={}", branchName);
-
-            // ✅ Detect credentials
             CredentialsProvider credentialsProvider = detectCredentialsProvider();
-            // ✅ Force GitHub token explicitly (stronger than relying only on helper)
             var token = System.getenv("GITHUB_TOKEN");
-            log.info("PUSH DEBUG: GITHUB_TOKEN present={}", token != null);
 
             if (token != null) {
-                log.info("PUSH DEBUG: Overriding credentials with explicit GITHUB_TOKEN");
                 credentialsProvider = new UsernamePasswordCredentialsProvider("x-access-token", token);
             }
 
             if (credentialsProvider == null) {
-                log.warn("PUSH DEBUG: No credentials provider detected - push will likely fail");
+                log.debug("PUSH DEBUG: No credentials provider detected - push will likely fail");
             } else {
-                log.info("PUSH DEBUG: Using credentials provider={}", credentialsProvider.getClass().getName());
+                log.debug("PUSH DEBUG: Using credentials provider={}", credentialsProvider.getClass().getName());
             }
-
-            // ✅ Prepare refspec
             String fullBranchRef = "refs/heads/" + branchName;
             var refSpec = new RefSpec(fullBranchRef + ":" + fullBranchRef);
 
-            log.info("PUSH DEBUG: refSpec={}", fullBranchRef);
-
-            // ✅ Fetch with credentials (important for CI consistency)
             var fetchCmd = git.fetch().setRemote(remote);
             if (credentialsProvider != null) {
                 fetchCmd.setCredentialsProvider(credentialsProvider);
             }
             fetchCmd.call();
-
-            // ✅ Push (NO pushAll)
             var pushCmd = git.push()
                 .setRemote(remote)
                 .setRefSpecs(refSpec)
@@ -361,34 +310,18 @@ public class ActionGitSpelFunctions {
             if (credentialsProvider != null) {
                 pushCmd.setCredentialsProvider(credentialsProvider);
             }
-
             var results = pushCmd.call();
 
-            // ✅ Set upstream AFTER successful push
             StoredConfig config = repo.getConfig();
             config.setString("branch", branchName, "remote", remote);
             config.setString("branch", branchName, "merge", fullBranchRef);
             config.save();
 
             boolean success = false;
-
             for (var result : results) {
-                log.info("PUSH DEBUG: --- PushResult Start ---");
-
                 var messages = result.getMessages();
-                if (!StringUtils.isBlank(messages)) {
-                    log.warn("PUSH DEBUG: Remote messages:\n{}", messages);
-                }
-
                 for (var update : result.getRemoteUpdates()) {
                     var status = update.getStatus();
-
-                    log.info("PUSH DEBUG: Update remoteName={}", update.getRemoteName());
-                    log.info("PUSH DEBUG: Update status={}", status);
-                    log.info("PUSH DEBUG: Update srcRef={}", update.getSrcRef());
-                    log.info("PUSH DEBUG: Update dstRef={}", update.getRemoteName());
-                    log.info("PUSH DEBUG: Update message={}", update.getMessage());
-
                     switch (status) {
                         case OK:
                         case UP_TO_DATE:
@@ -410,27 +343,17 @@ public class ActionGitSpelFunctions {
                             );
                     }
                 }
-
-                log.info("PUSH DEBUG: --- PushResult End ---");
             }
 
             if (!success) {
                 throw new FcliSimpleException("Push completed but no refs were updated (likely auth or permission issue)");
             }
-
-            log.info("Successfully pushed branch: {}", branchName);
             return fullBranchRef;
-
         } catch (Exception e) {
-            // ✅ Deep root cause extraction
             Throwable root = e;
             while (root.getCause() != null) {
                 root = root.getCause();
             }
-
-            log.error("PUSH DEBUG: Root cause type={}", root.getClass().getName());
-            log.error("PUSH DEBUG: Root cause message={}", root.getMessage(), root);
-
             throw new FcliSimpleException(
                 "Failed to push (root cause): " + root.getClass().getName() + " - " + root.getMessage(),
                 e
@@ -441,32 +364,23 @@ public class ActionGitSpelFunctions {
     @SpelFunction(cat=util, desc="Detects the repository owner from CI environment variables. Checks GITHUB_REPOSITORY_OWNER (GitHub), CI_PROJECT_NAMESPACE (GitLab), BUILD_REPOSITORY_ID (Azure DevOps), or BITBUCKET_WORKSPACE (Bitbucket). Returns null if not running in a supported CI system.",
             returns="The repository owner/namespace or null if not detectable")
     public String ciRepositoryOwner() {
-        // GitHub Actions
         var owner = EnvHelper.env("GITHUB_REPOSITORY_OWNER");
         if (StringUtils.isNotBlank(owner)) {
-            log.debug("ciRepositoryOwner: Detected from GITHUB_REPOSITORY_OWNER={}", owner);
             return owner;
         }
-        // GitLab CI
         owner = EnvHelper.env("CI_PROJECT_NAMESPACE");
         if (StringUtils.isNotBlank(owner)) {
-            log.debug("ciRepositoryOwner: Detected from CI_PROJECT_NAMESPACE={}", owner);
             return owner;
         }
-        // Azure DevOps
         var buildRepoId = EnvHelper.env("BUILD_REPOSITORY_ID");
         owner = EnvHelper.env("SYSTEM_TEAMPROJECT");
         if (StringUtils.isNotBlank(buildRepoId) && StringUtils.isNotBlank(owner)) {
-            log.debug("ciRepositoryOwner: Detected from Azure DevOps SYSTEM_TEAMPROJECT={}", owner);
             return owner;
         }
-        // Bitbucket Pipelines
         owner = EnvHelper.env("BITBUCKET_WORKSPACE");
         if (StringUtils.isNotBlank(owner)) {
-            log.debug("ciRepositoryOwner: Detected from BITBUCKET_WORKSPACE={}", owner);
             return owner;
         }
-        log.debug("ciRepositoryOwner: No CI environment detected, returning null");
         return null;
     }
 
@@ -474,13 +388,10 @@ public class ActionGitSpelFunctions {
             returns="The default branch name (e.g. 'main', 'master', 'develop') or null if not detectable")
     public String defaultBranch(
             @SpelFunctionParam(name="sourceDir", desc="directory inside a git working tree") String sourceDir) {
-        // GitLab CI provides CI_DEFAULT_BRANCH
         var defaultBranch = EnvHelper.env("CI_DEFAULT_BRANCH");
         if (StringUtils.isNotBlank(defaultBranch)) {
-            log.debug("defaultBranch: Detected from CI_DEFAULT_BRANCH={}", defaultBranch);
             return defaultBranch;
         }
-        // Try reading from local git remote HEAD (set by git clone)
         try (var git = openGit(sourceDir)) {
             if (git == null) { return null; }
             var repo = git.getRepository();
@@ -489,7 +400,6 @@ public class ActionGitSpelFunctions {
                 var ref = repo.exactRef("refs/remotes/origin/HEAD");
                 if (ref != null && ref.getTarget() != null) {
                     var target = ref.getTarget().getName();
-                    // target is like refs/remotes/origin/main
                     if (target.startsWith("refs/remotes/origin/")) {
                         return target.substring("refs/remotes/origin/".length());
                     }
