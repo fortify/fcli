@@ -15,8 +15,8 @@ package com.fortify.cli.license.ncd_report.descriptor;
 import org.apache.commons.lang3.StringUtils;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.json.JsonNodeHolder;
+import com.fortify.cli.license.ncd_report.helper.NcdReportContributorHelper;
 
 /**
  * <p>Describe a commit author. Implementations must at least
@@ -38,27 +38,8 @@ public interface INcdReportAuthorDescriptor {
     String getEmail();
     
     public default ObjectNode toExpressionInput() {
-        var name = StringUtils.defaultIfBlank(getName(), "");
-        var email = StringUtils.defaultIfBlank(getEmail(), "");
-        var lcName = name.toLowerCase();
-        var lcEmail = email.toLowerCase();
-        var lcEmailDomain = StringUtils.substringAfter(lcEmail, "@");
-        var lcEmailName = StringUtils.substringBefore(lcEmail, "@");
-        var cleanName = lcName.replaceAll("[^a-z]", "");
-        // Remove all special characters, then remove leading digits unless remaining string contains only digits
-        // TODO Any better way of doing this instead of having to iterate through the string 3 times?
-        var cleanEmailName = lcEmailName.replaceAll("[^a-z0-9]", "");
-        if ( !cleanEmailName.matches("[0-9]+") ) {
-            cleanEmailName = cleanEmailName.replaceAll("^[0-9]+", "");
-        }
-        return JsonHelper.getObjectMapper().createObjectNode()
-            .put("name", name)
-            .put("email", email)
-            .put("lcName", lcName)
-            .put("lcEmail", lcEmail)
-            .put("lcEmailDomain", lcEmailDomain)
-            .put("lcEmailName", lcEmailName)
-            .put("cleanName", cleanName)
-            .put("cleanEmailName", cleanEmailName);
+        return NcdReportContributorHelper.createExpressionInput(
+                StringUtils.defaultIfBlank(getName(), ""),
+                StringUtils.defaultIfBlank(getEmail(), ""));
     }
 }

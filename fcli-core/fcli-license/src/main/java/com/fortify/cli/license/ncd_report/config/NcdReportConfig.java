@@ -41,7 +41,7 @@ public class NcdReportConfig implements IReportSourceSupplierConfig<NcdReportCon
     
     @Override
     public final Collection<INcdReportSourceConfig> getSourceConfigs() {
-        return sources.getSourceConfigs();
+        return sources == null ? java.util.List.of() : sources.getSourceConfigs();
     }
     
     /**

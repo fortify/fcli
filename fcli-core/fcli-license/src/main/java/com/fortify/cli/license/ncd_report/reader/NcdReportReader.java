@@ -19,12 +19,18 @@ import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.MappingIterator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.dataformat.csv.CsvMapper;
+import com.fasterxml.jackson.dataformat.csv.CsvSchema;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -32,6 +38,7 @@ import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.exception.FcliTechnicalException;
 import com.fortify.cli.license.ncd_report.config.NcdReportConfig;
 import com.fortify.cli.license.ncd_report.config.NcdReportContributorConfig;
+import com.fortify.cli.license.ncd_report.helper.NcdReportContributorHelper;
 
 import lombok.Getter;
 
@@ -40,6 +47,7 @@ import lombok.Getter;
  * command. Supports both report directory and report zip input formats.
  */
 public final class NcdReportReader implements AutoCloseable {
+    private static final CsvMapper CSV_MAPPER = new CsvMapper();
     private static final ObjectMapper YAML_MAPPER = createYamlMapper();
 
     @Getter private final Path reportPath;
@@ -101,6 +109,25 @@ public final class NcdReportReader implements AutoCloseable {
             return YAML_MAPPER.readValue(is, ObjectNode.class);
         } catch ( Exception e ) {
             throw new FcliTechnicalException(String.format("Error reading summary.txt from %s", reportPath), e);
+        }
+    }
+
+    public List<Map<String, String>> readContributors() {
+        try ( var csvReader = bufferedReader("contributors.csv") ) {
+            var schema = CsvSchema.emptySchema().withHeader();
+            MappingIterator<Map<String, String>> iterator = CSV_MAPPER
+                    .readerFor(new TypeReference<Map<String, String>>() {})
+                    .with(schema)
+                    .readValues(csvReader);
+            var result = new ArrayList<Map<String, String>>();
+            while ( iterator.hasNext() ) {
+                var row = iterator.next();
+                NcdReportContributorHelper.normalizeContributorRow(row);
+                result.add(row);
+            }
+            return result;
+        } catch ( Exception e ) {
+            throw new FcliSimpleException("Error reading contributors.csv from %s:\n\tMessage: %s", reportPath, e.getMessage());
         }
     }
 

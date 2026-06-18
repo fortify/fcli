@@ -13,23 +13,17 @@
 package com.fortify.cli.license.ncd_report.cli.cmd;
 
 import java.io.BufferedWriter;
-import java.math.BigInteger;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
@@ -45,7 +39,6 @@ import com.fasterxml.jackson.dataformat.csv.CsvSchema;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.fortify.cli.common.exception.FcliBugException;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.exception.FcliTechnicalException;
 import com.fortify.cli.common.json.JsonHelper;
@@ -57,7 +50,9 @@ import com.fortify.cli.common.util.DisableTest;
 import com.fortify.cli.common.util.DisableTest.TestType;
 import com.fortify.cli.license.ncd_report.config.NcdReportConfig;
 import com.fortify.cli.license.ncd_report.config.NcdReportContributorConfig;
+import com.fortify.cli.license.ncd_report.helper.NcdReportContributorHelper;
 import com.fortify.cli.license.ncd_report.reader.NcdReportReader;
+import com.fortify.cli.license.ncd_report.validator.NcdReportValidator;
 
 import lombok.Getter;
 import picocli.CommandLine.Command;
@@ -68,7 +63,6 @@ import picocli.CommandLine.Option;
 public final class NcdReportMergeCommand extends AbstractReportGenerateCommand {
     private static final ObjectMapper YAML_MAPPER = createYamlMapper();
     private static final CsvMapper CSV_MAPPER = new CsvMapper();
-    private static final Pattern CHECKSUM_LINE_PATTERN = Pattern.compile("^([0-9a-fA-F]{64})\\s+\\*?(.+)$");
     private static final List<String> DETAIL_FILE_NAMES = List.of(
             "details/repositories.csv",
             "details/commits-by-branch.csv",
@@ -107,7 +101,7 @@ public final class NcdReportMergeCommand extends AbstractReportGenerateCommand {
             usedSourceNames.add(sourceName);
             var sourceRef = "sources/" + sourceName;
             try ( var reader = new NcdReportReader(reportPath) ) {
-                checksumErrors.addAll(validateChecksums(reader));
+                checksumErrors.addAll(NcdReportValidator.validateChecksums(reader));
                 var config = reader.readConfig();
                 var sourceSummary = reader.readSummary();
                 var contributors = readContributors(reader, sourceRef);
@@ -122,79 +116,10 @@ public final class NcdReportMergeCommand extends AbstractReportGenerateCommand {
         return result;
     }
 
-    private List<String> validateChecksums(NcdReportReader reader) {
-        var result = new ArrayList<String>();
-        var checksumsPath = reader.entryPath("checksums.sha256");
-        if ( !java.nio.file.Files.exists(checksumsPath) ) {
-            result.add(String.format("%s: missing checksums.sha256", reader.getReportPath()));
-            return result;
-        }
-
-        var expectedByEntry = new HashMap<String, String>();
-        try ( var checksumsReader = reader.bufferedReader("checksums.sha256") ) {
-            String line;
-            int lineNumber = 0;
-            while ( (line = checksumsReader.readLine()) != null ) {
-                lineNumber++;
-                if ( StringUtils.isBlank(line) ) {
-                    continue;
-                }
-                var matcher = CHECKSUM_LINE_PATTERN.matcher(line.trim());
-                if ( !matcher.matches() ) {
-                    result.add(String.format("%s: checksums.sha256:%d invalid checksum format", reader.getReportPath(), lineNumber));
-                    continue;
-                }
-                var checksum = matcher.group(1).toUpperCase();
-                var entryName = matcher.group(2).trim();
-                if ( StringUtils.isBlank(entryName) ) {
-                    result.add(String.format("%s: checksums.sha256:%d missing entry name", reader.getReportPath(), lineNumber));
-                    continue;
-                }
-                expectedByEntry.put(entryName, checksum);
-            }
-        } catch ( Exception e ) {
-            result.add(String.format("%s: error reading checksums.sha256 (%s)", reader.getReportPath(), e.getMessage()));
-            return result;
-        }
-
-        var availableEntries = new HashSet<>(reader.listFileEntries());
-        availableEntries.remove("checksums.sha256");
-        for ( var entryName : availableEntries ) {
-            if ( !expectedByEntry.containsKey(entryName) ) {
-                result.add(String.format("%s: missing checksum entry for file %s", reader.getReportPath(), entryName));
-            }
-        }
-
-        expectedByEntry.forEach((entryName, expectedChecksum) -> {
-            var entryPath = reader.entryPath(entryName);
-            if ( !java.nio.file.Files.exists(entryPath) ) {
-                result.add(String.format("%s: checksum references missing file %s", reader.getReportPath(), entryName));
-                return;
-            }
-            try {
-                var actualChecksum = sha256(entryPath);
-                if ( !expectedChecksum.equalsIgnoreCase(actualChecksum) ) {
-                    result.add(String.format(
-                        "%s: checksum mismatch for %s (expected %s, actual %s)",
-                        reader.getReportPath(), entryName, expectedChecksum, actualChecksum));
-                }
-            } catch ( Exception e ) {
-                result.add(String.format("%s: error calculating checksum for %s (%s)", reader.getReportPath(), entryName, e.getMessage()));
-            }
-        });
-        return result;
-    }
-
     private List<ContributorRecord> readContributors(NcdReportReader reader, String sourceRef) {
-        try ( var csvReader = reader.bufferedReader("contributors.csv") ) {
-            var schema = CsvSchema.emptySchema().withHeader();
-            MappingIterator<Map<String, String>> iterator = CSV_MAPPER
-                    .readerFor(new TypeReference<Map<String, String>>() {})
-                    .with(schema)
-                    .readValues(csvReader);
+        try {
             var result = new ArrayList<ContributorRecord>();
-            while ( iterator.hasNext() ) {
-                var row = iterator.next();
+            for ( var row : reader.readContributors() ) {
                 result.add(ContributorRecord.fromRow(row, sourceRef));
             }
             return result;
@@ -575,30 +500,6 @@ public final class NcdReportMergeCommand extends AbstractReportGenerateCommand {
         return mapper;
     }
 
-    private static String computeAuthorId(ObjectNode expressionInput) {
-        var cleanName = expressionInput.path("cleanName").asText("");
-        var cleanEmailName = expressionInput.path("cleanEmailName").asText("");
-        var input = cleanName + ":" + cleanEmailName;
-        try {
-            var digest = MessageDigest.getInstance("SHA-256");
-            var hash = digest.digest(input.getBytes(StandardCharsets.UTF_8));
-            return String.format("%032x", new BigInteger(1, hash)).substring(0, 16);
-        } catch ( NoSuchAlgorithmException e ) {
-            throw new FcliBugException("SHA-256 not available", e);
-        }
-    }
-
-    private static String sha256(Path path) {
-        try {
-            byte[] hash = MessageDigest.getInstance("SHA-256").digest(java.nio.file.Files.readAllBytes(path));
-            return String.format("%064X", new BigInteger(1, hash));
-        } catch ( NoSuchAlgorithmException e ) {
-            throw new FcliBugException("SHA-256 not available", e);
-        } catch ( Exception e ) {
-            throw new FcliTechnicalException(String.format("Error calculating checksum for %s", path), e);
-        }
-    }
-
     private static final class ContributorRecord {
         private final String authorName;
         private final String authorEmail;
@@ -622,7 +523,7 @@ public final class NcdReportMergeCommand extends AbstractReportGenerateCommand {
             this.sourceContributionStatus = sourceContributionStatus;
             this.sourceContributingAuthorNumber = sourceContributingAuthorNumber;
             this.expressionInput = expressionInput;
-            this.authorId = computeAuthorId(expressionInput);
+            this.authorId = NcdReportContributorHelper.computeAuthorId(expressionInput);
             this.authorState = "processed";
             this.authorNumber = -1;
             this.contributionStatus = "contributing";
@@ -634,7 +535,7 @@ public final class NcdReportMergeCommand extends AbstractReportGenerateCommand {
             String authorEmail = StringUtils.defaultString(row.get("authorEmail"));
             String sourceContributionStatus = StringUtils.defaultString(row.get("contributionStatus"));
             int sourceContributingAuthorNumber = parseInt(row.get("contributingAuthorNumber"), -1);
-            ObjectNode expressionInput = createExpressionInput(authorName, authorEmail);
+            ObjectNode expressionInput = NcdReportContributorHelper.createExpressionInput(authorName, authorEmail);
             return new ContributorRecord(authorName, authorEmail, sourceReport, sourceContributionStatus, sourceContributingAuthorNumber, expressionInput);
         }
 
@@ -707,28 +608,6 @@ public final class NcdReportMergeCommand extends AbstractReportGenerateCommand {
         void contributingAuthorNumber(int contributingAuthorNumber) {
             this.contributingAuthorNumber = contributingAuthorNumber;
         }
-
-        private static ObjectNode createExpressionInput(String name, String email) {
-            var lcName = StringUtils.defaultString(name).toLowerCase();
-            var lcEmail = StringUtils.defaultString(email).toLowerCase();
-            var lcEmailDomain = StringUtils.substringAfter(lcEmail, "@");
-            var lcEmailName = StringUtils.substringBefore(lcEmail, "@");
-            var cleanName = lcName.replaceAll("[^a-z]", "");
-            var cleanEmailName = lcEmailName.replaceAll("[^a-z0-9]", "");
-            if ( !cleanEmailName.matches("[0-9]+") ) {
-                cleanEmailName = cleanEmailName.replaceAll("^[0-9]+", "");
-            }
-            return JsonHelper.getObjectMapper().createObjectNode()
-                    .put("name", StringUtils.defaultString(name))
-                    .put("email", StringUtils.defaultString(email))
-                    .put("lcName", lcName)
-                    .put("lcEmail", lcEmail)
-                    .put("lcEmailDomain", lcEmailDomain)
-                    .put("lcEmailName", lcEmailName)
-                    .put("cleanName", cleanName)
-                    .put("cleanEmailName", cleanEmailName);
-        }
-
         private static int parseInt(String value, int defaultValue) {
             try {
                 return Integer.parseInt(StringUtils.defaultIfBlank(value, String.valueOf(defaultValue)));
