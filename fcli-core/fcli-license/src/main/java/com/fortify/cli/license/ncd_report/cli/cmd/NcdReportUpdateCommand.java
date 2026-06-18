@@ -195,8 +195,7 @@ public final class NcdReportUpdateCommand extends AbstractRunnableCommand {
     private List<String> validateAndApplyUpdates(List<Map<String, String>> updates, List<Map<String, String>> contributors) {
         var warnings = new ArrayList<String>();
         var contributersByAuthorId = contributors.stream()
-                .collect(Collectors.toMap(c -> c.getOrDefault(NcdReportContributorsCsvSchema.AUTHOR_ID, ""), c -> c));
-        var actualCsvFields = contributors.isEmpty() ? Set.<String>of() : contributors.get(0).keySet();
+                .collect(Collectors.groupingBy(c -> c.getOrDefault(NcdReportContributorsCsvSchema.AUTHOR_ID, "")));
 
         for ( var update : updates ) {
             var authorId = StringUtils.defaultString(update.get(NcdReportContributorsCsvSchema.AUTHOR_ID)).trim();
@@ -205,8 +204,8 @@ public final class NcdReportUpdateCommand extends AbstractRunnableCommand {
                 continue;
             }
 
-            var contributor = contributersByAuthorId.get(authorId);
-            if ( contributor == null ) {
+            var matchingContributors = contributersByAuthorId.get(authorId);
+            if ( matchingContributors == null ) {
                 String msg = String.format("Unknown authorId '%s' in update", authorId);
                 if ( onUnknownAuthor == OnUnknownAuthor.fail ) {
                     throw new FcliSimpleException(msg);
@@ -217,50 +216,54 @@ public final class NcdReportUpdateCommand extends AbstractRunnableCommand {
                 continue;
             }
 
-            for ( var entry : update.entrySet() ) {
-                var field = entry.getKey();
-                var value = StringUtils.defaultString(entry.getValue()).trim();
-                
-                if ( field.equals(NcdReportContributorsCsvSchema.AUTHOR_ID) || StringUtils.isBlank(field) ) {
-                    continue;
-                }
+            for ( var contributor : matchingContributors ) {
+                for ( var entry : update.entrySet() ) {
+                    var field = entry.getKey();
+                    var value = StringUtils.defaultString(entry.getValue()).trim();
 
-                if ( NcdReportContributorsCsvSchema.IMMUTABLE_FIELDS.contains(field) ) {
-                    var existingValue = StringUtils.defaultString(contributor.get(field));
-                    if ( !existingValue.equals(value) && !StringUtils.isBlank(value) ) {
-                        warnings.add(String.format("authorId %s: immutable field '%s' in update mismatches report value; ignoring", authorId, field));
-                    }
-                    continue;
-                }
-
-                if ( !NcdReportContributorsCsvSchema.UPDATABLE_FIELDS.contains(field) ) {
-                    warnings.add(String.format("authorId %s: unknown field '%s'; ignoring", authorId, field));
-                    continue;
-                }
-
-                if ( NcdReportContributorsCsvSchema.OVERRIDDEN_STATUS.equals(field) ) {
-                    if ( StringUtils.isBlank(value) ) {
-                        contributor.put(field, "");
+                    if ( field.equals(NcdReportContributorsCsvSchema.AUTHOR_ID) || StringUtils.isBlank(field) ) {
                         continue;
                     }
-                    if ( !VALID_OVERRIDDEN_STATUSES.contains(value) ) {
-                        warnings.add(String.format("authorId %s: invalid overriddenStatus '%s'; ignoring", authorId, value));
-                        continue;
-                    }
-                }
 
-                if ( NcdReportContributorsCsvSchema.AI_DUPLICATE_OF.equals(field) ) {
-                    if ( !StringUtils.isBlank(value) && !contributersByAuthorId.containsKey(value) ) {
-                        warnings.add(String.format("authorId %s: aiDuplicateOf references unknown authorId '%s'; ignoring", authorId, value));
+                    if ( NcdReportContributorsCsvSchema.IMMUTABLE_FIELDS.contains(field) ) {
+                        if ( matchingContributors.size() == 1 ) {
+                            var existingValue = StringUtils.defaultString(contributor.get(field));
+                            if ( !existingValue.equals(value) && !StringUtils.isBlank(value) ) {
+                                warnings.add(String.format("authorId %s: immutable field '%s' in update mismatches report value; ignoring", authorId, field));
+                            }
+                        }
                         continue;
                     }
-                    if ( authorId.equals(value) ) {
-                        warnings.add(String.format("authorId %s: aiDuplicateOf cannot reference self; ignoring", authorId));
-                        continue;
-                    }
-                }
 
-                contributor.put(field, value);
+                    if ( !NcdReportContributorsCsvSchema.UPDATABLE_FIELDS.contains(field) ) {
+                        warnings.add(String.format("authorId %s: unknown field '%s'; ignoring", authorId, field));
+                        continue;
+                    }
+
+                    if ( NcdReportContributorsCsvSchema.OVERRIDDEN_STATUS.equals(field) ) {
+                        if ( StringUtils.isBlank(value) ) {
+                            contributor.put(field, "");
+                            continue;
+                        }
+                        if ( !VALID_OVERRIDDEN_STATUSES.contains(value) ) {
+                            warnings.add(String.format("authorId %s: invalid overriddenStatus '%s'; ignoring", authorId, value));
+                            continue;
+                        }
+                    }
+
+                    if ( NcdReportContributorsCsvSchema.AI_DUPLICATE_OF.equals(field) ) {
+                        if ( !StringUtils.isBlank(value) && !contributersByAuthorId.containsKey(value) ) {
+                            warnings.add(String.format("authorId %s: aiDuplicateOf references unknown authorId '%s'; ignoring", authorId, value));
+                            continue;
+                        }
+                        if ( authorId.equals(value) ) {
+                            warnings.add(String.format("authorId %s: aiDuplicateOf cannot reference self; ignoring", authorId));
+                            continue;
+                        }
+                    }
+
+                    contributor.put(field, value);
+                }
             }
         }
 
