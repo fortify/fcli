@@ -90,6 +90,8 @@ class NcdReportSpec extends FcliBaseSpec {
     // ===== Mock Source Tests =====
     
     @Shared @TestResource("runtime/report/ncd-report-mock.yml") String mockConfigFile;
+    @Shared @TestResource("runtime/report/mock-authors.json") String mockAuthorsJson;
+    @Shared @TestResource("runtime/report/mock-authors.csv") String mockAuthorsCsv;
     @Shared @TempDir("ncd-report-mock") String mockReportDir;
     @Shared @TempFile("ncd-report-mock.zip") String mockReportZip;
     
@@ -269,26 +271,26 @@ class NcdReportSpec extends FcliBaseSpec {
     def "mock-datafile-json"() {
         def reportDir = tempPath("ncd-report-with-json-data")
         def configYaml = tempPath("ncd-report-json-data.yml")
-        def mockDataFile = "src/ftest/resources/runtime/report/mock-authors.json"
+        def mockDataFile = mockAuthorsJson
         
         when:
             // Create config that references JSON data file
             new File(configYaml).text = """
-contributor:
-  ignoreExpression: >
-    lcName matches '.*\\[bot\\]'
-  duplicateExpression: >
-    a1.cleanName==a2.cleanName ||
-    a1.cleanEmailName==a2.cleanEmailName ||
-    a1.cleanName==a2.cleanEmailName
-
-sources:
-  mock:
-    - repositoryCount: 1
-      authorsPerRepository: 2
-      commitsPerAuthor: 3
-      dataFile: ${mockDataFile}
-"""
+|contributor:
+|  ignoreExpression: >
+|    lcName matches '.*\\[bot\\]'
+|  duplicateExpression: >
+|    a1.cleanName==a2.cleanName ||
+|    a1.cleanEmailName==a2.cleanEmailName ||
+|    a1.cleanName==a2.cleanEmailName
+|
+|sources:
+|  mock:
+|    - repositoryCount: 1
+|      authorsPerRepository: 2
+|      commitsPerAuthor: 3
+|      dataFile: "${mockDataFile}"
+""".stripMargin()
             
             def createArgs = "license ncd-report create -y -c ${configYaml} -d ${reportDir}"
             def result = Fcli.run(createArgs)
@@ -301,26 +303,26 @@ sources:
     def "mock-datafile-csv"() {
         def reportDir = tempPath("ncd-report-with-csv-data")
         def configYaml = tempPath("ncd-report-csv-data.yml")
-        def mockDataFile = "src/ftest/resources/runtime/report/mock-authors.csv"
+        def mockDataFile = mockAuthorsCsv
         
         when:
             // Create config that references CSV data file
             new File(configYaml).text = """
-contributor:
-  ignoreExpression: >
-    lcName matches '.*\\[bot\\]'
-  duplicateExpression: >
-    a1.cleanName==a2.cleanName ||
-    a1.cleanEmailName==a2.cleanEmailName ||
-    a1.cleanName==a2.cleanEmailName
-
-sources:
-  mock:
-    - repositoryCount: 1
-      authorsPerRepository: 2
-      commitsPerAuthor: 3
-      dataFile: ${mockDataFile}
-"""
+|contributor:
+|  ignoreExpression: >
+|    lcName matches '.*\\[bot\\]'
+|  duplicateExpression: >
+|    a1.cleanName==a2.cleanName ||
+|    a1.cleanEmailName==a2.cleanEmailName ||
+|    a1.cleanName==a2.cleanEmailName
+|
+|sources:
+|  mock:
+|    - repositoryCount: 1
+|      authorsPerRepository: 2
+|      commitsPerAuthor: 3
+|      dataFile: "${mockDataFile}"
+""".stripMargin()
             
             def createArgs = "license ncd-report create -y -c ${configYaml} -d ${reportDir}"
             def result = Fcli.run(createArgs)
