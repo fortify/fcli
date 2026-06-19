@@ -1,4 +1,4 @@
-﻿# yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-dev-2.x.json
+# yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-dev-2.x.json
 author: Fortify
 usage:
   header: Create a pull request or merge request on GitHub or GitLab
