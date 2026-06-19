@@ -61,6 +61,7 @@ import com.fortify.cli.common.concurrent.job.AsyncJobManager;
 import com.fortify.cli.common.concurrent.job.cli.mixin.AsyncJobManagerMixin;
 import com.fortify.cli.common.exception.FcliBugException;
 import com.fortify.cli.common.exception.FcliSimpleException;
+import com.fortify.cli.common.http.ssl.trust.FcliTrustManager;
 import com.fortify.cli.common.mcp.MCPExclude;
 import com.fortify.cli.common.util.DateTimePeriodHelper;
 import com.fortify.cli.common.util.DateTimePeriodHelper.Period;
@@ -252,6 +253,7 @@ public class AiAssistMCPStartStdioCommand extends AbstractRunnableCommand implem
     }
 
     private <T> T withSharedExecutionContext(Supplier<T> supplier) {
+        FcliTrustManager.refreshIfChanged();
         try (var frame = FcliExecutionContextHolder.push(new FcliExecutionContext(sharedIsolationScope, new FcliActionState()))) {
             return supplier.get();
         }

@@ -14,6 +14,7 @@ package com.fortify.cli.common.http.ssl.truststore.helper;
 
 import java.nio.file.Path;
 
+import com.fortify.cli.common.http.ssl.trust.FcliTrustManager;
 import com.fortify.cli.common.util.FcliDataHelper;
 
 public final class TrustStoreConfigHelper {
@@ -29,11 +30,15 @@ public final class TrustStoreConfigHelper {
     public static final TrustStoreConfigDescriptor setTrustStoreConfig(TrustStoreConfigDescriptor descriptor) {
         Path trustStoreConfigPath = getTrustStoreConfigPath();
         FcliDataHelper.saveSecuredFile(trustStoreConfigPath, descriptor, true);
+        // Refresh trust manager for RPC/MCP servers.
+        FcliTrustManager.refresh();
         return descriptor;
     }
     
     public static final void clearTrustStoreConfig() {
         FcliDataHelper.deleteFile(getTrustStoreConfigPath(), true);
+        // Refresh trust manager for RPC/MCP servers.
+        FcliTrustManager.refresh();
     }
     
     private static final Path getTrustStoreConfigPath() {

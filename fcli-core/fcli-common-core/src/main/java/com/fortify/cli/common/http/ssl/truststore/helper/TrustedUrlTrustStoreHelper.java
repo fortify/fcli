@@ -45,6 +45,7 @@ import javax.net.ssl.X509TrustManager;
 
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.exception.FcliTechnicalException;
+import com.fortify.cli.common.http.ssl.trust.FcliTrustManager;
 import com.fortify.cli.common.util.FcliDataHelper;
 
 import lombok.AccessLevel;
@@ -66,6 +67,8 @@ public final class TrustedUrlTrustStoreHelper {
         var rootCertificate = selectRootCertificate(certificateChain);
         var descriptor = toDescriptor(target, sourceUrl, rootCertificate);
         FcliDataHelper.saveFile(getDescriptorPath(target.key()), descriptor, true);
+        // Refresh trust manager for RPC/MCP servers.
+        FcliTrustManager.refresh();
         return descriptor;
     }
 
@@ -77,6 +80,8 @@ public final class TrustedUrlTrustStoreHelper {
             throw new FcliSimpleException("No trusted URL found for "+target.url());
         }
         FcliDataHelper.deleteFile(descriptorPath, true);
+        // Refresh trust manager for RPC/MCP servers.
+        FcliTrustManager.refresh();
         return existing;
     }
 
@@ -91,8 +96,11 @@ public final class TrustedUrlTrustStoreHelper {
     }
 
     public static Stream<TrustedUrlCertificateDescriptor> clearTrustedUrls() {
-        return listTrustedUrls()
-            .peek(d->FcliDataHelper.deleteFile(getDescriptorPath(d.getKey()), true));
+        var descriptors = listTrustedUrls().toList();
+        descriptors.forEach(d->FcliDataHelper.deleteFile(getDescriptorPath(d.getKey()), true));
+        // Refresh trust manager for RPC/MCP servers.
+        FcliTrustManager.refresh();
+        return descriptors.stream();
     }
 
     public static KeyStore getTrustedUrlsKeyStore() {
