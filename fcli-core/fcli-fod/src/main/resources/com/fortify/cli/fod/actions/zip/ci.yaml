@@ -136,18 +136,29 @@ steps:
           - var.set: { postScan.skipReason: } # Reset postScan.skipReason to allow post-scan tasks to run
              
       APPLY_REMEDIATIONS:
-        cmd: ${#actionCmd('APPLY_REMEDIATIONS', 'fod', 'apply-remediations')} "--progress=none"
+        cmd: ${#fcliCmd('APPLY_REMEDIATIONS', 'fod aviator apply-remediations')} "--rel=${global.ci.rel}" "--source-dir=${global.ci.sourceDir}" "--progress=none"
         skip.if-reason:
-          - ${#actionCmdSkipFromEnvReason('APPLY_REMEDIATIONS', true)} # Skip unless DO_APPLY_REMEDIATIONS==true or APPLY_REMEDIATIONS_ACTION/EXTRA_OPTS defined
+          - ${#fcliCmdSkipFromEnvReason('APPLY_REMEDIATIONS', true)} # Skip unless DO_APPLY_REMEDIATIONS==true or APPLY_REMEDIATIONS_ACTION/EXTRA_OPTS defined
           - ${postScan.skipReason}                                     # Skip if no scans were run
           - ${#env('DO_AVIATOR_AUDIT')!='true'?'Aviator audit not enabled (DO_AVIATOR_AUDIT!=true), no remediations available':''} # Skip if Aviator audit was not enabled
           - ${SAST_WAIT.dependencySkipReason}                          # Skip if SAST scan/wait was skipped or failed
+        on.success:
+          - var.set: { remediationsApplied: 'true' }
 
       CREATE_PR:
-        cmd: "${#actionCmd('CREATE_PR', 'fod', 'create-pr')} --progress=none"
+        cmd: ${#actionCmd('CREATE_PR', '', 'action run commit-and-create-pr')} "--source-dir=${global.ci.sourceDir}" "--branch-prefix=aviator/remediations" "--progress=none"
         skip.if-reason:
           - ${#actionCmdSkipFromEnvReason('CREATE_PR', true)}  # Skip unless DO_CREATE_PR==true or CREATE_PR_EXTRA_OPTS defined
-          - ${APPLY_REMEDIATIONS.dependencySkipReason}         # Skip if APPLY_REMEDIATIONS was skipped or failed
+          - ${!remediationsApplied?'Apply remediations was skipped or failed, skipping PR creation':''}
+        on.success:
+          - if: ${CREATE_PR.variables.status=='success'}
+            log.info: "Pull/Merge Request successfully created: ${CREATE_PR.variables.prLink}"
+          - if: ${CREATE_PR.variables.status=='no_changes'}
+            log.info: "No changes detected - PR/MR creation skipped"
+          - if: ${CREATE_PR.variables.status=='no_pr_support'}
+            log.warn: "Branch created and pushed, but PR/MR creation not supported for ${CREATE_PR.variables.ciSystem}"
+          - if: ${CREATE_PR.variables.status=='error'}
+            log.warn: "PR/MR creation failed: ${CREATE_PR.variables.errorMessage}"
 
       CHECK_POLICY:
         cmd: ${#actionCmd('CHECK_POLICY', 'fod', 'check-policy')} "--rel=${global.ci.rel}" "--progress=none"
@@ -221,3 +232,7 @@ formatters:
     ${CHECK_POLICY.exitCode==0||CHECK_POLICY.exitCode==100?CHECK_POLICY.stdout:CHECK_POLICY.dependencySkipReason}
         
     ${RELEASE_SUMMARY.stdout}
+
+
+
+

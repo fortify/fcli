@@ -29,6 +29,7 @@ import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.formkiq.graalvm.annotations.Reflectable;
+import com.fortify.cli.common.action.helper.credential.CredentialsProviderFactory;
 import com.fortify.cli.common.ci.CiBranch;
 import com.fortify.cli.common.ci.CiCommit;
 import com.fortify.cli.common.ci.CiCommitId;
@@ -411,6 +412,30 @@ public class ActionGitSpelFunctions {
         return null;
     }
 
+
+    @SpelFunction(cat=util, desc="""
+            Detects the hosting platform of the repository by parsing the git remote URL.
+            Returns "github" for GitHub-hosted repositories (github.com or *.github.com),
+            "gitlab" for GitLab-hosted repositories (gitlab.com or hostnames containing "gitlab"),
+            and "unknown" for any other remote or when detection fails.
+            This is platform detection (where the repo lives), not CI detection (where the pipeline runs).
+            """,
+            returns="\"github\", \"gitlab\", or \"unknown\"")
+    public String repositoryPlatform(
+            @SpelFunctionParam(name="sourceDir", desc="directory inside a git working tree") String sourceDir) {
+        try (var git = openGit(sourceDir)) {
+            if (git == null) { return "unknown"; }
+            var repo = git.getRepository();
+            var remote = selectRemote(repo);
+            if (remote == null) { return "unknown"; }
+            var remoteUrl = repo.getConfig().getString("remote", remote, "url");
+            return detectPlatformFromUrl(remoteUrl);
+        } catch (Exception e) {
+            log.debug("Failed to detect repository platform", e);
+            return "unknown";
+        }
+    }
+
     private Git openGit(String sourceDir) {
         if (StringUtils.isBlank(sourceDir)) { return null; }
         try {
@@ -425,28 +450,7 @@ public class ActionGitSpelFunctions {
     }
 
     private CredentialsProvider detectCredentialsProvider() {
-        // GitHub Actions / GitHub CLI
-        var token = EnvHelper.env("GITHUB_TOKEN");
-        if (StringUtils.isBlank(token)) { token = EnvHelper.env("GH_TOKEN"); }
-        if (StringUtils.isNotBlank(token)) {
-            return new UsernamePasswordCredentialsProvider("x-access-token", token);
-        }
-        // GitLab CI
-        token = EnvHelper.env("CI_JOB_TOKEN");
-        if (StringUtils.isNotBlank(token)) {
-            return new UsernamePasswordCredentialsProvider("gitlab-ci-token", token);
-        }
-        // Azure DevOps
-        token = EnvHelper.env("SYSTEM_ACCESSTOKEN");
-        if (StringUtils.isNotBlank(token)) {
-            return new UsernamePasswordCredentialsProvider("", token);
-        }
-        // Bitbucket Pipelines
-        token = EnvHelper.env("BITBUCKET_TOKEN");
-        if (StringUtils.isNotBlank(token)) {
-            return new UsernamePasswordCredentialsProvider("x-token-auth", token);
-        }
-        return null;
+        return CredentialsProviderFactory.detectAndGetJGitProvider();
     }
 
     private static String selectRemote(Repository repo) {
@@ -482,5 +486,27 @@ public class ActionGitSpelFunctions {
         } catch (Exception e) {
             return new String[]{fallbackShort, null};
         }
+    }
+    private static String detectPlatformFromUrl(String remoteUrl) {
+        if (StringUtils.isBlank(remoteUrl)) { return "unknown"; }
+        try {
+            String host;
+            var cleaned = remoteUrl.trim();
+            if (cleaned.startsWith("git@")) {
+                // SSH: git@github.com:owner/repo.git
+                int colon = cleaned.indexOf(':');
+                int at = cleaned.indexOf('@');
+                host = (at >= 0 && colon > at) ? cleaned.substring(at + 1, colon) : null;
+            } else {
+                host = java.net.URI.create(cleaned).getHost();
+            }
+            if (host == null) { return "unknown"; }
+            host = host.toLowerCase();
+            if (host.equals("github.com") || host.endsWith(".github.com")) { return "github"; }
+            if (host.equals("gitlab.com") || host.contains("gitlab")) { return "gitlab"; }
+        } catch (Exception e) {
+            log.debug("Failed to parse remote URL for platform detection: {}", remoteUrl);
+        }
+        return "unknown";
     }
 }
