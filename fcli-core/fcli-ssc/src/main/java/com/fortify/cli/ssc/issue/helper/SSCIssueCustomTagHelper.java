@@ -37,19 +37,46 @@ import lombok.Setter;
 
 @RequiredArgsConstructor
 public class SSCIssueCustomTagHelper {
+
+    public interface ExtendPolicy {
+        boolean canExtend();
+
+        void throwExtendNotAllowedException(String tagName, String validValues);
+
+        record Enabled() implements ExtendPolicy {
+            public boolean canExtend() { return true; }
+            public void throwExtendNotAllowedException(String tagName, String validValues) {}
+        }
+
+        record Disabled(String optionName) implements ExtendPolicy {
+            public boolean canExtend() { return false; }
+            public void throwExtendNotAllowedException(String tagName, String validValues) {
+                String suffix = " Use " + optionName + " to add new values.";
+                if (validValues == null || validValues.isBlank()) {
+                    throw new FcliSimpleException("Custom tag '" + tagName + "' has no valid list values configured." + suffix);
+                }
+                throw new FcliSimpleException("Invalid value for custom tag '" + tagName + "'."
+                        + " Supported values: " + validValues + "." + suffix);
+            }
+        }
+
+        static ExtendPolicy enabled() { return new Enabled(); }
+        static ExtendPolicy disabled(String optionName) { return new Disabled(optionName); }
+    }
+
     private final UnirestInstance unirest;
     private final String appVersionId;
     
     @Getter(lazy = true) 
     private final Map<String, CustomTagInfo> customTagInfoMap = loadCustomTagInfo();
     
-    public List<SSCIssueCustomTagAuditValue> processCustomTags(Map<String,String> customTags, boolean extend) {
+    public List<SSCIssueCustomTagAuditValue> processCustomTags(Map<String,String> customTags, ExtendPolicy extendPolicy) {
         if (customTags == null || customTags.isEmpty()) {
             return List.of();
         }
         
         Map<String, CustomTagInfo> tagInfoMap = getCustomTagInfoMap();
-        customTags.forEach((tagName, tagValue) -> validateCustomTagValue(tagName, tagValue, tagInfoMap, extend));
+        customTags.forEach((tagName, tagValue) -> validateCustomTagValue(tagName, tagValue, tagInfoMap, extendPolicy));
         
         return customTags.entrySet().stream()
                 .map(entry -> {
@@ -59,36 +86,24 @@ public class SSCIssueCustomTagHelper {
                     if (tagInfo == null) {
                         throw new FcliSimpleException("Custom tag '" + tagName + "' is not available for this application version");
                     }
-                    return createAuditValue(tagName, tagValue, tagInfo, extend);
+                    return createAuditValue(tagName, tagValue, tagInfo, extendPolicy);
                 })
-                .collect(Collectors.toList());
+                .toList();
     }
 
-    private void validateCustomTagValue(String tagName, String tagValue, Map<String, CustomTagInfo> tagInfoMap, boolean extend) {
+    private void validateCustomTagValue(String tagName, String tagValue, Map<String, CustomTagInfo> tagInfoMap, ExtendPolicy extendPolicy) {
         CustomTagInfo tagInfo = tagInfoMap.get(tagName.toLowerCase());
         if (tagInfo == null) {
             throw new FcliSimpleException("Custom tag '" + tagName + "' is not available for this application version");
         }
 
         boolean isUnset = tagValue == null || tagValue.isBlank();
+        if (isUnset) return;
         switch (tagInfo.getValueType()) {
-            case TEXT:
-                return;
-            case DECIMAL:
-                if (!isUnset) {
-                    validateDecimalValue(tagName, tagValue);
-                }
-                return;
-            case DATE:
-                if (!isUnset) {
-                    processDateValue(tagValue, tagName);
-                }
-                return;
-            case LIST:
-                if (!isUnset) {
-                    validateListValue(tagName, tagValue, tagInfo, extend);
-                }
-                return;
+            case TEXT:    return;
+            case DECIMAL: validateDecimalValue(tagName, tagValue); return;
+            case DATE:    return;
+            case LIST:    validateListValue(tagName, tagValue, tagInfo, extendPolicy); return;
             default:
                 throw new FcliSimpleException("Unsupported custom tag value type: " + tagInfo.getValueType());
         }
@@ -102,7 +117,7 @@ public class SSCIssueCustomTagHelper {
         }
     }
 
-    private void validateListValue(String tagName, String value, CustomTagInfo tagInfo, boolean extend) {
+    private void validateListValue(String tagName, String value, CustomTagInfo tagInfo, ExtendPolicy extendPolicy) {
         var valueList = tagInfo.getValueList();
         if (valueList != null) {
             for (ValueListItem item : valueList) {
@@ -111,22 +126,24 @@ public class SSCIssueCustomTagHelper {
                 }
             }
         }
-        if (tagInfo.isExtensible() && extend) {
+        if (tagInfo.isExtensible() && extendPolicy.canExtend()) {
             return;
         }
-        String hint = tagInfo.isExtensible()
-                ? " Use --extend to add new values."
-                : " This tag is not extensible.";
-        if (valueList == null || valueList.isEmpty()) {
-            throw new FcliSimpleException("Custom tag '" + tagName + "' has no valid list values configured." + hint);
+        if (!tagInfo.isExtensible()) {
+            String hint = " This tag is not extensible.";
+            String validValues = valueList == null || valueList.isEmpty() ? null
+                    : valueList.stream().map(ValueListItem::getLookupValue).collect(Collectors.joining(", "));
+            if (validValues == null) {
+                throw new FcliSimpleException("Custom tag '" + tagName + "' has no valid list values configured." + hint);
+            }
+            throw new FcliSimpleException("Invalid value '" + value + "' for custom tag '" + tagName + "'."
+                    + " Supported values: " + validValues + "." + hint);
         }
-        String validValues = valueList.stream()
-                .map(ValueListItem::getLookupValue)
-                .collect(Collectors.joining(", "));
-        throw new FcliSimpleException("Invalid value '" + value + "' for custom tag '" + tagName + "'."
-                + " Supported values: " + validValues + "." + hint);
+        String validValues = valueList == null || valueList.isEmpty() ? null
+                : valueList.stream().map(ValueListItem::getLookupValue).collect(Collectors.joining(", "));
+        extendPolicy.throwExtendNotAllowedException(tagName, validValues);
     }
-    
+
     public void populateCustomTagUpdates(Map<String,String> customTags, ArrayNode customTagsArray) {
         if (customTags == null || customTags.isEmpty()) {
             return;
@@ -158,7 +175,6 @@ public class SSCIssueCustomTagHelper {
         if (value == null || value.isBlank()) {
             return null;
         }
-        
         if (tagInfo.getValueType() == SSCCustomTagValueType.LIST) {
             if (tagInfo.getValueList() != null) {
                 for (ValueListItem item : tagInfo.getValueList()) {
@@ -168,11 +184,10 @@ public class SSCIssueCustomTagHelper {
                 }
             }
         }
-        
         return null;
     }
     
-    private SSCIssueCustomTagAuditValue createAuditValue(String tagName, String value, CustomTagInfo tagInfo, boolean extend) {
+    private SSCIssueCustomTagAuditValue createAuditValue(String tagName, String value, CustomTagInfo tagInfo, ExtendPolicy extendPolicy) {
         String guid = tagInfo.getGuid();
         boolean isUnset = value == null || value.isBlank();
         switch (tagInfo.getValueType()) {
@@ -193,23 +208,27 @@ public class SSCIssueCustomTagHelper {
                 return SSCIssueCustomTagAuditValue.forDate(guid, dateValue);
             case LIST:
                 if (isUnset) return SSCIssueCustomTagAuditValue.forList(guid, -1);
-                Integer lookupIndex = getListValueIndex(value, tagName, tagInfo, extend);
+                Integer lookupIndex = getListValueIndex(value, tagName, tagInfo, extendPolicy);
                 return SSCIssueCustomTagAuditValue.forList(guid, lookupIndex);
             default:
                 throw new FcliSimpleException("Unsupported custom tag value type: " + tagInfo.getValueType());
         }
     }
     
-    private String processDateValue(String value, String tagName) {
+    private void validateDateFormat(String value, String tagName) {
         try {
-            LocalDate date = LocalDate.parse(value, DateTimeFormatter.ISO_LOCAL_DATE);
-            return date.format(DateTimeFormatter.ISO_LOCAL_DATE);
+            LocalDate.parse(value, DateTimeFormatter.ISO_LOCAL_DATE);
         } catch (DateTimeParseException e) {
             throw new FcliSimpleException("Invalid date format '" + value + "' for custom tag '" + tagName + "'. Expected format: yyyy-MM-dd");
         }
     }
+
+    private String processDateValue(String value, String tagName) {
+        validateDateFormat(value, tagName);
+        return LocalDate.parse(value, DateTimeFormatter.ISO_LOCAL_DATE).format(DateTimeFormatter.ISO_LOCAL_DATE);
+    }
     
-    private Integer getListValueIndex(String value, String tagName, CustomTagInfo tagInfo, boolean extend) {
+    private Integer getListValueIndex(String value, String tagName, CustomTagInfo tagInfo, ExtendPolicy extendPolicy) {
         var valueList = tagInfo.getValueList();
         if (valueList != null) {
             for (ValueListItem item : valueList) {
@@ -218,24 +237,27 @@ public class SSCIssueCustomTagHelper {
                 }
             }
         }
-        if (tagInfo.isExtensible() && extend) {
+        if (tagInfo.isExtensible() && extendPolicy.canExtend()) {
             return extendTagWithValue(tagInfo, value);
         }
-        String hint = tagInfo.isExtensible()
-                ? " Use --extend to add new values."
-                : " This tag is not extensible.";
-        if (valueList == null || valueList.isEmpty()) {
-            throw new FcliSimpleException("Custom tag '" + tagName + "' has no valid list values configured." + hint);
+        if (!tagInfo.isExtensible()) {
+            String hint = " This tag is not extensible.";
+            String validValues = valueList == null || valueList.isEmpty() ? null
+                    : valueList.stream().map(ValueListItem::getLookupValue).collect(Collectors.joining(", "));
+            if (validValues == null) {
+                throw new FcliSimpleException("Custom tag '" + tagName + "' has no valid list values configured." + hint);
+            }
+            throw new FcliSimpleException("Invalid value '" + value + "' for custom tag '" + tagName + "'."
+                    + " Supported values: " + validValues + "." + hint);
         }
-        String validValues = valueList.stream()
-                .map(ValueListItem::getLookupValue)
-                .collect(Collectors.joining(", "));
-        throw new FcliSimpleException("Invalid value '" + value + "' for custom tag '" + tagName + "'."
-                + " Supported values: " + validValues + "." + hint);
+        String validValues = valueList == null || valueList.isEmpty() ? null
+                : valueList.stream().map(ValueListItem::getLookupValue).collect(Collectors.joining(", "));
+        extendPolicy.throwExtendNotAllowedException(tagName, validValues);
+        return -1; // unreachable; throwExtendNotAllowedException always throws
     }
     
     private int extendTagWithValue(CustomTagInfo tagInfo, String newValue) {
-        int newIndex = new SSCCustomTagDefinitionHelper(unirest).addValueToListTagById(tagInfo.getId(), newValue);
+        int newIndex = new SSCCustomTagDefinitionHelper(unirest).addValueToListTag(tagInfo.getGuid(), newValue);
         ValueListItem newItem = new ValueListItem();
         newItem.setLookupIndex(newIndex);
         newItem.setLookupValue(newValue);
@@ -263,9 +285,7 @@ public class SSCIssueCustomTagHelper {
             
             return result;
         } catch (Exception e) {
-            if (e instanceof FcliSimpleException) {
-                throw e;
-            }
+            if (e instanceof FcliSimpleException fse) throw fse;
             throw new FcliSimpleException("Failed to load custom tag information: " + e.getMessage(), e);
         }
     }
@@ -273,7 +293,6 @@ public class SSCIssueCustomTagHelper {
     private CustomTagInfo parseCustomTagInfo(JsonNode tagNode) {
         CustomTagInfo tagInfo = new CustomTagInfo();
         tagInfo.setGuid(tagNode.get("guid").asText());
-        tagInfo.setId(tagNode.path("id").asText(null));
         tagInfo.setName(tagNode.get("name").asText());
         tagInfo.setValueType(SSCCustomTagValueType.valueOf(tagNode.get("valueType").asText()));
         tagInfo.setExtensible(tagNode.path("extensible").asBoolean(false));
@@ -286,13 +305,13 @@ public class SSCIssueCustomTagHelper {
                 tagInfo.getValueList().add(item);
             }
         }
+        
         return tagInfo;
     }
     
     @Getter @Setter
     public static class CustomTagInfo {
         private String guid;
-        private String id;
         private String name;
         private SSCCustomTagValueType valueType;
         private boolean extensible;

@@ -194,7 +194,9 @@ public class SSCIssueUpdateCommand extends AbstractSSCJsonNodeOutputCommand impl
         }
         if (hasCustomTags()) {
             var customTagHelper = new SSCIssueCustomTagHelper(unirest, appVersionId);
-            List<SSCIssueCustomTagAuditValue> processedTags = customTagHelper.processCustomTags(customTags, extend);
+            List<SSCIssueCustomTagAuditValue> processedTags = customTagHelper.processCustomTags(customTags,
+                    extend ? SSCIssueCustomTagHelper.ExtendPolicy.enabled()
+                           : SSCIssueCustomTagHelper.ExtendPolicy.disabled("--extend"));
             request.put("customTagAudit", processedTags);
         }
         

@@ -14,7 +14,6 @@ package com.fortify.cli.ssc.custom_tag.helper;
 
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Stream;
 
@@ -132,38 +131,63 @@ public class SSCCustomTagDefinitionHelper {
 
     public int addValueToListTag(String tagGuid, String newValue) {
         SSCCustomTagDescriptor desc = getDescriptorByCustomTagSpec(tagGuid, true);
-        return addValueToListTagInternal(desc.getId(), (ObjectNode) desc.asJsonNode().deepCopy(), newValue);
-    }
-
-    public int addValueToListTagById(String tagNumericId, String newValue) {
-        JsonNode response = unirest.get(SSCUrls.CUSTOM_TAG(tagNumericId)).asObject(JsonNode.class).getBody();
-        ObjectNode body = (ObjectNode) response.get("data").deepCopy();
-        return addValueToListTagInternal(tagNumericId, body, newValue);
-    }
-
-    private int addValueToListTagInternal(String tagNumericId, ObjectNode body, String newValue) {
-        LinkedHashMap<String, ObjectNode> valueMap = buildValueMap(body);
-        if (valueMap.keySet().stream().noneMatch(k -> k.equalsIgnoreCase(newValue))) {
-            valueMap.put(newValue, newValueListEntry(newValue));
-        }
-        int newLookupIndex = -1;
-        ArrayNode newValueList = JsonNodeFactory.instance.arrayNode();
-        int idx = 1;
-        for (Map.Entry<String, ObjectNode> e : valueMap.entrySet()) {
-            e.getValue().put("lookupIndex", idx);
-            e.getValue().put("seqNumber", idx);
-            newValueList.add(e.getValue());
-            if (e.getKey().equalsIgnoreCase(newValue)) {
-                newLookupIndex = idx;
+        String tagNumericId = desc.getId();
+        ObjectNode body = fetchTagBody(tagNumericId, desc.getName());
+        // Return early if the value already exists
+        JsonNode existingList = body.get("valueList");
+        int maxLookupIndex = 0;
+        if (existingList != null && existingList.isArray()) {
+            for (JsonNode v : existingList) {
+                if (newValue.equalsIgnoreCase(v.path("lookupValue").asText())) {
+                    return v.path("lookupIndex").asInt();
+                }
+                int idx = v.path("lookupIndex").asInt(0);
+                if (idx > maxLookupIndex) {
+                    maxLookupIndex = idx;
+                }
             }
-            idx++;
         }
-        body.set("valueList", newValueList);
+        // Add new entry with an explicit lookupIndex = max(existing) + 1.
+        // SSC's PUT reconciliation matches valueList entries by lookupIndex; if the new
+        // entry has no lookupIndex, SSC may interpret existing in-use values as deleted,
+        // causing HTTP 400 "cannot be deleted". A unique new index avoids that.
+        int newIndex = maxLookupIndex + 1;
+        ObjectNode newEntry = JsonNodeFactory.instance.objectNode();
+        newEntry.put("lookupValue", newValue);
+        newEntry.put("lookupIndex", newIndex);
+        newEntry.put("seqNumber", newIndex);
+        body.withArray("valueList").add(newEntry);
         unirest.put(SSCUrls.CUSTOM_TAG(tagNumericId))
                 .body(body)
                 .asObject(JsonNode.class)
                 .getBody();
-        return newLookupIndex;
+        return confirmValueLookupIndex(tagNumericId, newValue);
+    }
+
+    private ObjectNode fetchTagBody(String tagNumericId, String tagName) {
+        JsonNode response = unirest.get(SSCUrls.CUSTOM_TAG(tagNumericId))
+                .asObject(JsonNode.class).getBody();
+        JsonNode dataNode = response == null ? null : response.get("data");
+        if (!(dataNode instanceof ObjectNode)) {
+            throw new FcliSimpleException(
+                "Unexpected response from SSC when fetching custom tag '" + tagName + "'");
+        }
+        return (ObjectNode) dataNode.deepCopy();
+    }
+
+    private int confirmValueLookupIndex(String tagNumericId, String value) {
+        JsonNode updated = unirest.get(SSCUrls.CUSTOM_TAG(tagNumericId))
+                .asObject(JsonNode.class).getBody();
+        JsonNode updatedList = updated == null ? null : updated.path("data").path("valueList");
+        if (updatedList != null && updatedList.isArray()) {
+            for (JsonNode v : updatedList) {
+                if (value.equalsIgnoreCase(v.path("lookupValue").asText())) {
+                    return v.path("lookupIndex").asInt();
+                }
+            }
+        }
+        throw new FcliSimpleException(
+            "Value '" + value + "' was sent to SSC but could not be confirmed in the updated tag definition.");
     }
 
     private ArrayNode buildCreateValueList(String values) {
@@ -220,33 +244,27 @@ public class SSCCustomTagDefinitionHelper {
         var valueList = body.withArray("valueList");
         LinkedHashMap<String, ObjectNode> valueMap = new LinkedHashMap<>();
         for (JsonNode v : valueList) {
-            String key = v.path("lookupValue").asText();
+            String key = v.path("lookupValue").asText().toLowerCase();
             valueMap.put(key, (ObjectNode)v);
         }
         return valueMap;
     }
 
     private void addValuesToMap(LinkedHashMap<String, ObjectNode> valueMap, String valuesStr) {
-        String[] vals = valuesStr.split(",");
-        for (String val : vals) {
-            String trimmed = val.trim();
-            if (trimmed.isBlank()) {
-                continue;
-            }
-            if (valueMap.keySet().stream().noneMatch(k -> k.equalsIgnoreCase(trimmed))) {
-                valueMap.put(trimmed, newValueListEntry(trimmed));
+        for (String val : valuesStr.split(",")) {
+            val = val.trim();
+            if (!val.isBlank() && !valueMap.containsKey(val.toLowerCase())) {
+                valueMap.put(val.toLowerCase(), newValueListEntry(val));
             }
         }
     }
 
     private void removeValuesFromMap(LinkedHashMap<String, ObjectNode> valueMap, String valuesStr) {
-        String[] vals = valuesStr.split(",");
-        for (String val : vals) {
-            String trimmed = val.trim();
-            if (trimmed.isBlank()) {
-                continue;
+        for (String val : valuesStr.split(",")) {
+            val = val.trim();
+            if (!val.isBlank()) {
+                valueMap.remove(val.toLowerCase());
             }
-            valueMap.keySet().removeIf(k -> k.equalsIgnoreCase(trimmed));
         }
     }
 
