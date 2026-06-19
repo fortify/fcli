@@ -83,11 +83,11 @@ steps:
         cmd: fcli action run git-stage-commit-push "--source-dir=${cli.sourceDir}" "--branch-prefix=${cli.branchPrefix}" "--author-name=${cli.authorName}" "--author-email=${cli.authorEmail}" --progress=none
         stdout: collect
         stderr: collect
-      on.fail:
-        - log.warn:
-            msg: "Failed to run git-stage-commit-push action"
-            cause: ${GIT_STAGE_COMMIT_PUSH_exception}
-        - throw: ${GIT_STAGE_COMMIT_PUSH_exception}
+    on.fail:
+      - log.warn:
+          msg: "Failed to run git-stage-commit-push action"
+          cause: ${GIT_STAGE_COMMIT_PUSH_exception}
+      - throw: ${GIT_STAGE_COMMIT_PUSH_exception}
   - var.set:
       gitResult: ${GIT_STAGE_COMMIT_PUSH.result}
 
@@ -102,11 +102,11 @@ steps:
         cmd: fcli action run pr-or-mr-create "--source-dir=${cli.sourceDir}" "--source-branch=${gitResult.branchName}" "--base-branch=${baseBranch}" "--title=${cli.title}" "--body=${cli.body}" --progress=none
         stdout: collect
         stderr: collect
-      on.fail:
-        - log.warn:
-            msg: "Failed to run pr-or-mr-create action"
-            cause: ${CREATE_PR_exception}
-        - throw: ${CREATE_PR_exception}
+    on.fail:
+      - log.warn:
+          msg: "Failed to run pr-or-mr-create action"
+          cause: ${CREATE_PR_exception}
+      - throw: ${CREATE_PR_exception}
   - var.set:
       prResult: ${CREATE_PR.result}
 
