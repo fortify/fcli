@@ -208,7 +208,7 @@ steps:
                 - "${#isBlank(aviator.artifactId) ? 'No artifact produced by Aviator audit, nothing to wait for' : ''}"
                         
             APPLY_REMEDIATIONS:
-              cmd: ${#fcliCmd('APPLY_REMEDIATIONS', 'aviator ssc apply-remediations')} "--av=${global.ci.av}" "--source-dir=${global.ci.sourceDir}" "--artifact-id=${aviator.artifactId}" "--progress=none"
+              cmd: ${#fcliCmd('APPLY_REMEDIATIONS', 'aviator ssc apply-remediations')} "--av=${global.ci.av}" "--source-dir=${global.ci.sourceDir}" "--progress=none"
               skip.if-reason:
                 - ${#fcliCmdSkipFromEnvReason('APPLY_REMEDIATIONS', true)} # Skip unless DO_APPLY_REMEDIATIONS==true or APPLY_REMEDIATIONS_ACTION/EXTRA_OPTS defined
                 - ${postScan.skipReason}                               # Skip if no scans were run
