@@ -26,6 +26,7 @@ import com.fasterxml.jackson.databind.MappingIterator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.csv.CsvMapper;
 import com.fasterxml.jackson.dataformat.csv.CsvSchema;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.license.ncd_report.collector.INcdReportRepositoryBranchCommitCollector;
 import com.fortify.cli.license.ncd_report.collector.NcdReportContext;
@@ -65,7 +66,7 @@ public class NcdReportMockResultsGenerator extends AbstractNcdReportResultsGener
     }
     
     /**
-     * Load authors from JSON or CSV file.
+     * Load authors from JSON, YAML, or CSV file.
      */
     private void loadAuthorsFromFile(String dataFilePath) throws Exception {
         File file = new File(dataFilePath);
@@ -73,8 +74,10 @@ public class NcdReportMockResultsGenerator extends AbstractNcdReportResultsGener
             throw new FcliSimpleException("Data file not found: " + dataFilePath);
         }
         
-        if ( dataFilePath.endsWith(".json") || dataFilePath.endsWith(".yaml") || dataFilePath.endsWith(".yml") ) {
+        if ( dataFilePath.endsWith(".json") ) {
             loadAuthorsFromJson(file);
+        } else if ( dataFilePath.endsWith(".yaml") || dataFilePath.endsWith(".yml") ) {
+            loadAuthorsFromYaml(file);
         } else if ( dataFilePath.endsWith(".csv") ) {
             loadAuthorsFromCsv(file);
         } else {
@@ -114,6 +117,40 @@ public class NcdReportMockResultsGenerator extends AbstractNcdReportResultsGener
         
         if ( authors.isEmpty() ) {
             throw new FcliSimpleException("No valid authors found in JSON file: " + file.getPath());
+        }
+    }
+    
+    /**
+     * Load authors from YAML file. Expects array of objects with 'name' and 'email' fields.
+     */
+    private void loadAuthorsFromYaml(File file) throws IOException {
+        ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
+        JsonNode root = mapper.readTree(file);
+        
+        if ( root.isArray() ) {
+            for ( JsonNode node : root ) {
+                String name = node.has("name") ? node.get("name").asText() : "";
+                String email = node.has("email") ? node.get("email").asText() : "";
+                if ( !name.isEmpty() && !email.isEmpty() ) {
+                    authors.add(new MockAuthorData(name, email));
+                }
+            }
+        } else if ( root.isObject() ) {
+            // Also support object with "authors" array
+            JsonNode authorsNode = root.get("authors");
+            if ( authorsNode != null && authorsNode.isArray() ) {
+                for ( JsonNode node : authorsNode ) {
+                    String name = node.has("name") ? node.get("name").asText() : "";
+                    String email = node.has("email") ? node.get("email").asText() : "";
+                    if ( !name.isEmpty() && !email.isEmpty() ) {
+                        authors.add(new MockAuthorData(name, email));
+                    }
+                }
+            }
+        }
+        
+        if ( authors.isEmpty() ) {
+            throw new FcliSimpleException("No valid authors found in YAML file: " + file.getPath());
         }
     }
     

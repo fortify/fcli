@@ -83,6 +83,7 @@ public final class NcdReportValidator {
      * @param checksumsPath Path to checksums.sha256 file
      * @return Map of filename to checksum
      * @throws FcliSimpleException if file format is invalid
+     * @throws FcliTechnicalException if file read fails
      */
     private static Map<String, String> parseChecksumFile(java.nio.file.Path checksumsPath) {
         var result = new HashMap<String, String>();
@@ -101,6 +102,8 @@ public final class NcdReportValidator {
                 result.put(fileName, checksum);
             }
             return result;
+        } catch ( FcliSimpleException | FcliTechnicalException e ) {
+            throw e;
         } catch ( Exception e ) {
             throw new FcliTechnicalException(String.format("Error reading checksums.sha256 from %s", checksumsPath), e);
         }

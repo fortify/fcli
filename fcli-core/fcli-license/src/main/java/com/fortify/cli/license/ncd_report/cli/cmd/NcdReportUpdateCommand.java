@@ -275,8 +275,10 @@ public final class NcdReportUpdateCommand extends AbstractRunnableCommand {
         var entryPath = reader.entryPath("contributors.csv");
 
         try {
-            // Build schema with only the columns actually present in the data
-            var presentColumns = contributors.isEmpty() ? Set.<String>of() : contributors.get(0).keySet();
+            // Build schema with all columns present across all rows
+            var presentColumns = contributors.stream()
+                    .flatMap(map -> map.keySet().stream())
+                    .collect(Collectors.toSet());
             var csvSchema = NcdReportContributorsCsvSchema.buildSchema(presentColumns);
 
             var writer = CSV_MAPPER.writer(csvSchema);
@@ -301,9 +303,15 @@ public final class NcdReportUpdateCommand extends AbstractRunnableCommand {
 
             for ( var line : lines ) {
                 var parts = line.split("\\s+", 2);
-                if ( parts.length >= 2 && parts[1].equals(entryName) ) {
-                    updated.add(String.format("%s %s", entryChecksum, entryName));
-                    found = true;
+                if ( parts.length >= 2 ) {
+                    // Strip leading * if present (standard checksum format allows optional *)
+                    var filename = parts[1].startsWith("*") ? parts[1].substring(1) : parts[1];
+                    if ( filename.equals(entryName) ) {
+                        updated.add(String.format("%s %s", entryChecksum, entryName));
+                        found = true;
+                    } else {
+                        updated.add(line);
+                    }
                 } else {
                     updated.add(line);
                 }
