@@ -50,17 +50,17 @@ public class ActionResolverMixin {
     }
     
     public static class RequiredParameter extends AbstractActionResolverMixin {
-        @MaskValue(sensitivity = LogSensitivityLevel.high, description = "REMOTE URL AUTH VALUE", pattern = RemoteUrlAuthHelper.URL_USERINFO_AUTH_VALUE_MASK_PATTERN)
+        @MaskValue(sensitivity = LogSensitivityLevel.high, description = "REMOTE URL AUTH VALUE", pattern = RemoteUrlAuthHelper.URL_USERINFO_AUTH_VALUE_MASK_PATTERN, maskFullValueOnNoMatch = RemoteUrlAuthHelper.URL_USERINFO_AUTH_VALUE_MASK_FULL_ON_NO_MATCH)
         @Getter @Parameters(arity="1", descriptionKey="fcli.action.nameOrLocation") private String action;
     }
     
     public static class OptionalParameter extends AbstractActionResolverMixin {
-        @MaskValue(sensitivity = LogSensitivityLevel.high, description = "REMOTE URL AUTH VALUE", pattern = RemoteUrlAuthHelper.URL_USERINFO_AUTH_VALUE_MASK_PATTERN)
+        @MaskValue(sensitivity = LogSensitivityLevel.high, description = "REMOTE URL AUTH VALUE", pattern = RemoteUrlAuthHelper.URL_USERINFO_AUTH_VALUE_MASK_PATTERN, maskFullValueOnNoMatch = RemoteUrlAuthHelper.URL_USERINFO_AUTH_VALUE_MASK_FULL_ON_NO_MATCH)
         @Getter @Parameters(arity="0..1", descriptionKey="fcli.action.nameOrLocation") private String action;
     }
     
     private static class PublicKeyResolverMixin extends AbstractTextResolverMixin {
-        @MaskValue(sensitivity = LogSensitivityLevel.high, description = "REMOTE URL AUTH VALUE", pattern = RemoteUrlAuthHelper.URL_USERINFO_AUTH_VALUE_MASK_PATTERN)
+        @MaskValue(sensitivity = LogSensitivityLevel.high, description = "REMOTE URL AUTH VALUE", pattern = RemoteUrlAuthHelper.URL_USERINFO_AUTH_VALUE_MASK_PATTERN, maskFullValueOnNoMatch = RemoteUrlAuthHelper.URL_USERINFO_AUTH_VALUE_MASK_FULL_ON_NO_MATCH)
         @Getter @Option(names={"--pubkey"}, required = false, descriptionKey = "fcli.action.resolver.pubkey", paramLabel = "source") private String textSource;
     }
 }

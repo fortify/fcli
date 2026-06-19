@@ -37,7 +37,7 @@ public class ActionSourceResolverMixin {
     }
     
     public static class OptionalOption extends AbstractActionSourceResolverMixin {
-        @MaskValue(sensitivity = LogSensitivityLevel.high, description = "REMOTE URL AUTH VALUE", pattern = RemoteUrlAuthHelper.URL_USERINFO_AUTH_VALUE_MASK_PATTERN)
+        @MaskValue(sensitivity = LogSensitivityLevel.high, description = "REMOTE URL AUTH VALUE", pattern = RemoteUrlAuthHelper.URL_USERINFO_AUTH_VALUE_MASK_PATTERN, maskFullValueOnNoMatch = RemoteUrlAuthHelper.URL_USERINFO_AUTH_VALUE_MASK_FULL_ON_NO_MATCH)
         @Option(names={"--from-zip", "-z"}, required = false, descriptionKey = "fcli.action.resolver.from-zip")
         @Getter private String source;
     }
