@@ -253,8 +253,8 @@ public class AiAssistMCPStartStdioCommand extends AbstractRunnableCommand implem
     }
 
     private <T> T withSharedExecutionContext(Supplier<T> supplier) {
-        FcliTrustManager.refreshIfChanged();
         try (var frame = FcliExecutionContextHolder.push(new FcliExecutionContext(sharedIsolationScope, new FcliActionState()))) {
+            FcliTrustManager.refreshIfChanged();
             return supplier.get();
         }
     }

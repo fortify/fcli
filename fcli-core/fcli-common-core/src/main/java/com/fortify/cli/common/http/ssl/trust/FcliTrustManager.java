@@ -13,16 +13,19 @@
 package com.fortify.cli.common.http.ssl.trust;
 
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
+import java.security.MessageDigest;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.HexFormat;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
@@ -30,6 +33,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
@@ -251,7 +255,7 @@ public final class FcliTrustManager extends X509ExtendedTrustManager {
         var descriptorFingerprint = String.join("|",
                 Objects.toString(descriptor.getPath(), ""),
                 Objects.toString(descriptor.getType(), ""),
-                Objects.toString(descriptor.getPassword(), ""),
+                hashSecretForFingerprint(descriptor.getPassword()),
                 Objects.toString(descriptor.getUseOsTrustStore(), ""));
 
         var trustedUrlsFingerprint = TrustedUrlTrustStoreHelper.listTrustedUrls()
@@ -260,16 +264,29 @@ public final class FcliTrustManager extends X509ExtendedTrustManager {
                         Objects.toString(d.getKey(), ""),
                         Objects.toString(d.getSha256(), ""),
                         Objects.toString(d.getNotAfter(), "")))
-                .reduce("", (a, b) -> a + "::" + b);
+                .collect(Collectors.joining("::"));
 
         return String.join("#",
                 descriptorFingerprint,
                 trustedUrlsFingerprint,
                 Objects.toString(EnvHelper.env("FCLI_TRUSTSTORE"), ""),
                 Objects.toString(EnvHelper.env("FCLI_TRUSTSTORE_TYPE"), ""),
-                Objects.toString(EnvHelper.env("FCLI_TRUSTSTORE_PWD"), ""),
+                hashSecretForFingerprint(EnvHelper.env("FCLI_TRUSTSTORE_PWD")),
                 Objects.toString(EnvHelper.env("FCLI_DISABLE_OS_TRUSTSTORE"), ""),
                 PlatformHelper.getOSString());
+    }
+
+    private String hashSecretForFingerprint(String value) {
+        if (StringUtils.isBlank(value)) {
+            return "";
+        }
+        try {
+            var bytes = MessageDigest.getInstance("SHA-256").digest(value.getBytes(StandardCharsets.UTF_8));
+            return HexFormat.of().formatHex(bytes);
+        } catch (GeneralSecurityException e) {
+            LOG.debug("Unable to hash trust-store secret for fingerprinting: {}", e.getMessage());
+            return Integer.toHexString(value.hashCode());
+        }
     }
 
     private void applyTrustStoreSystemProperties(TrustStoreConfigDescriptor descriptor) {

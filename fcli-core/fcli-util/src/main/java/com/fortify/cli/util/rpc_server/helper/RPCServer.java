@@ -225,8 +225,8 @@ public final class RPCServer {
         
         try {
             JsonNode result;
-            FcliTrustManager.refreshIfChanged();
             try (var frame = FcliExecutionContextHolder.push(new FcliExecutionContext(registry.getIsolationScope(), new FcliActionState()))) {
+                FcliTrustManager.refreshIfChanged();
                 result = handler.execute(request.params());
             }
             return RPCResponse.success(request.id(), result);
