@@ -63,7 +63,7 @@ class InitializationExecutionStrategyTest {
         static String maskedValueObservedInCall;
 
         @Parameters(index = "0")
-        @MaskValue(sensitivity = LogSensitivityLevel.high, description = "REMOTE URL AUTH VALUE", pattern = RemoteUrlAuthHelper.URL_USERINFO_AUTH_VALUE_MASK_PATTERN)
+        @MaskValue(sensitivity = LogSensitivityLevel.high, description = "REMOTE URL AUTH VALUE", pattern = RemoteUrlAuthHelper.URL_USERINFO_AUTH_VALUE_MASK_PATTERN, maskFullValueOnNoMatch = RemoteUrlAuthHelper.URL_USERINFO_AUTH_VALUE_MASK_FULL_ON_NO_MATCH)
         private String source;
 
         @Override

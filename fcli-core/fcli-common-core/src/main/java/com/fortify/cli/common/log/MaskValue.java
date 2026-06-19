@@ -53,7 +53,12 @@ public @interface MaskValue {
     /** Pattern to extract a substring to be masked from the original value. This pattern must 
      *  containing a single capturing group that represents the substring to be masked. Most
      *  common usage is to extract host name from URL, for which {@link #URL_HOSTNAME_PATTERN} 
-     *  can be used. If the input value doesn't match the given pattern, the full value will
-     *  be masked. */
+     *  can be used. The behavior when the input value doesn't match the given pattern is
+     *  controlled by {@link #maskFullValueOnNoMatch()}. */
     public String pattern() default "";
+    /** Controls behavior when {@link #pattern()} is non-empty but does not match the input value.
+     *  If <code>true</code> (the default), the full input value is masked as a fallback.
+     *  If <code>false</code>, no masking is performed when the pattern does not match (i.e., the
+     *  value is treated as containing no sensitive data). */
+    public boolean maskFullValueOnNoMatch() default true;
 }
