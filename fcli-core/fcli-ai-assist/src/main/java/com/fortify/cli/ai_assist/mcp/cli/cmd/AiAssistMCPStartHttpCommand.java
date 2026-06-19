@@ -39,6 +39,7 @@ import com.fortify.cli.common.cli.util.IFcliExecutionContextManager;
 import com.fortify.cli.common.cli.util.StdioHelper;
 import com.fortify.cli.common.concurrent.job.AsyncJobManager;
 import com.fortify.cli.common.exception.FcliSimpleException;
+import com.fortify.cli.common.http.ssl.trust.FcliTrustManager;
 import com.fortify.cli.common.log.LogMaskContext;
 import com.fortify.cli.common.mcp.MCPExclude;
 import com.fortify.cli.common.session.helper.AbstractSessionHelper;
@@ -198,6 +199,7 @@ public class AiAssistMCPStartHttpCommand extends AbstractRunnableCommand impleme
         // (e.g. FoD OAuth token from the token-fetch response) are captured per-request.
         try (var tempFrame = FcliExecutionContextHolder.push(
                 new FcliExecutionContext(new FcliIsolationScope(), new FcliActionState(), requestLogMaskCtx))) {
+            FcliTrustManager.refreshIfChanged();
             var auth = authHeaderParser.parseAndRegister(transportContext);
             var isolationScope = sessionDescriptorResolver.getOrCreateIsolationScope(auth);
             // Real frame: same requestLogMaskCtx, real isolation scope.
