@@ -208,7 +208,7 @@ steps:
                 - "${#isBlank(aviator.artifactId) ? 'No artifact produced by Aviator audit, nothing to wait for' : ''}"
                         
             APPLY_REMEDIATIONS:
-              cmd: ${#fcliCmd('APPLY_REMEDIATIONS', 'aviator ssc apply-remediations')} "--rel=${global.ci.rel}" "--source-dir=${global.ci.sourceDir}" "--progress=none"
+              cmd: ${#fcliCmd('APPLY_REMEDIATIONS', 'aviator ssc apply-remediations')} "--av=${global.ci.av}" "--source-dir=${global.ci.sourceDir}" "--artifact-id=${aviator.artifactId}" "--progress=none"
               skip.if-reason:
                 - ${#fcliCmdSkipFromEnvReason('APPLY_REMEDIATIONS', true)} # Skip unless DO_APPLY_REMEDIATIONS==true or APPLY_REMEDIATIONS_ACTION/EXTRA_OPTS defined
                 - ${postScan.skipReason}                               # Skip if no scans were run
@@ -220,8 +220,7 @@ steps:
             CREATE_PR:
               cmd: ${#actionCmd('CREATE_PR', '', 'action run commit-and-create-pr')} "--source-dir=${global.ci.sourceDir}" "--branch-prefix=aviator/remediations" "--progress=none"
               skip.if-reason:
-                - ${#actionCmdSkipFromEnvReason('CREATE_PR', true)}    # Skip unless DO_CREATE_PR==true or CREATE_PR_EXTRA_OPTS defined
-                - ${!remediationsApplied?'Apply remediations was skipped or failed, skipping PR creation':''}
+                - ${#isBlank(remediationsApplied)?'Apply remediations was skipped or failed, skipping PR creation':''}
               on.success:
                 - if: ${CREATE_PR.variables.status=='success'}
                   log.info: "Pull/Merge Request successfully created: ${CREATE_PR.variables.prLink}"
