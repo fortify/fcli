@@ -227,7 +227,9 @@ public class ActionGitSpelFunctions {
             returns="The commit SHA of the new commit")
     public String commit(
             @SpelFunctionParam(name="sourceDir", desc="directory inside a git working tree") String sourceDir,
-            @SpelFunctionParam(name="message", desc="commit message") String message) {
+            @SpelFunctionParam(name="message", desc="commit message") String message,
+            @SpelFunctionParam(name="name", desc="commit author name") String name,
+            @SpelFunctionParam(name="email", desc="commit author email") String email) {
         try (var git = openGit(sourceDir)) {
             if (git == null) {
                 throw new FcliSimpleException("Not a git repository: " + sourceDir);
@@ -236,9 +238,6 @@ public class ActionGitSpelFunctions {
             if (git.status().call().isClean()) {
                 throw new FcliSimpleException("No changes to commit");
             }
-
-            String name = "fcli-actions[bot]"; //TODO - Check if we can get author info from env or git config
-            String email = "fcli-actions@opentext.com"; //TODO - Check if we can get author info from env or git config
 
             var commitResult = git.commit()
                 .setMessage(message)

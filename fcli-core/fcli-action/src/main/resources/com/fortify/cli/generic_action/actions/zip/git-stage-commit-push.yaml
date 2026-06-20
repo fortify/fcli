@@ -90,12 +90,6 @@ steps:
       - exit: 0
   - log.info: "Changes detected in ${cli.sourceDir}, proceeding."
 
-  # Set git author identity
-  - var.set:
-      gitAuthorEnv: ${#env.set('GIT_AUTHOR_NAME', cli.authorName).put('GIT_AUTHOR_EMAIL', cli.authorEmail)}
-    on.fail:
-      - log.warn: "Warning: Unable to set git author environment variables"
-
   # Create branch
   - var.set:
       branchName: ${#git.createBranch(cli.sourceDir, cli.branchPrefix)}
@@ -118,7 +112,7 @@ steps:
 
   # Commit
   - var.set:
-      commitSha: "${#git.commit(cli.sourceDir, cli.commitMessage)}"
+      commitSha: "${#git.commit(cli.sourceDir, cli.commitMessage, cli.authorName, cli.authorEmail)}"
     on.fail:
       - log.warn:
           msg: "Failed to commit staged changes"
