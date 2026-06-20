@@ -87,7 +87,7 @@ steps:
       - log.warn:
           msg: "Failed to run git-stage-commit-push action"
           cause: ${GIT_STAGE_COMMIT_PUSH_exception}
-      - throw: ${GIT_STAGE_COMMIT_PUSH_exception}
+      - throw: "Failed to run git-stage-commit-push action - check logs for details"
   - var.set:
       gitResult: ${GIT_STAGE_COMMIT_PUSH.result}
 
@@ -106,7 +106,7 @@ steps:
       - log.warn:
           msg: "Failed to run pr-or-mr-create action"
           cause: ${CREATE_PR_exception}
-      - throw: ${CREATE_PR_exception}
+      - throw: "Failed to run pr-or-mr-create action - check logs for details"
   - var.set:
       prResult: ${CREATE_PR.result}
 
