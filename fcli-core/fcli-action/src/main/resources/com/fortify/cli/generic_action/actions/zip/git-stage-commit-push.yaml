@@ -82,7 +82,6 @@ steps:
     do:
       - log.info: "No changes detected in ${cli.sourceDir}, skipping commit and push."
       - var.set:
-          result: ${T(java.util.LinkedHashMap).new()}
           result.status: "no_changes"
           result.branchName: ""
           result.commitSha: ""
@@ -119,6 +118,7 @@ steps:
           cause: ${lastException}
       - throw: ${lastException}
   - log.info: "Committed changes: ${commitSha}"
+  - log.debug: "Remote URL: ${gitRepoInfo.repository.remoteUrl}"
 
   # Push
   - var.set:
@@ -138,7 +138,6 @@ steps:
   - log.info: "Pushed branch to remote: ${pushedRef}"
 
   - var.set:
-      result: ${T(java.util.LinkedHashMap).new()}
       result.status: "success"
       result.branchName: "${branchName}"
       result.commitSha: "${commitSha}"

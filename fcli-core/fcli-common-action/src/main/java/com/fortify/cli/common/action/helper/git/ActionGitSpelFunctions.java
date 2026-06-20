@@ -23,9 +23,7 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.lib.StoredConfig;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
-import org.eclipse.jgit.transport.CredentialsProvider;
 import org.eclipse.jgit.transport.RefSpec;
-import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.formkiq.graalvm.annotations.Reflectable;
@@ -182,17 +180,17 @@ public class ActionGitSpelFunctions {
         }
     }
 
-    @SpelFunction(cat=util, desc="Creates a new branch in the local git repository and checks it out. The branch name is based on the provided prefix and a timestamp suffix to ensure uniqueness (e.g., 'fcli/remediation/20260520-103045').",
+    @SpelFunction(cat=util, desc="Creates a new branch in the local git repository and checks it out. The branch name is based on the provided prefix and a timestamp suffix to ensure uniqueness.",
             returns="The name of the created branch")
     public String createBranch(
             @SpelFunctionParam(name="sourceDir", desc="directory inside a git working tree") String sourceDir,
-            @SpelFunctionParam(name="branchPrefix", desc="prefix for the branch name (e.g., 'fcli/remediation')") String branchPrefix) {
+            @SpelFunctionParam(name="branchPrefix", desc="prefix for the branch name (e.g., 'fcli/aviator-remediations')") String branchPrefix) {
         try (var git = openGit(sourceDir)) {
             if (git == null) {
                 throw new FcliSimpleException("Not a git repository: " + sourceDir);
             }
             var timestamp = java.time.LocalDateTime.now()
-                .format(java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss"));
+                .format(java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss-SSS"));
             var branchName = branchPrefix + "/" + timestamp;
             git.checkout()
                 .setCreateBranch(true)
@@ -282,35 +280,63 @@ public class ActionGitSpelFunctions {
                 repo.getConfig().setString("remote", remote, "url", remoteUrl);
                 repo.getConfig().save();
             }
-            CredentialsProvider credentialsProvider = detectCredentialsProvider();
-            var token = System.getenv("GITHUB_TOKEN");
-
-            if (token != null) {
-                credentialsProvider = new UsernamePasswordCredentialsProvider("x-access-token", token);
-            }
-
+            var credentialsProvider = CredentialsProviderFactory.detectAndGetJGitProvider();
             if (credentialsProvider == null) {
                 log.debug("PUSH DEBUG: No credentials provider detected - push will likely fail");
             } else {
                 log.debug("PUSH DEBUG: Using credentials provider={}", credentialsProvider.getClass().getName());
             }
-            String fullBranchRef = "refs/heads/" + branchName;
-            var refSpec = new RefSpec(fullBranchRef + ":" + fullBranchRef);
 
+            String fullBranchRef = "refs/heads/" + branchName;
+            log.debug("PUSH DETAILS: branch={}, remote={}, remoteUrl={}, fullBranchRef={}",
+                branchName,
+                remote,
+                remoteUrl,
+                fullBranchRef
+            );
+            var refSpec = new RefSpec(fullBranchRef + ":" + fullBranchRef);
+            if (credentialsProvider != null) {
+                log.debug("CREDENTIALS: type={}, class={}", 
+                    credentialsProvider.getClass().getSimpleName(),
+                    credentialsProvider.getClass().getName()
+                );
+            }
+
+            log.debug("PUSH COMMAND SETUP: remote={}, refSpec={}, timeout=300s, credentialsSet={}",
+                remote,
+                refSpec.toString(),
+                credentialsProvider != null
+            );
             var fetchCmd = git.fetch().setRemote(remote);
             if (credentialsProvider != null) {
                 fetchCmd.setCredentialsProvider(credentialsProvider);
             }
-            fetchCmd.call();
+
+            try{
+                var fetchResult = fetchCmd.call();
+                log.debug("Fetch completed with {} ref updates", 
+                    fetchResult != null ? fetchResult.getAdvertisedRefs().size() : 0
+                );
+            } catch(Exception e){
+                log.warn("Fetch failed (but continuing with push): {}", e.getMessage(), e);
+            }
+
             var pushCmd = git.push()
                 .setRemote(remote)
                 .setRefSpecs(refSpec)
-                .setTimeout(60);
+                .setTimeout(300);
 
             if (credentialsProvider != null) {
                 pushCmd.setCredentialsProvider(credentialsProvider);
             }
             var results = pushCmd.call();
+
+            log.debug("Push command completed. credentialsProvider: {}",
+                credentialsProvider != null ? credentialsProvider.getClass().getSimpleName() : "null"
+            );
+
+            // Don't convert to ArrayList - just iterate directly
+            // We can't use .isEmpty() or .size() on Iterable, so remove those checks
 
             StoredConfig config = repo.getConfig();
             config.setString("branch", branchName, "remote", remote);
@@ -318,14 +344,27 @@ public class ActionGitSpelFunctions {
             config.save();
 
             boolean success = false;
+            boolean hasResults = false;
             for (var result : results) {
+                hasResults = true;
                 var messages = result.getMessages();
+                if (messages != null && !messages.isBlank()) {
+                    log.debug("Push result messages: {}", messages);
+                }
+
                 for (var update : result.getRemoteUpdates()) {
                     var status = update.getStatus();
+                    log.debug("Push update: status={}, remoteName={}, message='{}', forceUpdate={}",
+                        status,
+                        update.getRemoteName(),
+                        update.getMessage() != null ? update.getMessage() : "null",
+                        update.isForceUpdate()
+                    );
                     switch (status) {
                         case OK:
                         case UP_TO_DATE:
                             success = true;
+                            log.debug("Push successful: {}", update.getRemoteName());
                             break;
 
                         case REJECTED_NONFASTFORWARD:
@@ -339,10 +378,15 @@ public class ActionGitSpelFunctions {
                                 "Push rejected: "
                                     + "status=" + status
                                     + ", remote=" + update.getRemoteName()
-                                    + ", message=" + update.getMessage()
+                                    + ", message=" + (update.getMessage() != null ? update.getMessage() : "no message")
                             );
                     }
                 }
+            }
+
+            if (!hasResults) {
+                log.warn("Push returned empty results - push may have failed silently");
+                throw new FcliSimpleException("Push completed but returned no results");
             }
 
             if (!success) {
@@ -446,10 +490,6 @@ public class ActionGitSpelFunctions {
         } catch (Exception e) {
             return null;
         }
-    }
-
-    private CredentialsProvider detectCredentialsProvider() {
-        return CredentialsProviderFactory.detectAndGetJGitProvider();
     }
 
     private static String selectRemote(Repository repo) {

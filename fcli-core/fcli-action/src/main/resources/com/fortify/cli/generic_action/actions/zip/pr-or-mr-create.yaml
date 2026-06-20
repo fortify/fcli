@@ -67,7 +67,8 @@ steps:
   # Compute base branch: CLI option/env var -> git remote HEAD -> "main"
   - var.set:
       baseBranch: "${#ifBlank(cli.baseBranch, #ifBlank(#git.defaultBranch(cli.sourceDir), 'main'))}"
-
+  - log.debug: "Computed base branch for PR/MR: ${baseBranch}"
+  
   - if: "${#isBlank(cli.sourceBranch)}"
     throw: "Option '--source-branch' is required. Pass the branch created by git-stage-commit-push."
 
