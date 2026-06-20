@@ -218,7 +218,7 @@ steps:
                 - var.set: { remediationsApplied: 'true' }
 
             CREATE_PR:
-              cmd: ${#actionCmd('CREATE_PR', '', 'action run commit-and-create-pr')} "--source-dir=${global.ci.sourceDir}" "--branch-prefix=aviator/remediations" "--progress=none"
+              cmd: ${#actionCmd('CREATE_PR', '', 'commit-and-create-pr')} "--source-dir=${global.ci.sourceDir}" "--branch-prefix=aviator/remediations" "--progress=none"
               skip.if-reason:
                 - ${#isBlank(remediationsApplied)?'Apply remediations was skipped or failed, skipping PR creation':''}
               on.success:
