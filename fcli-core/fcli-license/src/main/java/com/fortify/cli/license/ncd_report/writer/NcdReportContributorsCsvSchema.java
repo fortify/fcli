@@ -53,11 +53,11 @@ public final class NcdReportContributorsCsvSchema {
     public static final String MERGED_CONTRIBUTION_STATUS = "mergedContributionStatus";
     public static final String MERGED_CONTRIBUTING_AUTHOR_NUMBER = "mergedContributingAuthorNumber";
 
-    // Updatable deduplication fields
-    public static final String AI_DUPLICATE_OF = "aiDuplicateOf";
-    public static final String AI_CONFIDENCE = "aiConfidence";
-    public static final String AI_NOTES = "aiNotes";
-    public static final String OVERRIDDEN_STATUS = "overriddenStatus";
+    // Updatable override fields
+    public static final String OVERRIDE_DUPLICATE_OF = "overrideDuplicateOf";
+    public static final String OVERRIDE_STATUS = "overrideStatus";
+    public static final String OVERRIDE_STATUS_CONFIDENCE = "overrideStatusConfidence";
+    public static final String OVERRIDE_STATUS_NOTES = "overrideStatusNotes";
 
     // All immutable fields (identity, state, and source/merge semantics)
     public static final Set<String> IMMUTABLE_FIELDS = Set.of(
@@ -72,7 +72,10 @@ public final class NcdReportContributorsCsvSchema {
 
     // All updatable fields
     public static final Set<String> UPDATABLE_FIELDS = Set.of(
-        AI_DUPLICATE_OF, AI_CONFIDENCE, AI_NOTES, OVERRIDDEN_STATUS
+        OVERRIDE_DUPLICATE_OF,
+        OVERRIDE_STATUS,
+        OVERRIDE_STATUS_CONFIDENCE,
+        OVERRIDE_STATUS_NOTES
     );
 
     // Column order for CSV output
@@ -97,10 +100,10 @@ public final class NcdReportContributorsCsvSchema {
         MERGED_AUTHOR_NUMBER,
         MERGED_CONTRIBUTION_STATUS,
         MERGED_CONTRIBUTING_AUTHOR_NUMBER,
-        AI_DUPLICATE_OF,
-        AI_CONFIDENCE,
-        AI_NOTES,
-        OVERRIDDEN_STATUS
+        OVERRIDE_DUPLICATE_OF,
+        OVERRIDE_STATUS_CONFIDENCE,
+        OVERRIDE_STATUS_NOTES,
+        OVERRIDE_STATUS
     );
 
     /**

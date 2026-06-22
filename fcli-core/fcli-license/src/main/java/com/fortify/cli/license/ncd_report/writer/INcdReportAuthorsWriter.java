@@ -16,6 +16,6 @@ import com.fortify.cli.license.ncd_report.descriptor.NcdReportProcessedAuthorDes
 
 public interface INcdReportAuthorsWriter {
     void writeIgnoredAuthor(NcdReportProcessedAuthorDescriptor descriptor);
-    void writeDuplicateAuthor(NcdReportProcessedAuthorDescriptor descriptor, int contributingAuthorNumber);
+    void writeDuplicateAuthor(NcdReportProcessedAuthorDescriptor descriptor, String representativeAuthorId, int contributingAuthorNumber);
     void writeContributor(NcdReportProcessedAuthorDescriptor descriptor, int contributingAuthorNumber);
 }

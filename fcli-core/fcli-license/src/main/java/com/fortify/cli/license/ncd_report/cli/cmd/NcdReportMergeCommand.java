@@ -46,8 +46,6 @@ import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.writer.record.RecordWriterFactory;
 import com.fortify.cli.common.report.cli.cmd.AbstractReportGenerateCommand;
 import com.fortify.cli.common.report.writer.IReportWriter;
-import com.fortify.cli.common.util.DisableTest;
-import com.fortify.cli.common.util.DisableTest.TestType;
 import com.fortify.cli.license.ncd_report.config.NcdReportConfig;
 import com.fortify.cli.license.ncd_report.config.NcdReportContributorConfig;
 import com.fortify.cli.license.ncd_report.helper.NcdReportContributorHelper;
@@ -71,8 +69,7 @@ public final class NcdReportMergeCommand extends AbstractReportGenerateCommand {
 
     @Getter @Mixin private OutputHelperMixins.DetailsNoQuery outputHelper;
 
-    @Option(names = {"-r", "--reports"}, required = true, split = ",", arity = "2..*")
-    @DisableTest(TestType.OPT_ARITY_VARIABLE)
+    @Option(names = {"-r", "--reports"}, required = true, split = ",")
     @Getter private List<Path> reportPaths;
 
     @Override
@@ -85,6 +82,7 @@ public final class NcdReportMergeCommand extends AbstractReportGenerateCommand {
         var sourceReports = loadSourceReports();
         var mergedContributorConfig = mergeContributorConfig(sourceReports);
         var contributors = mergeContributors(sourceReports, mergedContributorConfig);
+        synthesizeMissingDuplicateOf(contributors);
         writeMergedContributors(reportWriter, contributors);
         var detailRowCounts = writeMergedDetails(reportWriter, sourceReports, contributors);
         writeMergedConfig(reportWriter, mergedContributorConfig);
@@ -258,7 +256,34 @@ public final class NcdReportMergeCommand extends AbstractReportGenerateCommand {
             var representativeIndex = rootToMinIndex.get(root);
             var contributor = contributors.get(i);
             contributor.contributingAuthorNumber(rootToContributingNumber.get(root));
-            contributor.contributionStatus(i == representativeIndex ? "contributing" : "duplicate");
+            if ( i == representativeIndex ) {
+                contributor.contributionStatus("contributing");
+            } else {
+                contributor.contributionStatus("duplicate");
+                contributor.overrideDuplicateOf(contributors.get(representativeIndex).authorId());
+            }
+        }
+    }
+
+    private void synthesizeMissingDuplicateOf(List<ContributorRecord> contributors) {
+        // For records marked as duplicate but with missing overrideDuplicateOf, synthesize it
+        // by looking up the representative record (same contributingAuthorNumber with contributing status)
+        var representativesByNumber = new HashMap<Integer, String>();
+        
+        for ( var contributor : contributors ) {
+            if ( "contributing".equalsIgnoreCase(contributor.contributionStatus()) ) {
+                representativesByNumber.put(contributor.contributingAuthorNumber(), contributor.authorId());
+            }
+        }
+        
+        for ( var contributor : contributors ) {
+            if ( "duplicate".equalsIgnoreCase(contributor.contributionStatus()) 
+                    && StringUtils.isBlank(contributor.overrideDuplicateOf) ) {
+                var representativeId = representativesByNumber.get(contributor.contributingAuthorNumber());
+                if ( representativeId != null ) {
+                    contributor.overrideDuplicateOf(representativeId);
+                }
+            }
         }
     }
 
@@ -513,6 +538,10 @@ public final class NcdReportMergeCommand extends AbstractReportGenerateCommand {
         private int authorNumber;
         private String contributionStatus;
         private int contributingAuthorNumber;
+        private String overrideDuplicateOf;
+        private String overrideStatus;
+        private String overrideStatusConfidence;
+        private String overrideStatusNotes;
 
         private ContributorRecord(String authorName, String authorEmail, String sourceReport, String sourceContributionStatus,
                 int sourceContributingAuthorNumber, ObjectNode expressionInput)
@@ -528,6 +557,10 @@ public final class NcdReportMergeCommand extends AbstractReportGenerateCommand {
             this.authorNumber = -1;
             this.contributionStatus = "contributing";
             this.contributingAuthorNumber = -1;
+            this.overrideDuplicateOf = "";
+            this.overrideStatus = "";
+            this.overrideStatusConfidence = "";
+            this.overrideStatusNotes = "";
         }
 
         static ContributorRecord fromRow(Map<String, String> row, String sourceReport) {
@@ -536,7 +569,13 @@ public final class NcdReportMergeCommand extends AbstractReportGenerateCommand {
             String sourceContributionStatus = StringUtils.defaultString(row.get("contributionStatus"));
             int sourceContributingAuthorNumber = parseInt(row.get("contributingAuthorNumber"), -1);
             ObjectNode expressionInput = NcdReportContributorHelper.createExpressionInput(authorName, authorEmail);
-            return new ContributorRecord(authorName, authorEmail, sourceReport, sourceContributionStatus, sourceContributingAuthorNumber, expressionInput);
+              var record = new ContributorRecord(authorName, authorEmail, sourceReport, sourceContributionStatus, sourceContributingAuthorNumber, expressionInput);
+              // Preserve any existing override fields from source report
+              record.overrideDuplicateOf = StringUtils.defaultString(row.get("overrideDuplicateOf"));
+              record.overrideStatus = StringUtils.defaultString(row.get("overrideStatus"));
+              record.overrideStatusConfidence = StringUtils.defaultString(row.get("overrideStatusConfidence"));
+              record.overrideStatusNotes = StringUtils.defaultString(row.get("overrideStatusNotes"));
+              return record;
         }
 
         ObjectNode toRow() {
@@ -548,6 +587,10 @@ public final class NcdReportMergeCommand extends AbstractReportGenerateCommand {
                     .put("authorNumber", authorNumber)
                     .put("contributionStatus", contributionStatus)
                     .put("contributingAuthorNumber", contributingAuthorNumber)
+                    .put("overrideDuplicateOf", overrideDuplicateOf)
+                    .put("overrideStatus", overrideStatus)
+                    .put("overrideStatusConfidence", overrideStatusConfidence)
+                    .put("overrideStatusNotes", overrideStatusNotes)
                     .put("sourceReport", sourceReport)
                     .put("sourceContributionStatus", sourceContributionStatus)
                     .put("sourceContributingAuthorNumber", sourceContributingAuthorNumber);
@@ -608,6 +651,11 @@ public final class NcdReportMergeCommand extends AbstractReportGenerateCommand {
         void contributingAuthorNumber(int contributingAuthorNumber) {
             this.contributingAuthorNumber = contributingAuthorNumber;
         }
+
+        void overrideDuplicateOf(String overrideDuplicateOf) {
+            this.overrideDuplicateOf = overrideDuplicateOf;
+        }
+
         private static int parseInt(String value, int defaultValue) {
             try {
                 return Integer.parseInt(StringUtils.defaultIfBlank(value, String.valueOf(defaultValue)));

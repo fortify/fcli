@@ -146,6 +146,7 @@ class NcdReportSpec extends FcliBaseSpec {
             result.stdout.any { it.contains("authorId") }
             result.stdout.any { it.contains("authorName") }
             result.stdout.any { it.contains("contributionStatus") }
+            result.stdout.any { it.contains("duplicateOf") }
     }
     
     def "mock-list-contributors-csv"() {
@@ -159,6 +160,7 @@ class NcdReportSpec extends FcliBaseSpec {
             result.stdout[0].contains("authorId")
             result.stdout[0].contains("authorName")
             result.stdout[0].contains("contributionStatus")
+            result.stdout[0].contains("duplicateOf")
             result.stdout.size() > 2  // Header + at least one author
     }
     
@@ -178,7 +180,7 @@ class NcdReportSpec extends FcliBaseSpec {
             def result2 = Fcli.run(createArgs2)
             
             // Merge the two reports
-            def mergeArgs = "license ncd-report merge -r ${report1} ${report2} -d ${mergedReport} -y"
+            def mergeArgs = "license ncd-report merge -r ${report1},${report2} -d ${mergedReport} -y"
             def mergeResult = Fcli.run(mergeArgs)
         then:
             new File("${mergedReport}/summary.txt").exists()
@@ -200,7 +202,7 @@ class NcdReportSpec extends FcliBaseSpec {
             Fcli.run(listArgs)
             
             // Update the same report with the list output
-            def updateArgs = "license ncd-report update -r ${report1} -c ${tmpListOutput}"
+            def updateArgs = "license ncd-report update-contributor-status -r ${report1} -c ${tmpListOutput}"
             Fcli.run(updateArgs)
         then:
             new File(tmpListOutput).exists()
@@ -251,18 +253,18 @@ class NcdReportSpec extends FcliBaseSpec {
             new File(updateData).text = '''[
   {
         "authorId": "''' + authorIds[0] + '''",
-        "aiDuplicateOf": "''' + authorIds[1] + '''",
-    "aiConfidence": "0.95"
+                "overrideDuplicateOf": "''' + authorIds[1] + '''",
+        "overrideStatusConfidence": "0.95"
   },
   {
         "authorId": "''' + authorIds[2] + '''",
-        "aiDuplicateOf": "''' + authorIds[3] + '''",
-    "aiConfidence": "0.85"
+                "overrideDuplicateOf": "''' + authorIds[3] + '''",
+        "overrideStatusConfidence": "0.85"
   }
 ]'''
             
             // Try to update (may not find exact matches in generated data, but validates the command)
-                        def updateArgs = "license ncd-report update -r ${reportPath} -c ${updateData}"
+                        def updateArgs = "license ncd-report update-contributor-status -r ${reportPath} -c ${updateData}"
             Fcli.run(updateArgs)
         then:
             new File(reportPath).exists()

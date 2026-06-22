@@ -31,8 +31,8 @@ public final class NcdReportAuthorsWriter implements INcdReportAuthorsWriter {
     }
     
     @Override
-    public void writeDuplicateAuthor(NcdReportProcessedAuthorDescriptor descriptor, int contributingAuthorNumber) {
-        write(descriptor, "duplicate", contributingAuthorNumber);
+    public void writeDuplicateAuthor(NcdReportProcessedAuthorDescriptor descriptor, String representativeAuthorId, int contributingAuthorNumber) {
+        write(descriptor, "duplicate", representativeAuthorId, contributingAuthorNumber);
     }
     
     @Override
@@ -40,10 +40,15 @@ public final class NcdReportAuthorsWriter implements INcdReportAuthorsWriter {
         write(descriptor, "contributing", contributingAuthorNumber);
     }
     
-    public void write(NcdReportProcessedAuthorDescriptor descriptor, String status, int contributingAuthorNumber) {
+    public void write(NcdReportProcessedAuthorDescriptor descriptor, String status, String overrideDuplicateOf, int contributingAuthorNumber) {
         recordWriter.append(descriptor.updateReportRecord(
                 JsonHelper.getObjectMapper().createObjectNode())
                 .put("contributionStatus", status)
+                .put("overrideDuplicateOf", overrideDuplicateOf)
                 .put("contributingAuthorNumber", contributingAuthorNumber));
+    }
+
+    private void write(NcdReportProcessedAuthorDescriptor descriptor, String status, int contributingAuthorNumber) {
+        write(descriptor, status, "", contributingAuthorNumber);
     }
 }

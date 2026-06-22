@@ -45,7 +45,7 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
 @Command(name = "update-contributor-status", aliases = {"ucs"})
-public final class NcdReportUpdateCommand extends AbstractRunnableCommand {
+public final class NcdReportUpdateContributorStatusCommand extends AbstractRunnableCommand {
     private static final CsvMapper CSV_MAPPER = new CsvMapper();
     private static final ObjectMapper JSON_MAPPER = JsonHelper.getObjectMapper();
     private static final ObjectMapper YAML_MAPPER = createYamlMapper();

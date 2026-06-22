@@ -40,6 +40,10 @@ public class NcdReportProcessedAuthorDescriptor {
      * as the author's name/email are the same, making it suitable as a stable
      * cross-report reference key (e.g. for AI-assisted deduplication annotations).
      */
+    public String getAuthorId() {
+        return computeAuthorId();
+    }
+
     private String computeAuthorId() {
         return NcdReportContributorHelper.computeAuthorId(expressionInput);
     }
