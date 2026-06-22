@@ -37,6 +37,11 @@ public class FoDAttributeUpdateOptions {
         @Getter private Map<String, String> attributes;
     }
 
+    public static class RequiredAttrOption extends AbstractFoDAppAttributeUpdateMixin {
+        @Option(names = {"--attrs", "--attributes"}, required = true, split=",", paramLabel = PARAM_LABEL)
+        @Getter private Map<String, String> attributes;
+    }
+
     public static class RequiredPositionalParameter extends AbstractFoDAppAttributeUpdateMixin {
         @EnvSuffix("ATTRS") @Parameters(index = "0..*", arity = "1..*", paramLabel = PARAM_LABEL)
         @Getter private Map<String, String> attributes;

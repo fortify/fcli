@@ -119,6 +119,7 @@ public class RemediationProcessor {
 
 
                         if (!calculateHashBase64(content, "SHA-256").equals(fileHash)) {
+                            logger.trace("File hash mismatch for remediation {} in {}; searching changed source content", instanceId, filename);
                             Element contextElem = (Element) change.getElementsByTagNameNS(NAMESPACE_URI, "Context").item(0);
                             String contextText = contextElem.getTextContent();
 
@@ -126,9 +127,12 @@ public class RemediationProcessor {
                             List<String> contextLine = Arrays.asList(contextText.split("\\r?\\n"));
                             int contextLineFrom = FuzzyContextSearcher.fuzzySearchContext(originalLines, contextLine, 0) ;
                             if(contextLineFrom==-1) {
+                                logger.trace("Context search failed for remediation {} in {}; context lines={}, source lines={}", instanceId, filename,
+                                        contextLine.size(), originalLines.size());
                                 logger.info("File content has changed. Context Lines not found. Remediation not possible for {}", instanceId);
                                 continue;
                             }
+                            logger.trace("Context for remediation {} in {} matched at line {}", instanceId, filename, contextLineFrom + 1);
                             Element OriginalCodeElem = (Element) change.getElementsByTagNameNS(NAMESPACE_URI, "OriginalCode").item(0);
                             String OriginalCodeText = OriginalCodeElem.getTextContent();
 
@@ -137,11 +141,14 @@ public class RemediationProcessor {
 
                             int[] lineFromTo = FuzzyContextSearcher.fuzzySearchOriginalCode(originalLines, OriginalCodeLine, 0, contextLineFrom);
                             if(lineFromTo[0]==-1 || lineFromTo[1]==-1) {
+                                logger.trace("Original code search failed for remediation {} in {}; context line={}, original code lines={}, source lines={}",
+                                        instanceId, filename, contextLineFrom + 1, OriginalCodeLine.size(), originalLines.size());
                                 logger.info("File content has changed. Original Code lines not found. Remediation not possible for {}", instanceId);
                                 continue;
                             }
                             lineFrom = lineFromTo[0]+1; //Adding 1 for 1-based indexing
                             lineTo = lineFromTo[1] + 1; //Adding 1 for 1-based indexing
+                            logger.trace("Original code for remediation {} in {} matched at lines {}-{}", instanceId, filename, lineFrom, lineTo);
                         }
 
 

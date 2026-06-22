@@ -28,11 +28,11 @@ import org.slf4j.LoggerFactory;
 import com.fortify.cli.common.cli.cmd.AbstractRunnableCommand;
 import com.fortify.cli.common.exception.FcliBugException;
 import com.fortify.cli.common.exception.FcliSimpleException;
+import com.fortify.cli.common.tool.definitions.helper.ToolDefinitionVersionDescriptor;
+import com.fortify.cli.common.tool.definitions.helper.ToolDefinitionsHelper;
 import com.fortify.cli.tool._common.helper.Tool;
 import com.fortify.cli.tool._common.helper.ToolInstallationDescriptor;
 import com.fortify.cli.tool._common.helper.ToolInstallationsResolver;
-import com.fortify.cli.tool.definitions.helper.ToolDefinitionVersionDescriptor;
-import com.fortify.cli.tool.definitions.helper.ToolDefinitionsHelper;
 
 import lombok.Getter;
 import lombok.SneakyThrows;

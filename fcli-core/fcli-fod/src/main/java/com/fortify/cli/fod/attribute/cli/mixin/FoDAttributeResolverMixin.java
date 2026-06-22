@@ -17,8 +17,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.fod.attribute.helper.FoDAttributeDescriptor;
-import com.fortify.cli.fod.attribute.helper.FoDAttributeHelper;
+import com.fortify.cli.fod.attribute.helper.FoDAttributeDefinitionDescriptor;
+import com.fortify.cli.fod.attribute.helper.FoDAttributeDefinitionHelper;
 
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
@@ -30,29 +30,30 @@ public class FoDAttributeResolverMixin {
     public static abstract class AbstractFoDAttributeResolverMixin {
         public abstract String getAttributeId();
 
-        public FoDAttributeDescriptor getAttributeDescriptor(UnirestInstance unirest) {
-            return FoDAttributeHelper.getAttributeDescriptor(unirest, getAttributeId(), true);
+        public FoDAttributeDefinitionDescriptor getAttributeDescriptor(UnirestInstance unirest) {
+            return new FoDAttributeDefinitionHelper(unirest).getDefinition(getAttributeId(), true);
         }
     }
 
     public static abstract class AbstractFoDMultiAttributeResolverMixin {
         public abstract String[] getAttributeIds();
 
-        public FoDAttributeDescriptor[] getAttributeDescriptors(UnirestInstance unirest) {
+        public FoDAttributeDefinitionDescriptor[] getAttributeDescriptors(UnirestInstance unirest) {
+            var helper = new FoDAttributeDefinitionHelper(unirest);
             return Stream.of(getAttributeIds())
-                    .map(id -> FoDAttributeHelper.getAttributeDescriptor(unirest, id, true))
-                    .toArray(FoDAttributeDescriptor[]::new);
+                    .map(id -> helper.getDefinition(id, true))
+                    .toArray(FoDAttributeDefinitionDescriptor[]::new);
         }
 
         public Collection<JsonNode> getAttributeDescriptorJsonNodes(UnirestInstance unirest) {
             return Stream.of(getAttributeDescriptors(unirest))
-                    .map(FoDAttributeDescriptor::asJsonNode)
+                    .map(FoDAttributeDefinitionDescriptor::asJsonNode)
                     .collect(Collectors.toList());
         }
 
         public Integer[] getAttributeIds(UnirestInstance unirest) {
             return Stream.of(getAttributeDescriptors(unirest))
-                    .map(FoDAttributeDescriptor::getId)
+                    .map(FoDAttributeDefinitionDescriptor::getId)
                     .toArray(Integer[]::new);
         }
     }

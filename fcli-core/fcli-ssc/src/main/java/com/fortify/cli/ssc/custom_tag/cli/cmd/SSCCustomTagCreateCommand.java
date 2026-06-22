@@ -13,13 +13,11 @@
 package com.fortify.cli.ssc.custom_tag.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.ssc._common.output.cli.cmd.AbstractSSCJsonNodeOutputCommand;
+import com.fortify.cli.ssc.custom_tag.helper.SSCCustomTagDefinitionHelper;
 import com.fortify.cli.ssc.custom_tag.helper.SSCCustomTagValueType;
 
 import kong.unirest.UnirestInstance;
@@ -51,7 +49,8 @@ public class SSCCustomTagCreateCommand extends AbstractSSCJsonNodeOutputCommand 
 
     @Override
     public JsonNode getJsonNode(UnirestInstance unirest) {
-        ObjectNode body = buildBody();
+        ObjectNode body = new SSCCustomTagDefinitionHelper(unirest).buildCreateBody(
+                name, valueType, description, restriction, hidden, requiresComment, extensible, values);
         var response = unirest.post("/api/v1/customTags")
             .body(body)
             .asObject(JsonNode.class).getBody();
@@ -66,43 +65,5 @@ public class SSCCustomTagCreateCommand extends AbstractSSCJsonNodeOutputCommand 
     @Override
     public boolean isSingular() {
         return true;
-    }
-
-    // --- Private body-building helpers below ---
-    private ObjectNode buildBody() {
-        ObjectNode body = JsonNodeFactory.instance.objectNode();
-        body.put("name", name);
-        body.put("description", description != null ? description : "");
-        body.put("valueType", valueType.name());
-        body.put("restriction", restriction);
-        body.put("hidden", hidden);
-        body.put("requiresComment", requiresComment);
-        body.put("customTagType", "CUSTOM");
-        if (valueType == SSCCustomTagValueType.LIST) {
-            body.put("extensible", extensible);
-            body.set("valueList", buildValueList());
-        }
-        return body;
-    }
-
-    private ArrayNode buildValueList() {
-        if (values == null || values.isBlank()) {
-            throw new FcliSimpleException("At least one value must be specified for LIST type using --values");
-        }
-        var valueList = JsonNodeFactory.instance.arrayNode();
-        String[] vals = values.split(",");
-        for (int i = 0; i < vals.length; i++) {
-            String val = vals[i].trim();
-            ObjectNode entry = JsonNodeFactory.instance.objectNode();
-            entry.put("lookupIndex", i+1);
-            entry.put("deletable", true);
-            entry.put("lookupValue", val);
-            entry.put("description", "");
-            entry.putNull("auditAssistantTrainingLabel");
-            entry.put("hidden", false);
-            entry.put("seqNumber", i+1);
-            valueList.add(entry);
-        }
-        return valueList;
     }
 }

@@ -15,19 +15,14 @@ package com.fortify.cli.fod.action.helper;
 import com.fortify.cli.common.action.runner.ActionRunnerContextLocal;
 import com.fortify.cli.common.action.runner.IActionProductContextProvider;
 import com.fortify.cli.common.action.runner.processor.IActionRequestHelper.BasicActionRequestHelper;
-import com.fortify.cli.common.http.proxy.helper.ProxyHelper;
 import com.fortify.cli.common.rest.unirest.UnirestHelper;
-import com.fortify.cli.common.rest.unirest.config.UnirestJsonHeaderConfigurer;
-import com.fortify.cli.common.rest.unirest.config.UnirestUnexpectedHttpResponseConfigurer;
-import com.fortify.cli.common.rest.unirest.config.UnirestUrlConfigConfigurer;
 import com.fortify.cli.common.spel.IConfigurableSpelEvaluator;
 import com.fortify.cli.fod._common.rest.helper.FoDProductHelper;
-import com.fortify.cli.fod._common.rest.helper.FoDRetryStrategy;
+import com.fortify.cli.fod._common.rest.helper.FoDUnirestHelper;
 import com.fortify.cli.fod._common.session.helper.FoDSessionDescriptor;
 import com.fortify.cli.fod._common.session.helper.FoDSessionHelper;
 
 import kong.unirest.UnirestInstance;
-import kong.unirest.apache.ApacheClient;
 
 public class FoDActionProductContextProvider implements IActionProductContextProvider {
     @Override
@@ -57,18 +52,7 @@ public class FoDActionProductContextProvider implements IActionProductContextPro
     }
 
     private static UnirestInstance createFoDUnirestInstance(FoDSessionDescriptor descriptor) {
-        return UnirestHelper.createUnirestInstance(u -> configureFoDUnirest(u, descriptor));
-    }
-
-    private static void configureFoDUnirest(UnirestInstance unirest, FoDSessionDescriptor descriptor) {
-        unirest.config().httpClient(config ->
-                new ApacheClient(config, cb ->
-                        cb.setServiceUnavailableRetryStrategy(new FoDRetryStrategy())));
-        UnirestUnexpectedHttpResponseConfigurer.configure(unirest);
-        UnirestJsonHeaderConfigurer.configure(unirest);
-        UnirestUrlConfigConfigurer.configure(unirest, descriptor.getUrlConfig());
-        ProxyHelper.configureProxy(unirest, "fod", descriptor.getUrlConfig().getUrl());
-        unirest.config().setDefaultHeader("Authorization",
-                String.format("Bearer %s", descriptor.getActiveBearerToken()));
+        return UnirestHelper.createUnirestInstance(
+                u -> FoDUnirestHelper.configureUnirestInstance(u, descriptor));
     }
 }

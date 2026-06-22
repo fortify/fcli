@@ -22,7 +22,7 @@ import org.apache.commons.lang3.StringUtils;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.json.JsonNodeHolder;
-import com.fortify.cli.fod.attribute.helper.FoDAttributeDescriptor;
+import com.fortify.cli.fod.attribute.helper.FoDAttributeValueDescriptor;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -58,7 +58,7 @@ public class FoDReleaseDescriptor extends JsonNodeHolder {
     private LocalDateTime staticScanDate;
     private LocalDateTime dynamicScanDate;
     private LocalDateTime mobileScanDate;
-    private ArrayList<FoDAttributeDescriptor> attributes;
+    private ArrayList<FoDAttributeValueDescriptor> attributes;
 
     @JsonIgnore public String getQualifiedName() {
         return StringUtils.isBlank(microserviceName)
@@ -74,7 +74,7 @@ public class FoDReleaseDescriptor extends JsonNodeHolder {
 
     public Map<Integer, String> attributesAsMap() {
         Map<Integer, String> attrMap = new HashMap<>();
-        for (FoDAttributeDescriptor attr : attributes) {
+        for (FoDAttributeValueDescriptor attr : attributes) {
             attrMap.put(attr.getId(), attr.getValue());
         }
         return  attrMap;

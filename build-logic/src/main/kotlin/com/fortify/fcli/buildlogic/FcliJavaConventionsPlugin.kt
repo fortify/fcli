@@ -30,49 +30,39 @@ class FcliJavaConventionsPlugin: Plugin<Project> {
         }
 
         // Dependencies leveraging BOM project if present
-        afterEvaluate {
-            val bomRef = findProperty("fcliBomRef") as String?
-            if (bomRef != null) {
-                dependencies.apply {
-                    add("implementation", platform(project(bomRef)))
-                    add("annotationProcessor", platform(project(bomRef)))
-                }
-            }
+        val bomRef = findProperty("fcliBomRef") as String?
+        if (bomRef != null) {
             dependencies.apply {
-                // Exclude slf4j transitive dependency for io.modelcontextprotocol
-                add("implementation", "io.modelcontextprotocol.sdk:mcp-core") {
-                    exclude(group = "org.slf4j", module = "slf4j-api")
-                }
-                add("implementation", "io.modelcontextprotocol.sdk:mcp-json-jackson2") {
-                    exclude(group = "org.slf4j", module = "slf4j-api")
-                }
-                add("annotationProcessor", "info.picocli:picocli-codegen")
-                add("compileOnly", "com.formkiq:graalvm-annotations")
-                add("annotationProcessor", "com.formkiq:graalvm-annotations-processor")
-                add("implementation", "com.konghq:unirest-java")
-                add("implementation", "com.konghq:unirest-objectmapper-jackson")
-                add("implementation", "org.springframework:spring-expression")
-                add("implementation", "org.springframework:spring-context")
-                add("compileOnly", "com.google.code.findbugs:jsr305")
-                add("implementation", "org.slf4j:slf4j-api")
-                add("implementation", "org.slf4j:jcl-over-slf4j")
-                add("implementation", "ch.qos.logback:logback-classic")
-                add("implementation", "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml")
-                add("implementation", "com.fasterxml.jackson.dataformat:jackson-dataformat-csv")
-                add("implementation", "com.fasterxml.jackson.dataformat:jackson-dataformat-xml")
-                add("implementation", "com.fasterxml.jackson.datatype:jackson-datatype-jsr310")
-                add("implementation", "com.fasterxml.jackson.datatype:jackson-datatype-jdk8")
-                add("implementation", "com.github.freva:ascii-table")
-                add("implementation", "org.jasypt:jasypt")
-                add("testImplementation", "org.junit.jupiter:junit-jupiter-api")
-                add("testImplementation", "org.junit.jupiter:junit-jupiter-params")
-                add("testRuntimeOnly", "org.junit.jupiter:junit-jupiter-engine")
-                add("testRuntimeOnly", "org.junit.platform:junit-platform-launcher")
-                add("implementation", "org.apache.commons:commons-lang3:3.18.0")
-                add("implementation", "org.apache.commons:commons-compress")
-                add("implementation", "org.jsoup:jsoup")
-                add("implementation", "org.eclipse.jgit:org.eclipse.jgit");
+                add("implementation", platform(project(bomRef)))
+                add("annotationProcessor", platform(project(bomRef)))
             }
+        }
+        dependencies.apply {
+            add("compileOnly", "com.formkiq:graalvm-annotations")
+            add("annotationProcessor", "com.formkiq:graalvm-annotations-processor")
+            add("implementation", "com.konghq:unirest-java")
+            add("implementation", "com.konghq:unirest-objectmapper-jackson")
+            add("implementation", "org.springframework:spring-expression")
+            add("implementation", "org.springframework:spring-context")
+            add("compileOnly", "com.google.code.findbugs:jsr305")
+            add("implementation", "org.slf4j:slf4j-api")
+            add("implementation", "org.slf4j:jcl-over-slf4j")
+            add("implementation", "ch.qos.logback:logback-classic")
+            add("implementation", "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml")
+            add("implementation", "com.fasterxml.jackson.dataformat:jackson-dataformat-csv")
+            add("implementation", "com.fasterxml.jackson.dataformat:jackson-dataformat-xml")
+            add("implementation", "com.fasterxml.jackson.datatype:jackson-datatype-jsr310")
+            add("implementation", "com.fasterxml.jackson.datatype:jackson-datatype-jdk8")
+            add("implementation", "com.github.freva:ascii-table")
+            add("implementation", "org.jasypt:jasypt")
+            add("testImplementation", "org.junit.jupiter:junit-jupiter-api")
+            add("testImplementation", "org.junit.jupiter:junit-jupiter-params")
+            add("testRuntimeOnly", "org.junit.jupiter:junit-jupiter-engine")
+            add("testRuntimeOnly", "org.junit.platform:junit-platform-launcher")
+            add("implementation", "org.apache.commons:commons-lang3:3.18.0")
+            add("implementation", "org.apache.commons:commons-compress")
+            add("implementation", "org.jsoup:jsoup")
+            add("implementation", "org.eclipse.jgit:org.eclipse.jgit");
         }
 
         tasks.withType(org.gradle.api.tasks.compile.JavaCompile::class).configureEach {
@@ -173,38 +163,50 @@ class FcliJavaConventionsPlugin: Plugin<Project> {
             }
         }
 
-        // Resource-config generation incremental
-        tasks.register("generateResourceConfig") {
-            group = "build resources"
-            description = "Generate GraalVM resource-config.json"
-            dependsOn(ensureGeneratedDirs)
-            dependsOn(generateZipResources, buildTimeActions)
-            inputs.dir("src/main/resources")
-            inputs.dir(generatedZipResourcesDir)
-            inputs.dir(generatedActionOutputResourcesDir)
-            val outputDirProvider = generatedResourceConfigDir.map { it.dir("META-INF/native-image/fcli-generated/${project.name}") }
-            outputs.dir(outputDirProvider)
-            doLast {
-                val entries = mutableListOf<String>()
-                // Helper to add files from a base directory
-                fun addFiles(baseDir: java.io.File, tree: org.gradle.api.file.FileTree) {
-                    tree.files.filter { it.isFile }.sorted().forEach { f ->
-                        val rel = f.relativeTo(baseDir).invariantSeparatorsPath
-                        entries += "\n  {\"pattern\":\"$rel\"}"
+        // Resource-config generation — only register when module has resources to index
+        val srcResDir = project.file("src/main/resources")
+        val hasSourceResources = srcResDir.isDirectory &&
+            project.fileTree(srcResDir) { exclude("**/i18n/**", "META-INF/**", "**/zip/**") }.files.any()
+        val hasActionZips = project.file("src/main/resources/com/fortify/cli").let { cliRoot ->
+            cliRoot.isDirectory && (cliRoot.listFiles()?.any { dir ->
+                dir.isDirectory && File(dir, "actions/zip").isDirectory
+            } ?: false)
+        }
+        if (hasSourceResources || hasActionZips) {
+            tasks.register("generateResourceConfig") {
+                group = "build resources"
+                description = "Generate GraalVM resource-config.json"
+                dependsOn(ensureGeneratedDirs)
+                dependsOn(generateZipResources, buildTimeActions)
+                if (srcResDir.isDirectory) { inputs.dir(srcResDir) }
+                inputs.dir(generatedZipResourcesDir)
+                inputs.dir(generatedActionOutputResourcesDir)
+                val outputDirProvider = generatedResourceConfigDir.map { it.dir("META-INF/native-image/fcli-generated/${project.name}") }
+                outputs.dir(outputDirProvider)
+                doLast {
+                    val entries = mutableListOf<String>()
+                    // Helper to add files from a base directory
+                    fun addFiles(baseDir: java.io.File, tree: org.gradle.api.file.FileTree) {
+                        tree.files.filter { it.isFile }.sorted().forEach { f ->
+                            val rel = f.relativeTo(baseDir).invariantSeparatorsPath
+                            entries += "\n  {\"pattern\":\"$rel\"}"
+                        }
                     }
-                }
-                val srcBase = project.layout.projectDirectory.dir("src/main/resources").asFile
-                addFiles(srcBase, project.fileTree(srcBase) { exclude("**/i18n/**", "META-INF/**", "**/zip/**") })
-                val genZipBase = generatedZipResourcesDir.get().asFile
-                addFiles(genZipBase, project.fileTree(genZipBase))
-                val genActionBase = generatedActionOutputResourcesDir.get().asFile
-                addFiles(genActionBase, project.fileTree(genActionBase))
-                if (entries.isNotEmpty()) {
-                    val contents = "{" + "\"resources\":[" + entries.joinToString(",") + "\n]}"
-                    val outputDir = outputDirProvider.get().asFile.apply { mkdirs() }
-                    val outFile = File(outputDir, "resource-config.json")
-                    if (!outFile.exists() || outFile.readText() != contents) {
-                        outFile.writeText(contents)
+                    val srcBase = project.layout.projectDirectory.dir("src/main/resources").asFile
+                    if (srcBase.isDirectory) {
+                        addFiles(srcBase, project.fileTree(srcBase) { exclude("**/i18n/**", "META-INF/**", "**/zip/**") })
+                    }
+                    val genZipBase = generatedZipResourcesDir.get().asFile
+                    addFiles(genZipBase, project.fileTree(genZipBase))
+                    val genActionBase = generatedActionOutputResourcesDir.get().asFile
+                    addFiles(genActionBase, project.fileTree(genActionBase))
+                    if (entries.isNotEmpty()) {
+                        val contents = "{" + "\"resources\":[" + entries.joinToString(",") + "\n]}"
+                        val outputDir = outputDirProvider.get().asFile.apply { mkdirs() }
+                        val outFile = File(outputDir, "resource-config.json")
+                        if (!outFile.exists() || outFile.readText() != contents) {
+                            outFile.writeText(contents)
+                        }
                     }
                 }
             }
@@ -214,7 +216,9 @@ class FcliJavaConventionsPlugin: Plugin<Project> {
             named("main") {
                 output.dir(generatedZipResourcesDir, "builtBy" to generateZipResources.getName())
                 output.dir(generatedActionOutputResourcesDir, "builtBy" to buildTimeActions.getName())
-                output.dir(generatedResourceConfigDir, "builtBy" to "generateResourceConfig")
+                if (hasSourceResources || hasActionZips) {
+                    output.dir(generatedResourceConfigDir, "builtBy" to "generateResourceConfig")
+                }
             }
         }
 

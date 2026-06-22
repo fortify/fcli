@@ -29,8 +29,8 @@ import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.json.JsonHelper;
+import com.fortify.cli.common.tool.definitions.helper.ToolDefinitionVersionDescriptor;
 import com.fortify.cli.common.util.FcliDataHelper;
-import com.fortify.cli.tool.definitions.helper.ToolDefinitionVersionDescriptor;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

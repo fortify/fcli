@@ -30,6 +30,11 @@ public class AviatorAdminConfigDescriptorSupplier extends AbstractSessionDescrip
     }
 
     @Override
+    protected String getSessionDescriptorType() {
+        return AviatorAdminConfigHelper.instance().getType();
+    }
+
+    @Override
     public ISessionNameSupplier getSessionNameSupplier() {
         return configNameSupplier;
     }

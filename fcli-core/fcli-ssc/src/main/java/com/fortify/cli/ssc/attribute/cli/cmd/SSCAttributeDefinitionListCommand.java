@@ -30,6 +30,7 @@ import picocli.CommandLine.Mixin;
 
 @Command(name = OutputHelperMixins.ListDefinitions.CMD_NAME) @CommandGroup("definition")
 public class SSCAttributeDefinitionListCommand extends AbstractSSCBaseRequestOutputCommand implements IServerSideQueryParamGeneratorSupplier {
+    private static final String EXTRA_ATTRIBUTE_CATEGORIES = "SCANCENTRAL_DAST";
     @Getter @Mixin private OutputHelperMixins.ListDefinitions outputHelper; 
     @Mixin private SSCFetchRangeMixin fetchRangeMixin;
     @Mixin private SSCQParamMixin qParamMixin;
@@ -43,7 +44,8 @@ public class SSCAttributeDefinitionListCommand extends AbstractSSCBaseRequestOut
 
     @Override
     public HttpRequest<?> getBaseRequest(UnirestInstance unirest) {
-        return unirest.get("/api/v1/attributeDefinitions?orderby=category,name");
+        return unirest.get("/api/v1/attributeDefinitions?orderby=category,name")
+                .queryString("extraCategories", EXTRA_ATTRIBUTE_CATEGORIES);
     }
     
     @Override

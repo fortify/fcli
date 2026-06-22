@@ -20,6 +20,7 @@ import com.fortify.cli.common.action.runner.IActionProductContextProvider;
 import com.fortify.cli.common.action.runner.processor.IActionRequestHelper.BasicActionRequestHelper;
 import com.fortify.cli.common.output.product.IProductHelper;
 import com.fortify.cli.common.rest.unirest.IUnirestInstanceSupplier;
+import com.fortify.cli.common.rest.unirest.UnirestHelper;
 import com.fortify.cli.common.spel.IConfigurableSpelEvaluator;
 import com.fortify.cli.ssc._common.rest.helper.SSCAndScanCentralUnirestHelper;
 import com.fortify.cli.ssc._common.rest.sc_dast.helper.SCDastProductHelper;
@@ -64,17 +65,17 @@ public class SSCActionProductContextProvider implements IActionProductContextPro
     }
 
     private static UnirestInstance createSscUnirestInstance(SSCAndScanCentralSessionDescriptor descriptor) {
-        return com.fortify.cli.common.rest.unirest.UnirestHelper.createUnirestInstance(
+        return UnirestHelper.createUnirestInstance(
                 u -> SSCAndScanCentralUnirestHelper.configureSscUnirestInstance(u, descriptor));
     }
 
     private static UnirestInstance createScSastUnirestInstance(SSCAndScanCentralSessionDescriptor descriptor) {
-        return com.fortify.cli.common.rest.unirest.UnirestHelper.createUnirestInstance(
+        return UnirestHelper.createUnirestInstance(
                 u -> SSCAndScanCentralUnirestHelper.configureScSastControllerUnirestInstance(u, descriptor));
     }
 
     private static UnirestInstance createScDastUnirestInstance(SSCAndScanCentralSessionDescriptor descriptor) {
-        return com.fortify.cli.common.rest.unirest.UnirestHelper.createUnirestInstance(
+        return UnirestHelper.createUnirestInstance(
                 u -> SSCAndScanCentralUnirestHelper.configureScDastControllerUnirestInstance(u, descriptor));
     }
 

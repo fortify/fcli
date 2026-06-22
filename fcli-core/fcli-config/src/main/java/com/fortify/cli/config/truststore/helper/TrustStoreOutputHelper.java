@@ -20,7 +20,10 @@ public class TrustStoreOutputHelper {
     
     public static final JsonNode transformRecord(JsonNode record) {
         ObjectNode node = ((ObjectNode)record);
-        node.put("password", "****"); // Hide trust store password in any output
+        if ( node.has("password") ) {
+            node.put("password", "****"); // Hide trust store password in any output
+        }
+        node.remove("certificatePem");
         return node;
     }
 }

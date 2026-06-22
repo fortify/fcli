@@ -35,6 +35,16 @@ public class FoDSessionDescriptor extends AbstractSessionDescriptorWithSingleUrl
         super(urlConfig);
         this.cachedTokenResponse = tokenResponse;
     }
+
+    /**
+     * Returns a copy of this descriptor with the given token response, preserving all other fields
+     * including the URL configuration and any fields that may be added in the future.
+     */
+    public FoDSessionDescriptor withCachedTokenResponse(FoDTokenCreateResponse newTokenResponse) {
+        var copy = new FoDSessionDescriptor(getUrlConfig(), newTokenResponse);
+        copy.setCreatedDate(getCreatedDate());
+        return copy;
+    }
     
     @JsonIgnore
     public final boolean hasActiveCachedTokenResponse() {

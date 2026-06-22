@@ -13,9 +13,9 @@
 package com.fortify.cli.util.rpc_server.helper;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.util._common.helper.AsyncJobManager;
-import com.fortify.cli.util._common.helper.AsyncTaskFcliCommand;
-import com.fortify.cli.util._common.helper.CollectingJobEventListener;
+import com.fortify.cli.common.concurrent.job.AsyncJobManager;
+import com.fortify.cli.common.concurrent.job.CollectingJobEventListener;
+import com.fortify.cli.common.concurrent.job.task.AsyncTaskFcliCommand;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -82,7 +82,11 @@ public final class RPCMethodHandlerFcliExecute implements IRPCMethodHandler {
 
         var task = new AsyncTaskFcliCommand(command, collectRecords);
         var description = "fcli " + command;
-        var jobId = asyncJobManager.startBackground(task, effectiveListener, description);
+        var jobId = asyncJobManager.startBackground(AsyncJobManager.TaskDescriptor.builder()
+            .task(task)
+            .listener(effectiveListener)
+            .description(description)
+            .build());
 
         if (collector != null) {
             return RPCWaitHelper.awaitOrFallback(collector, waitConfig, jobId, jobType, cacheConfig, collectRecords);

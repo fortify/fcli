@@ -13,9 +13,10 @@
 package com.fortify.cli.util.rpc_server.helper;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.common.cli.util.FcliExecutionContextHolder;
+import com.fortify.cli.common.concurrent.job.AsyncJobManager;
+import com.fortify.cli.common.concurrent.job.CachingJobEventListener;
 import com.fortify.cli.common.json.JsonHelper;
-import com.fortify.cli.util._common.helper.AsyncJobManager;
-import com.fortify.cli.util._common.helper.CachingJobEventListener;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -42,7 +43,6 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public final class RPCMethodHandlerJobGetStatus implements IRPCMethodHandler {
     private final AsyncJobManager asyncJobManager;
-    private final CachingJobEventListener cachingListener;
 
     @Override
     public String description() {
@@ -71,9 +71,14 @@ public final class RPCMethodHandlerJobGetStatus implements IRPCMethodHandler {
             response.put("description", info.getDescription());
             response.put("completed", info.isCompleted());
             response.put("exitCode", info.getExitCode());
-            response.put("cached", cachingListener.hasCache(jobId));
+            response.put("cached", getCachingListener().hasCache(jobId));
             response.put("createdMillis", info.getCreatedMillis());
         }
         return response;
+    }
+
+    private CachingJobEventListener getCachingListener() {
+        return FcliExecutionContextHolder.current().getIsolationScope()
+                .getOrCreateScopedState(CachingJobEventListener.class, CachingJobEventListener::new);
     }
 }

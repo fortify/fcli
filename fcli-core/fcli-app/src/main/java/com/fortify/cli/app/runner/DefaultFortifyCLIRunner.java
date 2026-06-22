@@ -15,6 +15,7 @@ package com.fortify.cli.app.runner;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import com.fortify.cli.app._main.cli.cmd.FCLIRootCommands;
@@ -22,6 +23,7 @@ import com.fortify.cli.app.runner.util.FortifyCLIDefaultValueProvider;
 import com.fortify.cli.app.runner.util.FortifyCLIDynamicInitializer;
 import com.fortify.cli.app.runner.util.FortifyCLIStaticInitializer;
 import com.fortify.cli.common.cli.util.FcliCommandSpecHelper;
+import com.fortify.cli.common.cli.util.FcliExecutionContextHolder;
 import com.fortify.cli.common.cli.util.FcliExecutionStrategyFactory;
 import com.fortify.cli.common.cli.util.FcliWrappedHelpExclude;
 import com.fortify.cli.common.cli.util.StdioHelper;
@@ -32,22 +34,49 @@ import com.fortify.cli.common.variable.FcliVariableHelper;
 
 import picocli.CommandLine;
 import picocli.CommandLine.Help;
-import picocli.CommandLine.Help.Ansi;
 import picocli.CommandLine.Help.Ansi.Text;
 import picocli.CommandLine.Model.ArgGroupSpec;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Model.OptionSpec;
 
 public final class DefaultFortifyCLIRunner {
-    public static Ansi ANSI = Help.Ansi.AUTO;
     // TODO See https://github.com/remkop/picocli/issues/2066
     //@Getter(value = AccessLevel.PRIVATE, lazy = true)
     //private final CommandLine commandLine = createCommandLine();
+
+    public static final int run(String... args) {
+        StdioHelper.install();
+        try {
+            return prepareExecution(normalizeArgs(args)).get();
+        } finally {
+            StdioHelper.uninstall();
+        }
+    }
+
+    /**
+     * Run all initializers and build the configured {@link CommandLine} object within a
+     * short-lived bootstrap execution context, then return a supplier that executes the
+     * command. The bootstrap context gives initializers (e.g. trust-store loading) access
+     * to {@code FcliExecutionContextHolder.current()} without requiring any special-casing
+     * in the helper code, while ensuring the stack is empty again before
+     * {@code cl.execute()} is called so that {@link com.fortify.cli.common.cli.util.FcliExecutionStrategy}
+     * manages the per-command context exactly as normal.
+     */
+    private static Supplier<Integer> prepareExecution(NormalizedArgs normalizedArgs) {
+        try (var bootstrapContext = FcliExecutionContextHolder.pushNew()) {
+            FortifyCLIDynamicInitializer.getInstance().initialize(normalizedArgs.args());
+            //CommandLine cl = getCommandLine(); // TODO See https://github.com/remkop/picocli/issues/2066
+            CommandLine cl = createCommandLine(normalizedArgs.isWrapped());
+            FcliExecutionStrategyFactory.configureCommandLine(cl);
+            var resolvedArgs = normalizedArgs.args();
+            return () -> { cl.clearExecutionResults(); return cl.execute(resolvedArgs); };
+        }
+    }
     
     private static final CommandLine createCommandLine(boolean useWrapperHelp) {
         FortifyCLIStaticInitializer.getInstance().initialize();
         CommandLine cl = new CommandLine(FCLIRootCommands.class);
-        cl.setColorScheme(Help.defaultColorScheme(ANSI));
+        cl.setColorScheme(Help.defaultColorScheme(StdioHelper.getAnsi()));
         FcliCommandSpecHelper.setRootCommandLine(cl);
         // Custom parameter exception handler is disabled for now as it causes https://github.com/fortify/fcli/issues/434.
         // See comments in I18nParameterExceptionHandler for more detail.
@@ -60,36 +89,30 @@ public final class DefaultFortifyCLIRunner {
         return cl;
     }
     
-    public static final int run(String... args) {
-        StdioHelper.install();
-        try {
-            // If first arg is 'fcli', remove it. This allows for passing 'fcli' command name
-            // to scratch Docker image, for consistency with non-scratch/shell-based images.
-            if ( args.length>0 && "fcli".equalsIgnoreCase(args[0]) ) {
-                args = Arrays.copyOfRange(args, 1, args.length);
-            }
-            
-            // Check for -Xwrapped option and remove it from args
-            boolean isWrapped = Arrays.stream(args).anyMatch("-Xwrapped"::equals);
-            if ( isWrapped ) {
-                args = Arrays.stream(args).filter(arg -> !"-Xwrapped".equals(arg)).toArray(String[]::new);
-            }
-            
-            // Replace --fcli-help with --help for wrapper compatibility
-            args = Arrays.stream(args)
-                    .map(arg -> "--fcli-help".equals(arg) ? "--help" : arg)
-                    .toArray(String[]::new);
-            
-            String[] resolvedArgs = FcliVariableHelper.resolveVariables(args);
-            FortifyCLIDynamicInitializer.getInstance().initialize(resolvedArgs);
-            //CommandLine cl = getCommandLine(); // TODO See https://github.com/remkop/picocli/issues/2066
-            CommandLine cl = createCommandLine(isWrapped);
-            FcliExecutionStrategyFactory.configureCommandLine(cl);
-            cl.clearExecutionResults();
-            return cl.execute(resolvedArgs);
-        } finally {
-            StdioHelper.uninstall();
+    /** Holds normalized (pre-processed and variable-resolved) arguments together with wrapper detection. */
+    private record NormalizedArgs(String[] args, boolean isWrapped) {}
+
+    /**
+     * Normalize raw command-line arguments: strip an optional leading {@code fcli} token,
+     * detect and remove {@code -Xwrapped}, translate {@code --fcli-help} to {@code --help},
+     * and resolve any fcli variable references.
+     */
+    private static NormalizedArgs normalizeArgs(String... args) {
+        // If first arg is 'fcli', remove it. This allows for passing 'fcli' command name
+        // to scratch Docker image, for consistency with non-scratch/shell-based images.
+        if ( args.length>0 && "fcli".equalsIgnoreCase(args[0]) ) {
+            args = Arrays.copyOfRange(args, 1, args.length);
         }
+        // Check for -Xwrapped option and remove it from args
+        boolean isWrapped = Arrays.stream(args).anyMatch("-Xwrapped"::equals);
+        if ( isWrapped ) {
+            args = Arrays.stream(args).filter(arg -> !"-Xwrapped".equals(arg)).toArray(String[]::new);
+        }
+        // Replace --fcli-help with --help for wrapper compatibility
+        args = Arrays.stream(args)
+                .map(arg -> "--fcli-help".equals(arg) ? "--help" : arg)
+                .toArray(String[]::new);
+        return new NormalizedArgs(FcliVariableHelper.resolveVariables(args), isWrapped);
     }
     
     private static abstract class AbstractFcliHelp extends CommandLine.Help {

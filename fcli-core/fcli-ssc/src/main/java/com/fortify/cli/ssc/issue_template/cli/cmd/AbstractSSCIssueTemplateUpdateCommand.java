@@ -23,7 +23,7 @@ import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.ssc._common.output.cli.cmd.AbstractSSCJsonNodeOutputCommand;
 import com.fortify.cli.ssc._common.rest.ssc.SSCUrls;
 import com.fortify.cli.ssc.custom_tag.cli.mixin.SSCCustomTagAddRemoveMixin;
-import com.fortify.cli.ssc.custom_tag.helper.SSCCustomTagUpdateHelper;
+import com.fortify.cli.ssc.custom_tag.helper.SSCCustomTagAssignmentHelper;
 import com.fortify.cli.ssc.issue_template.cli.mixin.SSCIssueTemplateResolverMixin;
 import com.fortify.cli.ssc.issue_template.helper.SSCIssueTemplateDescriptor;
 import com.fortify.cli.ssc.issue_template.helper.SSCIssueTemplateHelper;
@@ -57,7 +57,7 @@ public abstract class AbstractSSCIssueTemplateUpdateCommand extends AbstractSSCJ
     }
 
     protected ArrayNode getCustomTagIds(UnirestInstance unirest, SSCIssueTemplateDescriptor descriptor) {
-        SSCCustomTagUpdateHelper tagUpdateHelper = new SSCCustomTagUpdateHelper(unirest);
+        SSCCustomTagAssignmentHelper tagUpdateHelper = new SSCCustomTagAssignmentHelper(unirest);
         var currentTags = SSCIssueTemplateHelper.getCustomTagsRequest(unirest, descriptor.getId()).asObject(JsonNode.class).getBody();
         return tagUpdateHelper.computeUpdatedTagDescriptors(
                 currentTags,

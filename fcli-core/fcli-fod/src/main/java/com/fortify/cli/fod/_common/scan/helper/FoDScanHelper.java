@@ -194,8 +194,16 @@ public class FoDScanHelper {
                 .routeParam("scanId", scanId)
                 .asObject(JsonNode.class).getBody();
         if (cancelResponse.has("success") && !cancelResponse.get("success").asBoolean()) {
-            throw new IllegalStateException("Error cancelling scan " + cancelResponse.get("message").asText());
+            throw new FcliSimpleException("Error cancelling scan " + cancelResponse.get("message").asText());
         }
+    }
+
+    public static FoDScanDescriptor updateScan(UnirestInstance unirest, String scanId, FoDScanPutRequest request) {
+        unirest.put(FoDUrls.V3_SCAN)
+                .routeParam("scanId", scanId)
+                .body(objectMapper.valueToTree(request))
+                .asObject(JsonNode.class).getBody();
+        return getScanDescriptor(unirest, scanId, null);
     }
 
 }

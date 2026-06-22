@@ -23,6 +23,7 @@ import picocli.CommandLine;
                 FoDDastScanDownloadCommand.class,
                 FoDDastScanDownloadLatestCommand.class,
                 FoDDastScanGetCommand.class,
+                FoDDastScanUpdateCommand.class,
                 FoDDastLegacyScanGetConfigCommand.class,
                 FoDDastScanImportCommand.class,
                 FoDDastScanListCommand.class,

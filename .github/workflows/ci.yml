@@ -1,4 +1,5 @@
 name: Build and release
+run-name: "Build and release (${{ github.event_name }})"
 on:
   workflow_dispatch:
   pull_request:
@@ -26,8 +27,13 @@ env:
   graal_java_version: 21
           
 jobs:
+  check-duplicate-run:
+    uses: fortify/.github/.github/workflows/check-duplicate-run.yml@main
+
   create-release:
     name: create-release
+    needs: check-duplicate-run
+    if: needs.check-duplicate-run.outputs.should_skip != 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -47,7 +53,7 @@ jobs:
         uses: actions/checkout@v6
       - name: PROD - Prepare GitHub release
         id: create_prod_release
-        uses: fortify/3rdparty-actions/actions/googleapis/release-please-action/v4@main
+        uses: fortify/3rdparty-actions/actions/googleapis/release-please-action/v5@main
         if: contains(github.ref, 'refs/heads/rel/')
         with:
           skip-github-pull-request: true
@@ -135,6 +141,16 @@ jobs:
         with:
           name: build-output
           path: build/dist/**/*
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: fcli-jar
+          path: build/dist/release-assets/fcli.jar
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: fcli-ftest-jar
+          path: build/dist/fcli-ftest.jar
           
     outputs:
       do_release: ${{ env.DO_RELEASE }}
@@ -182,7 +198,7 @@ jobs:
         run: native-image ${{ env.native_image_opts }} --static --libc=musl -Djansi.disable=true --initialize-at-build-time=com.fortify.cli.common.util.JAnsiConfig -H:ExcludeResources="org/fusesource/jansi/internal/native/.*" -jar ./artifacts/release-assets/fcli.jar fcli
 
       - name: Compress native fcli
-        uses: fortify/3rdparty-actions/actions/svenstaro/upx-action/v2@main
+        uses: fortify/3rdparty-actions/actions/crazy-max/ghaction-upx/v4@main
         with:
           files: fcli
 
@@ -338,7 +354,7 @@ jobs:
           else
             ref="${GITHUB_REF}"
           fi
-          gh workflow run functional-tests.yml --ref "${ref}" -f runId=${GITHUB_RUN_ID}
+          gh workflow run verify-release.yml --ref "${ref}" -f runId=${GITHUB_RUN_ID}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           BUILD_BRANCH: ${{ needs.build.outputs.branch }}
@@ -366,7 +382,7 @@ jobs:
           
       - name: PROD - Prepare release PR
         if: contains(github.ref, 'refs/heads/rel/')
-        uses: fortify/3rdparty-actions/actions/googleapis/release-please-action/v4@main
+        uses: fortify/3rdparty-actions/actions/googleapis/release-please-action/v5@main
         with:
           skip-github-release: true
           target-branch: ${{ github.ref_name }}
@@ -383,12 +399,11 @@ jobs:
           RELEASE_BRANCH: ${{ needs.build.outputs.branch }}
           
       - name: DEV - Update ${{ needs.build.outputs.release_tag }} tag
-        uses: fortify/3rdparty-actions/actions/richardsimko/update-tag/v1@main
+        uses: fortify/.github/.github/actions/update-tag@main
         if: needs.build.outputs.do_dev_release
         with:
           tag_name: ${{ needs.build.outputs.release_tag }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
+          github_token: ${{ secrets.GITHUB_TOKEN }}
           
       - name: Upload assets to release
         if: needs.build.outputs.do_release
@@ -426,11 +441,10 @@ jobs:
           name: combined-artifacts
     
       - name: PROD - Publish ${{ matrix.semantic_version }} tag
-        uses: fortify/3rdparty-actions/actions/richardsimko/update-tag/v1@main
+        uses: fortify/.github/.github/actions/update-tag@main
         with:
           tag_name: ${{ matrix.semantic_version }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
       
       - name: PROD - Publish semantic release ${{ matrix.semantic_version }}
         run: |

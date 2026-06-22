@@ -33,13 +33,30 @@
     "name":"com.fortify.cli.aviator.config.TagMappingConfig",
     "allDeclaredFields":true,
     "queryAllPublicMethods":true,
-    "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"setMapping","parameterTypes":["com.fortify.cli.aviator.config.TagMappingConfig$Mapping"] }, {"name":"setTag_id","parameterTypes":["java.lang.String"] }]
+    "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"setMapping","parameterTypes":["com.fortify.cli.aviator.config.TagMappingConfig$Mapping"] }, {"name":"setSuppression_exclusions","parameterTypes":["java.util.List"] }, {"name":"setTag_id","parameterTypes":["java.lang.String"] }]
   },
   {
     "name":"com.fortify.cli.aviator.config.TagMappingConfig$Mapping",
     "allDeclaredFields":true,
     "queryAllPublicMethods":true,
     "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"setTier_1","parameterTypes":["com.fortify.cli.aviator.config.TagMappingConfig$Tier"] }, {"name":"setTier_2","parameterTypes":["com.fortify.cli.aviator.config.TagMappingConfig$Tier"] }]
+  },
+  {
+    "name":"com.fortify.cli.aviator.config.TagMappingConfig$SuppressionExclusion",
+    "allDeclaredConstructors": true,
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true,
+    "allPublicFields": true,
+    "allDeclaredFields":true,
+    "queryAllPublicMethods":true,
+    "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"setCategories","parameterTypes":["java.util.List"] }]
+  },
+  {
+    "name":"com.fortify.cli.aviator.config.TagMappingConfig$SuppressionExclusionBeanInfo"
+  },
+  {
+    "name":"com.fortify.cli.aviator.config.TagMappingConfig$SuppressionExclusionCustomizer"
   },
   {
     "name":"com.fortify.cli.aviator.config.TagMappingConfig$MappingBeanInfo"

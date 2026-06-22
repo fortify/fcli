@@ -1,5 +1,52 @@
 # Changelog
 
+## [3.20.0](https://github.com/fortify/fcli/compare/v3.19.0...v3.20.0) (2026-06-05)
+
+
+### Features
+
+* `fcli ai-assist extensions list-assistants`: New command to list supported AI coding assistants with detection and installation status ([1c6916a](https://github.com/fortify/fcli/commit/1c6916afd8d7b4758b8fb89b47db1f5914266857))
+* `fcli ai-assist extensions list-installed`: New command to list currently installed Fortify extensions per coding assistant and content type ([1c6916a](https://github.com/fortify/fcli/commit/1c6916afd8d7b4758b8fb89b47db1f5914266857))
+* `fcli ai-assist extensions list-versions`: New command to list available extension versions from tool definitions ([1c6916a](https://github.com/fortify/fcli/commit/1c6916afd8d7b4758b8fb89b47db1f5914266857))
+* `fcli ai-assist extensions setup`: New command to install/update Fortify extensions (skills, agents, ...) for AI coding assistants (Claude Code, GitHub Copilot, OpenAI Codex, Gemini CLI) with auto-detection, target deduplication, and digest verification ([1c6916a](https://github.com/fortify/fcli/commit/1c6916afd8d7b4758b8fb89b47db1f5914266857))
+* `fcli ai-assist extensions uninstall`: New command to remove installed Fortify extensions, with optional `--dir` for directory-specific removal ([1c6916a](https://github.com/fortify/fcli/commit/1c6916afd8d7b4758b8fb89b47db1f5914266857))
+* `fcli ai-assist mcp create-http-config`: New command to generate sample HTTP MCP server config files for SSC or FoD ([1c6916a](https://github.com/fortify/fcli/commit/1c6916afd8d7b4758b8fb89b47db1f5914266857))
+* `fcli ai-assist mcp start-http`: New command to start an HTTP MCP server exposing imported action functions, with per-request auth headers for SSC and FoD ([1c6916a](https://github.com/fortify/fcli/commit/1c6916afd8d7b4758b8fb89b47db1f5914266857))
+* `fcli ai-assist mcp start-stdio`: New command replacing `fcli util mcp-server start` for starting the fcli MCP server over stdio ([1c6916a](https://github.com/fortify/fcli/commit/1c6916afd8d7b4758b8fb89b47db1f5914266857))
+* `fcli config truststore`: Add `add-trusted-url`, `list-trusted-urls`, and `remove-trusted-url` commands ([1dd7d69](https://github.com/fortify/fcli/commit/1dd7d697e90f06c265bb62936e667460ad1895e3))
+* `fcli util mcp-server start`: Deprecated in favor of `fcli ai-assist mcp start-stdio`; delegates all arguments to the new command ([1c6916a](https://github.com/fortify/fcli/commit/1c6916afd8d7b4758b8fb89b47db1f5914266857))
+* Add `--header`/`-H` option on `session login` and selected other commands to allow for specifying custom headers to be used on requests to the respective target system(s), for example for reverse proxy / access gateway authentication ([708cd54](https://github.com/fortify/fcli/commit/708cd545c30b0f21b43eb17e5a6bb86112219e7d))
+* Add `fod *-scan update` commands to allow scan attributes to be updated (closes [#913](https://github.com/fortify/fcli/issues/913)) ([8df8504](https://github.com/fortify/fcli/commit/8df8504f2cc093e9fea9915d4a91d956b3386ac9))
+* Add `headers` configuration option in MSP/NCD report configuration files ([708cd54](https://github.com/fortify/fcli/commit/708cd545c30b0f21b43eb17e5a6bb86112219e7d))
+* Add support for authenticated URL access (closes [#1009](https://github.com/fortify/fcli/issues/1009)) ([7609d10](https://github.com/fortify/fcli/commit/7609d10d1b5500463006bc077305bfb01dceecc5))
+
+
+### Bug Fixes
+
+* `fcli aviator ssc apply-remediations`: Fix potential `IndexOutOfBoundsException` in fuzzy context matching ([634f5a5](https://github.com/fortify/fcli/commit/634f5a527b7abaa841c31e0fb61bdb6fc79e252c))
+* `fcli fod aviator apply-remediations`: Fix potential `IndexOutOfBoundsException` in fuzzy context matching ([634f5a5](https://github.com/fortify/fcli/commit/634f5a527b7abaa841c31e0fb61bdb6fc79e252c))
+* `fcli sc-sast sensor list`: Include full sensor details independent of filtering options; previously `--pool`, `--appversion`, and `--latest-only` returned only compatible client versions instead of full sensor records ([1c6916a](https://github.com/fortify/fcli/commit/1c6916afd8d7b4758b8fb89b47db1f5914266857))
+* `fcli tool definitions update`: Ignore spurious intermediate directories in custom `tool-definitions.zip` ([1c6916a](https://github.com/fortify/fcli/commit/1c6916afd8d7b4758b8fb89b47db1f5914266857))
+* Certificates from system trust store are now being properly applied on all HTTPS requests ([454ff81](https://github.com/fortify/fcli/commit/454ff81920cae7c9780e4608d8e0bd1f3f22ec8d))
+* Fix `--auto-required-attrs` default values for INTEGER and DATE attribute types ([#1027](https://github.com/fortify/fcli/issues/1027)) ([16b41ea](https://github.com/fortify/fcli/commit/16b41ea9952dc6b8432e15339b8689a8db20a7fc))
+
+## [3.19.0](https://github.com/fortify/fcli/compare/v3.18.0...v3.19.0) (2026-05-11)
+
+
+### Features
+
+* `fcli aviator ssc audit`: Add suppression exclusions in tag mapping configuration ([#991](https://github.com/fortify/fcli/issues/991)) ([8400aff](https://github.com/fortify/fcli/commit/8400aff83f134a1e2c03f699db8c74f6cc83c7bf))
+* `fcli fod app/release update`: Add `--auto-required-attrs` option to automatically set required attributes that were not set before ([d172ce6](https://github.com/fortify/fcli/commit/d172ce664ab9a21978ab58cabeac470f2b519033))
+* `fcli fod issue update`: Add `--all`/`--include-all` option for updating all issues for a release ([0d0d7a5](https://github.com/fortify/fcli/commit/0d0d7a5954cbbe010456f76a9ed3127e98fffb35))
+* Load trusted certificates from system trust store if available, in addition to existing Java trust store configuration ([786e345](https://github.com/fortify/fcli/commit/786e345d214b2caaf1dbce1e3358b863cd778c2e))
+
+
+### Bug Fixes
+
+* `fcli fod issue update`: Add `--issue-ids` alias for `--vuln-ids` for consistency ([0d0d7a5](https://github.com/fortify/fcli/commit/0d0d7a5954cbbe010456f76a9ed3127e98fffb35))
+* `fcli fod issue update`: Correct description of `--user` option ([0d0d7a5](https://github.com/fortify/fcli/commit/0d0d7a5954cbbe010456f76a9ed3127e98fffb35))
+* `fcli fod issue update`: Update descriptions to use issues (vulnerabilities) consistently ([0d0d7a5](https://github.com/fortify/fcli/commit/0d0d7a5954cbbe010456f76a9ed3127e98fffb35))
+
 ## [3.18.0](https://github.com/fortify/fcli/compare/v3.17.0...v3.18.0) (2026-04-22)
 
 

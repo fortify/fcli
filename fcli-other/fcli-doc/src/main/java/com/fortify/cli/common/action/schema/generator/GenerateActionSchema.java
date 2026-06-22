@@ -34,6 +34,7 @@ import com.fortify.cli.common.action.model.Action;
 import com.fortify.cli.common.action.model.ActionStepRunFcliEntry;
 import com.fortify.cli.common.action.model.TemplateExpressionWithFormatter;
 import com.fortify.cli.common.action.schema.ActionSchemaHelper;
+import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.json.JsonPropertyDescriptionAppend;
 import com.fortify.cli.common.spel.fn.descriptor.SpelFunctionDescriptorsFactory;
@@ -62,7 +63,7 @@ public class GenerateActionSchema {
             .collect(Collectors.joining("\n\n"));
     public static void main(String[] args) throws Exception {
         if (args.length != 3) {
-            throw new IllegalArgumentException(
+            throw new FcliSimpleException(
                     "This command must be run as GenerateActionSchema <true (dev release)|false (final release)> <action schema version> <schema output file location>");
         }
         var isDevelopmentRelease = args[0];

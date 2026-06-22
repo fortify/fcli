@@ -21,11 +21,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fortify.cli.common.exception.FcliSimpleException;
+import com.fortify.cli.common.tool.definitions.helper.ToolDefinitionVersionDescriptor;
 import com.fortify.cli.common.util.EnvHelper;
 import com.fortify.cli.common.util.JreHelper;
 import com.fortify.cli.common.util.PlatformHelper;
 import com.fortify.cli.tool._common.helper.ToolInstallationDescriptor.JreSource;
-import com.fortify.cli.tool.definitions.helper.ToolDefinitionVersionDescriptor;
 
 import lombok.Builder;
 import lombok.Data;

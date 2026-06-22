@@ -16,7 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.util._common.helper.IJobEventListener;
+import com.fortify.cli.common.concurrent.job.IJobEventListener;
 
 import lombok.extern.slf4j.Slf4j;
 

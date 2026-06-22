@@ -82,47 +82,61 @@ public class FuzzyContextSearcher {
         return -1; // Not found
     }
 
-    public static int[] fuzzySearchOriginalCode(List<String> sourceLines, List<String> originalCodeLine, int maxMismatches, int startIndex){
+    public static int[] fuzzySearchOriginalCode(List<String> sourceLines, List<String> originalCodeLine, int maxMismatches, int startIndex) {
         List<String> normalizedSource = normalizeLines(sourceLines);
         List<String> normalizedOriginalCode = normalizeLines(originalCodeLine);
-        int[] lineFromTo = new int[2]; //0th index represents original line starting line number in sourceLine
-        //1st index represents original line end line number in sourceLine
-        int misMatches;
-        int sourceIndex;
-        for(int i=startIndex; i<normalizedSource.size(); i++)
-        {
-            misMatches=0;
-            sourceIndex = i;
-            if(normalizedSource.get(i).isEmpty())
+
+        for (int i = Math.max(0, startIndex); i < normalizedSource.size(); i++) {
+            if (normalizedSource.get(i).isEmpty()) {
                 continue;
-            for(int j=0; j<normalizedOriginalCode.size(); j++){
-                if(normalizedOriginalCode.get(j).isEmpty())
-                    continue;
-                if( j>0 && normalizedSource.get(sourceIndex).isEmpty())
-                {
-                    sourceIndex++;
-                    //continue;
-                }
-                if(!linesSimilar(normalizedSource.get(sourceIndex), normalizedOriginalCode.get(j)))
-                {
-                    misMatches++;
-                    if(misMatches>maxMismatches)
-                        break;
-                }
-                if(j==normalizedOriginalCode.size()-1)
-                {
-                    lineFromTo[0] = i;
-                    lineFromTo[1] = sourceIndex;
-                    return lineFromTo;
-                }
-                sourceIndex++;
             }
 
+            int lineTo = findOriginalCodeEnd(normalizedSource, normalizedOriginalCode, maxMismatches, i);
+            if (lineTo != -1) {
+                return new int[] {i, lineTo};
+            }
         }
-        //Original Code lines not found in source Code
-        lineFromTo[0] = -1;
-        lineFromTo[1] = -1;
-        return lineFromTo;
+
+        return new int[] {-1, -1};
+    }
+
+    private static int findOriginalCodeEnd(List<String> normalizedSource, List<String> normalizedOriginalCode, int maxMismatches,
+            int sourceIndex) {
+        int mismatches = 0;
+        int lineTo = -1;
+        boolean matchedAnyLine = false;
+
+        for (String originalCodeLine : normalizedOriginalCode) {
+            if (originalCodeLine.isEmpty()) {
+                continue;
+            }
+
+            if (matchedAnyLine) {
+                sourceIndex = skipEmptySourceLines(normalizedSource, sourceIndex);
+            }
+            if (sourceIndex >= normalizedSource.size()) {
+                return -1;
+            }
+
+            if (!linesSimilar(normalizedSource.get(sourceIndex), originalCodeLine)) {
+                mismatches++;
+                if (mismatches > maxMismatches) {
+                    return -1;
+                }
+            }
+
+            lineTo = sourceIndex++;
+            matchedAnyLine = true;
+        }
+
+        return matchedAnyLine ? lineTo : -1;
+    }
+
+    private static int skipEmptySourceLines(List<String> normalizedSource, int sourceIndex) {
+        while (sourceIndex < normalizedSource.size() && normalizedSource.get(sourceIndex).isEmpty()) {
+            sourceIndex++;
+        }
+        return sourceIndex;
     }
 
 

@@ -43,6 +43,9 @@ public class TrustStoreSetCommand extends AbstractOutputCommand implements IJson
     
     @Option(names = {"-t", "--type"}, defaultValue = "jks")
     private String trustStoreType;
+
+    @Option(names = {"--no-os-truststore"})
+    private boolean noOsTrustStore;
     
     @Override
     public JsonNode getJsonNode() {
@@ -55,6 +58,7 @@ public class TrustStoreSetCommand extends AbstractOutputCommand implements IJson
             .path(absolutePathString)
             .type(trustStoreType)
             .password(trustStorePassword)
+            .useOsTrustStore(!noOsTrustStore)
             .build();
         TrustStoreConfigHelper.setTrustStoreConfig(descriptor);
         return descriptor.asJsonNode();

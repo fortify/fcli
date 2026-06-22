@@ -266,7 +266,7 @@ class RPCServerSpec extends FcliBaseSpec {
             def server = RPCServerHelper.start("util rpc-server start")
         then:
             try {
-                def actionCmd = "action run ${globalVarsActionPath} --on-unsigned ignore" as String
+                def actionCmd = "action run ${globalVarsActionPath} --on-unsigned ignore --on-invalid-version ignore" as String
                 // First invocation: set global var 'color' to 'red'; old value should be null
                 def result1 = server.executeAndWait("fcli.execute",
                     [command: "${actionCmd} --key color --value red" as String], 21, 22)

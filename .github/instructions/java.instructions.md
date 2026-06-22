@@ -6,129 +6,45 @@ applyTo: 'fcli/**/*.java'
 
 # Java Development Guide
 
-## Maintaining These Instructions
+## Architecture
 
-**If you detect discrepancies** between these instructions and the actual implementation, or discover patterns/features not documented here:
+- **Commands:** `AbstractContainerCommand` (groups), `AbstractRunnableCommand` (leaf, `Callable<Integer>`)
+- **Output:** `IRecordWriter` implementations via `RecordWriterFactory`; commands implement `IOutputConfigSupplier`
+- **Sessions:** Product-specific descriptors, cached `UnirestInstance` per session via `*UnirestInstanceSupplierMixin`
+- **Actions:** YAML in `src/main/resources/.../actions/zip/`; extend `AbstractActionRunCommand`
 
-1. **Notify the user** about the discrepancy or missing documentation
-2. **Suggest specific updates** to this instruction file
-3. **Verify against current code** before proceeding with changes based on potentially outdated instructions
+## Command Patterns
 
-## Architecture Overview
+- Leaf commands extend `Abstract<product>OutputCommand`; name/output via `OutputHelperMixins`
+- Descriptions and table columns in `*Messages.properties`; rely on Picocli default key lookup (don't set `descriptionKey`)
+- Every command needs `fcli.<path>.usage.header` in `*Messages.properties` — `FortifyCLITest` validates this
+- Use `@Mixin` for shared options; `@Reflectable` for Jackson/reflection-accessed classes
+- Only use `@DisableTest` when a genuine design conflict exists with `FortifyCLITest`
+- Register new commands as subcommands in parent; externalize all user-facing strings
 
-**Module structure:**
-- Multi-module Gradle project: `fcli-core/*` (product modules), `fcli-other/*` (supporting modules)
-- Module references defined in `gradle.properties` via `*Ref` properties (e.g., `fcliFoDRef=:fcli-core:fcli-fod`)
+## Unirest HTTP Headers
 
-**Key components:**
-- **Commands:** `AbstractContainerCommand` (command groups), `AbstractRunnableCommand` (leaf commands implementing `Callable<Integer>`)
-- **Output:** Unified framework supporting JSON/CSV/XML/YAML/table via `IRecordWriter` implementations
-- **Session management:** Product-specific descriptors (e.g., `FoDSessionDescriptor`), cached `UnirestInstance` per session
-- **Actions:** YAML-based workflow automation in `src/main/resources/.../actions/zip/` directories
-  - Schema version tracked in `gradle.properties` (`fcliActionSchemaVersion`)
-  - Step types: `run.fcli`, `rest.call`, `var.set`, `for-each`, etc.
-  - Action commands extend `AbstractActionRunCommand`; parsed options passed to `ActionRunner`
-
-## Code Conventions
-
-- Target Java 17 features: records, text blocks, `var`, pattern matching for `instanceof`
-- Prefer explicit imports; avoid wildcards
-- Always use imports, no fully qualified class names (unless this results in collision because same class name exists in multiple packages)
-- Short methods (~20 lines max); extract helpers or use Streams for clarity
-- No change-tracking comments (e.g., "New ...", "Updated ..."); only explanatory comments when code is complex
-
-## Command Structure (Picocli-based)
-
-**Container commands** (`AbstractContainerCommand`): Group subcommands; only define help option.  
-**Leaf commands** (`AbstractRunnableCommand`): Implement `Callable<Integer>`; return 0 for success.
-
-### Mixins Pattern
-
-- Inject shared options/functionality via `@Mixin` (e.g., `OutputHelperMixins.List`, `UnirestInstanceSupplierMixin`)
-- Mixins implementing `ICommandAware` receive `CommandSpec` injection for accessing command metadata
-- `CommandHelperMixin`: Standard mixin providing access to `CommandSpec`, message resolver, root `CommandLine`
-
-### Session Management
-
-- Product modules extend `AbstractSessionLoginCommand`/`AbstractSessionLogoutCommand`
-- Sessions stored in fcli state directory; access via `*SessionHelper.instance().get(sessionName)`
-- UnirestInstance configured per session; managed by `*UnirestInstanceSupplierMixin` with automatic caching
-
-### Unirest HTTP Headers
-
-Always use `headerReplace(name, value)` instead of convenience methods like `accept()`, `contentType()`, or `header()` when setting HTTP headers on Unirest requests. The convenience methods **add** a new header entry rather than replacing an existing one, which causes duplicate headers when default headers are already configured on the `UnirestInstance` (e.g., via `UnirestJsonHeaderConfigurer`).
-
-Use constants from `com.fortify.cli.common.rest.unirest.HttpHeader` for header names:
-- `HttpHeader.ACCEPT` — `"Accept"`
-- `HttpHeader.CONTENT_TYPE` — `"Content-Type"`
-- `HttpHeader.AUTHORIZATION` — `"Authorization"`
-- `HttpHeader.ACCEPT_ENCODING` — `"Accept-Encoding"`
-
-```java
-// Wrong — accept() adds a header, potentially duplicating the default
-request.accept("application/octet-stream")
-
-// Correct — headerReplace() replaces any existing value for the same header name
-request.headerReplace(HttpHeader.ACCEPT, "application/octet-stream")
-```
-
-### Output Handling
-
-- Commands implement `IOutputConfigSupplier` to define default output format (table/json/csv/xml/yaml)
-- `StandardOutputWriter` drives output; delegates to `RecordWriterFactory` enum for format-specific writers
-- Data flow: `IObjectNodeProducer` → formatter/transformer → `IRecordWriter` → output stream
-
-## Picocli Command Implementation Details
-
-- Most leaf commands should extend from `Abstract<product>OutputCommand` or (legacy) `Abstract<product>[JsonNode|Request]OutputCommand`. Command name and output helper are usually defined through `OutputHelperMixins` (or a product-specific variant).
-- Usage headers, command and option descriptions, and default table output options must be defined in the appropriate `*Messages.properties` resource bundle for the product/module.
-- Unless a shared description is appropriate for shared options in mixins/arggroups, rely on Picocli's default message key lookup mechanism. Do not specify `descriptionKey` or similar resource bundle key attributes in Picocli annotations; let Picocli resolve keys based on command/field/option names. The default key format is `<command-qualified-name>.<option-name-without-dashes>` (e.g., `fcli.util.mcp-server.start.import` for option `--import` on command `fcli util mcp-server start`). Add the corresponding entry in the module's `*Messages.properties` file.
-- Only use `@DisableTest` when a design requirement genuinely conflicts with a `FortifyCLITest` convention. For example, a multi-value option intentionally named `--import` (singular) may disable `MULTI_OPT_PLURAL_NAME`. Do not preemptively disable tests like `MULTI_OPT_SPLIT`, `OPT_ARITY_PRESENT`, or `OPT_ARITY_VARIABLE`; instead, declare the option correctly (e.g., `split=","`, no `arity` attribute) so it passes those tests naturally.
-- Use `@Mixin` to inject shared option groups or helpers. For product-specific shared options, create a dedicated mixin class.
-- For commands that produce output, implement `IOutputConfigSupplier` to define the default output format and columns.
-- For commands that require session or API context, use the appropriate `*UnirestInstanceSupplierMixin` and session helper pattern.
-- All classes that may need to be accessed reflectively (e.g., for Jackson serialization/deserialization, action YAML mapping, or runtime plugin discovery) must be annotated with `@Reflectable`.
-- When adding new commands, ensure they are registered as subcommands in the appropriate parent command class, and that all user-facing strings are externalized to the correct resource bundle.
+Always use `headerReplace(name, value)` — never `accept()`, `contentType()`, or `header()` (they add duplicates). Use `HttpHeader.*` constants.
 
 ## Exception Handling
 
-Use hierarchy in `com.fortify.cli.common.exception` for consistent CLI error handling:
+- New/updated code should throw only fcli-domain exceptions (`Fcli*Exception`), module-domain exceptions (for example `Aviator*Exception` in Aviator modules), or picocli exceptions (`ParameterException` and related) when integrating with command parsing.
+- Avoid throwing standard Java runtime exceptions (`IllegalArgumentException`, `IllegalStateException`, `RuntimeException`, and similar) for user-facing or command-flow errors.
 
-### Primary Types
+| Scenario | Exception |
+|----------|-----------|
+| Invalid/missing user input | `FcliSimpleException` |
+| External resource not found | `FcliSimpleException` with remediation |
+| User abort | `FcliAbortedByUserException` |
+| I/O, network, JSON parse | `FcliTechnicalException` (wrap cause) |
+| Invariant violation, unreachable | `FcliBugException` |
 
-- `FcliSimpleException`: User-facing errors (invalid input, missing resource). Concise summary; suppresses underlying stack trace unless cause is non-simple.
-- `FcliTechnicalException`: Unexpected technical failures (I/O, JSON parsing, network). Prints full stack trace.
-- `FcliBugException`: Product defects/impossible states. Full stack trace; message should guide bug report.
+Messages: actionable, sentence case, no trailing periods. Preserve root cause in wrapping.
 
-### Decision Matrix
+## Design Patterns
 
-1. Invalid/missing/ambiguous user input → `FcliSimpleException`
-2. External resource not found (normal possibility) → `FcliSimpleException` with remediation guidance
-3. User-initiated abort → `FcliAbortedByUserException` (extends `FcliSimpleException`)
-4. Low-level failure (network, file I/O, JSON parse) → `FcliTechnicalException` (wrap cause)
-5. Invariant violation, unreachable code → `FcliBugException`
-
-### Message Style
-
-- Actionable: specify option name, expected format, remediation steps
-- Sentence case; no trailing periods unless multiple sentences
-- Multi-value options: use "|" for enums (`true|1|false|0`), ", " for sets
-- Contextual IDs in single quotes only when ambiguous
-
-### Wrapping
-
-- Preserve root cause: `throw new FcliTechnicalException("Error reading "+file, e);`
-- Convert third-party exceptions at boundaries; don't re-wrap `AbstractFcliException`
-- Only wrap when adding context; otherwise propagate
-
-### Examples
-
-```java
-if (StringUtils.isBlank(name)) throw new FcliSimpleException("--name must be specified");
-try { parse(json); } catch (JsonProcessingException e) { throw new FcliTechnicalException("Error processing JSON", e); }
-default -> throw new FcliBugException("Unexpected status: "+status);
-```
-
-## Common Utility Classes
-
-The `fcli-common` module provides utility classes in `com.fortify.cli.common.util` for common operations. Always prefer these over direct JDK/third-party equivalents. See the utilities guide for complete documentation.
+- **Template Method:** Override narrowest hook in abstract base classes
+- **Strategy:** `IOutputConfigSupplier`, `IRecordWriter`, `UnirestInstanceSupplierMixin` — inject via `@Mixin`
+- **Factory/Registry:** `RecordWriterFactory`, `OutputHelperMixins` — extend enum/factory, don't modify consumers
+- **Composite:** Command tree — containers have zero business logic
+- **Separation of concerns:** Commands parse+orchestrate; helpers hold logic; writers shape output

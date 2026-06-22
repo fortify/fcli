@@ -25,7 +25,7 @@ import com.fortify.cli.fod._common.output.cli.cmd.AbstractFoDJsonNodeOutputComma
 import com.fortify.cli.fod._common.util.FoDEnums;
 import com.fortify.cli.fod.app.cli.mixin.FoDSdlcStatusTypeOptions;
 import com.fortify.cli.fod.attribute.cli.mixin.FoDAttributeUpdateOptions;
-import com.fortify.cli.fod.attribute.helper.FoDAttributeHelper;
+import com.fortify.cli.fod.attribute.helper.FoDAttributeDefinitionHelper;
 import com.fortify.cli.fod.release.cli.mixin.FoDReleaseByQualifiedNameOrIdResolverMixin;
 import com.fortify.cli.fod.release.helper.FoDReleaseDescriptor;
 import com.fortify.cli.fod.release.helper.FoDReleaseHelper;
@@ -63,7 +63,7 @@ public class FoDReleaseUpdateCommand extends AbstractFoDJsonNodeOutputCommand im
     public JsonNode getJsonNode(UnirestInstance unirest) {
         FoDReleaseDescriptor releaseDescriptor = releaseResolver.getReleaseDescriptor(unirest);
         FoDSdlcStatusTypeOptions.FoDSdlcStatusType sdlcStatusTypeNew = sdlcStatus.getSdlcStatusType();
-        JsonNode jsonAttrs = FoDAttributeHelper.getAttributesNodeForUpdate(unirest, FoDEnums.AttributeTypes.Release,
+        JsonNode jsonAttrs = new FoDAttributeDefinitionHelper(unirest).buildAttributesNodeForUpdate(FoDEnums.AttributeTypes.Release,
                 releaseDescriptor.getAttributes(), appAttrsUpdate.getAttributes(), autoRequiredAttrsOption.isAutoRequiredAttrs());
 
         FoDReleaseUpdateRequest appRelUpdateRequest = FoDReleaseUpdateRequest.builder()
