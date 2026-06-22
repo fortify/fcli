@@ -1,5 +1,5 @@
 ---
-title: 'fcli-license-ncd-report-update(1)'
+title: 'fcli-license-ncd-report-update-contributor-status(1)'
 fcli_version: 
 ---
 
@@ -9,7 +9,7 @@ fcli_version:
 <meta http-equiv="Content-Type" content="text/html; charset=">
 <meta name="generator" content="Asciidoctor 2.0.18">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>fcli-license-ncd-report-update(1)</title>
+<title>fcli-license-ncd-report-update-contributor-status(1)</title>
 
 {% include asciidoc-head.html %}
 {% include fcli-enhancements.html %}
@@ -17,11 +17,11 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260619.125223-dev_feat.v3.x.ncd-report-improvements" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260622.182024-dev_feat.v3.x.ncd-report-improvements" %}
 
 
 <div id="header">
-<h1>fcli-license-ncd-report-update(1) Manual Page</h1>
+<h1>fcli-license-ncd-report-update-contributor-status(1) Manual Page</h1>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
 <ul class="sectlevel1">
@@ -33,7 +33,7 @@ fcli_version:
 </div>
 <h2>Name</h2>
 <div class="sectionbody">
-<p>fcli-license-ncd-report-update - Update contributor deduplication status in an NCD report.</p>
+<p>fcli-license-ncd-report-update-contributor-status - Update contributor override data in an NCD report (manual or AI-assisted).</p>
 </div>
 </div>
 <div id="content">
@@ -42,11 +42,10 @@ fcli_version:
 <h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli license ncd-report update</strong> [<strong>-c</strong>=<em>&lt;contributorsPath&gt;</em>]
-                               [<strong>--on-unknown-author</strong>=<em>&lt;onUnknownAuthor&gt;</em>]
-                               <strong>-r</strong>=<em>&lt;reportPath&gt;</em> [[<strong>-h</strong>] [<strong>--env-prefix</strong>=<em>&lt;prefix&gt;</em>]
-                               [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>] [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]
-                               [<strong>--log-mask</strong>=<em>&lt;level&gt;</em>] [<strong>--debug</strong>]]</p>
+<p><strong>fcli license ncd-report update-contributor-status</strong> [<strong>-c</strong>=<em>&lt;contributorsPath&gt;</em>]
+[<strong>--on-unknown-author</strong>=<em>&lt;onUnknownAuthor&gt;</em>] <strong>-r</strong>=<em>&lt;reportPath&gt;</em> [[<strong>-h</strong>]
+[<strong>--env-prefix</strong>=<em>&lt;prefix&gt;</em>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>] [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]
+[<strong>--log-mask</strong>=<em>&lt;level&gt;</em>] [<strong>--debug</strong>]]</p>
 </div>
 </div>
 </div>
@@ -63,7 +62,7 @@ fcli_version:
 <dl>
 <dt class="hdlist1"><strong>-c</strong>, <strong>--contributors</strong>=<em>&lt;contributorsPath&gt;</em></dt>
 <dd>
-<p>Contributor updates in CSV, JSON, or YAML format (or stdin if omitted) in similar format as produced by the <code>list-contributors</code> command. Must contain 'authorId' and may include aiDuplicateOf, aiConfidence, aiNotes, or overriddenStatus.</p>
+<p>Contributor updates in CSV, JSON, or YAML format (or stdin if omitted) in similar format as produced by the <code>list-contributors</code> command. Must contain 'authorId' and may include overrideDuplicateOf, overrideStatus, overrideStatusConfidence, or overrideStatusNotes.</p>
 </dd>
 <dt class="hdlist1"><strong>--on-unknown-author</strong>=<em>&lt;onUnknownAuthor&gt;</em></dt>
 <dd>
@@ -115,7 +114,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2026-06-19 12:55:01 UTC
+Last updated 2026-06-22 18:23:05 UTC
 </div>
 </div>
 </body>
