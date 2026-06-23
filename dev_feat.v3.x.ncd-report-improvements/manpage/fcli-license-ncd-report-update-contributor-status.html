@@ -17,7 +17,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260622.182024-dev_feat.v3.x.ncd-report-improvements" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260623.111212-dev_feat.v3.x.ncd-report-improvements" %}
 
 
 <div id="header">
@@ -43,7 +43,7 @@ fcli_version:
 <div class="sectionbody">
 <div class="paragraph">
 <p><strong>fcli license ncd-report update-contributor-status</strong> [<strong>-c</strong>=<em>&lt;contributorsPath&gt;</em>]
-[<strong>--on-unknown-author</strong>=<em>&lt;onUnknownAuthor&gt;</em>] <strong>-r</strong>=<em>&lt;reportPath&gt;</em> [[<strong>-h</strong>]
+[<strong>--min-confidence</strong>=<em>&lt;minConfidence&gt;</em>] <strong>-r</strong>=<em>&lt;reportPath&gt;</em> [[<strong>-h</strong>]
 [<strong>--env-prefix</strong>=<em>&lt;prefix&gt;</em>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>] [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]
 [<strong>--log-mask</strong>=<em>&lt;level&gt;</em>] [<strong>--debug</strong>]]</p>
 </div>
@@ -62,11 +62,11 @@ fcli_version:
 <dl>
 <dt class="hdlist1"><strong>-c</strong>, <strong>--contributors</strong>=<em>&lt;contributorsPath&gt;</em></dt>
 <dd>
-<p>Contributor updates in CSV, JSON, or YAML format (or stdin if omitted) in similar format as produced by the <code>list-contributors</code> command. Must contain 'authorId' and may include overrideDuplicateOf, overrideStatus, overrideStatusConfidence, or overrideStatusNotes.</p>
+<p>Contributor updates in CSV, JSON, or YAML format (or stdin if omitted) in the same format as produced by the <code>list-contributors</code> command. Must contain 'authorId' and may include duplicateOf, overrideStatus, overrideStatusConfidence, or overrideStatusNotes.</p>
 </dd>
-<dt class="hdlist1"><strong>--on-unknown-author</strong>=<em>&lt;onUnknownAuthor&gt;</em></dt>
+<dt class="hdlist1"><strong>--min-confidence</strong>=<em>&lt;minConfidence&gt;</em></dt>
 <dd>
-<p>Action when update references unknown authorId (fail, warn, ignore).</p>
+<p>Minimum confidence threshold (0.0-1.0); records below this value are warned and skipped (default: 0.8).</p>
 </dd>
 <dt class="hdlist1"><strong>-r</strong>, <strong>--report</strong>=<em>&lt;reportPath&gt;</em></dt>
 <dd>
@@ -114,7 +114,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2026-06-22 18:23:05 UTC
+Last updated 2026-06-23 11:15:03 UTC
 </div>
 </div>
 </body>
