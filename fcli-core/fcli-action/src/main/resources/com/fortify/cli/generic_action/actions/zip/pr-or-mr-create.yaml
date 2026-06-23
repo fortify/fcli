@@ -41,7 +41,7 @@ cli.options:
     names: --source-branch
     description: >-
       Source branch to raise the PR/MR from.
-    required: false
+    required: true
     default: "${#env('SOURCE_BRANCH')?:''}"
   baseBranch:
     names: --base-branch
@@ -100,17 +100,18 @@ steps:
               msg: "Failed to create GitHub Pull Request from '${cli.sourceBranch}' to '${baseBranch}'"
               cause: ${lastException}
           - log.warn: "Troubleshooting: Verify branch '${cli.sourceBranch}' exists on remote and base branch '${baseBranch}' is valid"
+          - log.debug: "Failed to create GitHub PR: ${lastException.message}"
           - var.set:
               result.status: "error"
               result.errorMessage: "${lastException.message}"
-      - if: ${pr!=null && pr.html_url!=null && pr.number!=null}
+      - if: ${#isNotBlank(pr)} && ${#isNotBlank(pr.html_url)} && ${#isNotBlank(pr.number)}
         do:
           - var.set:
               result.status: "success"
               result.prLink: "${pr.html_url}"
           - log.info: "Created GitHub Pull Request #${pr.number}: ${pr.html_url}"
 
-      - if: ${pr==null || pr.html_url==null}
+      - if: ${#isBlank(pr)} || ${#isBlank(pr.html_url)}
         do:
           - log.warn: "PR creation returned empty or invalid response: ${pr}"
           - var.set:
@@ -131,14 +132,14 @@ steps:
           - var.set:
               result.status: "error"
               result.errorMessage: "${lastException.message}"
-      - if: ${mr!=null && mr.web_url!=null && mr.iid!=null}
+      - if: ${#isNotBlank(mr)} && ${#isNotBlank(mr.web_url)} && ${#isNotBlank(mr.iid)}
         do:
           - var.set:
               result.status: "success"
               result.prLink: "${mr.web_url}"
           - log.info: "Created GitLab Merge Request !${mr.iid}: ${mr.web_url}"
       
-      - if: ${mr==null || mr.web_url==null}
+      - if: ${#isBlank(mr)} || ${#isBlank(mr.web_url)}
         do:
           - log.warn: "Merge Request creation returned empty or invalid response: ${mr}"
           - var.set:

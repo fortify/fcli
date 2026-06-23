@@ -69,7 +69,7 @@ steps:
   # Validate git repository
   - var.set:
       gitRepoInfo: ${#git.localRepo(cli.sourceDir)}
-  - if: ${gitRepoInfo==null}
+  - if: ${#isBlank(gitRepoInfo)}
     throw: "Source directory '${cli.sourceDir}' is not a git repository."
   - if: "${#isBlank(gitRepoInfo.repository.remoteUrl)}"
     throw: "Git repository has no remote URL configured. A remote is required for push."

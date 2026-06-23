@@ -94,12 +94,12 @@ steps:
     do:
       - log.warn: "git-stage-commit-push failed with status 'error'. Check logs for details."
       - throw: "git-stage-commit-push failed with status 'error'. Check logs for details."
-  - log.debug: "git-stage-commit-push completed: status=${gitResult.status}"
   
   - if: "${gitResult.status=='no_changes'}"
     do:
       - log.info: "No changes detected, skipping PR/MR creation."
       - exit: 0
+
   - log.debug: "changes are pushed to the remote branch '${gitResult.branchName}' and stepping to PR create step"
 
   # Step 2: Create PR/MR from the pushed branch
@@ -108,14 +108,14 @@ steps:
         cmd: fcli action run pr-or-mr-create "--source-dir=${cli.sourceDir}" "--source-branch=${gitResult.branchName}" "--base-branch=${baseBranch}" "--title=${cli.title}" "--body=${cli.body}" --progress=none
         stdout: collect
         stderr: collect
-    on.fail:
-      - log.warn:
-          msg: "Failed to run pr-or-mr-create action"
-          cause: ${CREATE_PR_exception}
-      - throw: "Failed to run pr-or-mr-create action - check logs for details"
+      on.fail:
+        - log.warn:
+            msg: "Failed to run pr-or-mr-create action"
+            cause: ${CREATE_PR_exception}
   - var.set:
       prResult: "${CREATE_PR.result?:{status: 'error', prLink: ''}}"
 
   - log.debug: "commit-and-create-pr completed: git=${gitResult.status}, pr=${prResult.status}"
+  
   - if: "${prResult.status=='success'}"
     log.info: "PR/MR URL: ${prResult.prLink}"
