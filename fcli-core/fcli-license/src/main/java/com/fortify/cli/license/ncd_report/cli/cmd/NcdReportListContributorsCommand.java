@@ -49,8 +49,15 @@ public final class NcdReportListContributorsCommand extends AbstractOutputComman
         try ( var reader = new NcdReportReader(reportPath) ) {
             var contributors = readContributors(reader);
             enrichContributors(contributors);
-            dedupeByAuthorId(contributors).stream()
-                .sorted(compareByNameEmailAuthorId())
+            // Sort contributors by author name with duplicates immediately following their representative,
+            // and ignored records at the end. This sorting is applied for consistency and readability,
+            // especially when reading legacy reports that may not be optimally ordered.
+            var deduped = dedupeByAuthorId(contributors);
+            var asObjectNodes = deduped.stream()
+                .map(map -> JsonHelper.getObjectMapper().convertValue(map, ObjectNode.class))
+                .toList();
+            var sorted = NcdReportContributorsCsvSchema.sortByAuthorNameAndStatus(new java.util.ArrayList<>(asObjectNodes));
+            sorted.stream()
                 .map(this::toOutputRow)
                 .forEach(result::add);
         }
@@ -78,13 +85,13 @@ public final class NcdReportListContributorsCommand extends AbstractOutputComman
 
         contributors.stream()
             .filter(r -> "duplicate".equalsIgnoreCase(getValue(r, NcdReportContributorsCsvSchema.CONTRIBUTION_STATUS)))
-            .filter(r -> StringUtils.isBlank(getValue(r, NcdReportContributorsCsvSchema.OVERRIDE_DUPLICATE_OF)))
+            .filter(r -> StringUtils.isBlank(getValue(r, NcdReportContributorsCsvSchema.DUPLICATE_OF)))
             .forEach(r -> {
                 var number = getValue(r, "contributingAuthorNumber");
                 var representativeId = representativeByContributingNumber.get(number);
                 if ( StringUtils.isNotBlank(representativeId)
                         && !representativeId.equals(getValue(r, NcdReportContributorsCsvSchema.AUTHOR_ID)) ) {
-                    r.put(NcdReportContributorsCsvSchema.OVERRIDE_DUPLICATE_OF, representativeId);
+                    r.put(NcdReportContributorsCsvSchema.DUPLICATE_OF, representativeId);
                 }
             });
     }
@@ -129,32 +136,18 @@ public final class NcdReportListContributorsCommand extends AbstractOutputComman
         };
     }
 
-
-
-    private Comparator<Map<String, String>> compareByNameEmailAuthorId() {
-        return Comparator
-                .<Map<String, String>, String>comparing(r -> r.getOrDefault("authorName", "").toLowerCase())
-                .thenComparing(r -> r.getOrDefault("authorEmail", "").toLowerCase())
-                .thenComparing(r -> r.getOrDefault("authorId", ""));
-    }
-
-    private ObjectNode toOutputRow(Map<String, String> row) {
+    private ObjectNode toOutputRow(ObjectNode row) {
         return JsonHelper.getObjectMapper().createObjectNode()
-                .put(NcdReportContributorsCsvSchema.AUTHOR_ID, getValue(row, NcdReportContributorsCsvSchema.AUTHOR_ID))
-                .put(NcdReportContributorsCsvSchema.AUTHOR_NAME, getValue(row, NcdReportContributorsCsvSchema.AUTHOR_NAME))
-                .put(NcdReportContributorsCsvSchema.AUTHOR_EMAIL, getValue(row, NcdReportContributorsCsvSchema.AUTHOR_EMAIL))
-                .put(NcdReportContributorsCsvSchema.CONTRIBUTION_STATUS,
-                        getValue(row, NcdReportContributorsCsvSchema.CONTRIBUTION_STATUS))
-                .put("duplicateOf",
-                        getValue(row, NcdReportContributorsCsvSchema.OVERRIDE_DUPLICATE_OF))
-                .put(NcdReportContributorsCsvSchema.OVERRIDE_STATUS,
-                        getValue(row, NcdReportContributorsCsvSchema.OVERRIDE_STATUS))
-                .put(NcdReportContributorsCsvSchema.OVERRIDE_DUPLICATE_OF,
-                        getValue(row, NcdReportContributorsCsvSchema.OVERRIDE_DUPLICATE_OF))
+                .put(NcdReportContributorsCsvSchema.AUTHOR_ID, row.path(NcdReportContributorsCsvSchema.AUTHOR_ID).asText(""))
+                .put(NcdReportContributorsCsvSchema.AUTHOR_NAME, row.path(NcdReportContributorsCsvSchema.AUTHOR_NAME).asText(""))
+                .put(NcdReportContributorsCsvSchema.AUTHOR_EMAIL, row.path(NcdReportContributorsCsvSchema.AUTHOR_EMAIL).asText(""))
+                .put(NcdReportContributorsCsvSchema.CONTRIBUTION_STATUS, row.path(NcdReportContributorsCsvSchema.CONTRIBUTION_STATUS).asText(""))
+                .put(NcdReportContributorsCsvSchema.DUPLICATE_OF, row.path(NcdReportContributorsCsvSchema.DUPLICATE_OF).asText(""))
+                .put(NcdReportContributorsCsvSchema.OVERRIDE_STATUS, row.path(NcdReportContributorsCsvSchema.OVERRIDE_STATUS).asText(""))
                 .put(NcdReportContributorsCsvSchema.OVERRIDE_STATUS_CONFIDENCE,
-                        getValue(row, NcdReportContributorsCsvSchema.OVERRIDE_STATUS_CONFIDENCE))
+                        row.path(NcdReportContributorsCsvSchema.OVERRIDE_STATUS_CONFIDENCE).asText(""))
                 .put(NcdReportContributorsCsvSchema.OVERRIDE_STATUS_NOTES,
-                        getValue(row, NcdReportContributorsCsvSchema.OVERRIDE_STATUS_NOTES));
+                        row.path(NcdReportContributorsCsvSchema.OVERRIDE_STATUS_NOTES).asText(""));
     }
 
     private String getValue(Map<String, String> row, String fieldName) {

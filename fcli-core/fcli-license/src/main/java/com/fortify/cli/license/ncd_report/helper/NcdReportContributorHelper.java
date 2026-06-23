@@ -50,9 +50,9 @@ public final class NcdReportContributorHelper {
     }
 
     public static String computeAuthorId(ObjectNode expressionInput) {
-        var cleanName = expressionInput.path(NcdReportContributorsCsvSchema.CLEAN_NAME).asText("");
-        var cleanEmailName = expressionInput.path(NcdReportContributorsCsvSchema.CLEAN_EMAIL_NAME).asText("");
-        var input = cleanName + ":" + cleanEmailName;
+        var name = expressionInput.path("name").asText("");
+        var email = expressionInput.path("email").asText("");
+        var input = name.toLowerCase() + ":" + email.toLowerCase();
         try {
             var digest = MessageDigest.getInstance("SHA-256");
             var hash = digest.digest(input.getBytes(StandardCharsets.UTF_8));

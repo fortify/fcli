@@ -12,10 +12,14 @@
  */
 package com.fortify.cli.license.ncd_report.writer;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
+import java.util.TreeMap;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.csv.CsvSchema;
 
 /**
@@ -39,7 +43,7 @@ public final class NcdReportContributorsCsvSchema {
     public static final String CONTRIBUTING_AUTHOR_NUMBER = "contributingAuthorNumber";
 
     // Source report fields (immutable, from merged reports only)
-    public static final String SOURCE_REPORT = "sourceReport";
+    public static final String SOURCE_REPORTS = "sourceReports";
     public static final String SOURCE_CONTRIBUTION_STATUS = "sourceContributionStatus";
     public static final String SOURCE_CONTRIBUTING_AUTHOR_NUMBER = "sourceContributingAuthorNumber";
     public static final String SOURCE_AUTHOR_ID = "sourceAuthorId";
@@ -54,7 +58,7 @@ public final class NcdReportContributorsCsvSchema {
     public static final String MERGED_CONTRIBUTING_AUTHOR_NUMBER = "mergedContributingAuthorNumber";
 
     // Updatable override fields
-    public static final String OVERRIDE_DUPLICATE_OF = "overrideDuplicateOf";
+    public static final String DUPLICATE_OF = "duplicateOf";
     public static final String OVERRIDE_STATUS = "overrideStatus";
     public static final String OVERRIDE_STATUS_CONFIDENCE = "overrideStatusConfidence";
     public static final String OVERRIDE_STATUS_NOTES = "overrideStatusNotes";
@@ -64,7 +68,7 @@ public final class NcdReportContributorsCsvSchema {
         AUTHOR_ID, AUTHOR_NAME, AUTHOR_EMAIL, CLEAN_NAME, CLEAN_EMAIL_NAME,
         AUTHOR_STATE, AUTHOR_NUMBER,
         CONTRIBUTION_STATUS, CONTRIBUTING_AUTHOR_NUMBER,
-        SOURCE_REPORT, SOURCE_CONTRIBUTION_STATUS, SOURCE_CONTRIBUTING_AUTHOR_NUMBER,
+        SOURCE_REPORTS, SOURCE_CONTRIBUTION_STATUS, SOURCE_CONTRIBUTING_AUTHOR_NUMBER,
         SOURCE_AUTHOR_ID, SOURCE_AUTHOR_STATE, SOURCE_AUTHOR_NUMBER,
         MERGED_AUTHOR_ID, MERGED_AUTHOR_STATE, MERGED_AUTHOR_NUMBER,
         MERGED_CONTRIBUTION_STATUS, MERGED_CONTRIBUTING_AUTHOR_NUMBER
@@ -72,7 +76,7 @@ public final class NcdReportContributorsCsvSchema {
 
     // All updatable fields
     public static final Set<String> UPDATABLE_FIELDS = Set.of(
-        OVERRIDE_DUPLICATE_OF,
+        DUPLICATE_OF,
         OVERRIDE_STATUS,
         OVERRIDE_STATUS_CONFIDENCE,
         OVERRIDE_STATUS_NOTES
@@ -86,21 +90,15 @@ public final class NcdReportContributorsCsvSchema {
         CLEAN_NAME,
         CLEAN_EMAIL_NAME,
         AUTHOR_STATE,
-        AUTHOR_NUMBER,
         CONTRIBUTION_STATUS,
-        CONTRIBUTING_AUTHOR_NUMBER,
-        SOURCE_REPORT,
+        SOURCE_REPORTS,
         SOURCE_CONTRIBUTION_STATUS,
-        SOURCE_CONTRIBUTING_AUTHOR_NUMBER,
         SOURCE_AUTHOR_ID,
         SOURCE_AUTHOR_STATE,
-        SOURCE_AUTHOR_NUMBER,
         MERGED_AUTHOR_ID,
         MERGED_AUTHOR_STATE,
-        MERGED_AUTHOR_NUMBER,
         MERGED_CONTRIBUTION_STATUS,
-        MERGED_CONTRIBUTING_AUTHOR_NUMBER,
-        OVERRIDE_DUPLICATE_OF,
+        DUPLICATE_OF,
         OVERRIDE_STATUS_CONFIDENCE,
         OVERRIDE_STATUS_NOTES,
         OVERRIDE_STATUS
@@ -133,6 +131,60 @@ public final class NcdReportContributorsCsvSchema {
             builder.addColumn(column);
         }
         return builder.build().withUseHeader(true);
+    }
+
+    /**
+     * Return the list of columns written to contributors.csv output.
+     */
+    public static List<String> getOutputColumns() {
+        return COLUMN_ORDER;
+    }
+
+    /**
+     * Sort contributors for consistent CSV output using a two-phase approach.
+     * Phase 1: Collect and organize records by status (contributing, duplicate, ignored).
+     * Phase 2: Build result by iterating contributing records (sorted by name),
+     *          adding each record's duplicates immediately after, then all ignored records at end.
+     * This sorting is necessary for legacy reports and improves readability.
+     */
+    public static List<ObjectNode> sortByAuthorNameAndStatus(List<ObjectNode> contributors) {
+        var nameComparator = Comparator.comparing(
+            (ObjectNode r) -> r.path(AUTHOR_NAME).asText("").toLowerCase());
+
+        // Phase 1: Collect records by status
+        var contributing = new ArrayList<ObjectNode>();
+        var duplicateByRepId = new TreeMap<String, ArrayList<ObjectNode>>();
+        var ignored = new ArrayList<ObjectNode>();
+
+        for ( var record : contributors ) {
+            var status = record.path(CONTRIBUTION_STATUS).asText("").toLowerCase();
+            if ( "contributing".equals(status) ) {
+                contributing.add(record);
+            } else if ( "duplicate".equals(status) ) {
+                var repId = record.path(DUPLICATE_OF).asText("");
+                duplicateByRepId.computeIfAbsent(repId, k -> new ArrayList<>()).add(record);
+            } else if ( "ignored".equals(status) ) {
+                ignored.add(record);
+            }
+        }
+
+        // Sort each group by author name
+        contributing.sort(nameComparator);
+        duplicateByRepId.values().forEach(list -> list.sort(nameComparator));
+        ignored.sort(nameComparator);
+
+        // Phase 2: Build result: contributing + their duplicates + ignored
+        var result = new ArrayList<ObjectNode>();
+        for ( var contribRecord : contributing ) {
+            result.add(contribRecord);
+            var repId = contribRecord.path(AUTHOR_ID).asText("");
+            if ( duplicateByRepId.containsKey(repId) ) {
+                result.addAll(duplicateByRepId.get(repId));
+            }
+        }
+        result.addAll(ignored);
+
+        return result;
     }
 
     private NcdReportContributorsCsvSchema() {}

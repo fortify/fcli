@@ -61,7 +61,13 @@ public class MockAuthorData {
         // Additional distinct authors for volume
         new MockAuthorData("Jennifer Park", "j.park@example.com"),
         new MockAuthorData("David Brown", "d.brown@example.com"),
-        new MockAuthorData("Lisa Anderson", "l.anderson@example.com")
+        new MockAuthorData("Lisa Anderson", "l.anderson@example.com"),
+
+        // Some ignored authors (e.g., bots, test accounts)
+        new MockAuthorData("MyBot1 [bot]", "bot1@example.com"),
+        new MockAuthorData("MyBot2 [bot]", "bot2@example.com"),
+        new MockAuthorData("MyBot3 [bot]", "bot3@example.com"),
+        new MockAuthorData("MyBot4 [bot]", "bot4@example.com")
     );
     
     /**

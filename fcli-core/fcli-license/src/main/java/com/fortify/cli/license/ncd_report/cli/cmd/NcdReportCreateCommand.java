@@ -34,7 +34,7 @@ import picocli.CommandLine.Option;
 public final class NcdReportCreateCommand extends AbstractConfigurableReportGenerateCommand<NcdReportConfig, NcdReportContext> {
     @Getter @Mixin private OutputHelperMixins.CreateWithDetailsOutput outputHelper;
     @Mixin private UnirestContextMixin unirestContextMixin;
-    @Option(names = {"-c","--config"}, required = true, defaultValue = "NcdReportConfig.yml")
+    @Option(names = {"-c","--config"}, defaultValue = "NcdReportConfig.yml")
     @Getter private File configFile;
     @Option(names = {"--end-date"})
     @Getter private LocalDate endDate;

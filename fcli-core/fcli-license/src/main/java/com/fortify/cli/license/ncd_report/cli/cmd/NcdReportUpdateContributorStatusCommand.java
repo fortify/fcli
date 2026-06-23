@@ -16,6 +16,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -28,6 +29,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.MappingIterator;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.csv.CsvMapper;
 import com.fasterxml.jackson.dataformat.csv.CsvSchema;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
@@ -50,6 +52,7 @@ public final class NcdReportUpdateContributorStatusCommand extends AbstractRunna
     private static final ObjectMapper JSON_MAPPER = JsonHelper.getObjectMapper();
     private static final ObjectMapper YAML_MAPPER = createYamlMapper();
     private static final Set<String> VALID_OVERRIDE_STATUSES = Set.of("contributing", "duplicate", "ignored");
+    private static final double DEFAULT_MIN_CONFIDENCE = 0.8;
 
     @Option(names = {"-r", "--report"}, required = true)
     private Path reportPath;
@@ -57,36 +60,44 @@ public final class NcdReportUpdateContributorStatusCommand extends AbstractRunna
     @Option(names = {"-c", "--contributors"})
     private Path contributorsPath;
 
-    public enum OnUnknownAuthor {
-        fail, warn, ignore
-    }
-
-    @Option(names = {"--on-unknown-author"}, defaultValue = "fail")
-    private OnUnknownAuthor onUnknownAuthor;
+    @Option(names = {"--min-confidence"}, defaultValue = "" + DEFAULT_MIN_CONFIDENCE)
+    private double minConfidence;
 
     @Override
     public Integer call() {
+        ObjectNode summary = null;
+        int updateCount = 0;
+        
         try ( var reader = new NcdReportReader(reportPath) ) {
-            // Validate report integrity before making changes
             var checksumErrors = NcdReportValidator.validateChecksums(reader);
             if ( !checksumErrors.isEmpty() ) {
                 throw new FcliSimpleException("Report integrity check failed:\n%s", String.join("\n", checksumErrors));
             }
 
             var updates = readUpdateFile();
+            updateCount = updates.size();
             var contributors = readContributors(reader);
-            var warnings = validateAndApplyUpdates(updates, contributors);
-            
+            var warnings = applyUpdates(updates, contributors);
+            synchronizeContributionFields(contributors, warnings);
+
             if ( !warnings.isEmpty() ) {
                 System.err.println("Warnings during update:");
                 warnings.forEach(w -> System.err.println("  - " + w));
             }
 
-            rewriteContributorsAndChecksums(reader, contributors);
-            System.out.println(String.format("Successfully updated %d contributors in report %s", updates.size(), reportPath));
+            summary = rewriteContributorsAndSummaryAndChecksums(reader, contributors);
         }
+        
+        System.out.println(String.format("Successfully applied %d update(s) to report %s", updateCount, reportPath));
+        System.out.println("Summary:");
+        System.out.print(asYaml(summary));
+        
         return 0;
     }
+
+    // -------------------------------------------------------------------------
+    // Reading update input
+    // -------------------------------------------------------------------------
 
     private List<Map<String, String>> readUpdateFile() {
         try {
@@ -99,7 +110,7 @@ public final class NcdReportUpdateContributorStatusCommand extends AbstractRunna
             return switch ( detectInputFormat(content) ) {
             case JSON -> readStructuredUpdates(JSON_MAPPER, content, "JSON");
             case YAML -> readStructuredUpdates(YAML_MAPPER, content, "YAML");
-            case CSV -> readCsvUpdates(content);
+            case CSV  -> readCsvUpdates(content);
             };
         } catch ( Exception e ) {
             throw new FcliSimpleException("Error reading contributor updates from %s:\n\tMessage: %s", getContributorsSource(), e.getMessage());
@@ -107,80 +118,57 @@ public final class NcdReportUpdateContributorStatusCommand extends AbstractRunna
     }
 
     private InputFormat detectInputFormat(String content) {
-        var lowerCasePath = contributorsPath == null ? "" : contributorsPath.getFileName().toString().toLowerCase();
-        if ( lowerCasePath.endsWith(".json") ) {
-            return InputFormat.JSON;
-        }
-        if ( lowerCasePath.endsWith(".yaml") || lowerCasePath.endsWith(".yml") ) {
-            return InputFormat.YAML;
-        }
-        if ( lowerCasePath.endsWith(".csv") ) {
-            return InputFormat.CSV;
-        }
-
+        var path = contributorsPath == null ? "" : contributorsPath.getFileName().toString().toLowerCase();
+        if ( path.endsWith(".json") )            { return InputFormat.JSON; }
+        if ( path.endsWith(".yaml") || path.endsWith(".yml") ) { return InputFormat.YAML; }
+        if ( path.endsWith(".csv") )             { return InputFormat.CSV; }
         var trimmed = content.stripLeading();
-        if ( trimmed.startsWith("{") || trimmed.startsWith("[") ) {
-            return InputFormat.JSON;
-        }
-        if ( trimmed.startsWith("-") || trimmed.startsWith("---") ) {
-            return InputFormat.YAML;
-        }
+        if ( trimmed.startsWith("{") || trimmed.startsWith("[") ) { return InputFormat.JSON; }
+        if ( trimmed.startsWith("-") || trimmed.startsWith("---") ) { return InputFormat.YAML; }
         var firstLine = trimmed.lines().findFirst().orElse("").trim();
-        if ( firstLine.matches("[A-Za-z0-9_-]+\\s*:.*") ) {
-            return InputFormat.YAML;
-        }
+        if ( firstLine.matches("[A-Za-z0-9_-]+\\s*:.*") ) { return InputFormat.YAML; }
         return InputFormat.CSV;
     }
 
     private List<Map<String, String>> readCsvUpdates(String content) throws Exception {
         var schema = CsvSchema.emptySchema().withHeader();
-        MappingIterator<Map<String, String>> iterator = CSV_MAPPER
+        MappingIterator<Map<String, String>> it = CSV_MAPPER
                 .readerFor(new TypeReference<Map<String, String>>() {})
                 .with(schema)
                 .readValues(content);
         var result = new ArrayList<Map<String, String>>();
-        while ( iterator.hasNext() ) {
-            var row = iterator.next();
-            if ( row.values().stream().allMatch(StringUtils::isBlank) ) {
-                continue;
+        while ( it.hasNext() ) {
+            var row = it.next();
+            if ( !row.values().stream().allMatch(StringUtils::isBlank) ) {
+                result.add(row);
             }
-            result.add(row);
         }
         return result;
     }
 
-    private List<Map<String, String>> readStructuredUpdates(ObjectMapper mapper, String content, String formatName) throws Exception {
-        var rootNode = mapper.readTree(content);
-        if ( rootNode == null || rootNode.isNull() ) {
-            return List.of();
+    private List<Map<String, String>> readStructuredUpdates(ObjectMapper mapper, String content, String fmt) throws Exception {
+        var root = mapper.readTree(content);
+        if ( root == null || root.isNull() ) { return List.of(); }
+        if ( root.isObject() ) { return List.of(toStringMap(root, fmt)); }
+        if ( !root.isArray() ) {
+            throw new FcliSimpleException("%s contributor updates must be an object or array of objects", fmt);
         }
-        if ( rootNode.isObject() ) {
-            return List.of(toStringMap(rootNode, formatName));
-        }
-        if ( !rootNode.isArray() ) {
-            throw new FcliSimpleException("%s contributor updates must be an object or array of objects", formatName);
-        }
-
         var result = new ArrayList<Map<String, String>>();
-        for ( var node : rootNode ) {
-            result.add(toStringMap(node, formatName));
-        }
+        for ( var node : root ) { result.add(toStringMap(node, fmt)); }
         return result;
     }
 
-    private Map<String, String> toStringMap(JsonNode node, String formatName) {
+    private Map<String, String> toStringMap(JsonNode node, String fmt) {
         if ( !node.isObject() ) {
-            throw new FcliSimpleException("%s contributor updates must contain only objects", formatName);
+            throw new FcliSimpleException("%s contributor updates must contain only objects", fmt);
         }
         var result = new LinkedHashMap<String, String>();
-        node.fields().forEachRemaining(entry -> result.put(entry.getKey(), jsonValueToString(entry.getValue())));
+        node.fields().forEachRemaining(e -> result.put(e.getKey(), jsonValueToString(e.getValue())));
         return result;
     }
 
     private String jsonValueToString(JsonNode node) {
-        if ( node == null || node.isNull() ) {
-            return "";
-        }
+        if ( node == null || node.isNull() ) { return ""; }
         return node.isValueNode() ? node.asText() : node.toString();
     }
 
@@ -188,129 +176,316 @@ public final class NcdReportUpdateContributorStatusCommand extends AbstractRunna
         return contributorsPath == null ? "stdin" : contributorsPath.toString();
     }
 
+    // -------------------------------------------------------------------------
+    // Applying updates
+    // -------------------------------------------------------------------------
+
     private List<Map<String, String>> readContributors(NcdReportReader reader) {
         return reader.readContributors();
     }
 
-    private List<String> validateAndApplyUpdates(List<Map<String, String>> updates, List<Map<String, String>> contributors) {
+    private List<String> applyUpdates(List<Map<String, String>> updates, List<Map<String, String>> contributors) {
         var warnings = new ArrayList<String>();
-        var contributersByAuthorId = contributors.stream()
+        var byAuthorId = contributors.stream()
                 .collect(Collectors.groupingBy(c -> c.getOrDefault(NcdReportContributorsCsvSchema.AUTHOR_ID, "")));
 
         for ( var update : updates ) {
-            var authorId = StringUtils.defaultString(update.get(NcdReportContributorsCsvSchema.AUTHOR_ID)).trim();
-            if ( StringUtils.isBlank(authorId) ) {
-                warnings.add("Update row missing authorId, skipping");
-                continue;
-            }
-
-            var matchingContributors = contributersByAuthorId.get(authorId);
-            if ( matchingContributors == null ) {
-                String msg = String.format("Unknown authorId '%s' in update", authorId);
-                if ( onUnknownAuthor == OnUnknownAuthor.fail ) {
-                    throw new FcliSimpleException(msg);
-                }
-                if ( onUnknownAuthor == OnUnknownAuthor.warn ) {
-                    warnings.add(msg);
-                }
-                continue;
-            }
-
-            for ( var contributor : matchingContributors ) {
-                for ( var entry : update.entrySet() ) {
-                    var field = entry.getKey();
-                    var value = StringUtils.defaultString(entry.getValue()).trim();
-
-                    if ( field.equals(NcdReportContributorsCsvSchema.AUTHOR_ID) || StringUtils.isBlank(field) ) {
-                        continue;
-                    }
-
-                    // Skip 'duplicateOf' convenience output field from list command (use 'overrideDuplicateOf' instead)
-                    if ( "duplicateOf".equals(field) ) {
-                        continue;
-                    }
-
-                    if ( NcdReportContributorsCsvSchema.IMMUTABLE_FIELDS.contains(field) ) {
-                        if ( matchingContributors.size() == 1 ) {
-                            var existingValue = StringUtils.defaultString(contributor.get(field));
-                            if ( !existingValue.equals(value) && !StringUtils.isBlank(value) ) {
-                                warnings.add(String.format("authorId %s: immutable field '%s' in update mismatches report value; ignoring", authorId, field));
-                            }
-                        }
-                        continue;
-                    }
-
-                    if ( !NcdReportContributorsCsvSchema.UPDATABLE_FIELDS.contains(field) ) {
-                        warnings.add(String.format("authorId %s: unknown field '%s'; ignoring", authorId, field));
-                        continue;
-                    }
-
-                    if ( NcdReportContributorsCsvSchema.OVERRIDE_STATUS.equals(field) ) {
-                        if ( StringUtils.isBlank(value) ) {
-                            contributor.put(field, "");
-                            continue;
-                        }
-                        if ( !VALID_OVERRIDE_STATUSES.contains(value) ) {
-                            warnings.add(String.format("authorId %s: invalid overrideStatus '%s'; ignoring", authorId, value));
-                            continue;
-                        }
-                    }
-
-                    if ( NcdReportContributorsCsvSchema.OVERRIDE_DUPLICATE_OF.equals(field) ) {
-                        if ( !StringUtils.isBlank(value) && !contributersByAuthorId.containsKey(value) ) {
-                            warnings.add(String.format("authorId %s: overrideDuplicateOf references unknown authorId '%s'; ignoring", authorId, value));
-                            continue;
-                        }
-                        if ( authorId.equals(value) ) {
-                            // Ignore self-references to support list-contributors -> update roundtrip on reports
-                            // where duplicates may intentionally share the same computed authorId.
-                            continue;
-                        }
-                    }
-
-                    contributor.put(field, value);
-                }
-            }
+            applyUpdate(update, byAuthorId, warnings);
         }
-
         return warnings;
     }
 
-    private void rewriteContributorsAndChecksums(NcdReportReader reader, List<Map<String, String>> contributors) {
-        var reportPath = reader.getReportPath();
-        var entryPath = reader.entryPath("contributors.csv");
+    private void applyUpdate(Map<String, String> update, Map<String, List<Map<String, String>>> byAuthorId, List<String> warnings) {
+        var authorId = StringUtils.defaultString(update.get(NcdReportContributorsCsvSchema.AUTHOR_ID)).trim();
+        if ( StringUtils.isBlank(authorId) ) {
+            warnings.add("Update row missing authorId; skipping");
+            return;
+        }
+        var targets = byAuthorId.get(authorId);
+        if ( targets == null ) {
+            warnings.add(String.format("authorId %s: not found in report; skipping", authorId));
+            return;
+        }
+        if ( !validateUpdateRow(authorId, update, byAuthorId, warnings) ) {
+            return;
+        }
+        for ( var contributor : targets ) {
+            applyFieldsToContributor(authorId, update, contributor, targets.size(), warnings);
+        }
+    }
 
+    /**
+     * Cross-field consistency validation for an update row.
+     * Returns false if the entire row should be skipped.
+     */
+    private boolean validateUpdateRow(String authorId, Map<String, String> update,
+            Map<String, List<Map<String, String>>> byAuthorId, List<String> warnings) {
+        var overrideStatus = StringUtils.defaultString(update.get(NcdReportContributorsCsvSchema.OVERRIDE_STATUS)).trim();
+        var duplicateOf    = StringUtils.defaultString(update.get(NcdReportContributorsCsvSchema.DUPLICATE_OF)).trim();
+        var confidence     = StringUtils.defaultString(update.get(NcdReportContributorsCsvSchema.OVERRIDE_STATUS_CONFIDENCE)).trim();
+
+        // Validate confidence threshold
+        if ( StringUtils.isNotBlank(confidence) ) {
+            try {
+                double val = Double.parseDouble(confidence);
+                if ( val < minConfidence ) {
+                    warnings.add(String.format(
+                            "authorId %s: confidence %.2f is below minimum %.2f; skipping",
+                            authorId, val, minConfidence));
+                    return false;
+                }
+            } catch ( NumberFormatException e ) {
+                warnings.add(String.format("authorId %s: invalid confidence value '%s'; skipping", authorId, confidence));
+                return false;
+            }
+        }
+
+        // Validate overrideStatus value
+        if ( StringUtils.isNotBlank(overrideStatus) && !VALID_OVERRIDE_STATUSES.contains(overrideStatus) ) {
+            warnings.add(String.format("authorId %s: unknown overrideStatus '%s'; skipping", authorId, overrideStatus));
+            return false;
+        }
+
+        // duplicate status requires duplicateOf
+        if ( "duplicate".equals(overrideStatus) && StringUtils.isBlank(duplicateOf) ) {
+            warnings.add(String.format("authorId %s: overrideStatus 'duplicate' requires a non-blank duplicateOf; skipping", authorId));
+            return false;
+        }
+
+        // non-duplicate status must not set duplicateOf
+        if ( StringUtils.isNotBlank(duplicateOf) && StringUtils.isNotBlank(overrideStatus)
+                && !"duplicate".equals(overrideStatus) ) {
+            warnings.add(String.format(
+                    "authorId %s: duplicateOf set but overrideStatus is '%s' (not 'duplicate'); skipping",
+                    authorId, overrideStatus));
+            return false;
+        }
+
+        // duplicateOf must reference a known authorId
+        if ( StringUtils.isNotBlank(duplicateOf) ) {
+            if ( !byAuthorId.containsKey(duplicateOf) ) {
+                warnings.add(String.format("authorId %s: duplicateOf '%s' references unknown authorId; skipping", authorId, duplicateOf));
+                return false;
+            }
+            if ( authorId.equals(duplicateOf) ) {
+                // Self-reference is silently ignored (can arise from lsc roundtrip)
+                return true;
+            }
+        }
+
+        return true;
+    }
+
+    private void applyFieldsToContributor(String authorId, Map<String, String> update, Map<String, String> contributor,
+            int targetCount, List<String> warnings) {
+        for ( var entry : update.entrySet() ) {
+            var field = entry.getKey();
+            var value = StringUtils.defaultString(entry.getValue()).trim();
+
+            if ( StringUtils.isBlank(field) || field.equals(NcdReportContributorsCsvSchema.AUTHOR_ID) ) {
+                continue;
+            }
+            if ( NcdReportContributorsCsvSchema.IMMUTABLE_FIELDS.contains(field) ) {
+                // Only warn on immutable mismatches when authorId uniquely identifies a single row;
+                // multiple rows share the same authorId when they are aliases of the same person.
+                if ( targetCount == 1 ) {
+                    warnIfImmutableMismatch(authorId, field, value, contributor, warnings);
+                }
+                continue;
+            }
+            if ( !NcdReportContributorsCsvSchema.UPDATABLE_FIELDS.contains(field) ) {
+                warnings.add(String.format("authorId %s: unknown field '%s'; ignoring", authorId, field));
+                continue;
+            }
+            contributor.put(field, value);
+        }
+    }
+
+    private void warnIfImmutableMismatch(String authorId, String field, String value,
+            Map<String, String> contributor, List<String> warnings) {
+        if ( StringUtils.isBlank(value) ) { return; }
+        var existing = StringUtils.defaultString(contributor.get(field));
+        if ( !existing.equals(value) ) {
+            warnings.add(String.format(
+                    "authorId %s: immutable field '%s' in update differs from report value; ignoring",
+                    authorId, field));
+        }
+    }
+
+    private void synchronizeContributionFields(List<Map<String, String>> contributors, List<String> warnings) {
+        applyOverrideStatusToContributionStatus(contributors);
+        recalculateContributingAuthorNumbers(contributors, warnings);
+    }
+
+    private void applyOverrideStatusToContributionStatus(List<Map<String, String>> contributors) {
+        for ( var contributor : contributors ) {
+            var overrideStatus = StringUtils.defaultString(
+                    contributor.get(NcdReportContributorsCsvSchema.OVERRIDE_STATUS)).trim();
+            if ( StringUtils.isBlank(overrideStatus) ) {
+                continue;
+            }
+            contributor.put(NcdReportContributorsCsvSchema.CONTRIBUTION_STATUS, overrideStatus);
+            if ( !"duplicate".equals(overrideStatus) ) {
+                contributor.put(NcdReportContributorsCsvSchema.DUPLICATE_OF, "");
+            }
+        }
+    }
+
+    private void recalculateContributingAuthorNumbers(List<Map<String, String>> contributors, List<String> warnings) {
+        var byAuthorId = contributors.stream()
+                .filter(c -> StringUtils.isNotBlank(c.get(NcdReportContributorsCsvSchema.AUTHOR_ID)))
+                .collect(Collectors.toMap(
+                        c -> c.get(NcdReportContributorsCsvSchema.AUTHOR_ID),
+                        c -> c,
+                        (left, right) -> left,
+                        LinkedHashMap::new));
+
+        for ( var contributor : contributors ) {
+            contributor.put(NcdReportContributorsCsvSchema.CONTRIBUTING_AUTHOR_NUMBER, "-1");
+        }
+
+        var contributing = contributors.stream()
+                .filter(c -> "contributing".equals(normalizeStatus(c)))
+                .sorted((left, right) -> StringUtils.defaultString(left.get(NcdReportContributorsCsvSchema.AUTHOR_NAME))
+                        .compareToIgnoreCase(StringUtils.defaultString(right.get(NcdReportContributorsCsvSchema.AUTHOR_NAME))))
+                .toList();
+        int contributingAuthorNumber = 1;
+        for ( var contributor : contributing ) {
+            contributor.put(NcdReportContributorsCsvSchema.CONTRIBUTING_AUTHOR_NUMBER,
+                    String.valueOf(contributingAuthorNumber++));
+        }
+
+        for ( var contributor : contributors ) {
+            if ( !"duplicate".equals(normalizeStatus(contributor)) ) {
+                continue;
+            }
+            var authorId = StringUtils.defaultString(contributor.get(NcdReportContributorsCsvSchema.AUTHOR_ID));
+            var duplicateOf = StringUtils.defaultString(contributor.get(NcdReportContributorsCsvSchema.DUPLICATE_OF)).trim();
+            if ( StringUtils.isBlank(duplicateOf) ) {
+                warnings.add(String.format("authorId %s: duplicate status has blank duplicateOf; leaving contributingAuthorNumber as -1", authorId));
+                continue;
+            }
+
+            var representative = resolveContributingRepresentative(duplicateOf, byAuthorId, new HashSet<>());
+            if ( representative == null ) {
+                warnings.add(String.format("authorId %s: duplicateOf '%s' does not resolve to a contributing author; leaving contributingAuthorNumber as -1",
+                        authorId, duplicateOf));
+                continue;
+            }
+
+            contributor.put(NcdReportContributorsCsvSchema.CONTRIBUTING_AUTHOR_NUMBER,
+                    StringUtils.defaultString(representative.get(NcdReportContributorsCsvSchema.CONTRIBUTING_AUTHOR_NUMBER), "-1"));
+        }
+    }
+
+    private Map<String, String> resolveContributingRepresentative(String authorId,
+            Map<String, Map<String, String>> byAuthorId, Set<String> seenAuthorIds)
+    {
+        if ( !seenAuthorIds.add(authorId) ) {
+            return null;
+        }
+        var contributor = byAuthorId.get(authorId);
+        if ( contributor == null ) {
+            return null;
+        }
+        var status = normalizeStatus(contributor);
+        if ( "contributing".equals(status) ) {
+            return contributor;
+        }
+        if ( "duplicate".equals(status) ) {
+            var duplicateOf = StringUtils.defaultString(contributor.get(NcdReportContributorsCsvSchema.DUPLICATE_OF)).trim();
+            if ( StringUtils.isBlank(duplicateOf) ) {
+                return null;
+            }
+            return resolveContributingRepresentative(duplicateOf, byAuthorId, seenAuthorIds);
+        }
+        return null;
+    }
+
+    private String normalizeStatus(Map<String, String> contributor) {
+        return StringUtils.defaultString(contributor.get(NcdReportContributorsCsvSchema.CONTRIBUTION_STATUS)).trim().toLowerCase();
+    }
+
+    // -------------------------------------------------------------------------
+    // Writing back
+    // -------------------------------------------------------------------------
+
+    private ObjectNode rewriteContributorsAndSummaryAndChecksums(NcdReportReader reader, List<Map<String, String>> contributors) {
+        var entryPath = reader.entryPath("contributors.csv");
         try {
-            // Build schema with all columns present across all rows
+            var sortedContributors = NcdReportContributorsCsvSchema.sortByAuthorNameAndStatus(
+                contributors.stream()
+                    .map(row -> JSON_MAPPER.convertValue(row, ObjectNode.class))
+                    .toList());
             var presentColumns = contributors.stream()
                     .flatMap(map -> map.keySet().stream())
                     .collect(Collectors.toSet());
             var csvSchema = NcdReportContributorsCsvSchema.buildSchema(presentColumns);
-
-            var writer = CSV_MAPPER.writer(csvSchema);
-            var csv = writer.writeValueAsString(contributors);
+            var outputColumns = NcdReportContributorsCsvSchema.getOutputColumns().stream()
+                    .filter(presentColumns::contains)
+                    .toList();
+            var writableContributors = sortedContributors.stream()
+                .map(row -> JSON_MAPPER.convertValue(row, new TypeReference<Map<String, String>>() {}))
+                    .map(row -> {
+                        Map<String, String> writableRow = new java.util.LinkedHashMap<>();
+                        outputColumns.forEach(column -> writableRow.put(column, row.get(column)));
+                        return writableRow;
+                    })
+                    .toList();
+            var csv = CSV_MAPPER.writer(csvSchema).writeValueAsString(writableContributors);
             Files.write(entryPath, csv.getBytes(StandardCharsets.UTF_8));
-
             updateChecksum(reader, "contributors.csv");
+
+            var summary = updateSummary(reader, writableContributors);
+            updateChecksum(reader, "summary.txt");
+            return summary;
         } catch ( Exception e ) {
-            throw new FcliTechnicalException(String.format("Error updating contributors.csv in %s", reportPath), e);
+            throw new FcliTechnicalException(String.format("Error updating contributors.csv in %s", reader.getReportPath()), e);
+        }
+    }
+
+    private ObjectNode updateSummary(NcdReportReader reader, List<Map<String, String>> contributors) {
+        var summaryPath = reader.entryPath("summary.txt");
+        var summary = reader.readSummary().deepCopy();
+
+        int total = contributors.size();
+        int ignored = (int) contributors.stream().filter(c -> "ignored".equals(normalizeStatus(c))).count();
+        int duplicate = (int) contributors.stream().filter(c -> "duplicate".equals(normalizeStatus(c))).count();
+        int contributing = (int) contributors.stream().filter(c -> "contributing".equals(normalizeStatus(c))).count();
+        int nonIgnored = total - ignored;
+
+        summary.set("authorCount", JsonHelper.getObjectMapper().createObjectNode()
+                .put("total", total)
+                .put("contributing", contributing)
+                .put("ignored", ignored)
+                .put("nonIgnored", nonIgnored)
+                .put("duplicate", duplicate));
+        try {
+            Files.write(summaryPath, YAML_MAPPER.writeValueAsBytes(summary));
+        } catch ( Exception e ) {
+            throw new FcliTechnicalException(String.format("Error updating summary.txt in %s", reader.getReportPath()), e);
+        }
+        return summary;
+    }
+
+    private String asYaml(ObjectNode summary) {
+        try {
+            return YAML_MAPPER.writeValueAsString(summary);
+        } catch ( Exception e ) {
+            throw new FcliTechnicalException("Error formatting summary output", e);
         }
     }
 
     private void updateChecksum(NcdReportReader reader, String entryName) {
-        var reportPath = reader.getReportPath();
         var checksumsPath = reader.entryPath("checksums.sha256");
-
         try {
             var lines = Files.readAllLines(checksumsPath);
             var updated = new ArrayList<String>();
             var entryChecksum = NcdReportValidator.sha256(reader.entryPath(entryName));
             boolean found = false;
-
             for ( var line : lines ) {
                 var parts = line.split("\\s+", 2);
                 if ( parts.length >= 2 ) {
-                    // Strip leading * if present (standard checksum format allows optional *)
                     var filename = parts[1].startsWith("*") ? parts[1].substring(1) : parts[1];
                     if ( filename.equals(entryName) ) {
                         updated.add(String.format("%s %s", entryChecksum, entryName));
@@ -322,16 +497,18 @@ public final class NcdReportUpdateContributorStatusCommand extends AbstractRunna
                     updated.add(line);
                 }
             }
-
             if ( !found ) {
                 updated.add(String.format("%s %s", entryChecksum, entryName));
             }
-
             Files.write(checksumsPath, updated, StandardCharsets.UTF_8);
         } catch ( Exception e ) {
-            throw new FcliTechnicalException(String.format("Error updating checksums in %s", reportPath), e);
+            throw new FcliTechnicalException(String.format("Error updating checksums in %s", reader.getReportPath()), e);
         }
     }
+
+    // -------------------------------------------------------------------------
+    // Utilities
+    // -------------------------------------------------------------------------
 
     private static ObjectMapper createYamlMapper() {
         var mapper = new ObjectMapper(new YAMLFactory());

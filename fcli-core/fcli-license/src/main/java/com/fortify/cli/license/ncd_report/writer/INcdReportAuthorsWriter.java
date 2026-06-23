@@ -18,4 +18,5 @@ public interface INcdReportAuthorsWriter {
     void writeIgnoredAuthor(NcdReportProcessedAuthorDescriptor descriptor);
     void writeDuplicateAuthor(NcdReportProcessedAuthorDescriptor descriptor, String representativeAuthorId, int contributingAuthorNumber);
     void writeContributor(NcdReportProcessedAuthorDescriptor descriptor, int contributingAuthorNumber);
+    void finalize();
 }

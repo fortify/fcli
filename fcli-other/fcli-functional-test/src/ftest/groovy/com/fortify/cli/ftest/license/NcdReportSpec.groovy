@@ -32,6 +32,49 @@ class NcdReportSpec extends FcliBaseSpec {
     private String tempPath(String relativePath) {
         return new File(mockReportDir, relativePath).absolutePath
     }
+
+    private static String sha256Hex(File file) {
+        def digest = java.security.MessageDigest.getInstance("SHA-256")
+        digest.update(java.nio.file.Files.readAllBytes(file.toPath()))
+        return digest.digest().collect { String.format("%02X", it) }.join("")
+    }
+
+    private static void updateChecksum(String reportDir, String entryName) {
+        def checksumsFile = new File("${reportDir}/checksums.sha256")
+        def entryFile = new File("${reportDir}/${entryName}")
+        def checksum = sha256Hex(entryFile)
+        def lines = checksumsFile.readLines()
+        def updated = []
+        def found = false
+        lines.each { line ->
+            def parts = line.split(/\s+/, 2)
+            if ( parts.size() >= 2 ) {
+                def filename = parts[1].startsWith("*") ? parts[1].substring(1) : parts[1]
+                if ( filename == entryName ) {
+                    updated << "${checksum} ${entryName}"
+                    found = true
+                } else {
+                    updated << line
+                }
+            } else {
+                updated << line
+            }
+        }
+        if ( !found ) {
+            updated << "${checksum} ${entryName}"
+        }
+        checksumsFile.text = updated.join("\n") + "\n"
+    }
+
+    private static void addLegacyNumberColumnsToContributorsCsv(String reportDir) {
+        def contributorsFile = new File("${reportDir}/contributors.csv")
+        def lines = contributorsFile.readLines()
+        def updated = []
+        updated << (lines[0] + ",authorNumber,contributingAuthorNumber")
+        lines.drop(1).each { updated << (it + ",-1,-1") }
+        contributorsFile.text = updated.join("\n") + "\n"
+        updateChecksum(reportDir, "contributors.csv")
+    }
     
     def "generate-config"() {
         def args = "license ncd-report create-config -y -c ${sampleConfigOutputFile} -o yaml"
@@ -103,6 +146,9 @@ class NcdReportSpec extends FcliBaseSpec {
             new File("${mockReportDir}/summary.txt").exists()
             new File("${mockReportDir}/contributors.csv").exists()
             new File("${mockReportDir}/checksums.sha256").exists()
+            def contributorHeader = new File("${mockReportDir}/contributors.csv").readLines().first()
+            !contributorHeader.contains("authorNumber")
+            !contributorHeader.contains("contributingAuthorNumber")
             verifyAll(result.stdout) {
                 it.any { it == "reportPath: ${mockReportDir}" }
                 it.any { it == '  reportType: Number of Contributing Developers (NCD) Report' }
@@ -161,7 +207,38 @@ class NcdReportSpec extends FcliBaseSpec {
             result.stdout[0].contains("authorName")
             result.stdout[0].contains("contributionStatus")
             result.stdout[0].contains("duplicateOf")
+            !result.stdout[0].contains("authorNumber")
+            !result.stdout[0].contains("contributingAuthorNumber")
             result.stdout.size() > 2  // Header + at least one author
+    }
+
+    def "mock-legacy-number-columns-accepted-by-lsc-merge-update"() {
+        def report1 = tempPath("ncd-report-legacy-source-1")
+        def report2 = tempPath("ncd-report-legacy-source-2")
+        def mergedReport = tempPath("ncd-report-legacy-merged")
+        def listCsv = tempPath("ncd-report-legacy-list.csv")
+
+        when:
+            Fcli.run("license ncd-report create -y -c ${mockConfigFile} -d ${report1}")
+            Fcli.run("license ncd-report create -y -c ${mockConfigFile} -d ${report2}")
+
+            // Inject legacy numeric columns into contributors.csv and update checksums,
+            // simulating reports produced by older fcli versions.
+            addLegacyNumberColumnsToContributorsCsv(report1)
+            addLegacyNumberColumnsToContributorsCsv(report2)
+
+            def lscResult = Fcli.run("license ncd-report list-contributors -r ${report1} -o csv --to-file ${listCsv}")
+            def updateResult = Fcli.run("license ncd-report update-contributor-status -r ${report1} -c ${listCsv}")
+            def mergeResult = Fcli.run("license ncd-report merge -r ${report1},${report2} -d ${mergedReport} -y")
+
+            def mergedHeader = new File("${mergedReport}/contributors.csv").readLines().first()
+        then:
+            new File(listCsv).exists()
+            lscResult.exitCode == 0
+            updateResult.exitCode == 0
+            mergeResult.exitCode == 0
+            !mergedHeader.contains("authorNumber")
+            !mergedHeader.contains("contributingAuthorNumber")
     }
     
     def "mock-merge"() {
@@ -182,10 +259,20 @@ class NcdReportSpec extends FcliBaseSpec {
             // Merge the two reports
             def mergeArgs = "license ncd-report merge -r ${report1},${report2} -d ${mergedReport} -y"
             def mergeResult = Fcli.run(mergeArgs)
+            def mergedLines = new File("${mergedReport}/contributors.csv").readLines()
+            def headerCols = mergedLines.first().split(',', -1)
+            def statusIndex = headerCols.findIndexOf { it == 'contributionStatus' }
+            def sourceReportsIndex = headerCols.findIndexOf { it == 'sourceReports' }
+            def ignoredCount = mergedLines.drop(1).count { row ->
+                def cols = row.split(',', -1)
+                statusIndex >= 0 && cols.size() > statusIndex && cols[statusIndex] == 'ignored'
+            }
         then:
             new File("${mergedReport}/summary.txt").exists()
             new File("${mergedReport}/contributors.csv").exists()
             mergeResult.stdout.any { it.contains("mergedReportCount: 2") }
+            sourceReportsIndex >= 0
+            ignoredCount >= 4
     }
     
     def "mock-update-from-list-output"() {
@@ -253,12 +340,12 @@ class NcdReportSpec extends FcliBaseSpec {
             new File(updateData).text = '''[
   {
         "authorId": "''' + authorIds[0] + '''",
-                "overrideDuplicateOf": "''' + authorIds[1] + '''",
+                "duplicateOf": "''' + authorIds[1] + '''",
         "overrideStatusConfidence": "0.95"
   },
   {
         "authorId": "''' + authorIds[2] + '''",
-                "overrideDuplicateOf": "''' + authorIds[3] + '''",
+                "duplicateOf": "''' + authorIds[3] + '''",
         "overrideStatusConfidence": "0.85"
   }
 ]'''

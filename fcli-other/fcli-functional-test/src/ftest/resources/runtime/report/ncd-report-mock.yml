@@ -13,5 +13,7 @@ contributor:
 sources:
   mock:
     - repositoryCount: 3
-      authorsPerRepository: 5
+      # Use enough authors to include built-in bot accounts from MockAuthorData,
+      # so ignoreExpression behavior is exercised in generated reports.
+      authorsPerRepository: 8
       commitsPerAuthor: 10

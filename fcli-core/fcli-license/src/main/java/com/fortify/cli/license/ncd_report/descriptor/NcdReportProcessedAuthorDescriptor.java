@@ -29,8 +29,7 @@ public class NcdReportProcessedAuthorDescriptor {
         return objectNode.put("authorId", computeAuthorId())
                 .put("authorName", authorDescriptor.getName())
                 .put("authorEmail", authorDescriptor.getEmail())
-                .put("authorState", state.name())
-                .put("authorNumber", authorNumber);
+                .put("authorState", state.name());
     }
 
     /**
