@@ -108,10 +108,10 @@ steps:
         cmd: fcli action run pr-or-mr-create "--source-dir=${cli.sourceDir}" "--source-branch=${gitResult.branchName}" "--base-branch=${baseBranch}" "--title=${cli.title}" "--body=${cli.body}" --progress=none
         stdout: collect
         stderr: collect
-      on.fail:
-        - log.warn:
-            msg: "Failed to run pr-or-mr-create action"
-            cause: ${CREATE_PR_exception}
+    on.fail:
+      - log.warn:
+          msg: "Failed to run pr-or-mr-create action"
+          cause: ${CREATE_PR_exception}
   - var.set:
       prResult: "${CREATE_PR.result?:{status: 'error', prLink: ''}}"
 
