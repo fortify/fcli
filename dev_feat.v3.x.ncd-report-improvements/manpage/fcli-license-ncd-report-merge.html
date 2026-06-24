@@ -17,7 +17,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260623.111212-dev_feat.v3.x.ncd-report-improvements" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260624.105052-dev_feat.v3.x.ncd-report-improvements" %}
 
 
 <div id="header">
@@ -34,7 +34,7 @@ fcli_version:
 </div>
 <h2>Name</h2>
 <div class="sectionbody">
-<p>fcli-license-ncd-report-merge - Merge multiple NCD reports into a single combined report with cross-report deduplication.</p>
+<p>fcli-license-ncd-report-merge - Merge multiple NCD reports into a single combined report</p>
 </div>
 </div>
 <div id="content">
@@ -57,7 +57,12 @@ fcli_version:
 <div class="sect1">
 <h2 id="_description"><a class="anchor" href="#_description"></a>Description</h2>
 <div class="sectionbody">
-
+<div class="paragraph">
+<p>This command can be used to merge multiple NCD reports into a single combined report with cross-report deduplication.</p>
+</div>
+<div class="paragraph">
+<p>As an example, if you have individual teams generate separate NCD reports and a developer moves from one team to another, that developer may be counted as a contributing developer in both team reports, thus counted twice when manually combining the counts. Merging the reports will deduplicate the developer and count them only once in the merged report.</p>
+</div>
 </div>
 </div>
 <div class="sect1">
@@ -148,7 +153,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2026-06-23 11:15:03 UTC
+Last updated 2026-06-24 10:53:41 UTC
 </div>
 </div>
 </body>

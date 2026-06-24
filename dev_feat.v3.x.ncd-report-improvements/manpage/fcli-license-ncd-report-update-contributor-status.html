@@ -17,7 +17,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260623.111212-dev_feat.v3.x.ncd-report-improvements" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260624.105052-dev_feat.v3.x.ncd-report-improvements" %}
 
 
 <div id="header">
@@ -33,7 +33,7 @@ fcli_version:
 </div>
 <h2>Name</h2>
 <div class="sectionbody">
-<p>fcli-license-ncd-report-update-contributor-status - Update contributor override data in an NCD report (manual or AI-assisted).</p>
+<p>fcli-license-ncd-report-update-contributor-status - Update contribution status in an NCD report</p>
 </div>
 </div>
 <div id="content">
@@ -52,7 +52,9 @@ fcli_version:
 <div class="sect1">
 <h2 id="_description"><a class="anchor" href="#_description"></a>Description</h2>
 <div class="sectionbody">
-
+<div class="paragraph">
+<p>This command takes the edited output of the <code>list-contributors</code> command and applies requested contribution status updates to an existing NCD report. Please see the <code>list-contributors</code> command for details on how to prepare the updates.</p>
+</div>
 </div>
 </div>
 <div class="sect1">
@@ -62,7 +64,7 @@ fcli_version:
 <dl>
 <dt class="hdlist1"><strong>-c</strong>, <strong>--contributors</strong>=<em>&lt;contributorsPath&gt;</em></dt>
 <dd>
-<p>Contributor updates in CSV, JSON, or YAML format (or stdin if omitted) in the same format as produced by the <code>list-contributors</code> command. Must contain 'authorId' and may include duplicateOf, overrideStatus, overrideStatusConfidence, or overrideStatusNotes.</p>
+<p>Contributor updates file in CSV (with header row), JSON (object or array of objects), or YAML (object or array of objects) format. If omitted, updates are read from stdin. Input should use the <code>list-contributors</code> output format (typically exported with <code>-o json|csv|yaml</code>) and each update row should include <code>authorId</code>.</p>
 </dd>
 <dt class="hdlist1"><strong>--min-confidence</strong>=<em>&lt;minConfidence&gt;</em></dt>
 <dd>
@@ -114,7 +116,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2026-06-23 11:15:03 UTC
+Last updated 2026-06-24 10:53:41 UTC
 </div>
 </div>
 </body>

@@ -17,7 +17,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260623.111212-dev_feat.v3.x.ncd-report-improvements" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260624.105052-dev_feat.v3.x.ncd-report-improvements" %}
 
 
 <div id="header">
@@ -34,7 +34,7 @@ fcli_version:
 </div>
 <h2>Name</h2>
 <div class="sectionbody">
-<p>fcli-license-ncd-report-list-contributors - List contributors from an NCD report to verify author identities and update contribution status through the `update-contributor-status` command. Additional report details may be available in the CSV files inside the report.</p>
+<p>fcli-license-ncd-report-list-contributors - List contributors from an NCD report</p>
 </div>
 </div>
 <div id="content">
@@ -53,7 +53,22 @@ fcli_version:
 <div class="sect1">
 <h2 id="_description"><a class="anchor" href="#_description"></a>Description</h2>
 <div class="sectionbody">
-
+<div class="paragraph">
+<p>This command lists contributors from an NCD report for manual identity review, contribution status verification, and contribution status updates.</p>
+</div>
+<div class="paragraph">
+<p>To prepare contribution status updates (manually or AI-assisted), generate output in your preferred output format (JSON, CSV, or YAML) using the <code>-o/--output</code> option, then update any of the following fields for the rows for which contribution status needs to be modified:
+- <code>overrideStatus</code>: Can be <code>contributing</code>, <code>duplicate</code>, or <code>ignored</code>
+- <code>overrideStatusConfidence</code>: Confidence level (0.0-1.0) for the override
+- <code>overrideStatusNotes</code>: Additional notes for the override
+- <code>duplicateOf</code>: Required if <code>overrideStatus</code> is <code>duplicate</code></p>
+</div>
+<div class="paragraph">
+<p>Each row to be updated must include the original <code>authorId</code> field. Other fields may be omitted; any changed contents in those fields will be ignored with a warning.</p>
+</div>
+<div class="paragraph">
+<p>Feed the edited output into the <code>update-contributor-status</code> command (alias <code>ucs</code>) to apply the updates to the report.</p>
+</div>
 </div>
 </div>
 <div class="sect1">
@@ -136,7 +151,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2026-06-23 11:15:03 UTC
+Last updated 2026-06-24 10:53:41 UTC
 </div>
 </div>
 </body>
