@@ -80,15 +80,16 @@ steps:
   # Step 1: Stage, commit and push
   - run.fcli:
       GIT_STAGE_COMMIT_PUSH:
-        cmd: fcli action run git-stage-commit-push "--source-dir=${cli.sourceDir}" "--branch-prefix=${cli.branchPrefix}" "--author-name=${cli.authorName}" "--author-email=${cli.authorEmail}" --progress=none
+        cmd: fcli action run git-stage-commit-push "--source-dir=${cli.sourceDir}" "--branch-prefix=${cli.branchPrefix}" "--author-name=${cli.authorName}" "--author-email=${cli.authorEmail}" --output=json --progress=none
         stdout: collect
         stderr: collect
     on.fail:
       - log.warn:
           msg: "Failed to run git-stage-commit-push action"
           cause: ${GIT_STAGE_COMMIT_PUSH_exception}
+  - log.debug: "GIT_STAGE_COMMIT_PUSH variable content: ${GIT_STAGE_COMMIT_PUSH}"
   - var.set:
-      gitResult: "${GIT_STAGE_COMMIT_PUSH.result?:{status: 'error', branchName: '', commitSha: '', pushedRef: ''}}"
+      gitResult: "${#jsonParse(GIT_STAGE_COMMIT_PUSH.stdout)}"
 
   - if: "${gitResult.status=='error'}"
     do:
@@ -113,7 +114,7 @@ steps:
           msg: "Failed to run pr-or-mr-create action"
           cause: ${CREATE_PR_exception}
   - var.set:
-      prResult: "${CREATE_PR.result?:{status: 'error', prLink: ''}}"
+      prResult: "${#jsonParse(CREATE_PR.stdout)}"
 
   - log.debug: "commit-and-create-pr completed: git=${gitResult.status}, pr=${prResult.status}"
   
