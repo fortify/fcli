@@ -15,13 +15,10 @@ sources:
     # the following (classic) scopes: read:org, read:user, repo
     tokenExpression: >                          
       #env("FCLI_FT_GITHUB_TOKEN")
-    repositoryIncludeExpression: >
-      topics.contains("fortify-integration-sample")
-    organizations:                      
-    - name: fortify
-    - name: fod-dev 
-      repositoryIncludeExpression: >
-        true
+    # Explicit repository listing to reduce test runtime
+    repositories:
+    - name: fortify/IWA-Java
+    - name: fod-dev/fod-uploader-java
 
   gitlab:                               
   - baseUrl: https://gitlab.com
@@ -29,7 +26,6 @@ sources:
     # and require the following scopes: read_api, read_repository
     tokenExpression: >                          
       #env("FCLI_FT_GITLAB_TOKEN")      
-    repositoryIncludeExpression: >
-      topics.contains("vulnerable-sample-app")
-    groups:                      
-    - id: Fortify
+    # Explicit repository listing to reduce test runtime
+    repositories:
+    - name: Fortify/example-eightball
