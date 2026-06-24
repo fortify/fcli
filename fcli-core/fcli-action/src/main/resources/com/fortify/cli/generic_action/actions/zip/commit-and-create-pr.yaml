@@ -80,16 +80,17 @@ steps:
   # Step 1: Stage, commit and push
   - run.fcli:
       GIT_STAGE_COMMIT_PUSH:
-        cmd: fcli action run git-stage-commit-push "--source-dir=${cli.sourceDir}" "--branch-prefix=${cli.branchPrefix}" "--author-name=${cli.authorName}" "--author-email=${cli.authorEmail}" --output=json --progress=none
+        cmd: fcli action run git-stage-commit-push "--source-dir=${cli.sourceDir}" "--branch-prefix=${cli.branchPrefix}" "--author-name=${cli.authorName}" "--author-email=${cli.authorEmail}" --progress=none --store=git_stage_result
         stdout: collect
         stderr: collect
     on.fail:
       - log.warn:
           msg: "Failed to run git-stage-commit-push action"
           cause: ${GIT_STAGE_COMMIT_PUSH_exception}
-  - log.debug: "GIT_STAGE_COMMIT_PUSH variable content: ${GIT_STAGE_COMMIT_PUSH}"
+      - throw: "git-stage-commit-push failed"
+  
   - var.set:
-      gitResult: "${#jsonParse(GIT_STAGE_COMMIT_PUSH.stdout)}"
+      gitResult: "${#var('git_stage_result')}"
 
   - if: "${gitResult.status=='error'}"
     do:
@@ -106,15 +107,18 @@ steps:
   # Step 2: Create PR/MR from the pushed branch
   - run.fcli:
       CREATE_PR:
-        cmd: fcli action run pr-or-mr-create "--source-dir=${cli.sourceDir}" "--source-branch=${gitResult.branchName}" "--base-branch=${baseBranch}" "--title=${cli.title}" "--body=${cli.body}" --progress=none
+        cmd: fcli action run pr-or-mr-create "--source-dir=${cli.sourceDir}" "--source-branch=${gitResult.branchName}" "--base-branch=${baseBranch}" "--title=${cli.title}" "--body=${cli.body}" --progress=none --store=pr_create_result
         stdout: collect
         stderr: collect
     on.fail:
       - log.warn:
           msg: "Failed to run pr-or-mr-create action"
           cause: ${CREATE_PR_exception}
+      - throw: "pr-or-mr-create failed"
+      
+  # Retrieve PR result
   - var.set:
-      prResult: "${#jsonParse(CREATE_PR.stdout)}"
+      prResult: "${#var('pr_create_result')}"
 
   - log.debug: "commit-and-create-pr completed: git=${gitResult.status}, pr=${prResult.status}"
   

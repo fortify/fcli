@@ -156,3 +156,6 @@ steps:
   - log.info: "pr-or-mr-create completed: status=${result.status}, platform=${result.platform}"
   - if: "${result.status=='success'}"
     log.info: "PR/MR URL: ${result.prLink}"
+  
+  - out.write:
+      object: "${result}"

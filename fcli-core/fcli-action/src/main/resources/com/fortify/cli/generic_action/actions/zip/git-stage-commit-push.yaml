@@ -143,3 +143,6 @@ steps:
       result.commitSha: "${commitSha}"
       result.pushedRef: "${pushedRef}"
   - log.info: "git-stage-commit-push completed: branch=${result.branchName}, commit=${result.commitSha}"
+  
+  - out.write:
+      object: "${result}"
