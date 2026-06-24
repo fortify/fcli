@@ -100,11 +100,12 @@ final class NcdReportAuthorCollector {
     }
     
     private final void writeEntry(Entry<NcdReportProcessedAuthorDescriptor, Set<NcdReportProcessedAuthorDescriptor>> e) {
+        var representativeAuthorId = e.getKey().getAuthorId();
         var contributingAuthorNumber = counters.increaseCount(AuthorCounter.contributing);
         INcdReportAuthorsWriter writer = writers.authorsWriter();
         writer.writeContributor(e.getKey(), contributingAuthorNumber);
         e.getValue().forEach(d->{
-            writer.writeDuplicateAuthor(d, contributingAuthorNumber);
+            writer.writeDuplicateAuthor(d, representativeAuthorId, contributingAuthorNumber);
             counters.increaseCount(AuthorCounter.duplicate);
         });
     }
