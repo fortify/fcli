@@ -1,6 +1,6 @@
 ---
 title: 'Action Documentation: <a href="manpage/fcli-action.html"><code>fcli action</code></a>'
-fcli_version: 0.20260624.042409-dev_feat.v3.x.create-pr-fcli-action
+fcli_version: 0.20260624.170427-dev_feat.v3.x.create-pr-fcli-action
 ---
 
 <!DOCTYPE html>
@@ -17,13 +17,13 @@ fcli_version: 0.20260624.042409-dev_feat.v3.x.create-pr-fcli-action
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260624.042409-dev_feat.v3.x.create-pr-fcli-action" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260624.170427-dev_feat.v3.x.create-pr-fcli-action" %}
 
 
 <div id="header">
 <h1>Action Documentation: <a href="manpage/fcli-action.html"><code>fcli action</code></a></h1>
 <div class="details">
-<span id="revnumber">version 0.20260624.042409-dev_feat.v3.x.create-pr-fcli-action</span>
+<span id="revnumber">version 0.20260624.170427-dev_feat.v3.x.create-pr-fcli-action</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -47,7 +47,7 @@ fcli_version: 0.20260624.042409-dev_feat.v3.x.create-pr-fcli-action
 <li><a href="#_post_scan_actions_2">Post-Scan Actions</a></li>
 </ul>
 </li>
-<li><a href="#_commit_and_create_pr">commit-and-create-pr</a>
+<li><a href="#_create_pr">create-pr</a>
 <ul class="sectlevel2">
 <li><a href="#_synopsis_2">Synopsis</a></li>
 <li><a href="#_description_2">Description</a></li>
@@ -60,18 +60,11 @@ fcli_version: 0.20260624.042409-dev_feat.v3.x.create-pr-fcli-action
 <li><a href="#_description_3">Description</a></li>
 </ul>
 </li>
-<li><a href="#_git_stage_commit_push">git-stage-commit-push</a>
+<li><a href="#_git_push_changes">git-push-changes</a>
 <ul class="sectlevel2">
 <li><a href="#_synopsis_4">Synopsis</a></li>
 <li><a href="#_description_4">Description</a></li>
 <li><a href="#_options_2">Options</a></li>
-</ul>
-</li>
-<li><a href="#_pr_or_mr_create">pr-or-mr-create</a>
-<ul class="sectlevel2">
-<li><a href="#_synopsis_5">Synopsis</a></li>
-<li><a href="#_description_5">Description</a></li>
-<li><a href="#_options_3">Options</a></li>
 </ul>
 </li>
 </ul>
@@ -679,42 +672,46 @@ DEBRICKED_EXPORT_EXTRA_OPTS</p></td>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_commit_and_create_pr"><a class="anchor" href="#_commit_and_create_pr"></a>commit-and-create-pr</h2>
+<h2 id="_create_pr"><a class="anchor" href="#_create_pr"></a>create-pr</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Stage, commit, push and create a pull/merge request</p>
+<p>Create a pull request or merge request on GitHub or GitLab</p>
 </div>
 <div class="sect2">
 <h3 id="_synopsis_2"><a class="anchor" href="#_synopsis_2"></a>Synopsis</h3>
 <div class="paragraph">
-<p><strong><a href="manpage/fcli-action-run.html">fcli action run</a> commit-and-create-pr [<a href="manpage/fcli-action-run.html">fcli action run</a> options] [action options, see below]</strong></p>
+<p><strong><a href="manpage/fcli-action-run.html">fcli action run</a> create-pr [<a href="manpage/fcli-action-run.html">fcli action run</a> options] [action options, see below]</strong></p>
 </div>
 </div>
 <div class="sect2">
 <h3 id="_description_2"><a class="anchor" href="#_description_2"></a>Description</h3>
 <div class="paragraph">
-<p>Convenience wrapper that combines <code>git-stage-commit-push</code> and <code>pr-or-mr-create</code>
-into a single action. Detects local changes, commits them to a new branch, pushes
-to the remote, then raises a pull request (GitHub) or merge request (GitLab).</p>
+<p>This action creates a pull request (GitHub) or merge request (GitLab) for an
+existing branch. The repository platform is auto-detected from the git remote URL.
+Only GitHub and GitLab are supported; for other platforms the branch must be
+promoted to a PR/MR manually.</p>
 </div>
 <div class="paragraph">
-<p>For more control, run <code>git-stage-commit-push</code> and <code>pr-or-mr-create</code> separately.</p>
+<p>Typically used after <code>git-stage-commit-push</code> to raise a PR/MR for the pushed branch.</p>
 </div>
 <div class="paragraph">
 <p>This action requires:
-- Git repository access (local clone with a configured remote)
-- A CI token: GITHUB_TOKEN/GH_TOKEN (GitHub), CI_JOB_TOKEN (GitLab),
-  SYSTEM_ACCESSTOKEN (Azure DevOps), or BITBUCKET_TOKEN (Bitbucket)</p>
+- Git repository with a remote pointing to GitHub or GitLab
+- A CI token with PR/MR creation permissions (GITHUB_TOKEN/GH_TOKEN or CI_JOB_TOKEN)</p>
 </div>
 <div class="paragraph">
 <p>Configuration via CLI options or environment variables:
-- <code>--source-dir</code> / <code>SOURCE_DIR</code>&#8201;&#8212;&#8201;Directory where changes are detected (default: '.')
-- <code>--branch-prefix</code> / <code>BRANCH_PREFIX</code>&#8201;&#8212;&#8201;Branch name prefix (default: "fcli/aviator-remediations")
-- <code>--title</code> / <code>PR_TITLE</code>&#8201;&#8212;&#8201;PR/MR title
-- <code>--body</code> / <code>PR_BODY</code>&#8201;&#8212;&#8201;PR/MR description
+- <code>--source-dir</code> / <code>SOURCE_DIR</code>&#8201;&#8212;&#8201;Local repo directory used to detect the platform (default: '.')
+- <code>--source-branch</code> / <code>SOURCE_BRANCH</code>&#8201;&#8212;&#8201;Branch to raise the PR/MR from (required)
 - <code>--base-branch</code> / <code>BASE_BRANCH</code>&#8201;&#8212;&#8201;Target branch for the PR/MR (default: auto-detected from remote, fallback "main")
-- <code>--author-name</code> / <code>GIT_AUTHOR_NAME</code>&#8201;&#8212;&#8201;Commit author name (default: "fcli-aviator[bot]")
-- <code>--author-email</code> / <code>GIT_AUTHOR_EMAIL</code>&#8201;&#8212;&#8201;Commit author email</p>
+- <code>--title</code> / <code>PR_TITLE</code>&#8201;&#8212;&#8201;PR/MR title
+- <code>--body</code> / <code>PR_BODY</code>&#8201;&#8212;&#8201;PR/MR description</p>
+</div>
+<div class="paragraph">
+<p>Output variables:
+- <code>result.status</code>&#8201;&#8212;&#8201;"success", "no_pr_support", or "error"
+- <code>result.prLink</code>&#8201;&#8212;&#8201;URL of the created PR/MR (empty on failure)
+- <code>result.platform</code>&#8201;&#8212;&#8201;Detected repository platform ("github", "gitlab", or "unknown")</p>
 </div>
 </div>
 <div class="sect2">
@@ -723,11 +720,15 @@ to the remote, then raises a pull request (GitHub) or merge request (GitLab).</p
 <dl>
 <dt class="hdlist1">--source-dir, -s</dt>
 <dd>
-<p>Directory where changes are detected. Defaults to current working directory if not specified.</p>
+<p>Local repo directory used to detect the repository platform. Defaults to current working directory if not specified.</p>
 </dd>
-<dt class="hdlist1">--branch-prefix</dt>
+<dt class="hdlist1">--source-branch</dt>
 <dd>
-<p>Prefix for the new branch name.</p>
+<p>Source branch to raise the PR/MR from.</p>
+</dd>
+<dt class="hdlist1">--base-branch</dt>
+<dd>
+<p>Target branch for the PR/MR. Auto-detected from the remote HEAD if not specified, falling back to "main".</p>
 </dd>
 <dt class="hdlist1">--title, -t</dt>
 <dd>
@@ -736,18 +737,6 @@ to the remote, then raises a pull request (GitHub) or merge request (GitLab).</p
 <dt class="hdlist1">--body</dt>
 <dd>
 <p>PR/MR description.</p>
-</dd>
-<dt class="hdlist1">--base-branch</dt>
-<dd>
-<p>Target branch for the PR/MR. Auto-detected from the remote HEAD if not specified, falling back to "main".</p>
-</dd>
-<dt class="hdlist1">--author-name</dt>
-<dd>
-<p>Git author name for the commit.</p>
-</dd>
-<dt class="hdlist1">--author-email</dt>
-<dd>
-<p>Git author email for the commit.</p>
 </dd>
 </dl>
 </div>
@@ -780,7 +769,7 @@ like default FoD release name and SSC application version name.</p>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_git_stage_commit_push"><a class="anchor" href="#_git_stage_commit_push"></a>git-stage-commit-push</h2>
+<h2 id="_git_push_changes"><a class="anchor" href="#_git_push_changes"></a>git-push-changes</h2>
 <div class="sectionbody">
 <div class="paragraph">
 <p>Stage, commit and push local changes to a new branch</p>
@@ -788,7 +777,7 @@ like default FoD release name and SSC application version name.</p>
 <div class="sect2">
 <h3 id="_synopsis_4"><a class="anchor" href="#_synopsis_4"></a>Synopsis</h3>
 <div class="paragraph">
-<p><strong><a href="manpage/fcli-action-run.html">fcli action run</a> git-stage-commit-push [<a href="manpage/fcli-action-run.html">fcli action run</a> options] [action options, see below]</strong></p>
+<p><strong><a href="manpage/fcli-action-run.html">fcli action run</a> git-push-changes [<a href="manpage/fcli-action-run.html">fcli action run</a> options] [action options, see below]</strong></p>
 </div>
 </div>
 <div class="sect2">
@@ -850,84 +839,12 @@ Bitbucket Pipelines).</p>
 </div>
 </div>
 </div>
-<div class="sect1">
-<h2 id="_pr_or_mr_create"><a class="anchor" href="#_pr_or_mr_create"></a>pr-or-mr-create</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>Create a pull request or merge request on GitHub or GitLab</p>
-</div>
-<div class="sect2">
-<h3 id="_synopsis_5"><a class="anchor" href="#_synopsis_5"></a>Synopsis</h3>
-<div class="paragraph">
-<p><strong><a href="manpage/fcli-action-run.html">fcli action run</a> pr-or-mr-create [<a href="manpage/fcli-action-run.html">fcli action run</a> options] [action options, see below]</strong></p>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_description_5"><a class="anchor" href="#_description_5"></a>Description</h3>
-<div class="paragraph">
-<p>This action creates a pull request (GitHub) or merge request (GitLab) for an
-existing branch. The repository platform is auto-detected from the git remote URL.
-Only GitHub and GitLab are supported; for other platforms the branch must be
-promoted to a PR/MR manually.</p>
-</div>
-<div class="paragraph">
-<p>Typically used after <code>git-stage-commit-push</code> to raise a PR/MR for the pushed branch.</p>
-</div>
-<div class="paragraph">
-<p>This action requires:
-- Git repository with a remote pointing to GitHub or GitLab
-- A CI token with PR/MR creation permissions (GITHUB_TOKEN/GH_TOKEN or CI_JOB_TOKEN)</p>
-</div>
-<div class="paragraph">
-<p>Configuration via CLI options or environment variables:
-- <code>--source-dir</code> / <code>SOURCE_DIR</code>&#8201;&#8212;&#8201;Local repo directory used to detect the platform (default: '.')
-- <code>--source-branch</code> / <code>SOURCE_BRANCH</code>&#8201;&#8212;&#8201;Branch to raise the PR/MR from (required)
-- <code>--base-branch</code> / <code>BASE_BRANCH</code>&#8201;&#8212;&#8201;Target branch for the PR/MR (default: auto-detected from remote, fallback "main")
-- <code>--title</code> / <code>PR_TITLE</code>&#8201;&#8212;&#8201;PR/MR title
-- <code>--body</code> / <code>PR_BODY</code>&#8201;&#8212;&#8201;PR/MR description</p>
-</div>
-<div class="paragraph">
-<p>Output variables:
-- <code>result.status</code>&#8201;&#8212;&#8201;"success", "no_pr_support", or "error"
-- <code>result.prLink</code>&#8201;&#8212;&#8201;URL of the created PR/MR (empty on failure)
-- <code>result.platform</code>&#8201;&#8212;&#8201;Detected repository platform ("github", "gitlab", or "unknown")</p>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_options_3"><a class="anchor" href="#_options_3"></a>Options</h3>
-<div class="dlist">
-<dl>
-<dt class="hdlist1">--source-dir, -s</dt>
-<dd>
-<p>Local repo directory used to detect the repository platform. Defaults to current working directory if not specified.</p>
-</dd>
-<dt class="hdlist1">--source-branch</dt>
-<dd>
-<p>Source branch to raise the PR/MR from.</p>
-</dd>
-<dt class="hdlist1">--base-branch</dt>
-<dd>
-<p>Target branch for the PR/MR. Auto-detected from the remote HEAD if not specified, falling back to "main".</p>
-</dd>
-<dt class="hdlist1">--title, -t</dt>
-<dd>
-<p>PR/MR title.</p>
-</dd>
-<dt class="hdlist1">--body</dt>
-<dd>
-<p>PR/MR description.</p>
-</dd>
-</dl>
-</div>
-</div>
-</div>
-</div>
 {% endraw %}
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20260624.042409-dev_feat.v3.x.create-pr-fcli-action<br>
-Last updated 2026-06-24 04:27:18 UTC
+Version 0.20260624.170427-dev_feat.v3.x.create-pr-fcli-action<br>
+Last updated 2026-06-24 17:07:38 UTC
 </div>
 </div>
 </body>
