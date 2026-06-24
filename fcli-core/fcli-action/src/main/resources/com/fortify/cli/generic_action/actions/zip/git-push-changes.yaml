@@ -86,6 +86,8 @@ steps:
           result.branchName: ""
           result.commitSha: ""
           result.pushedRef: ""
+      - out.write:
+          object: "${result}"
       - exit: 0
   - log.info: "Changes detected in ${cli.sourceDir}, proceeding."
 
@@ -93,8 +95,11 @@ steps:
   - var.set:
       branchName: ${#git.createBranch(cli.sourceDir, cli.branchPrefix)}
     on.fail:
+      - var.set:
+          result.status: "error"
+          result.errorMessage: "${lastException.message}"
       - log.warn:
-          msg: "Failed to create branch with prefix '${cli.branchPrefix}'"
+          msg: "Failed to create branch with prefix `'${cli.branchPrefix}`'"
           cause: ${lastException}
       - throw: ${lastException}
   - log.info: "Created branch: ${branchName}"
@@ -103,6 +108,9 @@ steps:
   - var.set:
       staged: ${#git.addAll(cli.sourceDir)}
     on.fail:
+      - var.set:
+          result.status: "error"
+          result.errorMessage: "${lastException.message}"
       - log.warn:
           msg: "Failed to stage changes in ${cli.sourceDir}"
           cause: ${lastException}
@@ -113,6 +121,9 @@ steps:
   - var.set:
       commitSha: "${#git.commit(cli.sourceDir, cli.commitMessage, cli.authorName, cli.authorEmail)}"
     on.fail:
+      - var.set:
+          result.status: "error"
+          result.errorMessage: "${lastException.message}"
       - log.warn:
           msg: "Failed to commit staged changes"
           cause: ${lastException}
@@ -125,6 +136,8 @@ steps:
       pushedRef: ${#git.push(cli.sourceDir, branchName)}
     on.fail:
       - var.set:
+          result.status: "error"
+          result.errorMessage: "${lastException.message}"
           remoteUrl: "${gitRepoInfo.repository.remoteUrl?:'unknown'}"
           exceptionMsg: "${lastException.message}"
       - log.warn:

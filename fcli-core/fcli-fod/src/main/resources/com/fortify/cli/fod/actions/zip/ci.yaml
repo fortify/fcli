@@ -145,17 +145,25 @@ steps:
         on.success:
           - var.set: { remediationsApplied: 'true' }
 
-      CREATE_PR:
-        cmd: ${#fcliCmd('CREATE_PR', 'action run commit-and-create-pr')} "--source-dir=${global.ci.sourceDir}" "--branch-prefix=aviator/remediations" "--progress=none"
+      GIT_PUSH_CHANGES:
+        cmd: ${#fcliCmd('GIT_PUSH_CHANGES', 'action run git-push-changes')} "--source-dir=${global.ci.sourceDir}" "--branch-prefix=aviator/remediations" "--progress=none"
         skip.if-reason:
-          - ${#isBlank(remediationsApplied)?'Apply remediations was skipped or failed, skipping PR creation':''}
+          - ${#isBlank(remediationsApplied)?'Apply remediations was skipped or failed, skipping Git operations':''}
+        on.fail:
+          - log.warn: "Git stage/commit/push failed"
+
+      CREATE_PR:
+        cmd: ${#fcliCmd('CREATE_PR', 'action run create-pr')} "--source-dir=${global.ci.sourceDir}" "--source-branch=${GIT_PUSH_CHANGES.variables.branchName}" "--progress=none"
+        skip.if-reason:
+          - ${GIT_PUSH_CHANGES.dependencySkipReason}
+          - "${GIT_PUSH_CHANGES.variables.status=='no_changes' ? 'No changes detected, skipping PR/MR creation' : ''}"
         on.success:
           - if: ${CREATE_PR.variables.status=='success'}
             log.info: "Pull/Merge Request successfully created: ${CREATE_PR.variables.prLink}"
           - if: ${CREATE_PR.variables.status=='no_changes'}
             log.info: "No changes detected - PR/MR creation skipped"
           - if: ${CREATE_PR.variables.status=='no_pr_support'}
-            log.warn: "Branch created and pushed, but PR/MR creation not supported for ${CREATE_PR.variables.ciSystem}"
+            log.warn: "Branch created and pushed, but PR/MR creation not supported for platform '${CREATE_PR.variables.platform}'"
           - if: ${CREATE_PR.variables.status=='error'}
             log.warn: "PR/MR creation failed: ${CREATE_PR.variables.errorMessage}"
 

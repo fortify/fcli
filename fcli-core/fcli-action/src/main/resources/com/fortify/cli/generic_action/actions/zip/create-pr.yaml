@@ -64,13 +64,13 @@ cli.options:
     default: "${#env('PR_BODY')?:'This pull request contains changes applied by fcli aviator.'}"
 
 steps:
+  - if: "${#isBlank(cli.sourceBranch)}"
+    throw: "Option '--source-branch' is required. Pass the branch created by git-stage-commit-push."
+
   # Compute base branch: CLI option/env var -> git remote HEAD -> "main"
   - var.set:
       baseBranch: "${#ifBlank(cli.baseBranch, #ifBlank(#git.defaultBranch(cli.sourceDir), 'main'))}"
-  - log.debug: "Computed base branch for PR/MR: ${baseBranch}"
-  
-  - if: "${#isBlank(cli.sourceBranch)}"
-    throw: "Option '--source-branch' is required. Pass the branch created by git-stage-commit-push."
+  - log.debug: "Computed base branch for PR/MR: ${baseBranch}"  
 
   - log.debug: "Started the action create PR/MR: for base branch '${baseBranch}' and source branch '${cli.sourceBranch}'"
   
@@ -104,6 +104,9 @@ steps:
           - var.set:
               result.status: "error"
               result.errorMessage: "${lastException.message}"
+          - throw:
+              msg: "Failed to create GitHub Pull Request from '${cli.sourceBranch}' to '${baseBranch}'"
+              cause: ${lastException}
       - if: ${#isNotBlank(pr)} && ${#isNotBlank(pr.html_url)} && ${#isNotBlank(pr.number)}
         do:
           - var.set:
@@ -117,7 +120,7 @@ steps:
           - var.set:
               result.status: "error"
               result.errorMessage: "GitHub PR creation did not return expected response. Check logs for details."
-
+          - throw: "GitHub PR creation did not return expected response. Check logs for details."
   # GitLab MR creation
   - if: "${repoPlatform=='gitlab'}"
     do:
@@ -132,6 +135,9 @@ steps:
           - var.set:
               result.status: "error"
               result.errorMessage: "${lastException.message}"
+          - throw:
+              msg: "Failed to create GitLab Merge Request from '${cli.sourceBranch}' to '${baseBranch}'"
+              cause: ${lastException}
       - if: ${#isNotBlank(mr)} && ${#isNotBlank(mr.web_url)} && ${#isNotBlank(mr.iid)}
         do:
           - var.set:
@@ -145,6 +151,7 @@ steps:
           - var.set:
               result.status: "error"
               result.errorMessage: "GitLab MR creation did not return expected response. Check logs for details."
+          - throw: "GitLab MR creation did not return expected response. Check logs for details."
 
   # Unsupported repository platform
   - if: "${repoPlatform!='github' && repoPlatform!='gitlab'}"
