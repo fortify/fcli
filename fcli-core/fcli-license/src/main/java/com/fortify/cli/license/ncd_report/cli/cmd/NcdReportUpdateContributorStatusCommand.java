@@ -66,7 +66,8 @@ public final class NcdReportUpdateContributorStatusCommand extends AbstractRunna
     @Override
     public Integer call() {
         ObjectNode summary = null;
-        int updateCount = 0;
+        int recordsProcessed = 0;
+        int updatesApplied = 0;
         
         try ( var reader = new NcdReportReader(reportPath) ) {
             var checksumErrors = NcdReportValidator.validateChecksums(reader);
@@ -75,9 +76,11 @@ public final class NcdReportUpdateContributorStatusCommand extends AbstractRunna
             }
 
             var updates = readUpdateFile();
-            updateCount = updates.size();
             var contributors = readContributors(reader);
-            var warnings = applyUpdates(updates, contributors);
+            var updateResult = applyUpdates(updates, contributors);
+            recordsProcessed = updateResult.recordsProcessed();
+            updatesApplied = updateResult.updatesApplied();
+            var warnings = updateResult.warnings();
             synchronizeContributionFields(contributors, warnings);
 
             if ( !warnings.isEmpty() ) {
@@ -88,7 +91,11 @@ public final class NcdReportUpdateContributorStatusCommand extends AbstractRunna
             summary = rewriteContributorsAndSummaryAndChecksums(reader, contributors);
         }
         
-        System.out.println(String.format("Successfully applied %d update(s) to report %s", updateCount, reportPath));
+        System.out.println(String.format(
+                "Processed %d update record(s), applied %d update(s) to report %s",
+                recordsProcessed,
+                updatesApplied,
+                reportPath));
         System.out.println("Summary:");
         System.out.print(asYaml(summary));
         
@@ -184,34 +191,45 @@ public final class NcdReportUpdateContributorStatusCommand extends AbstractRunna
         return reader.readContributors();
     }
 
-    private List<String> applyUpdates(List<Map<String, String>> updates, List<Map<String, String>> contributors) {
+    private UpdateApplicationResult applyUpdates(List<Map<String, String>> updates, List<Map<String, String>> contributors) {
         var warnings = new ArrayList<String>();
+        int updatesApplied = 0;
         var byAuthorId = contributors.stream()
                 .collect(Collectors.groupingBy(c -> c.getOrDefault(NcdReportContributorsCsvSchema.AUTHOR_ID, "")));
 
         for ( var update : updates ) {
-            applyUpdate(update, byAuthorId, warnings);
+            if ( applyUpdate(update, byAuthorId, warnings) ) {
+                updatesApplied++;
+            }
         }
-        return warnings;
+        return new UpdateApplicationResult(updates.size(), updatesApplied, warnings);
     }
 
-    private void applyUpdate(Map<String, String> update, Map<String, List<Map<String, String>>> byAuthorId, List<String> warnings) {
+    private boolean applyUpdate(Map<String, String> update, Map<String, List<Map<String, String>>> byAuthorId, List<String> warnings) {
         var authorId = StringUtils.defaultString(update.get(NcdReportContributorsCsvSchema.AUTHOR_ID)).trim();
         if ( StringUtils.isBlank(authorId) ) {
             warnings.add("Update row missing authorId; skipping");
-            return;
+            return false;
         }
         var targets = byAuthorId.get(authorId);
         if ( targets == null ) {
             warnings.add(String.format("authorId %s: not found in report; skipping", authorId));
-            return;
+            return false;
         }
         if ( !validateUpdateRow(authorId, update, byAuthorId, warnings) ) {
-            return;
+            return false;
         }
+
+        boolean hasAppliedFields = false;
         for ( var contributor : targets ) {
-            applyFieldsToContributor(authorId, update, contributor, targets.size(), warnings);
+            if ( applyFieldsToContributor(authorId, update, contributor, targets.size(), warnings) ) {
+                hasAppliedFields = true;
+            }
         }
+        if ( !hasAppliedFields ) {
+            warnings.add(String.format("authorId %s: no updatable fields found; skipping", authorId));
+        }
+        return hasAppliedFields;
     }
 
     /**
@@ -276,8 +294,9 @@ public final class NcdReportUpdateContributorStatusCommand extends AbstractRunna
         return true;
     }
 
-    private void applyFieldsToContributor(String authorId, Map<String, String> update, Map<String, String> contributor,
+    private boolean applyFieldsToContributor(String authorId, Map<String, String> update, Map<String, String> contributor,
             int targetCount, List<String> warnings) {
+        boolean hasAppliedFields = false;
         for ( var entry : update.entrySet() ) {
             var field = entry.getKey();
             var value = StringUtils.defaultString(entry.getValue()).trim();
@@ -298,7 +317,9 @@ public final class NcdReportUpdateContributorStatusCommand extends AbstractRunna
                 continue;
             }
             contributor.put(field, value);
+            hasAppliedFields = true;
         }
+        return hasAppliedFields;
     }
 
     private void warnIfImmutableMismatch(String authorId, String field, String value,
@@ -479,7 +500,7 @@ public final class NcdReportUpdateContributorStatusCommand extends AbstractRunna
     private void updateChecksum(NcdReportReader reader, String entryName) {
         var checksumsPath = reader.entryPath("checksums.sha256");
         try {
-            var lines = Files.readAllLines(checksumsPath);
+            var lines = Files.readAllLines(checksumsPath, StandardCharsets.UTF_8);
             var updated = new ArrayList<String>();
             var entryChecksum = NcdReportValidator.sha256(reader.entryPath(entryName));
             boolean found = false;
@@ -520,4 +541,6 @@ public final class NcdReportUpdateContributorStatusCommand extends AbstractRunna
     private enum InputFormat {
         CSV, JSON, YAML
     }
+
+    private record UpdateApplicationResult(int recordsProcessed, int updatesApplied, List<String> warnings) {}
 }

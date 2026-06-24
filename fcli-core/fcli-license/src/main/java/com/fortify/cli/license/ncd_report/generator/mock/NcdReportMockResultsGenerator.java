@@ -14,6 +14,7 @@ package com.fortify.cli.license.ncd_report.generator.mock;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
@@ -41,6 +42,8 @@ import com.fortify.cli.license.ncd_report.generator.AbstractNcdReportResultsGene
  * Supports both built-in realistic authors and loading from external JSON/CSV files.
  */
 public class NcdReportMockResultsGenerator extends AbstractNcdReportResultsGenerator<NcdReportMockSourceConfig> {
+    private static final ObjectMapper JSON_MAPPER = new ObjectMapper();
+    private static final ObjectMapper YAML_MAPPER = new ObjectMapper(new YAMLFactory());
     private List<MockAuthorData> authors = new ArrayList<>();
     
     public NcdReportMockResultsGenerator(NcdReportMockSourceConfig sourceConfig, NcdReportContext reportContext) {
@@ -69,88 +72,52 @@ public class NcdReportMockResultsGenerator extends AbstractNcdReportResultsGener
      * Load authors from JSON, YAML, or CSV file.
      */
     private void loadAuthorsFromFile(String dataFilePath) throws Exception {
-        File file = new File(dataFilePath);
+        var file = new File(dataFilePath);
         if ( !file.exists() ) {
             throw new FcliSimpleException("Data file not found: " + dataFilePath);
         }
-        
-        if ( dataFilePath.endsWith(".json") ) {
-            loadAuthorsFromJson(file);
-        } else if ( dataFilePath.endsWith(".yaml") || dataFilePath.endsWith(".yml") ) {
-            loadAuthorsFromYaml(file);
-        } else if ( dataFilePath.endsWith(".csv") ) {
+
+        var lcDataFilePath = dataFilePath.toLowerCase();
+        if ( lcDataFilePath.endsWith(".json") ) {
+            loadAuthorsFromStructuredFile(file, JSON_MAPPER, "JSON");
+        } else if ( lcDataFilePath.endsWith(".yaml") || lcDataFilePath.endsWith(".yml") ) {
+            loadAuthorsFromStructuredFile(file, YAML_MAPPER, "YAML");
+        } else if ( lcDataFilePath.endsWith(".csv") ) {
             loadAuthorsFromCsv(file);
         } else {
             throw new FcliSimpleException("Unsupported data file format: " + dataFilePath + 
                 ". Supported formats: JSON, YAML, CSV");
         }
     }
-    
+
     /**
-     * Load authors from JSON file. Expects array of objects with 'name' and 'email' fields.
+     * Load authors from JSON or YAML file. Expects array of objects with name and email fields,
+     * or an object containing an authors array.
      */
-    private void loadAuthorsFromJson(File file) throws IOException {
-        ObjectMapper mapper = new ObjectMapper();
+    private void loadAuthorsFromStructuredFile(File file, ObjectMapper mapper, String formatName) throws IOException {
         JsonNode root = mapper.readTree(file);
-        
+
         if ( root.isArray() ) {
-            for ( JsonNode node : root ) {
-                String name = node.has("name") ? node.get("name").asText() : "";
-                String email = node.has("email") ? node.get("email").asText() : "";
-                if ( !name.isEmpty() && !email.isEmpty() ) {
-                    authors.add(new MockAuthorData(name, email));
-                }
-            }
+            addAuthorsFromArray(root);
         } else if ( root.isObject() ) {
-            // Also support object with "authors" array
             JsonNode authorsNode = root.get("authors");
             if ( authorsNode != null && authorsNode.isArray() ) {
-                for ( JsonNode node : authorsNode ) {
-                    String name = node.has("name") ? node.get("name").asText() : "";
-                    String email = node.has("email") ? node.get("email").asText() : "";
-                    if ( !name.isEmpty() && !email.isEmpty() ) {
-                        authors.add(new MockAuthorData(name, email));
-                    }
-                }
+                addAuthorsFromArray(authorsNode);
             }
         }
-        
+
         if ( authors.isEmpty() ) {
-            throw new FcliSimpleException("No valid authors found in JSON file: " + file.getPath());
+            throw new FcliSimpleException("No valid authors found in %s file: %s", formatName, file.getPath());
         }
     }
-    
-    /**
-     * Load authors from YAML file. Expects array of objects with 'name' and 'email' fields.
-     */
-    private void loadAuthorsFromYaml(File file) throws IOException {
-        ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
-        JsonNode root = mapper.readTree(file);
-        
-        if ( root.isArray() ) {
-            for ( JsonNode node : root ) {
-                String name = node.has("name") ? node.get("name").asText() : "";
-                String email = node.has("email") ? node.get("email").asText() : "";
-                if ( !name.isEmpty() && !email.isEmpty() ) {
-                    authors.add(new MockAuthorData(name, email));
-                }
+
+    private void addAuthorsFromArray(JsonNode authorsNode) {
+        for ( JsonNode node : authorsNode ) {
+            String name = node.has("name") ? node.get("name").asText() : "";
+            String email = node.has("email") ? node.get("email").asText() : "";
+            if ( !name.isEmpty() && !email.isEmpty() ) {
+                authors.add(new MockAuthorData(name, email));
             }
-        } else if ( root.isObject() ) {
-            // Also support object with "authors" array
-            JsonNode authorsNode = root.get("authors");
-            if ( authorsNode != null && authorsNode.isArray() ) {
-                for ( JsonNode node : authorsNode ) {
-                    String name = node.has("name") ? node.get("name").asText() : "";
-                    String email = node.has("email") ? node.get("email").asText() : "";
-                    if ( !name.isEmpty() && !email.isEmpty() ) {
-                        authors.add(new MockAuthorData(name, email));
-                    }
-                }
-            }
-        }
-        
-        if ( authors.isEmpty() ) {
-            throw new FcliSimpleException("No valid authors found in YAML file: " + file.getPath());
         }
     }
     
@@ -158,7 +125,7 @@ public class NcdReportMockResultsGenerator extends AbstractNcdReportResultsGener
      * Load authors from CSV file. Expects columns: name, email.
      */
     private void loadAuthorsFromCsv(File file) throws IOException {
-        String csvContent = new String(Files.readAllBytes(file.toPath()));
+        String csvContent = Files.readString(file.toPath(), StandardCharsets.UTF_8);
         var schema = CsvSchema.emptySchema().withHeader();
         CsvMapper csvMapper = new CsvMapper();
         

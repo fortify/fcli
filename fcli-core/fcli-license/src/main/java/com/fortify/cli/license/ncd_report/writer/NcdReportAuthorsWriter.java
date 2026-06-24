@@ -54,11 +54,11 @@ public final class NcdReportAuthorsWriter implements INcdReportAuthorsWriter {
     }
 
     /**
-     * Finalize the output by sorting all buffered records and writing them to the CSV.
+     * Close the writer by sorting all buffered records and writing them to the CSV.
      * This method should be called after all records have been buffered.
      */
     @Override
-    public void finalize() {
+    public void close() {
         var sorted = NcdReportContributorsCsvSchema.sortByAuthorNameAndStatus(buffer);
         sorted.forEach(recordWriter::append);
     }

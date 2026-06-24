@@ -34,8 +34,8 @@ public class NcdReportProcessedAuthorDescriptor {
 
     /**
      * Computes a stable 16-hex-char identifier for this author derived from the
-     * normalised cleanName and cleanEmailName fields already present in the
-     * expression input.  The value is reproducible across separate runs as long
+        * normalized lowercase name and email fields in the expression input.
+        * The value is reproducible across separate runs as long
      * as the author's name/email are the same, making it suitable as a stable
      * cross-report reference key (e.g. for AI-assisted deduplication annotations).
      */

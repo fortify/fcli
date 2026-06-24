@@ -151,29 +151,24 @@ public final class NcdReportContributorsCsvSchema {
         var nameComparator = Comparator.comparing(
             (ObjectNode r) -> r.path(AUTHOR_NAME).asText("").toLowerCase());
 
-        // Phase 1: Collect records by status
         var contributing = new ArrayList<ObjectNode>();
-        var duplicateByRepId = new TreeMap<String, ArrayList<ObjectNode>>();
+        var duplicates = new ArrayList<ObjectNode>();
         var ignored = new ArrayList<ObjectNode>();
+        splitByStatus(contributors, contributing, duplicates, ignored);
 
-        for ( var record : contributors ) {
-            var status = record.path(CONTRIBUTION_STATUS).asText("").toLowerCase();
-            if ( "contributing".equals(status) ) {
-                contributing.add(record);
-            } else if ( "duplicate".equals(status) ) {
-                var repId = record.path(DUPLICATE_OF).asText("");
-                duplicateByRepId.computeIfAbsent(repId, k -> new ArrayList<>()).add(record);
-            } else if ( "ignored".equals(status) ) {
-                ignored.add(record);
-            }
-        }
+        var contributingByAuthorId = indexContributingByAuthorId(contributing);
+        var contributingByNumber = indexContributingByNumber(contributing);
+        var duplicateByRepId = new TreeMap<String, ArrayList<ObjectNode>>();
+        var unmatchedDuplicates = new ArrayList<ObjectNode>();
+        groupDuplicates(duplicates, duplicateByRepId, unmatchedDuplicates, contributingByAuthorId, contributingByNumber);
 
         // Sort each group by author name
         contributing.sort(nameComparator);
         duplicateByRepId.values().forEach(list -> list.sort(nameComparator));
+        unmatchedDuplicates.sort(nameComparator);
         ignored.sort(nameComparator);
 
-        // Phase 2: Build result: contributing + their duplicates + ignored
+        // Phase 2: Build result: contributing + their duplicates + unmatched duplicates + ignored
         var result = new ArrayList<ObjectNode>();
         for ( var contribRecord : contributing ) {
             result.add(contribRecord);
@@ -182,9 +177,92 @@ public final class NcdReportContributorsCsvSchema {
                 result.addAll(duplicateByRepId.get(repId));
             }
         }
+        result.addAll(unmatchedDuplicates);
         result.addAll(ignored);
 
         return result;
+    }
+
+    private static void splitByStatus(List<ObjectNode> contributors, List<ObjectNode> contributing,
+            List<ObjectNode> duplicates, List<ObjectNode> ignored)
+    {
+        for ( var record : contributors ) {
+            var status = record.path(CONTRIBUTION_STATUS).asText("").toLowerCase();
+            if ( "contributing".equals(status) ) {
+                contributing.add(record);
+            } else if ( "duplicate".equals(status) ) {
+                duplicates.add(record);
+            } else if ( "ignored".equals(status) ) {
+                ignored.add(record);
+            }
+        }
+    }
+
+    private static TreeMap<String, ObjectNode> indexContributingByAuthorId(List<ObjectNode> contributing) {
+        var result = new TreeMap<String, ObjectNode>();
+        for ( var record : contributing ) {
+            var authorId = record.path(AUTHOR_ID).asText("").trim();
+            if ( !authorId.isBlank() ) {
+                result.put(authorId, record);
+            }
+        }
+        return result;
+    }
+
+    private static TreeMap<Integer, ObjectNode> indexContributingByNumber(List<ObjectNode> contributing) {
+        var result = new TreeMap<Integer, ObjectNode>();
+        for ( var record : contributing ) {
+            var number = parsePositiveInt(record.path(CONTRIBUTING_AUTHOR_NUMBER).asText(""));
+            if ( number > 0 ) {
+                result.putIfAbsent(number, record);
+            }
+        }
+        return result;
+    }
+
+    private static void groupDuplicates(List<ObjectNode> duplicates, TreeMap<String, ArrayList<ObjectNode>> duplicateByRepId,
+            List<ObjectNode> unmatchedDuplicates, TreeMap<String, ObjectNode> contributingByAuthorId,
+            TreeMap<Integer, ObjectNode> contributingByNumber)
+    {
+        for ( var duplicate : duplicates ) {
+            var representativeAuthorId = resolveRepresentativeAuthorId(duplicate, contributingByAuthorId, contributingByNumber);
+            if ( representativeAuthorId == null ) {
+                unmatchedDuplicates.add(duplicate);
+                continue;
+            }
+            duplicate.put(DUPLICATE_OF, representativeAuthorId);
+            duplicateByRepId.computeIfAbsent(representativeAuthorId, k -> new ArrayList<>()).add(duplicate);
+        }
+    }
+
+    private static String resolveRepresentativeAuthorId(ObjectNode duplicate, TreeMap<String, ObjectNode> contributingByAuthorId,
+            TreeMap<Integer, ObjectNode> contributingByNumber)
+    {
+        var duplicateOf = duplicate.path(DUPLICATE_OF).asText("").trim();
+        if ( !duplicateOf.isBlank() && contributingByAuthorId.containsKey(duplicateOf) ) {
+            return duplicateOf;
+        }
+
+        var contributingAuthorNumber = parsePositiveInt(duplicate.path(CONTRIBUTING_AUTHOR_NUMBER).asText(""));
+        if ( contributingAuthorNumber <= 0 ) {
+            return null;
+        }
+
+        var representative = contributingByNumber.get(contributingAuthorNumber);
+        if ( representative == null ) {
+            return null;
+        }
+        var authorId = representative.path(AUTHOR_ID).asText("").trim();
+        return authorId.isBlank() ? null : authorId;
+    }
+
+    private static int parsePositiveInt(String value) {
+        try {
+            var parsed = Integer.parseInt(value.trim());
+            return parsed > 0 ? parsed : -1;
+        } catch ( NumberFormatException e ) {
+            return -1;
+        }
     }
 
     private NcdReportContributorsCsvSchema() {}
