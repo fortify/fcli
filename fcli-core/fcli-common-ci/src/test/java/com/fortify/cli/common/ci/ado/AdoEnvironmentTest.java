@@ -159,6 +159,7 @@ public class AdoEnvironmentTest {
     
     @Test
     void testGetQualifiedRepoName() {
+        System.setProperty("fcli.env.System.TeamFoundationCollectionUri", "https://dev.azure.com/myorg/");
         System.setProperty("fcli.env.Build.Repository.Name", "ProductRepo");
         System.setProperty("fcli.env.Build.SourceBranch", "refs/heads/staging");
         System.setProperty("fcli.env.Build.SourceBranchName", "staging");
@@ -172,6 +173,7 @@ public class AdoEnvironmentTest {
     
     @Test
     void testGetBranchForVersioning() {
+        System.setProperty("fcli.env.System.TeamFoundationCollectionUri", "https://dev.azure.com/myorg/");
         System.setProperty("fcli.env.Build.Repository.Name", "ProductRepo");
         System.setProperty("fcli.env.Build.SourceBranch", "refs/heads/release-2.0");
         System.setProperty("fcli.env.Build.SourceBranchName", "release-2.0");
@@ -185,6 +187,7 @@ public class AdoEnvironmentTest {
     
     @Test
     void testGetBranchForVersioningInPullRequest() {
+        System.setProperty("fcli.env.System.TeamFoundationCollectionUri", "https://dev.azure.com/myorg/");
         System.setProperty("fcli.env.Build.Repository.Name", "ProductRepo");
         System.setProperty("fcli.env.Build.SourceBranch", "refs/pull/789/merge");
         System.setProperty("fcli.env.Build.SourceVersion", "abc123");
@@ -200,6 +203,7 @@ public class AdoEnvironmentTest {
     
     @Test
     void testRepositoryNameWithPath() {
+        System.setProperty("fcli.env.System.TeamFoundationCollectionUri", "https://dev.azure.com/myorg/");
         System.setProperty("fcli.env.Build.Repository.Name", "team/subteam/MyRepo");
         System.setProperty("fcli.env.Build.SourceBranch", "refs/heads/main");
         System.setProperty("fcli.env.Build.SourceVersion", "abc123");
@@ -213,6 +217,7 @@ public class AdoEnvironmentTest {
     
     @Test
     void testDefaultWorkingDirectoryFallback() {
+        System.setProperty("fcli.env.System.TeamFoundationCollectionUri", "https://dev.azure.com/myorg/");
         System.setProperty("fcli.env.Build.Repository.Name", "MyRepo");
         System.setProperty("fcli.env.Build.SourceBranch", "refs/heads/main");
         System.setProperty("fcli.env.Build.SourceVersion", "abc123");
@@ -226,9 +231,15 @@ public class AdoEnvironmentTest {
     
     @Test
     void testFallbackToCurrentDirectory() {
+        System.setProperty("fcli.env.System.TeamFoundationCollectionUri", "https://dev.azure.com/myorg/");
         System.setProperty("fcli.env.Build.Repository.Name", "MyRepo");
         System.setProperty("fcli.env.Build.SourceBranch", "refs/heads/main");
         System.setProperty("fcli.env.Build.SourceVersion", "abc123");
+        // Explicitly blank out directory vars to prevent real ADO agent env vars from leaking in
+        System.setProperty("fcli.env.Build.SourcesDirectory", "");
+        System.setProperty("fcli.env.BUILD_SOURCESDIRECTORY", "");
+        System.setProperty("fcli.env.System.DefaultWorkingDirectory", "");
+        System.setProperty("fcli.env.SYSTEM_DEFAULTWORKINGDIRECTORY", "");
         
         var env = AdoEnvironment.detect();
         
