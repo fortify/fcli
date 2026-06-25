@@ -231,7 +231,9 @@ steps:
               skip.if-reason:
                 - ${GIT_PUSH_CHANGES.dependencySkipReason}
               on.fail:
-                - log.warn: "PR/MR creation failed"
+                - log.warn:
+                    msg: "PR/MR creation failed"
+                    cause: ${lastException}
 
             CHECK_POLICY:
               cmd: ${#actionCmd('CHECK_POLICY', 'ssc', 'check-policy')} "--av=${global.ci.av}" "--progress=none"
@@ -312,6 +314,3 @@ formatters:
     ${CHECK_POLICY.exitCode==0||CHECK_POLICY.exitCode==100?CHECK_POLICY.stdout:CHECK_POLICY.dependencySkipReason}
         
     ${APPVERSION_SUMMARY.stdout}
-      
-
-

@@ -143,29 +143,25 @@ steps:
           - ${#env('DO_AVIATOR_AUDIT')!='true'?'Aviator audit not enabled (DO_AVIATOR_AUDIT!=true), no remediations available':''} # Skip if Aviator audit was not enabled
           - ${SAST_WAIT.dependencySkipReason}                          # Skip if SAST scan/wait was skipped or failed
         on.success:
-          - var.set: { remediationsApplied: 'true' }
+          - var.set:
+              remediationsApplied: 'true'
+              branchName: "aviator/remediations/${#formatDateTime('yyyyMMdd-HHmmss-SSS')}"
 
       GIT_PUSH_CHANGES:
-        cmd: ${#fcliCmd('GIT_PUSH_CHANGES', 'action run git-push-changes')} "--source-dir=${global.ci.sourceDir}" "--branch-prefix=aviator/remediations" "--progress=none"
+        cmd: ${#fcliCmd('GIT_PUSH_CHANGES', 'action run git-push-changes')} "--source-dir=${global.ci.sourceDir}" "--branch-name=${branchName}" "--progress=none"
         skip.if-reason:
           - ${#isBlank(remediationsApplied)?'Apply remediations was skipped or failed, skipping Git operations':''}
         on.fail:
           - log.warn: "Git stage/commit/push failed"
 
       CREATE_PR:
-        cmd: ${#fcliCmd('CREATE_PR', 'action run create-pr')} "--source-dir=${global.ci.sourceDir}" "--source-branch=${GIT_PUSH_CHANGES.variables.branchName}" "--progress=none"
+        cmd: ${#fcliCmd('CREATE_PR', 'action run create-pr')} "--source-dir=${global.ci.sourceDir}" "--source-branch=${branchName}" "--progress=none"
         skip.if-reason:
           - ${GIT_PUSH_CHANGES.dependencySkipReason}
-          - "${GIT_PUSH_CHANGES.variables.status=='no_changes' ? 'No changes detected, skipping PR/MR creation' : ''}"
-        on.success:
-          - if: ${CREATE_PR.variables.status=='success'}
-            log.info: "Pull/Merge Request successfully created: ${CREATE_PR.variables.prLink}"
-          - if: ${CREATE_PR.variables.status=='no_changes'}
-            log.info: "No changes detected - PR/MR creation skipped"
-          - if: ${CREATE_PR.variables.status=='no_pr_support'}
-            log.warn: "Branch created and pushed, but PR/MR creation not supported for platform '${CREATE_PR.variables.platform}'"
-          - if: ${CREATE_PR.variables.status=='error'}
-            log.warn: "PR/MR creation failed: ${CREATE_PR.variables.errorMessage}"
+        on.fail:
+          - log.warn:
+              msg: "PR/MR creation failed"
+              cause: ${lastException}
 
       CHECK_POLICY:
         cmd: ${#actionCmd('CHECK_POLICY', 'fod', 'check-policy')} "--rel=${global.ci.rel}" "--progress=none"
@@ -239,7 +235,3 @@ formatters:
     ${CHECK_POLICY.exitCode==0||CHECK_POLICY.exitCode==100?CHECK_POLICY.stdout:CHECK_POLICY.dependencySkipReason}
         
     ${RELEASE_SUMMARY.stdout}
-
-
-
-

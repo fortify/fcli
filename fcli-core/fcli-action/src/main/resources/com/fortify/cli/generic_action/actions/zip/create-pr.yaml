@@ -21,11 +21,6 @@ usage:
     - `--title` / `PR_TITLE` -- PR/MR title
     - `--body` / `PR_BODY` -- PR/MR description
 
-    Output variables:
-    - `result.status` -- "success", "no_pr_support", or "error"
-    - `result.prLink` -- URL of the created PR/MR (empty on failure)
-    - `result.platform` -- Detected repository platform ("github", "gitlab", or "unknown")
-
 config:
   output: immediate
 
@@ -65,26 +60,15 @@ cli.options:
 
 steps:
   - if: "${#isBlank(cli.sourceBranch)}"
-    throw: "Option '--source-branch' is required. Pass the branch created by git-stage-commit-push."
+    throw: "Option '--source-branch' is required. Pass the source branch from which the PR/MR is to be created."
 
   # Compute base branch: CLI option/env var -> git remote HEAD -> "main"
   - var.set:
       baseBranch: "${#ifBlank(cli.baseBranch, #ifBlank(#git.defaultBranch(cli.sourceDir), 'main'))}"
-  - log.debug: "Computed base branch for PR/MR: ${baseBranch}"  
-
-  - log.debug: "Started the action create PR/MR: for base branch '${baseBranch}' and source branch '${cli.sourceBranch}'"
-  
-  - log.debug: "PR/MR configuration: platform detection from '${cli.sourceDir}', source=${cli.sourceBranch}, base=${baseBranch}"
 
   # Detect repository platform from git remote URL
   - var.set:
       repoPlatform: ${#git.repositoryPlatform(cli.sourceDir)}
-  - log.debug: "Detected repository platform: ${repoPlatform}"
-
-  - var.set:
-      result.status: "error"
-      result.prLink: ""
-      result.platform: "${repoPlatform}"
 
   # GitHub PR creation
   - if: "${repoPlatform=='github'}"
@@ -101,25 +85,15 @@ steps:
               cause: ${lastException}
           - log.warn: "Troubleshooting: Verify branch '${cli.sourceBranch}' exists on remote and base branch '${baseBranch}' is valid"
           - log.debug: "Failed to create GitHub PR: ${lastException.message}"
-          - var.set:
-              result.status: "error"
-              result.errorMessage: "${lastException.message}"
           - throw:
               msg: "Failed to create GitHub Pull Request from '${cli.sourceBranch}' to '${baseBranch}'"
               cause: ${lastException}
       - if: ${#isNotBlank(pr)} && ${#isNotBlank(pr.html_url)} && ${#isNotBlank(pr.number)}
-        do:
-          - var.set:
-              result.status: "success"
-              result.prLink: "${pr.html_url}"
-          - log.info: "Created GitHub Pull Request #${pr.number}: ${pr.html_url}"
+        - log.info: "Created GitHub Pull Request #${pr.number}: ${pr.html_url}"
 
       - if: ${#isBlank(pr)} || ${#isBlank(pr.html_url)}
         do:
           - log.warn: "PR creation returned empty or invalid response: ${pr}"
-          - var.set:
-              result.status: "error"
-              result.errorMessage: "GitHub PR creation did not return expected response. Check logs for details."
           - throw: "GitHub PR creation did not return expected response. Check logs for details."
   # GitLab MR creation
   - if: "${repoPlatform=='gitlab'}"
@@ -132,37 +106,21 @@ steps:
               msg: "Failed to create GitLab Merge Request from '${cli.sourceBranch}' to '${baseBranch}'"
               cause: ${lastException}
           - log.warn: "Troubleshooting: Verify branch '${cli.sourceBranch}' exists on remote and base branch '${baseBranch}' is valid"
-          - var.set:
-              result.status: "error"
-              result.errorMessage: "${lastException.message}"
           - throw:
               msg: "Failed to create GitLab Merge Request from '${cli.sourceBranch}' to '${baseBranch}'"
               cause: ${lastException}
       - if: ${#isNotBlank(mr)} && ${#isNotBlank(mr.web_url)} && ${#isNotBlank(mr.iid)}
         do:
-          - var.set:
-              result.status: "success"
-              result.prLink: "${mr.web_url}"
           - log.info: "Created GitLab Merge Request !${mr.iid}: ${mr.web_url}"
       
       - if: ${#isBlank(mr)} || ${#isBlank(mr.web_url)}
         do:
           - log.warn: "Merge Request creation returned empty or invalid response: ${mr}"
-          - var.set:
-              result.status: "error"
-              result.errorMessage: "GitLab MR creation did not return expected response. Check logs for details."
           - throw: "GitLab MR creation did not return expected response. Check logs for details."
 
   # Unsupported repository platform
   - if: "${repoPlatform!='github' && repoPlatform!='gitlab'}"
     do:
       - log.warn: "PR/MR creation is not supported for repository platform '${repoPlatform}'. Branch '${cli.sourceBranch}' has been pushed; please create a PR/MR manually."
-      - var.set:
-          result.status: "no_pr_support"
-
-  - log.info: "pr-or-mr-create completed: status=${result.status}, platform=${result.platform}"
-  - if: "${result.status=='success'}"
-    log.info: "PR/MR URL: ${result.prLink}"
-  
-  - out.write:
-      object: "${result}"
+      - throw: "PR/MR creation is not supported for repository platform '${repoPlatform}'"
+  - log.info: "create-pr completed: PR/MR created for branch '${cli.sourceBranch}' targeting '${baseBranch}'"
