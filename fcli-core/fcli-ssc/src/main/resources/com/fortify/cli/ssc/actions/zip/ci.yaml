@@ -219,6 +219,7 @@ steps:
 
             GIT_PUSH_CHANGES:
               cmd: ${#fcliCmd('GIT_PUSH_CHANGES', 'action run git-push-changes')} "--source-dir=${global.ci.sourceDir}" "--branch-prefix=aviator/remediations" "--progress=none"
+              stdout: collect
               skip.if-reason:
                 - ${#isBlank(remediationsApplied)?'Apply remediations was skipped or failed, skipping Git operations':''}
               on.fail:
@@ -226,9 +227,11 @@ steps:
 
             CREATE_PR:
               cmd: ${#fcliCmd('CREATE_PR', 'action run create-pr')} "--source-dir=${global.ci.sourceDir}" "--source-branch=${GIT_PUSH_CHANGES.variables.branchName}" "--progress=none"
+              stdout: collect
               skip.if-reason:
                 - ${GIT_PUSH_CHANGES.dependencySkipReason}
-                - "${GIT_PUSH_CHANGES.variables.status=='no_changes' ? 'No changes detected, skipping PR/MR creation' : ''}"
+                - ${#isBlank(GIT_PUSH_CHANGES.variables)?'No changes detected, skipping PR/MR creation':''}
+                - ${GIT_PUSH_CHANGES.variables.status!='success'?'Git push not completed/failed, skipping PR/MR creation':''}
               on.success:
                 - if: ${CREATE_PR.variables.status=='success'}
                   log.info: "Pull/Merge Request successfully created: ${CREATE_PR.variables.prLink}"
