@@ -1,6 +1,6 @@
 ---
 title: 'Action Documentation: <a href="manpage/fcli-action.html"><code>fcli action</code></a>'
-fcli_version: 0.20260625.090306-dev_feat.v3.x.create-pr-fcli-action
+fcli_version: 0.20260625.164946-dev_feat.v3.x.create-pr-fcli-action
 ---
 
 <!DOCTYPE html>
@@ -17,13 +17,13 @@ fcli_version: 0.20260625.090306-dev_feat.v3.x.create-pr-fcli-action
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260625.090306-dev_feat.v3.x.create-pr-fcli-action" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260625.164946-dev_feat.v3.x.create-pr-fcli-action" %}
 
 
 <div id="header">
 <h1>Action Documentation: <a href="manpage/fcli-action.html"><code>fcli action</code></a></h1>
 <div class="details">
-<span id="revnumber">version 0.20260625.090306-dev_feat.v3.x.create-pr-fcli-action</span>
+<span id="revnumber">version 0.20260625.164946-dev_feat.v3.x.create-pr-fcli-action</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -707,12 +707,6 @@ promoted to a PR/MR manually.</p>
 - <code>--title</code> / <code>PR_TITLE</code>&#8201;&#8212;&#8201;PR/MR title
 - <code>--body</code> / <code>PR_BODY</code>&#8201;&#8212;&#8201;PR/MR description</p>
 </div>
-<div class="paragraph">
-<p>Output variables:
-- <code>result.status</code>&#8201;&#8212;&#8201;"success", "no_pr_support", or "error"
-- <code>result.prLink</code>&#8201;&#8212;&#8201;URL of the created PR/MR (empty on failure)
-- <code>result.platform</code>&#8201;&#8212;&#8201;Detected repository platform ("github", "gitlab", or "unknown")</p>
-</div>
 </div>
 <div class="sect2">
 <h3 id="_options"><a class="anchor" href="#_options"></a>Options</h3>
@@ -802,13 +796,6 @@ Bitbucket Pipelines).</p>
 - <code>--author-name</code> / <code>GIT_AUTHOR_NAME</code>&#8201;&#8212;&#8201;Commit author name (default: "fcli-aviator[bot]")
 - <code>--author-email</code> / <code>GIT_AUTHOR_EMAIL</code>&#8201;&#8212;&#8201;Commit author email</p>
 </div>
-<div class="paragraph">
-<p>Output variables (accessible by subsequent actions or scripts):
-- <code>result.status</code>&#8201;&#8212;&#8201;"success", "no_changes", or "error"
-- <code>result.branchName</code>&#8201;&#8212;&#8201;Name of the newly created branch
-- <code>result.commitSha</code>&#8201;&#8212;&#8201;SHA of the created commit
-- <code>result.pushedRef</code>&#8201;&#8212;&#8201;Full ref pushed to the remote</p>
-</div>
 </div>
 <div class="sect2">
 <h3 id="_options_2"><a class="anchor" href="#_options_2"></a>Options</h3>
@@ -843,8 +830,8 @@ Bitbucket Pipelines).</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20260625.090306-dev_feat.v3.x.create-pr-fcli-action<br>
-Last updated 2026-06-25 09:06:14 UTC
+Version 0.20260625.164946-dev_feat.v3.x.create-pr-fcli-action<br>
+Last updated 2026-06-25 16:53:13 UTC
 </div>
 </div>
 </body>
