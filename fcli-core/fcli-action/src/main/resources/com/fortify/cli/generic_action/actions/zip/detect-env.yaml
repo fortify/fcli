@@ -6,7 +6,7 @@ usage:
   description: |
     This action collects data about the current environment in which fcli is being run,
     like the current CI/CD platform (GitHub, GitLab, Azure DevOps, ...), Git data from
-    current source code directory, ... Collected data is stored in global.ci.* action 
+    current source code directory, ... Collected data is stored in global.ci.* action
     variables for use by other actions, and printed to the output for user reference.
     This includes both environment-specific data, and any data derived from that data,
     like default FoD release name and SSC application version name.
@@ -14,7 +14,7 @@ usage:
 config:
   output: immediate
   mcp: exclude
-  
+
 steps:
   # Only run if not run before; global.isCiInitialized is set at the end of this action.
   # Callers may also check this variable to avoid re-running this action.
@@ -26,9 +26,9 @@ steps:
           global.ci.fcliVersion:           ${fcliBuildProps.fcliVersion} # Fcli version
           global.ci.fcliBuildInfo:         ${fcliBuildProps.fcliBuildInfo} # Fcli build information
           global.ci.name:                  # Name of current CI system
-          global.ci.id:                    # Id of current CI system, used to look up <id>-* actions 
+          global.ci.id:                    # Id of current CI system, used to look up <id>-* actions
           global.ci.qualifiedRepoName:     # Fully qualified repository name
-          global.ci.sourceBranch:          # The current branch being processed/scanned 
+          global.ci.sourceBranch:          # The current branch being processed/scanned
           global.ci.commitHeadSHA:         # Head commit SHA (actual commit on branch)
           global.ci.commitMergeSHA:        # Merge commit SHA (for PRs on GitHub, same as head otherwise)
           global.ci.workspaceDir:          "." # Workspace/repository root directory (default to current dir)
@@ -38,6 +38,7 @@ steps:
           global.ci.prId:                  # Pull/merge request numeric identifier (null if not active)
           global.ci.prTarget:              # Pull/merge request target branch (null if not active)
           global.ci.prTerminology:         "Pull Request" # Pull/merge request terminology for this CI system (default)
+          global.ci.prCommentActionSuffix: pr-comment # Comment action suffix, for example pr-comment or mr-comment
           # The following are set by default at the end, but may be overridden by individual CI configurations
           global.fod.prCommentAction:   # FoD PR comment action
           global.ssc.prCommentAction:   # SSC PR comment action
@@ -52,7 +53,7 @@ steps:
           ci.detected: ${#_ci.detect()}
           ci.type:     ${ci.detected.type}
           ci.env:      ${ci.detected.env}
-      
+
       # For recognized CI systems (not unknown), extract properties from detected environment
       # Using conditional navigation operator ?. to safely access properties even if ci.env is empty
       - if: ${ci.type!='unknown'}
@@ -69,12 +70,13 @@ steps:
           global.ci.prId:                ${ci.env?.pullRequest?.id}
           global.ci.prTarget:            ${ci.env?.pullRequest?.target}
           global.ci.prTerminology:       ${ci.env?.prTerminology?:global.ci.prTerminology}
-      
+          global.ci.prCommentActionSuffix: ${ci.env?.prCommentActionSuffix?:global.ci.prCommentActionSuffix}
+
       # GitHub-specific properties
       - if: ${ci.type=='github'}
         var.set:
           global.ci.jobSummaryFile: ${#ifBlank(global.ci.jobSummaryFile,ci.env?.jobSummaryFile)}
-          
+
       # Jenkins
       - if: ${#isNotBlank(#env('JENKINS_HOME'))||#isNotBlank(#env('JENKINS_URL'))}
         var.set:
@@ -82,7 +84,19 @@ steps:
           global.ci.id:                  jenkins
           global.ci.workspaceDir:        ${#env('WORKSPACE')}
           global.ci.sourceDir:           ${#env('WORKSPACE')}
-      
+
+      # Azure DevOps - detect PR context from @fortify/setup env ado
+      - if: ${#isNotBlank(#env('SYSTEM_TEAMFOUNDATIONSERVERURI'))}
+        var.set:
+          global.ci.name:                Azure DevOps
+          global.ci.id:                  ado
+          global.ci.workspaceDir:        ${#env('BUILD_SOURCESDIRECTORY')}
+          global.ci.sourceDir:           ${#env('BUILD_SOURCESDIRECTORY')}
+          global.ci.prActive:            ${#isNotBlank(#env('SYSTEM_PULLREQUEST_PULLREQUESTID'))}
+          global.ci.prId:                ${#env('SYSTEM_PULLREQUEST_PULLREQUESTID')}
+          global.ci.prTarget:            ${#env('SYSTEM_PULLREQUEST_TARGETBRANCH')}
+          global.ci.prCommentActionSuffix: pr-comment
+
       # Override sourceDir with SOURCE_DIR if specified (custom user variable)
       # NOTE: workspaceDir is NOT overridden by SOURCE_DIR, as it should always be the workspace root
       - if: ${#isNotBlank(#env('SOURCE_DIR'))}
@@ -94,7 +108,7 @@ steps:
           global.ci.sourceDir: ${#ifBlank(global.ci.sourceDir,'.')}
       - var.set:
           global.ci.localRepo: ${#localRepo(global.ci.sourceDir)}
-      
+
       # Generic local repository fallback (run if previous CI-specific steps didn't set these)
       - if: ${#isBlank(global.ci.id) && global.ci.localRepo!=null}
         var.set:
@@ -104,14 +118,14 @@ steps:
           global.ci.sourceBranch:      ${global.ci.localRepo.branch?.short}
           global.ci.commitHeadSHA:     ${global.ci.localRepo.commit?.headId?.full}
           global.ci.commitMergeSHA:    ${global.ci.localRepo.commit?.mergeId?.full}
-    
+
       # Additional generic variables based on the output of the CI-specific sections above
       - var.set:
           global.ci.defaultFortifyRepo:  ${#joinOrNull(':', global.ci.qualifiedRepoName, global.ci.sourceBranch)}
-          # Set default reporting actions based on ci identifier. Note that FoD/SSC CI actions should check existence of these actions 
+          # Set default reporting actions based on ci identifier. Note that FoD/SSC CI actions should check existence of these actions
           # TODO Only use default values if not explicitly defined in CI-specific sections above.
-          global.ci.fod_prCommentAction:   ${#actionOrNull('fod',#joinOrNull('-', global.ci.id, 'pr-comment'))}
-          global.ci.ssc_prCommentAction:   ${#actionOrNull('ssc',#joinOrNull('-', global.ci.id, 'pr-comment'))}
+          global.ci.fod_prCommentAction:   ${#actionOrNull('fod',#joinOrNull('-', global.ci.id, global.ci.prCommentActionSuffix))}
+          global.ci.ssc_prCommentAction:   ${#actionOrNull('ssc',#joinOrNull('-', global.ci.id, global.ci.prCommentActionSuffix))}
           global.ci.fod_sastExportAction:  ${#actionOrNull('fod',#joinOrNull('-', global.ci.id, 'sast-report'))}
           global.ci.ssc_sastExportAction:  ${#actionOrNull('ssc',#joinOrNull('-', global.ci.id, 'sast-report'))}
           global.ci.fod_dastExportAction:  ${#actionOrNull('fod',#joinOrNull('-', global.ci.id, 'dast-report'))}
@@ -122,13 +136,13 @@ steps:
       - if: "${global.ci.prActive!=true}"
         var.set:
           global.ci.prNotActiveSkipReason: "Not a ${global.ci.prTerminology}"
-      - log.info: "${global.ci.name!=null ? 'Detected '+global.ci.name : 'No CI system detected'}"
+      - log.info: {msg: "${global.ci.name!=null ? 'Detected '+global.ci.name : 'No CI system detected'}"}
       - records.for-each:
           from: ${#properties(global.ci)}
           record.var-name: p
           do:
             - if: ${#isDebugEnabled() || p.value!=null}
-              log.info: "${'  '+p.key+': '+p.value}"
+              log.info: {msg: "${'  '+p.key+': '+p.value}"}
 
       # Mark as initialized to prevent re-running this action
       - var.set:

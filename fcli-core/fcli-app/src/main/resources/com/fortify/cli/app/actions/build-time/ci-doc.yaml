@@ -256,10 +256,13 @@ formatters:
             desc: >-
               (PREVIEW) If `DO_PR_COMMENT` is set to true (implied if any of the other two `PR_COMMENT_*` variables
               are set), a Pull Request or Merge Request comment will be generated using an fcli-provided action
-              matching the current CI system like actionRef:_:github-pr-comment or, if specified, the custom fcli action
-              specified through `PR_COMMENT_ACTION`. Extra options for the fcli action can be specified through
-              the `PR_COMMENT_EXTRA_OPTS` environment variable, which may include fcli options to allow unsigned
-              custom actions to be used.
+              matching the current CI system. For GitHub, Azure DevOps, and Bitbucket the action is named
+              `<ci-id>-pr-comment` (e.g., actionRef:_:github-pr-comment or actionRef:_:ado-pr-comment).
+              For GitLab, the action is named `<ci-id>-mr-comment` (e.g., actionRef:_:gitlab-mr-comment)
+              to reflect GitLab's Merge Request terminology.
+              A custom action can be specified through `PR_COMMENT_ACTION`. Extra options for the fcli action
+              can be specified through the `PR_COMMENT_EXTRA_OPTS` environment variable, which may include
+              fcli options to allow unsigned custom actions to be used.
           - names: DO_SAST_EXPORT\nSAST_EXPORT_ACTION\nSAST_EXPORT_EXTRA_OPTS
             desc: >-
               If `DO_SAST_EXPORT` is not set to `false` and a SAST scan was completed, the SAST vulnerability
@@ -413,10 +416,13 @@ formatters:
             desc: >-
               (PREVIEW) If `DO_PR_COMMENT` is set to true (implied if any of the other two `PR_COMMENT_*` variables
               are set), a Pull Request or Merge Request comment will be generated using an fcli-provided action
-              matching the current CI system like actionRef:_:github-pr-comment or, if specified, the custom fcli action
-              specified through `PR_COMMENT_ACTION`. Extra options for the fcli action can be specified through
-              the `PR_COMMENT_EXTRA_OPTS` environment variable, which may include fcli options to allow unsigned
-              custom actions to be used.
+              matching the current CI system. For GitHub, Azure DevOps, and Bitbucket the action is named
+              `<ci-id>-pr-comment` (e.g., actionRef:_:github-pr-comment or actionRef:_:ado-pr-comment).
+              For GitLab, the action is named `<ci-id>-mr-comment` (e.g., actionRef:_:gitlab-mr-comment)
+              to reflect GitLab's Merge Request terminology.
+              A custom action can be specified through `PR_COMMENT_ACTION`. Extra options for the fcli action
+              can be specified through the `PR_COMMENT_EXTRA_OPTS` environment variable, which may include
+              fcli options to allow unsigned custom actions to be used.
           - names: DO_SAST_EXPORT\nSAST_EXPORT_ACTION\nSAST_EXPORT_EXTRA_OPTS
             desc: >-
               If `DO_SAST_EXPORT` is not set to `false` and a SAST scan was completed, the SAST vulnerability

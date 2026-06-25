@@ -52,6 +52,7 @@ public record GitHubEnvironment(
     // GitHub-specific properties
     String jobSummaryFile,
     String prTerminology,
+    String prCommentActionSuffix,
     String ciName,
     String ciId
     
@@ -63,6 +64,7 @@ public record GitHubEnvironment(
     public static final String NAME = "GitHub";
     public static final String ID = "github";
     public static final String PR_TERMINOLOGY = "Pull Request";
+    public static final String PR_COMMENT_ACTION_SUFFIX = "pr-comment";
     
     // Environment variable names
     public static final String ENV_REPOSITORY = "GITHUB_REPOSITORY";
@@ -139,6 +141,7 @@ public record GitHubEnvironment(
             .ciCommit(ciCommit)
             .pullRequest(pullRequest)
             .prTerminology(PR_TERMINOLOGY)
+            .prCommentActionSuffix(PR_COMMENT_ACTION_SUFFIX)
             .ciName(NAME)
             .ciId(ID)
             .build();

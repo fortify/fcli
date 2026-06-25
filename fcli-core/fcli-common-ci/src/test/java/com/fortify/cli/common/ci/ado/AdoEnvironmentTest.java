@@ -129,6 +129,33 @@ public class AdoEnvironmentTest {
         assertEquals("bugfix-abc", env.ciBranch().short_());
         assertEquals("release", env.pullRequest().target());
     }
+
+    @Test
+    void testDetectPullRequestUppercaseEnvVars() {
+        System.setProperty("fcli.env.SYSTEM_TEAMFOUNDATIONCOLLECTIONURI", "https://dev.azure.com/myorg/");
+        System.setProperty("fcli.env.SYSTEM_TEAMPROJECT", "MyProject");
+        System.setProperty("fcli.env.BUILD_REPOSITORY_NAME", "MyRepo");
+        System.setProperty("fcli.env.BUILD_REPOSITORY_ID", "ffffffff-1111-2222-3333-aaaaaaaaaaaa");
+        System.setProperty("fcli.env.BUILD_BUILDID", "404");
+        System.setProperty("fcli.env.BUILD_SOURCEBRANCH", "refs/pull/999/merge");
+        System.setProperty("fcli.env.BUILD_SOURCEVERSION", "feedbeef1234");
+        System.setProperty("fcli.env.SYSTEM_PULLREQUEST_SOURCEBRANCHNAME", "feature-uppercase");
+        System.setProperty("fcli.env.SYSTEM_PULLREQUEST_TARGETBRANCHNAME", "main");
+        System.setProperty("fcli.env.SYSTEM_PULLREQUEST_PULLREQUESTID", "999");
+        System.setProperty("fcli.env.BUILD_SOURCESDIRECTORY", "/home/vsts/work/1/s");
+
+        var env = AdoEnvironment.detect();
+
+        assertNotNull(env);
+        assertEquals("MyProject", env.project());
+        assertEquals("ffffffff-1111-2222-3333-aaaaaaaaaaaa", env.repositoryId());
+        assertEquals("404", env.buildId());
+        assertEquals("feature-uppercase", env.ciBranch().short_());
+        assertEquals(true, env.pullRequest().active());
+        assertEquals("999", env.pullRequest().id());
+        assertEquals("main", env.pullRequest().target());
+        assertEquals("/home/vsts/work/1/s", env.ciRepository().workspaceDir());
+    }
     
     @Test
     void testGetQualifiedRepoName() {

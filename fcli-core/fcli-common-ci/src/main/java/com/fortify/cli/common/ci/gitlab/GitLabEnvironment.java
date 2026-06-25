@@ -47,6 +47,7 @@ public record GitLabEnvironment(
     String projectId,
     String pipelineId,
     String prTerminology,
+    String prCommentActionSuffix,
     String ciName,
     String ciId
 ) {
@@ -55,6 +56,7 @@ public record GitLabEnvironment(
     public static final String NAME = "GitLab";
     public static final String ID = "gitlab";
     public static final String PR_TERMINOLOGY = "Merge Request";
+    public static final String PR_COMMENT_ACTION_SUFFIX = "mr-comment";
     
     // Environment variable names
     public static final String ENV_GITLAB_CI = "GITLAB_CI";
@@ -141,6 +143,7 @@ public record GitLabEnvironment(
             .ciCommit(ciCommit)
             .pullRequest(pullRequest)
             .prTerminology(PR_TERMINOLOGY)
+            .prCommentActionSuffix(PR_COMMENT_ACTION_SUFFIX)
             .ciName(NAME)
             .ciId(ID)
             .build();
