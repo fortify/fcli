@@ -15,7 +15,7 @@ usage:
 
     Configuration via CLI options or environment variables:
     - `--source-dir` / `SOURCE_DIR` -- Directory where changes are detected (default: '.')
-    - `--branch-prefix` / `BRANCH_PREFIX` -- Branch name prefix (default: "fcli/aviator-remediations")
+    - `--branch-name` / `BRANCH_NAME` -- Full branch name to use.
     - `--commit-message` / `COMMIT_MESSAGE` -- Commit message
     - `--author-name` / `GIT_AUTHOR_NAME` -- Commit author name (default: "fcli-aviator[bot]")
     - `--author-email` / `GIT_AUTHOR_EMAIL` -- Commit author email
@@ -38,12 +38,12 @@ cli.options:
       Defaults to current working directory if not specified.
     required: false
     default: "${#env('SOURCE_DIR')?:'.'}"
-  branchPrefix:
-    names: --branch-prefix
+  branchName:
+    names: --branch-name
     description: >-
-      Prefix for the new branch name. The branch name will be <prefix>/<timestamp>.
-    required: false
-    default: "${#env('BRANCH_PREFIX')?:'fcli/aviator-remediations'}"
+      Full branch name to use.
+    required: true
+    default: "${#env('BRANCH_NAME')?:''}"
   commitMessage:
     names: --commit-message, -m
     description: >-
@@ -64,7 +64,7 @@ cli.options:
     default: "${#env('GIT_AUTHOR_EMAIL')?:'fcli-aviator@opentext.com'}"
 
 steps:
-  - log.debug: "Action configuration: sourceDir=${cli.sourceDir}, branchPrefix=${cli.branchPrefix}, author=${cli.authorName} <${cli.authorEmail}>"
+  - log.debug: "Action configuration: sourceDir=${cli.sourceDir}, branchName=${cli.branchName}, author=${cli.authorName} <${cli.authorEmail}>"
 
   # Validate git repository
   - var.set:
@@ -93,13 +93,13 @@ steps:
 
   # Create branch
   - var.set:
-      branchName: ${#git.createBranch(cli.sourceDir, cli.branchPrefix)}
+      branchName: "${#git.checkoutNewBranch(cli.sourceDir, cli.branchName)}"
     on.fail:
       - var.set:
           result.status: "error"
           result.errorMessage: "${lastException.message}"
       - log.warn:
-          msg: "Failed to create branch with prefix `'${cli.branchPrefix}`'"
+          msg: "Failed to create/checkout branch"
           cause: ${lastException}
       - throw: ${lastException}
   - log.info: "Created branch: ${branchName}"

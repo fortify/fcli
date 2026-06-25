@@ -215,23 +215,22 @@ steps:
                 - ${aviator.skipReason}                                # Skip if Aviator is not configured
                 - ${AVIATOR_WAIT.dependencySkipReason}                 # Skip if AVIATOR_WAIT was skipped or failed (no remediations available)
               on.success:
-                - var.set: { remediationsApplied: 'true' }
+                - var.set:
+                    remediationsApplied: 'true'
+                    branchName: "aviator/remediations/${#formatDateTime('yyyyMMdd-HHmmss-SSS')}"
 
             GIT_PUSH_CHANGES:
-              cmd: ${#fcliCmd('GIT_PUSH_CHANGES', 'action run git-push-changes')} "--source-dir=${global.ci.sourceDir}" "--branch-prefix=aviator/remediations" "--progress=none"
-              stdout: collect
+              cmd: ${#fcliCmd('GIT_PUSH_CHANGES', 'action run git-push-changes')} "--source-dir=${global.ci.sourceDir}" "--branch-name=${branchName}" "--progress=none"
               skip.if-reason:
                 - ${#isBlank(remediationsApplied)?'Apply remediations was skipped or failed, skipping Git operations':''}
               on.fail:
                 - log.warn: "Git stage/commit/push failed"
 
             CREATE_PR:
-              cmd: ${#fcliCmd('CREATE_PR', 'action run create-pr')} "--source-dir=${global.ci.sourceDir}" "--source-branch=${GIT_PUSH_CHANGES.variables.branchName}" "--progress=none"
+              cmd: ${#fcliCmd('CREATE_PR', 'action run create-pr')} "--source-dir=${global.ci.sourceDir}" "--source-branch=${branchName}" "--progress=none"
               stdout: collect
               skip.if-reason:
                 - ${GIT_PUSH_CHANGES.dependencySkipReason}
-                - ${#isBlank(GIT_PUSH_CHANGES.variables)?'No changes detected, skipping PR/MR creation':''}
-                - ${GIT_PUSH_CHANGES.variables.status!='success'?'Git push not completed/failed, skipping PR/MR creation':''}
               on.success:
                 - if: ${CREATE_PR.variables.status=='success'}
                   log.info: "Pull/Merge Request successfully created: ${CREATE_PR.variables.prLink}"
