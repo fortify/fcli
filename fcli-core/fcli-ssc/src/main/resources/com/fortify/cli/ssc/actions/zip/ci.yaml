@@ -228,18 +228,10 @@ steps:
 
             CREATE_PR:
               cmd: ${#fcliCmd('CREATE_PR', 'action run create-pr')} "--source-dir=${global.ci.sourceDir}" "--source-branch=${branchName}" "--progress=none"
-              stdout: collect
               skip.if-reason:
                 - ${GIT_PUSH_CHANGES.dependencySkipReason}
-              on.success:
-                - if: ${CREATE_PR.variables.status=='success'}
-                  log.info: "Pull/Merge Request successfully created: ${CREATE_PR.variables.prLink}"
-                - if: ${CREATE_PR.variables.status=='no_changes'}
-                  log.info: "No changes detected - PR/MR creation skipped"
-                - if: ${CREATE_PR.variables.status=='no_pr_support'}
-                  log.warn: "Branch created and pushed, but PR/MR creation not supported for platform '${CREATE_PR.variables.platform}'"
-                - if: ${CREATE_PR.variables.status=='error'}
-                  log.warn: "PR/MR creation failed: ${CREATE_PR.variables.errorMessage}"
+              on.fail:
+                - log.warn: "PR/MR creation failed"
 
             CHECK_POLICY:
               cmd: ${#actionCmd('CHECK_POLICY', 'ssc', 'check-policy')} "--av=${global.ci.av}" "--progress=none"
