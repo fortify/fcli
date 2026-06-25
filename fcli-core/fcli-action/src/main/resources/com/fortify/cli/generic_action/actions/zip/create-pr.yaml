@@ -89,7 +89,8 @@ steps:
               msg: "Failed to create GitHub Pull Request from '${cli.sourceBranch}' to '${baseBranch}'"
               cause: ${lastException}
       - if: ${#isNotBlank(pr)} && ${#isNotBlank(pr.html_url)} && ${#isNotBlank(pr.number)}
-        - log.info: "Created GitHub Pull Request #${pr.number}: ${pr.html_url}"
+        do:
+          - log.info: "Created GitHub Pull Request #${pr.number}: ${pr.html_url}"
 
       - if: ${#isBlank(pr)} || ${#isBlank(pr.html_url)}
         do:
