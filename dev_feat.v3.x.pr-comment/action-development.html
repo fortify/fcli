@@ -1,6 +1,6 @@
 ---
 title: 'Fcli Action Development Guide'
-fcli_version: 0.20260625.114709-dev_feat.v3.x.pr-comment
+fcli_version: 0.20260626.105015-dev_feat.v3.x.pr-comment
 ---
 
 <!DOCTYPE html>
@@ -17,13 +17,13 @@ fcli_version: 0.20260625.114709-dev_feat.v3.x.pr-comment
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260625.114709-dev_feat.v3.x.pr-comment" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260626.105015-dev_feat.v3.x.pr-comment" %}
 
 
 <div id="header">
 <h1>Fcli Action Development Guide</h1>
 <div class="details">
-<span id="revnumber">version 0.20260625.114709-dev_feat.v3.x.pr-comment</span>
+<span id="revnumber">version 0.20260626.105015-dev_feat.v3.x.pr-comment</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -108,18 +108,10 @@ fcli_version: 0.20260625.114709-dev_feat.v3.x.pr-comment
 <li><a href="#_spel_functions">SpEL Functions</a></li>
 <li><a href="#_ci">[ci]</a></li>
 <li><a href="#_ci_detect"><code>_ci.detect</code></a></li>
-<li><a href="#_ado_env"><code>ado.env</code></a></li>
-<li><a href="#_ado_type"><code>ado.type</code></a></li>
 <li><a href="#_ado_project"><code>ado.project</code></a></li>
 <li><a href="#_ado_repo"><code>ado.repo</code></a></li>
-<li><a href="#_bitbucket_env"><code>bitbucket.env</code></a></li>
-<li><a href="#_bitbucket_type"><code>bitbucket.type</code></a></li>
 <li><a href="#_bitbucket_repo"><code>bitbucket.repo</code></a></li>
-<li><a href="#_github_env"><code>github.env</code></a></li>
-<li><a href="#_github_type"><code>github.type</code></a></li>
 <li><a href="#_github_repo"><code>github.repo</code></a></li>
-<li><a href="#_gitlab_env"><code>gitlab.env</code></a></li>
-<li><a href="#_gitlab_type"><code>gitlab.type</code></a></li>
 <li><a href="#_gitlab_project"><code>gitlab.project</code></a></li>
 <li><a href="#_date">[date]</a></li>
 <li><a href="#_currentdatetime"><code>currentDateTime</code></a></li>
@@ -236,7 +228,7 @@ fcli_version: 0.20260625.114709-dev_feat.v3.x.pr-comment
 </thead>
 <tbody>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0.20260625.114709-dev_feat.v3.x.pr-comment</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.20260626.105015-dev_feat.v3.x.pr-comment</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">2.9.0</p></td>
 </tr>
 </tbody>
@@ -358,7 +350,7 @@ your action YAML file, your IDE or YAML editor may automatically provide support
 YAML files. If not, try closing and re-opening the YAML file, or consult the documentation of your IDE or YAML editor.</p>
 </div>
 <div class="paragraph">
-<p>As shown in the sample schema statements above, the current fcli version 0.20260625.114709-dev_feat.v3.x.pr-comment supports
+<p>As shown in the sample schema statements above, the current fcli version 0.20260626.105015-dev_feat.v3.x.pr-comment supports
 schema version <a href="https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.9.0.json">2.9.0</a>. Other
 fcli versions may support different schema versions. In general, fcli provides backward compatibility for earlier schema
 versions with the same schema major version range, and forward compatibility for later schema patch versions within the
@@ -3209,114 +3201,6 @@ will be an empty JSON object, and no other SpEL functions will be available.</p>
 </table>
 </div>
 <div class="sect2">
-<h3 id="_ado_env"><a class="anchor" href="#_ado_env"></a><code>ado.env</code></h3>
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 1%;">
-<col>
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #ado.env</code></strong></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Environment data or <code>null</code> if not running in Azure DevOps</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
-<p>Returns Azure DevOps environment data as ObjectNode (auto-detected for the current pipeline run)</p>
-</div></div></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
-<p><strong>Return Type Structure:</strong><br></p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="highlight"><code class="language-json" data-lang="json">{
-  "buildId" : "string",
-  "ciBranch" : {
-    "full" : "string",
-    "short" : "string"
-  },
-  "ciCommit" : {
-    "author" : {
-      "email" : "string",
-      "name" : "string",
-      "when" : "string"
-    },
-    "committer" : {
-      "email" : "string",
-      "name" : "string",
-      "when" : "string"
-    },
-    "headId" : {
-      "full" : "string",
-      "short" : "string"
-    },
-    "mergeId" : {
-      "full" : "string",
-      "short" : "string"
-    },
-    "message" : {
-      "full" : "string",
-      "short" : "string"
-    }
-  },
-  "ciId" : "string",
-  "ciName" : "string",
-  "ciRepository" : {
-    "name" : {
-      "full" : "string",
-      "short" : "string"
-    },
-    "remoteUrl" : "string",
-    "workspaceDir" : "string"
-  },
-  "organization" : "string",
-  "prKeyword" : "string",
-  "prTerminology" : "string",
-  "project" : "string",
-  "pullRequest" : {
-    "active" : "boolean",
-    "id" : "string",
-    "target" : "string"
-  },
-  "repositoryId" : "string"
-}</code></pre>
-</div>
-</div></div></td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="sect2">
-<h3 id="_ado_type"><a class="anchor" href="#_ado_type"></a><code>ado.type</code></h3>
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 1%;">
-<col>
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>string #ado.type</code></strong></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">"ado"</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
-<p>Returns CI system type identifier</p>
-</div></div></td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="sect2">
 <h3 id="_ado_project"><a class="anchor" href="#_ado_project"></a><code>ado.project</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
@@ -3441,115 +3325,6 @@ will be an empty JSON object, and no other SpEL functions will be available.</p>
 </table>
 </div>
 <div class="sect2">
-<h3 id="_bitbucket_env"><a class="anchor" href="#_bitbucket_env"></a><code>bitbucket.env</code></h3>
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 1%;">
-<col>
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #bitbucket.env</code></strong></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Environment data or <code>null</code> if not running in Bitbucket Pipelines</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
-<p>Returns Bitbucket Pipelines environment data as ObjectNode (auto-detected for the current step)</p>
-</div></div></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
-<p><strong>Return Type Structure:</strong><br></p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="highlight"><code class="language-json" data-lang="json">{
-  "ciBranch" : {
-    "full" : "string",
-    "short" : "string"
-  },
-  "ciCommit" : {
-    "author" : {
-      "email" : "string",
-      "name" : "string",
-      "when" : "string"
-    },
-    "committer" : {
-      "email" : "string",
-      "name" : "string",
-      "when" : "string"
-    },
-    "headId" : {
-      "full" : "string",
-      "short" : "string"
-    },
-    "mergeId" : {
-      "full" : "string",
-      "short" : "string"
-    },
-    "message" : {
-      "full" : "string",
-      "short" : "string"
-    }
-  },
-  "ciId" : "string",
-  "ciName" : "string",
-  "ciRepository" : {
-    "name" : {
-      "full" : "string",
-      "short" : "string"
-    },
-    "remoteUrl" : "string",
-    "workspaceDir" : "string"
-  },
-  "pipelineUuid" : "string",
-  "prKeyword" : "string",
-  "prTerminology" : "string",
-  "pullRequest" : {
-    "active" : "boolean",
-    "id" : "string",
-    "target" : "string"
-  },
-  "repositoryFullName" : "string",
-  "repositoryOwner" : "string",
-  "repositorySlug" : "string",
-  "workspace" : "string"
-}</code></pre>
-</div>
-</div></div></td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="sect2">
-<h3 id="_bitbucket_type"><a class="anchor" href="#_bitbucket_type"></a><code>bitbucket.type</code></h3>
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 1%;">
-<col>
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>string #bitbucket.type</code></strong></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">"bitbucket"</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
-<p>Returns CI system type identifier</p>
-</div></div></td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="sect2">
 <h3 id="_bitbucket_repo"><a class="anchor" href="#_bitbucket_repo"></a><code>bitbucket.repo</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
@@ -3620,111 +3395,6 @@ will be an empty JSON object, and no other SpEL functions will be available.</p>
 <tr>
 <td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
 <p>Creates or updates a Bitbucket Code Insights report for the current commit using detected workspace/repository data</p>
-</div></div></td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="sect2">
-<h3 id="_github_env"><a class="anchor" href="#_github_env"></a><code>github.env</code></h3>
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 1%;">
-<col>
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #github.env</code></strong></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Environment data or <code>null</code> if not running in GitHub Actions</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
-<p>Returns GitHub Actions environment data as ObjectNode (auto-detected for the current workflow run)</p>
-</div></div></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
-<p><strong>Return Type Structure:</strong><br></p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="highlight"><code class="language-json" data-lang="json">{
-  "ciBranch" : {
-    "full" : "string",
-    "short" : "string"
-  },
-  "ciCommit" : {
-    "author" : {
-      "email" : "string",
-      "name" : "string",
-      "when" : "string"
-    },
-    "committer" : {
-      "email" : "string",
-      "name" : "string",
-      "when" : "string"
-    },
-    "headId" : {
-      "full" : "string",
-      "short" : "string"
-    },
-    "mergeId" : {
-      "full" : "string",
-      "short" : "string"
-    },
-    "message" : {
-      "full" : "string",
-      "short" : "string"
-    }
-  },
-  "ciId" : "string",
-  "ciName" : "string",
-  "ciRepository" : {
-    "name" : {
-      "full" : "string",
-      "short" : "string"
-    },
-    "remoteUrl" : "string",
-    "workspaceDir" : "string"
-  },
-  "jobSummaryFile" : "string",
-  "prKeyword" : "string",
-  "prTerminology" : "string",
-  "pullRequest" : {
-    "active" : "boolean",
-    "id" : "string",
-    "target" : "string"
-  }
-}</code></pre>
-</div>
-</div></div></td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="sect2">
-<h3 id="_github_type"><a class="anchor" href="#_github_type"></a><code>github.type</code></h3>
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 1%;">
-<col>
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>string #github.type</code></strong></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">"github"</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
-<p>Returns CI system type identifier</p>
 </div></div></td>
 </tr>
 </tbody>
@@ -3851,112 +3521,6 @@ will be an empty JSON object, and no other SpEL functions will be available.</p>
 <tr>
 <td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
 <p>Uploads SARIF to GitHub Code Scanning (paid tier, requires GHAS) using repository/ref/commit from the current workflow run. Throws GhasUnavailableException if GitHub Advanced Security is not enabled. Use on.fail in action YAML to implement fallback logic.</p>
-</div></div></td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="sect2">
-<h3 id="_gitlab_env"><a class="anchor" href="#_gitlab_env"></a><code>gitlab.env</code></h3>
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 1%;">
-<col>
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #gitlab.env</code></strong></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Environment data or <code>null</code> if not running in GitLab CI</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
-<p>Returns GitLab CI environment data as ObjectNode (auto-detected for the current pipeline run)</p>
-</div></div></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
-<p><strong>Return Type Structure:</strong><br></p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="highlight"><code class="language-json" data-lang="json">{
-  "ciBranch" : {
-    "full" : "string",
-    "short" : "string"
-  },
-  "ciCommit" : {
-    "author" : {
-      "email" : "string",
-      "name" : "string",
-      "when" : "string"
-    },
-    "committer" : {
-      "email" : "string",
-      "name" : "string",
-      "when" : "string"
-    },
-    "headId" : {
-      "full" : "string",
-      "short" : "string"
-    },
-    "mergeId" : {
-      "full" : "string",
-      "short" : "string"
-    },
-    "message" : {
-      "full" : "string",
-      "short" : "string"
-    }
-  },
-  "ciId" : "string",
-  "ciName" : "string",
-  "ciRepository" : {
-    "name" : {
-      "full" : "string",
-      "short" : "string"
-    },
-    "remoteUrl" : "string",
-    "workspaceDir" : "string"
-  },
-  "pipelineId" : "string",
-  "prKeyword" : "string",
-  "prTerminology" : "string",
-  "projectId" : "string",
-  "pullRequest" : {
-    "active" : "boolean",
-    "id" : "string",
-    "target" : "string"
-  }
-}</code></pre>
-</div>
-</div></div></td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="sect2">
-<h3 id="_gitlab_type"><a class="anchor" href="#_gitlab_type"></a><code>gitlab.type</code></h3>
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 1%;">
-<col>
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>string #gitlab.type</code></strong></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">"gitlab"</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
-<p>Returns CI system type identifier</p>
 </div></div></td>
 </tr>
 </tbody>
@@ -6575,8 +6139,8 @@ commit: {
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20260625.114709-dev_feat.v3.x.pr-comment<br>
-Last updated 2026-06-25 11:49:57 UTC
+Version 0.20260626.105015-dev_feat.v3.x.pr-comment<br>
+Last updated 2026-06-26 10:53:10 UTC
 </div>
 </div>
 </body>
