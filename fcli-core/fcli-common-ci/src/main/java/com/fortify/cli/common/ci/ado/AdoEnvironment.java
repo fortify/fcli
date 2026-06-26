@@ -47,6 +47,7 @@ public record AdoEnvironment(
     String organization,
     String project,
     String repositoryId,
+    String token,
     String buildId,
     String prTerminology,
     String prKeyword,
@@ -76,7 +77,7 @@ public record AdoEnvironment(
     public static final String[] ENV_PR_TARGET_BRANCH = {"System.PullRequest.TargetBranch", "SYSTEM_PULLREQUEST_TARGETBRANCH"};
     public static final String[] ENV_PR_TARGET_BRANCH_NAME = {"System.PullRequest.TargetBranchName", "SYSTEM_PULLREQUEST_TARGETBRANCHNAME"};
     public static final String[] ENV_PR_ID = {"System.PullRequest.PullRequestId", "SYSTEM_PULLREQUEST_PULLREQUESTID"};
-    public static final String ENV_TOKEN = "ADO_TOKEN";
+    public static final String[] ENV_TOKEN = {"ADO_TOKEN", "SYSTEM_ACCESSTOKEN"};
     
     /**
      * Detect Azure DevOps CI environment from environment variables.
@@ -141,6 +142,7 @@ public record AdoEnvironment(
             .organization(orgUrl)
             .project(env(ENV_PROJECT))
             .repositoryId(repositoryId)
+            .token(env(ENV_TOKEN))
             .buildId(buildId)
             .ciRepository(ciRepository)
             .ciBranch(ciBranch)

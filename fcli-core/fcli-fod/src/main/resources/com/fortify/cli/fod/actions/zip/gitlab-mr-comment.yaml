@@ -46,26 +46,26 @@ cli.options:
     default: Static
   gitlab-api-url:
     names: --gitlab-api-url
-    description: "Required GitLab API v4 base URL (e.g., https://gitlab.com/api/v4 or https://gitlab.example.com/api/v4). Default value CI_API_V4_URL environment variable."
+    description: "Required GitLab API v4 base URL (e.g., https://gitlab.com/api/v4 or https://gitlab.example.com/api/v4). Auto-detected when running on GitLab CI."
     required: true
-    default: ${#env('CI_API_V4_URL')}
+    default: "${#gitlab.env?.apiV4Url}"
   gitlab-token:
     names: --gitlab-token
-    description: "Required GitLab token. Defaults to GITLAB_TOKEN, falls back to GITLAB_API_TOKEN, then CI_JOB_TOKEN."
+    description: "Required GitLab token. Auto-detected when running on GitLab CI."
     required: true
-    default: "${#ifBlank(#env('GITLAB_TOKEN'), #ifBlank(#env('GITLAB_API_TOKEN'), #env('CI_JOB_TOKEN')))}"
+    default: "${#gitlab.env?.token}"
     mask:
       sensitivity: high
   project-id:
     names: --project-id
-    description: "Required GitLab project id. Default value CI_PROJECT_ID environment variable."
+    description: "Required GitLab project id. Auto-detected when running on GitLab CI."
     required: true
-    default: ${#env('CI_PROJECT_ID')}
+    default: "${#gitlab.env?.projectId}"
   mr-iid:
     names: --mr-iid
-    description: "Required Merge Request IID. Default value CI_MERGE_REQUEST_IID environment variable."
+    description: "Required Merge Request IID. Auto-detected when running on GitLab CI merge request pipelines."
     required: true
-    default: ${#env('CI_MERGE_REQUEST_IID')}
+    default: "${#gitlab.env?.pullRequest?.id}"
   dryrun:
     names: --dryrun
     description: "Set to true to output request body without posting comment."

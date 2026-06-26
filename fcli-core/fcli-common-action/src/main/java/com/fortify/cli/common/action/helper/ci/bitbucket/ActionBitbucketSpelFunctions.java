@@ -16,20 +16,14 @@ import static com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunction.
 
 import org.apache.commons.lang3.StringUtils;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.formkiq.graalvm.annotations.Reflectable;
-import com.fortify.cli.common.action.helper.ci.IActionSpelFunctions;
 import com.fortify.cli.common.action.runner.ActionRunnerContextLocal;
-import com.fortify.cli.common.ci.bitbucket.BitbucketEnvironment;
 import com.fortify.cli.common.ci.bitbucket.BitbucketRestHelper;
 import com.fortify.cli.common.ci.bitbucket.BitbucketUnirestInstanceSupplier;
 import com.fortify.cli.common.exception.FcliSimpleException;
-import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.spel.fn.descriptor.annotation.RenderSubFunctionsMode;
 import com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunction;
 import com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunctionPrefix;
-
-import lombok.RequiredArgsConstructor;
 
 /**
  * Bitbucket-specific helper exposed to actions through {@code #ci.bitbucket()}.
@@ -38,31 +32,14 @@ import lombok.RequiredArgsConstructor;
  * with REST plumbing.
  */
 @Reflectable
-@RequiredArgsConstructor
 @SpelFunctionPrefix("bitbucket.")
-public class ActionBitbucketSpelFunctions implements IActionSpelFunctions {
+public class ActionBitbucketSpelFunctions extends ActionBitbucketCiInfoSpelFunctions {
     private final ActionRunnerContextLocal ctx;
-    private final BitbucketEnvironment env;
     private BitbucketRestHelper restHelper;
 
     public ActionBitbucketSpelFunctions(ActionRunnerContextLocal ctx) {
+        super();
         this.ctx = ctx;
-        this.env = BitbucketEnvironment.detect();
-    }
-
-    @SpelFunction(cat=ci, desc="Returns Bitbucket Pipelines environment data as ObjectNode (auto-detected for the current step)",
-            returns="Environment data or `null` if not running in Bitbucket Pipelines",
-            returnType=BitbucketEnvironment.class)
-    @Override
-    public ObjectNode getEnv() {
-        return env != null ? JsonHelper.getObjectMapper().valueToTree(env) : null;
-    }
-
-    @SpelFunction(cat=ci, desc="Returns CI system type identifier",
-            returns="\"bitbucket\"")
-    @Override
-    public String getType() {
-        return BitbucketEnvironment.TYPE;
     }
     
     /**

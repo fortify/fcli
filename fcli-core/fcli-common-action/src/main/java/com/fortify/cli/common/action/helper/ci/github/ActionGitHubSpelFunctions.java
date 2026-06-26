@@ -14,20 +14,14 @@ package com.fortify.cli.common.action.helper.ci.github;
 
 import static com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunction.SpelFunctionCategory.ci;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.formkiq.graalvm.annotations.Reflectable;
-import com.fortify.cli.common.action.helper.ci.IActionSpelFunctions;
 import com.fortify.cli.common.action.runner.ActionRunnerContextLocal;
-import com.fortify.cli.common.ci.github.GitHubEnvironment;
 import com.fortify.cli.common.ci.github.GitHubRestHelper;
 import com.fortify.cli.common.ci.github.GitHubUnirestInstanceSupplier;
 import com.fortify.cli.common.exception.FcliSimpleException;
-import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.spel.fn.descriptor.annotation.RenderSubFunctionsMode;
 import com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunction;
 import com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunctionPrefix;
-
-import lombok.RequiredArgsConstructor;
 
 /**
  * Action-friendly GitHub helper providing convenient methods for CI/CD workflows.
@@ -39,11 +33,9 @@ import lombok.RequiredArgsConstructor;
  * @author rsenden
  */
 @Reflectable
-@RequiredArgsConstructor
 @SpelFunctionPrefix("github.")
-public class ActionGitHubSpelFunctions implements IActionSpelFunctions {
+public class ActionGitHubSpelFunctions extends ActionGitHubCiInfoSpelFunctions {
     private final ActionRunnerContextLocal ctx;
-    private final GitHubEnvironment env;
     private GitHubRestHelper restHelper;
     
     /**
@@ -51,31 +43,8 @@ public class ActionGitHubSpelFunctions implements IActionSpelFunctions {
      * Does not throw if not in CI - use getEnv() != null to check.
      */
     public ActionGitHubSpelFunctions(ActionRunnerContextLocal ctx) {
+        super();
         this.ctx = ctx;
-        this.env = GitHubEnvironment.detect();
-    }
-    
-    /**
-     * Get environment data as ObjectNode for use in actions.
-     * Returns null if not running in GitHub Actions.
-     * Can be accessed in action YAML as: ${#ci.github().env}
-     */
-    @SpelFunction(cat=ci, desc="Returns GitHub Actions environment data as ObjectNode (auto-detected for the current workflow run)",
-            returns="Environment data or `null` if not running in GitHub Actions",
-            returnType=GitHubEnvironment.class)
-    @Override
-    public ObjectNode getEnv() {
-        return env != null ? JsonHelper.getObjectMapper().valueToTree(env) : null;
-    }
-    
-    /**
-     * Returns "github" as the CI system type.
-     */
-    @SpelFunction(cat=ci, desc="Returns CI system type identifier",
-            returns="\"github\"")
-    @Override
-    public String getType() {
-        return GitHubEnvironment.TYPE;
     }
     
     /**

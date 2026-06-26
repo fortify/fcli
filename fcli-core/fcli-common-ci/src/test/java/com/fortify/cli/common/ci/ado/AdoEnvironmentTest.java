@@ -48,6 +48,7 @@ public class AdoEnvironmentTest {
         System.setProperty("fcli.env.Build.SourceBranchName", "main");
         System.setProperty("fcli.env.Build.SourceVersion", "9876543210abcdef9876543210abcdef98765432");
         System.setProperty("fcli.env.Build.SourcesDirectory", "/home/vsts/work/1/s");
+        System.setProperty("fcli.env.ADO_TOKEN", "ado-token-value");
         
         var env = AdoEnvironment.detect();
         
@@ -55,6 +56,7 @@ public class AdoEnvironmentTest {
         assertEquals("https://dev.azure.com/myorg/", env.organization());
         assertEquals("MyProject", env.project());
         assertEquals("11111111-2222-3333-4444-555555555555", env.repositoryId());
+        assertEquals("ado-token-value", env.token());
         assertEquals("101", env.buildId());
         
         assertNotNull(env.ciRepository());

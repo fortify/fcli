@@ -48,34 +48,33 @@ cli.options:
     default: Static
   ado-organization-url:
     names: --ado-organization-url
-    description: "Azure DevOps organization URL. Auto-detected from ADO CI environment; provide for local testing. Default: System.TeamFoundationCollectionUri or ADO_ORGANIZATION_URL."
+    description: "Azure DevOps organization URL. Auto-detected when running on Azure DevOps; provide for local testing."
     required: true
-    default: "${#env('System.TeamFoundationCollectionUri')!=null?#env('System.TeamFoundationCollectionUri'):#env('ADO_ORGANIZATION_URL')}"
+    default: "${#ado.env?.organization}"
   ado-token:
     names: --ado-token
-    description: "Azure DevOps token used with Bearer auth by default. Auto-detected from ADO CI environment; provide for local testing. Default: ADO_TOKEN or SYSTEM_ACCESSTOKEN."
+    description: "Azure DevOps token used with Bearer auth by default. Auto-detected when running on Azure DevOps; provide for local testing."
     required: false
-    default: "${#isNotBlank(#env('ADO_TOKEN'))?#env('ADO_TOKEN'):#env('SYSTEM_ACCESSTOKEN')}"
+    default: "${#ado.env?.token}"
   ado-authorization:
     names: --ado-authorization
-    description: "Optional full Authorization header value (for example, Basic <base64(:PAT)>). Default: ADO_AUTHORIZATION environment variable. If not set, this action uses Bearer with --ado-token."
+    description: "Optional full Authorization header value (for example, Basic <base64(:PAT)>), overriding `--ado-token`."
     required: false
-    default: ${#env('ADO_AUTHORIZATION')}
   project:
     names: --project
-    description: "Azure DevOps project name. Auto-detected from ADO CI environment; provide for local testing. Default: System.TeamProject or ADO_PROJECT."
+    description: "Azure DevOps project name. Auto-detected when running on Azure DevOps; provide for local testing."
     required: false
-    default: "${#env('System.TeamProject')!=null?#env('System.TeamProject'):#env('ADO_PROJECT')}"
+    default: "${#ado.env?.project}"
   repository-id:
     names: --repository-id
-    description: "Repository ID or name. Auto-detected from ADO CI environment; provide for local testing. Default: Build.Repository.ID or ADO_REPOSITORY_ID."
+    description: "Repository ID or name. Auto-detected when running on Azure DevOps; provide for local testing."
     required: true
-    default: "${#env('Build.Repository.ID')!=null?#env('Build.Repository.ID'):#env('ADO_REPOSITORY_ID')}"
+    default: "${#ado.env?.repositoryId}"
   pr-id:
     names: --pr-id
-    description: "Pull request ID. Auto-detected from ADO CI environment; provide for local testing. Default: System.PullRequest.PullRequestId or ADO_PR_ID."
+    description: "Pull request ID. Auto-detected when running on Azure DevOps; provide for local testing."
     required: true
-    default: "${#env('System.PullRequest.PullRequestId')!=null?#env('System.PullRequest.PullRequestId'):#env('ADO_PR_ID')}"
+    default: "${#ado.env?.pullRequest?.id}"
   dryrun:
     names: --dryrun
     description: "Set to true to output request body without posting comment."
