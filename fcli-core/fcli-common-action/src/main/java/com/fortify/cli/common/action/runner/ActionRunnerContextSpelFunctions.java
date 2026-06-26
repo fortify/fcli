@@ -25,6 +25,7 @@ import org.apache.commons.lang3.StringUtils;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.formkiq.graalvm.annotations.Reflectable;
+import com.fortify.cli.common.action.helper.ActionLoaderHelper;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunction;
 import com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunctionParam;
@@ -289,6 +290,10 @@ public final class ActionRunnerContextSpelFunctions {
             return result.toString();
         }
         
+        private String productToModuleName(String product) {
+            return "generic".equals(product) ? "generic_action" : product;
+        }
+
         private String processActionReferences(String text) {
             // Pattern: actionRef:product:action[#anchor]
             // product: generic, fod, ssc, or _ (current/generic)
@@ -317,7 +322,7 @@ public final class ActionRunnerContextSpelFunctions {
                 }
                 
                 String replacement;
-                if (isAsciiDoc) {
+                if (isAsciiDoc && ActionLoaderHelper.hasBuiltInAction(productToModuleName(resolvedProduct), actionName)) {
                     // Use FcliBuildProperties.getFcliDocBaseUrl() to construct absolute URL
                     String baseUrl = FcliBuildProperties.INSTANCE.getFcliDocBaseUrl();
                     String url = baseUrl + "/" + resolvedProduct + "-actions.html" + anchor;

@@ -47,8 +47,10 @@ public record AdoEnvironment(
     String organization,
     String project,
     String repositoryId,
+    String token,
     String buildId,
     String prTerminology,
+    String prKeyword,
     String ciName,
     String ciId
 ) {
@@ -57,41 +59,43 @@ public record AdoEnvironment(
     public static final String NAME = "Azure DevOps";
     public static final String ID = "ado";
     public static final String PR_TERMINOLOGY = "Pull Request";
+    public static final String PR_KEYWORD = "pr";
     
-    // Environment variable names
-    public static final String ENV_ORGANIZATION_URL = "System.TeamFoundationCollectionUri";
-    public static final String ENV_PROJECT = "System.TeamProject";
-    public static final String ENV_REPOSITORY_NAME = "Build.Repository.Name";
-    public static final String ENV_REPOSITORY_ID = "Build.Repository.ID";
-    public static final String ENV_BUILD_ID = "Build.BuildId";
-    public static final String ENV_SOURCE_BRANCH = "Build.SourceBranch";
-    public static final String ENV_SOURCE_BRANCH_NAME = "Build.SourceBranchName";
-    public static final String ENV_SOURCE_VERSION = "Build.SourceVersion";
-    public static final String ENV_SOURCES_DIRECTORY = "Build.SourcesDirectory";
-    public static final String ENV_DEFAULT_WORKING_DIRECTORY = "System.DefaultWorkingDirectory";
-    public static final String ENV_PR_SOURCE_BRANCH = "System.PullRequest.SourceBranch";
-    public static final String ENV_PR_SOURCE_BRANCH_NAME = "System.PullRequest.SourceBranchName";
-    public static final String ENV_PR_TARGET_BRANCH = "System.PullRequest.TargetBranch";
-    public static final String ENV_PR_TARGET_BRANCH_NAME = "System.PullRequest.TargetBranchName";
-    public static final String ENV_PR_ID = "System.PullRequest.PullRequestId";
-    public static final String ENV_TOKEN = "ADO_TOKEN";
+    // Environment variable names (arrays for fallback lookup)
+    public static final String[] ENV_ORGANIZATION_URL = {"System.TeamFoundationCollectionUri", "SYSTEM_TEAMFOUNDATIONCOLLECTIONURI"};
+    public static final String[] ENV_PROJECT = {"System.TeamProject", "SYSTEM_TEAMPROJECT"};
+    public static final String[] ENV_REPOSITORY_NAME = {"Build.Repository.Name", "BUILD_REPOSITORY_NAME"};
+    public static final String[] ENV_REPOSITORY_ID = {"Build.Repository.ID", "BUILD_REPOSITORY_ID"};
+    public static final String[] ENV_BUILD_ID = {"Build.BuildId", "BUILD_BUILDID"};
+    public static final String[] ENV_SOURCE_BRANCH = {"Build.SourceBranch", "BUILD_SOURCEBRANCH"};
+    public static final String[] ENV_SOURCE_BRANCH_NAME = {"Build.SourceBranchName", "BUILD_SOURCEBRANCHNAME"};
+    public static final String[] ENV_SOURCE_VERSION = {"Build.SourceVersion", "BUILD_SOURCEVERSION"};
+    public static final String[] ENV_SOURCES_DIRECTORY = {"Build.SourcesDirectory", "BUILD_SOURCESDIRECTORY"};
+    public static final String[] ENV_DEFAULT_WORKING_DIRECTORY = {"System.DefaultWorkingDirectory", "SYSTEM_DEFAULTWORKINGDIRECTORY"};
+    public static final String[] ENV_PR_SOURCE_BRANCH = {"System.PullRequest.SourceBranch", "SYSTEM_PULLREQUEST_SOURCEBRANCH"};
+    public static final String[] ENV_PR_SOURCE_BRANCH_NAME = {"System.PullRequest.SourceBranchName", "SYSTEM_PULLREQUEST_SOURCEBRANCHNAME"};
+    public static final String[] ENV_PR_TARGET_BRANCH = {"System.PullRequest.TargetBranch", "SYSTEM_PULLREQUEST_TARGETBRANCH"};
+    public static final String[] ENV_PR_TARGET_BRANCH_NAME = {"System.PullRequest.TargetBranchName", "SYSTEM_PULLREQUEST_TARGETBRANCHNAME"};
+    public static final String[] ENV_PR_ID = {"System.PullRequest.PullRequestId", "SYSTEM_PULLREQUEST_PULLREQUESTID"};
+    public static final String[] ENV_TOKEN = {"ADO_TOKEN", "SYSTEM_ACCESSTOKEN"};
     
     /**
      * Detect Azure DevOps CI environment from environment variables.
      * Returns null if not running in Azure DevOps.
      */
     public static AdoEnvironment detect() {
-        var repoName = EnvHelper.env(ENV_REPOSITORY_NAME);
-        if (StringUtils.isBlank(repoName)) return null;
-        
-        var sourceBranchRaw = EnvHelper.env(ENV_SOURCE_BRANCH);
+        var orgUrl = env(ENV_ORGANIZATION_URL);
+        if (StringUtils.isBlank(orgUrl)) return null;
+
+        var repoName = env(ENV_REPOSITORY_NAME);
+        var sourceBranchRaw = env(ENV_SOURCE_BRANCH);
         var isPr = StringUtils.isNotBlank(sourceBranchRaw) && sourceBranchRaw.startsWith("refs/pull/");
         var branchInfo = detectBranchInfo(isPr, sourceBranchRaw);
         var sourceBranch = branchInfo[0];
         var targetBranch = branchInfo[1];
-        var sha = EnvHelper.env(ENV_SOURCE_VERSION);
-        var repositoryId = EnvHelper.env(ENV_REPOSITORY_ID);
-        var buildId = EnvHelper.env(ENV_BUILD_ID);
+        var sha = env(ENV_SOURCE_VERSION);
+        var repositoryId = env(ENV_REPOSITORY_ID);
+        var buildId = env(ENV_BUILD_ID);
         
         // Build standardized structures
         // Extract simple repo name from full path if present
@@ -103,8 +107,7 @@ public record AdoEnvironment(
         }
         
         var ciRepository = CiRepository.builder()
-            .workspaceDir(EnvHelper.envOrDefault(ENV_SOURCES_DIRECTORY,
-                EnvHelper.envOrDefault(ENV_DEFAULT_WORKING_DIRECTORY, ".")))
+            .workspaceDir(StringUtils.defaultIfBlank(env(ENV_SOURCES_DIRECTORY, ENV_DEFAULT_WORKING_DIRECTORY), "."))
             .remoteUrl(null)  // Not readily available in environment
             .name(CiRepositoryName.builder()
                 .short_(shortRepoName)
@@ -132,19 +135,21 @@ public record AdoEnvironment(
             .build();
         
         var pullRequest = isPr
-            ? CiPullRequest.active(EnvHelper.env(ENV_PR_ID), targetBranch)
+            ? CiPullRequest.active(env(ENV_PR_ID), targetBranch)
             : CiPullRequest.inactive();
         
         return AdoEnvironment.builder()
-            .organization(EnvHelper.env(ENV_ORGANIZATION_URL))
-            .project(EnvHelper.env(ENV_PROJECT))
+            .organization(orgUrl)
+            .project(env(ENV_PROJECT))
             .repositoryId(repositoryId)
+            .token(env(ENV_TOKEN))
             .buildId(buildId)
             .ciRepository(ciRepository)
             .ciBranch(ciBranch)
             .ciCommit(ciCommit)
             .pullRequest(pullRequest)
             .prTerminology(PR_TERMINOLOGY)
+            .prKeyword(PR_KEYWORD)
             .ciName(NAME)
             .ciId(ID)
             .build();
@@ -159,20 +164,24 @@ public record AdoEnvironment(
         String targetBranch;
         
         if (isPr) {
-            sourceBranch = EnvHelper.envOrDefault(ENV_PR_SOURCE_BRANCH,
-                EnvHelper.env(ENV_PR_SOURCE_BRANCH_NAME));
+            sourceBranch = env(ENV_PR_SOURCE_BRANCH, ENV_PR_SOURCE_BRANCH_NAME);
             sourceBranch = StringUtils.isNotBlank(sourceBranch) ? sourceBranch.replaceAll("^refs/heads/", "") : null;
             
-            targetBranch = EnvHelper.envOrDefault(ENV_PR_TARGET_BRANCH,
-                EnvHelper.env(ENV_PR_TARGET_BRANCH_NAME));
+            targetBranch = env(ENV_PR_TARGET_BRANCH, ENV_PR_TARGET_BRANCH_NAME);
             targetBranch = StringUtils.isNotBlank(targetBranch) ? targetBranch.replaceAll("^refs/heads/", "") : null;
         } else {
-            sourceBranch = EnvHelper.envOrDefault(ENV_SOURCE_BRANCH_NAME,
-                StringUtils.isNotBlank(sourceBranchRaw) ? sourceBranchRaw.replaceAll("^refs/heads/", "") : null);
+            sourceBranch = env(ENV_SOURCE_BRANCH_NAME);
+            if (StringUtils.isBlank(sourceBranch) && StringUtils.isNotBlank(sourceBranchRaw)) {
+                sourceBranch = sourceBranchRaw.replaceAll("^refs/heads/", "");
+            }
             targetBranch = null;
         }
         
         return new String[]{sourceBranch, targetBranch};
+    }
+
+    private static String env(String[]... envNames) {
+        return EnvHelper.env(envNames);
     }
     
     /**

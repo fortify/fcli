@@ -30,11 +30,8 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jgit.lib.Repository;
@@ -53,8 +50,6 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.action.helper.ActionLoaderHelper;
-import com.fortify.cli.common.action.helper.ActionLoaderHelper.ActionSource;
-import com.fortify.cli.common.action.helper.ActionLoaderHelper.ActionValidationHandler;
 import com.fortify.cli.common.action.schema.ActionSchemaDescriptorFactory;
 import com.fortify.cli.common.ci.CiBranch;
 import com.fortify.cli.common.ci.CiCommit;
@@ -85,8 +80,6 @@ public class ActionSpelFunctions {
     private static final String CODE_END   = "\n===== CODE END =====\n";
     private static final Pattern CODE_PATTERN = Pattern.compile(String.format("%s(.*?)%s", CODE_START, CODE_END), Pattern.DOTALL);
     private static final Pattern uriPartsPattern = Pattern.compile("^(?<serverUrl>(?:(?<protocol>[A-Za-z]+):)?(\\/{0,3})(?<host>[0-9.\\-A-Za-z]+)(?::(?<port>\\d+))?)(?<path>\\/(?<relativePath>[^?#]*))?(?:\\?(?<query>[^#]*))?(?:#(?<fragment>.*))?$");
-    private static final Map<String,Set<String>> builtinActionNamesByModule = new ConcurrentHashMap<>();
-    
     @SpelFunction(cat=util, desc="Resolves the given path against the current working directory.",
             returns="The absolute, normalized path")
     public static final String resolveAgainstCurrentWorkDir(
@@ -746,16 +739,7 @@ public class ActionSpelFunctions {
         }
         
         private static boolean hasBuiltInAction(String moduleName, String actionName) {
-            if ( StringUtils.isBlank(actionName) ) { return false; }
-            return builtinActionNamesByModule
-                    .computeIfAbsent(moduleName, ActionSpelFunctionsHelper::getBuiltinActionNames)
-                    .contains(actionName);
+            return ActionLoaderHelper.hasBuiltInAction(moduleName, actionName);
         }
-        
-        private static final Set<String> getBuiltinActionNames(String moduleName) {
-            return ActionLoaderHelper
-                        .streamAsNames(ActionSource.defaultActionSources(moduleName), ActionValidationHandler.IGNORE)
-                        .collect(Collectors.toSet());
-        }       
     }
 }

@@ -80,10 +80,7 @@ public class GitLabUnirestInstanceSupplier implements IUnirestInstanceSupplier {
             .urlConfig(UrlConfig.builder()
                 .url(EnvHelper.envOrDefault(GitLabEnvironment.ENV_API_V4_URL, "https://gitlab.com"))
                 .build())
-            .token(StringUtils.firstNonBlank(
-                EnvHelper.env(GitLabEnvironment.ENV_TOKEN),      // Custom GITLAB_TOKEN (highest priority)
-                EnvHelper.env(GitLabEnvironment.ENV_JOB_TOKEN)   // Built-in CI_JOB_TOKEN (automatic fallback)
-            ))
+            .token(EnvHelper.env(GitLabEnvironment.ENV_TOKEN))
             .configuredFromEnv(true)
             .build();
     }
