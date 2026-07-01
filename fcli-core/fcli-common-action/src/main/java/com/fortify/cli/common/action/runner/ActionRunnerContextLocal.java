@@ -24,6 +24,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.action.helper.ci.ActionCiSpelFunctionsRegistry;
 import com.fortify.cli.common.action.helper.fs.ActionFileSystemSpelFunctions;
+import com.fortify.cli.common.action.helper.git.ActionGitSpelFunctions;
 import com.fortify.cli.common.action.model.ActionStepCheckEntry;
 import com.fortify.cli.common.action.model.ActionStepCheckEntry.CheckStatus;
 import com.fortify.cli.common.action.model.FcliActionValidationException;
@@ -234,6 +235,7 @@ public class ActionRunnerContextLocal implements AutoCloseable {
                 ActionCiSpelFunctionsRegistry.registerInfoVariables(spelContext);
             }
             spelContext.setVariable("fs", ActionFileSystemSpelFunctions.INSTANCE);
+            spelContext.setVariable("git", ActionGitSpelFunctions.INSTANCE);
             spelContext.setVariable("fcli", FcliCommandsSpelFunctions.INSTANCE);
         }
     }

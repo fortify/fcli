@@ -20,7 +20,6 @@ import static com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunction.
 import static com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunction.SpelFunctionCategory.util;
 import static com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunction.SpelFunctionCategory.workflow;
 
-import java.net.URI;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.Year;
@@ -34,10 +33,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
-import org.eclipse.jgit.lib.Repository;
-import org.eclipse.jgit.revwalk.RevCommit;
-import org.eclipse.jgit.revwalk.RevWalk;
-import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -50,14 +45,8 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.action.helper.ActionLoaderHelper;
+import com.fortify.cli.common.action.helper.git.ActionGitSpelFunctions;
 import com.fortify.cli.common.action.schema.ActionSchemaDescriptorFactory;
-import com.fortify.cli.common.ci.CiBranch;
-import com.fortify.cli.common.ci.CiCommit;
-import com.fortify.cli.common.ci.CiCommitId;
-import com.fortify.cli.common.ci.CiCommitMessage;
-import com.fortify.cli.common.ci.CiPerson;
-import com.fortify.cli.common.ci.CiRepository;
-import com.fortify.cli.common.ci.CiRepositoryName;
 import com.fortify.cli.common.ci.LocalRepoInfo;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.FortifyTraceNodeHelper;
@@ -547,6 +536,8 @@ public class ActionSpelFunctions {
     }
     
     @SpelFunction(cat=internal, desc="""
+                (DEPRECATED) Use `#git.localRepo(...)` instead; this function is retained only for backward \
+                compatibility and simply delegates to it. It may be removed in a future fcli release.
                 Returns basic information about the local git repository for the given source directory, or null if the
                 directory is not inside a git working tree. Only constant-time lookups are performed (HEAD commit only).
                 Structure:
@@ -562,96 +553,10 @@ public class ActionSpelFunctions {
                 }
                 """, returns="Git repository information or null if not a git work dir",
                 returnType=LocalRepoInfo.class)
+        @Deprecated
         public static final ObjectNode localRepo(
                 @SpelFunctionParam(name="sourceDir", desc="directory assumed to be inside a git working tree") String sourceDir) {
-            if (StringUtils.isBlank(sourceDir)) { return null; }
-            var dir = Path.of(sourceDir).toAbsolutePath().normalize().toFile();
-            if (!dir.exists()) { return null; }
-            FileRepositoryBuilder builder = new FileRepositoryBuilder().findGitDir(dir);
-            if (builder.getGitDir()==null) { return null; }
-            try (Repository repo = builder.build()) {
-                var mapper = JsonHelper.getObjectMapper();
-                
-                // Repository information
-                var remote = ActionSpelFunctionsJGitHelper.selectRemote(repo);
-                var remoteUrl = remote==null?null:repo.getConfig().getString("remote", remote, "url");
-                var names = ActionSpelFunctionsJGitHelper.deriveRepoNames(dir.getName(), remoteUrl);
-                var repository = CiRepository.builder()
-                    .workspaceDir(repo.getWorkTree().getAbsolutePath())
-                    .remoteUrl(StringUtils.isBlank(remoteUrl) ? null : remoteUrl)
-                    .name(CiRepositoryName.builder()
-                        .short_(names[0])
-                        .full(names[1])
-                        .build())
-                    .build();
-                
-                // Branch information
-                CiBranch branch = null;
-                try {
-                    String fullBranch = repo.getFullBranch();
-                    if (fullBranch != null) {
-                        branch = CiBranch.builder()
-                            .full(fullBranch)
-                            .short_(Repository.shortenRefName(fullBranch))
-                            .build();
-                    }
-                } catch (Exception e) { }
-                
-                // Commit information
-                CiCommit commit = null;
-                var headId = repo.resolve("HEAD");
-                if (headId != null) {
-                    try (var walk = new RevWalk(repo)) {
-                        RevCommit gitCommit = walk.parseCommit(headId);
-                        String shortId;
-                        try {
-                            var abbrev = repo.newObjectReader().abbreviate(gitCommit.getId(), 8);
-                            shortId = abbrev.name();
-                        } catch (Exception ex) {
-                            shortId = gitCommit.getId().getName().substring(0, 8);
-                        }
-                        
-                        var authorIdent = gitCommit.getAuthorIdent();
-                        var committerIdent = gitCommit.getCommitterIdent();
-                        
-                        var commitId = CiCommitId.builder()
-                            .full(gitCommit.getId().getName())
-                            .short_(shortId)
-                            .build();
-                        
-                        commit = CiCommit.builder()
-                            .headId(commitId)
-                            .mergeId(commitId)  // Same as headId for local repos
-                            .message(CiCommitMessage.builder()
-                                .short_(gitCommit.getShortMessage())
-                                .full(gitCommit.getFullMessage())
-                                .build())
-                            .author(authorIdent != null ? CiPerson.builder()
-                                .name(authorIdent.getName())
-                                .email(authorIdent.getEmailAddress())
-                                .when(authorIdent.getWhenAsInstant().toString())
-                                .build() : null)
-                            .committer(committerIdent != null ? CiPerson.builder()
-                                .name(committerIdent.getName())
-                                .email(committerIdent.getEmailAddress())
-                                .when(committerIdent.getWhenAsInstant().toString())
-                                .build() : null)
-                            .build();
-                    } catch (Exception e) { }
-                }
-                
-                // Build root object
-                var root = mapper.createObjectNode();
-                root.set("repository", mapper.valueToTree(repository));
-                if (branch != null) {
-                    root.set("branch", mapper.valueToTree(branch));
-                }
-                if (commit != null) {
-                    root.set("commit", mapper.valueToTree(commit));
-                }
-                
-                return root;
-            } catch (Exception e) { return null; }
+            return ActionGitSpelFunctions.INSTANCE.localRepo(sourceDir);
         }
     
     private static final class ActionSpelFunctionsJsoupHelper {
@@ -690,46 +595,6 @@ public class ActionSpelFunctions {
             return sb.toString();
         }
     }
-    
-    private static final class ActionSpelFunctionsJGitHelper {
-        private static String selectRemote(Repository repo) {
-                try {
-                    var remotes = repo.getRemoteNames();
-                    if (remotes==null || remotes.isEmpty()) { return null; }
-                    if (remotes.contains("origin")) { return "origin"; }
-                    return remotes.iterator().next();
-                } catch (Exception e) { return null; }
-            }
-            
-            private static String[] deriveRepoNames(String fallbackShort, String remoteUrl) {
-                if (StringUtils.isBlank(remoteUrl)) { return new String[]{fallbackShort, null}; }
-                try {
-                    var cleaned = remoteUrl.trim();
-                    if (cleaned.endsWith(".git")) { cleaned = cleaned.substring(0, cleaned.length()-4); }
-                    String pathPart;
-                    if (cleaned.startsWith("git@")) {
-                        int idx = cleaned.indexOf(":");
-                        pathPart = idx>=0 ? cleaned.substring(idx+1) : cleaned;
-                    } else {
-                        try {
-                            var uri = URI.create(cleaned);
-                            pathPart = uri.getPath();
-                            if (pathPart==null) { pathPart = cleaned; }
-                        } catch (Exception ex) { pathPart = cleaned; }
-                    }
-                    if (pathPart.startsWith("/")) { pathPart = pathPart.substring(1); }
-                    if (pathPart.endsWith("/")) { pathPart = pathPart.substring(0, pathPart.length()-1); }
-                    if (pathPart.contains("/")) {
-                        var shortName = pathPart.substring(pathPart.lastIndexOf('/')+1);
-                        return new String[]{shortName, pathPart};
-                    }
-                    return new String[]{pathPart, pathPart};
-                } catch (Exception e) { return new String[]{fallbackShort, null}; }
-            }
-
-    }
-    
-
     
     private static final class ActionSpelFunctionsHelper {
         private static final String envOrDefault(String prefix, String suffix, String defaultValue) {

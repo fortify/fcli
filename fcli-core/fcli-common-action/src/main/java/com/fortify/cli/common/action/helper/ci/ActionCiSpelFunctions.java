@@ -73,6 +73,7 @@ public class ActionCiSpelFunctions {
         return ActionUnknownCiSpelFunctions.INSTANCE;
     }
     
+
     /**
      * Unknown/unsupported CI system implementation.
      * Used when no known CI system is detected.

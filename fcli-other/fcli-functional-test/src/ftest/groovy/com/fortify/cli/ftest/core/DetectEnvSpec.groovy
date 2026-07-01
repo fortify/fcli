@@ -37,6 +37,8 @@ class DetectEnvSpec extends FcliBaseSpec {
                 it.any { it.contains("prActive: false") }
                 it.any { it.contains("prNotActiveSkipReason: Not a Pull Request") }
                 it.any { it.contains("fod_prCommentAction: github-pr-comment") }
+                it.any { it.contains("fod_aviatorRemediationsAction: github-remediations-pr") }
+                it.any { it.contains("ssc_aviatorRemediationsAction: github-remediations-pr") }
             }
     }
     
@@ -66,6 +68,8 @@ class DetectEnvSpec extends FcliBaseSpec {
                 it.any { it.contains("prActive: false") }
                 it.any { it.contains("prNotActiveSkipReason: Not a Merge Request") }
                 it.any { it.contains("fod_prCommentAction: gitlab-mr-comment") }
+                it.any { it.contains("fod_aviatorRemediationsAction: push-remediations") }
+                it.any { it.contains("ssc_aviatorRemediationsAction: push-remediations") }
             }
     }
     
@@ -153,6 +157,8 @@ class DetectEnvSpec extends FcliBaseSpec {
                 it.any { it.contains("prTarget: main") }
                 it.any { it.contains("prTerminology: Pull Request") }
                 it.any { it.contains("fod_prCommentAction: github-pr-comment") }
+                it.any { it.contains("fod_aviatorRemediationsAction: github-remediations-pr") }
+                it.any { it.contains("ssc_aviatorRemediationsAction: github-remediations-pr") }
             }
     }
     
@@ -181,6 +187,8 @@ class DetectEnvSpec extends FcliBaseSpec {
                 it.any { it.contains("prTarget: main") }
                 it.any { it.contains("prTerminology: Merge Request") }
                 it.any { it.contains("fod_prCommentAction: gitlab-mr-comment") }
+                it.any { it.contains("fod_aviatorRemediationsAction: push-remediations") }
+                it.any { it.contains("ssc_aviatorRemediationsAction: push-remediations") }
             }
     }
     

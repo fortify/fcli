@@ -95,7 +95,7 @@ steps:
           global.ci.workspaceDir: ${#ifBlank(global.ci.workspaceDir,'.')}
           global.ci.sourceDir: ${#ifBlank(global.ci.sourceDir,'.')}
       - var.set:
-          global.ci.localRepo: ${#localRepo(global.ci.sourceDir)}
+          global.ci.localRepo: ${#git.localRepo(global.ci.sourceDir)}
 
       # Generic local repository fallback (run if previous CI-specific steps didn't set these)
       - if: ${#isBlank(global.ci.id) && global.ci.localRepo!=null}
@@ -120,6 +120,11 @@ steps:
           global.ci.ssc_dastExportAction:  ${#actionOrNull('ssc',#joinOrNull('-', global.ci.id, 'dast-report'))}
           global.ci.fod_scaExportAction:   ${#actionOrNull('fod',#joinOrNull('-', global.ci.id, 'debricked-report'))}  # TODO 'debricked' or more generic 'sca' or 'composition (analysis)'
           global.ci.ssc_scaExportAction:   ${#actionOrNull('ssc',#joinOrNull('-', global.ci.id, 'debricked-report'))}  # TODO 'debricked' or more generic 'sca' or 'composition (analysis)'
+          # Aviator remediations action: use a CI-specific <id>-remediations-<pr|mr> action if it exists
+          # (e.g. github-remediations-pr for GitHub PR creation), otherwise fall back to the generic
+          # push-remediations action that only pushes changes to a new branch.
+          global.ci.fod_aviatorRemediationsAction:  ${#actionOrNull('fod',#joinOrNull('-', global.ci.id, 'remediations', global.ci.prKeyword))?:'push-remediations'}
+          global.ci.ssc_aviatorRemediationsAction:  ${#actionOrNull('ssc',#joinOrNull('-', global.ci.id, 'remediations', global.ci.prKeyword))?:'push-remediations'}
       # Set PR-related skip reason if not active
       - if: "${global.ci.prActive!=true}"
         var.set:

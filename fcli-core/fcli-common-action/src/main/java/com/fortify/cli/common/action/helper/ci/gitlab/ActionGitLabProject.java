@@ -69,6 +69,16 @@ public class ActionGitLabProject {
         return project.createMergeRequestNote(env.pullRequest().id(), body);
     }
     
+    @SpelFunction(cat=ci, desc="Creates a merge request in the project detected from the current pipeline run.",
+            returns="Created merge request object from GitLab API")
+    public ObjectNode createMergeRequest(
+            @SpelFunctionParam(name="title", desc="merge request title") String title,
+            @SpelFunctionParam(name="sourceBranch", desc="branch containing the changes") String sourceBranch,
+            @SpelFunctionParam(name="targetBranch", desc="branch to merge into") String targetBranch,
+            @SpelFunctionParam(name="description", desc="merge request description (Markdown supported)") String description) {
+        return project.createMergeRequest(title, sourceBranch, targetBranch, description);
+    }
+    
     private String requirePipelineId(String operation) {
         var pipelineId = env.pipelineId();
         if (StringUtils.isBlank(pipelineId)) {

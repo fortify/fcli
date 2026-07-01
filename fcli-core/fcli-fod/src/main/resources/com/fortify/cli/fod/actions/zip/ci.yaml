@@ -135,6 +135,15 @@ steps:
         on.success:
           - var.set: { postScan.skipReason: } # Reset postScan.skipReason to allow post-scan tasks to run
              
+      AVIATOR_REMEDIATIONS:
+        cmd: ${#actionCmd('AVIATOR_REMEDIATIONS', 'fod', global.ci.fod_aviatorRemediationsAction)} "--rel=${global.ci.rel}" "--source-dir=${global.ci.sourceDir}" "--progress=none"
+        skip.if-reason:
+          - ${#actionCmdSkipFromEnvReason('AVIATOR_REMEDIATIONS', true)} # Skip unless DO_AVIATOR_REMEDIATIONS==true or AVIATOR_REMEDIATIONS_ACTION/EXTRA_OPTS defined
+          - ${#actionCmdSkipNoActionReason('AVIATOR_REMEDIATIONS', 'fod', global.ci.fod_aviatorRemediationsAction)}
+          - ${postScan.skipReason}                                     # Skip if no scans were run
+          - ${#env('DO_AVIATOR_AUDIT')!='true'?'Aviator audit not enabled (DO_AVIATOR_AUDIT!=true), no remediations available':''} # Skip if Aviator audit was not enabled
+          - ${SAST_WAIT.dependencySkipReason}                          # Skip if SAST scan/wait was skipped or failed
+
       CHECK_POLICY:
         cmd: ${#actionCmd('CHECK_POLICY', 'fod', 'check-policy')} "--rel=${global.ci.rel}" "--progress=none"
         stdout: collect

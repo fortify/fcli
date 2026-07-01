@@ -195,15 +195,27 @@ steps:
               skip.if-reason:
                 - ${postScan.skipReason}                               # Skip if no scans were run
                 - ${aviator.skipReason}                                # Skip if Aviator audit is to be skipped
-                
-                  
+              on.success:
+                - var.set:
+                    aviator.artifactId: "${#var('aviator_audit').hasNonNull('artifactId') ? #var('aviator_audit').get('artifactId').asText() : ''}"
+
             AVIATOR_WAIT:
-              cmd: "${#fcliCmd('AVIATOR_WAIT', 'ssc artifact wait-for')} ::aviator_audit::"
+              cmd: "${#fcliCmd('AVIATOR_WAIT', 'ssc artifact wait-for')} ${aviator.artifactId}"
               skip.if-reason:
                 - ${postScan.skipReason}                               # Skip if no scans were run
                 - ${aviator.skipReason}                                # Skip if Aviator audit is to be skipped
                 - ${AVIATOR_AUDIT.dependencySkipReason}                # Skip if AVIATOR_AUDIT was skipped or failed
+                - "${#isBlank(aviator.artifactId) ? 'No artifact produced by Aviator audit, nothing to wait for' : ''}"
                         
+            AVIATOR_REMEDIATIONS:
+              cmd: ${#actionCmd('AVIATOR_REMEDIATIONS', 'ssc', global.ci.ssc_aviatorRemediationsAction)} "--source-dir=${global.ci.sourceDir}" "--artifact-id=${aviator.artifactId}" "--progress=none"
+              skip.if-reason:
+                - ${#actionCmdSkipFromEnvReason('AVIATOR_REMEDIATIONS', true)} # Skip unless DO_AVIATOR_REMEDIATIONS==true or AVIATOR_REMEDIATIONS_ACTION/EXTRA_OPTS defined
+                - ${#actionCmdSkipNoActionReason('AVIATOR_REMEDIATIONS', 'ssc', global.ci.ssc_aviatorRemediationsAction)}
+                - ${postScan.skipReason}                               # Skip if no scans were run
+                - ${aviator.skipReason}                                # Skip if Aviator is not configured
+                - ${AVIATOR_WAIT.dependencySkipReason}                 # Skip if AVIATOR_WAIT was skipped or failed (no remediations available)
+
             CHECK_POLICY:
               cmd: ${#actionCmd('CHECK_POLICY', 'ssc', 'check-policy')} "--av=${global.ci.av}" "--progress=none"
               stdout: collect
@@ -283,4 +295,3 @@ formatters:
     ${CHECK_POLICY.exitCode==0||CHECK_POLICY.exitCode==100?CHECK_POLICY.stdout:CHECK_POLICY.dependencySkipReason}
         
     ${APPVERSION_SUMMARY.stdout}
-      
