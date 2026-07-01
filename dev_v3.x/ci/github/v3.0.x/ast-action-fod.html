@@ -1,6 +1,6 @@
 ---
 title: 'fortify/github-action'
-fcli_version: 0.20260701.125419-dev_v3.x
+fcli_version: 0.20260701.135600-dev_v3.x
 ---
 
 <!DOCTYPE html>
@@ -17,14 +17,14 @@ fcli_version: 0.20260701.125419-dev_v3.x
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260701.125419-dev_v3.x" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260701.135600-dev_v3.x" %}
 
 
 <div id="header">
 <h1>fortify/github-action</h1>
 <div class="subtitle">OpenText Core Application Security (Fortify on Demand)</div>
 <div class="details">
-<span id="revnumber">version 0.20260701.125419-dev_v3.x</span>
+<span id="revnumber">version 0.20260701.135600-dev_v3.x</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -242,7 +242,7 @@ This GitHub Action requires at least fcli v3.15.0 to function correctly.
 <div class="title">Note</div>
 </td>
 <td class="content">
-Environment variables listed in the subsequent sections are for fcli 0.20260701.125419-dev_v3.x; if your bootstrap settings install another fcli version, please refer to to the fcli <a href="https://fortify.github.io/fcli/latest_dev/generic-actions.html#_ci">ci</a> action documentation for that version.
+Environment variables listed in the subsequent sections are for fcli 0.20260701.135600-dev_v3.x; if your bootstrap settings install another fcli version, please refer to to the fcli <a href="https://fortify.github.io/fcli/latest_dev/generic-actions.html#_ci">ci</a> action documentation for that version.
 </td>
 </tr>
 </table>
@@ -531,6 +531,15 @@ SAST_EXPORT_EXTRA_OPTS</p></td>
 <p>If <code>DO_SAST_EXPORT</code> is not set to <code>false</code> and a SAST scan was completed, the SAST vulnerability data will be exported into a CI-specific format using an fcli-provided action matching the current CI system like <a href="https://fortify.github.io/fcli/latest_dev/fod-actions.html#_github_sast_report">github-sast-report</a> or <a href="https://fortify.github.io/fcli/latest_dev/fod-actions.html#_gitlab_sast_report">gitlab-sast-report</a>, or, if specified, the custom fcli action specified through <code>SAST_EXPORT_ACTION</code>. Extra options for the fcli action can be specified through the <code>SAST_EXPORT_EXTRA_OPTS</code> environment variable, which may include fcli options to allow unsigned custom actions to be used.</p>
 </div></div></td>
 </tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">DO_AVIATOR_REMEDIATIONS<br>
+AVIATOR_REMEDIATIONS_ACTION<br>
+AVIATOR_REMEDIATIONS_EXTRA_OPTS<br>
+GIT_PUSH_TOKEN</p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>(PREVIEW) If <code>DO_AVIATOR_REMEDIATIONS</code> is set to true (implied if any of the other two <code>AVIATOR_REMEDIATIONS_*</code> variables are set) and Aviator remediations are available, those remediations will be applied to the local source code, committed, and pushed to a new branch. On GitHub, a Pull Request is created from that branch using the fcli-provided <a href="https://fortify.github.io/fcli/latest_dev/fod-actions.html#_github_remediations_pr">github-remediations-pr</a> action; on other CI systems the fcli-provided <a href="https://fortify.github.io/fcli/latest_dev/fod-actions.html#_push_remediations">push-remediations</a> action is used to push the branch without creating a Pull or Merge Request. A custom action can be specified through <code>AVIATOR_REMEDIATIONS_ACTION</code>, and extra options for the fcli action can be specified through the <code>AVIATOR_REMEDIATIONS_EXTRA_OPTS</code> environment variable, which may include fcli options to allow unsigned custom actions to be used. The branch push is authenticated using the <code>GIT_PUSH_TOKEN</code> environment variable if set, falling back to the access token of the current CI system and then to the local Git configuration.</p>
+</div></div></td>
+</tr>
 </tbody>
 </table>
 </div>
@@ -609,8 +618,8 @@ there are some important changes to be aware of:</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20260701.125419-dev_v3.x<br>
-Last updated 2026-07-01 12:58:10 UTC
+Version 0.20260701.135600-dev_v3.x<br>
+Last updated 2026-07-01 14:00:11 UTC
 </div>
 </div>
 </body>

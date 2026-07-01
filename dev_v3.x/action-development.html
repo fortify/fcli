@@ -1,6 +1,6 @@
 ---
 title: 'Fcli Action Development Guide'
-fcli_version: 0.20260701.125419-dev_v3.x
+fcli_version: 0.20260701.135600-dev_v3.x
 ---
 
 <!DOCTYPE html>
@@ -17,13 +17,13 @@ fcli_version: 0.20260701.125419-dev_v3.x
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260701.125419-dev_v3.x" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260701.135600-dev_v3.x" %}
 
 
 <div id="header">
 <h1>Fcli Action Development Guide</h1>
 <div class="details">
-<span id="revnumber">version 0.20260701.125419-dev_v3.x</span>
+<span id="revnumber">version 0.20260701.135600-dev_v3.x</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -228,7 +228,7 @@ fcli_version: 0.20260701.125419-dev_v3.x
 </thead>
 <tbody>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0.20260701.125419-dev_v3.x</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.20260701.135600-dev_v3.x</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">2.9.0</p></td>
 </tr>
 </tbody>
@@ -350,7 +350,7 @@ your action YAML file, your IDE or YAML editor may automatically provide support
 YAML files. If not, try closing and re-opening the YAML file, or consult the documentation of your IDE or YAML editor.</p>
 </div>
 <div class="paragraph">
-<p>As shown in the sample schema statements above, the current fcli version 0.20260701.125419-dev_v3.x supports
+<p>As shown in the sample schema statements above, the current fcli version 0.20260701.135600-dev_v3.x supports
 schema version <a href="https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.9.0.json">2.9.0</a>. Other
 fcli versions may support different schema versions. In general, fcli provides backward compatibility for earlier schema
 versions with the same schema major version range, and forward compatibility for later schema patch versions within the
@@ -3508,6 +3508,34 @@ will be an empty JSON object, and no other SpEL functions will be available.</p>
 <tbody>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #github.repo().createPullRequest(string title, string head, string base, string body)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string title</em> - pull request title<br>
+<em>string head</em> - branch containing the changes<br>
+<em>string base</em> - branch to merge into<br>
+<em>string body</em> - pull request description (Markdown supported)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Created pull request object from GitHub API</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p>Creates a pull request in the repository detected from the current workflow run.</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #github.repo().uploadSarif(string sarifContent)</code></strong></p></td>
 </tr>
 <tr>
@@ -3570,6 +3598,34 @@ will be an empty JSON object, and no other SpEL functions will be available.</p>
 <tr>
 <td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
 <p>(PREVIEW) Adds a comment to the merge request detected from the current pipeline run. This function is not yet used by any built-in fcli actions; signature and implementation may change in future fcli versions based on new insights as to how to best integrate this functionality into fcli built-in actions.</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #gitlab.project().createMergeRequest(string title, string sourceBranch, string targetBranch, string description)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string title</em> - merge request title<br>
+<em>string sourceBranch</em> - branch containing the changes<br>
+<em>string targetBranch</em> - branch to merge into<br>
+<em>string description</em> - merge request description (Markdown supported)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Created merge request object from GitLab API</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p>Creates a merge request in the project detected from the current pipeline run.</p>
 </div></div></td>
 </tr>
 </tbody>
@@ -6068,7 +6124,8 @@ This method does NOT process other references - call render() first if needed.</
 <p><strong>INTERNAL USE ONLY</strong></p>
 </div>
 <div class="paragraph">
-<p>Returns basic information about the local git repository for the given source directory, or null if the
+<p>(DEPRECATED) Use <code>#git.localRepo(&#8230;&#8203;)</code> instead; this function is retained only for backward compatibility and simply delegates to it. It may be removed in a future fcli release.
+Returns basic information about the local git repository for the given source directory, or null if the
 directory is not inside a git working tree. Only constant-time lookups are performed (HEAD commit only).
 Structure:
 {
@@ -6139,8 +6196,8 @@ commit: {
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20260701.125419-dev_v3.x<br>
-Last updated 2026-07-01 12:57:18 UTC
+Version 0.20260701.135600-dev_v3.x<br>
+Last updated 2026-07-01 13:59:14 UTC
 </div>
 </div>
 </body>
