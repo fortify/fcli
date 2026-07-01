@@ -67,7 +67,7 @@ public class FoDScanSastHelper extends FoDScanHelper {
                 .queryString("remdiationScanPreferenceType", (req.getRemdiationScanPreferenceType() != null ?
                         FoDEnums.RemediationScanPreferenceType.valueOf(req.getRemdiationScanPreferenceType()) : FoDEnums.RemediationScanPreferenceType.NonRemediationScanOnly))
                 .queryString("inProgressScanActionType", (req.getInProgressScanActionType() != null ?
-                        FoDEnums.InProgressScanActionType.valueOf(req.getInProgressScanActionType()) : FoDEnums.InProgressScanActionType.DoNotStartScan))
+                        req.getInProgressScanActionType() : FoDEnums.InProgressScanActionType.DoNotStartScan.toString()))
                 .queryString("scanTool", req.getScanTool())
                 .queryString("scanToolVersion", req.getScanToolVersion())
                 .queryString("scanMethodType", req.getScanMethodType());

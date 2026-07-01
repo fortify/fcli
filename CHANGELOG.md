@@ -1,5 +1,27 @@
 # Changelog
 
+## [3.21.0](https://github.com/fortify/fcli/compare/v3.20.0...v3.21.0) (2026-06-26)
+
+
+### Features
+
+* 'fcli fod app list-users': New command to list users assigned to an application (resolves [#1008](https://github.com/fortify/fcli/issues/1008)) ([018721d](https://github.com/fortify/fcli/commit/018721d6829228602544e79d45bd7574b97a045f))
+* `fcli fod sast-scan start`: Add `--in-progress-action` and `--entitlement-preference` options ([4312743](https://github.com/fortify/fcli/commit/431274380ba817580c9db2d36b3c9d46c4e57e3a))
+* `fcli license ncd-report create`: Add `--end-date` option to allow for generating historical reports ([4a0864b](https://github.com/fortify/fcli/commit/4a0864b4181b4574a522fef76e1d37ffad21a712))
+* `fcli license ncd-report list-contributors`: New command for listing contributors in NCD report ([4a0864b](https://github.com/fortify/fcli/commit/4a0864b4181b4574a522fef76e1d37ffad21a712))
+* `fcli license ncd-report merge`: New command for merging NCD reports ([4a0864b](https://github.com/fortify/fcli/commit/4a0864b4181b4574a522fef76e1d37ffad21a712))
+* `fcli license ncd-report update-contributor-status`: New command for updating contributor status based on manual or AI review ([4a0864b](https://github.com/fortify/fcli/commit/4a0864b4181b4574a522fef76e1d37ffad21a712))
+* `fcli ssc issue update`: Add `--extend` option to allow for adding new values to extensible custom tags ([a201fd2](https://github.com/fortify/fcli/commit/a201fd2215f89ecd603c74a0266b4d990964d161))
+
+
+### Bug Fixes
+
+* `fcli * action run`: Only mask credentials in remote action URLs; do not mask plain action names ([8a9ffeb](https://github.com/fortify/fcli/commit/8a9ffeb3610ea0d0a2c18c3394938a0945c6104e))
+* `fcli fod issue update`: Make `--user` option optional ([6951f77](https://github.com/fortify/fcli/commit/6951f7705362edbee14a944ca3df287915bd17ca))
+* `fcli ssc`: Add support for ScanCentral DAST attributes in attribute-related operations ([f8cc477](https://github.com/fortify/fcli/commit/f8cc4777ace9a5a2b60ec401fbeeee2f03a6ebe6))
+* FoD `release-summary` action: Fix exception on releases with no open vulnerabilities ([b7c1b84](https://github.com/fortify/fcli/commit/b7c1b8401fdcb14902ec6160c638be04ced67272))
+* RPC/MCP servers: Refresh trust manager on changed configuration ([#1039](https://github.com/fortify/fcli/issues/1039)) ([7a8fe5b](https://github.com/fortify/fcli/commit/7a8fe5b78081702dd50467fe714f707c96646809))
+
 ## [3.20.0](https://github.com/fortify/fcli/compare/v3.19.0...v3.20.0) (2026-06-05)
 
 

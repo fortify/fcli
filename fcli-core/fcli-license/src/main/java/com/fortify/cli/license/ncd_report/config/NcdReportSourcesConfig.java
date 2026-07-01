@@ -35,9 +35,10 @@ public class NcdReportSourcesConfig {
     private Optional<NcdReportGitHubSourceConfig[]> github = Optional.empty();
     private Optional<NcdReportGitLabSourceConfig[]> gitlab = Optional.empty();
     private Optional<NcdReportAdoSourceConfig[]> ado = Optional.empty();
+    private Optional<NcdReportMockSourceConfig[]> mock = Optional.empty();
     
     public final List<INcdReportSourceConfig> getSourceConfigs() {
-        return Stream.of(ado, github, gitlab)
+        return Stream.of(ado, github, gitlab, mock)
                 .filter(Optional::isPresent)
                 .map(Optional::get)
                 .map(INcdReportSourceConfig[].class::cast)

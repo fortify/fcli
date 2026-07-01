@@ -53,7 +53,7 @@ public class PublicKeyImportCommand extends AbstractOutputCommand implements IJs
     }
     
     private static class PublicKeyResolverMixin extends AbstractTextResolverMixin {
-        @MaskValue(sensitivity = LogSensitivityLevel.high, description = "REMOTE URL AUTH VALUE", pattern = RemoteUrlAuthHelper.URL_USERINFO_AUTH_VALUE_MASK_PATTERN)
+        @MaskValue(sensitivity = LogSensitivityLevel.high, description = "REMOTE URL AUTH VALUE", pattern = RemoteUrlAuthHelper.URL_USERINFO_AUTH_VALUE_MASK_PATTERN, maskFullValueOnNoMatch = RemoteUrlAuthHelper.URL_USERINFO_AUTH_VALUE_MASK_FULL_ON_NO_MATCH)
         @Getter @Parameters(arity = "1", descriptionKey = "fcli.config.public-key.resolver", paramLabel = "source") private String textSource;
     }
 }

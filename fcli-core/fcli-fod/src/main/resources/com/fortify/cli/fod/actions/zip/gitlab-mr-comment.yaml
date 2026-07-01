@@ -1,0 +1,145 @@
+# yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-dev-2.x.json
+
+# For now, this template uses latest release state to generate MR comments.
+
+author: Fortify
+usage:
+  header: (PREVIEW) Add GitLab Merge Request comment.
+  description: |
+    This action adds review comments to a GitLab Merge Request. Currently
+    this is marked as PREVIEW as we build out this functionality; later
+    versions may have different behavior and/or require different action
+    cli.
+
+    For best results, this fcli action should only be run on GitLab
+    merge_request_event. Upon MR creation, a new FoD release should
+    be created, copying state from the FoD release that represents the
+    branch into which the MR will be merged, and a new scan should be
+    run on the current MR branch before invoking this fcli action.
+
+    This will ensure that scan results for the current MR will be
+    compared against the latest scan results for the target branch
+    upon MR creation. Optionally, new scans can be run upon MR changes,
+    creating new MR comments that show the issue delta compared to the
+    previous scan for this MR.
+
+    You will need to provide a GitLab token or set one of the environment
+    variables "GITLAB_TOKEN" (recommended) or "GITLAB_API_TOKEN" with
+    permissions to post comments on the MR, and the GitLab API v4 base URL
+    (e.g., https://gitlab.com/api/v4) if not using the default gitlab.com.
+    The project id and MR IID must also be provided, but can be automatically
+    populated from CI environment variables if running in GitLab CI.
+
+config:
+  rest.target.default: fod
+
+cli.options:
+  release:
+    names: --release, --rel
+    description: "Required release id or <appName>:[<microserviceName>:]<releaseName>. Default value FOD_RELEASE environment variable."
+    required: true
+    default: ${#env('FOD_RELEASE')}
+  scan-type:
+    names: --scan-type, -t
+    description: "Scan type for which to list vulnerabilities. Default value Static."
+    required: true
+    default: Static
+  gitlab-api-url:
+    names: --gitlab-api-url
+    description: "Required GitLab API v4 base URL (e.g., https://gitlab.com/api/v4 or https://gitlab.example.com/api/v4). Auto-detected when running on GitLab CI."
+    required: true
+    default: "${#gitlab.env?.apiV4Url}"
+  gitlab-token:
+    names: --gitlab-token
+    description: "Required GitLab token. Auto-detected when running on GitLab CI."
+    required: true
+    default: "${#gitlab.env?.token}"
+    mask:
+      sensitivity: high
+  project-id:
+    names: --project-id
+    description: "Required GitLab project id. Auto-detected when running on GitLab CI."
+    required: true
+    default: "${#gitlab.env?.projectId}"
+  mr-iid:
+    names: --mr-iid
+    description: "Required Merge Request IID. Auto-detected when running on GitLab CI merge request pipelines."
+    required: true
+    default: "${#gitlab.env?.pullRequest?.id}"
+  dryrun:
+    names: --dryrun
+    description: "Set to true to output request body without posting comment."
+    type: boolean
+    required: false
+    default: false
+
+steps:
+  - rest.target:
+      gitlab:
+        baseUrl: ${cli['gitlab-api-url']}
+        headers:
+          PRIVATE-TOKEN: ${cli['gitlab-token']}
+  - var.set:
+      rel: ${#fod.release(cli.release)}
+  - log.progress: Processing issue data
+  - rest.call:
+      issues:
+        uri: /api/v3/releases/${rel.releaseId}/vulnerabilities?limit=50
+        query:
+          includeFixed: true
+          filters: scantype:${cli['scan-type']}
+        log.progress:
+          page.post-process: Processed ${totalIssueCount?:0} of ${issues_raw.totalCount} issues
+        records.for-each:
+          record.var-name: issue
+          if: ${issue.status!='Existing'}
+          do:
+            - var.set:
+                removedIssues..: {fmt: mdIssueListItem, if: "${issue.status=='Fix Validated'}"}
+                newIssues..: {fmt: mdIssueListItem, if: "${(issue.status=='New' || issue.status=='Reopen')}"}
+
+  - var.set:
+      reviewBody: {fmt: reviewBody}
+      noteRequestBody: {fmt: noteRequestBody}
+      hasIssueStatusChanges: ${newIssues!=null || removedIssues!=null}
+
+  - if: ${cli.dryrun && hasIssueStatusChanges}
+    log.info: {msg: "${noteRequestBody}"}
+
+  - if: ${cli.dryrun && !hasIssueStatusChanges}
+    log.info: {msg: "No issue status changes detected; skipping MR note."}
+
+  - if: ${!cli.dryrun && hasIssueStatusChanges}
+    rest.call:
+      postMRNote:
+        method: POST
+        uri: /projects/${cli['project-id']}/merge_requests/${cli['mr-iid']}/notes
+        target: gitlab
+        body: ${noteRequestBody}
+
+  - if: ${!cli.dryrun && !hasIssueStatusChanges}
+    log.info: {msg: "No issue status changes detected; not posting MR comment."}
+
+formatters:
+  noteRequestBody:
+    body: ${reviewBody}
+
+  reviewBody: |
+    ## Fortify vulnerability summary
+
+    Any issues listed below are based on comparing the latest scan results against the previous
+    scan results in FoD release [${rel.applicationName}${#isNotBlank(rel.microserviceName)?' - '+rel.microserviceName:''} - ${rel.releaseName}](${#fod.releaseBrowserUrl(rel)}).
+
+    ### New Issues
+
+    ${newIssues==null
+      ? "* No new or re-introduced issues were detected"
+      : ("* "+#join('\n* ',newIssues))}
+
+    ### Removed Issues
+
+    ${removedIssues==null
+      ? "* No removed issues were detected"
+      : ("* "+#join('\n* ',removedIssues))}
+
+  mdIssueListItem: "${issue.status} (${issue.scantype}) - ${issue.category}:    \n[${issue.primaryLocationFull}${issue.lineNumber==null?'':':'+issue.lineNumber}](${#fod.issueBrowserUrl(issue)})"

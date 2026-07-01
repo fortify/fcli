@@ -19,7 +19,7 @@ Programmatic access: `#actionSchema()`, `#actionSpelFunctions()` (available insi
 
 ## SpEL Expression Scope
 
-- **`cli.options::default`** — Only `ActionSpelFunctions` + `#env()`; NO action context, NO product-specific functions
+- **`cli.options::default`** — Only `ActionSpelFunctions` + `#env()` + `#<ci>.env` (e.g. `#ado.env`, `#github.env`); NO action context, NO product-specific functions
 - **`steps` section** — Full access: all SpEL functions, action variables, product-specific (`fod.*`, `ssc.*`), CI-specific (`github.*`, `gitlab.*`, `ado.*`)
 
 ## YAML/SpEL Pitfalls

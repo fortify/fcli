@@ -117,10 +117,12 @@ public class NcdReportGitHubResultsGenerator extends AbstractNcdReportResultsGen
      * method.
      */
     private void generateMostRecentCommitData(INcdReportRepositoryBranchCommitCollector branchCommitCollector, NcdReportGitHubRepositoryDescriptor repoDescriptor, List<NcdReportGitHubBranchDescriptor> branchDescriptors) {
+        String until = reportContext().reportConfig().getCommitEndDateTime()
+                .format(DateTimeFormatter.ISO_INSTANT);
         NcdReportGitHubCommitDescriptor mostRecentCommitDescriptor = null;
         NcdReportGitHubBranchDescriptor mostRecentBranchDescriptor = null;
         for ( var branchDescriptor : branchDescriptors ) {
-            var currentCommitResponse = getLatestCommit(repoDescriptor, branchDescriptor);
+            var currentCommitResponse = getLatestCommit(repoDescriptor, branchDescriptor, until);
             if ( currentCommitResponse.size()>0 ) {
                 var currentCommitDescriptor = JsonHelper.treeToValue(currentCommitResponse.get(0), NcdReportGitHubCommitDescriptor.class);
                 if ( mostRecentCommitDescriptor==null || currentCommitDescriptor.getDate().isAfter(mostRecentCommitDescriptor.getDate()) ) {
@@ -140,14 +142,16 @@ public class NcdReportGitHubResultsGenerator extends AbstractNcdReportResultsGen
      * @return true if any commits were found, false otherwise  
      */
     private boolean generateCommitDataForBranches(INcdReportRepositoryBranchCommitCollector branchCommitCollector, NcdReportGitHubRepositoryDescriptor repoDescriptor, List<NcdReportGitHubBranchDescriptor> branchDescriptors) {
-        String since = reportContext().reportConfig().getCommitOffsetDateTime()
+        String since = reportContext().reportConfig().getCommitStartDateTime()
+                .format(DateTimeFormatter.ISO_INSTANT);
+        String until = reportContext().reportConfig().getCommitEndDateTime()
                 .format(DateTimeFormatter.ISO_INSTANT);
         boolean commitsFound = false;
         for ( var branchDescriptor : branchDescriptors ) {
             reportContext().progressWriter().writeI18nProgress("fcli.license.ncd-report.loading.branch-commits", repoDescriptor.getFullName(), branchDescriptor.getName());
             List<Boolean> foundFlag = new ArrayList<>();
             restHelper.repo(repoDescriptor.getOwnerName(), repoDescriptor.getName())
-                .queryCommits().sha(branchDescriptor.getSha()).since(since).process(commit -> {
+                .queryCommits().sha(branchDescriptor.getSha()).since(since).until(until).process(commit -> {
                     foundFlag.add(true);
                     addCommit(branchCommitCollector, repoDescriptor, branchDescriptor, commit);
                     return Break.FALSE;
@@ -185,9 +189,18 @@ public class NcdReportGitHubResultsGenerator extends AbstractNcdReportResultsGen
     /**
      * Get a single commit (most recent) for a branch.
      */
-    private ArrayNode getLatestCommit(NcdReportGitHubRepositoryDescriptor repoDescriptor, NcdReportGitHubBranchDescriptor branchDescriptor) {
-        return restHelper.repo(repoDescriptor.getOwnerName(), repoDescriptor.getName())
-            .getLatestCommit(branchDescriptor.getSha());
+    private ArrayNode getLatestCommit(NcdReportGitHubRepositoryDescriptor repoDescriptor, NcdReportGitHubBranchDescriptor branchDescriptor, String until) {
+        var result = JsonHelper.getObjectMapper().createArrayNode();
+        restHelper.repo(repoDescriptor.getOwnerName(), repoDescriptor.getName())
+            .queryCommits()
+                .sha(branchDescriptor.getSha())
+                .until(until)
+                .queryParam("per_page", 1)
+                .process(commit -> {
+                    result.add(commit);
+                    return Break.TRUE;
+                });
+        return result;
     }
     
     /**

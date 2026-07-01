@@ -26,8 +26,13 @@ public class MaskValueDescriptor {
     private final LogSensitivityLevel sensitivity;
     private final String description;
     private final String pattern;
+    private final boolean maskFullValueOnNoMatch;
     
     public MaskValueDescriptor(LogSensitivityLevel sensitivity, String description) {
-        this(sensitivity, description, null);
+        this(sensitivity, description, null, true);
+    }
+    
+    public MaskValueDescriptor(LogSensitivityLevel sensitivity, String description, String pattern) {
+        this(sensitivity, description, pattern, true);
     }
 }

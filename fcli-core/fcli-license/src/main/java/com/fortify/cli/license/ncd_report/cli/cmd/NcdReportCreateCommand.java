@@ -13,6 +13,9 @@
 package com.fortify.cli.license.ncd_report.cli.cmd;
 
 import java.io.File;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.ZoneOffset;
 
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.progress.helper.IProgressWriterI18n;
@@ -31,8 +34,10 @@ import picocli.CommandLine.Option;
 public final class NcdReportCreateCommand extends AbstractConfigurableReportGenerateCommand<NcdReportConfig, NcdReportContext> {
     @Getter @Mixin private OutputHelperMixins.CreateWithDetailsOutput outputHelper;
     @Mixin private UnirestContextMixin unirestContextMixin;
-    @Option(names = {"-c","--config"}, required = true, defaultValue = "NcdReportConfig.yml")
+    @Option(names = {"-c","--config"}, defaultValue = "NcdReportConfig.yml")
     @Getter private File configFile;
+    @Option(names = {"--end-date"})
+    @Getter private LocalDate endDate;
     
     @Override
     protected String getReportTitle() {
@@ -44,6 +49,13 @@ public final class NcdReportCreateCommand extends AbstractConfigurableReportGene
         return NcdReportConfig.class;
     }
     
+    @Override
+    protected void updateConfig(NcdReportConfig config) {
+        if ( endDate != null ) {
+            config.setCommitEndDate(endDate.atTime(LocalTime.MAX).atOffset(ZoneOffset.UTC));
+        }
+    }
+
     @Override
     protected NcdReportContext createReportContext(NcdReportConfig config, IReportWriter reportWriter, IProgressWriterI18n progressWriter) {
         return new NcdReportContext(config, reportWriter, progressWriter, unirestContextMixin.getUnirestContext());

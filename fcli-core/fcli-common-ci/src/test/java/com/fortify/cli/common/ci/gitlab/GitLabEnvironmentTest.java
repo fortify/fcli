@@ -47,10 +47,14 @@ public class GitLabEnvironmentTest {
         System.setProperty("fcli.env.CI_COMMIT_BRANCH", "develop");
         System.setProperty("fcli.env.CI_PIPELINE_ID", "9876");
         System.setProperty("fcli.env.CI_REPOSITORY_URL", "https://gitlab.example.com/group/myproject.git");
+        System.setProperty("fcli.env.CI_API_V4_URL", "https://gitlab.example.com/api/v4");
+        System.setProperty("fcli.env.GITLAB_API_TOKEN", "gl-api-token");
         
         var env = GitLabEnvironment.detect();
         
         assertNotNull(env);
+        assertEquals("https://gitlab.example.com/api/v4", env.apiV4Url());
+        assertEquals("gl-api-token", env.token());
         assertEquals("12345", env.projectId());
         assertEquals("9876", env.pipelineId());
         

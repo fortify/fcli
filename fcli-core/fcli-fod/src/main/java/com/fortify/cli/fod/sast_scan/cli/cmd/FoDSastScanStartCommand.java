@@ -19,6 +19,7 @@ import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.progress.cli.mixin.ProgressWriterFactoryMixin;
 import com.fortify.cli.common.progress.helper.IProgressWriter;
+import com.fortify.cli.common.rest.unirest.UnexpectedHttpResponseException;
 import com.fortify.cli.common.util.FcliBuildProperties;
 import com.fortify.cli.fod._common.scan.cli.cmd.AbstractFoDScanStartCommand;
 import com.fortify.cli.fod._common.scan.cli.mixin.FoDRemediationScanPreferenceTypeMixins;
@@ -41,6 +42,10 @@ public class FoDSastScanStartCommand extends AbstractFoDScanStartCommand {
 
     @Option(names = {"--notes"})
     private String notes;
+    @Option(names = {"--in-progress-action"}, descriptionKey = "fcli.fod.sast-scan.start.in-progress-action")
+    private FoDEnums.InProgressScanActionType inProgressScanActionType;
+    @Option(names = {"--entitlement-preference"}, descriptionKey = "fcli.fod.scan.entitlement-preference")
+    private FoDEnums.EntitlementPreferenceType entitlementPreferenceType;
     @Mixin private CommonOptionMixins.RequiredFile scanFileMixin;
 
     @Mixin private FoDRemediationScanPreferenceTypeMixins.OptionalOption remediationScanType;
@@ -49,29 +54,63 @@ public class FoDSastScanStartCommand extends AbstractFoDScanStartCommand {
     @Override
     protected FoDScanDescriptor startScan(UnirestInstance unirest, FoDReleaseDescriptor releaseDescriptor) {
         String relId = releaseDescriptor.getReleaseId();
-        Boolean isRemediation = false;
-
-        // if we have requested remediation scan use it to find appropriate assessment type
-        if (remediationScanType != null && remediationScanType.getRemediationScanPreferenceType() != null) {
-            if (remediationScanType.getRemediationScanPreferenceType().equals(FoDEnums.RemediationScanPreferenceType.RemediationScanIfAvailable) ||
-                    remediationScanType.getRemediationScanPreferenceType().equals(FoDEnums.RemediationScanPreferenceType.RemediationScanOnly)) {
-                isRemediation = true;
-            }
-        }
 
         validateScanSetup(unirest, relId);
 
-        FoDScanSastStartRequest startScanRequest = FoDScanSastStartRequest.builder()
-                .isRemediationScan(isRemediation)
+        FoDEnums.RemediationScanPreferenceType remediationPref = remediationScanType != null
+                ? remediationScanType.getRemediationScanPreferenceType() : null;
+
+        boolean useAdvanced = entitlementPreferenceType != null || inProgressScanActionType != null;
+
+        FoDScanSastStartRequest.FoDScanSastStartRequestBuilder requestBuilder = FoDScanSastStartRequest.builder()
                 .scanMethodType("Other")
                 .notes(notes != null && !notes.isEmpty() ? notes : "")
                 .scanTool(FcliBuildProperties.INSTANCE.getFcliProjectName())
-                .scanToolVersion(FcliBuildProperties.INSTANCE.getFcliVersion())
-                .build();
+                .scanToolVersion(FcliBuildProperties.INSTANCE.getFcliVersion());
 
         try (IProgressWriter progressWriter = progressWriterFactory.create()) {
+            if (useAdvanced) {
+                FoDEnums.InProgressScanActionType inProgressAction = inProgressScanActionType != null
+                        ? inProgressScanActionType : FoDEnums.InProgressScanActionType.Queue;
+                // FoD's start-scan-advanced expects 'CancelInProgressScan' rather than the enum's 'CancelScanInProgress'
+                String inProgressApiValue = inProgressAction == FoDEnums.InProgressScanActionType.CancelScanInProgress
+                        ? "CancelInProgressScan" : inProgressAction.name();
+                FoDScanSastStartRequest startScanRequest = requestBuilder
+                        .entitlementPreferenceType(entitlementPreferenceType != null ? entitlementPreferenceType.name() : null)
+                        .purchaseEntitlement(false)
+                        .remdiationScanPreferenceType(remediationPref != null ? remediationPref.name() : null)
+                        .inProgressScanActionType(inProgressApiValue)
+                        .build();
+                return FoDScanSastHelper.startScanAdvanced(unirest, releaseDescriptor, startScanRequest, scanFileMixin.getFile(), progressWriter);
+            }
+            boolean isRemediation = remediationPref != null
+                    && (remediationPref.equals(FoDEnums.RemediationScanPreferenceType.RemediationScanIfAvailable)
+                            || remediationPref.equals(FoDEnums.RemediationScanPreferenceType.RemediationScanOnly));
+            FoDScanSastStartRequest startScanRequest = requestBuilder
+                    .isRemediationScan(isRemediation)
+                    .build();
             return FoDScanSastHelper.startScanWithDefaults(unirest, releaseDescriptor, startScanRequest, scanFileMixin.getFile(), progressWriter);
+        } catch (Exception e) {
+            throw translateScanInProgressException(e);
         }
+    }
+
+    // FoD returns HTTP 422 (errorCode 2001) when a scan is already in progress and the
+    // in-progress action prevents starting a new one. Translate that into a concise,
+    // actionable message instead of surfacing the raw upload/HTTP exception.
+    private RuntimeException translateScanInProgressException(Exception e) {
+        for (Throwable t = e; t != null; t = t.getCause()) {
+            if (t instanceof UnexpectedHttpResponseException) {
+                UnexpectedHttpResponseException httpException = (UnexpectedHttpResponseException) t;
+                if (httpException.getStatus() == 422 && httpException.getMessage() != null
+                        && httpException.getMessage().toLowerCase().contains("another scan is in progress")) {
+                    return new FcliSimpleException("Cannot start scan: another scan is already in progress for this release. "
+                            + "Use '--in-progress-action=Queue' to queue this scan, or "
+                            + "'--in-progress-action=CancelScanInProgress' to cancel the running scan and start a new one.");
+                }
+            }
+        }
+        return e instanceof RuntimeException ? (RuntimeException) e : new FcliSimpleException(e);
     }
 
     private void validateScanSetup(UnirestInstance unirest, String relId) {

@@ -44,6 +44,7 @@ public record BitbucketEnvironment(
     String repositoryFullName,
     String pipelineUuid,
     String prTerminology,
+    String prKeyword,
     String ciName,
     String ciId
 ) {
@@ -51,6 +52,7 @@ public record BitbucketEnvironment(
     public static final String NAME = "Bitbucket";
     public static final String ID = "bitbucket";
     public static final String PR_TERMINOLOGY = "Pull Request";
+    public static final String PR_KEYWORD = "pr";
 
     public static final String ENV_WORKSPACE = "BITBUCKET_WORKSPACE";
     public static final String ENV_REPO_OWNER = "BITBUCKET_REPO_OWNER";
@@ -138,6 +140,7 @@ public record BitbucketEnvironment(
             .repositoryFullName(repoFullName)
             .pipelineUuid(EnvHelper.env(ENV_PIPELINE_UUID))
             .prTerminology(PR_TERMINOLOGY)
+            .prKeyword(PR_KEYWORD)
             .ciName(NAME)
             .ciId(ID)
             .build();

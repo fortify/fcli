@@ -57,7 +57,7 @@ public class FoDIssueUpdateCommand extends AbstractFoDJsonNodeOutputCommand impl
     @Mixin private FoDReleaseByQualifiedNameOrIdResolverMixin.RequiredOption releaseResolver;
     @Mixin private FoDAttributeUpdateOptions.OptionalAttrOption issueAttrsUpdate;
 
-    @Option(names = {"--user"}, required = true)
+    @Option(names = {"--user"}, required = false)
     protected String user;
     @Option(names = {"--dev-status"}, required = false)
     protected String developerStatus;

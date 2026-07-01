@@ -22,12 +22,15 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -72,7 +75,16 @@ import lombok.SneakyThrows;
 
 public class ActionLoaderHelper {
     private static final Logger LOG = LoggerFactory.getLogger(ActionLoaderHelper.class);
+    private static final Map<String, Set<String>> builtinActionNamesByModule = new ConcurrentHashMap<>();
     private ActionLoaderHelper() {}
+
+    public static final boolean hasBuiltInAction(String moduleName, String actionName) {
+        if (StringUtils.isBlank(actionName)) { return false; }
+        return builtinActionNamesByModule
+                .computeIfAbsent(moduleName, m -> streamAsNames(ActionSource.defaultActionSources(m), ActionValidationHandler.IGNORE)
+                        .collect(Collectors.toSet()))
+                .contains(actionName);
+    }
     
     public static final ActionLoadResult load(List<ActionSource> sources, String name, ActionValidationHandler actionValidationHandler) {
         return new ActionLoader(sources, actionValidationHandler).load(name);

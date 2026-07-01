@@ -44,9 +44,12 @@ public record GitLabEnvironment(
     CiCommit ciCommit,
     CiPullRequest pullRequest,
     // GitLab-specific properties
+    String apiV4Url,
+    String token,
     String projectId,
     String pipelineId,
     String prTerminology,
+    String prKeyword,
     String ciName,
     String ciId
 ) {
@@ -55,6 +58,7 @@ public record GitLabEnvironment(
     public static final String NAME = "GitLab";
     public static final String ID = "gitlab";
     public static final String PR_TERMINOLOGY = "Merge Request";
+    public static final String PR_KEYWORD = "mr";
     
     // Environment variable names
     public static final String ENV_GITLAB_CI = "GITLAB_CI";
@@ -71,8 +75,9 @@ public record GitLabEnvironment(
     public static final String ENV_REPOSITORY_URL = "CI_REPOSITORY_URL";
     public static final String ENV_SERVER_URL = "CI_SERVER_URL"; // Base GitLab URL
     public static final String ENV_API_V4_URL = "CI_API_V4_URL"; // API v4 URL
-    public static final String ENV_TOKEN = "GITLAB_TOKEN";
-    public static final String ENV_JOB_TOKEN = "CI_JOB_TOKEN"; // Built-in job token (automatic)
+    public static final String ENV_JOB_TOKEN = "CI_JOB_TOKEN"; // Built-in job token
+    // Job token is built-in and automatic, but can be overridden by GITLAB_TOKEN or GITLAB_API_TOKEN
+    public static final String[] ENV_TOKEN = {"GITLAB_TOKEN", "GITLAB_API_TOKEN", ENV_JOB_TOKEN}; 
     
     /**
      * Detect GitLab CI environment from environment variables.
@@ -134,6 +139,8 @@ public record GitLabEnvironment(
         var pipelineIdValue = EnvHelper.env(ENV_PIPELINE_ID);
         
         return GitLabEnvironment.builder()
+            .apiV4Url(EnvHelper.env(ENV_API_V4_URL))
+            .token(EnvHelper.env(ENV_TOKEN))
             .projectId(projectIdStr)
             .pipelineId(StringUtils.isNotBlank(pipelineIdValue) ? pipelineIdValue : null)
             .ciRepository(ciRepository)
@@ -141,6 +148,7 @@ public record GitLabEnvironment(
             .ciCommit(ciCommit)
             .pullRequest(pullRequest)
             .prTerminology(PR_TERMINOLOGY)
+            .prKeyword(PR_KEYWORD)
             .ciName(NAME)
             .ciId(ID)
             .build();

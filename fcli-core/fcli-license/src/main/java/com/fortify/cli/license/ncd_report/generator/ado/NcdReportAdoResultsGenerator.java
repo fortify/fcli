@@ -112,10 +112,11 @@ public class NcdReportAdoResultsGenerator extends AbstractNcdReportResultsGenera
     }
 
     private void generateMostRecentCommitData(AdoRestHelper restHelper, INcdReportRepositoryBranchCommitCollector branchCommitCollector, NcdReportAdoRepositoryDescriptor repoDescriptor, List<NcdReportAdoBranchDescriptor> branchDescriptors) {
+        String until = reportContext().reportConfig().getCommitEndDateTime().format(DateTimeFormatter.ISO_INSTANT);
         NcdReportAdoCommitDescriptor mostRecentCommit = null;
         NcdReportAdoBranchDescriptor mostRecentBranch = null;
         for ( var branch : branchDescriptors ) {
-            ObjectNode body = getLatestCommit(restHelper, repoDescriptor, branch);
+            ObjectNode body = getLatestCommit(restHelper, repoDescriptor, branch, until);
             ArrayNode commits = (ArrayNode) body.path("value");
             if ( commits.size()>0 ) {
                 var commit = JsonHelper.treeToValue(commits.get(0), NcdReportAdoCommitDescriptor.class);
@@ -131,13 +132,14 @@ public class NcdReportAdoResultsGenerator extends AbstractNcdReportResultsGenera
     }
 
     private boolean generateCommitDataForBranches(AdoRestHelper restHelper, INcdReportRepositoryBranchCommitCollector branchCommitCollector, NcdReportAdoRepositoryDescriptor repoDescriptor, List<NcdReportAdoBranchDescriptor> branchDescriptors) {
-        String since = reportContext().reportConfig().getCommitOffsetDateTime().format(DateTimeFormatter.ISO_INSTANT);
+        String since = reportContext().reportConfig().getCommitStartDateTime().format(DateTimeFormatter.ISO_INSTANT);
+        String until = reportContext().reportConfig().getCommitEndDateTime().format(DateTimeFormatter.ISO_INSTANT);
         boolean commitsFound = false;
         for ( var branchDescriptor : branchDescriptors ) {
             reportContext().progressWriter().writeI18nProgress("fcli.license.ncd-report.loading.branch-commits", repoDescriptor.getFullName(), branchDescriptor.getName());
             List<Boolean> foundFlag = new ArrayList<>();
             restHelper.repository(repoDescriptor.getOrganizationName(), repoDescriptor.getProjectName(), repoDescriptor.getId())
-                .queryCommits().branchName(branchDescriptor.getName()).fromDate(since).process(commit -> {
+                .queryCommits().branchName(branchDescriptor.getName()).fromDate(since).toDate(until).process(commit -> {
                     foundFlag.add(true);
                     addCommit(branchCommitCollector, repoDescriptor, branchDescriptor, commit);
                     return Break.FALSE;
@@ -165,9 +167,18 @@ public class NcdReportAdoResultsGenerator extends AbstractNcdReportResultsGenera
         return result;
     }
 
-    private ObjectNode getLatestCommit(AdoRestHelper restHelper, NcdReportAdoRepositoryDescriptor repoDescriptor, NcdReportAdoBranchDescriptor branchDescriptor) {
-        return restHelper.repository(repoDescriptor.getOrganizationName(), repoDescriptor.getProjectName(), repoDescriptor.getId())
-            .getLatestCommit(branchDescriptor.getName());
+    private ObjectNode getLatestCommit(AdoRestHelper restHelper, NcdReportAdoRepositoryDescriptor repoDescriptor, NcdReportAdoBranchDescriptor branchDescriptor, String until) {
+        var value = JsonHelper.getObjectMapper().createArrayNode();
+        restHelper.repository(repoDescriptor.getOrganizationName(), repoDescriptor.getProjectName(), repoDescriptor.getId())
+            .queryCommits()
+                .branchName(branchDescriptor.getName())
+                .toDate(until)
+                .queryParam("searchCriteria.$top", 1)
+                .process(commit -> {
+                    value.add(commit);
+                    return Break.TRUE;
+                });
+        return JsonHelper.getObjectMapper().createObjectNode().set("value", value);
     }
 
     private NcdReportAdoRepositoryDescriptor getRepoDescriptor(JsonNode repoNode) {

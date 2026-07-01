@@ -13,13 +13,13 @@
 package com.fortify.cli.license.ncd_report.config;
 
 import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.Collection;
 import java.util.Optional;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.report.config.IReportSourceSupplierConfig;
-import com.fortify.cli.common.util.DateTimePeriodHelper;
-import com.fortify.cli.common.util.DateTimePeriodHelper.Period;
 import com.fortify.cli.license.ncd_report.collector.NcdReportContext;
 
 import lombok.Data;
@@ -34,16 +34,29 @@ import lombok.NoArgsConstructor;
 @Reflectable @NoArgsConstructor 
 @Data
 public class NcdReportConfig implements IReportSourceSupplierConfig<NcdReportContext> {
-    private static final DateTimePeriodHelper PERIOD_HELPER = new DateTimePeriodHelper(Period.DAYS);
     private NcdReportSourcesConfig sources;
     private Optional<NcdReportContributorConfig> contributor;
+    /** Not a YAML config field — set programmatically from the {@code --end-date} CLI option. */
+    @JsonIgnore private OffsetDateTime commitEndDate;
     
     @Override
     public final Collection<INcdReportSourceConfig> getSourceConfigs() {
-        return sources.getSourceConfigs();
+        return sources == null ? java.util.List.of() : sources.getSourceConfigs();
     }
     
-    public final OffsetDateTime getCommitOffsetDateTime() {
-        return PERIOD_HELPER.getCurrentOffsetDateTimeMinusPeriod("90d");
+    /**
+     * Returns the (inclusive) end of the 90-day reporting window.
+     * When {@code --end-date} is supplied this is end-of-day on that date; otherwise it is now.
+     */
+    public final OffsetDateTime getCommitEndDateTime() {
+        return commitEndDate != null ? commitEndDate : OffsetDateTime.now(ZoneOffset.UTC);
+    }
+
+    /**
+     * Returns the (inclusive) start of the 90-day reporting window: exactly 90 days before
+     * {@link #getCommitEndDateTime()}.
+     */
+    public final OffsetDateTime getCommitStartDateTime() {
+        return getCommitEndDateTime().minusDays(90);
     }
 }

@@ -52,7 +52,7 @@ public final class LogMaskHelper {
      */
     public final LogMaskHelper registerValue(MaskValue maskAnnotation, LogMaskSource source, Object value) {
         if ( maskAnnotation!=null ) {
-            registerValue(maskAnnotation.sensitivity(), source, maskAnnotation.description(), value, maskAnnotation.pattern());
+            doRegisterValue(maskAnnotation.sensitivity(), source, maskAnnotation.description(), value, maskAnnotation.pattern(), maskAnnotation.maskFullValueOnNoMatch());
         }
         return this;
     }
@@ -63,7 +63,7 @@ public final class LogMaskHelper {
      */
     public final LogMaskHelper registerValue(MaskValueDescriptor maskDescriptor, LogMaskSource source, Object value) {
         if ( maskDescriptor!=null ) {
-            registerValue(maskDescriptor.sensitivity(), source, maskDescriptor.description(), value, maskDescriptor.pattern());
+            doRegisterValue(maskDescriptor.sensitivity(), source, maskDescriptor.description(), value, maskDescriptor.pattern(), maskDescriptor.maskFullValueOnNoMatch());
         }
         return this;
     }
@@ -73,8 +73,12 @@ public final class LogMaskHelper {
      * each attribute of that annotation as a separate method argument.
      */
     public final LogMaskHelper registerValue(LogSensitivityLevel sensitivityLevel, LogMaskSource source, String description, Object value, String patternString) {
+        return doRegisterValue(sensitivityLevel, source, description, value, patternString, true);
+    }
+
+    private final LogMaskHelper doRegisterValue(LogSensitivityLevel sensitivityLevel, LogMaskSource source, String description, Object value, String patternString, boolean maskFullValueOnNoMatch) {
         if ( value instanceof Collection<?> collection ) {
-            collection.forEach(item -> registerValue(sensitivityLevel, source, description, item, patternString));
+            collection.forEach(item -> doRegisterValue(sensitivityLevel, source, description, item, patternString, maskFullValueOnNoMatch));
             return this;
         }
         var valueString = valueAsString(value);
@@ -85,6 +89,8 @@ public final class LogMaskHelper {
                     throw new FcliBugException("Pattern string passed to LogMaskHelper::registerValue must contain exactly one capturing group");
                 }
                 valueString = matcher.group(1);
+            } else if ( !maskFullValueOnNoMatch ) {
+                return this; // Pattern didn't match; configured to skip masking on no match
             }
         }
         return registerValue(sensitivityLevel, valueString, String.format("<REDACTED %s (%s)>", description.toUpperCase(), source));

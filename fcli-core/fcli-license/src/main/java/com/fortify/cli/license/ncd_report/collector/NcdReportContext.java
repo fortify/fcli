@@ -70,6 +70,10 @@ public final class NcdReportContext implements IReportContext {
     @Override @SneakyThrows
     public void close() {
         repositoryProcessor.writeResults();
+        writers.authorsWriter().close();
+        reportWriter.summary()
+            .put("reportStartDate", reportConfig.getCommitStartDateTime().toLocalDate().toString())
+            .put("reportEndDate", reportConfig.getCommitEndDateTime().toLocalDate().toString());
         logger().updateSummary(reportWriter.summary());
     }
 }
