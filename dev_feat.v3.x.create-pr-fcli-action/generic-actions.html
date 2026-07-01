@@ -1,6 +1,6 @@
 ---
 title: 'Action Documentation: <a href="manpage/fcli-action.html"><code>fcli action</code></a>'
-fcli_version: 0.20260625.164946-dev_feat.v3.x.create-pr-fcli-action
+fcli_version: 0.20260701.114850-dev_feat.v3.x.create-pr-fcli-action
 ---
 
 <!DOCTYPE html>
@@ -17,13 +17,13 @@ fcli_version: 0.20260625.164946-dev_feat.v3.x.create-pr-fcli-action
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260625.164946-dev_feat.v3.x.create-pr-fcli-action" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260701.114850-dev_feat.v3.x.create-pr-fcli-action" %}
 
 
 <div id="header">
 <h1>Action Documentation: <a href="manpage/fcli-action.html"><code>fcli action</code></a></h1>
 <div class="details">
-<span id="revnumber">version 0.20260625.164946-dev_feat.v3.x.create-pr-fcli-action</span>
+<span id="revnumber">version 0.20260701.114850-dev_feat.v3.x.create-pr-fcli-action</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -47,24 +47,10 @@ fcli_version: 0.20260625.164946-dev_feat.v3.x.create-pr-fcli-action
 <li><a href="#_post_scan_actions_2">Post-Scan Actions</a></li>
 </ul>
 </li>
-<li><a href="#_create_pr">create-pr</a>
+<li><a href="#_detect_env">detect-env</a>
 <ul class="sectlevel2">
 <li><a href="#_synopsis_2">Synopsis</a></li>
 <li><a href="#_description_2">Description</a></li>
-<li><a href="#_options">Options</a></li>
-</ul>
-</li>
-<li><a href="#_detect_env">detect-env</a>
-<ul class="sectlevel2">
-<li><a href="#_synopsis_3">Synopsis</a></li>
-<li><a href="#_description_3">Description</a></li>
-</ul>
-</li>
-<li><a href="#_git_push_changes">git-push-changes</a>
-<ul class="sectlevel2">
-<li><a href="#_synopsis_4">Synopsis</a></li>
-<li><a href="#_description_4">Description</a></li>
-<li><a href="#_options_2">Options</a></li>
 </ul>
 </li>
 </ul>
@@ -384,7 +370,7 @@ CHECK_POLICY_EXTRA_OPTS</p></td>
 PR_COMMENT_ACTION<br>
 PR_COMMENT_EXTRA_OPTS</p></td>
 <td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
-<p>(PREVIEW) If <code>DO_PR_COMMENT</code> is set to true (implied if any of the other two <code>PR_COMMENT_*</code> variables are set), a Pull Request or Merge Request comment will be generated using an fcli-provided action matching the current CI system like <a href="https://fortify.github.io/fcli/latest_dev/fod-actions.html#_github_pr_comment">github-pr-comment</a> or, if specified, the custom fcli action specified through <code>PR_COMMENT_ACTION</code>. Extra options for the fcli action can be specified through the <code>PR_COMMENT_EXTRA_OPTS</code> environment variable, which may include fcli options to allow unsigned custom actions to be used.</p>
+<p>(PREVIEW) If <code>DO_PR_COMMENT</code> is set to true (implied if any of the other two <code>PR_COMMENT_*</code> variables are set), a Pull Request or Merge Request comment will be generated using an fcli-provided action matching the current CI system like <a href="https://fortify.github.io/fcli/latest_dev/fod-actions.html#_github_pr_comment">github-pr-comment</a>, <a href="https://fortify.github.io/fcli/latest_dev/fod-actions.html#_ado_pr_comment">ado-pr-comment</a>, or  <a href="https://fortify.github.io/fcli/latest_dev/fod-actions.html#_gitlab_mr_comment">gitlab-mr-comment</a>. A custom action can be specified through <code>PR_COMMENT_ACTION</code>. Extra options for the fcli action can be specified through the <code>PR_COMMENT_EXTRA_OPTS</code> environment variable, which may include fcli options to allow unsigned custom actions to be used.</p>
 </div></div></td>
 </tr>
 <tr>
@@ -393,6 +379,15 @@ SAST_EXPORT_ACTION<br>
 SAST_EXPORT_EXTRA_OPTS</p></td>
 <td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
 <p>If <code>DO_SAST_EXPORT</code> is not set to <code>false</code> and a SAST scan was completed, the SAST vulnerability data will be exported into a CI-specific format using an fcli-provided action matching the current CI system like <a href="https://fortify.github.io/fcli/latest_dev/fod-actions.html#_github_sast_report">github-sast-report</a> or <a href="https://fortify.github.io/fcli/latest_dev/fod-actions.html#_gitlab_sast_report">gitlab-sast-report</a>, or, if specified, the custom fcli action specified through <code>SAST_EXPORT_ACTION</code>. Extra options for the fcli action can be specified through the <code>SAST_EXPORT_EXTRA_OPTS</code> environment variable, which may include fcli options to allow unsigned custom actions to be used.</p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">DO_AVIATOR_REMEDIATIONS<br>
+AVIATOR_REMEDIATIONS_ACTION<br>
+AVIATOR_REMEDIATIONS_EXTRA_OPTS<br>
+GIT_PUSH_TOKEN</p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>(PREVIEW) If <code>DO_AVIATOR_REMEDIATIONS</code> is set to true (implied if any of the other two <code>AVIATOR_REMEDIATIONS_*</code> variables are set) and Aviator remediations are available, those remediations will be applied to the local source code, committed, and pushed to a new branch. On GitHub, a Pull Request is created from that branch using the fcli-provided <a href="https://fortify.github.io/fcli/latest_dev/fod-actions.html#_github_remediations_pr">github-remediations-pr</a> action; on other CI systems the fcli-provided <a href="https://fortify.github.io/fcli/latest_dev/fod-actions.html#_push_remediations">push-remediations</a> action is used to push the branch without creating a Pull or Merge Request. A custom action can be specified through <code>AVIATOR_REMEDIATIONS_ACTION</code>, and extra options for the fcli action can be specified through the <code>AVIATOR_REMEDIATIONS_EXTRA_OPTS</code> environment variable, which may include fcli options to allow unsigned custom actions to be used. The branch push is authenticated using the <code>GIT_PUSH_TOKEN</code> environment variable if set, falling back to the access token of the current CI system and then to the local Git configuration.</p>
 </div></div></td>
 </tr>
 </tbody>
@@ -647,7 +642,7 @@ CHECK_POLICY_EXTRA_OPTS</p></td>
 PR_COMMENT_ACTION<br>
 PR_COMMENT_EXTRA_OPTS</p></td>
 <td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
-<p>(PREVIEW) If <code>DO_PR_COMMENT</code> is set to true (implied if any of the other two <code>PR_COMMENT_*</code> variables are set), a Pull Request or Merge Request comment will be generated using an fcli-provided action matching the current CI system like <a href="https://fortify.github.io/fcli/latest_dev/ssc-actions.html#_github_pr_comment">github-pr-comment</a> or, if specified, the custom fcli action specified through <code>PR_COMMENT_ACTION</code>. Extra options for the fcli action can be specified through the <code>PR_COMMENT_EXTRA_OPTS</code> environment variable, which may include fcli options to allow unsigned custom actions to be used.</p>
+<p>(PREVIEW) If <code>DO_PR_COMMENT</code> is set to true (implied if any of the other two <code>PR_COMMENT_*</code> variables are set), a Pull Request or Merge Request comment will be generated using an fcli-provided action matching the current CI system like <a href="https://fortify.github.io/fcli/latest_dev/ssc-actions.html#_github_pr_comment">github-pr-comment</a>, <code>ado-pr-comment</code>, or  <code>gitlab-mr-comment</code>. A custom action can be specified through <code>PR_COMMENT_ACTION</code>. Extra options for the fcli action can be specified through the <code>PR_COMMENT_EXTRA_OPTS</code> environment variable, which may include fcli options to allow unsigned custom actions to be used.</p>
 </div></div></td>
 </tr>
 <tr>
@@ -666,74 +661,17 @@ DEBRICKED_EXPORT_EXTRA_OPTS</p></td>
 <p>If <code>DO_DEBRICKED_EXPORT</code> is not set to <code>false</code> and a Debricked scan was completed, the Debricked vulnerability data will be exported into a CI-specific format using an fcli-provided action matching the current CI system like <a href="https://fortify.github.io/fcli/latest_dev/ssc-actions.html#_gitlab_debricked_report">gitlab-debricked-report</a>, or, if specified, the custom fcli action specified through <code>DEBRICKED_EXPORT_ACTION</code>. Extra options for the fcli action can be specified through the <code>DEBRICKED_EXPORT_EXTRA_OPTS</code> environment variable, which may include fcli options to allow unsigned custom actions to be used.</p>
 </div></div></td>
 </tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">DO_AVIATOR_REMEDIATIONS<br>
+AVIATOR_REMEDIATIONS_ACTION<br>
+AVIATOR_REMEDIATIONS_EXTRA_OPTS<br>
+GIT_PUSH_TOKEN</p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>(PREVIEW) If <code>DO_AVIATOR_REMEDIATIONS</code> is set to true (implied if any of the other two <code>AVIATOR_REMEDIATIONS_*</code> variables are set) and Aviator remediations are available, those remediations will be applied to the local source code, committed, and pushed to a new branch. On GitHub, a Pull Request is created from that branch using the fcli-provided <a href="https://fortify.github.io/fcli/latest_dev/ssc-actions.html#_github_remediations_pr">github-remediations-pr</a> action; on other CI systems the fcli-provided <a href="https://fortify.github.io/fcli/latest_dev/ssc-actions.html#_push_remediations">push-remediations</a> action is used to push the branch without creating a Pull or Merge Request. A custom action can be specified through <code>AVIATOR_REMEDIATIONS_ACTION</code>, and extra options for the fcli action can be specified through the <code>AVIATOR_REMEDIATIONS_EXTRA_OPTS</code> environment variable, which may include fcli options to allow unsigned custom actions to be used. The branch push is authenticated using the <code>GIT_PUSH_TOKEN</code> environment variable if set, falling back to the access token of the current CI system and then to the local Git configuration.</p>
+</div></div></td>
+</tr>
 </tbody>
 </table>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_create_pr"><a class="anchor" href="#_create_pr"></a>create-pr</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>Create a pull request or merge request on GitHub or GitLab</p>
-</div>
-<div class="sect2">
-<h3 id="_synopsis_2"><a class="anchor" href="#_synopsis_2"></a>Synopsis</h3>
-<div class="paragraph">
-<p><strong><a href="manpage/fcli-action-run.html">fcli action run</a> create-pr [<a href="manpage/fcli-action-run.html">fcli action run</a> options] [action options, see below]</strong></p>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_description_2"><a class="anchor" href="#_description_2"></a>Description</h3>
-<div class="paragraph">
-<p>This action creates a pull request (GitHub) or merge request (GitLab) for an
-existing branch. The repository platform is auto-detected from the git remote URL.
-Only GitHub and GitLab are supported; for other platforms the branch must be
-promoted to a PR/MR manually.</p>
-</div>
-<div class="paragraph">
-<p>Typically used after <code>git-stage-commit-push</code> to raise a PR/MR for the pushed branch.</p>
-</div>
-<div class="paragraph">
-<p>This action requires:
-- Git repository with a remote pointing to GitHub or GitLab
-- A CI token with PR/MR creation permissions (GITHUB_TOKEN/GH_TOKEN or CI_JOB_TOKEN)</p>
-</div>
-<div class="paragraph">
-<p>Configuration via CLI options or environment variables:
-- <code>--source-dir</code> / <code>SOURCE_DIR</code>&#8201;&#8212;&#8201;Local repo directory used to detect the platform (default: '.')
-- <code>--source-branch</code> / <code>SOURCE_BRANCH</code>&#8201;&#8212;&#8201;Branch to raise the PR/MR from (required)
-- <code>--base-branch</code> / <code>BASE_BRANCH</code>&#8201;&#8212;&#8201;Target branch for the PR/MR (default: auto-detected from remote, fallback "main")
-- <code>--title</code> / <code>PR_TITLE</code>&#8201;&#8212;&#8201;PR/MR title
-- <code>--body</code> / <code>PR_BODY</code>&#8201;&#8212;&#8201;PR/MR description</p>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_options"><a class="anchor" href="#_options"></a>Options</h3>
-<div class="dlist">
-<dl>
-<dt class="hdlist1">--source-dir, -s</dt>
-<dd>
-<p>Local repo directory used to detect the repository platform. Defaults to current working directory if not specified.</p>
-</dd>
-<dt class="hdlist1">--source-branch</dt>
-<dd>
-<p>Source branch to raise the PR/MR from.</p>
-</dd>
-<dt class="hdlist1">--base-branch</dt>
-<dd>
-<p>Target branch for the PR/MR. Auto-detected from the remote HEAD if not specified, falling back to "main".</p>
-</dd>
-<dt class="hdlist1">--title, -t</dt>
-<dd>
-<p>PR/MR title.</p>
-</dd>
-<dt class="hdlist1">--body</dt>
-<dd>
-<p>PR/MR description.</p>
-</dd>
-</dl>
-</div>
 </div>
 </div>
 </div>
@@ -744,13 +682,13 @@ promoted to a PR/MR manually.</p>
 <p>Collect environment-specific data</p>
 </div>
 <div class="sect2">
-<h3 id="_synopsis_3"><a class="anchor" href="#_synopsis_3"></a>Synopsis</h3>
+<h3 id="_synopsis_2"><a class="anchor" href="#_synopsis_2"></a>Synopsis</h3>
 <div class="paragraph">
 <p><strong><a href="manpage/fcli-action-run.html">fcli action run</a> detect-env [<a href="manpage/fcli-action-run.html">fcli action run</a> options] [action options, see below]</strong></p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_description_3"><a class="anchor" href="#_description_3"></a>Description</h3>
+<h3 id="_description_2"><a class="anchor" href="#_description_2"></a>Description</h3>
 <div class="paragraph">
 <p>This action collects data about the current environment in which fcli is being run,
 like the current CI/CD platform (GitHub, GitLab, Azure DevOps, &#8230;&#8203;), Git data from
@@ -762,76 +700,12 @@ like default FoD release name and SSC application version name.</p>
 </div>
 </div>
 </div>
-<div class="sect1">
-<h2 id="_git_push_changes"><a class="anchor" href="#_git_push_changes"></a>git-push-changes</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>Stage, commit and push local changes to a new branch</p>
-</div>
-<div class="sect2">
-<h3 id="_synopsis_4"><a class="anchor" href="#_synopsis_4"></a>Synopsis</h3>
-<div class="paragraph">
-<p><strong><a href="manpage/fcli-action-run.html">fcli action run</a> git-push-changes [<a href="manpage/fcli-action-run.html">fcli action run</a> options] [action options, see below]</strong></p>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_description_4"><a class="anchor" href="#_description_4"></a>Description</h3>
-<div class="paragraph">
-<p>This action detects local file changes, creates a new branch, stages and commits
-the changes, then pushes the branch to the remote repository. Credentials are
-auto-detected from the CI environment (GitHub Actions, GitLab CI, Azure DevOps,
-Bitbucket Pipelines).</p>
-</div>
-<div class="paragraph">
-<p>This action requires:
-- Git repository access (local clone with a configured remote)
-- A CI token with push permissions (GITHUB_TOKEN, GH_TOKEN, CI_JOB_TOKEN,
-  SYSTEM_ACCESSTOKEN, or BITBUCKET_TOKEN)</p>
-</div>
-<div class="paragraph">
-<p>Configuration via CLI options or environment variables:
-- <code>--source-dir</code> / <code>SOURCE_DIR</code>&#8201;&#8212;&#8201;Directory where changes are detected (default: '.')
-- <code>--branch-name</code> / <code>BRANCH_NAME</code>&#8201;&#8212;&#8201;Full branch name to use.
-- <code>--commit-message</code> / <code>COMMIT_MESSAGE</code>&#8201;&#8212;&#8201;Commit message
-- <code>--author-name</code> / <code>GIT_AUTHOR_NAME</code>&#8201;&#8212;&#8201;Commit author name (default: "fcli-aviator[bot]")
-- <code>--author-email</code> / <code>GIT_AUTHOR_EMAIL</code>&#8201;&#8212;&#8201;Commit author email</p>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_options_2"><a class="anchor" href="#_options_2"></a>Options</h3>
-<div class="dlist">
-<dl>
-<dt class="hdlist1">--source-dir, -s</dt>
-<dd>
-<p>Directory where changes are detected. Defaults to current working directory if not specified.</p>
-</dd>
-<dt class="hdlist1">--branch-name</dt>
-<dd>
-<p>Full branch name to use.</p>
-</dd>
-<dt class="hdlist1">--commit-message, -m</dt>
-<dd>
-<p>Git commit message.</p>
-</dd>
-<dt class="hdlist1">--author-name</dt>
-<dd>
-<p>Git author name for the commit.</p>
-</dd>
-<dt class="hdlist1">--author-email</dt>
-<dd>
-<p>Git author email for the commit.</p>
-</dd>
-</dl>
-</div>
-</div>
-</div>
-</div>
 {% endraw %}
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20260625.164946-dev_feat.v3.x.create-pr-fcli-action<br>
-Last updated 2026-06-25 16:53:13 UTC
+Version 0.20260701.114850-dev_feat.v3.x.create-pr-fcli-action<br>
+Last updated 2026-07-01 11:52:02 UTC
 </div>
 </div>
 </body>
