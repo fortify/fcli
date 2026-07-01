@@ -317,7 +317,7 @@ public class GitHubRepo {
             .asObject(ObjectNode.class)
             .getBody();
     }
-        // === Branch and Commit Operations ===
+    // === Branch and Commit Operations ===
     
     /**
      * Query builder for branches.

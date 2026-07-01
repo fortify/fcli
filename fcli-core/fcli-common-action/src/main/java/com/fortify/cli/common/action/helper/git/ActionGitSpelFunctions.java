@@ -43,6 +43,7 @@ import com.fortify.cli.common.ci.CiBranch;
 import com.fortify.cli.common.ci.CiCommit;
 import com.fortify.cli.common.ci.CiCommitId;
 import com.fortify.cli.common.ci.CiCommitMessage;
+import com.fortify.cli.common.ci.CiGitCredentials;
 import com.fortify.cli.common.ci.CiGitCredentialsHelper;
 import com.fortify.cli.common.ci.CiPerson;
 import com.fortify.cli.common.ci.CiRepository;
@@ -80,7 +81,8 @@ public class ActionGitSpelFunctions {
               repository: { workspaceDir, remoteUrl?, name: { short, full? } },
               branch: { full?, short? },
               commit: {
-                id: { full, short },
+                headId: { full, short },
+                mergeId: { full, short },
                 message: { short, full },
                 author: { name, email, when },
                 committer: { name, email, when }
@@ -286,7 +288,7 @@ public class ActionGitSpelFunctions {
         verifyPushResults(pushCmd.call(), remote);
     }
 
-    @SpelFunction(cat = util, desc = "Detects the default branch of the remote repository. Checks CI environment variables (CI_DEFAULT_BRANCH for GitLab, looks up via GitHub API env), then falls back to reading refs/remotes/origin/HEAD from the local git config. Returns null if detection fails.", returns = "The default branch name (e.g. 'main', 'master', 'develop') or null if not detectable")
+    @SpelFunction(cat = util, desc = "Detects the default branch of the remote repository. Checks CI environment variables (CI_DEFAULT_BRANCH), then falls back to reading refs/remotes/<remote>/HEAD from the local git config. Returns null if detection fails.", returns = "The default branch name (e.g. 'main', 'master', 'develop') or null if not detectable")
     public String defaultBranch(
             @SpelFunctionParam(name = "sourceDir", desc = "directory inside a git working tree") String sourceDir) {
         var defaultBranch = EnvHelper.env("CI_DEFAULT_BRANCH");
@@ -298,15 +300,9 @@ public class ActionGitSpelFunctions {
                 return null;
             }
             var repo = git.getRepository();
-            var remoteHead = repo.resolve("refs/remotes/origin/HEAD");
-            if (remoteHead != null) {
-                var ref = repo.exactRef("refs/remotes/origin/HEAD");
-                if (ref != null && ref.getTarget() != null) {
-                    var target = ref.getTarget().getName();
-                    if (target.startsWith("refs/remotes/origin/")) {
-                        return target.substring("refs/remotes/origin/".length());
-                    }
-                }
+            var remoteDefaultBranch = detectDefaultBranchFromRemoteHeads(repo);
+            if (StringUtils.isNotBlank(remoteDefaultBranch)) {
+                return remoteDefaultBranch;
             }
         } catch (Exception e) {
             log.debug("Error detecting default branch", e);
@@ -395,30 +391,11 @@ public class ActionGitSpelFunctions {
     }
 
     private static CredentialsProvider resolveCredentialsProvider(String remoteUrl) {
-        if (isSshUrl(remoteUrl)) {
+        CiGitCredentials credentials = CiGitCredentialsHelper.resolvePushCredentials(remoteUrl);
+        if (credentials == null) {
             return null;
         }
-        var token = CiGitCredentialsHelper.resolvePushToken();
-        if (StringUtils.isBlank(token)) {
-            return null;
-        }
-        return new UsernamePasswordCredentialsProvider(httpsUsername(remoteUrl), token);
-    }
-
-    private static boolean isSshUrl(String remoteUrl) {
-        if (StringUtils.isBlank(remoteUrl)) {
-            return false;
-        }
-        var url = remoteUrl.trim();
-        return url.startsWith("git@") || url.startsWith("ssh://");
-    }
-
-    private static String httpsUsername(String remoteUrl) {
-        switch (detectPlatformFromUrl(remoteUrl)) {
-            case "github": return "x-access-token";
-            case "gitlab": return "gitlab-ci-token";
-            default: return "git";
-        }
+        return new UsernamePasswordCredentialsProvider(credentials.username(), credentials.token());
     }
 
     private static void verifyPushResults(Iterable<PushResult> results, String remote) {
@@ -458,6 +435,29 @@ public class ActionGitSpelFunctions {
             }
         }
         return false;
+    }
+
+    private static String detectDefaultBranchFromRemoteHeads(Repository repo) {
+        var remoteNames = repo.getRemoteNames();
+        if (remoteNames == null || remoteNames.isEmpty()) {
+            return null;
+        }
+        try {
+            for (var remote : remoteNames) {
+                var refName = "refs/remotes/" + remote + "/HEAD";
+                var ref = repo.exactRef(refName);
+                if (ref != null && ref.getTarget() != null) {
+                    var target = ref.getTarget().getName();
+                    var prefix = "refs/remotes/" + remote + "/";
+                    if (target.startsWith(prefix)) {
+                        return target.substring(prefix.length());
+                    }
+                }
+            }
+        } catch (IOException e) {
+            log.debug("Failed to resolve default branch from remote HEAD", e);
+        }
+        return null;
     }
 
     private static String rootMessage(Throwable e) {
@@ -510,34 +510,4 @@ public class ActionGitSpelFunctions {
         }
     }
 
-    private static String detectPlatformFromUrl(String remoteUrl) {
-        if (StringUtils.isBlank(remoteUrl)) {
-            return "unknown";
-        }
-        try {
-            String host;
-            var cleaned = remoteUrl.trim();
-            if (cleaned.startsWith("git@")) {
-                // SSH: git@github.com:owner/repo.git
-                int colon = cleaned.indexOf(':');
-                int at = cleaned.indexOf('@');
-                host = (at >= 0 && colon > at) ? cleaned.substring(at + 1, colon) : null;
-            } else {
-                host = URI.create(cleaned).getHost();
-            }
-            if (host == null) {
-                return "unknown";
-            }
-            host = host.toLowerCase();
-            if (host.equals("github.com") || host.endsWith(".github.com")) {
-                return "github";
-            }
-            if (host.equals("gitlab.com") || host.contains("gitlab")) {
-                return "gitlab";
-            }
-        } catch (Exception e) {
-            log.debug("Failed to parse remote URL for platform detection: {}", remoteUrl);
-        }
-        return "unknown";
-    }
 }
