@@ -1,0 +1,120 @@
+---
+title: 'fcli-ai-assist-extensions(1)'
+fcli_version: 
+---
+
+<!DOCTYPE html>
+<html lang="">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=">
+<meta name="generator" content="Asciidoctor 2.0.18">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>fcli-ai-assist-extensions(1)</title>
+
+{% include asciidoc-head.html %}
+{% include fcli-enhancements.html %}
+
+</head>
+<body class="manpage toc2 toc-left">
+
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="3.22.0" %}
+
+
+<div id="header">
+<h1>fcli-ai-assist-extensions(1) Manual Page</h1>
+<div id="toc" class="toc2">
+<div id="toctitle">Table of Contents</div>
+<ul class="sectlevel1">
+<li><a href="#_synopsis">Synopsis</a></li>
+<li><a href="#_description">Description</a></li>
+<li><a href="#_generic_fcli_options_also_see_documentation_link_below">Generic fcli options (also see documentation link below)</a></li>
+<li><a href="#_commands">Commands</a></li>
+</ul>
+</div>
+<h2>Name</h2>
+<div class="sectionbody">
+<p>fcli-ai-assist-extensions - Manage Fortify extensions for AI coding assistants</p>
+</div>
+</div>
+<div id="content">
+{% raw %}
+<div class="sect1">
+<h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p><strong>fcli ai-assist extensions</strong> [<strong>-h</strong>] [COMMAND]</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_description"><a class="anchor" href="#_description"></a>Description</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Set up, uninstall, or check status of Fortify extensions (skills, agents, plugins) for AI coding assistants like Claude Code, GitHub Copilot, OpenAI Codex, and Gemini CLI.</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
+Available extension versions, download URLs, and assistant detection logic are managed through fcli tool definitions (<code>ai-assistant-extensions*</code> at <a href="https://github.com/fortify/tool-definitions/tree/main/v1" class="bare">https://github.com/fortify/tool-definitions/tree/main/v1</a>). Run <code>fcli tool definitions update</code> before running this command.
+</td>
+</tr>
+</table>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_generic_fcli_options_also_see_documentation_link_below"><a class="anchor" href="#_generic_fcli_options_also_see_documentation_link_below"></a>Generic fcli options (also see documentation link below)</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><strong>-h</strong>, <strong>--help</strong></dt>
+<dd>
+<p>Use 'fcli [command] -h' to display help for fcli (sub-)commands.</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_commands"><a class="anchor" href="#_commands"></a>Commands</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><a href="fcli-ai-assist-extensions-setup.html"><strong>setup</strong></a></dt>
+<dd>
+<p>Set up Fortify extensions for coding assistants</p>
+</dd>
+<dt class="hdlist1"><a href="fcli-ai-assist-extensions-uninstall.html"><strong>uninstall</strong></a></dt>
+<dd>
+<p>Remove installed Fortify extensions</p>
+</dd>
+<dt class="hdlist1"><a href="fcli-ai-assist-extensions-list-installed.html"><strong>list-installed</strong></a></dt>
+<dd>
+<p>List installed extensions</p>
+</dd>
+<dt class="hdlist1"><a href="fcli-ai-assist-extensions-list-versions.html"><strong>list-versions</strong></a></dt>
+<dd>
+<p>List available extension versions</p>
+</dd>
+<dt class="hdlist1"><a href="fcli-ai-assist-extensions-list-assistants.html"><strong>list-assistants</strong></a></dt>
+<dd>
+<p>List supported AI coding assistants</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+{% endraw %}
+</div>
+<div id="footer">
+<div id="footer-text">
+Version <br>
+Last updated 2026-07-01 15:25:50 UTC
+</div>
+</div>
+</body>
+</html>
