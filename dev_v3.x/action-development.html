@@ -1,6 +1,6 @@
 ---
 title: 'Fcli Action Development Guide'
-fcli_version: 0.20260701.135600-dev_v3.x
+fcli_version: 0.20260701.141005-dev_v3.x
 ---
 
 <!DOCTYPE html>
@@ -17,13 +17,13 @@ fcli_version: 0.20260701.135600-dev_v3.x
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260701.135600-dev_v3.x" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260701.141005-dev_v3.x" %}
 
 
 <div id="header">
 <h1>Fcli Action Development Guide</h1>
 <div class="details">
-<span id="revnumber">version 0.20260701.135600-dev_v3.x</span>
+<span id="revnumber">version 0.20260701.141005-dev_v3.x</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -148,6 +148,12 @@ fcli_version: 0.20260701.135600-dev_v3.x
 <li><a href="#_ssc_filterset"><code>ssc.filterSet</code></a></li>
 <li><a href="#_ssc_issuebrowserurl"><code>ssc.issueBrowserUrl</code></a></li>
 <li><a href="#_ssc_ruledescriptionsprocessor"><code>ssc.ruleDescriptionsProcessor</code></a></li>
+<li><a href="#_http">[http]</a></li>
+<li><a href="#_basicauth"><code>basicAuth</code></a></li>
+<li><a href="#_bearerauth"><code>bearerAuth</code></a></li>
+<li><a href="#_uripart"><code>uriPart</code></a></li>
+<li><a href="#_urldecode"><code>urlDecode</code></a></li>
+<li><a href="#_urlencode"><code>urlEncode</code></a></li>
 <li><a href="#_txt">[txt]</a></li>
 <li><a href="#_abbreviate"><code>abbreviate</code></a></li>
 <li><a href="#_fmt"><code>fmt</code></a></li>
@@ -166,6 +172,8 @@ fcli_version: 0.20260701.135600-dev_v3.x
 <li><a href="#_substringafter"><code>substringAfter</code></a></li>
 <li><a href="#_substringbefore"><code>substringBefore</code></a></li>
 <li><a href="#_util">[util]</a></li>
+<li><a href="#_base64decode"><code>base64Decode</code></a></li>
+<li><a href="#_base64encode"><code>base64Encode</code></a></li>
 <li><a href="#_env"><code>env</code></a></li>
 <li><a href="#_fs_exists"><code>fs.exists</code></a></li>
 <li><a href="#_fs_isdirectory"><code>fs.isDirectory</code></a></li>
@@ -177,7 +185,6 @@ fcli_version: 0.20260701.135600-dev_v3.x
 <li><a href="#_jsonstringify"><code>jsonStringify</code></a></li>
 <li><a href="#_properties"><code>properties</code></a></li>
 <li><a href="#_resolveagainstcurrentworkdir"><code>resolveAgainstCurrentWorkDir</code></a></li>
-<li><a href="#_uripart"><code>uriPart</code></a></li>
 <li><a href="#_uuid"><code>uuid</code></a></li>
 <li><a href="#_workflow">[workflow]</a></li>
 <li><a href="#_action_copyparametersfromgroup"><code>action.copyParametersFromGroup</code></a></li>
@@ -228,7 +235,7 @@ fcli_version: 0.20260701.135600-dev_v3.x
 </thead>
 <tbody>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0.20260701.135600-dev_v3.x</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.20260701.141005-dev_v3.x</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">2.9.0</p></td>
 </tr>
 </tbody>
@@ -350,7 +357,7 @@ your action YAML file, your IDE or YAML editor may automatically provide support
 YAML files. If not, try closing and re-opening the YAML file, or consult the documentation of your IDE or YAML editor.</p>
 </div>
 <div class="paragraph">
-<p>As shown in the sample schema statements above, the current fcli version 0.20260701.135600-dev_v3.x supports
+<p>As shown in the sample schema statements above, the current fcli version 0.20260701.141005-dev_v3.x supports
 schema version <a href="https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.9.0.json">2.9.0</a>. Other
 fcli versions may support different schema versions. In general, fcli provides backward compatibility for earlier schema
 versions with the same schema major version range, and forward compatibility for later schema patch versions within the
@@ -4592,6 +4599,142 @@ ObjectNode with the same same fields as returned by <code>fcli util all-commands
 </table>
 </div>
 <div class="sect2">
+<h3 id="_http"><a class="anchor" href="#_http"></a>[http]</h3>
+
+</div>
+<div class="sect2">
+<h3 id="_basicauth"><a class="anchor" href="#_basicauth"></a><code>basicAuth</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>string #basicAuth(string username, string password)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string username</em> - the username to include in the basic auth credential pair<br>
+<em>string password</em> - the password to include in the basic auth credential pair</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Authorization header value in the format <code>Basic &lt;base64(username:password)&gt;</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p>Builds an HTTP Basic Authorization header value from username and password.</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_bearerauth"><a class="anchor" href="#_bearerauth"></a><code>bearerAuth</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>string #bearerAuth(string token)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string token</em> - the bearer token</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Authorization header value in the format <code>Bearer &lt;token&gt;</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p>Builds an HTTP Bearer Authorization header value from the given token.</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_uripart"><a class="anchor" href="#_uripart"></a><code>uriPart</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>string #uriPart(string uri, string part)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string uri</em> - URI from which to retrieve the requested part<br>
+<em>string part</em> - URI part to be returned; may be one of serverUrl, protocol, host, port, path, relativePath, query, fragment</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Requested part of the given URI, or <code>null</code> if part name is not valid or not present</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p>Retrieves a given part of the given URI</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_urldecode"><a class="anchor" href="#_urldecode"></a><code>urlDecode</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>string #urlDecode(string input)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string input</em> - the URI-component encoded string to decode</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">UTF-8 decoded string from URI-component encoded input, or <code>null</code> if input is <code>null</code></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_urlencode"><a class="anchor" href="#_urlencode"></a><code>urlEncode</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>string #urlEncode(string input)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string input</em> - the string to URI-component encode</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">URI-component encoded string using UTF-8, or <code>null</code> if input is <code>null</code></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
 <h3 id="_txt"><a class="anchor" href="#_txt"></a>[txt]</h3>
 
 </div>
@@ -5019,6 +5162,52 @@ values provided in the mapping object.</p>
 
 </div>
 <div class="sect2">
+<h3 id="_base64decode"><a class="anchor" href="#_base64decode"></a><code>base64Decode</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>string #base64Decode(string input)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string input</em> - the Base64-encoded string to decode</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">UTF-8 decoded string from the given Base64 input, or <code>null</code> if input is <code>null</code></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_base64encode"><a class="anchor" href="#_base64encode"></a><code>base64Encode</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>string #base64Encode(string input)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string input</em> - the string to encode as Base64</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Base64-encoded representation of the input string using UTF-8, or <code>null</code> if input is <code>null</code></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
 <h3 id="_env"><a class="anchor" href="#_env"></a><code>env</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
@@ -5313,35 +5502,6 @@ used with <code>records.for-each::from</code> to iterate over object properties.
 <tr>
 <td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
 <p>Resolves the given path against the current working directory.</p>
-</div></div></td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="sect2">
-<h3 id="_uripart"><a class="anchor" href="#_uripart"></a><code>uriPart</code></h3>
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 1%;">
-<col>
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>string #uriPart(string uri, string part)</code></strong></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string uri</em> - URI from which to retrieve the requested part<br>
-<em>string part</em> - URI part to be returned; may be one of serverUrl, protocol, host, port, path, relativePath, query, fragment</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Requested part of the given URI, or <code>null</code> if part name is not valid or not present</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
-<p>Retrieves a given part of the given URI</p>
 </div></div></td>
 </tr>
 </tbody>
@@ -6124,20 +6284,7 @@ This method does NOT process other references - call render() first if needed.</
 <p><strong>INTERNAL USE ONLY</strong></p>
 </div>
 <div class="paragraph">
-<p>(DEPRECATED) Use <code>#git.localRepo(&#8230;&#8203;)</code> instead; this function is retained only for backward compatibility and simply delegates to it. It may be removed in a future fcli release.
-Returns basic information about the local git repository for the given source directory, or null if the
-directory is not inside a git working tree. Only constant-time lookups are performed (HEAD commit only).
-Structure:
-{
-repository: { workspaceDir, remoteUrl?, name: { short, full? } },
-branch: { full?, short? },
-commit: {
-    id: { full, short },
-    message: { short, full },
-    author: { name, email, when },
-    committer: { name, email, when }
-}
-}</p>
+<p>(DEPRECATED) Use <code>#git.localRepo(&#8230;&#8203;)</code> instead; this function is retained only for backward compatibility and simply delegates to it.</p>
 </div></div></td>
 </tr>
 <tr>
@@ -6196,8 +6343,8 @@ commit: {
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20260701.135600-dev_v3.x<br>
-Last updated 2026-07-01 13:59:14 UTC
+Version 0.20260701.141005-dev_v3.x<br>
+Last updated 2026-07-01 14:12:51 UTC
 </div>
 </div>
 </body>
