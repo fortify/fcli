@@ -135,33 +135,14 @@ steps:
         on.success:
           - var.set: { postScan.skipReason: } # Reset postScan.skipReason to allow post-scan tasks to run
              
-      APPLY_REMEDIATIONS:
-        cmd: ${#fcliCmd('APPLY_REMEDIATIONS', 'fod aviator apply-remediations')} "--rel=${global.ci.rel}" "--source-dir=${global.ci.sourceDir}" "--progress=none"
+      AVIATOR_REMEDIATIONS:
+        cmd: ${#actionCmd('AVIATOR_REMEDIATIONS', 'fod', global.ci.fod_aviatorRemediationsAction)} "--rel=${global.ci.rel}" "--source-dir=${global.ci.sourceDir}" "--progress=none"
         skip.if-reason:
-          - ${#fcliCmdSkipFromEnvReason('APPLY_REMEDIATIONS', true)} # Skip unless DO_APPLY_REMEDIATIONS==true or APPLY_REMEDIATIONS_ACTION/EXTRA_OPTS defined
+          - ${#actionCmdSkipFromEnvReason('AVIATOR_REMEDIATIONS', true)} # Skip unless DO_AVIATOR_REMEDIATIONS==true or AVIATOR_REMEDIATIONS_ACTION/EXTRA_OPTS defined
+          - ${#actionCmdSkipNoActionReason('AVIATOR_REMEDIATIONS', 'fod', global.ci.fod_aviatorRemediationsAction)}
           - ${postScan.skipReason}                                     # Skip if no scans were run
           - ${#env('DO_AVIATOR_AUDIT')!='true'?'Aviator audit not enabled (DO_AVIATOR_AUDIT!=true), no remediations available':''} # Skip if Aviator audit was not enabled
           - ${SAST_WAIT.dependencySkipReason}                          # Skip if SAST scan/wait was skipped or failed
-        on.success:
-          - var.set:
-              remediationsApplied: 'true'
-              branchName: "aviator/remediations/${#formatDateTime('yyyyMMdd-HHmmss-SSS')}"
-
-      GIT_PUSH_CHANGES:
-        cmd: ${#fcliCmd('GIT_PUSH_CHANGES', 'action run git-push-changes')} "--source-dir=${global.ci.sourceDir}" "--branch-name=${branchName}" "--progress=none"
-        skip.if-reason:
-          - ${#isBlank(remediationsApplied)?'Apply remediations was skipped or failed, skipping Git operations':''}
-        on.fail:
-          - log.warn: "Git stage/commit/push failed"
-
-      CREATE_PR:
-        cmd: ${#fcliCmd('CREATE_PR', 'action run create-pr')} "--source-dir=${global.ci.sourceDir}" "--source-branch=${branchName}" "--progress=none"
-        skip.if-reason:
-          - ${GIT_PUSH_CHANGES.dependencySkipReason}
-        on.fail:
-          - log.warn:
-              msg: "PR/MR creation failed"
-              cause: ${lastException}
 
       CHECK_POLICY:
         cmd: ${#actionCmd('CHECK_POLICY', 'fod', 'check-policy')} "--rel=${global.ci.rel}" "--progress=none"

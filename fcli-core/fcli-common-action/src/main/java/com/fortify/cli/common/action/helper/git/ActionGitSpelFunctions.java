@@ -14,27 +14,40 @@ package com.fortify.cli.common.action.helper.git;
 
 import static com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunction.SpelFunctionCategory.util;
 
+import java.io.File;
 import java.io.IOException;
+import java.net.URI;
 import java.nio.file.Path;
+import java.util.Set;
+import java.util.TreeSet;
 
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.Status;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.api.errors.RefNotFoundException;
+import org.eclipse.jgit.api.errors.TransportException;
 import org.eclipse.jgit.lib.Repository;
-import org.eclipse.jgit.lib.StoredConfig;
+import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
+import org.eclipse.jgit.transport.CredentialsProvider;
+import org.eclipse.jgit.transport.PushResult;
 import org.eclipse.jgit.transport.RefSpec;
+import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.formkiq.graalvm.annotations.Reflectable;
-import com.fortify.cli.common.action.helper.credential.CredentialsProviderFactory;
 import com.fortify.cli.common.ci.CiBranch;
 import com.fortify.cli.common.ci.CiCommit;
 import com.fortify.cli.common.ci.CiCommitId;
 import com.fortify.cli.common.ci.CiCommitMessage;
+import com.fortify.cli.common.ci.CiGitCredentialsHelper;
 import com.fortify.cli.common.ci.CiPerson;
 import com.fortify.cli.common.ci.CiRepository;
 import com.fortify.cli.common.ci.CiRepositoryName;
+import com.fortify.cli.common.ci.LocalRepoInfo;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunction;
@@ -73,7 +86,7 @@ public class ActionGitSpelFunctions {
                 committer: { name, email, when }
               }
             }
-            """, returns = "Git repository information or null if not a git work dir")
+            """, returns = "Git repository information or null if not a git work dir", returnType = LocalRepoInfo.class)
     public ObjectNode localRepo(
             @SpelFunctionParam(name = "sourceDir", desc = "directory assumed to be inside a git working tree") String sourceDir) {
         if (StringUtils.isBlank(sourceDir)) {
@@ -90,7 +103,7 @@ public class ActionGitSpelFunctions {
         try (Repository repo = builder.build()) {
             var mapper = JsonHelper.getObjectMapper();
             var remote = selectRemote(repo);
-            var remoteUrl = remote == null ? "origin" : repo.getConfig().getString("remote", remote, "url");
+            var remoteUrl = remote == null ? null : repo.getConfig().getString("remote", remote, "url");
             var names = deriveRepoNames(dir.getName(), remoteUrl);
             var repository = CiRepository.builder()
                     .workspaceDir(repo.getWorkTree().getAbsolutePath())
@@ -116,7 +129,7 @@ public class ActionGitSpelFunctions {
             CiCommit commit = null;
             var headId = repo.resolve("HEAD");
             if (headId != null) {
-                try (var walk = new org.eclipse.jgit.revwalk.RevWalk(repo)) {
+                try (var walk = new RevWalk(repo)) {
                     var gitCommit = walk.parseCommit(headId);
                     String shortId;
                     try {
@@ -170,64 +183,37 @@ public class ActionGitSpelFunctions {
         }
     }
 
-    @SpelFunction(cat = util, desc = "Checks whether the working tree of the git repository at the given directory has any uncommitted changes (modified, added, or deleted files).", returns = "`true` if there are uncommitted changes, `false` otherwise or if not a git repository")
-    public boolean hasChanges(
+    @SpelFunction(cat = util, desc = """
+            Captures a snapshot of the paths that currently have uncommitted changes in the working tree
+            (modified, added, removed, missing, changed, conflicting, or untracked). This snapshot can be
+            passed to #git.commitChangesSince to commit only the changes introduced afterwards, leaving
+            pre-existing changes (e.g. build output) untouched. Structure: { paths: [ "relative/path", ... ] }
+            """, returns = "Snapshot of currently dirty paths, or null if the directory is not a git working tree")
+    public ObjectNode status(
             @SpelFunctionParam(name = "sourceDir", desc = "directory inside a git working tree") String sourceDir) {
         try (var git = openGit(sourceDir)) {
             if (git == null) {
-                return false;
+                return null;
             }
-            var status = git.status().call();
-            boolean hasChanges = !status.getModified().isEmpty()
-                    || !status.getAdded().isEmpty()
-                    || !status.getRemoved().isEmpty()
-                    || !status.getUntracked().isEmpty()
-                    || !status.getChanged().isEmpty();
-            return hasChanges;
-        } catch (Exception e) {
-            return false;
-        }
-    }
-
-    @SpelFunction(cat = util, desc = "Creates a new branch with the given full name in the local git repository and checks it out.", returns = "The name of the created branch")
-    public String checkoutNewBranch(
-            @SpelFunctionParam(name = "sourceDir", desc = "directory inside a git working tree") String sourceDir,
-            @SpelFunctionParam(name = "branchName", desc = "full branch name to create and checkout") String branchName) {
-        try (var git = openGit(sourceDir)) {
-            if (git == null) {
-                throw new FcliSimpleException("Not a git repository: " + sourceDir);
-            }
-            git.checkout()
-                    .setCreateBranch(true)
-                    .setName(branchName)
-                    .call();
-            String current = git.getRepository().getBranch();
-            if (!branchName.equals(current)) {
-                throw new FcliSimpleException("Failed to checkout branch " + branchName);
-            }
-            return branchName;
-        } catch (GitAPIException | IOException e) {
-            throw new FcliSimpleException("Failed to create branch: " + e.getMessage());
-        }
-    }
-
-    @SpelFunction(cat = util, desc = "Stages all modified and new files in the working tree for commit.", returns = "`true` if files were staged successfully")
-    public boolean addAll(
-            @SpelFunctionParam(name = "sourceDir", desc = "directory inside a git working tree") String sourceDir) {
-        try (var git = openGit(sourceDir)) {
-            if (git == null) {
-                throw new FcliSimpleException("Not a git repository: " + sourceDir);
-            }
-            git.add().setUpdate(true).addFilepattern(".").call();
-            return true;
+            var root = JsonHelper.getObjectMapper().createObjectNode();
+            var paths = root.putArray("paths");
+            collectDirtyPaths(git.status().call()).forEach(paths::add);
+            return root;
         } catch (GitAPIException e) {
-            throw new FcliSimpleException("Failed to stage files: " + e.getMessage());
+            throw new FcliSimpleException("Failed to determine git status: " + e.getMessage());
         }
     }
 
-    @SpelFunction(cat = util, desc = "Commits all staged changes in the local git repository with the given message.", returns = "The commit SHA of the new commit")
-    public String commit(
+    @SpelFunction(cat = util, desc = """
+            Creates and checks out a new branch, stages only the changes introduced since the given snapshot (as
+            returned by #git.status), and commits them with the given author and message. Paths that were already
+            dirty in the snapshot (e.g. build artifacts) are left uncommitted. Returns null without creating a
+            branch or commit if there are no new changes to commit.
+            """, returns = "The commit SHA, or null if there were no new changes to commit")
+    public String commitChangesSince(
             @SpelFunctionParam(name = "sourceDir", desc = "directory inside a git working tree") String sourceDir,
+            @SpelFunctionParam(name = "snapshot", desc = "dirty-paths snapshot from #git.status") JsonNode snapshot,
+            @SpelFunctionParam(name = "branchName", desc = "full branch name to create and checkout") String branchName,
             @SpelFunctionParam(name = "message", desc = "commit message") String message,
             @SpelFunctionParam(name = "name", desc = "commit author name") String name,
             @SpelFunctionParam(name = "email", desc = "commit author email") String email) {
@@ -235,24 +221,31 @@ public class ActionGitSpelFunctions {
             if (git == null) {
                 throw new FcliSimpleException("Not a git repository: " + sourceDir);
             }
-
-            if (git.status().call().isClean()) {
-                throw new FcliSimpleException("No changes to commit");
+            var newPaths = collectDirtyPaths(git.status().call());
+            newPaths.removeAll(snapshotPaths(snapshot));
+            if (newPaths.isEmpty()) {
+                return null;
             }
-
-            var commitResult = git.commit()
+            createAndCheckoutBranch(git, branchName);
+            stagePaths(git, newPaths);
+            var commit = git.commit()
                     .setMessage(message)
                     .setAuthor(name, email)
                     .setCommitter(name, email)
                     .call();
-            var sha = commitResult.getId().getName();
-            return sha;
-        } catch (GitAPIException e) {
-            throw new FcliSimpleException("Failed to commit: " + e.getMessage());
+            return commit.getId().getName();
+        } catch (GitAPIException | IOException e) {
+            throw new FcliSimpleException("Failed to commit changes: " + e.getMessage());
         }
     }
 
-    @SpelFunction(cat = util, desc = "Pushes the current branch to the remote repository. Uses token-based authentication from CI environment variables (GITHUB_TOKEN, CI_JOB_TOKEN, SYSTEM_ACCESSTOKEN, BITBUCKET_TOKEN) if available.", returns = "The name of the remote ref that was pushed")
+    @SpelFunction(cat = util, desc = """
+            Pushes the given branch to the remote repository. For HTTPS remotes, authentication uses the
+            GIT_PUSH_TOKEN environment variable if set, falling back to the token of the active CI system; if
+            neither is available or authentication fails, the push is retried using the local git configuration
+            (e.g. an http.extraHeader injected by the CI checkout step). For SSH remotes, the configured SSH keys
+            are used. Returns the pushed ref.
+            """, returns = "The name of the remote ref that was pushed")
     public String push(
             @SpelFunctionParam(name = "sourceDir", desc = "directory inside a git working tree") String sourceDir,
             @SpelFunctionParam(name = "branchName", desc = "name of the branch to push") String branchName) {
@@ -261,164 +254,36 @@ public class ActionGitSpelFunctions {
                 throw new FcliSimpleException("Not a git repository: " + sourceDir);
             }
             var repo = git.getRepository();
-            var remote = selectRemote(repo);
-            if (remote == null)
-                remote = "origin";
-            try {
-                git.checkout().setName(branchName).call();
-            } catch (Exception e) {
-                git.checkout()
-                        .setCreateBranch(true)
-                        .setName(branchName)
-                        .setStartPoint("HEAD")
-                        .call();
-            }
-
+            var remote = StringUtils.defaultString(selectRemote(repo), "origin");
+            ensureOnBranch(git, branchName);
             var remoteUrl = repo.getConfig().getString("remote", remote, "url");
-            if (remoteUrl != null && !remoteUrl.endsWith(".git")) {
-                remoteUrl = remoteUrl + ".git";
-                repo.getConfig().setString("remote", remote, "url", remoteUrl);
-                repo.getConfig().save();
-            }
-            var credentialsProvider = CredentialsProviderFactory.detectAndGetJGitProvider();
-            if (credentialsProvider == null) {
-                log.debug("PUSH DEBUG: No credentials provider detected - push will likely fail");
-            } else {
-                log.debug("PUSH DEBUG: Using credentials provider={}", credentialsProvider.getClass().getName());
-            }
-
-            String fullBranchRef = "refs/heads/" + branchName;
-            log.debug("PUSH DETAILS: branch={}, remote={}, remoteUrl={}, fullBranchRef={}",
-                    branchName,
-                    remote,
-                    remoteUrl,
-                    fullBranchRef);
-            var refSpec = new RefSpec(fullBranchRef + ":" + fullBranchRef);
-            if (credentialsProvider != null) {
-                log.debug("CREDENTIALS: type={}, class={}",
-                        credentialsProvider.getClass().getSimpleName(),
-                        credentialsProvider.getClass().getName());
-            }
-
-            log.debug("PUSH COMMAND SETUP: remote={}, refSpec={}, timeout=300s, credentialsSet={}",
-                    remote,
-                    refSpec.toString(),
-                    credentialsProvider != null);
-            var fetchCmd = git.fetch().setRemote(remote);
-            if (credentialsProvider != null) {
-                fetchCmd.setCredentialsProvider(credentialsProvider);
-            }
-
+            var refSpec = new RefSpec("refs/heads/" + branchName + ":refs/heads/" + branchName);
+            var credentialsProvider = resolveCredentialsProvider(remoteUrl);
             try {
-                var fetchResult = fetchCmd.call();
-                log.debug("Fetch completed with {} ref updates",
-                        fetchResult != null ? fetchResult.getAdvertisedRefs().size() : 0);
+                push(git, remote, refSpec, credentialsProvider);
             } catch (Exception e) {
-                log.warn("Fetch failed (but continuing with push): {}", e.getMessage(), e);
-            }
-
-            var pushCmd = git.push()
-                    .setRemote(remote)
-                    .setRefSpecs(refSpec)
-                    .setTimeout(300);
-
-            if (credentialsProvider != null) {
-                pushCmd.setCredentialsProvider(credentialsProvider);
-            }
-            var results = pushCmd.call();
-
-            log.debug("Push command completed. credentialsProvider: {}",
-                    credentialsProvider != null ? credentialsProvider.getClass().getSimpleName() : "null");
-
-            // Don't convert to ArrayList - just iterate directly
-            // We can't use .isEmpty() or .size() on Iterable, so remove those checks
-
-            StoredConfig config = repo.getConfig();
-            config.setString("branch", branchName, "remote", remote);
-            config.setString("branch", branchName, "merge", fullBranchRef);
-            config.save();
-
-            boolean success = false;
-            boolean hasResults = false;
-            for (var result : results) {
-                hasResults = true;
-                var messages = result.getMessages();
-                if (messages != null && !messages.isBlank()) {
-                    log.debug("Push result messages: {}", messages);
+                if (credentialsProvider == null || !isLikelyAuthFailure(e)) {
+                    throw e;
                 }
-
-                for (var update : result.getRemoteUpdates()) {
-                    var status = update.getStatus();
-                    log.debug("Push update: status={}, remoteName={}, message='{}', forceUpdate={}",
-                            status,
-                            update.getRemoteName(),
-                            update.getMessage() != null ? update.getMessage() : "null",
-                            update.isForceUpdate());
-                    switch (status) {
-                        case OK:
-                        case UP_TO_DATE:
-                            success = true;
-                            log.debug("Push successful: {}", update.getRemoteName());
-                            break;
-
-                        case REJECTED_NONFASTFORWARD:
-                        case REJECTED_NODELETE:
-                        case REJECTED_REMOTE_CHANGED:
-                        case REJECTED_OTHER_REASON:
-                        case NON_EXISTING:
-                        case NOT_ATTEMPTED:
-                        default:
-                            throw new FcliSimpleException(
-                                    "Push rejected: "
-                                            + "status=" + status
-                                            + ", remote=" + update.getRemoteName()
-                                            + ", message="
-                                            + (update.getMessage() != null ? update.getMessage() : "no message"));
-                    }
-                }
+                log.debug("Push using resolved credentials failed ({}); retrying with local git configuration",
+                        rootMessage(e));
+                push(git, remote, refSpec, null);
             }
-
-            if (!hasResults) {
-                log.warn("Push returned empty results - push may have failed silently");
-                throw new FcliSimpleException("Push completed but returned no results");
-            }
-
-            if (!success) {
-                throw new FcliSimpleException(
-                        "Push completed but no refs were updated (likely auth or permission issue)");
-            }
-            return fullBranchRef;
+            return "refs/heads/" + branchName;
+        } catch (FcliSimpleException e) {
+            throw e;
         } catch (Exception e) {
-            Throwable root = e;
-            while (root.getCause() != null) {
-                root = root.getCause();
-            }
-            throw new FcliSimpleException(
-                    "Failed to push (root cause): " + root.getClass().getName() + " - " + root.getMessage(),
-                    e);
+            throw new FcliSimpleException("Failed to push branch " + branchName + ": " + rootMessage(e), e);
         }
     }
 
-    @SpelFunction(cat = util, desc = "Detects the repository owner from CI environment variables. Checks GITHUB_REPOSITORY_OWNER (GitHub), CI_PROJECT_NAMESPACE (GitLab), BUILD_REPOSITORY_ID (Azure DevOps), or BITBUCKET_WORKSPACE (Bitbucket). Returns null if not running in a supported CI system.", returns = "The repository owner/namespace or null if not detectable")
-    public String ciRepositoryOwner() {
-        var owner = EnvHelper.env("GITHUB_REPOSITORY_OWNER");
-        if (StringUtils.isNotBlank(owner)) {
-            return owner;
+    private void push(Git git, String remote, RefSpec refSpec, CredentialsProvider credentialsProvider)
+            throws GitAPIException {
+        var pushCmd = git.push().setRemote(remote).setRefSpecs(refSpec).setTimeout(300);
+        if (credentialsProvider != null) {
+            pushCmd.setCredentialsProvider(credentialsProvider);
         }
-        owner = EnvHelper.env("CI_PROJECT_NAMESPACE");
-        if (StringUtils.isNotBlank(owner)) {
-            return owner;
-        }
-        var buildRepoId = EnvHelper.env("BUILD_REPOSITORY_ID");
-        owner = EnvHelper.env("SYSTEM_TEAMPROJECT");
-        if (StringUtils.isNotBlank(buildRepoId) && StringUtils.isNotBlank(owner)) {
-            return owner;
-        }
-        owner = EnvHelper.env("BITBUCKET_WORKSPACE");
-        if (StringUtils.isNotBlank(owner)) {
-            return owner;
-        }
-        return null;
+        verifyPushResults(pushCmd.call(), remote);
     }
 
     @SpelFunction(cat = util, desc = "Detects the default branch of the remote repository. Checks CI environment variables (CI_DEFAULT_BRANCH for GitLab, looks up via GitHub API env), then falls back to reading refs/remotes/origin/HEAD from the local git config. Returns null if detection fails.", returns = "The default branch name (e.g. 'main', 'master', 'develop') or null if not detectable")
@@ -449,32 +314,6 @@ public class ActionGitSpelFunctions {
         return null;
     }
 
-    @SpelFunction(cat = util, desc = """
-            Detects the hosting platform of the repository by parsing the git remote URL.
-            Returns "github" for GitHub-hosted repositories (github.com or *.github.com),
-            "gitlab" for GitLab-hosted repositories (gitlab.com or hostnames containing "gitlab"),
-            and "unknown" for any other remote or when detection fails.
-            This is platform detection (where the repo lives), not CI detection (where the pipeline runs).
-            """, returns = "\"github\", \"gitlab\", or \"unknown\"")
-    public String repositoryPlatform(
-            @SpelFunctionParam(name = "sourceDir", desc = "directory inside a git working tree") String sourceDir) {
-        try (var git = openGit(sourceDir)) {
-            if (git == null) {
-                return "unknown";
-            }
-            var repo = git.getRepository();
-            var remote = selectRemote(repo);
-            if (remote == null) {
-                return "unknown";
-            }
-            var remoteUrl = repo.getConfig().getString("remote", remote, "url");
-            return detectPlatformFromUrl(remoteUrl);
-        } catch (Exception e) {
-            log.debug("Failed to detect repository platform", e);
-            return "unknown";
-        }
-    }
-
     private Git openGit(String sourceDir) {
         if (StringUtils.isBlank(sourceDir)) {
             return null;
@@ -492,6 +331,141 @@ public class ActionGitSpelFunctions {
         } catch (Exception e) {
             return null;
         }
+    }
+
+    private void ensureOnBranch(Git git, String branchName) throws GitAPIException, IOException {
+        if (branchName.equals(git.getRepository().getBranch())) {
+            return;
+        }
+        try {
+            git.checkout().setName(branchName).call();
+        } catch (RefNotFoundException e) {
+            git.checkout().setCreateBranch(true).setName(branchName).setStartPoint("HEAD").call();
+        }
+    }
+
+    private void createAndCheckoutBranch(Git git, String branchName) throws GitAPIException, IOException {
+        git.checkout().setCreateBranch(true).setName(branchName).call();
+        if (!branchName.equals(git.getRepository().getBranch())) {
+            throw new FcliSimpleException("Failed to checkout branch " + branchName);
+        }
+    }
+
+    private void stagePaths(Git git, Set<String> paths) throws GitAPIException {
+        var workTree = git.getRepository().getWorkTree();
+        var addNew = git.add();
+        var addDeleted = git.add().setUpdate(true);
+        var hasNew = false;
+        var hasDeleted = false;
+        for (var path : paths) {
+            if (new File(workTree, path).exists()) {
+                addNew.addFilepattern(path);
+                hasNew = true;
+            } else {
+                addDeleted.addFilepattern(path);
+                hasDeleted = true;
+            }
+        }
+        if (hasNew) {
+            addNew.call();
+        }
+        if (hasDeleted) {
+            addDeleted.call();
+        }
+    }
+
+    private static Set<String> collectDirtyPaths(Status status) {
+        var paths = new TreeSet<String>();
+        paths.addAll(status.getModified());
+        paths.addAll(status.getChanged());
+        paths.addAll(status.getAdded());
+        paths.addAll(status.getRemoved());
+        paths.addAll(status.getMissing());
+        paths.addAll(status.getUntracked());
+        paths.addAll(status.getConflicting());
+        return paths;
+    }
+
+    private static Set<String> snapshotPaths(JsonNode snapshot) {
+        var paths = new TreeSet<String>();
+        if (snapshot != null && snapshot.get("paths") instanceof ArrayNode arr) {
+            arr.forEach(node -> paths.add(node.asText()));
+        }
+        return paths;
+    }
+
+    private static CredentialsProvider resolveCredentialsProvider(String remoteUrl) {
+        if (isSshUrl(remoteUrl)) {
+            return null;
+        }
+        var token = CiGitCredentialsHelper.resolvePushToken();
+        if (StringUtils.isBlank(token)) {
+            return null;
+        }
+        return new UsernamePasswordCredentialsProvider(httpsUsername(remoteUrl), token);
+    }
+
+    private static boolean isSshUrl(String remoteUrl) {
+        if (StringUtils.isBlank(remoteUrl)) {
+            return false;
+        }
+        var url = remoteUrl.trim();
+        return url.startsWith("git@") || url.startsWith("ssh://");
+    }
+
+    private static String httpsUsername(String remoteUrl) {
+        switch (detectPlatformFromUrl(remoteUrl)) {
+            case "github": return "x-access-token";
+            case "gitlab": return "gitlab-ci-token";
+            default: return "git";
+        }
+    }
+
+    private static void verifyPushResults(Iterable<PushResult> results, String remote) {
+        var updated = false;
+        for (var result : results) {
+            for (var update : result.getRemoteUpdates()) {
+                switch (update.getStatus()) {
+                    case OK:
+                    case UP_TO_DATE:
+                        updated = true;
+                        break;
+                    default:
+                        throw new FcliSimpleException("Push to " + remote + " rejected: status=" + update.getStatus()
+                                + (update.getMessage() != null ? " (" + update.getMessage() + ")" : ""));
+                }
+            }
+        }
+        if (!updated) {
+            throw new FcliSimpleException("Push to " + remote
+                    + " did not update any refs (likely an authentication or permission issue)");
+        }
+    }
+
+    private static boolean isLikelyAuthFailure(Throwable e) {
+        for (var cause = e; cause != null; cause = cause.getCause()) {
+            if (cause instanceof TransportException) {
+                return true;
+            }
+            var message = cause.getMessage();
+            if (message != null) {
+                var lower = message.toLowerCase();
+                if (lower.contains("401") || lower.contains("403") || lower.contains("auth")
+                        || lower.contains("not authorized") || lower.contains("forbidden")
+                        || lower.contains("permission")) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private static String rootMessage(Throwable e) {
+        var root = e;
+        while (root.getCause() != null) {
+            root = root.getCause();
+        }
+        return root.getMessage();
     }
 
     private static String selectRemote(Repository repo) {
@@ -519,7 +493,7 @@ public class ActionGitSpelFunctions {
                 int idx = cleaned.indexOf(":");
                 pathPart = idx >= 0 ? cleaned.substring(idx + 1) : cleaned;
             } else {
-                var uri = java.net.URI.create(cleaned);
+                var uri = URI.create(cleaned);
                 pathPart = uri.getPath();
                 if (pathPart.startsWith("/")) {
                     pathPart = pathPart.substring(1);
@@ -549,7 +523,7 @@ public class ActionGitSpelFunctions {
                 int at = cleaned.indexOf('@');
                 host = (at >= 0 && colon > at) ? cleaned.substring(at + 1, colon) : null;
             } else {
-                host = java.net.URI.create(cleaned).getHost();
+                host = URI.create(cleaned).getHost();
             }
             if (host == null) {
                 return "unknown";

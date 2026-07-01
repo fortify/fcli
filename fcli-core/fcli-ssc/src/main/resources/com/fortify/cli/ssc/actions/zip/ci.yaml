@@ -207,33 +207,14 @@ steps:
                 - ${AVIATOR_AUDIT.dependencySkipReason}                # Skip if AVIATOR_AUDIT was skipped or failed
                 - "${#isBlank(aviator.artifactId) ? 'No artifact produced by Aviator audit, nothing to wait for' : ''}"
                         
-            APPLY_REMEDIATIONS:
-              cmd: ${#fcliCmd('APPLY_REMEDIATIONS', 'aviator ssc apply-remediations')} "--source-dir=${global.ci.sourceDir}" "--artifact-id=${aviator.artifactId}" "--progress=none"
+            AVIATOR_REMEDIATIONS:
+              cmd: ${#actionCmd('AVIATOR_REMEDIATIONS', 'ssc', global.ci.ssc_aviatorRemediationsAction)} "--source-dir=${global.ci.sourceDir}" "--artifact-id=${aviator.artifactId}" "--progress=none"
               skip.if-reason:
-                - ${#fcliCmdSkipFromEnvReason('APPLY_REMEDIATIONS', true)} # Skip unless DO_APPLY_REMEDIATIONS==true or APPLY_REMEDIATIONS_ACTION/EXTRA_OPTS defined
+                - ${#actionCmdSkipFromEnvReason('AVIATOR_REMEDIATIONS', true)} # Skip unless DO_AVIATOR_REMEDIATIONS==true or AVIATOR_REMEDIATIONS_ACTION/EXTRA_OPTS defined
+                - ${#actionCmdSkipNoActionReason('AVIATOR_REMEDIATIONS', 'ssc', global.ci.ssc_aviatorRemediationsAction)}
                 - ${postScan.skipReason}                               # Skip if no scans were run
                 - ${aviator.skipReason}                                # Skip if Aviator is not configured
                 - ${AVIATOR_WAIT.dependencySkipReason}                 # Skip if AVIATOR_WAIT was skipped or failed (no remediations available)
-              on.success:
-                - var.set:
-                    remediationsApplied: 'true'
-                    branchName: "aviator/remediations/${#formatDateTime('yyyyMMdd-HHmmss-SSS')}"
-
-            GIT_PUSH_CHANGES:
-              cmd: ${#fcliCmd('GIT_PUSH_CHANGES', 'action run git-push-changes')} "--source-dir=${global.ci.sourceDir}" "--branch-name=${branchName}" "--progress=none"
-              skip.if-reason:
-                - ${#isBlank(remediationsApplied)?'Apply remediations was skipped or failed, skipping Git operations':''}
-              on.fail:
-                - log.warn: "Git stage/commit/push failed"
-
-            CREATE_PR:
-              cmd: ${#fcliCmd('CREATE_PR', 'action run create-pr')} "--source-dir=${global.ci.sourceDir}" "--source-branch=${branchName}" "--progress=none"
-              skip.if-reason:
-                - ${GIT_PUSH_CHANGES.dependencySkipReason}
-              on.fail:
-                - log.warn:
-                    msg: "PR/MR creation failed"
-                    cause: ${lastException}
 
             CHECK_POLICY:
               cmd: ${#actionCmd('CHECK_POLICY', 'ssc', 'check-policy')} "--av=${global.ci.av}" "--progress=none"
