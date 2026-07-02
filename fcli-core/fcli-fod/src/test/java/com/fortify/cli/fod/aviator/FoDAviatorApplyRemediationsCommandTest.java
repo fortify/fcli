@@ -12,14 +12,21 @@
  */
 package com.fortify.cli.fod.aviator;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.lang.reflect.Field;
+import java.util.List;
+import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 
+import com.fortify.cli.aviator._common.util.AviatorIssueIdFilterUtils;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.fod.aviator.cmd.FoDAviatorApplyRemediationsCommand;
+
+import picocli.CommandLine;
 
 class FoDAviatorApplyRemediationsCommandTest {
     @Test
@@ -63,5 +70,42 @@ class FoDAviatorApplyRemediationsCommandTest {
 
         assertThrows(FcliSimpleException.class, () -> command.getJsonNode(null),
             "Blank sourceCodeDirectory should throw FcliSimpleException");
+    }
+
+    @Test
+    void testNormalizeIssueIdsTrimsAndDeduplicates() throws Exception {
+        FoDAviatorApplyRemediationsCommand command = parse("--issue-ids", " ISSUE-1 , , ISSUE-2,ISSUE-1 ");
+        assertEquals(Set.of("ISSUE-1", "ISSUE-2"), AviatorIssueIdFilterUtils.normalizeIssueIds(getIssueIds(command)));
+    }
+
+    @Test
+    void testNormalizeIssueIdsRejectsOnlyBlankValues() throws Exception {
+        FoDAviatorApplyRemediationsCommand command = parse("--issue-ids", " ,  , ");
+        assertThrows(FcliSimpleException.class, () -> AviatorIssueIdFilterUtils.normalizeIssueIds(getIssueIds(command)));
+    }
+
+    @Test
+    void testIssueIdsOptionParsesIntoField() throws Exception {
+        FoDAviatorApplyRemediationsCommand command = parse("--issue-ids", "ISSUE-1,ISSUE-2");
+        Field field = FoDAviatorApplyRemediationsCommand.class.getDeclaredField("issueIds");
+        field.setAccessible(true);
+        assertEquals(List.of("ISSUE-1", "ISSUE-2"), field.get(command));
+    }
+
+    private static FoDAviatorApplyRemediationsCommand parse(String... args) {
+        FoDAviatorApplyRemediationsCommand command = new FoDAviatorApplyRemediationsCommand();
+        var fullArgs = new java.util.ArrayList<String>();
+        fullArgs.add("--release");
+        fullArgs.add("1");
+        java.util.Collections.addAll(fullArgs, args);
+        new CommandLine(command).parseArgs(fullArgs.toArray(String[]::new));
+        return command;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static List<String> getIssueIds(FoDAviatorApplyRemediationsCommand command) throws Exception {
+        Field field = FoDAviatorApplyRemediationsCommand.class.getDeclaredField("issueIds");
+        field.setAccessible(true);
+        return (List<String>) field.get(command);
     }
 }
