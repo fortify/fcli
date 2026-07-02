@@ -23,7 +23,6 @@ import com.fortify.cli.fod._common.output.cli.cmd.AbstractFoDOutputCommand;
 import com.fortify.cli.fod._common.rest.FoDUrls;
 import com.fortify.cli.fod._common.rest.helper.FoDInputTransformer;
 import com.fortify.cli.fod.issue.cli.mixin.FoDIssueEmbedMixin;
-import com.fortify.cli.fod.issue.cli.mixin.FoDIssueIncludeMixin;
 import com.fortify.cli.fod.issue.helper.FoDIssueHelper;
 import com.fortify.cli.fod.issue.helper.FoDIssueHelper.IssueAggregationData;
 import com.fortify.cli.fod.release.cli.mixin.FoDReleaseByQualifiedNameOrIdResolverMixin;
@@ -44,7 +43,6 @@ public class FoDIssueGetCommand extends AbstractFoDOutputCommand {
     @Parameters(index = "0", arity = "1", descriptionKey = "fcli.fod.issue.get.vulnId")
     private String vulnId;
     @Mixin private FoDIssueEmbedMixin embedMixin;
-    @Mixin private FoDIssueIncludeMixin includeMixin;
 
     @Override
     protected IObjectNodeProducer getObjectNodeProducer(UnirestInstance unirest) {
@@ -68,8 +66,10 @@ public class FoDIssueGetCommand extends AbstractFoDOutputCommand {
         HttpRequest<?> request = unirest.get(FoDUrls.VULNERABILITIES)
                 .routeParam("relId", releaseId)
                 .queryString("filters", "vulnId:" + vulnId)
+                .queryString("includeFixed", "true")
+                .queryString("includeSuppressed", "true")
                 .queryString("limit", "2");
-        JsonNode body = includeMixin.updateRequest(request).asObject(JsonNode.class).getBody();
+        JsonNode body = request.asObject(JsonNode.class).getBody();
         JsonNode items = FoDInputTransformer.getItems(body);
         if ( items==null || !items.isArray() ) { return null; }
         if ( items.size()>1 ) {

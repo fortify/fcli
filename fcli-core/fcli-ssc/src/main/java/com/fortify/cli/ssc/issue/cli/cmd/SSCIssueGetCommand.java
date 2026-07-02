@@ -24,7 +24,6 @@ import com.fortify.cli.ssc._common.output.cli.cmd.AbstractSSCOutputCommand;
 import com.fortify.cli.ssc._common.rest.ssc.SSCUrls;
 import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionResolverMixin;
 import com.fortify.cli.ssc.issue.cli.mixin.SSCIssueBulkEmbedMixin;
-import com.fortify.cli.ssc.issue.cli.mixin.SSCIssueIncludeMixin;
 
 import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
@@ -40,7 +39,6 @@ public class SSCIssueGetCommand extends AbstractSSCOutputCommand implements IHtt
     @EnvSuffix("ISSUE_ID") @Parameters(index = "0", arity = "1", descriptionKey = "fcli.ssc.issue.get.id")
     private String id;
     @Mixin private SSCIssueBulkEmbedMixin bulkEmbedMixin;
-    @Mixin private SSCIssueIncludeMixin includeMixin;
 
     @Override
     protected IObjectNodeProducer getObjectNodeProducer(UnirestInstance unirest) {
@@ -51,7 +49,10 @@ public class SSCIssueGetCommand extends AbstractSSCOutputCommand implements IHtt
     }
 
     private HttpRequest<?> getBaseRequest(UnirestInstance unirest, String appVersionId) {
-        return unirest.get(SSCUrls.PROJECT_VERSION_ISSUE(appVersionId, id));
+        return unirest.get(SSCUrls.PROJECT_VERSION_ISSUE(appVersionId, id))
+                .queryString("showHidden", "true")
+                .queryString("showRemoved", "true")
+                .queryString("showSuppressed", "true");
     }
 
     @Override
