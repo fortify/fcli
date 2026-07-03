@@ -19,6 +19,7 @@ import java.util.Map;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
+import com.fortify.cli.aviator._common.config.AviatorConfigManager;
 import com.fortify.cli.aviator.config.LanguagesCommentConfig;
 import com.fortify.cli.aviator.util.LanguageCommentMapperUtil;
 
@@ -52,5 +53,15 @@ class FileUtilsTest {
         String result = fileUtils.appendLineNumbers("<div/>", "db/t1.sql", 0, "HTML");
 
         assertEquals("<div/> <!-- L1 -->", result);
+    }
+
+    @Test
+    void shouldUseConfiguredLanguageAndCommentMappingForFileExtension() {
+        AviatorConfigManager.getInstance();
+        FileUtils fileUtils = new FileUtils();
+
+        String result = fileUtils.appendLineNumbers("package com.example;", "src/main/java/com/example/HomeController.java", 0);
+
+        assertEquals("package com.example; // L1", result);
     }
 }
