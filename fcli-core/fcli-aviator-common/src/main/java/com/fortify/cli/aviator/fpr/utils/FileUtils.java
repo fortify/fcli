@@ -82,7 +82,7 @@ public class FileUtils {
 
         List<String> lines = readFileWithFallback(fullSourcePath);
         if (lineNumber > 0 && lines.size() >= lineNumber) {
-            return lines.get(lineNumber - 1);
+            return appendLineNumbers(lines.get(lineNumber - 1), relativePath, lineNumber - 1);
         }
         logger.info("Could not get line {} from file {} (total lines: {})", lineNumber, fullSourcePath, lines.size());
         return "";
@@ -110,7 +110,7 @@ public class FileUtils {
             sb.append(lines.get(i)).append(System.lineSeparator());
         }
 
-        return new Fragment(sb.toString(), startLine, endLine);
+        return new Fragment(appendLineNumbers(sb.toString(), relativePath, startLine - 1), startLine, endLine);
     }
 
     /**
