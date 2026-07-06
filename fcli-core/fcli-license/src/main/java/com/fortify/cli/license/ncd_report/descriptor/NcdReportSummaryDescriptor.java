@@ -23,10 +23,13 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.json.JsonHelper;
 
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
+@Reflectable @NoArgsConstructor
 @Data
 @JsonInclude(Include.NON_NULL)
 @JsonPropertyOrder({
@@ -87,6 +90,7 @@ public class NcdReportSummaryDescriptor {
         return additionalProperties;
     }
 
+    @Reflectable @NoArgsConstructor
     @Data
     @JsonPropertyOrder({"total", "included", "excluded", "empty", "error", "dormant"})
     public static class RepositoryCounts {
@@ -98,12 +102,14 @@ public class NcdReportSummaryDescriptor {
         private Integer dormant;
     }
 
+    @Reflectable @NoArgsConstructor
     @Data
     @JsonPropertyOrder({"analyzed"})
     public static class CommitCount {
         private Integer analyzed;
     }
 
+    @Reflectable @NoArgsConstructor
     @Data
     @JsonPropertyOrder({"total", "contributing", "ignored", "nonIgnored", "duplicate", "dormant"})
     public static class AuthorCount {
@@ -115,6 +121,7 @@ public class NcdReportSummaryDescriptor {
         private Integer dormant;
     }
 
+    @Reflectable @NoArgsConstructor
     @Data
     @JsonPropertyOrder({"repositories", "commitsByBranch", "commitsByRepository", "contributorsByRepository"})
     public static class DetailRowCount {
@@ -124,6 +131,7 @@ public class NcdReportSummaryDescriptor {
         private Integer contributorsByRepository;
     }
 
+    @Reflectable @NoArgsConstructor
     @Data
     @JsonPropertyOrder({"error", "warn"})
     public static class LogCounts {
