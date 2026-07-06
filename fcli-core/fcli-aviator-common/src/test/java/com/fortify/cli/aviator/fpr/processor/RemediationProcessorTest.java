@@ -200,7 +200,7 @@ class RemediationProcessorTest {
                 <Remediations xmlns=\"xmlns://www.fortify.com/schema/remediations\">
                     <Remediation instanceId=\"ISSUE-TRAVERSAL\">
                         <FileChanges>
-                            <Filename>..\\outside.java</Filename>
+                            <Filename>../outside.java</Filename>
                             <Hash>%s</Hash>
                             <Change>
                                 <LineFrom>3</LineFrom>
