@@ -198,4 +198,12 @@ public class FoDScanHelper {
         }
     }
 
+    public static FoDScanDescriptor updateScan(UnirestInstance unirest, String scanId, FoDScanPutRequest request) {
+        unirest.put(FoDUrls.V3_SCAN)
+                .routeParam("scanId", scanId)
+                .body(objectMapper.valueToTree(request))
+                .asObject(JsonNode.class).getBody();
+        return getScanDescriptor(unirest, scanId, null);
+    }
+
 }

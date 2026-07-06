@@ -1,0 +1,162 @@
+# yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-dev-2.x.json
+
+# For now, this template uses latest release state to generate PR comments.
+
+author: Fortify
+usage:
+  header: (PREVIEW) Add Azure DevOps Pull Request comment.
+  description: |
+    This action adds a comment to an Azure DevOps Pull Request. Currently
+    this is marked as PREVIEW as we build out this functionality; later
+    versions may have different behavior and/or require different action
+    cli.
+
+    For best results, this fcli action should only be run on Azure DevOps
+    pull request build triggers. Upon PR creation, a new FoD release should
+    be created, copying state from the FoD release that represents the
+    branch into which the PR will be merged, and a new scan should be
+    run on the current PR branch before invoking this fcli action.
+
+    This will ensure that scan results for the current PR will be
+    compared against the latest scan results for the target branch
+    upon PR creation. Optionally, new scans can be run upon PR changes,
+    creating new PR comments that show the issue delta compared to the
+    previous scan for this PR.
+
+    Authentication defaults to "Authorization: Bearer <token>" using
+    ADO_TOKEN/SYSTEM_ACCESSTOKEN or --ado-token, which is suitable for
+    Azure DevOps pipeline access tokens. If you want to use a PAT with
+    Basic auth, provide the full Authorization header through
+    ADO_AUTHORIZATION or --ado-authorization (for example,
+    "Basic <base64(:PAT)>"). The organization URL, project, repository ID,
+    and pull request ID can be automatically populated from Azure DevOps CI
+    environment variables.
+
+config:
+  rest.target.default: fod
+
+cli.options:
+  release:
+    names: --release, --rel
+    description: "Required release id or <appName>:[<microserviceName>:]<releaseName>. Default value FOD_RELEASE environment variable."
+    required: true
+    default: ${#env('FOD_RELEASE')}
+  scan-type:
+    names: --scan-type, -t
+    description: "Scan type for which to list vulnerabilities. Default value: Static"
+    required: true
+    default: Static
+  ado-organization-url:
+    names: --ado-organization-url
+    description: "Azure DevOps organization URL. Auto-detected when running on Azure DevOps; provide for local testing."
+    required: true
+    default: "${#ado.env?.organization}"
+  ado-token:
+    names: --ado-token
+    description: "Azure DevOps token used with Bearer auth by default. Auto-detected when running on Azure DevOps; provide for local testing."
+    required: false
+    default: "${#ado.env?.token}"
+  ado-authorization:
+    names: --ado-authorization
+    description: "Optional full Authorization header value (for example, Basic <base64(:PAT)>), overriding `--ado-token`."
+    required: false
+  project:
+    names: --project
+    description: "Azure DevOps project name. Auto-detected when running on Azure DevOps; provide for local testing."
+    required: false
+    default: "${#ado.env?.project}"
+  repository-id:
+    names: --repository-id
+    description: "Repository ID or name. Auto-detected when running on Azure DevOps; provide for local testing."
+    required: true
+    default: "${#ado.env?.repositoryId}"
+  pr-id:
+    names: --pr-id
+    description: "Pull request ID. Auto-detected when running on Azure DevOps; provide for local testing."
+    required: true
+    default: "${#ado.env?.pullRequest?.id}"
+  dryrun:
+    names: --dryrun
+    description: "Set to true to output request body without posting comment."
+    type: boolean
+    required: false
+    default: false
+
+steps:
+  - var.set:
+      adoEnv: ${#ado.env}
+
+  - rest.target:
+      ado:
+        baseUrl: "${adoEnv!=null?adoEnv.organization:cli['ado-organization-url']}"
+        headers:
+          Authorization: "${#ifBlank(cli['ado-authorization'],'Bearer '+cli['ado-token'])}"
+          'Content-Type': 'application/json'
+  - var.set:
+      rel: ${#fod.release(cli.release)}
+  - log.progress: Processing issue data
+  - rest.call:
+      issues:
+        uri: /api/v3/releases/${rel.releaseId}/vulnerabilities?limit=50
+        query:
+          includeFixed: true
+          filters: scantype:${cli['scan-type']}
+        log.progress:
+          page.post-process: Processed ${totalIssueCount?:0} of ${issues_raw.totalCount} issues
+        records.for-each:
+          record.var-name: issue
+          if: ${issue.status!='Existing'}
+          do:
+            - var.set:
+                removedIssues..: {fmt: mdIssueListItem, if: "${issue.status=='Fix Validated'}"}
+                newIssues..: {fmt: mdIssueListItem, if: "${(issue.status=='New' || issue.status=='Reopen')}"}
+
+  - var.set:
+      commentBody: {fmt: commentBody}
+      threadRequestBody: {fmt: threadRequestBody}
+      hasIssueStatusChanges: ${newIssues!=null || removedIssues!=null}
+      adoProjectPath: ${(adoEnv!=null?adoEnv.project:cli['project']).replace(' ','%20')}
+
+  - if: ${cli.dryrun && hasIssueStatusChanges}
+    log.info: {msg: "${commentBody}"}
+
+  - if: ${cli.dryrun && !hasIssueStatusChanges}
+    log.info: {msg: "No issue status changes detected; skipping PR thread."}
+
+  - if: ${!cli.dryrun && hasIssueStatusChanges}
+    rest.call:
+      postPRThread:
+        method: POST
+        uri: "/${adoProjectPath}/_apis/git/repositories/${adoEnv!=null?adoEnv.repositoryId:cli['repository-id']}/pullRequests/${adoEnv!=null?adoEnv.pullRequest.id:cli['pr-id']}/threads"
+        target: ado
+        query:
+          'api-version': '7.0'
+        body: ${threadRequestBody}
+
+  - if: ${!cli.dryrun && !hasIssueStatusChanges}
+    log.info: {msg: "No issue status changes detected; not posting PR comment."}
+
+formatters:
+  threadRequestBody:
+    comments:
+      - content: ${commentBody}
+
+  commentBody: |
+    ## Fortify vulnerability summary
+
+    Any issues listed below are based on comparing the latest scan results against the previous
+    scan results in FoD release [${rel.applicationName}${#isNotBlank(rel.microserviceName)?' - '+rel.microserviceName:''} - ${rel.releaseName}](${#fod.releaseBrowserUrl(rel)}).
+
+    ### New Issues
+
+    ${newIssues==null
+      ? "* No new or re-introduced issues were detected"
+      : ("* "+#join('\n* ',newIssues))}
+
+    ### Removed Issues
+
+    ${removedIssues==null
+      ? "* No removed issues were detected"
+      : ("* "+#join('\n* ',removedIssues))}
+
+  mdIssueListItem: "${issue.status} (${issue.scantype}) - ${issue.category}:    \n[${issue.primaryLocationFull}${issue.lineNumber==null?'':':'+issue.lineNumber}](${#fod.issueBrowserUrl(issue)})"

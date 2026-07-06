@@ -50,7 +50,7 @@ public final class SpelFunctionDescriptorsFactory {
     }
     
     public static final ArrayListWithAsJsonMethod<SpelFunctionDescriptor> getActionSpelFunctionsDescriptors() {
-        // FoD & SSC classes are only available at runtime, so we need to specify them by name
+        // FoD, SSC, and action classes are only available at runtime, so we need to specify them by name
         return getSpelFunctionsDescriptors(
                 "com.fortify.cli.common.spel.fn.SpelFunctionsStandard",
                 "com.fortify.cli.common.action.runner.ActionSpelFunctions",

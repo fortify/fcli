@@ -63,7 +63,7 @@ class InitializationExecutionStrategyTest {
         static String maskedValueObservedInCall;
 
         @Parameters(index = "0")
-        @MaskValue(sensitivity = LogSensitivityLevel.high, description = "REMOTE URL AUTH VALUE", pattern = RemoteUrlAuthHelper.URL_USERINFO_AUTH_VALUE_MASK_PATTERN)
+        @MaskValue(sensitivity = LogSensitivityLevel.high, description = "REMOTE URL AUTH VALUE", pattern = RemoteUrlAuthHelper.URL_USERINFO_AUTH_VALUE_MASK_PATTERN, maskFullValueOnNoMatch = RemoteUrlAuthHelper.URL_USERINFO_AUTH_VALUE_MASK_FULL_ON_NO_MATCH)
         private String source;
 
         @Override
@@ -84,5 +84,18 @@ class InitializationExecutionStrategyTest {
         assertEquals(0, exitCode);
         assertNotNull(DummyPositionalMaskCommand.maskedValueObservedInCall);
         assertFalse(DummyPositionalMaskCommand.maskedValueObservedInCall.contains("positionalMaskSecret12345"));
+    }
+
+    @Test
+    void strategyDoesNotMaskPositionalRemoteUrlWithoutUserinfo() {
+        var source = "https://untrusted-root.badssl.com/";
+        DummyPositionalMaskCommand.maskedValueObservedInCall = null;
+        var cmd = new CommandLine(new DummyPositionalMaskCommand());
+        FcliExecutionStrategyFactory.configureCommandLine(cmd);
+        LogMaskHelper.INSTANCE.setLogMaskLevel(LogMaskLevel.high);
+        int exitCode = cmd.execute(source);
+        assertEquals(0, exitCode);
+        assertNotNull(DummyPositionalMaskCommand.maskedValueObservedInCall);
+        assertEquals(source, DummyPositionalMaskCommand.maskedValueObservedInCall);
     }
 }

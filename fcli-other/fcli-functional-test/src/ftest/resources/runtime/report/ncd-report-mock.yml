@@ -1,0 +1,19 @@
+# Configuration file for testing the NCD license reporting functionality with mock data
+# This uses the built-in mock source for testing without requiring external API access
+
+contributor:
+  ignoreExpression: >
+    lcName matches '.*\[bot\]'
+    
+  duplicateExpression: >
+    a1.cleanName==a2.cleanName ||
+    a1.cleanEmailName==a2.cleanEmailName ||
+    a1.cleanName==a2.cleanEmailName
+
+sources:
+  mock:
+    - repositoryCount: 3
+      # Use enough authors to include built-in bot accounts from MockAuthorData,
+      # so ignoreExpression behavior is exercised in generated reports.
+      authorsPerRepository: 8
+      commitsPerAuthor: 10

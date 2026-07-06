@@ -68,6 +68,16 @@ public class ActionGitHubRepo {
         return repo.createPullRequestComment(env.pullRequest().id(), body);
     }
     
+    @SpelFunction(cat=ci, desc="Creates a pull request in the repository detected from the current workflow run.",
+            returns="Created pull request object from GitHub API")
+    public ObjectNode createPullRequest(
+            @SpelFunctionParam(name="title", desc="pull request title") String title,
+            @SpelFunctionParam(name="head", desc="branch containing the changes") String head,
+            @SpelFunctionParam(name="base", desc="branch to merge into") String base,
+            @SpelFunctionParam(name="body", desc="pull request description (Markdown supported)") String body) {
+        return repo.createPullRequest(title, head, base, body);
+    }
+    
     @SpelFunction(cat=ci, desc="(PREVIEW) Adds a review comment on a specific file and line in the pull request detected from the workflow run. This function is not yet used by any built-in fcli actions; signature and implementation may change in future fcli versions based on new insights as to how to best integrate this functionality into fcli built-in actions.",
             returns="Created review comment object")
     public ObjectNode addReviewComment(

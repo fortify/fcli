@@ -66,10 +66,20 @@ public final class AiAssistExtensionsPathResolver {
      * Resolve a single path string: tilde expansion and ${VAR} substitution.
      */
     public static Path resolvePath(String path) {
+        path = resolvePathString(path);
+        if (StringUtils.isBlank(path)) { return null; }
+        return Path.of(path).toAbsolutePath().normalize();
+    }
+
+    /**
+     * Resolve a single path string without converting to Path. This allows callers
+     * that use glob semantics to apply tilde and ${VAR} expansion before matching.
+     */
+    public static String resolvePathString(String path) {
         if (StringUtils.isBlank(path)) { return null; }
         path = expandTilde(path);
         path = expandEnvVars(path);
-        return Path.of(path).toAbsolutePath().normalize();
+        return path;
     }
 
     private static String expandTilde(String path) {

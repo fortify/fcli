@@ -21,7 +21,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.fortify.cli.common.util.EnvHelper;
 import com.fortify.cli.common.util.FileUtils;
 import com.fortify.cli.common.util.PlatformHelper;
 
@@ -94,10 +93,8 @@ public final class AiAssistExtensionsConditionEvaluator {
      */
     private static boolean evaluateGlobExists(Object value) {
         var pattern = resolvePlatformString(value);
+        pattern = AiAssistExtensionsPathResolver.resolvePathString(pattern);
         if (pattern == null) { return false; }
-        if (pattern.startsWith("~/")) {
-            pattern = EnvHelper.getUserHome() + pattern.substring(1);
-        }
         try {
             return FileUtils.processGlobPathStream(pattern, p -> true,
                     stream -> stream.findAny().isPresent());
@@ -126,7 +123,8 @@ public final class AiAssistExtensionsConditionEvaluator {
             var dirPath = Path.of(dir);
             for (var ext : extensions) {
                 var candidate = dirPath.resolve(command + ext);
-                if (Files.isRegularFile(candidate)) {
+                if (Files.isRegularFile(candidate)
+                        && (PlatformHelper.isWindows() || Files.isExecutable(candidate))) {
                     return true;
                 }
             }

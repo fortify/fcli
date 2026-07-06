@@ -19,8 +19,12 @@ import picocli.CommandLine.Command;
 @Command(
         name = "truststore",
         subcommands = {
+            TrustStoreAddTrustedUrlCommand.class,
             TrustStoreClearCommand.class,
+            TrustStoreClearTrustedUrlsCommand.class,
             TrustStoreGetCommand.class,
+            TrustStoreListTrustedUrlsCommand.class,
+            TrustStoreRemoveTrustedUrlCommand.class,
             TrustStoreSetCommand.class,
         }
 )

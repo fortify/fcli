@@ -37,8 +37,8 @@ public @interface SpelFunction {
      * Example: github.repo() with SECTION creates section "repo" with uploadSarif, etc.
      */
     RenderSubFunctionsMode renderSubFunctions() default RenderSubFunctionsMode.AUTO;
-    
+
     public static enum SpelFunctionCategory {
-        txt, date, workflow, fortify, fcli, util, ci, internal
+        txt, date, workflow, fortify, fcli, util, http, ci, internal
     }
 }

@@ -20,6 +20,7 @@ import java.util.function.Function;
 
 import org.springframework.expression.spel.support.SimpleEvaluationContext;
 
+import com.fortify.cli.common.action.helper.ci.ActionCiSpelFunctionsRegistry;
 import com.fortify.cli.common.action.model.Action;
 import com.fortify.cli.common.cli.util.SimpleOptionsParser.OptionsParseResult;
 import com.fortify.cli.common.progress.helper.IProgressWriterI18n;
@@ -75,6 +76,7 @@ public class ActionRunnerConfig {
         private final ActionRunnerConfig config;
         
         protected final void configureSpelContext(SimpleEvaluationContext spelContext) {
+            ActionCiSpelFunctionsRegistry.registerInfoVariables(spelContext);
             configureSpelContext(spelContext, config.getActionConfigSpelEvaluatorConfigurers(), config);
         }
     }

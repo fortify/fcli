@@ -256,10 +256,11 @@ formatters:
             desc: >-
               (PREVIEW) If `DO_PR_COMMENT` is set to true (implied if any of the other two `PR_COMMENT_*` variables
               are set), a Pull Request or Merge Request comment will be generated using an fcli-provided action
-              matching the current CI system like actionRef:_:github-pr-comment or, if specified, the custom fcli action
-              specified through `PR_COMMENT_ACTION`. Extra options for the fcli action can be specified through
-              the `PR_COMMENT_EXTRA_OPTS` environment variable, which may include fcli options to allow unsigned
-              custom actions to be used.
+              matching the current CI system like actionRef:_:github-pr-comment, actionRef:_:ado-pr-comment, or 
+              actionRef:_:gitlab-mr-comment.
+              A custom action can be specified through `PR_COMMENT_ACTION`. Extra options for the fcli action
+              can be specified through the `PR_COMMENT_EXTRA_OPTS` environment variable, which may include
+              fcli options to allow unsigned custom actions to be used.
           - names: DO_SAST_EXPORT\nSAST_EXPORT_ACTION\nSAST_EXPORT_EXTRA_OPTS
             desc: >-
               If `DO_SAST_EXPORT` is not set to `false` and a SAST scan was completed, the SAST vulnerability
@@ -268,6 +269,18 @@ formatters:
               specified through `SAST_EXPORT_ACTION`. Extra options for the fcli action can be specified through the
               `SAST_EXPORT_EXTRA_OPTS` environment variable, which may include fcli options to allow unsigned custom
               actions to be used.
+          - names: DO_AVIATOR_REMEDIATIONS\nAVIATOR_REMEDIATIONS_ACTION\nAVIATOR_REMEDIATIONS_EXTRA_OPTS\nGIT_PUSH_TOKEN
+            desc: >-
+              (PREVIEW) If `DO_AVIATOR_REMEDIATIONS` is set to true (implied if any of the other two
+              `AVIATOR_REMEDIATIONS_*` variables are set) and Aviator remediations are available, those remediations
+              will be applied to the local source code, committed, and pushed to a new branch. On GitHub, a Pull Request
+              is created from that branch using the fcli-provided actionRef:_:github-remediations-pr action; on other CI
+              systems the fcli-provided actionRef:_:push-remediations action is used to push the branch without creating a
+              Pull or Merge Request. A custom action can be specified through `AVIATOR_REMEDIATIONS_ACTION`, and extra
+              options for the fcli action can be specified through the `AVIATOR_REMEDIATIONS_EXTRA_OPTS` environment
+              variable, which may include fcli options to allow unsigned custom actions to be used. The branch push is
+              authenticated using the `GIT_PUSH_TOKEN` environment variable if set, falling back to the access token of
+              the current CI system and then to the local Git configuration.
     ssc:
       - title: Authentication & Connection
         fragment: session
@@ -413,10 +426,11 @@ formatters:
             desc: >-
               (PREVIEW) If `DO_PR_COMMENT` is set to true (implied if any of the other two `PR_COMMENT_*` variables
               are set), a Pull Request or Merge Request comment will be generated using an fcli-provided action
-              matching the current CI system like actionRef:_:github-pr-comment or, if specified, the custom fcli action
-              specified through `PR_COMMENT_ACTION`. Extra options for the fcli action can be specified through
-              the `PR_COMMENT_EXTRA_OPTS` environment variable, which may include fcli options to allow unsigned
-              custom actions to be used.
+              matching the current CI system like actionRef:_:github-pr-comment, actionRef:_:ado-pr-comment, or 
+              actionRef:_:gitlab-mr-comment.
+              A custom action can be specified through `PR_COMMENT_ACTION`. Extra options for the fcli action
+              can be specified through the `PR_COMMENT_EXTRA_OPTS` environment variable, which may include
+              fcli options to allow unsigned custom actions to be used.
           - names: DO_SAST_EXPORT\nSAST_EXPORT_ACTION\nSAST_EXPORT_EXTRA_OPTS
             desc: >-
               If `DO_SAST_EXPORT` is not set to `false` and a SAST scan was completed, the SAST vulnerability
@@ -433,6 +447,18 @@ formatters:
               specified through `DEBRICKED_EXPORT_ACTION`. Extra options for the fcli action can be specified through the
               `DEBRICKED_EXPORT_EXTRA_OPTS` environment variable, which may include fcli options to allow unsigned custom
               actions to be used.
+          - names: DO_AVIATOR_REMEDIATIONS\nAVIATOR_REMEDIATIONS_ACTION\nAVIATOR_REMEDIATIONS_EXTRA_OPTS\nGIT_PUSH_TOKEN
+            desc: >-
+              (PREVIEW) If `DO_AVIATOR_REMEDIATIONS` is set to true (implied if any of the other two
+              `AVIATOR_REMEDIATIONS_*` variables are set) and Aviator remediations are available, those remediations
+              will be applied to the local source code, committed, and pushed to a new branch. On GitHub, a Pull Request
+              is created from that branch using the fcli-provided actionRef:_:github-remediations-pr action; on other CI
+              systems the fcli-provided actionRef:_:push-remediations action is used to push the branch without creating a
+              Pull or Merge Request. A custom action can be specified through `AVIATOR_REMEDIATIONS_ACTION`, and extra
+              options for the fcli action can be specified through the `AVIATOR_REMEDIATIONS_EXTRA_OPTS` environment
+              variable, which may include fcli options to allow unsigned custom actions to be used. The branch push is
+              authenticated using the `GIT_PUSH_TOKEN` environment variable if set, falling back to the access token of
+              the current CI system and then to the local Git configuration.
   
   # ============================================================================
   # CI SYSTEM DEFINITIONS

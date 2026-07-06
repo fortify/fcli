@@ -22,8 +22,8 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.ssc._common.rest.ssc.SSCUrls;
+import com.fortify.cli.ssc.custom_tag.helper.SSCCustomTagAssignmentHelper;
 import com.fortify.cli.ssc.custom_tag.helper.SSCCustomTagDescriptor;
-import com.fortify.cli.ssc.custom_tag.helper.SSCCustomTagUpdateHelper;
 
 import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
@@ -42,7 +42,7 @@ public class SSCAppVersionCustomTagUpdater {
             return null;
         }
         ArrayNode current = getInitialTags(appVersionId);
-        SSCCustomTagUpdateHelper tagUpdateHelper = new SSCCustomTagUpdateHelper(unirest);
+        SSCCustomTagAssignmentHelper tagUpdateHelper = new SSCCustomTagAssignmentHelper(unirest);
         List<SSCCustomTagDescriptor> currentDescriptors = JsonHelper.stream(current)
             .map(tag -> JsonHelper.treeToValue(tag, SSCCustomTagDescriptor.class))
             .collect(Collectors.toList());

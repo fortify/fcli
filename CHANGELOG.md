@@ -1,5 +1,74 @@
 # Changelog
 
+## [3.22.0](https://github.com/fortify/fcli/compare/v3.21.0...v3.22.0) (2026-07-01)
+
+
+### Features
+
+* fcli action framework: Add base64 & HTTP-related SpEL functions ([2ac1546](https://github.com/fortify/fcli/commit/2ac1546c7689850558b509ea370d24e98cff34d6))
+* fcli actions framework: Add various SpEL functions related to `git` and CI systems ([25adc0e](https://github.com/fortify/fcli/commit/25adc0e39a2ef548cb3b8fe4bc91c510279aa8eb))
+* FoD `ci` action: Add `DO_AVIATOR_REMEDIATIONS` to support pushing Aviator remediations to the remote repository and (if running on GitHub) raising a PR
+* FoD `ci` action: Enhance `DO_PR_COMMENT` to support Azure DevOps and GitLab ([7caeb12](https://github.com/fortify/fcli/commit/7caeb12ade9dbb5bc676899f2a64a972100f6350))
+* FoD: Add `ado-pr-comment` built-in action to generate Fortify comments on Azure DevOps pull requests ([7caeb12](https://github.com/fortify/fcli/commit/7caeb12ade9dbb5bc676899f2a64a972100f6350))
+* FoD: Add `github-remediations-pr` built-in action for raising a GitHub Pull Request with Aviator remediations ([25adc0e](https://github.com/fortify/fcli/commit/25adc0e39a2ef548cb3b8fe4bc91c510279aa8eb))
+* FoD: Add `gitlab-mr-comment` built-in action to generate Fortify comments on GitLab merge requests ([7caeb12](https://github.com/fortify/fcli/commit/7caeb12ade9dbb5bc676899f2a64a972100f6350))
+* FoD: Add `push-remediations` built-in action for applying Aviator remediations and pushing these changes onto new remote branch ([25adc0e](https://github.com/fortify/fcli/commit/25adc0e39a2ef548cb3b8fe4bc91c510279aa8eb))
+* SSC `ci` action: Add `DO_AVIATOR_REMEDIATIONS` to support pushing Aviator remediations to the remote repository and (if running on GitHub) raising a PR
+* SSC: Add `github-remediations-pr` built-in action for raising a GitHub Pull Request with Aviator remediations ([25adc0e](https://github.com/fortify/fcli/commit/25adc0e39a2ef548cb3b8fe4bc91c510279aa8eb))
+* SSC: Add `push-remediations` built-in action for applying Aviator remediations and pushing these changes onto new remote branch ([25adc0e](https://github.com/fortify/fcli/commit/25adc0e39a2ef548cb3b8fe4bc91c510279aa8eb))
+
+## [3.21.0](https://github.com/fortify/fcli/compare/v3.20.0...v3.21.0) (2026-06-26)
+
+
+### Features
+
+* 'fcli fod app list-users': New command to list users assigned to an application (resolves [#1008](https://github.com/fortify/fcli/issues/1008)) ([018721d](https://github.com/fortify/fcli/commit/018721d6829228602544e79d45bd7574b97a045f))
+* `fcli fod sast-scan start`: Add `--in-progress-action` and `--entitlement-preference` options ([4312743](https://github.com/fortify/fcli/commit/431274380ba817580c9db2d36b3c9d46c4e57e3a))
+* `fcli license ncd-report create`: Add `--end-date` option to allow for generating historical reports ([4a0864b](https://github.com/fortify/fcli/commit/4a0864b4181b4574a522fef76e1d37ffad21a712))
+* `fcli license ncd-report list-contributors`: New command for listing contributors in NCD report ([4a0864b](https://github.com/fortify/fcli/commit/4a0864b4181b4574a522fef76e1d37ffad21a712))
+* `fcli license ncd-report merge`: New command for merging NCD reports ([4a0864b](https://github.com/fortify/fcli/commit/4a0864b4181b4574a522fef76e1d37ffad21a712))
+* `fcli license ncd-report update-contributor-status`: New command for updating contributor status based on manual or AI review ([4a0864b](https://github.com/fortify/fcli/commit/4a0864b4181b4574a522fef76e1d37ffad21a712))
+* `fcli ssc issue update`: Add `--extend` option to allow for adding new values to extensible custom tags ([a201fd2](https://github.com/fortify/fcli/commit/a201fd2215f89ecd603c74a0266b4d990964d161))
+
+
+### Bug Fixes
+
+* `fcli * action run`: Only mask credentials in remote action URLs; do not mask plain action names ([8a9ffeb](https://github.com/fortify/fcli/commit/8a9ffeb3610ea0d0a2c18c3394938a0945c6104e))
+* `fcli fod issue update`: Make `--user` option optional ([6951f77](https://github.com/fortify/fcli/commit/6951f7705362edbee14a944ca3df287915bd17ca))
+* `fcli ssc`: Add support for ScanCentral DAST attributes in attribute-related operations ([f8cc477](https://github.com/fortify/fcli/commit/f8cc4777ace9a5a2b60ec401fbeeee2f03a6ebe6))
+* FoD `release-summary` action: Fix exception on releases with no open vulnerabilities ([b7c1b84](https://github.com/fortify/fcli/commit/b7c1b8401fdcb14902ec6160c638be04ced67272))
+* RPC/MCP servers: Refresh trust manager on changed configuration ([#1039](https://github.com/fortify/fcli/issues/1039)) ([7a8fe5b](https://github.com/fortify/fcli/commit/7a8fe5b78081702dd50467fe714f707c96646809))
+
+## [3.20.0](https://github.com/fortify/fcli/compare/v3.19.0...v3.20.0) (2026-06-05)
+
+
+### Features
+
+* `fcli ai-assist extensions list-assistants`: New command to list supported AI coding assistants with detection and installation status ([1c6916a](https://github.com/fortify/fcli/commit/1c6916afd8d7b4758b8fb89b47db1f5914266857))
+* `fcli ai-assist extensions list-installed`: New command to list currently installed Fortify extensions per coding assistant and content type ([1c6916a](https://github.com/fortify/fcli/commit/1c6916afd8d7b4758b8fb89b47db1f5914266857))
+* `fcli ai-assist extensions list-versions`: New command to list available extension versions from tool definitions ([1c6916a](https://github.com/fortify/fcli/commit/1c6916afd8d7b4758b8fb89b47db1f5914266857))
+* `fcli ai-assist extensions setup`: New command to install/update Fortify extensions (skills, agents, ...) for AI coding assistants (Claude Code, GitHub Copilot, OpenAI Codex, Gemini CLI) with auto-detection, target deduplication, and digest verification ([1c6916a](https://github.com/fortify/fcli/commit/1c6916afd8d7b4758b8fb89b47db1f5914266857))
+* `fcli ai-assist extensions uninstall`: New command to remove installed Fortify extensions, with optional `--dir` for directory-specific removal ([1c6916a](https://github.com/fortify/fcli/commit/1c6916afd8d7b4758b8fb89b47db1f5914266857))
+* `fcli ai-assist mcp create-http-config`: New command to generate sample HTTP MCP server config files for SSC or FoD ([1c6916a](https://github.com/fortify/fcli/commit/1c6916afd8d7b4758b8fb89b47db1f5914266857))
+* `fcli ai-assist mcp start-http`: New command to start an HTTP MCP server exposing imported action functions, with per-request auth headers for SSC and FoD ([1c6916a](https://github.com/fortify/fcli/commit/1c6916afd8d7b4758b8fb89b47db1f5914266857))
+* `fcli ai-assist mcp start-stdio`: New command replacing `fcli util mcp-server start` for starting the fcli MCP server over stdio ([1c6916a](https://github.com/fortify/fcli/commit/1c6916afd8d7b4758b8fb89b47db1f5914266857))
+* `fcli config truststore`: Add `add-trusted-url`, `list-trusted-urls`, and `remove-trusted-url` commands ([1dd7d69](https://github.com/fortify/fcli/commit/1dd7d697e90f06c265bb62936e667460ad1895e3))
+* `fcli util mcp-server start`: Deprecated in favor of `fcli ai-assist mcp start-stdio`; delegates all arguments to the new command ([1c6916a](https://github.com/fortify/fcli/commit/1c6916afd8d7b4758b8fb89b47db1f5914266857))
+* Add `--header`/`-H` option on `session login` and selected other commands to allow for specifying custom headers to be used on requests to the respective target system(s), for example for reverse proxy / access gateway authentication ([708cd54](https://github.com/fortify/fcli/commit/708cd545c30b0f21b43eb17e5a6bb86112219e7d))
+* Add `fod *-scan update` commands to allow scan attributes to be updated (closes [#913](https://github.com/fortify/fcli/issues/913)) ([8df8504](https://github.com/fortify/fcli/commit/8df8504f2cc093e9fea9915d4a91d956b3386ac9))
+* Add `headers` configuration option in MSP/NCD report configuration files ([708cd54](https://github.com/fortify/fcli/commit/708cd545c30b0f21b43eb17e5a6bb86112219e7d))
+* Add support for authenticated URL access (closes [#1009](https://github.com/fortify/fcli/issues/1009)) ([7609d10](https://github.com/fortify/fcli/commit/7609d10d1b5500463006bc077305bfb01dceecc5))
+
+
+### Bug Fixes
+
+* `fcli aviator ssc apply-remediations`: Fix potential `IndexOutOfBoundsException` in fuzzy context matching ([634f5a5](https://github.com/fortify/fcli/commit/634f5a527b7abaa841c31e0fb61bdb6fc79e252c))
+* `fcli fod aviator apply-remediations`: Fix potential `IndexOutOfBoundsException` in fuzzy context matching ([634f5a5](https://github.com/fortify/fcli/commit/634f5a527b7abaa841c31e0fb61bdb6fc79e252c))
+* `fcli sc-sast sensor list`: Include full sensor details independent of filtering options; previously `--pool`, `--appversion`, and `--latest-only` returned only compatible client versions instead of full sensor records ([1c6916a](https://github.com/fortify/fcli/commit/1c6916afd8d7b4758b8fb89b47db1f5914266857))
+* `fcli tool definitions update`: Ignore spurious intermediate directories in custom `tool-definitions.zip` ([1c6916a](https://github.com/fortify/fcli/commit/1c6916afd8d7b4758b8fb89b47db1f5914266857))
+* Certificates from system trust store are now being properly applied on all HTTPS requests ([454ff81](https://github.com/fortify/fcli/commit/454ff81920cae7c9780e4608d8e0bd1f3f22ec8d))
+* Fix `--auto-required-attrs` default values for INTEGER and DATE attribute types ([#1027](https://github.com/fortify/fcli/issues/1027)) ([16b41ea](https://github.com/fortify/fcli/commit/16b41ea9952dc6b8432e15339b8689a8db20a7fc))
+
 ## [3.19.0](https://github.com/fortify/fcli/compare/v3.18.0...v3.19.0) (2026-05-11)
 
 

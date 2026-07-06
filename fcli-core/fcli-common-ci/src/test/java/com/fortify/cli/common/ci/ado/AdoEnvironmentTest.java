@@ -48,6 +48,7 @@ public class AdoEnvironmentTest {
         System.setProperty("fcli.env.Build.SourceBranchName", "main");
         System.setProperty("fcli.env.Build.SourceVersion", "9876543210abcdef9876543210abcdef98765432");
         System.setProperty("fcli.env.Build.SourcesDirectory", "/home/vsts/work/1/s");
+        System.setProperty("fcli.env.ADO_TOKEN", "ado-token-value");
         
         var env = AdoEnvironment.detect();
         
@@ -55,6 +56,7 @@ public class AdoEnvironmentTest {
         assertEquals("https://dev.azure.com/myorg/", env.organization());
         assertEquals("MyProject", env.project());
         assertEquals("11111111-2222-3333-4444-555555555555", env.repositoryId());
+        assertEquals("ado-token-value", env.token());
         assertEquals("101", env.buildId());
         
         assertNotNull(env.ciRepository());
@@ -129,9 +131,37 @@ public class AdoEnvironmentTest {
         assertEquals("bugfix-abc", env.ciBranch().short_());
         assertEquals("release", env.pullRequest().target());
     }
+
+    @Test
+    void testDetectPullRequestUppercaseEnvVars() {
+        System.setProperty("fcli.env.SYSTEM_TEAMFOUNDATIONCOLLECTIONURI", "https://dev.azure.com/myorg/");
+        System.setProperty("fcli.env.SYSTEM_TEAMPROJECT", "MyProject");
+        System.setProperty("fcli.env.BUILD_REPOSITORY_NAME", "MyRepo");
+        System.setProperty("fcli.env.BUILD_REPOSITORY_ID", "ffffffff-1111-2222-3333-aaaaaaaaaaaa");
+        System.setProperty("fcli.env.BUILD_BUILDID", "404");
+        System.setProperty("fcli.env.BUILD_SOURCEBRANCH", "refs/pull/999/merge");
+        System.setProperty("fcli.env.BUILD_SOURCEVERSION", "feedbeef1234");
+        System.setProperty("fcli.env.SYSTEM_PULLREQUEST_SOURCEBRANCHNAME", "feature-uppercase");
+        System.setProperty("fcli.env.SYSTEM_PULLREQUEST_TARGETBRANCHNAME", "main");
+        System.setProperty("fcli.env.SYSTEM_PULLREQUEST_PULLREQUESTID", "999");
+        System.setProperty("fcli.env.BUILD_SOURCESDIRECTORY", "/home/vsts/work/1/s");
+
+        var env = AdoEnvironment.detect();
+
+        assertNotNull(env);
+        assertEquals("MyProject", env.project());
+        assertEquals("ffffffff-1111-2222-3333-aaaaaaaaaaaa", env.repositoryId());
+        assertEquals("404", env.buildId());
+        assertEquals("feature-uppercase", env.ciBranch().short_());
+        assertEquals(true, env.pullRequest().active());
+        assertEquals("999", env.pullRequest().id());
+        assertEquals("main", env.pullRequest().target());
+        assertEquals("/home/vsts/work/1/s", env.ciRepository().workspaceDir());
+    }
     
     @Test
     void testGetQualifiedRepoName() {
+        System.setProperty("fcli.env.System.TeamFoundationCollectionUri", "https://dev.azure.com/myorg/");
         System.setProperty("fcli.env.Build.Repository.Name", "ProductRepo");
         System.setProperty("fcli.env.Build.SourceBranch", "refs/heads/staging");
         System.setProperty("fcli.env.Build.SourceBranchName", "staging");
@@ -145,6 +175,7 @@ public class AdoEnvironmentTest {
     
     @Test
     void testGetBranchForVersioning() {
+        System.setProperty("fcli.env.System.TeamFoundationCollectionUri", "https://dev.azure.com/myorg/");
         System.setProperty("fcli.env.Build.Repository.Name", "ProductRepo");
         System.setProperty("fcli.env.Build.SourceBranch", "refs/heads/release-2.0");
         System.setProperty("fcli.env.Build.SourceBranchName", "release-2.0");
@@ -158,6 +189,7 @@ public class AdoEnvironmentTest {
     
     @Test
     void testGetBranchForVersioningInPullRequest() {
+        System.setProperty("fcli.env.System.TeamFoundationCollectionUri", "https://dev.azure.com/myorg/");
         System.setProperty("fcli.env.Build.Repository.Name", "ProductRepo");
         System.setProperty("fcli.env.Build.SourceBranch", "refs/pull/789/merge");
         System.setProperty("fcli.env.Build.SourceVersion", "abc123");
@@ -173,6 +205,7 @@ public class AdoEnvironmentTest {
     
     @Test
     void testRepositoryNameWithPath() {
+        System.setProperty("fcli.env.System.TeamFoundationCollectionUri", "https://dev.azure.com/myorg/");
         System.setProperty("fcli.env.Build.Repository.Name", "team/subteam/MyRepo");
         System.setProperty("fcli.env.Build.SourceBranch", "refs/heads/main");
         System.setProperty("fcli.env.Build.SourceVersion", "abc123");
@@ -186,6 +219,7 @@ public class AdoEnvironmentTest {
     
     @Test
     void testDefaultWorkingDirectoryFallback() {
+        System.setProperty("fcli.env.System.TeamFoundationCollectionUri", "https://dev.azure.com/myorg/");
         System.setProperty("fcli.env.Build.Repository.Name", "MyRepo");
         System.setProperty("fcli.env.Build.SourceBranch", "refs/heads/main");
         System.setProperty("fcli.env.Build.SourceVersion", "abc123");
@@ -199,9 +233,15 @@ public class AdoEnvironmentTest {
     
     @Test
     void testFallbackToCurrentDirectory() {
+        System.setProperty("fcli.env.System.TeamFoundationCollectionUri", "https://dev.azure.com/myorg/");
         System.setProperty("fcli.env.Build.Repository.Name", "MyRepo");
         System.setProperty("fcli.env.Build.SourceBranch", "refs/heads/main");
         System.setProperty("fcli.env.Build.SourceVersion", "abc123");
+        // Explicitly blank out directory vars to prevent real ADO agent env vars from leaking in
+        System.setProperty("fcli.env.Build.SourcesDirectory", "");
+        System.setProperty("fcli.env.BUILD_SOURCESDIRECTORY", "");
+        System.setProperty("fcli.env.System.DefaultWorkingDirectory", "");
+        System.setProperty("fcli.env.SYSTEM_DEFAULTWORKINGDIRECTORY", "");
         
         var env = AdoEnvironment.detect();
         

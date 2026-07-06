@@ -24,6 +24,7 @@ import lombok.NoArgsConstructor;
 public class SSCCustomTagDescriptor extends JsonNodeHolder {
     private String customTagType;
     private boolean deletable;
+    private boolean extensible;
     private String guid;
     private String id;
     private String name;

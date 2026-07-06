@@ -56,6 +56,8 @@ public class SSCIssueUpdateCommand extends AbstractSSCJsonNodeOutputCommand impl
     private String comment;
     @Option(names = {"--assign-user"})
     private String assignUser;
+    @Option(names = {"--extend"}, defaultValue = "false")
+    private boolean extend;
     
     @Override
     public JsonNode getJsonNode(UnirestInstance unirest) {
@@ -192,7 +194,9 @@ public class SSCIssueUpdateCommand extends AbstractSSCJsonNodeOutputCommand impl
         }
         if (hasCustomTags()) {
             var customTagHelper = new SSCIssueCustomTagHelper(unirest, appVersionId);
-            List<SSCIssueCustomTagAuditValue> processedTags = customTagHelper.processCustomTags(customTags);
+            List<SSCIssueCustomTagAuditValue> processedTags = customTagHelper.processCustomTags(customTags,
+                    extend ? SSCIssueCustomTagHelper.ExtendPolicy.enabled()
+                           : SSCIssueCustomTagHelper.ExtendPolicy.disabled("--extend"));
             request.put("customTagAudit", processedTags);
         }
         

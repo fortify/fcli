@@ -15,12 +15,12 @@ package com.fortify.cli.common.action.runner;
 import static com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunction.SpelFunctionCategory.date;
 import static com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunction.SpelFunctionCategory.fcli;
 import static com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunction.SpelFunctionCategory.fortify;
+import static com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunction.SpelFunctionCategory.http;
 import static com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunction.SpelFunctionCategory.internal;
 import static com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunction.SpelFunctionCategory.txt;
 import static com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunction.SpelFunctionCategory.util;
 import static com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunction.SpelFunctionCategory.workflow;
 
-import java.net.URI;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.Year;
@@ -30,17 +30,10 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
-import org.eclipse.jgit.lib.Repository;
-import org.eclipse.jgit.revwalk.RevCommit;
-import org.eclipse.jgit.revwalk.RevWalk;
-import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -53,16 +46,8 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.action.helper.ActionLoaderHelper;
-import com.fortify.cli.common.action.helper.ActionLoaderHelper.ActionSource;
-import com.fortify.cli.common.action.helper.ActionLoaderHelper.ActionValidationHandler;
+import com.fortify.cli.common.action.helper.git.ActionGitSpelFunctions;
 import com.fortify.cli.common.action.schema.ActionSchemaDescriptorFactory;
-import com.fortify.cli.common.ci.CiBranch;
-import com.fortify.cli.common.ci.CiCommit;
-import com.fortify.cli.common.ci.CiCommitId;
-import com.fortify.cli.common.ci.CiCommitMessage;
-import com.fortify.cli.common.ci.CiPerson;
-import com.fortify.cli.common.ci.CiRepository;
-import com.fortify.cli.common.ci.CiRepositoryName;
 import com.fortify.cli.common.ci.LocalRepoInfo;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.FortifyTraceNodeHelper;
@@ -85,8 +70,6 @@ public class ActionSpelFunctions {
     private static final String CODE_END   = "\n===== CODE END =====\n";
     private static final Pattern CODE_PATTERN = Pattern.compile(String.format("%s(.*?)%s", CODE_START, CODE_END), Pattern.DOTALL);
     private static final Pattern uriPartsPattern = Pattern.compile("^(?<serverUrl>(?:(?<protocol>[A-Za-z]+):)?(\\/{0,3})(?<host>[0-9.\\-A-Za-z]+)(?::(?<port>\\d+))?)(?<path>\\/(?<relativePath>[^?#]*))?(?:\\?(?<query>[^#]*))?(?:#(?<fragment>.*))?$");
-    private static final Map<String,Set<String>> builtinActionNamesByModule = new ConcurrentHashMap<>();
-    
     @SpelFunction(cat=util, desc="Resolves the given path against the current working directory.",
             returns="The absolute, normalized path")
     public static final String resolveAgainstCurrentWorkDir(
@@ -94,7 +77,7 @@ public class ActionSpelFunctions {
     {
         return Path.of(".").resolve(path).toAbsolutePath().normalize().toString();
     }
-    
+
     @SpelFunction(cat=workflow, desc = "Throws an error with the given message if the first argument evaluates to true.",
             returns="`true` if no error is thrown")
     public static final boolean check(
@@ -107,9 +90,9 @@ public class ActionSpelFunctions {
             return true;
         }
     }
-    
+
     @SpelFunction(cat=txt, desc = "Repeats the input text a specified number of times.",
-            returns= "The input text repeated the given number of times") 
+            returns= "The input text repeated the given number of times")
     public static final String repeat(
             @SpelFunctionParam(name="input", desc="the text to repeat.") String text,
             @SpelFunctionParam(name="count", desc="the number of times to repeat the text; if <=0, an empty string will be returned") int count)
@@ -119,7 +102,7 @@ public class ActionSpelFunctions {
         for (int i = 0; i < count; i++) { sb.append(text);}
         return sb.toString();
     }
-    
+
     @SpelFunction(cat=txt, desc = "Converts the given HTML string into plain text.",
             returns="The plain text extracted from the input HTML, or `null` if the input is `null`")
     public static final String htmlToText(
@@ -129,16 +112,16 @@ public class ActionSpelFunctions {
         Document document = ActionSpelFunctionsJsoupHelper.asDocument(html);
         return ActionSpelFunctionsJsoupHelper.documentToPlainText(document);
     }
-    
+
     @SpelFunction(cat=txt, desc = "Converts the given HTML string into a single-line plain text string by removing all HTML tags.",
             returns="The plain text representation of the given HTML input, or `null` if the input is `null`")
     public static final String htmlToSingleLineText(
-            @SpelFunctionParam(name="html", desc="the HTML string to convert to single-line plain text") String html) 
+            @SpelFunctionParam(name="html", desc="the HTML string to convert to single-line plain text") String html)
     {
         if (html == null) { return null; }
         return Jsoup.clean(html, "", Safelist.none());
     }
-    
+
     @SpelFunction(cat=fortify, desc = "Cleans the given rule description and returns it as plain text.",
             returns="The cleaned rule description, or empty string if input is `null`")
     public static final String cleanRuleDescription(
@@ -149,7 +132,7 @@ public class ActionSpelFunctions {
         var paragraphs = document.select("Paragraph");
         for (var p : paragraphs) {
             var altParagraph = p.select("AltParagraph");
-            if (!altParagraph.isEmpty()) { p.replaceWith(new TextNode(String.join("\n\n", altParagraph.eachText())));} 
+            if (!altParagraph.isEmpty()) { p.replaceWith(new TextNode(String.join("\n\n", altParagraph.eachText())));}
             else { p.remove(); }
         }
         document.select("IfDef").remove();
@@ -168,17 +151,17 @@ public class ActionSpelFunctions {
         return ActionSpelFunctionsJsoupHelper.documentToPlainText(document);
     }
 
-    @SpelFunction(cat=util, desc = "Retrieves a given part of the given URI",
-            returns="Requested part of the given URI, or `null` if part name is not valid or not present") 
+    @SpelFunction(cat=http, desc = "Retrieves a given part of the given URI",
+            returns="Requested part of the given URI, or `null` if part name is not valid or not present")
     public static final String uriPart(
-            @SpelFunctionParam(name="uri", desc="URI from which to retrieve the requested part") String uriString, 
+            @SpelFunctionParam(name="uri", desc="URI from which to retrieve the requested part") String uriString,
             @SpelFunctionParam(name="part", desc="URI part to be returned; may be one of serverUrl, protocol, host, port, path, relativePath, query, fragment") String part)
     {
         if ( StringUtils.isBlank(uriString) ) {return null;}
         Matcher matcher = uriPartsPattern.matcher(uriString);
         return matcher.matches() ? matcher.group(part) : null;
     }
-    
+
     @SpelFunction(cat=date, desc = """
             Returns either current or given date/time formatted according to the given formatter pattern. See
             'Patterns for Formatting and Parsing' section at
@@ -196,7 +179,7 @@ public class ActionSpelFunctions {
         var dateString = dateStrings == null || dateStrings.length == 0 ? currentDateTime() : dateStrings[0];
         return formatDateTimeWithZoneId(pattern, dateString, ZoneId.systemDefault());
     }
-    
+
     @SpelFunction(cat=date, desc = """
             Returns given date/time formatted according to the given formatter pattern. See 'Patterns for Formatting
             and Parsing' section at
@@ -213,9 +196,9 @@ public class ActionSpelFunctions {
         ZonedDateTime zonedDateTime = new JSONDateTimeConverter(defaultZoneId).parseZonedDateTime(dateString);
         return DateTimeFormatter.ofPattern(pattern).format(zonedDateTime);
     }
-    
+
     @SpelFunction(cat=date, desc = """
-            Converts given date/time to UTC time zone and formats the result according to the given formatter pattern. 
+            Converts given date/time to UTC time zone and formats the result according to the given formatter pattern.
             See 'Patterns for Formatting and Parsing' section at
             https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/format/DateTimeFormatter.html
             for details on formatter pattern syntax. If the given date/time doesn't include time zone, system
@@ -224,13 +207,13 @@ public class ActionSpelFunctions {
             returns="Formatted date/time")
     public static final String formatDateTimeAsUTC(
             @SpelFunctionParam(name="fmt", desc="formatter pattern used to format given date/time") String pattern,
-            @SpelFunctionParam(name="input", desc="date/time in JSON format to be formatted") String dateString) 
+            @SpelFunctionParam(name="input", desc="date/time in JSON format to be formatted") String dateString)
     {
         return formatDateTimewithZoneIdAsUTC(pattern, dateString, ZoneId.systemDefault());
     }
-    
+
     @SpelFunction(cat=date, desc = """
-            Converts given date/time to UTC time zone and formats the result according to the given formatter pattern. 
+            Converts given date/time to UTC time zone and formats the result according to the given formatter pattern.
             See 'Patterns for Formatting and Parsing' section at
             https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/format/DateTimeFormatter.html
             for details on formatter pattern syntax. If the given date/time doesn't include time zone, the given
@@ -246,7 +229,7 @@ public class ActionSpelFunctions {
         LocalDateTime utcDateTime = LocalDateTime.ofInstant(zonedDateTime.toInstant(), ZoneOffset.UTC);
         return DateTimeFormatter.ofPattern(pattern).format(utcDateTime);
     }
-    
+
     @SpelFunction(cat=date, returns="The current date/time as `yyyy-MM-dd HH:mm:ss`")
     public static final String currentDateTime() {
         return DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(LocalDateTime.now());
@@ -255,27 +238,27 @@ public class ActionSpelFunctions {
     @SpelFunction(cat=workflow, desc= """
             Constructs an fcli command for running an fcli action based on function arguments combined with
             user-supplied environment variables. Example environment variable names:
-            
+
             * If `envPrefix` is `SETUP`, we look for `SETUP_ACTION` and `SETUP_EXTRA_OPTS`
             * If `envPrefix` is `PACKAGE_ACTION`, we look for `PACKAGE_ACTION` and `PACKAGE_ACTION_EXTRA_OPTS`
-            
+
             As can be seen in the second example, if the given envPrefix already ends with `_ACTION`, \
             the extra `_ACTION` suffix is skipped to avoid variable names like `PACKAGE_ACTION_ACTION`. \
             Note though that we do keep `_ACTION` in `*_ACTION_EXTRA_OPTS`, to allow for having both \
             PACKAGE_EXTRA_OPTS (on the `scancentral package` command), and PACKAGE_ACTION_EXTRA_OPTS \
             (on the `fcli * action run package` command).
-            
-            This function returns an fcli command like `fcli <module> action run <action> <extra-opts>`, 
+
+            This function returns an fcli command like `fcli <module> action run <action> <extra-opts>`,
             where:
-            
+
             * `<module>` is taken from the corresponding function argument
             * `<action>` is taken from either environment variable (if defined) or function argument, \
             allowing the user to run a custom    fcli action instead of built-in action
             * `<extra-opts>` is taken from environment variable
-            """, 
+            """,
             returns="`fcli <module> action run <action> <extra-opts>`")
     public static final String actionCmd(
-            @SpelFunctionParam(name="envPrefix", desc="environment variable prefix") String envPrefix, 
+            @SpelFunctionParam(name="envPrefix", desc="environment variable prefix") String envPrefix,
             @SpelFunctionParam(name="moduleName", desc="fcli module name") String moduleName,
             @SpelFunctionParam(name="actionName", desc="fcli action name") String actionName)
     {
@@ -284,26 +267,26 @@ public class ActionSpelFunctions {
                 ActionSpelFunctionsHelper.envOrDefault(envPrefix.replaceAll("_ACTION$", ""), "ACTION", actionName),
                 extraOpts(envPrefix));
     }
-    
+
     @SpelFunction(cat=workflow, desc = """
             Returns the given fcli command, amended with extra options specified in an optional,
             user-supplied environment variable named `<envPrefix>_EXTRA_OPTS`.
             """,
-            returns="`<cmd> <extra-opts>`") 
+            returns="`<cmd> <extra-opts>`")
     public static final String fcliCmd(
             @SpelFunctionParam(name="envPrefix", desc="the environment variable prefix used to determine extra options") String envPrefix,
             @SpelFunctionParam(name="cmd", desc="the base command to be executed") String cmd)
     {
         return String.format("%s %s", cmd, extraOpts(envPrefix));
     }
-    
+
     @SpelFunction(cat=workflow, desc="""
             Returns a skip reason if there's no action available to be run. If user configured a custom action \
             for the given `envPrefix` (also see `#actionCmd(...)`, we assume that the action exists and thus \
             return `null`. Otherwise, we check whether the given (built-in) action name is not blank and exists;
-            if not, we return an appropriate skip reason.  
-            """, 
-            returns="Skip reason or `null` if no reason to skip") 
+            if not, we return an appropriate skip reason.
+            """,
+            returns="Skip reason or `null` if no reason to skip")
     public static final String actionCmdSkipNoActionReason(
             @SpelFunctionParam(name="envPrefix", desc="the environment variable prefix used to check the action environment variable") String envPrefix,
             @SpelFunctionParam(name="moduleName", desc="the name of the module to check for built-in actions") String moduleName,
@@ -320,13 +303,13 @@ public class ActionSpelFunctions {
         }
         return null;
     }
-    
+
     @SpelFunction(cat=workflow, desc="""
             For use with `run.fcli::skip.if-reason`, returns a skip reason if either user explicitly \
             set `DO_<envPrefix>` to `false`, or if `skipByDefault` is `true` and user didn't explicitly \
             set `DO_<envPrefix>` to `true`. Note that `DO_<envPrefix>: true` is implied if either \
             `<envPrefix>_ACTION` or `<envPrefix>_EXTRA_OPTS` have been set.
-            """, 
+            """,
             returns="Skip reason or `null` if no reason to skip")
     public static final String actionCmdSkipFromEnvReason(
             @SpelFunctionParam(name="envPrefix", desc="the environment variable prefix used to construct related environment variable names") String envPrefix,
@@ -352,14 +335,14 @@ public class ActionSpelFunctions {
         }
         return skipByDefault ? String.format("Set %s to 'true' to enable this step", doEnvName) : null;
     }
-    
+
     @SpelFunction(cat=workflow, desc="""
             For use with `run.fcli::skip.if-reason`, returns a skip reason if either user explicitly \
             set `DO_<envPrefix>` to `false`, or if `skipByDefault` is `true` and user didn't explicitly \
             set `DO_<envPrefix>` to `true`. Note that `DO_<envPrefix>==true` is implied if \
             `<envPrefix>_EXTRA_OPTS` has been set.
-            """, 
-            returns="Skip reason or `null` if no reason to skip") 
+            """,
+            returns="Skip reason or `null` if no reason to skip")
     public static final String fcliCmdSkipFromEnvReason(
             @SpelFunctionParam(name="envPrefix", desc="the environment variable prefix used to construct related environment variable names") String envPrefix,
             @SpelFunctionParam(name="skipByDefault", desc="flag indicating whether to skip by default when no relevant environment variables are set") boolean skipByDefault)
@@ -383,46 +366,46 @@ public class ActionSpelFunctions {
         }
         return skipByDefault ? String.format("Set %s to 'true' to enable this step", doEnvName) : null;
     }
-    
+
     @SpelFunction(cat=workflow, desc="""
             For use with `run.fcli::skip.if-reason`, returns the given skip reason if `skip` is \
             `true`, otherwise `null` is returned.
-            """, 
-            returns="Skip reason or `null` if no reason to skip") 
+            """,
+            returns="Skip reason or `null` if no reason to skip")
     public static final String skipReasonIf(
             @SpelFunctionParam(name="skip", desc="the condition indicating whether to skip") boolean skip,
             @SpelFunctionParam(name="reason", desc="the reason to return if skipping") String reason)
     {
         return skip ? reason : null;
     }
-    
+
     @SpelFunction(cat=workflow, desc="""
             For use with `run.fcli::skip.if-reason`, returns a skip reason if the given environment \
             variable hasn't been set, otherwise `null` is returned.
-            """, 
-            returns="Skip reason or `null` if no reason to skip")  
+            """,
+            returns="Skip reason or `null` if no reason to skip")
     public static final String skipBlankEnvReason(
-            @SpelFunctionParam(name="", desc="the name of the environment variable to check") String envName) 
+            @SpelFunctionParam(name="", desc="the name of the environment variable to check") String envName)
     {
         return StringUtils.isNotBlank(EnvHelper.env(envName)) ? null : String.format("%s not set", envName);
     }
 
     @SpelFunction(cat=workflow,
-            returns="The given fcli action name if it exists in the given fcli module, `null` otherwise.") 
+            returns="The given fcli action name if it exists in the given fcli module, `null` otherwise.")
     public static final String actionOrNull(
             @SpelFunctionParam(name="moduleName", desc="fcli module to check for action existence") String moduleName,
             @SpelFunctionParam(name="actionName", desc="fcli action to check for existence") String actionName)
     {
         return ActionSpelFunctionsHelper.hasBuiltInAction(moduleName, actionName) ? actionName : null;
     }
-    
+
     @SpelFunction(cat=workflow, desc = """
             Replaces environment variable references in the given options string with the corresponding \
             environment variable values, removing any options for which the environment variable doesn't \
             exist or its value is blank. For example, given `--opt1=ENV1 --opt2=ENV2`, this function will \
             return `"--opt1=SomeValue"` if `ENV1` is set to `SomeValue` and `ENV2` is either blank or doesn't \
-            exist. 
-            """, returns="") 
+            exist.
+            """, returns="")
     public static final String optsFromEnv(
             @SpelFunctionParam(name="input", desc="options to be resolved from environment variables") String opts)
     {
@@ -439,7 +422,7 @@ public class ActionSpelFunctions {
         }
         return String.join(" ", output);
     }
-    
+
     @SpelFunction(cat=workflow, desc = """
             Returns a formatted option string in the form `"name=value"` if the value is not blank, \
             or an empty string if the value is blank. This is useful for conditionally including \
@@ -447,20 +430,20 @@ public class ActionSpelFunctions {
             """,
             returns="Formatted option string `\"name=value\"` if value is not blank, empty string otherwise")
     public static final String opt(
-            @SpelFunctionParam(name="name", desc="the option name") String name, 
+            @SpelFunctionParam(name="name", desc="the option name") String name,
             @SpelFunctionParam(name="value", desc="the option value; if blank, function returns empty string") String value) {
         if ( StringUtils.isBlank(value) ) { return ""; }
         return String.format("\"%s=%s\"", name, value);
     }
 
     @SpelFunction(cat=workflow,
-            returns="Value of `<envPrefix>_EXTRA_OPTS` environment variable, or empty string if not defined") 
+            returns="Value of `<envPrefix>_EXTRA_OPTS` environment variable, or empty string if not defined")
     public static final String extraOpts(
         @SpelFunctionParam(name="envPrefix", desc="the environment variable prefix used to construct the full `EXTRA_OPTS` variable name") String envPrefix)
     {
         return ActionSpelFunctionsHelper.envOrDefault(envPrefix, "EXTRA_OPTS", "");
     }
-    
+
     @SpelFunction(cat=util, desc = """
             Converts the given object into an array of key-value pairs. For example, an object `{p1: v1, p2: v2}` \
             will be converted into an array `[{key: p1, value: v1}, {key: p2, value: v2}`. This can for example be
@@ -488,45 +471,45 @@ public class ActionSpelFunctions {
             Creates an issue source file resolver that maps Fortify-reported paths to workspace-relative paths. \
             Fortify may add or strip leading directories during scanning; this resolver uses longest-suffix \
             matching to find the correct file in the workspace.
-            
+
             Configuration properties:
             * `workspaceDir` - Repository root directory (required for path resolution)
             * `sourceDir` - Directory that was scanned (optional; used to prioritize matches when multiple files share the same name)
-            
+
             Example: `${#issueSourceFileResolver({workspaceDir:\"/workspace\", sourceDir:\"/workspace/src\"})}`
-            
+
             For backward compatibility, if only `sourceDir` is provided, it will be used as `workspaceDir`.
-            
+
             See available methods via SpEL function documentation of the returned IssueSourceFileResolver object.
             """,
             returns="Issue source file resolver with resolve() and exists() methods",
-            renderSubFunctions=RenderSubFunctionsMode.INLINE) 
+            renderSubFunctions=RenderSubFunctionsMode.INLINE)
     public static final IssueSourceFileResolver issueSourceFileResolver(
-            @SpelFunctionParam(name="config", desc="configuration; may contain `workspaceDir` (repo root) and/or `sourceDir` (scan directory for prioritization)") Map<String, String> config) 
+            @SpelFunctionParam(name="config", desc="configuration; may contain `workspaceDir` (repo root) and/or `sourceDir` (scan directory for prioritization)") Map<String, String> config)
     {
         var workspaceDir = config.get("workspaceDir");
         var sourceDir = config.get("sourceDir");
-        
+
         // For backward compatibility: if only sourceDir provided (old usage), use it as workspaceDir
         if (StringUtils.isBlank(workspaceDir) && StringUtils.isNotBlank(sourceDir)) {
             workspaceDir = sourceDir;
             sourceDir = null; // Don't use as sourcePath since it's also the workspace
         }
-        
+
         var builder = IssueSourceFileResolver.builder()
                 .workspacePath(StringUtils.isBlank(workspaceDir) ? null : Path.of(workspaceDir))
                 .sourcePath(StringUtils.isBlank(sourceDir) ? null : Path.of(sourceDir));
         return builder.build();
     }
 
-    @SpelFunction(cat=fortify, returns="normalized array of trace nodes") 
+    @SpelFunction(cat=fortify, returns="normalized array of trace nodes")
     public static final ArrayNode normalizeTraceNodes(
             @SpelFunctionParam(name="input", desc="the original, non-normalized array of trace nodes") ArrayNode traceNodes)
     {
         return FortifyTraceNodeHelper.normalize(traceNodes);
     }
 
-    @SpelFunction(cat=fortify, returns="normalized and merged array of trace nodes") 
+    @SpelFunction(cat=fortify, returns="normalized and merged array of trace nodes")
     public static final ArrayNode normalizeAndMergeTraceNodes(
             @SpelFunctionParam(name="input", desc="the original, non-normalized array of trace nodes") ArrayNode traceNodes)
     {
@@ -552,115 +535,18 @@ public class ActionSpelFunctions {
     public static final String copyright() {
         return String.format("Copyright (c) %s Open Text", Year.now().getValue());
     }
-    
+
     @SpelFunction(cat=internal, desc="""
-                Returns basic information about the local git repository for the given source directory, or null if the
-                directory is not inside a git working tree. Only constant-time lookups are performed (HEAD commit only).
-                Structure:
-                {
-                repository: { workspaceDir, remoteUrl?, name: { short, full? } },
-                branch: { full?, short? },
-                commit: {
-                    id: { full, short },
-                    message: { short, full },
-                    author: { name, email, when },
-                    committer: { name, email, when }
-                }
-                }
+                (DEPRECATED) Use `#git.localRepo(...)` instead; this function is retained only for backward \
+                compatibility and simply delegates to it.
                 """, returns="Git repository information or null if not a git work dir",
                 returnType=LocalRepoInfo.class)
+        @Deprecated
         public static final ObjectNode localRepo(
                 @SpelFunctionParam(name="sourceDir", desc="directory assumed to be inside a git working tree") String sourceDir) {
-            if (StringUtils.isBlank(sourceDir)) { return null; }
-            var dir = Path.of(sourceDir).toAbsolutePath().normalize().toFile();
-            if (!dir.exists()) { return null; }
-            FileRepositoryBuilder builder = new FileRepositoryBuilder().findGitDir(dir);
-            if (builder.getGitDir()==null) { return null; }
-            try (Repository repo = builder.build()) {
-                var mapper = JsonHelper.getObjectMapper();
-                
-                // Repository information
-                var remote = ActionSpelFunctionsJGitHelper.selectRemote(repo);
-                var remoteUrl = remote==null?null:repo.getConfig().getString("remote", remote, "url");
-                var names = ActionSpelFunctionsJGitHelper.deriveRepoNames(dir.getName(), remoteUrl);
-                var repository = CiRepository.builder()
-                    .workspaceDir(repo.getWorkTree().getAbsolutePath())
-                    .remoteUrl(StringUtils.isBlank(remoteUrl) ? null : remoteUrl)
-                    .name(CiRepositoryName.builder()
-                        .short_(names[0])
-                        .full(names[1])
-                        .build())
-                    .build();
-                
-                // Branch information
-                CiBranch branch = null;
-                try {
-                    String fullBranch = repo.getFullBranch();
-                    if (fullBranch != null) {
-                        branch = CiBranch.builder()
-                            .full(fullBranch)
-                            .short_(Repository.shortenRefName(fullBranch))
-                            .build();
-                    }
-                } catch (Exception e) { }
-                
-                // Commit information
-                CiCommit commit = null;
-                var headId = repo.resolve("HEAD");
-                if (headId != null) {
-                    try (var walk = new RevWalk(repo)) {
-                        RevCommit gitCommit = walk.parseCommit(headId);
-                        String shortId;
-                        try {
-                            var abbrev = repo.newObjectReader().abbreviate(gitCommit.getId(), 8);
-                            shortId = abbrev.name();
-                        } catch (Exception ex) {
-                            shortId = gitCommit.getId().getName().substring(0, 8);
-                        }
-                        
-                        var authorIdent = gitCommit.getAuthorIdent();
-                        var committerIdent = gitCommit.getCommitterIdent();
-                        
-                        var commitId = CiCommitId.builder()
-                            .full(gitCommit.getId().getName())
-                            .short_(shortId)
-                            .build();
-                        
-                        commit = CiCommit.builder()
-                            .headId(commitId)
-                            .mergeId(commitId)  // Same as headId for local repos
-                            .message(CiCommitMessage.builder()
-                                .short_(gitCommit.getShortMessage())
-                                .full(gitCommit.getFullMessage())
-                                .build())
-                            .author(authorIdent != null ? CiPerson.builder()
-                                .name(authorIdent.getName())
-                                .email(authorIdent.getEmailAddress())
-                                .when(authorIdent.getWhenAsInstant().toString())
-                                .build() : null)
-                            .committer(committerIdent != null ? CiPerson.builder()
-                                .name(committerIdent.getName())
-                                .email(committerIdent.getEmailAddress())
-                                .when(committerIdent.getWhenAsInstant().toString())
-                                .build() : null)
-                            .build();
-                    } catch (Exception e) { }
-                }
-                
-                // Build root object
-                var root = mapper.createObjectNode();
-                root.set("repository", mapper.valueToTree(repository));
-                if (branch != null) {
-                    root.set("branch", mapper.valueToTree(branch));
-                }
-                if (commit != null) {
-                    root.set("commit", mapper.valueToTree(commit));
-                }
-                
-                return root;
-            } catch (Exception e) { return null; }
+            return ActionGitSpelFunctions.INSTANCE.localRepo(sourceDir);
         }
-    
+
     private static final class ActionSpelFunctionsJsoupHelper {
         private static final void replaceCode(Element e) {
             var text = e.text();
@@ -698,64 +584,15 @@ public class ActionSpelFunctions {
         }
     }
     
-    private static final class ActionSpelFunctionsJGitHelper {
-        private static String selectRemote(Repository repo) {
-                try {
-                    var remotes = repo.getRemoteNames();
-                    if (remotes==null || remotes.isEmpty()) { return null; }
-                    if (remotes.contains("origin")) { return "origin"; }
-                    return remotes.iterator().next();
-                } catch (Exception e) { return null; }
-            }
-            
-            private static String[] deriveRepoNames(String fallbackShort, String remoteUrl) {
-                if (StringUtils.isBlank(remoteUrl)) { return new String[]{fallbackShort, null}; }
-                try {
-                    var cleaned = remoteUrl.trim();
-                    if (cleaned.endsWith(".git")) { cleaned = cleaned.substring(0, cleaned.length()-4); }
-                    String pathPart;
-                    if (cleaned.startsWith("git@")) {
-                        int idx = cleaned.indexOf(":");
-                        pathPart = idx>=0 ? cleaned.substring(idx+1) : cleaned;
-                    } else {
-                        try {
-                            var uri = URI.create(cleaned);
-                            pathPart = uri.getPath();
-                            if (pathPart==null) { pathPart = cleaned; }
-                        } catch (Exception ex) { pathPart = cleaned; }
-                    }
-                    if (pathPart.startsWith("/")) { pathPart = pathPart.substring(1); }
-                    if (pathPart.endsWith("/")) { pathPart = pathPart.substring(0, pathPart.length()-1); }
-                    if (pathPart.contains("/")) {
-                        var shortName = pathPart.substring(pathPart.lastIndexOf('/')+1);
-                        return new String[]{shortName, pathPart};
-                    }
-                    return new String[]{pathPart, pathPart};
-                } catch (Exception e) { return new String[]{fallbackShort, null}; }
-            }
-
-    }
-    
-
-    
     private static final class ActionSpelFunctionsHelper {
         private static final String envOrDefault(String prefix, String suffix, String defaultValue) {
             var envName = String.format("%s_%s", prefix, suffix).toUpperCase().replace('-', '_');
             var envValue = EnvHelper.env(envName);
-            return StringUtils.isNotBlank(envValue) ? envValue : defaultValue; 
+            return StringUtils.isNotBlank(envValue) ? envValue : defaultValue;
         }
-        
+
         private static boolean hasBuiltInAction(String moduleName, String actionName) {
-            if ( StringUtils.isBlank(actionName) ) { return false; }
-            return builtinActionNamesByModule
-                    .computeIfAbsent(moduleName, ActionSpelFunctionsHelper::getBuiltinActionNames)
-                    .contains(actionName);
+            return ActionLoaderHelper.hasBuiltInAction(moduleName, actionName);
         }
-        
-        private static final Set<String> getBuiltinActionNames(String moduleName) {
-            return ActionLoaderHelper
-                        .streamAsNames(ActionSource.defaultActionSources(moduleName), ActionValidationHandler.IGNORE)
-                        .collect(Collectors.toSet());
-        }       
     }
 }

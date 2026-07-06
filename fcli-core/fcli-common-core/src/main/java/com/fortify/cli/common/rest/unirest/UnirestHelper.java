@@ -16,13 +16,17 @@ import java.io.File;
 import java.nio.file.StandardCopyOption;
 import java.util.function.Consumer;
 
+import javax.net.ssl.SSLContext;
+
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.http.proxy.helper.ProxyHelper;
 import com.fortify.cli.common.json.JsonHelper;
+import com.fortify.cli.common.rest.unirest.config.UnirestHttpClientConfigurer;
 
 import kong.unirest.Unirest;
 import kong.unirest.UnirestInstance;
 import kong.unirest.jackson.JacksonObjectMapper;
+import lombok.SneakyThrows;
 
 /**
  * This class provides utility methods related to Unirest
@@ -48,15 +52,19 @@ public class UnirestHelper {
     }
 
     /**
-     * Create a new Unirest instance, configured with the standard FCLI JSON object mapper.
+     * Create a new Unirest instance, configured with the standard FCLI JSON object mapper
+     * and the JVM default SSL context.
      * Callers are responsible for closing the returned instance.
      */
+    @SneakyThrows
     public static UnirestInstance createUnirestInstance() {
         UnirestInstance instance = Unirest.spawnInstance();
         instance.config().setObjectMapper(new JacksonObjectMapper(JsonHelper.getObjectMapper()));
+        instance.config().sslContext(SSLContext.getDefault());
+        UnirestHttpClientConfigurer.configure(instance, null);
         return instance;
     }
-    
+
     /**
      * Create a new Unirest instance, configured with the standard FCLI JSON object mapper
      * and any custom configuration applied by the given configurer.

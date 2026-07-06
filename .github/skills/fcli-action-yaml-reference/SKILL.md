@@ -13,7 +13,7 @@ Detailed reference material for developing fcli action YAML files. The always-on
 
 Default values for CLI options — evaluated **before** action steps run.
 
-- Only `ActionSpelFunctions` + `#env()` available
+- Only `ActionSpelFunctions` + `#env()` + `#<ci>.env` (e.g. `#ado.env`, `#github.env`) available
 - Evaluated via `ActionRunnerConfig.getSpelEvaluator()`
 - **NOT available:** `ActionRunnerContextSpelFunctions` (`action.*`), product-specific functions (`fod.*`, `ssc.*`), action variables, execution context
 

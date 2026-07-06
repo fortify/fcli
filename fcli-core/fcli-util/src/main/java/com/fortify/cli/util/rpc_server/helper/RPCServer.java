@@ -32,6 +32,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fortify.cli.common.cli.util.FcliActionState;
 import com.fortify.cli.common.cli.util.FcliExecutionContext;
 import com.fortify.cli.common.cli.util.FcliExecutionContextHolder;
+import com.fortify.cli.common.http.ssl.trust.FcliTrustManager;
 import com.fortify.cli.common.json.JsonHelper;
 
 import lombok.extern.slf4j.Slf4j;
@@ -225,6 +226,7 @@ public final class RPCServer {
         try {
             JsonNode result;
             try (var frame = FcliExecutionContextHolder.push(new FcliExecutionContext(registry.getIsolationScope(), new FcliActionState()))) {
+                FcliTrustManager.refreshIfChanged();
                 result = handler.execute(request.params());
             }
             return RPCResponse.success(request.id(), result);

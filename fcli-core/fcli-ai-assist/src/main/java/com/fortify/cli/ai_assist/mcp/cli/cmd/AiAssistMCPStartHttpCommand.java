@@ -39,6 +39,7 @@ import com.fortify.cli.common.cli.util.IFcliExecutionContextManager;
 import com.fortify.cli.common.cli.util.StdioHelper;
 import com.fortify.cli.common.concurrent.job.AsyncJobManager;
 import com.fortify.cli.common.exception.FcliSimpleException;
+import com.fortify.cli.common.http.ssl.trust.FcliTrustManager;
 import com.fortify.cli.common.log.LogMaskContext;
 import com.fortify.cli.common.mcp.MCPExclude;
 import com.fortify.cli.common.session.helper.AbstractSessionHelper;
@@ -152,6 +153,7 @@ public class AiAssistMCPStartHttpCommand extends AbstractRunnableCommand impleme
 
     private void buildAndStartServer(MCPServerHttpConfig config,
             JdkHttpServerMcpStatelessTransport transport, McpSpecs specs) {
+        var tlsConfigured = config.getServer().getTls() != null;
         var serverBuilder = McpServer.sync(transport)
                 .serverInfo("fcli", FcliBuildProperties.INSTANCE.getFcliVersion())
                 .requestTimeout(Duration.ofSeconds(120))
@@ -164,6 +166,9 @@ public class AiAssistMCPStartHttpCommand extends AbstractRunnableCommand impleme
         var mcpServer = serverBuilder.build();
         log.debug("Initialized HTTP MCP server instance: {}", mcpServer);
         transport.start();
+        if (!tlsConfigured) {
+            log.warn("Starting HTTP MCP server without TLS certificates. Use this mode for testing only; use HTTPS with certificates in production");
+        }
         log.info("Fcli HTTP MCP server running on port {} for product {}", config.getServer().getPort(), config.getProduct());
         System.err.println("Fcli HTTP MCP server running on port " + config.getServer().getPort() + " endpoint /mcp. Hit Ctrl-C to exit.");
     }
@@ -194,6 +199,7 @@ public class AiAssistMCPStartHttpCommand extends AbstractRunnableCommand impleme
         // (e.g. FoD OAuth token from the token-fetch response) are captured per-request.
         try (var tempFrame = FcliExecutionContextHolder.push(
                 new FcliExecutionContext(new FcliIsolationScope(), new FcliActionState(), requestLogMaskCtx))) {
+            FcliTrustManager.refreshIfChanged();
             var auth = authHeaderParser.parseAndRegister(transportContext);
             var isolationScope = sessionDescriptorResolver.getOrCreateIsolationScope(auth);
             // Real frame: same requestLogMaskCtx, real isolation scope.

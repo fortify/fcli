@@ -12,6 +12,7 @@
  */
 package com.fortify.cli.ai_assist.extensions.helper;
 
+import java.io.File;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -151,6 +152,31 @@ final class AiAssistExtensionsContentHelper {
 
     // ──────────────────────────── Target-relative path computation ────────────────────────────
 
+    /**
+     * Strip a directory prefix from a source file path using Path.relativize().
+     * Returns the relative path if the file is under the directory prefix,
+     * otherwise returns the original sourceFile.
+     * Uses forward slashes in returned path for consistency with ZIP format.
+     */
+    private static String stripDirPrefixFromPath(String sourceFile, String dirPrefix) {
+        if (dirPrefix == null) {
+            return sourceFile;
+        }
+        try {
+            var filePath = Path.of(sourceFile);
+            var dirPath = Path.of(dirPrefix);
+            var relative = dirPath.relativize(filePath);
+            // If relativize doesn't escape the directory, it's a child path
+            // Return as forward-slash string for consistency with ZIP format
+            if (!relative.toString().startsWith("..")) {
+                return relative.toString().replace(File.separatorChar, '/');
+            }
+        } catch (IllegalArgumentException e) {
+            // Paths on different drives on Windows; fall through to return sourceFile
+        }
+        return sourceFile;
+    }
+
     static String getTargetRelativePath(
             AiAssistExtensionsContentManifestDescriptor contentManifest,
             AiAssistExtensionsTargetDescriptor target, String sourceFile) {
@@ -166,9 +192,11 @@ final class AiAssistExtensionsContentHelper {
             if (entriesMap != null && target.getSourceEntries() != null) {
                 for (var entryName : target.getSourceEntries()) {
                     var entryPath = entriesMap.getOrDefault(entryName, entryName);
-                    if (sourceFile.startsWith(entryPath + "/")) {
-                        return sourceFile.substring(entryPath.length() + 1);
-                    } else if (sourceFile.equals(entryPath)) {
+                    var relative = stripDirPrefixFromPath(sourceFile, entryPath);
+                    if (!relative.equals(sourceFile)) {
+                        return relative;
+                    }
+                    if (sourceFile.equals(entryPath)) {
                         return Path.of(sourceFile).getFileName().toString();
                     }
                 }
@@ -176,10 +204,7 @@ final class AiAssistExtensionsContentHelper {
             return Path.of(sourceFile).getFileName().toString();
         }
 
-        if (ctDesc.getSourceDir() != null && sourceFile.startsWith(ctDesc.getSourceDir() + "/")) {
-            return sourceFile.substring(ctDesc.getSourceDir().length() + 1);
-        }
-        return sourceFile;
+        return stripDirPrefixFromPath(sourceFile, ctDesc.getSourceDir());
     }
 
     static String getTargetRelativePathForContentType(
@@ -189,18 +214,19 @@ final class AiAssistExtensionsContentHelper {
             var entriesMap = ctDesc.getEntries();
             if (entriesMap != null) {
                 for (var entryPath : entriesMap.values()) {
-                    if (entryPath != null && sourceFile.startsWith(entryPath + "/")) {
-                        return sourceFile.substring(entryPath.length() + 1);
-                    } else if (sourceFile.equals(entryPath)) {
+                    if (entryPath != null) {
+                        var relative = stripDirPrefixFromPath(sourceFile, entryPath);
+                        if (!relative.equals(sourceFile)) {
+                            return relative;
+                        }
+                    }
+                    if (sourceFile.equals(entryPath)) {
                         return Path.of(sourceFile).getFileName().toString();
                     }
                 }
             }
             return Path.of(sourceFile).getFileName().toString();
         }
-        if (ctDesc.getSourceDir() != null && sourceFile.startsWith(ctDesc.getSourceDir() + "/")) {
-            return sourceFile.substring(ctDesc.getSourceDir().length() + 1);
-        }
-        return sourceFile;
+        return stripDirPrefixFromPath(sourceFile, ctDesc.getSourceDir());
     }
 }

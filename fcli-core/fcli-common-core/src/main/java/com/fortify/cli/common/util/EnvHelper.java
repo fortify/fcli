@@ -16,6 +16,7 @@ import java.util.function.Supplier;
 
 import org.apache.commons.lang3.StringUtils;
 
+import com.fortify.cli.common.exception.FcliBugException;
 import com.fortify.cli.common.exception.FcliSimpleException;
 
 public final class EnvHelper {
@@ -87,6 +88,37 @@ public final class EnvHelper {
      */
     public static final String env(String name) {
         return System.getProperty(envSystemPropertyName(name), System.getenv(name));
+    }
+
+    /** 
+     * Get the first non-blank value from the given environment variable names. 
+     * If no non-blank value is found, {@code null} is returned. 
+     */
+    public static final String env(String... names) {
+        if ( names==null || names.length==0 ) {
+            throw new FcliBugException("At least one environment variable name must be specified");
+        }
+        for (String name : names) {
+            var value = env(name);
+            if (StringUtils.isNotBlank(value)) {
+                return value;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Similar to {@link #env(String...)}, but allows for multiple arrays of environment
+     * variable names to be specified.
+     */
+    public static final String env(String[]... namesArrays) {
+        for (String[] names : namesArrays) {
+            var value = env(names);
+            if (StringUtils.isNotBlank(value)) {
+                return value;
+            }
+        }
+        return null;
     }
 
     public static String envSystemPropertyName(String envName) {

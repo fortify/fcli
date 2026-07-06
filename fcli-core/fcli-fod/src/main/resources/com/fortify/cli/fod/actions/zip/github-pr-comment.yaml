@@ -45,40 +45,40 @@ cli.options:
     default: Static
   github-api-url:
     names: --github-api-url
-    description: 'Required GitHub API URL. Default value: GITHUB_API_URL environment variable.'
+    description: 'Required GitHub API URL. Auto-detected when running on GitHub Actions.'
     required: true
-    default: ${#env('GITHUB_API_URL')}
+    default: "${#github.env?.apiUrl}"
     mask:
       description: GITHUB HOST NAME
       pattern: https?://([^/]+).*
       sensitivity: low
   github-token:
     names: --github-token
-    description: 'Required GitHub Token. Default value: GITHUB_TOKEN environment variable.'
+    description: 'Required GitHub token. Auto-detected from GITHUB_TOKEN when available in the environment.'
     required: true
-    default: ${#env('GITHUB_TOKEN')}
+    default: "${#github.env?.token}"
     mask:
       sensitivity: high
   github-owner:
     names: --github-owner
-    description: 'Required GitHub repository owner. Default value: GITHUB_REPOSITORY_OWNER environment variable.'
+    description: 'Required GitHub repository owner. Auto-detected when running on GitHub Actions.'
     required: true
-    default: ${#env('GITHUB_REPOSITORY_OWNER')}
+    default: "${#github.env?.repositoryOwner}"
   github-repo:
     names: --github-repo
-    description: 'Required GitHub repository. Default value: Taken from GITHUB_REPOSITORY environment variable.'
+    description: 'Required GitHub repository. Auto-detected when running on GitHub Actions.'
     required: true
-    default: ${#substringAfter(#env('GITHUB_REPOSITORY'),'/')}
+    default: "${#github.env?.repository}"
   pr:
     names: --pr
-    description: "Required PR number. Default value: Taken from GITHUB_REF_NAME environment variable. Note that default value will only work on GitHub pull_request triggers; if this fcli action is invoked through any other GitHub trigger, it will fail unless an explicit PR number is passed through this option." 
+    description: "Required PR number. Auto-detected when running on GitHub pull_request triggers; if this action is invoked through any other GitHub trigger, pass an explicit PR number through this option."
     required: true
-    default: ${#substringBefore(#env('GITHUB_REF_NAME'),'/')}
+    default: "${#github.env?.pullRequest?.id}"
   commit:
     names: --commit
-    description: 'Required commit hash. Default value: GITHUB_SHA environment variable.'
+    description: 'Required commit hash. Auto-detected when running on GitHub Actions.'
     required: true
-    default: ${#env('GITHUB_SHA')}
+    default: "${#github.env?.ciCommit?.headId?.full}"
   dryrun:
     names: --dryrun
     description: "Set to true to just output PR decoration JSON; don't actually update any PR"

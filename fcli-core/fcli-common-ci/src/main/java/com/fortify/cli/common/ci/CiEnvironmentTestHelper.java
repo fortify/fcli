@@ -71,19 +71,27 @@ public final class CiEnvironmentTestHelper {
 
     private static void collectEnvironmentVariableNames(Class<?> environmentClass, Set<String> target) {
         for ( Field field : environmentClass.getDeclaredFields() ) {
-            if ( Modifier.isStatic(field.getModifiers())
-                    && Modifier.isFinal(field.getModifiers())
-                    && field.getType().equals(String.class)
-                    && field.getName().startsWith("ENV_") ) {
-                try {
-                    field.setAccessible(true);
+            if ( !Modifier.isStatic(field.getModifiers()) || !Modifier.isFinal(field.getModifiers()) ) continue;
+            if ( !field.getName().startsWith("ENV_") ) continue;
+            try {
+                field.setAccessible(true);
+                if ( field.getType().equals(String.class) ) {
                     var value = (String)field.get(null);
                     if ( value != null ) {
                         target.add(value);
                     }
-                } catch ( IllegalAccessException e ) {
-                    throw new FcliBugException("Unable to access CI environment field "+field.getName(), e);
+                } else if ( field.getType().equals(String[].class) ) {
+                    var values = (String[])field.get(null);
+                    if ( values != null ) {
+                        for ( var value : values ) {
+                            if ( value != null ) {
+                                target.add(value);
+                            }
+                        }
+                    }
                 }
+            } catch ( IllegalAccessException e ) {
+                throw new FcliBugException("Unable to access CI environment field "+field.getName(), e);
             }
         }
     }

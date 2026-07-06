@@ -53,7 +53,7 @@ jobs:
         uses: actions/checkout@v6
       - name: PROD - Prepare GitHub release
         id: create_prod_release
-        uses: fortify/3rdparty-actions/actions/googleapis/release-please-action/v4@main
+        uses: fortify/3rdparty-actions/actions/googleapis/release-please-action/v5@main
         if: contains(github.ref, 'refs/heads/rel/')
         with:
           skip-github-pull-request: true
@@ -382,7 +382,7 @@ jobs:
           
       - name: PROD - Prepare release PR
         if: contains(github.ref, 'refs/heads/rel/')
-        uses: fortify/3rdparty-actions/actions/googleapis/release-please-action/v4@main
+        uses: fortify/3rdparty-actions/actions/googleapis/release-please-action/v5@main
         with:
           skip-github-release: true
           target-branch: ${{ github.ref_name }}

@@ -44,11 +44,17 @@ public class GitHubEnvironmentTest {
         System.setProperty("fcli.env.GITHUB_SHA", "1234567890abcdef1234567890abcdef12345678");
         System.setProperty("fcli.env.GITHUB_WORKSPACE", "/workspace");
         System.setProperty("fcli.env.GITHUB_STEP_SUMMARY", "/tmp/summary.md");
+        System.setProperty("fcli.env.GITHUB_API_URL", "https://api.github.example.com");
+        System.setProperty("fcli.env.GITHUB_TOKEN", "gh-token");
         
         var env = GitHubEnvironment.detect();
         
         assertNotNull(env);
         assertEquals("/tmp/summary.md", env.jobSummaryFile());
+        assertEquals("https://api.github.example.com", env.apiUrl());
+        assertEquals("gh-token", env.token());
+        assertEquals("owner", env.repositoryOwner());
+        assertEquals("repo", env.repository());
         
         assertNotNull(env.ciRepository());
         assertEquals("/workspace", env.ciRepository().workspaceDir());
