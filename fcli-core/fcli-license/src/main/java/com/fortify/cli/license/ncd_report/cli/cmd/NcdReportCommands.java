@@ -21,6 +21,7 @@ import picocli.CommandLine.Command;
         subcommands = {
             NcdReportCreateCommand.class,
             NcdReportCreateConfigCommand.class,
+            NcdReportGetSummaryCommand.class,
             NcdReportMergeCommand.class,
             NcdReportListContributorsCommand.class,
             NcdReportListRepositoriesCommand.class,
