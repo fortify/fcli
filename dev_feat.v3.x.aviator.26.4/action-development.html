@@ -1,6 +1,6 @@
 ---
 title: 'Fcli Action Development Guide'
-fcli_version: 0.20260706.081524-dev_feat.v3.x.aviator.26.4
+fcli_version: 0.20260706.083814-dev_feat.v3.x.aviator.26.4
 ---
 
 <!DOCTYPE html>
@@ -17,13 +17,13 @@ fcli_version: 0.20260706.081524-dev_feat.v3.x.aviator.26.4
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260706.081524-dev_feat.v3.x.aviator.26.4" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260706.083814-dev_feat.v3.x.aviator.26.4" %}
 
 
 <div id="header">
 <h1>Fcli Action Development Guide</h1>
 <div class="details">
-<span id="revnumber">version 0.20260706.081524-dev_feat.v3.x.aviator.26.4</span>
+<span id="revnumber">version 0.20260706.083814-dev_feat.v3.x.aviator.26.4</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -108,18 +108,10 @@ fcli_version: 0.20260706.081524-dev_feat.v3.x.aviator.26.4
 <li><a href="#_spel_functions">SpEL Functions</a></li>
 <li><a href="#_ci">[ci]</a></li>
 <li><a href="#_ci_detect"><code>_ci.detect</code></a></li>
-<li><a href="#_ado_env"><code>ado.env</code></a></li>
-<li><a href="#_ado_type"><code>ado.type</code></a></li>
 <li><a href="#_ado_project"><code>ado.project</code></a></li>
 <li><a href="#_ado_repo"><code>ado.repo</code></a></li>
-<li><a href="#_bitbucket_env"><code>bitbucket.env</code></a></li>
-<li><a href="#_bitbucket_type"><code>bitbucket.type</code></a></li>
 <li><a href="#_bitbucket_repo"><code>bitbucket.repo</code></a></li>
-<li><a href="#_github_env"><code>github.env</code></a></li>
-<li><a href="#_github_type"><code>github.type</code></a></li>
 <li><a href="#_github_repo"><code>github.repo</code></a></li>
-<li><a href="#_gitlab_env"><code>gitlab.env</code></a></li>
-<li><a href="#_gitlab_type"><code>gitlab.type</code></a></li>
 <li><a href="#_gitlab_project"><code>gitlab.project</code></a></li>
 <li><a href="#_date">[date]</a></li>
 <li><a href="#_currentdatetime"><code>currentDateTime</code></a></li>
@@ -156,6 +148,12 @@ fcli_version: 0.20260706.081524-dev_feat.v3.x.aviator.26.4
 <li><a href="#_ssc_filterset"><code>ssc.filterSet</code></a></li>
 <li><a href="#_ssc_issuebrowserurl"><code>ssc.issueBrowserUrl</code></a></li>
 <li><a href="#_ssc_ruledescriptionsprocessor"><code>ssc.ruleDescriptionsProcessor</code></a></li>
+<li><a href="#_http">[http]</a></li>
+<li><a href="#_basicauth"><code>basicAuth</code></a></li>
+<li><a href="#_bearerauth"><code>bearerAuth</code></a></li>
+<li><a href="#_uripart"><code>uriPart</code></a></li>
+<li><a href="#_urldecode"><code>urlDecode</code></a></li>
+<li><a href="#_urlencode"><code>urlEncode</code></a></li>
 <li><a href="#_txt">[txt]</a></li>
 <li><a href="#_abbreviate"><code>abbreviate</code></a></li>
 <li><a href="#_fmt"><code>fmt</code></a></li>
@@ -174,6 +172,8 @@ fcli_version: 0.20260706.081524-dev_feat.v3.x.aviator.26.4
 <li><a href="#_substringafter"><code>substringAfter</code></a></li>
 <li><a href="#_substringbefore"><code>substringBefore</code></a></li>
 <li><a href="#_util">[util]</a></li>
+<li><a href="#_base64decode"><code>base64Decode</code></a></li>
+<li><a href="#_base64encode"><code>base64Encode</code></a></li>
 <li><a href="#_env"><code>env</code></a></li>
 <li><a href="#_fs_exists"><code>fs.exists</code></a></li>
 <li><a href="#_fs_isdirectory"><code>fs.isDirectory</code></a></li>
@@ -185,7 +185,6 @@ fcli_version: 0.20260706.081524-dev_feat.v3.x.aviator.26.4
 <li><a href="#_jsonstringify"><code>jsonStringify</code></a></li>
 <li><a href="#_properties"><code>properties</code></a></li>
 <li><a href="#_resolveagainstcurrentworkdir"><code>resolveAgainstCurrentWorkDir</code></a></li>
-<li><a href="#_uripart"><code>uriPart</code></a></li>
 <li><a href="#_uuid"><code>uuid</code></a></li>
 <li><a href="#_workflow">[workflow]</a></li>
 <li><a href="#_action_copyparametersfromgroup"><code>action.copyParametersFromGroup</code></a></li>
@@ -236,8 +235,8 @@ fcli_version: 0.20260706.081524-dev_feat.v3.x.aviator.26.4
 </thead>
 <tbody>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0.20260706.081524-dev_feat.v3.x.aviator.26.4</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">2.8.0</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.20260706.083814-dev_feat.v3.x.aviator.26.4</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">2.9.0</p></td>
 </tr>
 </tbody>
 </table>
@@ -303,7 +302,7 @@ contents of some of the fcli built-in actions using one of the following approac
 <td class="content">
 <div class="paragraph">
 <p>Online action sources reference a development version of the action schema. For custom actions, please make
-sure to use <a href="https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.8.0.json" class="bare">https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.8.0.json</a> instead. Please see the next section for more details.</p>
+sure to use <a href="https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.9.0.json" class="bare">https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.9.0.json</a> instead. Please see the next section for more details.</p>
 </div>
 </td>
 </tr>
@@ -313,7 +312,7 @@ sure to use <a href="https://fortify.github.io/fcli/schemas/action/fcli-action-s
 <div class="sect2">
 <h3 id="_schema_based_code_assistance"><a class="anchor" href="#_schema_based_code_assistance"></a>Schema-based code assistance</h3>
 <div class="paragraph">
-<p>Fcli provides an <a href="https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.8.0.json">action schema</a>, which allows YAML editors
+<p>Fcli provides an <a href="https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.9.0.json">action schema</a>, which allows YAML editors
 and IDEs to provide code completion, documentation and validation for fcli action YAML documents. You may
 need to install a plugin to enable proper YAML editing and schema support. Following are some commonly used
 IDE plugins that are known to work with one of the schema associations listed below:</p>
@@ -337,7 +336,7 @@ IDE plugins that are known to work with one of the schema associations listed be
 <p>YAML comment, supported by IDEs like Visual Studio Code, Eclipse and IntelliJ:</p>
 <div class="listingblock">
 <div class="content">
-<pre># yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.8.0.json</pre>
+<pre># yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.9.0.json</pre>
 </div>
 </div>
 </li>
@@ -345,7 +344,7 @@ IDE plugins that are known to work with one of the schema associations listed be
 <p>YAML property, supported by Eclipse and some other YAML editors:</p>
 <div class="listingblock">
 <div class="content">
-<pre>$schema: https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.8.0.json</pre>
+<pre>$schema: https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.9.0.json</pre>
 </div>
 </div>
 </li>
@@ -358,8 +357,8 @@ your action YAML file, your IDE or YAML editor may automatically provide support
 YAML files. If not, try closing and re-opening the YAML file, or consult the documentation of your IDE or YAML editor.</p>
 </div>
 <div class="paragraph">
-<p>As shown in the sample schema statements above, the current fcli version 0.20260706.081524-dev_feat.v3.x.aviator.26.4 supports
-schema version <a href="https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.8.0.json">2.8.0</a>. Other
+<p>As shown in the sample schema statements above, the current fcli version 0.20260706.083814-dev_feat.v3.x.aviator.26.4 supports
+schema version <a href="https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.9.0.json">2.9.0</a>. Other
 fcli versions may support different schema versions. In general, fcli provides backward compatibility for earlier schema
 versions with the same schema major version range, and forward compatibility for later schema patch versions within the
 same schema minor version range.</p>
@@ -451,12 +450,12 @@ provide more details on the expected contents for each property type.</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-yaml" data-lang="yaml">$schema: https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.8.0.json</code></pre>
+<pre class="highlight"><code class="language-yaml" data-lang="yaml">$schema: https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.9.0.json</code></pre>
 </div>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-yaml" data-lang="yaml"># yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.8.0.json</code></pre>
+<pre class="highlight"><code class="language-yaml" data-lang="yaml"># yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.9.0.json</code></pre>
 </div>
 </div></div></td>
 </tr>
@@ -3209,113 +3208,6 @@ will be an empty JSON object, and no other SpEL functions will be available.</p>
 </table>
 </div>
 <div class="sect2">
-<h3 id="_ado_env"><a class="anchor" href="#_ado_env"></a><code>ado.env</code></h3>
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 1%;">
-<col>
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #ado.env</code></strong></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Environment data or <code>null</code> if not running in Azure DevOps</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
-<p>Returns Azure DevOps environment data as ObjectNode (auto-detected for the current pipeline run)</p>
-</div></div></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
-<p><strong>Return Type Structure:</strong><br></p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="highlight"><code class="language-json" data-lang="json">{
-  "buildId" : "string",
-  "ciBranch" : {
-    "full" : "string",
-    "short" : "string"
-  },
-  "ciCommit" : {
-    "author" : {
-      "email" : "string",
-      "name" : "string",
-      "when" : "string"
-    },
-    "committer" : {
-      "email" : "string",
-      "name" : "string",
-      "when" : "string"
-    },
-    "headId" : {
-      "full" : "string",
-      "short" : "string"
-    },
-    "mergeId" : {
-      "full" : "string",
-      "short" : "string"
-    },
-    "message" : {
-      "full" : "string",
-      "short" : "string"
-    }
-  },
-  "ciId" : "string",
-  "ciName" : "string",
-  "ciRepository" : {
-    "name" : {
-      "full" : "string",
-      "short" : "string"
-    },
-    "remoteUrl" : "string",
-    "workspaceDir" : "string"
-  },
-  "organization" : "string",
-  "prTerminology" : "string",
-  "project" : "string",
-  "pullRequest" : {
-    "active" : "boolean",
-    "id" : "string",
-    "target" : "string"
-  },
-  "repositoryId" : "string"
-}</code></pre>
-</div>
-</div></div></td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="sect2">
-<h3 id="_ado_type"><a class="anchor" href="#_ado_type"></a><code>ado.type</code></h3>
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 1%;">
-<col>
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>string #ado.type</code></strong></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">"ado"</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
-<p>Returns CI system type identifier</p>
-</div></div></td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="sect2">
 <h3 id="_ado_project"><a class="anchor" href="#_ado_project"></a><code>ado.project</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
@@ -3440,114 +3332,6 @@ will be an empty JSON object, and no other SpEL functions will be available.</p>
 </table>
 </div>
 <div class="sect2">
-<h3 id="_bitbucket_env"><a class="anchor" href="#_bitbucket_env"></a><code>bitbucket.env</code></h3>
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 1%;">
-<col>
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #bitbucket.env</code></strong></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Environment data or <code>null</code> if not running in Bitbucket Pipelines</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
-<p>Returns Bitbucket Pipelines environment data as ObjectNode (auto-detected for the current step)</p>
-</div></div></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
-<p><strong>Return Type Structure:</strong><br></p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="highlight"><code class="language-json" data-lang="json">{
-  "ciBranch" : {
-    "full" : "string",
-    "short" : "string"
-  },
-  "ciCommit" : {
-    "author" : {
-      "email" : "string",
-      "name" : "string",
-      "when" : "string"
-    },
-    "committer" : {
-      "email" : "string",
-      "name" : "string",
-      "when" : "string"
-    },
-    "headId" : {
-      "full" : "string",
-      "short" : "string"
-    },
-    "mergeId" : {
-      "full" : "string",
-      "short" : "string"
-    },
-    "message" : {
-      "full" : "string",
-      "short" : "string"
-    }
-  },
-  "ciId" : "string",
-  "ciName" : "string",
-  "ciRepository" : {
-    "name" : {
-      "full" : "string",
-      "short" : "string"
-    },
-    "remoteUrl" : "string",
-    "workspaceDir" : "string"
-  },
-  "pipelineUuid" : "string",
-  "prTerminology" : "string",
-  "pullRequest" : {
-    "active" : "boolean",
-    "id" : "string",
-    "target" : "string"
-  },
-  "repositoryFullName" : "string",
-  "repositoryOwner" : "string",
-  "repositorySlug" : "string",
-  "workspace" : "string"
-}</code></pre>
-</div>
-</div></div></td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="sect2">
-<h3 id="_bitbucket_type"><a class="anchor" href="#_bitbucket_type"></a><code>bitbucket.type</code></h3>
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 1%;">
-<col>
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>string #bitbucket.type</code></strong></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">"bitbucket"</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
-<p>Returns CI system type identifier</p>
-</div></div></td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="sect2">
 <h3 id="_bitbucket_repo"><a class="anchor" href="#_bitbucket_repo"></a><code>bitbucket.repo</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
@@ -3618,110 +3402,6 @@ will be an empty JSON object, and no other SpEL functions will be available.</p>
 <tr>
 <td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
 <p>Creates or updates a Bitbucket Code Insights report for the current commit using detected workspace/repository data</p>
-</div></div></td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="sect2">
-<h3 id="_github_env"><a class="anchor" href="#_github_env"></a><code>github.env</code></h3>
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 1%;">
-<col>
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #github.env</code></strong></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Environment data or <code>null</code> if not running in GitHub Actions</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
-<p>Returns GitHub Actions environment data as ObjectNode (auto-detected for the current workflow run)</p>
-</div></div></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
-<p><strong>Return Type Structure:</strong><br></p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="highlight"><code class="language-json" data-lang="json">{
-  "ciBranch" : {
-    "full" : "string",
-    "short" : "string"
-  },
-  "ciCommit" : {
-    "author" : {
-      "email" : "string",
-      "name" : "string",
-      "when" : "string"
-    },
-    "committer" : {
-      "email" : "string",
-      "name" : "string",
-      "when" : "string"
-    },
-    "headId" : {
-      "full" : "string",
-      "short" : "string"
-    },
-    "mergeId" : {
-      "full" : "string",
-      "short" : "string"
-    },
-    "message" : {
-      "full" : "string",
-      "short" : "string"
-    }
-  },
-  "ciId" : "string",
-  "ciName" : "string",
-  "ciRepository" : {
-    "name" : {
-      "full" : "string",
-      "short" : "string"
-    },
-    "remoteUrl" : "string",
-    "workspaceDir" : "string"
-  },
-  "jobSummaryFile" : "string",
-  "prTerminology" : "string",
-  "pullRequest" : {
-    "active" : "boolean",
-    "id" : "string",
-    "target" : "string"
-  }
-}</code></pre>
-</div>
-</div></div></td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="sect2">
-<h3 id="_github_type"><a class="anchor" href="#_github_type"></a><code>github.type</code></h3>
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 1%;">
-<col>
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>string #github.type</code></strong></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">"github"</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
-<p>Returns CI system type identifier</p>
 </div></div></td>
 </tr>
 </tbody>
@@ -3835,6 +3515,34 @@ will be an empty JSON object, and no other SpEL functions will be available.</p>
 <tbody>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #github.repo().createPullRequest(string title, string head, string base, string body)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string title</em> - pull request title<br>
+<em>string head</em> - branch containing the changes<br>
+<em>string base</em> - branch to merge into<br>
+<em>string body</em> - pull request description (Markdown supported)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Created pull request object from GitHub API</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p>Creates a pull request in the repository detected from the current workflow run.</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #github.repo().uploadSarif(string sarifContent)</code></strong></p></td>
 </tr>
 <tr>
@@ -3848,111 +3556,6 @@ will be an empty JSON object, and no other SpEL functions will be available.</p>
 <tr>
 <td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
 <p>Uploads SARIF to GitHub Code Scanning (paid tier, requires GHAS) using repository/ref/commit from the current workflow run. Throws GhasUnavailableException if GitHub Advanced Security is not enabled. Use on.fail in action YAML to implement fallback logic.</p>
-</div></div></td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="sect2">
-<h3 id="_gitlab_env"><a class="anchor" href="#_gitlab_env"></a><code>gitlab.env</code></h3>
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 1%;">
-<col>
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #gitlab.env</code></strong></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Environment data or <code>null</code> if not running in GitLab CI</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
-<p>Returns GitLab CI environment data as ObjectNode (auto-detected for the current pipeline run)</p>
-</div></div></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
-<p><strong>Return Type Structure:</strong><br></p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="highlight"><code class="language-json" data-lang="json">{
-  "ciBranch" : {
-    "full" : "string",
-    "short" : "string"
-  },
-  "ciCommit" : {
-    "author" : {
-      "email" : "string",
-      "name" : "string",
-      "when" : "string"
-    },
-    "committer" : {
-      "email" : "string",
-      "name" : "string",
-      "when" : "string"
-    },
-    "headId" : {
-      "full" : "string",
-      "short" : "string"
-    },
-    "mergeId" : {
-      "full" : "string",
-      "short" : "string"
-    },
-    "message" : {
-      "full" : "string",
-      "short" : "string"
-    }
-  },
-  "ciId" : "string",
-  "ciName" : "string",
-  "ciRepository" : {
-    "name" : {
-      "full" : "string",
-      "short" : "string"
-    },
-    "remoteUrl" : "string",
-    "workspaceDir" : "string"
-  },
-  "pipelineId" : "string",
-  "prTerminology" : "string",
-  "projectId" : "string",
-  "pullRequest" : {
-    "active" : "boolean",
-    "id" : "string",
-    "target" : "string"
-  }
-}</code></pre>
-</div>
-</div></div></td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="sect2">
-<h3 id="_gitlab_type"><a class="anchor" href="#_gitlab_type"></a><code>gitlab.type</code></h3>
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 1%;">
-<col>
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>string #gitlab.type</code></strong></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">"gitlab"</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
-<p>Returns CI system type identifier</p>
 </div></div></td>
 </tr>
 </tbody>
@@ -4002,6 +3605,34 @@ will be an empty JSON object, and no other SpEL functions will be available.</p>
 <tr>
 <td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
 <p>(PREVIEW) Adds a comment to the merge request detected from the current pipeline run. This function is not yet used by any built-in fcli actions; signature and implementation may change in future fcli versions based on new insights as to how to best integrate this functionality into fcli built-in actions.</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #gitlab.project().createMergeRequest(string title, string sourceBranch, string targetBranch, string description)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string title</em> - merge request title<br>
+<em>string sourceBranch</em> - branch containing the changes<br>
+<em>string targetBranch</em> - branch to merge into<br>
+<em>string description</em> - merge request description (Markdown supported)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Created merge request object from GitLab API</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p>Creates a merge request in the project detected from the current pipeline run.</p>
 </div></div></td>
 </tr>
 </tbody>
@@ -4968,6 +4599,142 @@ ObjectNode with the same same fields as returned by <code>fcli util all-commands
 </table>
 </div>
 <div class="sect2">
+<h3 id="_http"><a class="anchor" href="#_http"></a>[http]</h3>
+
+</div>
+<div class="sect2">
+<h3 id="_basicauth"><a class="anchor" href="#_basicauth"></a><code>basicAuth</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>string #basicAuth(string username, string password)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string username</em> - the username to include in the basic auth credential pair<br>
+<em>string password</em> - the password to include in the basic auth credential pair</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Authorization header value in the format <code>Basic &lt;base64(username:password)&gt;</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p>Builds an HTTP Basic Authorization header value from username and password.</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_bearerauth"><a class="anchor" href="#_bearerauth"></a><code>bearerAuth</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>string #bearerAuth(string token)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string token</em> - the bearer token</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Authorization header value in the format <code>Bearer &lt;token&gt;</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p>Builds an HTTP Bearer Authorization header value from the given token.</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_uripart"><a class="anchor" href="#_uripart"></a><code>uriPart</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>string #uriPart(string uri, string part)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string uri</em> - URI from which to retrieve the requested part<br>
+<em>string part</em> - URI part to be returned; may be one of serverUrl, protocol, host, port, path, relativePath, query, fragment</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Requested part of the given URI, or <code>null</code> if part name is not valid or not present</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p>Retrieves a given part of the given URI</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_urldecode"><a class="anchor" href="#_urldecode"></a><code>urlDecode</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>string #urlDecode(string input)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string input</em> - the URI-component encoded string to decode</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">UTF-8 decoded string from URI-component encoded input, or <code>null</code> if input is <code>null</code></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_urlencode"><a class="anchor" href="#_urlencode"></a><code>urlEncode</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>string #urlEncode(string input)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string input</em> - the string to URI-component encode</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">URI-component encoded string using UTF-8, or <code>null</code> if input is <code>null</code></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
 <h3 id="_txt"><a class="anchor" href="#_txt"></a>[txt]</h3>
 
 </div>
@@ -5395,6 +5162,52 @@ values provided in the mapping object.</p>
 
 </div>
 <div class="sect2">
+<h3 id="_base64decode"><a class="anchor" href="#_base64decode"></a><code>base64Decode</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>string #base64Decode(string input)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string input</em> - the Base64-encoded string to decode</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">UTF-8 decoded string from the given Base64 input, or <code>null</code> if input is <code>null</code></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_base64encode"><a class="anchor" href="#_base64encode"></a><code>base64Encode</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>string #base64Encode(string input)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string input</em> - the string to encode as Base64</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Base64-encoded representation of the input string using UTF-8, or <code>null</code> if input is <code>null</code></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
 <h3 id="_env"><a class="anchor" href="#_env"></a><code>env</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
@@ -5689,35 +5502,6 @@ used with <code>records.for-each::from</code> to iterate over object properties.
 <tr>
 <td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
 <p>Resolves the given path against the current working directory.</p>
-</div></div></td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="sect2">
-<h3 id="_uripart"><a class="anchor" href="#_uripart"></a><code>uriPart</code></h3>
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 1%;">
-<col>
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>string #uriPart(string uri, string part)</code></strong></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string uri</em> - URI from which to retrieve the requested part<br>
-<em>string part</em> - URI part to be returned; may be one of serverUrl, protocol, host, port, path, relativePath, query, fragment</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Requested part of the given URI, or <code>null</code> if part name is not valid or not present</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
-<p>Retrieves a given part of the given URI</p>
 </div></div></td>
 </tr>
 </tbody>
@@ -6500,19 +6284,7 @@ This method does NOT process other references - call render() first if needed.</
 <p><strong>INTERNAL USE ONLY</strong></p>
 </div>
 <div class="paragraph">
-<p>Returns basic information about the local git repository for the given source directory, or null if the
-directory is not inside a git working tree. Only constant-time lookups are performed (HEAD commit only).
-Structure:
-{
-repository: { workspaceDir, remoteUrl?, name: { short, full? } },
-branch: { full?, short? },
-commit: {
-    id: { full, short },
-    message: { short, full },
-    author: { name, email, when },
-    committer: { name, email, when }
-}
-}</p>
+<p>(DEPRECATED) Use <code>#git.localRepo(&#8230;&#8203;)</code> instead; this function is retained only for backward compatibility and simply delegates to it.</p>
 </div></div></td>
 </tr>
 <tr>
@@ -6571,8 +6343,8 @@ commit: {
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20260706.081524-dev_feat.v3.x.aviator.26.4<br>
-Last updated 2026-07-06 08:18:21 UTC
+Version 0.20260706.083814-dev_feat.v3.x.aviator.26.4<br>
+Last updated 2026-07-06 08:41:24 UTC
 </div>
 </div>
 </body>

@@ -17,7 +17,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260706.081524-dev_feat.v3.x.aviator.26.4" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260706.083814-dev_feat.v3.x.aviator.26.4" %}
 
 
 <div id="header">
@@ -60,6 +60,18 @@ fcli_version:
 <div class="sectionbody">
 <div class="paragraph">
 <p>Remove previously installed Fortify extensions and clean up fcli state. By default, scans both the distribution descriptor and fcli state to find all target directories. Use --dir to remove extensions from a specific directory instead. Use --content-types to remove only specific content types.</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
+Available extension versions, download URLs, and assistant detection logic are managed through fcli tool definitions (<code>ai-assistant-extensions*</code> at <a href="https://github.com/fortify/tool-definitions/tree/main/v1" class="bare">https://github.com/fortify/tool-definitions/tree/main/v1</a>). Run <code>fcli tool definitions update</code> before running this command.
+</td>
+</tr>
+</table>
 </div>
 </div>
 </div>
@@ -147,7 +159,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2026-07-06 08:18:10 UTC
+Last updated 2026-07-06 08:41:12 UTC
 </div>
 </div>
 </body>
