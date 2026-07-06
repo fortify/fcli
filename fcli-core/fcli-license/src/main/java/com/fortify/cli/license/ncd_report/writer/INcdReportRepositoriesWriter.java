@@ -16,5 +16,16 @@ import com.fortify.cli.license.ncd_report.descriptor.INcdReportRepositoryDescrip
 import com.fortify.cli.license.ncd_report.writer.NcdReportRepositoriesWriter.NcdReportRepositoryReportingStatus;
 
 public interface INcdReportRepositoriesWriter {
-    void writeRepository(INcdReportRepositoryDescriptor descriptor, NcdReportRepositoryReportingStatus status, String reason);
+    default void writeRepository(INcdReportRepositoryDescriptor descriptor, NcdReportRepositoryReportingStatus status, String reason, Boolean dormant) {
+        writeRepository(descriptor, status, reason, dormant, null, null, null);
+    }
+
+    default void writeRepository(INcdReportRepositoryDescriptor descriptor, NcdReportRepositoryReportingStatus status, String reason,
+            Boolean dormant, Integer commitCountRaw, Integer contributorCountRaw)
+    {
+        writeRepository(descriptor, status, reason, dormant, commitCountRaw, contributorCountRaw, null);
+    }
+
+    void writeRepository(INcdReportRepositoryDescriptor descriptor, NcdReportRepositoryReportingStatus status, String reason,
+            Boolean dormant, Integer commitCountRaw, Integer contributorCountRaw, String sourceReport);
 }

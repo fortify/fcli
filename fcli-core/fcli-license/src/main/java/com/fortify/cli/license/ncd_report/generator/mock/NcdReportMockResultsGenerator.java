@@ -153,10 +153,15 @@ public class NcdReportMockResultsGenerator extends AbstractNcdReportResultsGener
         var reportContext = reportContext();
         var repositoryProcessor = reportContext.repositoryProcessor();
         var endDateTime = reportContext.reportConfig().getCommitEndDateTime();
-        
-        // Generate mock repositories
-        var repositoryCount = sourceConfig().getRepositoryCount();
-        for ( int i = 1; i <= repositoryCount; i++ ) {
+        var startDateTime = reportContext.reportConfig().getCommitStartDateTime();
+
+        var activeRepositoryCount = Math.max(0, sourceConfig().getActiveRepositoryCount());
+        var dormantOverlappingRepositoryCount = Math.max(0, sourceConfig().getDormantOverlappingRepositoryCount());
+        var dormantNonOverlappingRepositoryCount = Math.max(0, sourceConfig().getDormantNonOverlappingRepositoryCount());
+        var totalRepositoryCount = activeRepositoryCount + dormantOverlappingRepositoryCount + dormantNonOverlappingRepositoryCount;
+
+        // Generate active repositories
+        for ( int i = 1; i <= activeRepositoryCount; i++ ) {
             final int repoIndex = i;
             var repoName = "mock-repo-" + repoIndex;
             var repoUrl = "https://mock.example.com/repos/" + repoName;
@@ -165,15 +170,51 @@ public class NcdReportMockResultsGenerator extends AbstractNcdReportResultsGener
             repositoryProcessor.processRepository(
                 sourceConfig(),
                 repoDescriptor,
-                (repo, branchCollector) -> generateCommitDataForRepository(branchCollector, repoIndex, repoDescriptor, endDateTime)
+                (repo, branchCollector) -> generateActiveCommitDataForRepository(branchCollector, repoIndex, repoDescriptor, startDateTime, endDateTime)
+            );
+        }
+
+        // Generate dormant repositories with overlapping contributors (single dormant commit/author)
+        int dormantOrdinal = 0;
+        int firstDormantIndex = activeRepositoryCount + 1;
+        int lastDormantOverlappingIndex = activeRepositoryCount + dormantOverlappingRepositoryCount;
+        for ( int i = firstDormantIndex; i <= lastDormantOverlappingIndex; i++ ) {
+            final int repoIndex = i;
+            final int currentDormantOrdinal = ++dormantOrdinal;
+            var repoName = "mock-repo-" + repoIndex;
+            var repoUrl = "https://mock.example.com/repos/" + repoName;
+            var repoDescriptor = new MockNcdReportRepositoryDescriptor(repoName, repoUrl, "public", false);
+
+            repositoryProcessor.processRepository(
+                sourceConfig(),
+                repoDescriptor,
+                (repo, branchCollector) -> generateDormantCommitDataForRepository(
+                        branchCollector, repoDescriptor, startDateTime, true, currentDormantOrdinal)
+            );
+        }
+
+        // Generate dormant repositories with non-overlapping contributors (single dormant commit/author)
+        for ( int i = lastDormantOverlappingIndex + 1; i <= totalRepositoryCount; i++ ) {
+            final int repoIndex = i;
+            final int currentDormantOrdinal = ++dormantOrdinal;
+            var repoName = "mock-repo-" + repoIndex;
+            var repoUrl = "https://mock.example.com/repos/" + repoName;
+            var repoDescriptor = new MockNcdReportRepositoryDescriptor(repoName, repoUrl, "public", false);
+
+            repositoryProcessor.processRepository(
+                sourceConfig(),
+                repoDescriptor,
+                (repo, branchCollector) -> generateDormantCommitDataForRepository(
+                        branchCollector, repoDescriptor, startDateTime, false, currentDormantOrdinal)
             );
         }
     }
     
-    private void generateCommitDataForRepository(
+    private void generateActiveCommitDataForRepository(
             INcdReportRepositoryBranchCommitCollector branchCollector,
             int repoIndex,
             INcdReportRepositoryDescriptor repositoryDescriptor,
+            OffsetDateTime reportStartDateTime,
             OffsetDateTime reportEndDateTime) {
         
         var authorsPerRepo = sourceConfig().getAuthorsPerRepository();
@@ -197,16 +238,64 @@ public class NcdReportMockResultsGenerator extends AbstractNcdReportResultsGener
                 var commitDescriptor = new MockNcdReportCommitDescriptor(commitSha, commitDateTime);
                 
                 // Create the full branch commit descriptor
+                var dormant = commitDateTime.isBefore(reportStartDateTime);
                 var branchCommitDescriptor = new NcdReportBranchCommitDescriptor(
                     repositoryDescriptor,
                     branchDescriptor,
                     commitDescriptor,
-                    author
+                    author,
+                    dormant
                 );
                 
                 branchCollector.reportBranchCommit(branchCommitDescriptor);
             }
         }
+    }
+
+    private void generateDormantCommitDataForRepository(
+            INcdReportRepositoryBranchCommitCollector branchCollector,
+            INcdReportRepositoryDescriptor repositoryDescriptor,
+            OffsetDateTime reportStartDateTime,
+            boolean overlapWithActiveRepositories,
+            int dormantOrdinal) {
+        var branchDescriptor = new MockNcdReportBranchDescriptor("main", "abc123");
+        var authorData = selectDormantRepositoryAuthorData(overlapWithActiveRepositories, dormantOrdinal);
+        var author = new MockNcdReportAuthorDescriptor(authorData.getName(), authorData.getEmail());
+        var commitDateTime = reportStartDateTime.minusDays(1);
+        var commitSha = String.format("%040x", ((long) dormantOrdinal * 10000) + 1);
+        var commitDescriptor = new MockNcdReportCommitDescriptor(commitSha, commitDateTime);
+
+        var branchCommitDescriptor = new NcdReportBranchCommitDescriptor(
+                repositoryDescriptor,
+                branchDescriptor,
+                commitDescriptor,
+                author,
+                true);
+        branchCollector.reportBranchCommit(branchCommitDescriptor);
+    }
+
+    private MockAuthorData selectDormantRepositoryAuthorData(boolean overlapWithActiveRepositories, int dormantOrdinal) {
+        if ( overlapWithActiveRepositories ) {
+            // Re-use the first active author to force overlap and test active-wins semantics.
+            return authors.get(0);
+        }
+
+        // Use synthetic authors by default to keep dormant-only contributors visible in top-level results.
+        var suffix = toAlphabeticSuffix(dormantOrdinal);
+        var name = String.format("Dormant Repo User %s", suffix);
+        var email = String.format("dormant.repo.user.%s@example.com", suffix.toLowerCase());
+        return new MockAuthorData(name, email);
+    }
+
+    private String toAlphabeticSuffix(int ordinal) {
+        int value = Math.max(1, ordinal);
+        var result = new StringBuilder();
+        while ( value > 0 ) {
+            value--;
+            result.insert(0, (char) ('A' + (value % 26)));
+            value = value / 26;
+        }
+        return result.toString();
     }
     
     @Override

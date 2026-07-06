@@ -16,14 +16,16 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.license.ncd_report.helper.NcdReportContributorHelper;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.RequiredArgsConstructor;
 
-@RequiredArgsConstructor @Data
+@RequiredArgsConstructor @Data @EqualsAndHashCode(exclude = "dormant")
 public class NcdReportProcessedAuthorDescriptor {
     private final INcdReportAuthorDescriptor authorDescriptor;
     private final NcdReportProcessedAuthorState state;
     private final int authorNumber;
     private final ObjectNode expressionInput;
+    private boolean dormant;
     
     public ObjectNode updateReportRecord(ObjectNode objectNode) {
         return objectNode.put("authorId", computeAuthorId())

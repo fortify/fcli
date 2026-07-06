@@ -132,7 +132,7 @@ public class NcdReportGitHubResultsGenerator extends AbstractNcdReportResultsGen
             }
         }
         if ( mostRecentCommitDescriptor!=null ) {
-            addCommit(branchCommitCollector, repoDescriptor, mostRecentBranchDescriptor, mostRecentCommitDescriptor.asJsonNode());
+            addCommit(branchCommitCollector, repoDescriptor, mostRecentBranchDescriptor, mostRecentCommitDescriptor.asJsonNode(), true);
         }
     }
 
@@ -153,7 +153,7 @@ public class NcdReportGitHubResultsGenerator extends AbstractNcdReportResultsGen
             restHelper.repo(repoDescriptor.getOwnerName(), repoDescriptor.getName())
                 .queryCommits().sha(branchDescriptor.getSha()).since(since).until(until).process(commit -> {
                     foundFlag.add(true);
-                    addCommit(branchCommitCollector, repoDescriptor, branchDescriptor, commit);
+                    addCommit(branchCommitCollector, repoDescriptor, branchDescriptor, commit, false);
                     return Break.FALSE;
                 });
             if (!foundFlag.isEmpty()) {
@@ -166,10 +166,12 @@ public class NcdReportGitHubResultsGenerator extends AbstractNcdReportResultsGen
     /**
      * Add commit data to the given {@link INcdReportRepositoryBranchCommitCollector}.
      */
-    private void addCommit(INcdReportRepositoryBranchCommitCollector branchCommitCollector, NcdReportGitHubRepositoryDescriptor repoDescriptor, NcdReportGitHubBranchDescriptor branchDescriptor, JsonNode commit) {
+    private void addCommit(INcdReportRepositoryBranchCommitCollector branchCommitCollector, NcdReportGitHubRepositoryDescriptor repoDescriptor,
+            NcdReportGitHubBranchDescriptor branchDescriptor, JsonNode commit, boolean dormant)
+    {
         var commitDescriptor = JsonHelper.treeToValue(commit, NcdReportGitHubCommitDescriptor.class);
         var authorDescriptor = JsonHelper.treeToValue(commit, NcdReportGitHubAuthorDescriptor.class);
-        branchCommitCollector.reportBranchCommit(new NcdReportBranchCommitDescriptor(repoDescriptor, branchDescriptor, commitDescriptor, authorDescriptor));
+        branchCommitCollector.reportBranchCommit(new NcdReportBranchCommitDescriptor(repoDescriptor, branchDescriptor, commitDescriptor, authorDescriptor, dormant));
     }
     
     /**

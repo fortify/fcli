@@ -27,10 +27,12 @@ public final class NcdReportAuthorsByRepositoryWriter implements INcdReportAutho
     }
     
     @Override
-    public void writeRepositoryAuthor(INcdReportRepositoryDescriptor repositoryDescriptor, NcdReportProcessedAuthorDescriptor authorDescriptor) {
-        recordWriter.append(authorDescriptor.updateReportRecord(
+    public void writeRepositoryAuthor(INcdReportRepositoryDescriptor repositoryDescriptor, NcdReportProcessedAuthorDescriptor authorDescriptor, boolean dormant) {
+        var row = authorDescriptor.updateReportRecord(
                 JsonHelper.getObjectMapper().createObjectNode()
                     .put("repositoryUrl", repositoryDescriptor.getUrl())
-                    .put("repositoryName", repositoryDescriptor.getFullName())));
+                    .put("repositoryName", repositoryDescriptor.getFullName()));
+        row.put("dormant", dormant);
+        recordWriter.append(row);
     }
 }

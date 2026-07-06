@@ -12,7 +12,10 @@ contributor:
 
 sources:
   mock:
-    - repositoryCount: 3
+    - activeRepositoryCount: 3
+      # Generate four dormant repositories by default (single dormant commit/author).
+      dormantOverlappingRepositoryCount: 2
+      dormantNonOverlappingRepositoryCount: 2
       # Use enough authors to include built-in bot accounts from MockAuthorData,
       # so ignoreExpression behavior is exercised in generated reports.
       authorsPerRepository: 8

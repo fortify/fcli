@@ -76,6 +76,8 @@ public final class NcdReportContributorHelper {
                         : value);
         row.compute(NcdReportContributorsCsvSchema.AUTHOR_ID,
                 (key, value) -> StringUtils.isBlank(value) ? computeAuthorId(expressionInput) : value);
+        row.compute(NcdReportContributorsCsvSchema.DORMANT,
+            (key, value) -> StringUtils.isBlank(value) ? "unknown" : value);
     }
 
     private NcdReportContributorHelper() {}

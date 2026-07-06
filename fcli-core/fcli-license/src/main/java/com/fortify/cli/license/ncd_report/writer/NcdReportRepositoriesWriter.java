@@ -19,21 +19,56 @@ import com.fortify.cli.common.report.writer.IReportWriter;
 import com.fortify.cli.license.ncd_report.descriptor.INcdReportRepositoryDescriptor;
 
 public final class NcdReportRepositoriesWriter implements INcdReportRepositoriesWriter {
-    private final IRecordWriter recordWriter;
+    private final IRecordWriter detailRecordWriter;
+    private final IRecordWriter topLevelRecordWriter;
     
     public NcdReportRepositoriesWriter(IReportWriter reportWriter) {
-        this.recordWriter = reportWriter.recordWriter(RecordWriterFactory.csv, "details/repositories.csv", false, null);
+        this.detailRecordWriter = reportWriter.recordWriter(RecordWriterFactory.csv, "details/repositories.csv", false, null);
+        this.topLevelRecordWriter = reportWriter.recordWriter(RecordWriterFactory.csv, "repositories.csv", false, null);
     }
     
     @Override
-    public void writeRepository(INcdReportRepositoryDescriptor descriptor, NcdReportRepositoryReportingStatus status, String reason) {
-        recordWriter.append(JsonHelper.getObjectMapper().createObjectNode()
+    public void writeRepository(INcdReportRepositoryDescriptor descriptor, NcdReportRepositoryReportingStatus status, String reason,
+            Boolean dormant, Integer commitCountRaw, Integer contributorCountRaw, String sourceReport)
+    {
+        var detailRow = JsonHelper.getObjectMapper().createObjectNode()
                     .put("repositoryUrl", descriptor.getUrl())
                     .put("repositoryName", descriptor.getFullName())
                     .put("visibility", descriptor.getVisibility())
                     .put("fork", descriptor.isFork())
                     .put("status", status.name())
-                    .put("reason", reason));
+                    .put("reason", reason);
+        if ( dormant == null ) {
+            detailRow.putNull("dormant");
+        } else {
+            detailRow.put("dormant", dormant);
+        }
+        detailRecordWriter.append(detailRow);
+
+        var topLevelRow = JsonHelper.getObjectMapper().createObjectNode()
+                .put("repositoryUrl", descriptor.getUrl())
+                .put("repositoryName", descriptor.getFullName())
+                .put("visibility", descriptor.getVisibility())
+                .put("fork", descriptor.isFork())
+                .put("status", status.name())
+                .put("reason", reason);
+        if ( dormant == null ) {
+            topLevelRow.putNull("dormant");
+        } else {
+            topLevelRow.put("dormant", dormant);
+        }
+        if ( commitCountRaw == null ) {
+            topLevelRow.putNull("commitCountRaw");
+        } else {
+            topLevelRow.put("commitCountRaw", commitCountRaw);
+        }
+        if ( contributorCountRaw == null ) {
+            topLevelRow.putNull("contributorCountRaw");
+        } else {
+            topLevelRow.put("contributorCountRaw", contributorCountRaw);
+        }
+        topLevelRow.put("sourceReport", sourceReport == null ? "" : sourceReport);
+        topLevelRecordWriter.append(topLevelRow);
     }
     
     public static enum NcdReportRepositoryReportingStatus {

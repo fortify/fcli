@@ -16,6 +16,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import com.fortify.cli.common.exception.FcliBugException;
 import com.fortify.cli.license.ncd_report.descriptor.INcdReportCommitDescriptor;
@@ -53,7 +54,10 @@ final class NcdReportRepositoryBranchCommitCollector implements INcdReportReposi
     private final INcdReportRepositoryDescriptor repositoryDescriptor;
     private final Map<NcdReportBranchCommitDescriptor, NcdReportProcessedAuthorDescriptor> branchCommitDescriptors = new LinkedHashMap<>();
     private final Map<INcdReportCommitDescriptor, NcdReportProcessedAuthorDescriptor> commitDescriptors = new LinkedHashMap<>();
+    private final Map<INcdReportCommitDescriptor, Boolean> commitDormantByCommitDescriptor = new LinkedHashMap<>();
     private final Set<NcdReportProcessedAuthorDescriptor> authorDescriptors = new LinkedHashSet<>();
+    private boolean repositoryDormant = true;
+
     @Override
     public void reportBranchCommit(NcdReportBranchCommitDescriptor branchCommitDescriptor) {
         if ( branchCommitDescriptor.getRepositoryDescriptor()!=repositoryDescriptor ) {
@@ -62,20 +66,46 @@ final class NcdReportRepositoryBranchCommitCollector implements INcdReportReposi
         var authorDescriptor = authorCollector.reportAuthor(branchCommitDescriptor.getAuthorDescriptor());
         branchCommitDescriptors.put(branchCommitDescriptor, authorDescriptor);
         commitDescriptors.put(branchCommitDescriptor.getCommitDescriptor(), authorDescriptor);
+        commitDormantByCommitDescriptor.putIfAbsent(branchCommitDescriptor.getCommitDescriptor(), branchCommitDescriptor.isDormant());
         authorDescriptors.add(authorDescriptor);
+        authorCollector.reportAuthorDormant(authorDescriptor, branchCommitDescriptor.isDormant());
+        if ( !branchCommitDescriptor.isDormant() ) {
+            repositoryDormant = false;
+        }
     }
     
     void writeResults(NcdReportResultsWriters writers) {
         branchCommitDescriptors.forEach((commitDescriptor, authorDescriptor)->writers.commitsByBranchWriter().writeBranchCommit(commitDescriptor, authorDescriptor));
-        commitDescriptors.forEach((commitDescriptor, authorDescriptor)->writers.commitsByRepositoryWriter().writeRepositoryCommit(repositoryDescriptor, commitDescriptor, authorDescriptor));
-        authorDescriptors.forEach(authorDescriptor->writers.authorsByRepositoryWriter().writeRepositoryAuthor(repositoryDescriptor, authorDescriptor));
+        commitDescriptors.forEach((commitDescriptor, authorDescriptor)->writers.commitsByRepositoryWriter()
+                .writeRepositoryCommit(repositoryDescriptor, commitDescriptor, authorDescriptor, isCommitDormant(commitDescriptor)));
+
+        var dormantByAuthor = branchCommitDescriptors.entrySet().stream()
+                .collect(Collectors.toMap(
+                        Map.Entry::getValue,
+                        e -> e.getKey().isDormant(),
+                        (current, incoming) -> current && incoming,
+                        LinkedHashMap::new));
+        authorDescriptors.forEach(authorDescriptor -> writers.authorsByRepositoryWriter()
+                .writeRepositoryAuthor(repositoryDescriptor, authorDescriptor, dormantByAuthor.getOrDefault(authorDescriptor, false)));
     }
     
     int getTotalCommitCount() {
         return branchCommitDescriptors.size();
     }
+
+    int getTotalContributorCount() {
+        return authorDescriptors.size();
+    }
     
     boolean isEmpty() {
         return branchCommitDescriptors.isEmpty();
+    }
+
+    boolean isDormant() {
+        return repositoryDormant;
+    }
+
+    private boolean isCommitDormant(INcdReportCommitDescriptor commitDescriptor) {
+        return commitDormantByCommitDescriptor.getOrDefault(commitDescriptor, false);
     }
 }

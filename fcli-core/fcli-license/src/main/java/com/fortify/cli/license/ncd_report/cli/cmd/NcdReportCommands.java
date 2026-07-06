@@ -23,6 +23,7 @@ import picocli.CommandLine.Command;
             NcdReportCreateConfigCommand.class,
             NcdReportMergeCommand.class,
             NcdReportListContributorsCommand.class,
+            NcdReportListRepositoriesCommand.class,
             NcdReportUpdateContributorStatusCommand.class
         }
 )

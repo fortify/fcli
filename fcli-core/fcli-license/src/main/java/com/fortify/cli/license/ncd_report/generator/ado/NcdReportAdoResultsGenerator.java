@@ -127,7 +127,7 @@ public class NcdReportAdoResultsGenerator extends AbstractNcdReportResultsGenera
             }
         }
         if ( mostRecentCommit!=null ) {
-            addCommit(branchCommitCollector, repoDescriptor, mostRecentBranch, mostRecentCommit.asJsonNode());
+            addCommit(branchCommitCollector, repoDescriptor, mostRecentBranch, mostRecentCommit.asJsonNode(), true);
         }
     }
 
@@ -141,7 +141,7 @@ public class NcdReportAdoResultsGenerator extends AbstractNcdReportResultsGenera
             restHelper.repository(repoDescriptor.getOrganizationName(), repoDescriptor.getProjectName(), repoDescriptor.getId())
                 .queryCommits().branchName(branchDescriptor.getName()).fromDate(since).toDate(until).process(commit -> {
                     foundFlag.add(true);
-                    addCommit(branchCommitCollector, repoDescriptor, branchDescriptor, commit);
+                    addCommit(branchCommitCollector, repoDescriptor, branchDescriptor, commit, false);
                     return Break.FALSE;
                 });
             if (!foundFlag.isEmpty()) {
@@ -151,10 +151,12 @@ public class NcdReportAdoResultsGenerator extends AbstractNcdReportResultsGenera
         return commitsFound;
     }
 
-    private void addCommit(INcdReportRepositoryBranchCommitCollector branchCommitCollector, NcdReportAdoRepositoryDescriptor repoDescriptor, NcdReportAdoBranchDescriptor branchDescriptor, JsonNode commit) {
+    private void addCommit(INcdReportRepositoryBranchCommitCollector branchCommitCollector, NcdReportAdoRepositoryDescriptor repoDescriptor,
+            NcdReportAdoBranchDescriptor branchDescriptor, JsonNode commit, boolean dormant)
+    {
         var commitDescriptor = JsonHelper.treeToValue(commit, NcdReportAdoCommitDescriptor.class);
         var authorDescriptor = JsonHelper.treeToValue(commit, NcdReportAdoAuthorDescriptor.class);
-        branchCommitCollector.reportBranchCommit(new NcdReportBranchCommitDescriptor(repoDescriptor, branchDescriptor, commitDescriptor, authorDescriptor));
+        branchCommitCollector.reportBranchCommit(new NcdReportBranchCommitDescriptor(repoDescriptor, branchDescriptor, commitDescriptor, authorDescriptor, dormant));
     }
     
     private List<NcdReportAdoBranchDescriptor> getBranchDescriptors(AdoRestHelper restHelper, NcdReportAdoRepositoryDescriptor repoDescriptor) {

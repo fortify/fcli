@@ -14,11 +14,11 @@ package com.fortify.cli.license.ncd_report.collector;
 
 import org.apache.commons.lang3.StringUtils;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.license.ncd_report.config.INcdReportRepoSelectorConfig;
 import com.fortify.cli.license.ncd_report.config.NcdReportConfig;
 import com.fortify.cli.license.ncd_report.descriptor.INcdReportRepositoryDescriptor;
+import com.fortify.cli.license.ncd_report.descriptor.NcdReportSummaryDescriptor;
 import com.fortify.cli.license.ncd_report.generator.INcdReportBranchCommitGenerator;
 import com.fortify.cli.license.ncd_report.writer.NcdReportRepositoriesWriter.NcdReportRepositoryReportingStatus;
 import com.fortify.cli.license.ncd_report.writer.NcdReportResultsWriters;
@@ -45,13 +45,13 @@ import com.fortify.cli.license.ncd_report.writer.NcdReportResultsWriters;
 final class NcdReportRepositoryProcessor implements INcdReportRepositoryProcessor {
     private final NcdReportConfig reportConfig;
     private final NcdReportResultsWriters writers;
-    private final ObjectNode summary;
+    private final NcdReportSummaryDescriptor summary;
     private final NcdReportRepositoryCollector repositoryCollector;
     private final NcdReportAuthorCollector authorCollector;
     
     private int totalAnalyzedCommitCount = 0;
     
-    public NcdReportRepositoryProcessor(NcdReportConfig reportConfig, NcdReportResultsWriters writers, ObjectNode summary) {
+    public NcdReportRepositoryProcessor(NcdReportConfig reportConfig, NcdReportResultsWriters writers, NcdReportSummaryDescriptor summary) {
         this.reportConfig = reportConfig;
         this.writers = writers;
         this.summary = summary;
@@ -67,9 +67,11 @@ final class NcdReportRepositoryProcessor implements INcdReportRepositoryProcesso
         if ( !repositoryCollector.isPreviouslyReported(repoDescriptor) ) {
             try {
                 if ( isExcludedFork(repoDescriptor, reportConfig, repoSelectorConfig) ) {
-                    repositoryCollector.reportRepository(repoDescriptor, NcdReportRepositoryReportingStatus.excluded, "Forks not included");
+                    repositoryCollector.reportRepository(repoDescriptor, NcdReportRepositoryReportingStatus.excluded, "Forks not included",
+                            null, 0, 0);
                 } else if ( isExcludedByExpression(repoDescriptor, reportConfig, repoSelectorConfig) ) {
-                    repositoryCollector.reportRepository(repoDescriptor, NcdReportRepositoryReportingStatus.excluded, "Doesn't match expression");
+                    repositoryCollector.reportRepository(repoDescriptor, NcdReportRepositoryReportingStatus.excluded,
+                            "Doesn't match expression", null, 0, 0);
                 } else {
                     processRepository(repoDescriptor, commitGenerator);
                 }
@@ -84,11 +86,14 @@ final class NcdReportRepositoryProcessor implements INcdReportRepositoryProcesso
         writers.progressWriter().writeI18nProgress("fcli.license.ncd-report.loading.commits", repoDescriptor.getFullName());
         branchCommitGenerator.generateBranchCommitData(repoDescriptor, branchCommitsCollector);
         if ( branchCommitsCollector.isEmpty() ) {
-            repositoryCollector.reportRepository(repoDescriptor, NcdReportRepositoryReportingStatus.empty, "No commits found");
+            repositoryCollector.reportRepository(repoDescriptor, NcdReportRepositoryReportingStatus.empty, "No commits found",
+                    null, 0, 0);
         } else {
             branchCommitsCollector.writeResults(writers);
-            totalAnalyzedCommitCount+=branchCommitsCollector.getTotalCommitCount();
-            repositoryCollector.reportRepository(repoDescriptor, NcdReportRepositoryReportingStatus.included, "Matches all criteria");
+            totalAnalyzedCommitCount += branchCommitsCollector.getTotalCommitCount();
+            repositoryCollector.reportRepository(repoDescriptor, NcdReportRepositoryReportingStatus.included,
+                    "Matches all criteria", branchCommitsCollector.isDormant(),
+                    branchCommitsCollector.getTotalCommitCount(), branchCommitsCollector.getTotalContributorCount());
         }
     }
 
@@ -110,8 +115,9 @@ final class NcdReportRepositoryProcessor implements INcdReportRepositoryProcesso
     
     void writeResults() {
         repositoryCollector.writeResults();
-        summary.set("commitCount", JsonHelper.getObjectMapper().createObjectNode()
-                .put("analyzed", totalAnalyzedCommitCount));
+        var commitCount = new NcdReportSummaryDescriptor.CommitCount();
+        commitCount.setAnalyzed(totalAnalyzedCommitCount);
+        summary.setCommitCount(commitCount);
         authorCollector.writeResults();
     }
 }

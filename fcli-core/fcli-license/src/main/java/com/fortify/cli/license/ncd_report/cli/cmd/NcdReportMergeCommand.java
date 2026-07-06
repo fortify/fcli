@@ -18,6 +18,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -48,10 +49,12 @@ import com.fortify.cli.common.report.cli.cmd.AbstractReportGenerateCommand;
 import com.fortify.cli.common.report.writer.IReportWriter;
 import com.fortify.cli.license.ncd_report.config.NcdReportConfig;
 import com.fortify.cli.license.ncd_report.config.NcdReportContributorConfig;
+import com.fortify.cli.license.ncd_report.descriptor.NcdReportSummaryDescriptor;
 import com.fortify.cli.license.ncd_report.helper.NcdReportContributorHelper;
 import com.fortify.cli.license.ncd_report.reader.NcdReportReader;
 import com.fortify.cli.license.ncd_report.validator.NcdReportValidator;
 import com.fortify.cli.license.ncd_report.writer.NcdReportContributorsCsvSchema;
+import com.fortify.cli.license.ncd_report.writer.NcdReportRepositoriesWriter.NcdReportRepositoryReportingStatus;
 
 import lombok.Getter;
 import picocli.CommandLine.Command;
@@ -72,6 +75,7 @@ public final class NcdReportMergeCommand extends AbstractReportGenerateCommand {
 
     @Option(names = {"-r", "--reports"}, required = true, split = ",")
     @Getter private List<Path> reportPaths;
+    private NcdReportSummaryDescriptor summary;
 
     @Override
     protected String getReportTitle() {
@@ -80,15 +84,38 @@ public final class NcdReportMergeCommand extends AbstractReportGenerateCommand {
 
     @Override
     protected void generateReport(IReportWriter reportWriter) {
+        this.summary = NcdReportSummaryDescriptor.fromObjectNode(reportWriter.summary());
         var sourceReports = loadSourceReports();
+        addDateRangeToSummary(sourceReports);
         var mergedContributorConfig = mergeContributorConfig(sourceReports);
         var contributors = mergeContributors(sourceReports, mergedContributorConfig);
         synthesizeMissingDuplicateOf(contributors);
         writeMergedContributors(reportWriter, contributors);
-        var detailRowCounts = writeMergedDetails(reportWriter, sourceReports, contributors);
+        var mergedDetailStats = writeMergedDetails(reportWriter, sourceReports, contributors);
         writeMergedConfig(reportWriter, mergedContributorConfig);
         copyEmbeddedSources(reportWriter, sourceReports);
-        updateSummary(reportWriter, contributors, sourceReports, mergedContributorConfig, detailRowCounts);
+        updateSummary(contributors, sourceReports, mergedContributorConfig, mergedDetailStats);
+        summary.applyTo(reportWriter.summary());
+    }
+
+    private void addDateRangeToSummary(List<SourceReport> sources) {
+        var reportEndDate = sources.stream()
+            .map(SourceReport::sourceReportEndDate)
+            .filter(d -> d != null)
+            .max(LocalDate::compareTo)
+            .orElse(null);
+        var reportStartDate = sources.stream()
+            .map(SourceReport::sourceReportStartDate)
+            .filter(d -> d != null)
+            .min(LocalDate::compareTo)
+            .orElse(null);
+
+        if ( reportStartDate != null ) {
+            summary.setReportStartDate(reportStartDate.toString());
+        }
+        if ( reportEndDate != null ) {
+            summary.setReportEndDate(reportEndDate.toString());
+        }
     }
 
     private List<SourceReport> loadSourceReports() {
@@ -173,6 +200,7 @@ public final class NcdReportMergeCommand extends AbstractReportGenerateCommand {
                 .flatMap(s -> s.contributors().stream())
                 .collect(Collectors.toCollection(ArrayList::new));
         allContributors = aggregateByAuthorId(allContributors);
+        allContributors.forEach(c -> c.dormantStatus(c.sourceDormantStatus()));
 
         var parser = new SpelExpressionParser();
         var ignoreExpression = mergedContributorConfig
@@ -216,7 +244,7 @@ public final class NcdReportMergeCommand extends AbstractReportGenerateCommand {
                     return contributor;
                 }
                 existing.addSourceOccurrence(contributor.sourceReport(), contributor.sourceContributionStatus(),
-                        contributor.sourceContributingAuthorNumber());
+                    contributor.sourceContributingAuthorNumber(), contributor.dormantStatus());
                 return existing;
             });
         }
@@ -263,9 +291,17 @@ public final class NcdReportMergeCommand extends AbstractReportGenerateCommand {
                 .collect(Collectors.toList());
 
         var rootToContributingNumber = new HashMap<Integer, Integer>();
+        var rootToDormantStatus = new HashMap<Integer, DormantStatus>();
         int contributingAuthorNumber = 1;
         for ( var entry : sortedRootEntries ) {
             rootToContributingNumber.put(entry.getKey(), contributingAuthorNumber++);
+            rootToDormantStatus.put(entry.getKey(), DormantStatus.DORMANT);
+        }
+
+        for ( int i = 0; i < count; i++ ) {
+            var root = find(parent, i);
+            var contributorDormantStatus = contributors.get(i).dormantStatus();
+            rootToDormantStatus.merge(root, contributorDormantStatus, DormantStatus::merge);
         }
 
         for ( int i = 0; i < count; i++ ) {
@@ -273,6 +309,7 @@ public final class NcdReportMergeCommand extends AbstractReportGenerateCommand {
             var representativeIndex = rootToMinIndex.get(root);
             var contributor = contributors.get(i);
             contributor.contributingAuthorNumber(rootToContributingNumber.get(root));
+            contributor.dormantStatus(rootToDormantStatus.getOrDefault(root, DormantStatus.UNKNOWN));
             if ( i == representativeIndex ) {
                 contributor.contributionStatus("contributing");
             } else {
@@ -324,7 +361,8 @@ public final class NcdReportMergeCommand extends AbstractReportGenerateCommand {
         sorted.forEach(writer::append);
     }
 
-    private Map<String, Integer> writeMergedDetails(IReportWriter reportWriter, List<SourceReport> sourceReports, List<ContributorRecord> mergedContributors) {
+    private MergedDetailStats writeMergedDetails(IReportWriter reportWriter, List<SourceReport> sourceReports, List<ContributorRecord> mergedContributors) {
+        var repositoryRawCountsBySource = computeRepositoryRawCountsBySourceReport(sourceReports);
         var sourceSemanticsByKey = sourceReports.stream()
             .flatMap(s -> s.contributors().stream())
             .collect(Collectors.toMap(
@@ -346,6 +384,13 @@ public final class NcdReportMergeCommand extends AbstractReportGenerateCommand {
                 HashMap::new));
 
         var countsByFile = new HashMap<String, Integer>();
+        var repositoryCounts = new NcdReportSummaryDescriptor.RepositoryCounts();
+        repositoryCounts.setIncluded(0);
+        repositoryCounts.setExcluded(0);
+        repositoryCounts.setEmpty(0);
+        repositoryCounts.setError(0);
+        repositoryCounts.setDormant(0);
+        var repositoryWriter = reportWriter.recordWriter(RecordWriterFactory.csv, "repositories.csv", false, null);
         for ( var detailFileName : DETAIL_FILE_NAMES ) {
             var writer = reportWriter.recordWriter(RecordWriterFactory.csv, detailFileName, false, null);
             int fileRowCount = 0;
@@ -355,8 +400,16 @@ public final class NcdReportMergeCommand extends AbstractReportGenerateCommand {
                         continue;
                     }
                     for ( var row : readCsvRows(reader, detailFileName) ) {
+                        normalizeDetailRow(detailFileName, row);
+                        if ( "details/repositories.csv".equals(detailFileName) ) {
+                            updateRepositoryCounts(repositoryCounts, row);
+                        }
                         row.put("sourceReport", sourceReport.sourceRef());
                         enrichRowWithSemantics(row, sourceSemanticsByKey, mergedSemanticsBySourceAndAuthor, mergedSemanticsByAuthor);
+                        if ( "details/repositories.csv".equals(detailFileName) ) {
+                            repositoryWriter.append(createTopLevelRepositoryRow(row,
+                                    repositoryRawCountsBySource.getOrDefault(sourceReport.sourceRef(), Collections.emptyMap())));
+                        }
                         writer.append(JsonHelper.getObjectMapper().valueToTree(row));
                         fileRowCount++;
                     }
@@ -364,7 +417,97 @@ public final class NcdReportMergeCommand extends AbstractReportGenerateCommand {
             }
             countsByFile.put(detailFileName, fileRowCount);
         }
-        return countsByFile;
+        repositoryCounts.setTotal(countsByFile.getOrDefault("details/repositories.csv", 0));
+        return new MergedDetailStats(countsByFile, repositoryCounts);
+    }
+
+    private Map<String, Map<String, RepositoryRawCounts>> computeRepositoryRawCountsBySourceReport(List<SourceReport> sourceReports) {
+        var result = new HashMap<String, Map<String, RepositoryRawCounts>>();
+        for ( var sourceReport : sourceReports ) {
+            var commitCountsByRepository = new HashMap<String, Integer>();
+            var contributorIdsByRepository = new HashMap<String, Set<String>>();
+            try ( var reader = new NcdReportReader(sourceReport.originalPath()) ) {
+                if ( sourceReport.entryNames().contains("details/commits-by-repository.csv") ) {
+                    for ( var row : readCsvRows(reader, "details/commits-by-repository.csv") ) {
+                        var repositoryUrl = StringUtils.defaultString(row.get("repositoryUrl"));
+                        if ( StringUtils.isBlank(repositoryUrl) ) {
+                            continue;
+                        }
+                        commitCountsByRepository.put(repositoryUrl, commitCountsByRepository.getOrDefault(repositoryUrl, 0) + 1);
+                    }
+                }
+                if ( sourceReport.entryNames().contains("details/contributors-by-repository.csv") ) {
+                    for ( var row : readCsvRows(reader, "details/contributors-by-repository.csv") ) {
+                        var repositoryUrl = StringUtils.defaultString(row.get("repositoryUrl"));
+                        if ( StringUtils.isBlank(repositoryUrl) ) {
+                            continue;
+                        }
+                        var authorId = StringUtils.defaultString(row.get("authorId"));
+                        if ( StringUtils.isBlank(authorId) ) {
+                            var expressionInput = NcdReportContributorHelper.createExpressionInput(
+                                    StringUtils.defaultString(row.get("authorName")),
+                                    StringUtils.defaultString(row.get("authorEmail")));
+                            authorId = NcdReportContributorHelper.computeAuthorId(expressionInput);
+                        }
+                        contributorIdsByRepository.computeIfAbsent(repositoryUrl, k -> new HashSet<>()).add(authorId);
+                    }
+                }
+            }
+
+            var repositoryRawCounts = new HashMap<String, RepositoryRawCounts>();
+            var repositoryUrls = new HashSet<String>();
+            repositoryUrls.addAll(commitCountsByRepository.keySet());
+            repositoryUrls.addAll(contributorIdsByRepository.keySet());
+            repositoryUrls.forEach(repositoryUrl -> repositoryRawCounts.put(repositoryUrl,
+                    new RepositoryRawCounts(
+                            commitCountsByRepository.getOrDefault(repositoryUrl, 0),
+                            contributorIdsByRepository.getOrDefault(repositoryUrl, Collections.emptySet()).size())));
+            result.put(sourceReport.sourceRef(), repositoryRawCounts);
+        }
+        return result;
+    }
+
+    private ObjectNode createTopLevelRepositoryRow(Map<String, String> detailRow, Map<String, RepositoryRawCounts> rawCountsByRepositoryUrl) {
+        var repositoryUrl = StringUtils.defaultString(detailRow.get("repositoryUrl"));
+        var rawCounts = rawCountsByRepositoryUrl.get(repositoryUrl);
+        var result = JsonHelper.getObjectMapper().createObjectNode()
+                .put("repositoryUrl", repositoryUrl)
+                .put("repositoryName", StringUtils.defaultString(detailRow.get("repositoryName")))
+                .put("visibility", StringUtils.defaultString(detailRow.get("visibility")))
+                .put("fork", StringUtils.defaultString(detailRow.get("fork")))
+                .put("status", StringUtils.defaultString(detailRow.get("status")))
+                .put("reason", StringUtils.defaultString(detailRow.get("reason")))
+                .put("dormant", StringUtils.defaultString(detailRow.get("dormant")));
+        if ( rawCounts == null ) {
+            result.putNull("commitCountRaw");
+            result.putNull("contributorCountRaw");
+        } else {
+            result.put("commitCountRaw", rawCounts.commitCountRaw());
+            result.put("contributorCountRaw", rawCounts.contributorCountRaw());
+        }
+        result.put("sourceReport", StringUtils.defaultString(detailRow.get("sourceReport")));
+        return result;
+    }
+
+    private void updateRepositoryCounts(NcdReportSummaryDescriptor.RepositoryCounts repositoryCounts, Map<String, String> row) {
+        var status = StringUtils.defaultString(row.get("status"));
+        if ( NcdReportRepositoryReportingStatus.included.name().equalsIgnoreCase(status) ) {
+            repositoryCounts.setIncluded(increaseCount(repositoryCounts.getIncluded()));
+            var dormant = StringUtils.defaultString(row.get("dormant"));
+            if ( "true".equalsIgnoreCase(dormant) ) {
+                repositoryCounts.setDormant(increaseCount(repositoryCounts.getDormant()));
+            }
+        } else if ( NcdReportRepositoryReportingStatus.excluded.name().equalsIgnoreCase(status) ) {
+            repositoryCounts.setExcluded(increaseCount(repositoryCounts.getExcluded()));
+        } else if ( NcdReportRepositoryReportingStatus.empty.name().equalsIgnoreCase(status) ) {
+            repositoryCounts.setEmpty(increaseCount(repositoryCounts.getEmpty()));
+        } else if ( NcdReportRepositoryReportingStatus.error.name().equalsIgnoreCase(status) ) {
+            repositoryCounts.setError(increaseCount(repositoryCounts.getError()));
+        }
+    }
+
+    private int increaseCount(Integer count) {
+        return (count == null ? 0 : count) + 1;
     }
 
     private List<Map<String, String>> readCsvRows(NcdReportReader reader, String entryName) {
@@ -384,6 +527,28 @@ public final class NcdReportMergeCommand extends AbstractReportGenerateCommand {
         }
     }
 
+    private void normalizeDetailRow(String detailFileName, Map<String, String> row) {
+        if ( !row.containsKey("dormant") || StringUtils.isBlank(row.get("dormant")) ) {
+            row.put("dormant", "unknown");
+        }
+
+        if ( isAuthorDetailFile(detailFileName) ) {
+            var authorId = StringUtils.defaultString(row.get("authorId"));
+            if ( StringUtils.isBlank(authorId) ) {
+                var expressionInput = NcdReportContributorHelper.createExpressionInput(
+                        StringUtils.defaultString(row.get("authorName")),
+                        StringUtils.defaultString(row.get("authorEmail")));
+                row.put("authorId", NcdReportContributorHelper.computeAuthorId(expressionInput));
+            }
+        }
+    }
+
+    private boolean isAuthorDetailFile(String detailFileName) {
+        return "details/commits-by-branch.csv".equals(detailFileName)
+                || "details/commits-by-repository.csv".equals(detailFileName)
+                || "details/contributors-by-repository.csv".equals(detailFileName);
+    }
+
     private void enrichRowWithSemantics(
             Map<String, String> row,
             Map<String, ContributorRecord> sourceSemanticsByKey,
@@ -400,6 +565,7 @@ public final class NcdReportMergeCommand extends AbstractReportGenerateCommand {
         var sourceSemantics = sourceSemanticsByKey.get(sourceAndAuthorIdKey(sourceReport, authorId));
         if ( sourceSemantics != null ) {
             row.put("sourceContributionStatus", sourceSemantics.sourceContributionStatus());
+            row.put("sourceDormant", sourceSemantics.sourceDormantStatus().toOutputValue());
         }
 
         var mergedSemantics = mergedSemanticsBySourceAndAuthor.get(sourceAndAuthorIdKey(sourceReport, authorId));
@@ -410,6 +576,8 @@ public final class NcdReportMergeCommand extends AbstractReportGenerateCommand {
             row.put("mergedAuthorId", mergedSemantics.authorId());
             row.put("mergedAuthorState", mergedSemantics.authorState());
             row.put("mergedContributionStatus", mergedSemantics.contributionStatus());
+            row.put("mergedDormant", mergedSemantics.dormantStatus().toOutputValue());
+            row.put("dormant", mergedSemantics.dormantStatus().toOutputValue());
         }
     }
 
@@ -455,54 +623,57 @@ public final class NcdReportMergeCommand extends AbstractReportGenerateCommand {
         }
     }
 
-        private void updateSummary(IReportWriter reportWriter, List<ContributorRecord> contributors, List<SourceReport> sources,
-            Optional<NcdReportContributorConfig> mergedContributorConfig, Map<String, Integer> detailRowCounts)
+        private void updateSummary(List<ContributorRecord> contributors, List<SourceReport> sources,
+            Optional<NcdReportContributorConfig> mergedContributorConfig, MergedDetailStats mergedDetailStats)
     {
-        var summary = reportWriter.summary();
-        summary.put("mergedReportCount", sources.size());
-        summary.set("mergedSourceReports", JsonHelper.toArrayNode(sources.stream().map(SourceReport::sourceRef).toArray(String[]::new)));
+        summary.setMergedReportCount(sources.size());
+        summary.setMergedSourceReports(sources.stream().map(SourceReport::sourceRef).toList());
+        summary.setRepositoryCounts(mergedDetailStats.repositoryCounts());
 
         int total = contributors.size();
         int ignored = (int) contributors.stream().filter(c -> "ignored".equals(c.contributionStatus())).count();
         int duplicate = (int) contributors.stream().filter(c -> "duplicate".equals(c.contributionStatus())).count();
         int contributing = (int) contributors.stream().filter(c -> "contributing".equals(c.contributionStatus())).count();
+        int dormant = (int) contributors.stream()
+            .filter(c -> "contributing".equals(c.contributionStatus()))
+            .filter(c -> c.dormantStatus() == DormantStatus.DORMANT)
+            .count();
         int nonIgnored = total - ignored;
 
-        summary.set("authorCount", JsonHelper.getObjectMapper().createObjectNode()
-                .put("total", total)
-                .put("contributing", contributing)
-                .put("ignored", ignored)
-                .put("nonIgnored", nonIgnored)
-                .put("duplicate", duplicate));
-        summary.set("commitCount", JsonHelper.getObjectMapper().createObjectNode()
-            .put("analyzed", detailRowCounts.getOrDefault("details/commits-by-branch.csv", 0)));
-        summary.set("detailRowCount", JsonHelper.getObjectMapper().createObjectNode()
-            .put("repositories", detailRowCounts.getOrDefault("details/repositories.csv", 0))
-            .put("commitsByBranch", detailRowCounts.getOrDefault("details/commits-by-branch.csv", 0))
-            .put("commitsByRepository", detailRowCounts.getOrDefault("details/commits-by-repository.csv", 0))
-            .put("contributorsByRepository", detailRowCounts.getOrDefault("details/contributors-by-repository.csv", 0)));
+        var authorCount = new NcdReportSummaryDescriptor.AuthorCount();
+        authorCount.setTotal(total);
+        authorCount.setContributing(contributing);
+        authorCount.setIgnored(ignored);
+        authorCount.setNonIgnored(nonIgnored);
+        authorCount.setDuplicate(duplicate);
+        authorCount.setDormant(dormant);
+        summary.setAuthorCount(authorCount);
 
-        var reportEndDate = sources.stream()
-            .map(SourceReport::sourceReportEndDate)
-            .filter(d -> d != null)
-            .max(LocalDate::compareTo)
-            .orElse(null);
-        var reportStartDate = sources.stream()
-            .map(SourceReport::sourceReportStartDate)
-            .filter(d -> d != null)
-            .min(LocalDate::compareTo)
-            .orElse(null);
-        if ( reportStartDate != null ) {
-            summary.put("reportStartDate", reportStartDate.toString());
-        }
-        if ( reportEndDate != null ) {
-            summary.put("reportEndDate", reportEndDate.toString());
-        }
+        var commitCount = new NcdReportSummaryDescriptor.CommitCount();
+        commitCount.setAnalyzed(mergedDetailStats.detailRowCounts().getOrDefault("details/commits-by-branch.csv", 0));
+        summary.setCommitCount(commitCount);
+
+        var detailRowCount = new NcdReportSummaryDescriptor.DetailRowCount();
+        detailRowCount.setRepositories(mergedDetailStats.detailRowCounts().getOrDefault("details/repositories.csv", 0));
+        detailRowCount.setCommitsByBranch(mergedDetailStats.detailRowCounts().getOrDefault("details/commits-by-branch.csv", 0));
+        detailRowCount.setCommitsByRepository(mergedDetailStats.detailRowCounts().getOrDefault("details/commits-by-repository.csv", 0));
+        detailRowCount.setContributorsByRepository(mergedDetailStats.detailRowCounts().getOrDefault("details/contributors-by-repository.csv", 0));
+        summary.setDetailRowCount(detailRowCount);
 
         mergedContributorConfig
             .flatMap(NcdReportContributorConfig::getDuplicateExpression)
-            .ifPresent(e -> summary.put("mergedDuplicateExpression", e));
+            .ifPresent(summary::setMergedDuplicateExpression);
     }
+
+            private static record MergedDetailStats(
+                Map<String, Integer> detailRowCounts,
+                NcdReportSummaryDescriptor.RepositoryCounts repositoryCounts
+            ) {}
+
+    private static record RepositoryRawCounts(
+            int commitCountRaw,
+            int contributorCountRaw
+    ) {}
 
     private String createUniqueSourceName(Path reportPath, Set<String> usedNames) {
         String fileName = reportPath.getFileName().toString();
@@ -547,6 +718,7 @@ public final class NcdReportMergeCommand extends AbstractReportGenerateCommand {
         private final String sourceReport;
         private final Set<String> sourceReports;
         private final Set<String> sourceContributionStatuses;
+        private final Set<DormantStatus> sourceDormantValues;
         private final int sourceContributingAuthorNumber;
         private final ObjectNode expressionInput;
 
@@ -559,9 +731,10 @@ public final class NcdReportMergeCommand extends AbstractReportGenerateCommand {
         private String overrideStatus;
         private String overrideStatusConfidence;
         private String overrideStatusNotes;
+        private DormantStatus dormantStatus;
 
         private ContributorRecord(String authorName, String authorEmail, String sourceReport, String sourceContributionStatus,
-                int sourceContributingAuthorNumber, ObjectNode expressionInput)
+            int sourceContributingAuthorNumber, DormantStatus sourceDormantStatus, ObjectNode expressionInput)
         {
             this.authorName = authorName;
             this.authorEmail = authorEmail;
@@ -570,6 +743,8 @@ public final class NcdReportMergeCommand extends AbstractReportGenerateCommand {
             this.sourceReports.add(sourceReport);
             this.sourceContributionStatuses = new LinkedHashSet<>();
             this.sourceContributionStatuses.add(sourceContributionStatus);
+            this.sourceDormantValues = new LinkedHashSet<>();
+            this.sourceDormantValues.add(sourceDormantStatus);
             this.sourceContributingAuthorNumber = sourceContributingAuthorNumber;
             this.expressionInput = expressionInput;
             this.authorId = NcdReportContributorHelper.computeAuthorId(expressionInput);
@@ -581,15 +756,18 @@ public final class NcdReportMergeCommand extends AbstractReportGenerateCommand {
             this.overrideStatus = "";
             this.overrideStatusConfidence = "";
             this.overrideStatusNotes = "";
+            this.dormantStatus = sourceDormantStatus;
         }
 
         static ContributorRecord fromRow(Map<String, String> row, String sourceReport) {
             String authorName = StringUtils.defaultString(row.get("authorName"));
             String authorEmail = StringUtils.defaultString(row.get("authorEmail"));
             String sourceContributionStatus = StringUtils.defaultString(row.get("contributionStatus"));
+            DormantStatus sourceDormantStatus = DormantStatus.fromInput(row.get("dormant"));
             int sourceContributingAuthorNumber = parseInt(row.get("contributingAuthorNumber"), -1);
             ObjectNode expressionInput = NcdReportContributorHelper.createExpressionInput(authorName, authorEmail);
-              var record = new ContributorRecord(authorName, authorEmail, sourceReport, sourceContributionStatus, sourceContributingAuthorNumber, expressionInput);
+                            var record = new ContributorRecord(authorName, authorEmail, sourceReport, sourceContributionStatus,
+                                            sourceContributingAuthorNumber, sourceDormantStatus, expressionInput);
               // Preserve any existing override fields from source report
               record.duplicateOf = StringUtils.defaultString(row.get("duplicateOf"));
               record.overrideStatus = StringUtils.defaultString(row.get("overrideStatus"));
@@ -605,6 +783,7 @@ public final class NcdReportMergeCommand extends AbstractReportGenerateCommand {
                     .put("authorEmail", authorEmail)
                     .put("authorState", authorState)
                     .put("contributionStatus", contributionStatus)
+                    .put("dormant", dormantStatus.toOutputValue())
                     .put("duplicateOf", duplicateOf)
                     .put("overrideStatus", overrideStatus)
                     .put("overrideStatusConfidence", overrideStatusConfidence)
@@ -635,6 +814,16 @@ public final class NcdReportMergeCommand extends AbstractReportGenerateCommand {
             return sourceContributingAuthorNumber;
         }
 
+        DormantStatus sourceDormantStatus() {
+            if ( sourceDormantValues.contains(DormantStatus.ACTIVE) ) {
+                return DormantStatus.ACTIVE;
+            }
+            if ( sourceDormantValues.contains(DormantStatus.UNKNOWN) ) {
+                return DormantStatus.UNKNOWN;
+            }
+            return DormantStatus.DORMANT;
+        }
+
         String authorState() {
             return authorState;
         }
@@ -651,9 +840,12 @@ public final class NcdReportMergeCommand extends AbstractReportGenerateCommand {
             return sourceContributionStatuses.stream().anyMatch(s -> "ignored".equalsIgnoreCase(s));
         }
 
-        void addSourceOccurrence(String sourceReport, String sourceContributionStatus, int sourceContributingAuthorNumber) {
+        void addSourceOccurrence(String sourceReport, String sourceContributionStatus, int sourceContributingAuthorNumber,
+                DormantStatus sourceDormantStatus)
+        {
             this.sourceReports.add(sourceReport);
             this.sourceContributionStatuses.add(sourceContributionStatus);
+            this.sourceDormantValues.add(sourceDormantStatus);
         }
 
         void authorState(String authorState) {
@@ -684,12 +876,54 @@ public final class NcdReportMergeCommand extends AbstractReportGenerateCommand {
             this.duplicateOf = duplicateOf;
         }
 
+        DormantStatus dormantStatus() {
+            return dormantStatus;
+        }
+
+        void dormantStatus(DormantStatus dormantStatus) {
+            this.dormantStatus = dormantStatus;
+        }
+
         private static int parseInt(String value, int defaultValue) {
             try {
                 return Integer.parseInt(StringUtils.defaultIfBlank(value, String.valueOf(defaultValue)));
             } catch ( NumberFormatException e ) {
                 return defaultValue;
             }
+        }
+
+    }
+
+    private static enum DormantStatus {
+        DORMANT,
+        ACTIVE,
+        UNKNOWN;
+
+        private static DormantStatus merge(DormantStatus a, DormantStatus b) {
+            if ( a == ACTIVE || b == ACTIVE ) {
+                return ACTIVE;
+            }
+            if ( a == UNKNOWN || b == UNKNOWN ) {
+                return UNKNOWN;
+            }
+            return DORMANT;
+        }
+
+        private static DormantStatus fromInput(String value) {
+            var normalized = StringUtils.defaultString(value).trim().toLowerCase();
+            return switch ( normalized ) {
+            case "true" -> DORMANT;
+            case "false" -> ACTIVE;
+            default -> UNKNOWN;
+            };
+        }
+
+        private String toOutputValue() {
+            return switch ( this ) {
+            case DORMANT -> "true";
+            case ACTIVE -> "false";
+            case UNKNOWN -> "unknown";
+            };
         }
     }
 
