@@ -142,6 +142,7 @@ public final class NcdReportListContributorsCommand extends AbstractOutputComman
                 .put(NcdReportContributorsCsvSchema.AUTHOR_NAME, row.path(NcdReportContributorsCsvSchema.AUTHOR_NAME).asText(""))
                 .put(NcdReportContributorsCsvSchema.AUTHOR_EMAIL, row.path(NcdReportContributorsCsvSchema.AUTHOR_EMAIL).asText(""))
                 .put(NcdReportContributorsCsvSchema.CONTRIBUTION_STATUS, row.path(NcdReportContributorsCsvSchema.CONTRIBUTION_STATUS).asText(""))
+                .put(NcdReportContributorsCsvSchema.DORMANT, row.path(NcdReportContributorsCsvSchema.DORMANT).asText("unknown"))
                 .put(NcdReportContributorsCsvSchema.DUPLICATE_OF, row.path(NcdReportContributorsCsvSchema.DUPLICATE_OF).asText(""))
                 .put(NcdReportContributorsCsvSchema.OVERRIDE_STATUS, row.path(NcdReportContributorsCsvSchema.OVERRIDE_STATUS).asText(""))
                 .put(NcdReportContributorsCsvSchema.OVERRIDE_STATUS_CONFIDENCE,

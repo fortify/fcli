@@ -82,14 +82,16 @@ public class NcdReportGitHubResultsGenerator extends AbstractNcdReportResultsGen
      */
     private void generateResults(NcdReportGitHubOrganizationConfig orgConfig) {
         String orgName = orgConfig.getName();
+        String sourceKey = "github:"+orgName;
         try {
             reportContext().progressWriter().writeI18nProgress("fcli.license.ncd-report.loading.github-repositories", orgName);
             restHelper.org(orgName).queryRepositories().process(repo -> {
-                reportContext().repositoryProcessor().processRepository(
+                var result = reportContext().repositoryProcessor().processRepository(
+                    sourceKey,
                     new NcdReportCombinedRepoSelectorConfig(sourceConfig(), orgConfig),
                     getRepoDescriptor(repo),
                     this::generateCommitData);
-                return Break.FALSE;
+                return result.sourceLimitReached() ? Break.TRUE : Break.FALSE;
             });
         } catch ( Exception e ) {
             reportContext().logger().error(String.format("Error processing organization: %s (%s)", orgName, sourceConfig().getApiUrl()), e);
@@ -132,7 +134,7 @@ public class NcdReportGitHubResultsGenerator extends AbstractNcdReportResultsGen
             }
         }
         if ( mostRecentCommitDescriptor!=null ) {
-            addCommit(branchCommitCollector, repoDescriptor, mostRecentBranchDescriptor, mostRecentCommitDescriptor.asJsonNode());
+            addCommit(branchCommitCollector, repoDescriptor, mostRecentBranchDescriptor, mostRecentCommitDescriptor.asJsonNode(), true);
         }
     }
 
@@ -153,7 +155,7 @@ public class NcdReportGitHubResultsGenerator extends AbstractNcdReportResultsGen
             restHelper.repo(repoDescriptor.getOwnerName(), repoDescriptor.getName())
                 .queryCommits().sha(branchDescriptor.getSha()).since(since).until(until).process(commit -> {
                     foundFlag.add(true);
-                    addCommit(branchCommitCollector, repoDescriptor, branchDescriptor, commit);
+                    addCommit(branchCommitCollector, repoDescriptor, branchDescriptor, commit, false);
                     return Break.FALSE;
                 });
             if (!foundFlag.isEmpty()) {
@@ -166,10 +168,12 @@ public class NcdReportGitHubResultsGenerator extends AbstractNcdReportResultsGen
     /**
      * Add commit data to the given {@link INcdReportRepositoryBranchCommitCollector}.
      */
-    private void addCommit(INcdReportRepositoryBranchCommitCollector branchCommitCollector, NcdReportGitHubRepositoryDescriptor repoDescriptor, NcdReportGitHubBranchDescriptor branchDescriptor, JsonNode commit) {
+    private void addCommit(INcdReportRepositoryBranchCommitCollector branchCommitCollector, NcdReportGitHubRepositoryDescriptor repoDescriptor,
+            NcdReportGitHubBranchDescriptor branchDescriptor, JsonNode commit, boolean dormant)
+    {
         var commitDescriptor = JsonHelper.treeToValue(commit, NcdReportGitHubCommitDescriptor.class);
         var authorDescriptor = JsonHelper.treeToValue(commit, NcdReportGitHubAuthorDescriptor.class);
-        branchCommitCollector.reportBranchCommit(new NcdReportBranchCommitDescriptor(repoDescriptor, branchDescriptor, commitDescriptor, authorDescriptor));
+        branchCommitCollector.reportBranchCommit(new NcdReportBranchCommitDescriptor(repoDescriptor, branchDescriptor, commitDescriptor, authorDescriptor, dormant));
     }
     
     /**

@@ -13,11 +13,11 @@
 package com.fortify.cli.license.ncd_report.collector;
 
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Stream;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.json.JsonHelper;
@@ -26,6 +26,7 @@ import com.fortify.cli.license.ncd_report.config.NcdReportContributorConfig;
 import com.fortify.cli.license.ncd_report.descriptor.INcdReportAuthorDescriptor;
 import com.fortify.cli.license.ncd_report.descriptor.NcdReportProcessedAuthorDescriptor;
 import com.fortify.cli.license.ncd_report.descriptor.NcdReportProcessedAuthorDescriptor.NcdReportProcessedAuthorState;
+import com.fortify.cli.license.ncd_report.descriptor.NcdReportSummaryDescriptor;
 import com.fortify.cli.license.ncd_report.writer.INcdReportAuthorsWriter;
 import com.fortify.cli.license.ncd_report.writer.NcdReportResultsWriters;
 
@@ -53,14 +54,16 @@ import lombok.SneakyThrows;
  */
 final class NcdReportAuthorCollector {
     private final NcdReportResultsWriters writers;
-    private final ObjectNode summary;
+    private final NcdReportSummaryDescriptor summary;
     
     private final Map<INcdReportAuthorDescriptor, NcdReportProcessedAuthorDescriptor> processedAuthors = new HashMap<>();
+    private final Set<NcdReportProcessedAuthorDescriptor> ignoredAuthors = new LinkedHashSet<>();
+    private final Map<NcdReportProcessedAuthorDescriptor, Boolean> dormantByAuthor = new HashMap<>();
     private final NcdReportAuthorDeduplicator deduplicator;
     private final Optional<NcdReportContributorConfig> contributorConfig;
     private final AuthorCounters counters = new AuthorCounters();
     
-    public NcdReportAuthorCollector(NcdReportConfig reportConfig, NcdReportResultsWriters writers, ObjectNode summary) {
+    public NcdReportAuthorCollector(NcdReportConfig reportConfig, NcdReportResultsWriters writers, NcdReportSummaryDescriptor summary) {
         this.writers = writers;
         this.summary = summary;
         this.contributorConfig = reportConfig.getContributor();
@@ -76,7 +79,7 @@ final class NcdReportAuthorCollector {
         var expressionInput = authorDescriptor.toExpressionInput();
         if ( isIgnored(expressionInput) ) {
             var result = new NcdReportProcessedAuthorDescriptor(authorDescriptor, NcdReportProcessedAuthorState.ignored, -1, expressionInput);
-            writers.authorsWriter().writeIgnoredAuthor(result);
+            ignoredAuthors.add(result);
             counters.increaseCount(AuthorCounter.ignored);
             return result;
         } else {
@@ -84,6 +87,10 @@ final class NcdReportAuthorCollector {
             deduplicator.addAuthor(result);
             return result;
         }
+    }
+
+    void reportAuthorDormant(NcdReportProcessedAuthorDescriptor descriptor, boolean dormant) {
+        dormantByAuthor.merge(descriptor, dormant, (current, incoming) -> current && incoming);
     }
     
     private boolean isIgnored(ObjectNode expressionInput) {
@@ -95,23 +102,40 @@ final class NcdReportAuthorCollector {
     
     @SneakyThrows
     final void writeResults() {
+        ignoredAuthors.forEach(this::writeIgnoredAuthor);
         deduplicator.getDeduplicatedAuthors().entrySet().forEach(this::writeEntry);
-        summary.set("authorCount", counters.toJson());
+        summary.setAuthorCount(counters.toSummaryAuthorCount());
+    }
+
+    private void writeIgnoredAuthor(NcdReportProcessedAuthorDescriptor descriptor) {
+        var dormant = isDormant(descriptor);
+        descriptor.setDormant(dormant);
+        writers.authorsWriter().writeIgnoredAuthor(descriptor, dormant);
     }
     
     private final void writeEntry(Entry<NcdReportProcessedAuthorDescriptor, Set<NcdReportProcessedAuthorDescriptor>> e) {
+        var groupDormant = isDormant(e.getKey()) && e.getValue().stream().allMatch(this::isDormant);
         var representativeAuthorId = e.getKey().getAuthorId();
         var contributingAuthorNumber = counters.increaseCount(AuthorCounter.contributing);
+        if ( groupDormant ) {
+            counters.increaseCount(AuthorCounter.dormant);
+        }
         INcdReportAuthorsWriter writer = writers.authorsWriter();
-        writer.writeContributor(e.getKey(), contributingAuthorNumber);
+        e.getKey().setDormant(groupDormant);
+        writer.writeContributor(e.getKey(), contributingAuthorNumber, groupDormant);
         e.getValue().forEach(d->{
-            writer.writeDuplicateAuthor(d, representativeAuthorId, contributingAuthorNumber);
+            d.setDormant(groupDormant);
+            writer.writeDuplicateAuthor(d, representativeAuthorId, contributingAuthorNumber, groupDormant);
             counters.increaseCount(AuthorCounter.duplicate);
         });
     }
+
+    private boolean isDormant(NcdReportProcessedAuthorDescriptor descriptor) {
+        return dormantByAuthor.getOrDefault(descriptor, false);
+    }
     
     private static enum AuthorCounter {
-        total, contributing, ignored, nonIgnored, duplicate
+        total, contributing, ignored, nonIgnored, duplicate, dormant
     }
     
     private static final class AuthorCounters {
@@ -127,11 +151,15 @@ final class NcdReportAuthorCollector {
             return counts.getOrDefault(counter, 0)+1;
         }
         
-        ObjectNode toJson() {
-            var node = JsonHelper.getObjectMapper().createObjectNode();
-            Stream.of(AuthorCounter.values())
-                .forEach(v->node.put(v.name(), counts.getOrDefault(v, 0)));
-            return node;
+        NcdReportSummaryDescriptor.AuthorCount toSummaryAuthorCount() {
+            var result = new NcdReportSummaryDescriptor.AuthorCount();
+            result.setTotal(counts.getOrDefault(AuthorCounter.total, 0));
+            result.setContributing(counts.getOrDefault(AuthorCounter.contributing, 0));
+            result.setIgnored(counts.getOrDefault(AuthorCounter.ignored, 0));
+            result.setNonIgnored(counts.getOrDefault(AuthorCounter.nonIgnored, 0));
+            result.setDuplicate(counts.getOrDefault(AuthorCounter.duplicate, 0));
+            result.setDormant(counts.getOrDefault(AuthorCounter.dormant, 0));
+            return result;
         }
     }
 }

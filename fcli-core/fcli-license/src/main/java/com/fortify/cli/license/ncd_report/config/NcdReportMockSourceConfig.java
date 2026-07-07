@@ -33,8 +33,14 @@ import lombok.NoArgsConstructor;
 @Reflectable @NoArgsConstructor @AllArgsConstructor
 @Data @EqualsAndHashCode(callSuper = true)
 public class NcdReportMockSourceConfig extends AbstractNcdReportRepoSelectorConfig implements INcdReportSourceConfig, IUrlConfig {
-    /** Number of repositories to generate (default 3) */
-    private Integer repositoryCount = 3;
+    /** Number of active repositories to generate (default 3) */
+    private Integer activeRepositoryCount = 3;
+
+    /** Number of dormant repositories whose author overlaps with active repositories (default 2) */
+    private Integer dormantOverlappingRepositoryCount = 2;
+
+    /** Number of dormant repositories with non-overlapping contributors (default 2) */
+    private Integer dormantNonOverlappingRepositoryCount = 2;
     
     /** Number of authors per repository (default 5) */
     private Integer authorsPerRepository = 5;

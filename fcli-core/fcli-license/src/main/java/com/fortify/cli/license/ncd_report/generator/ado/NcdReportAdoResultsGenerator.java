@@ -83,24 +83,29 @@ public class NcdReportAdoResultsGenerator extends AbstractNcdReportResultsGenera
     private void generateResults(AdoRestHelper restHelper, NcdReportAdoOrganizationConfig orgConfig, NcdReportAdoProjectConfig projectConfig) {
         var orgName = orgConfig.getName();
         var projectName = projectConfig.getName();
+        String sourceKey = "ado:"+orgName+"/"+projectName;
         try {
             reportContext().progressWriter().writeI18nProgress("fcli.license.ncd-report.loading.ado-repositories", orgName+"/"+projectName);
             restHelper.project(orgName, projectName).queryRepositories().process(repoNode -> {
-                processRepository(restHelper, orgConfig, projectConfig, repoNode);
-                return Break.FALSE;
+                return processRepository(sourceKey, restHelper, orgConfig, projectConfig, repoNode)
+                        ? Break.TRUE
+                        : Break.FALSE;
             });
         } catch ( Exception e ) {
             reportContext().logger().error(String.format("Error processing project: %s/%s (%s)", orgName, projectName, sourceConfig().getBaseUrl()), e);
         }
     }
 
-    private void processRepository(AdoRestHelper restHelper, NcdReportAdoOrganizationConfig orgConfig, NcdReportAdoProjectConfig projectConfig, JsonNode repoNode) {
+    private boolean processRepository(String sourceKey, AdoRestHelper restHelper, NcdReportAdoOrganizationConfig orgConfig,
+            NcdReportAdoProjectConfig projectConfig, JsonNode repoNode)
+    {
         var repoDescriptor = getRepoDescriptor(repoNode);
         repoDescriptor.setOrganizationName(orgConfig.getName());
         var combinedSelectorOrg = new NcdReportCombinedRepoSelectorConfig(sourceConfig(), orgConfig);
         var combinedSelectorProj = new NcdReportCombinedRepoSelectorConfig(combinedSelectorOrg, projectConfig);
-        reportContext().repositoryProcessor().processRepository(combinedSelectorProj, repoDescriptor, 
+        var result = reportContext().repositoryProcessor().processRepository(sourceKey, combinedSelectorProj, repoDescriptor,
             (repoDesc, collector) -> generateCommitData(restHelper, repoDesc, collector));
+        return result.sourceLimitReached();
     }
 
     private void generateCommitData(AdoRestHelper restHelper, NcdReportAdoRepositoryDescriptor repoDescriptor, INcdReportRepositoryBranchCommitCollector branchCommitCollector) {
@@ -127,7 +132,7 @@ public class NcdReportAdoResultsGenerator extends AbstractNcdReportResultsGenera
             }
         }
         if ( mostRecentCommit!=null ) {
-            addCommit(branchCommitCollector, repoDescriptor, mostRecentBranch, mostRecentCommit.asJsonNode());
+            addCommit(branchCommitCollector, repoDescriptor, mostRecentBranch, mostRecentCommit.asJsonNode(), true);
         }
     }
 
@@ -141,7 +146,7 @@ public class NcdReportAdoResultsGenerator extends AbstractNcdReportResultsGenera
             restHelper.repository(repoDescriptor.getOrganizationName(), repoDescriptor.getProjectName(), repoDescriptor.getId())
                 .queryCommits().branchName(branchDescriptor.getName()).fromDate(since).toDate(until).process(commit -> {
                     foundFlag.add(true);
-                    addCommit(branchCommitCollector, repoDescriptor, branchDescriptor, commit);
+                    addCommit(branchCommitCollector, repoDescriptor, branchDescriptor, commit, false);
                     return Break.FALSE;
                 });
             if (!foundFlag.isEmpty()) {
@@ -151,10 +156,12 @@ public class NcdReportAdoResultsGenerator extends AbstractNcdReportResultsGenera
         return commitsFound;
     }
 
-    private void addCommit(INcdReportRepositoryBranchCommitCollector branchCommitCollector, NcdReportAdoRepositoryDescriptor repoDescriptor, NcdReportAdoBranchDescriptor branchDescriptor, JsonNode commit) {
+    private void addCommit(INcdReportRepositoryBranchCommitCollector branchCommitCollector, NcdReportAdoRepositoryDescriptor repoDescriptor,
+            NcdReportAdoBranchDescriptor branchDescriptor, JsonNode commit, boolean dormant)
+    {
         var commitDescriptor = JsonHelper.treeToValue(commit, NcdReportAdoCommitDescriptor.class);
         var authorDescriptor = JsonHelper.treeToValue(commit, NcdReportAdoAuthorDescriptor.class);
-        branchCommitCollector.reportBranchCommit(new NcdReportBranchCommitDescriptor(repoDescriptor, branchDescriptor, commitDescriptor, authorDescriptor));
+        branchCommitCollector.reportBranchCommit(new NcdReportBranchCommitDescriptor(repoDescriptor, branchDescriptor, commitDescriptor, authorDescriptor, dormant));
     }
     
     private List<NcdReportAdoBranchDescriptor> getBranchDescriptors(AdoRestHelper restHelper, NcdReportAdoRepositoryDescriptor repoDescriptor) {

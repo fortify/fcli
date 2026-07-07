@@ -18,9 +18,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Stream;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.license.ncd_report.descriptor.INcdReportRepositoryDescriptor;
+import com.fortify.cli.license.ncd_report.descriptor.NcdReportSummaryDescriptor;
 import com.fortify.cli.license.ncd_report.writer.NcdReportRepositoriesWriter.NcdReportRepositoryReportingStatus;
 import com.fortify.cli.license.ncd_report.writer.NcdReportResultsWriters;
 
@@ -38,16 +37,39 @@ import lombok.SneakyThrows;
 @RequiredArgsConstructor
 final class NcdReportRepositoryCollector {
     private final NcdReportResultsWriters writers;
-    private final ObjectNode summary;
+    private final NcdReportSummaryDescriptor summary;
     
     private Set<INcdReportRepositoryDescriptor> repositories = new LinkedHashSet<>();
     private Map<NcdReportRepositoryReportingStatus, Integer> repositoryCountsByStatus = new HashMap<>();
+    private int dormantRepositoryCount = 0;
     
     @SneakyThrows
     void reportRepository(INcdReportRepositoryDescriptor descriptor, NcdReportRepositoryReportingStatus status, String reason) {
+        reportRepository(descriptor, status, reason, null);
+    }
+
+    @SneakyThrows
+    void reportRepository(INcdReportRepositoryDescriptor descriptor, NcdReportRepositoryReportingStatus status, String reason, Boolean dormant) {
+        reportRepository(descriptor, status, reason, dormant, null, null, null);
+    }
+
+    @SneakyThrows
+    void reportRepository(INcdReportRepositoryDescriptor descriptor, NcdReportRepositoryReportingStatus status, String reason,
+            Boolean dormant, Integer commitCountRaw, Integer contributorCountRaw)
+    {
+        reportRepository(descriptor, status, reason, dormant, commitCountRaw, contributorCountRaw, null);
+    }
+
+    @SneakyThrows
+    void reportRepository(INcdReportRepositoryDescriptor descriptor, NcdReportRepositoryReportingStatus status, String reason,
+            Boolean dormant, Integer commitCountRaw, Integer contributorCountRaw, String sourceReport)
+    {
         repositories.add(descriptor);
         increaseCountByStatus(status);
-        writers.repositoryWriter().writeRepository(descriptor, status, reason);
+        if ( status == NcdReportRepositoryReportingStatus.included && Boolean.TRUE.equals(dormant) ) {
+            dormantRepositoryCount++;
+        }
+        writers.repositoryWriter().writeRepository(descriptor, status, reason, dormant, commitCountRaw, contributorCountRaw, sourceReport);
     }
 
     void reportRepositoryError(INcdReportRepositoryDescriptor descriptor, Exception e) {
@@ -61,11 +83,18 @@ final class NcdReportRepositoryCollector {
     }
     
     void writeResults() {
-        ObjectNode repositoryCounts = JsonHelper.getObjectMapper().createObjectNode();
-        repositoryCounts.put("total", repositories.size());
-        Stream.of(NcdReportRepositoryReportingStatus.values())
-            .forEach(status->repositoryCounts.put(status.name(), getCountByStatus(status)));
-        summary.set("repositoryCounts", repositoryCounts);
+        var repositoryCounts = new NcdReportSummaryDescriptor.RepositoryCounts();
+        repositoryCounts.setTotal(repositories.size());
+        Stream.of(NcdReportRepositoryReportingStatus.values()).forEach(status -> {
+            switch ( status ) {
+            case included -> repositoryCounts.setIncluded(getCountByStatus(status));
+            case excluded -> repositoryCounts.setExcluded(getCountByStatus(status));
+            case empty -> repositoryCounts.setEmpty(getCountByStatus(status));
+            case error -> repositoryCounts.setError(getCountByStatus(status));
+            }
+        });
+        repositoryCounts.setDormant(dormantRepositoryCount);
+        summary.setRepositoryCounts(repositoryCounts);
     }
     
     private void increaseCountByStatus(NcdReportRepositoryReportingStatus status) {

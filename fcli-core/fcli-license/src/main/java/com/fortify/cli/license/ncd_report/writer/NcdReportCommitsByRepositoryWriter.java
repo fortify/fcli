@@ -28,13 +28,17 @@ public final class NcdReportCommitsByRepositoryWriter implements INcdReportCommi
     }
     
     @Override
-    public void writeRepositoryCommit(INcdReportRepositoryDescriptor repositoryDescriptor, INcdReportCommitDescriptor commitDescriptor, NcdReportProcessedAuthorDescriptor authorDescriptor) {
-        recordWriter.append(authorDescriptor.updateReportRecord(
+    public void writeRepositoryCommit(INcdReportRepositoryDescriptor repositoryDescriptor, INcdReportCommitDescriptor commitDescriptor,
+            NcdReportProcessedAuthorDescriptor authorDescriptor, boolean dormant)
+    {
+        var row = authorDescriptor.updateReportRecord(
                 JsonHelper.getObjectMapper().createObjectNode()
                     .put("repositoryUrl", repositoryDescriptor.getUrl())
                     .put("repositoryName", repositoryDescriptor.getFullName())
                     .put("commitId", commitDescriptor.getId())
                     .put("commitDate", commitDescriptor.getDate().toString())
-                    .put("commitMessage", commitDescriptor.getMessage().split("\\R",2)[0])));
+                    .put("commitMessage", commitDescriptor.getMessage().split("\\R",2)[0]));
+        row.put("dormant", dormant);
+        recordWriter.append(row);
     }
 }

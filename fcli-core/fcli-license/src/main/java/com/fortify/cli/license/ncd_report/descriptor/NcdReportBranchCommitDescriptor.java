@@ -29,4 +29,5 @@ public final class NcdReportBranchCommitDescriptor {
     private final INcdReportBranchDescriptor branchDescriptor;
     private final INcdReportCommitDescriptor commitDescriptor;
     private final INcdReportAuthorDescriptor authorDescriptor;
+    private final boolean dormant;
 }
