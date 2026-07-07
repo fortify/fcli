@@ -82,14 +82,16 @@ public class NcdReportGitHubResultsGenerator extends AbstractNcdReportResultsGen
      */
     private void generateResults(NcdReportGitHubOrganizationConfig orgConfig) {
         String orgName = orgConfig.getName();
+        String sourceKey = "github:"+orgName;
         try {
             reportContext().progressWriter().writeI18nProgress("fcli.license.ncd-report.loading.github-repositories", orgName);
             restHelper.org(orgName).queryRepositories().process(repo -> {
-                reportContext().repositoryProcessor().processRepository(
+                var result = reportContext().repositoryProcessor().processRepository(
+                    sourceKey,
                     new NcdReportCombinedRepoSelectorConfig(sourceConfig(), orgConfig),
                     getRepoDescriptor(repo),
                     this::generateCommitData);
-                return Break.FALSE;
+                return result.sourceLimitReached() ? Break.TRUE : Break.FALSE;
             });
         } catch ( Exception e ) {
             reportContext().logger().error(String.format("Error processing organization: %s (%s)", orgName, sourceConfig().getApiUrl()), e);

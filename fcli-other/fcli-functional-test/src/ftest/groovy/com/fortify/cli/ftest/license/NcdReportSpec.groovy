@@ -783,4 +783,69 @@ class NcdReportSpec extends FcliBaseSpec {
             new File("${reportDir}/contributors.csv").exists()
             result.stdout.any { it.contains("reportPath") }
     }
+
+    def "mock-validate-sources-json-includes-scm-details"() {
+        def configYaml = tempPath("ncd-report-validate-sources-json.yml")
+        when:
+            new File(configYaml).text = """
+|sources:
+|  mock:
+|    - activeRepositoryCount: 2
+|      dormantOverlappingRepositoryCount: 0
+|      dormantNonOverlappingRepositoryCount: 0
+|      authorsPerRepository: 1
+|      commitsPerAuthor: 1
+""".stripMargin()
+            def result = Fcli.run("license ncd-report validate-sources -c ${configYaml} --show all --limit-per-source 1 -o json")
+        then:
+            result.exitCode == 0
+            result.stdout.any { it.contains("scmDetails") }
+            result.stdout.any { it.contains('"source"') }
+            result.stdout.any { it.contains('"scm"') }
+            result.stdout.any { it.contains('"status"') }
+    }
+
+    def "mock-validate-sources-show-excluded"() {
+        def configYaml = tempPath("ncd-report-validate-sources-excluded.yml")
+        when:
+            new File(configYaml).text = """
+|sources:
+|  mock:
+|    - activeRepositoryCount: 3
+|      dormantOverlappingRepositoryCount: 0
+|      dormantNonOverlappingRepositoryCount: 0
+|      authorsPerRepository: 1
+|      commitsPerAuthor: 1
+|      repositoryIncludeExpression: "false"
+""".stripMargin()
+            def result = Fcli.run("license ncd-report validate-sources -c ${configYaml} --show excluded -o yaml")
+            def excludedCount = result.stdout.count { it.trim() == 'status: excluded' }
+        then:
+            result.exitCode == 0
+            excludedCount == 3
+    }
+
+    def "mock-validate-sources-limit-per-source"() {
+        def configYaml = tempPath("ncd-report-validate-sources-limit.yml")
+        when:
+            new File(configYaml).text = """
+|sources:
+|  mock:
+|    - activeRepositoryCount: 3
+|      dormantOverlappingRepositoryCount: 0
+|      dormantNonOverlappingRepositoryCount: 0
+|      authorsPerRepository: 1
+|      commitsPerAuthor: 1
+|    - activeRepositoryCount: 4
+|      dormantOverlappingRepositoryCount: 0
+|      dormantNonOverlappingRepositoryCount: 0
+|      authorsPerRepository: 1
+|      commitsPerAuthor: 1
+""".stripMargin()
+            def result = Fcli.run("license ncd-report validate-sources -c ${configYaml} --show all --limit-per-source 1 -o yaml")
+            def sourceCount = result.stdout.count { it.trim().startsWith('- source: mock:') }
+        then:
+            result.exitCode == 0
+            sourceCount == 2 // One row per configured mock source
+    }
 }

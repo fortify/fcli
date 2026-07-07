@@ -83,24 +83,29 @@ public class NcdReportAdoResultsGenerator extends AbstractNcdReportResultsGenera
     private void generateResults(AdoRestHelper restHelper, NcdReportAdoOrganizationConfig orgConfig, NcdReportAdoProjectConfig projectConfig) {
         var orgName = orgConfig.getName();
         var projectName = projectConfig.getName();
+        String sourceKey = "ado:"+orgName+"/"+projectName;
         try {
             reportContext().progressWriter().writeI18nProgress("fcli.license.ncd-report.loading.ado-repositories", orgName+"/"+projectName);
             restHelper.project(orgName, projectName).queryRepositories().process(repoNode -> {
-                processRepository(restHelper, orgConfig, projectConfig, repoNode);
-                return Break.FALSE;
+                return processRepository(sourceKey, restHelper, orgConfig, projectConfig, repoNode)
+                        ? Break.TRUE
+                        : Break.FALSE;
             });
         } catch ( Exception e ) {
             reportContext().logger().error(String.format("Error processing project: %s/%s (%s)", orgName, projectName, sourceConfig().getBaseUrl()), e);
         }
     }
 
-    private void processRepository(AdoRestHelper restHelper, NcdReportAdoOrganizationConfig orgConfig, NcdReportAdoProjectConfig projectConfig, JsonNode repoNode) {
+    private boolean processRepository(String sourceKey, AdoRestHelper restHelper, NcdReportAdoOrganizationConfig orgConfig,
+            NcdReportAdoProjectConfig projectConfig, JsonNode repoNode)
+    {
         var repoDescriptor = getRepoDescriptor(repoNode);
         repoDescriptor.setOrganizationName(orgConfig.getName());
         var combinedSelectorOrg = new NcdReportCombinedRepoSelectorConfig(sourceConfig(), orgConfig);
         var combinedSelectorProj = new NcdReportCombinedRepoSelectorConfig(combinedSelectorOrg, projectConfig);
-        reportContext().repositoryProcessor().processRepository(combinedSelectorProj, repoDescriptor, 
+        var result = reportContext().repositoryProcessor().processRepository(sourceKey, combinedSelectorProj, repoDescriptor,
             (repoDesc, collector) -> generateCommitData(restHelper, repoDesc, collector));
+        return result.sourceLimitReached();
     }
 
     private void generateCommitData(AdoRestHelper restHelper, NcdReportAdoRepositoryDescriptor repoDescriptor, INcdReportRepositoryBranchCommitCollector branchCommitCollector) {

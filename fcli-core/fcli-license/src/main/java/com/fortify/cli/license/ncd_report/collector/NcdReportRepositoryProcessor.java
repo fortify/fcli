@@ -12,6 +12,10 @@
  */
 package com.fortify.cli.license.ncd_report.collector;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.function.Consumer;
+
 import org.apache.commons.lang3.StringUtils;
 
 import com.fortify.cli.common.json.JsonHelper;
@@ -48,53 +52,112 @@ final class NcdReportRepositoryProcessor implements INcdReportRepositoryProcesso
     private final NcdReportSummaryDescriptor summary;
     private final NcdReportRepositoryCollector repositoryCollector;
     private final NcdReportAuthorCollector authorCollector;
+    private final NcdReportRepositoryProcessorMode mode;
+    private final NcdReportRepositorySelectionFilter selectionFilter;
+    private final Integer limitPerSource;
+    private final Consumer<NcdReportRepositoryProcessingResult> resultConsumer;
+    private final Map<String, Integer> sourceMatchCounts = new HashMap<>();
     
     private int totalAnalyzedCommitCount = 0;
     
     public NcdReportRepositoryProcessor(NcdReportConfig reportConfig, NcdReportResultsWriters writers, NcdReportSummaryDescriptor summary) {
+        this(reportConfig, writers, summary, NcdReportRepositoryProcessorMode.FULL_REPORT, NcdReportRepositorySelectionFilter.all, null, null);
+    }
+
+    public NcdReportRepositoryProcessor(NcdReportConfig reportConfig, NcdReportResultsWriters writers, NcdReportSummaryDescriptor summary,
+            NcdReportRepositoryProcessorMode mode, NcdReportRepositorySelectionFilter selectionFilter, Integer limitPerSource,
+            Consumer<NcdReportRepositoryProcessingResult> resultConsumer)
+    {
         this.reportConfig = reportConfig;
         this.writers = writers;
         this.summary = summary;
         this.repositoryCollector = new NcdReportRepositoryCollector(writers, summary);
-        this.authorCollector = new NcdReportAuthorCollector(reportConfig, writers, summary);
+        this.authorCollector = mode == NcdReportRepositoryProcessorMode.FULL_REPORT
+            ? new NcdReportAuthorCollector(reportConfig, writers, summary)
+            : null;
+        this.mode = mode;
+        this.selectionFilter = selectionFilter == null ? NcdReportRepositorySelectionFilter.all : selectionFilter;
+        this.limitPerSource = limitPerSource;
+        this.resultConsumer = resultConsumer;
     }
     
     @Override
-    public <R extends INcdReportRepositoryDescriptor> void processRepository(
-            INcdReportRepoSelectorConfig repoSelectorConfig, 
-            R repoDescriptor, INcdReportBranchCommitGenerator<R> commitGenerator) 
+    public <R extends INcdReportRepositoryDescriptor> NcdReportRepositoryProcessingResult processRepository(
+            String sourceKey, INcdReportRepoSelectorConfig repoSelectorConfig,
+            R repoDescriptor, INcdReportBranchCommitGenerator<R> commitGenerator)
     {
+        NcdReportRepositoryProcessingResult result;
         if ( !repositoryCollector.isPreviouslyReported(repoDescriptor) ) {
             try {
                 if ( isExcludedFork(repoDescriptor, reportConfig, repoSelectorConfig) ) {
                     repositoryCollector.reportRepository(repoDescriptor, NcdReportRepositoryReportingStatus.excluded, "Forks not included",
                             null, 0, 0);
+                    result = NcdReportRepositoryProcessingResult.processed(sourceKey, repoDescriptor,
+                            NcdReportRepositoryReportingStatus.excluded, "Forks not included");
                 } else if ( isExcludedByExpression(repoDescriptor, reportConfig, repoSelectorConfig) ) {
                     repositoryCollector.reportRepository(repoDescriptor, NcdReportRepositoryReportingStatus.excluded,
                             "Doesn't match expression", null, 0, 0);
+                    result = NcdReportRepositoryProcessingResult.processed(sourceKey, repoDescriptor,
+                            NcdReportRepositoryReportingStatus.excluded, "Doesn't match expression");
+                } else if ( mode == NcdReportRepositoryProcessorMode.SELECTION_ONLY ) {
+                    repositoryCollector.reportRepository(repoDescriptor, NcdReportRepositoryReportingStatus.included,
+                            "Matches all criteria", null, null, null);
+                    result = NcdReportRepositoryProcessingResult.processed(sourceKey, repoDescriptor,
+                            NcdReportRepositoryReportingStatus.included, "Matches all criteria");
                 } else {
-                    processRepository(repoDescriptor, commitGenerator);
+                    result = processRepository(sourceKey, repoDescriptor, commitGenerator);
                 }
             } catch ( Exception e ) {
                 repositoryCollector.reportRepositoryError(repoDescriptor, e);
+                result = NcdReportRepositoryProcessingResult.processed(sourceKey, repoDescriptor,
+                        NcdReportRepositoryReportingStatus.error, e.getMessage());
             }
+        } else {
+            result = NcdReportRepositoryProcessingResult.notProcessed(sourceKey, repoDescriptor);
         }
+        var resultWithLimit = applySourceLimit(result);
+        if ( resultConsumer != null && resultWithLimit.processed() ) {
+            resultConsumer.accept(resultWithLimit);
+        }
+        return resultWithLimit;
     }
 
-    private <R extends INcdReportRepositoryDescriptor> void processRepository(R repoDescriptor, INcdReportBranchCommitGenerator<R> branchCommitGenerator) {
+    private <R extends INcdReportRepositoryDescriptor> NcdReportRepositoryProcessingResult processRepository(String sourceKey,
+            R repoDescriptor, INcdReportBranchCommitGenerator<R> branchCommitGenerator)
+    {
         var branchCommitsCollector = new NcdReportRepositoryBranchCommitCollector(authorCollector, repoDescriptor);
         writers.progressWriter().writeI18nProgress("fcli.license.ncd-report.loading.commits", repoDescriptor.getFullName());
         branchCommitGenerator.generateBranchCommitData(repoDescriptor, branchCommitsCollector);
         if ( branchCommitsCollector.isEmpty() ) {
             repositoryCollector.reportRepository(repoDescriptor, NcdReportRepositoryReportingStatus.empty, "No commits found",
                     null, 0, 0);
+            return NcdReportRepositoryProcessingResult.processed(sourceKey, repoDescriptor,
+                    NcdReportRepositoryReportingStatus.empty, "No commits found");
         } else {
             branchCommitsCollector.writeResults(writers);
             totalAnalyzedCommitCount += branchCommitsCollector.getTotalCommitCount();
             repositoryCollector.reportRepository(repoDescriptor, NcdReportRepositoryReportingStatus.included,
                     "Matches all criteria", branchCommitsCollector.isDormant(),
                     branchCommitsCollector.getTotalCommitCount(), branchCommitsCollector.getTotalContributorCount());
+            return NcdReportRepositoryProcessingResult.processed(sourceKey, repoDescriptor,
+                    NcdReportRepositoryReportingStatus.included, "Matches all criteria");
         }
+    }
+
+    private NcdReportRepositoryProcessingResult applySourceLimit(NcdReportRepositoryProcessingResult result) {
+        if ( !result.processed() || !isLimitedBySource() || StringUtils.isBlank(result.sourceKey()) ) {
+            return result;
+        }
+        if ( !selectionFilter.matches(result.status()) ) {
+            return result;
+        }
+        int sourceMatchCount = sourceMatchCounts.getOrDefault(result.sourceKey(), 0) + 1;
+        sourceMatchCounts.put(result.sourceKey(), sourceMatchCount);
+        return result.withSourceLimitReached(sourceMatchCount >= limitPerSource);
+    }
+
+    private boolean isLimitedBySource() {
+        return limitPerSource != null && limitPerSource > 0;
     }
 
     private boolean isExcludedFork(INcdReportRepositoryDescriptor repoDescriptor, NcdReportConfig reportConfig, INcdReportRepoSelectorConfig repoSelector) {
@@ -118,6 +181,8 @@ final class NcdReportRepositoryProcessor implements INcdReportRepositoryProcesso
         var commitCount = new NcdReportSummaryDescriptor.CommitCount();
         commitCount.setAnalyzed(totalAnalyzedCommitCount);
         summary.setCommitCount(commitCount);
-        authorCollector.writeResults();
+        if ( authorCollector != null ) {
+            authorCollector.writeResults();
+        }
     }
 }

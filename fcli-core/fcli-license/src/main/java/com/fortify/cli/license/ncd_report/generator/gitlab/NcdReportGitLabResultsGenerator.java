@@ -84,15 +84,17 @@ public class NcdReportGitLabResultsGenerator extends AbstractNcdReportResultsGen
      */
     private void generateResults(NcdReportGitLabGroupConfig groupConfig) {
         String groupId = groupConfig.getId();
+        String sourceKey = "gitlab:"+groupId;
         try {
             boolean includeSubgroups = groupConfig.getIncludeSubgroups().orElse(sourceConfig().getIncludeSubgroups().orElse(true));
             reportContext().progressWriter().writeI18nProgress("fcli.license.ncd-report.loading.gitlab-repositories", groupId);
             restHelper.group(groupId).queryProjects().includeSubgroups(includeSubgroups).process(project -> {
-                reportContext().repositoryProcessor().processRepository(
+                var result = reportContext().repositoryProcessor().processRepository(
+                    sourceKey,
                     new NcdReportCombinedRepoSelectorConfig(sourceConfig(), groupConfig),
                     getRepoDescriptor(project),
                     this::generateCommitData);
-                return Break.FALSE;
+                return result.sourceLimitReached() ? Break.TRUE : Break.FALSE;
             });
         } catch ( Exception e ) {
             reportContext().logger().error(String.format("Error processing group: %s (%s)", groupId, sourceConfig().getBaseUrl()), e);

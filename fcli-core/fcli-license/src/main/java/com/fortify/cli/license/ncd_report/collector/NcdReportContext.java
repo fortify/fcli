@@ -12,6 +12,8 @@
  */
 package com.fortify.cli.license.ncd_report.collector;
 
+import java.util.function.Consumer;
+
 import com.fortify.cli.common.progress.helper.IProgressWriterI18n;
 import com.fortify.cli.common.report.collector.IReportContext;
 import com.fortify.cli.common.report.logger.IReportLogger;
@@ -48,6 +50,15 @@ public final class NcdReportContext implements IReportContext {
     private final NcdReportRepositoryProcessor repositoryProcessor;
     
     public NcdReportContext(NcdReportConfig reportConfig, IReportWriter reportWriter, IProgressWriterI18n progressWriter, UnirestContext unirestContext) {
+        this(reportConfig, reportWriter, progressWriter, unirestContext, NcdReportRepositoryProcessorMode.FULL_REPORT,
+                NcdReportRepositorySelectionFilter.all, null, null);
+    }
+
+    public NcdReportContext(NcdReportConfig reportConfig, IReportWriter reportWriter, IProgressWriterI18n progressWriter,
+            UnirestContext unirestContext, NcdReportRepositoryProcessorMode repositoryProcessorMode,
+            NcdReportRepositorySelectionFilter selectionFilter, Integer limitPerSource,
+            Consumer<NcdReportRepositoryProcessingResult> resultConsumer)
+    {
         this.reportConfig = reportConfig;
         this.progressWriter = progressWriter;
         this.unirestContext = unirestContext;
@@ -55,7 +66,8 @@ public final class NcdReportContext implements IReportContext {
         this.summary = NcdReportSummaryDescriptor.fromObjectNode(reportWriter.summary());
         setDateRangeOnSummary();
         this.writers = new NcdReportResultsWriters(reportWriter, progressWriter);
-        this.repositoryProcessor = new NcdReportRepositoryProcessor(reportConfig, writers, summary);
+        this.repositoryProcessor = new NcdReportRepositoryProcessor(reportConfig, writers, summary,
+            repositoryProcessorMode, selectionFilter, limitPerSource, resultConsumer);
     }
 
     private void setDateRangeOnSummary() {

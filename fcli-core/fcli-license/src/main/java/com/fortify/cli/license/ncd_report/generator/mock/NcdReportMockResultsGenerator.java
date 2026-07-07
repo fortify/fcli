@@ -161,17 +161,21 @@ public class NcdReportMockResultsGenerator extends AbstractNcdReportResultsGener
         var totalRepositoryCount = activeRepositoryCount + dormantOverlappingRepositoryCount + dormantNonOverlappingRepositoryCount;
 
         // Generate active repositories
+        String sourceKey = "mock:"+Integer.toHexString(System.identityHashCode(sourceConfig()));
+        boolean sourceLimitReached = false;
         for ( int i = 1; i <= activeRepositoryCount; i++ ) {
+            if ( sourceLimitReached ) { break; }
             final int repoIndex = i;
             var repoName = "mock-repo-" + repoIndex;
             var repoUrl = "https://mock.example.com/repos/" + repoName;
             var repoDescriptor = new MockNcdReportRepositoryDescriptor(repoName, repoUrl, "public", false);
             
-            repositoryProcessor.processRepository(
+            sourceLimitReached = repositoryProcessor.processRepository(
+                sourceKey,
                 sourceConfig(),
                 repoDescriptor,
                 (repo, branchCollector) -> generateActiveCommitDataForRepository(branchCollector, repoIndex, repoDescriptor, startDateTime, endDateTime)
-            );
+            ).sourceLimitReached();
         }
 
         // Generate dormant repositories with overlapping contributors (single dormant commit/author)
@@ -179,34 +183,38 @@ public class NcdReportMockResultsGenerator extends AbstractNcdReportResultsGener
         int firstDormantIndex = activeRepositoryCount + 1;
         int lastDormantOverlappingIndex = activeRepositoryCount + dormantOverlappingRepositoryCount;
         for ( int i = firstDormantIndex; i <= lastDormantOverlappingIndex; i++ ) {
+            if ( sourceLimitReached ) { break; }
             final int repoIndex = i;
             final int currentDormantOrdinal = ++dormantOrdinal;
             var repoName = "mock-repo-" + repoIndex;
             var repoUrl = "https://mock.example.com/repos/" + repoName;
             var repoDescriptor = new MockNcdReportRepositoryDescriptor(repoName, repoUrl, "public", false);
 
-            repositoryProcessor.processRepository(
+            sourceLimitReached = repositoryProcessor.processRepository(
+                sourceKey,
                 sourceConfig(),
                 repoDescriptor,
                 (repo, branchCollector) -> generateDormantCommitDataForRepository(
                         branchCollector, repoDescriptor, startDateTime, true, currentDormantOrdinal)
-            );
+            ).sourceLimitReached();
         }
 
         // Generate dormant repositories with non-overlapping contributors (single dormant commit/author)
         for ( int i = lastDormantOverlappingIndex + 1; i <= totalRepositoryCount; i++ ) {
+            if ( sourceLimitReached ) { break; }
             final int repoIndex = i;
             final int currentDormantOrdinal = ++dormantOrdinal;
             var repoName = "mock-repo-" + repoIndex;
             var repoUrl = "https://mock.example.com/repos/" + repoName;
             var repoDescriptor = new MockNcdReportRepositoryDescriptor(repoName, repoUrl, "public", false);
 
-            repositoryProcessor.processRepository(
+            sourceLimitReached = repositoryProcessor.processRepository(
+                sourceKey,
                 sourceConfig(),
                 repoDescriptor,
                 (repo, branchCollector) -> generateDormantCommitDataForRepository(
                         branchCollector, repoDescriptor, startDateTime, false, currentDormantOrdinal)
-            );
+            ).sourceLimitReached();
         }
     }
     

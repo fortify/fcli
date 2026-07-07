@@ -33,5 +33,12 @@ public interface INcdReportRepositoryProcessor {
      * be processed, the given {@link INcdReportBranchCommitGenerator} can be invoked to 
      * generate commit data for every branch in the given repository. 
      */
-    <R extends INcdReportRepositoryDescriptor> void processRepository(INcdReportRepoSelectorConfig repoSelectorConfig, R repoDescriptor, INcdReportBranchCommitGenerator<R> commitGenerator);
+    default <R extends INcdReportRepositoryDescriptor> NcdReportRepositoryProcessingResult processRepository(
+            INcdReportRepoSelectorConfig repoSelectorConfig, R repoDescriptor, INcdReportBranchCommitGenerator<R> commitGenerator)
+    {
+        return processRepository(null, repoSelectorConfig, repoDescriptor, commitGenerator);
+    }
+
+    <R extends INcdReportRepositoryDescriptor> NcdReportRepositoryProcessingResult processRepository(
+            String sourceKey, INcdReportRepoSelectorConfig repoSelectorConfig, R repoDescriptor, INcdReportBranchCommitGenerator<R> commitGenerator);
 }
