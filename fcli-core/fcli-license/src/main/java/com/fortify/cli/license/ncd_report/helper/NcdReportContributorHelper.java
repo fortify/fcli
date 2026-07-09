@@ -25,6 +25,10 @@ import com.fortify.cli.common.exception.FcliBugException;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.license.ncd_report.writer.NcdReportContributorsCsvSchema;
 
+/**
+ * Stateless utility methods for contributor identity and row normalization.
+ * This class intentionally contains only static methods.
+ */
 public final class NcdReportContributorHelper {
     public static ObjectNode createExpressionInput(String name, String email) {
         var normalizedName = StringUtils.defaultIfBlank(name, "");
