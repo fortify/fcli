@@ -665,6 +665,39 @@ class NcdReportSpec extends FcliBaseSpec {
             rows.every { it[commitIdx] == 'unknown' }
             rows.every { it[contributorIdx] == 'unknown' }
     }
+
+    def "mock-list-contributors-embed-repositories"() {
+        def reportDir = tempPath("ncd-report-list-contributors-embed-repositories")
+
+        when:
+            Fcli.run("license ncd-report create -y -c ${mockConfigFile} -d ${reportDir}")
+            def lscResult = Fcli.run("license ncd-report list-contributors -r ${reportDir} -o json --embed repositories")
+            def output = lscResult.stdout.join('\n')
+        then:
+            lscResult.exitCode == 0
+            output.contains('"authorId"')
+            output.contains('"repositories"')
+            output.contains('"repositoryUrl"')
+            output.contains('"repositoryName"')
+            output.contains('"commitCountRaw"')
+            output.contains('"contributorCountRaw"')
+    }
+
+    def "mock-list-repositories-embed-authors-and-contributors"() {
+        def reportDir = tempPath("ncd-report-list-repositories-embed-authors-contributors")
+
+        when:
+            Fcli.run("license ncd-report create -y -c ${mockConfigFile} -d ${reportDir}")
+            def lsrResult = Fcli.run("license ncd-report list-repositories -r ${reportDir} -o json --embed authors,contributors")
+            def output = lsrResult.stdout.join('\n')
+        then:
+            lsrResult.exitCode == 0
+            output.contains('"repositoryUrl"')
+            output.contains('"authors"')
+            output.contains('"contributors"')
+            output.contains('"authorId"')
+            output.contains('"contributionStatus"')
+    }
     
     def "mock-detect-duplicates"() {
         def duplicateReportDir = tempPath("ncd-report-duplicates")
