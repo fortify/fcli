@@ -17,15 +17,16 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.json.JsonHelper;
+import com.fortify.cli.common.json.producer.IObjectNodeProducer;
+import com.fortify.cli.common.json.producer.ObjectNodeProducerApplyFrom;
 import com.fortify.cli.common.output.cli.cmd.AbstractOutputCommand;
-import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.license.ncd_report.helper.NcdReportContributorHelper;
 import com.fortify.cli.license.ncd_report.reader.NcdReportReader;
@@ -37,38 +38,42 @@ import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
 @Command(name = "list-contributors", aliases = {"lsc"})
-public final class NcdReportListContributorsCommand extends AbstractOutputCommand implements IJsonNodeSupplier {
+public final class NcdReportListContributorsCommand extends AbstractOutputCommand {
     @Getter @Mixin private OutputHelperMixins.TableWithQuery outputHelper;
 
     @Option(names = {"-r", "--report"}, required = true)
     @Getter private Path reportPath;
 
     @Override
-    public JsonNode getJsonNode() {
-        var result = JsonHelper.getObjectMapper().createArrayNode();
-        try ( var reader = new NcdReportReader(reportPath) ) {
+    protected IObjectNodeProducer getObjectNodeProducer() {
+        return streamingObjectNodeProducerBuilder(ObjectNodeProducerApplyFrom.SPEC)
+                .streamSupplier(this::readContributorsStream)
+                .build();
+    }
+
+    private Stream<ObjectNode> readContributorsStream() {
+        var reader = new NcdReportReader(reportPath);
+        try {
             var contributors = readContributors(reader);
             enrichContributors(contributors);
             // Sort contributors by author name with duplicates immediately following their representative,
             // and ignored records at the end. This sorting is applied for consistency and readability,
             // especially when reading legacy reports that may not be optimally ordered.
-            var deduped = dedupeByAuthorId(contributors);
-            var asObjectNodes = deduped.stream()
-                .map(map -> JsonHelper.getObjectMapper().convertValue(map, ObjectNode.class))
-                .toList();
-            var sorted = NcdReportContributorsCsvSchema.sortByAuthorNameAndStatus(new java.util.ArrayList<>(asObjectNodes));
-            sorted.stream()
-                .map(this::toOutputRow)
-                .forEach(result::add);
+            var sorted = NcdReportContributorsCsvSchema.sortByAuthorNameAndStatus(dedupeByAuthorId(contributors));
+            return sorted.stream().map(this::toOutputRow).onClose(reader::close);
+        } catch ( RuntimeException e ) {
+            reader.close();
+            throw e;
         }
-        return result;
     }
 
-    private List<Map<String, String>> readContributors(NcdReportReader reader) {
-        return reader.readContributors();
+    private List<ObjectNode> readContributors(NcdReportReader reader) {
+        try ( var stream = reader.readContributorsAsObjectNodeStream() ) {
+            return stream.collect(Collectors.toCollection(ArrayList::new));
+        }
     }
 
-    private void enrichContributors(List<Map<String, String>> contributors) {
+    private void enrichContributors(List<ObjectNode> contributors) {
         var representativeByContributingNumber = new java.util.HashMap<String, String>();
 
         // Ensure authorId is present (legacy reports may not include this column).
@@ -96,7 +101,7 @@ public final class NcdReportListContributorsCommand extends AbstractOutputComman
             });
     }
 
-    private void ensureAuthorId(Map<String, String> row) {
+    private void ensureAuthorId(ObjectNode row) {
         if ( StringUtils.isNotBlank(getValue(row, NcdReportContributorsCsvSchema.AUTHOR_ID)) ) {
             return;
         }
@@ -106,10 +111,12 @@ public final class NcdReportListContributorsCommand extends AbstractOutputComman
         row.put(NcdReportContributorsCsvSchema.AUTHOR_ID, NcdReportContributorHelper.computeAuthorId(expressionInput));
     }
 
-    private List<Map<String, String>> dedupeByAuthorId(List<Map<String, String>> contributors) {
-        var result = new ArrayList<Map<String, String>>();
+    private List<ObjectNode> dedupeByAuthorId(List<ObjectNode> contributors) {
+        var result = new ArrayList<ObjectNode>();
         var seenAuthorIds = new HashSet<String>();
-        for ( var row : contributors.stream().sorted(compareByAuthorIdPriority()).toList() ) {
+        var sortedContributors = new ArrayList<>(contributors);
+        sortedContributors.sort(compareByAuthorIdPriority());
+        for ( var row : sortedContributors ) {
             var authorId = getValue(row, NcdReportContributorsCsvSchema.AUTHOR_ID);
             if ( seenAuthorIds.add(authorId) ) {
                 result.add(row);
@@ -118,15 +125,15 @@ public final class NcdReportListContributorsCommand extends AbstractOutputComman
         return result;
     }
 
-    private Comparator<Map<String, String>> compareByAuthorIdPriority() {
+    private Comparator<ObjectNode> compareByAuthorIdPriority() {
         return Comparator
-                .<Map<String, String>, String>comparing(r -> r.getOrDefault(NcdReportContributorsCsvSchema.AUTHOR_ID, ""))
+                .<ObjectNode, String>comparing(r -> getValue(r, NcdReportContributorsCsvSchema.AUTHOR_ID))
                 .thenComparingInt(this::contributionStatusPriority)
-                .thenComparing(r -> r.getOrDefault(NcdReportContributorsCsvSchema.AUTHOR_NAME, "").toLowerCase())
-                .thenComparing(r -> r.getOrDefault(NcdReportContributorsCsvSchema.AUTHOR_EMAIL, "").toLowerCase());
+                .thenComparing(r -> getValue(r, NcdReportContributorsCsvSchema.AUTHOR_NAME).toLowerCase())
+                .thenComparing(r -> getValue(r, NcdReportContributorsCsvSchema.AUTHOR_EMAIL).toLowerCase());
     }
 
-    private int contributionStatusPriority(Map<String, String> row) {
+    private int contributionStatusPriority(ObjectNode row) {
         var status = getValue(row, NcdReportContributorsCsvSchema.CONTRIBUTION_STATUS);
         return switch ( status.toLowerCase() ) {
         case "contributing" -> 0;
@@ -151,8 +158,8 @@ public final class NcdReportListContributorsCommand extends AbstractOutputComman
                         row.path(NcdReportContributorsCsvSchema.OVERRIDE_STATUS_NOTES).asText(""));
     }
 
-    private String getValue(Map<String, String> row, String fieldName) {
-        return StringUtils.defaultString(row.get(fieldName));
+    private String getValue(ObjectNode row, String fieldName) {
+        return row.path(fieldName).asText("");
     }
 
     @Override

@@ -189,7 +189,11 @@ public final class NcdReportUpdateContributorStatusCommand extends AbstractRunna
     // -------------------------------------------------------------------------
 
     private List<Map<String, String>> readContributors(NcdReportReader reader) {
-        return reader.readContributors();
+        try ( var contributors = reader.readContributorsAsObjectNodeStream() ) {
+            return contributors
+                    .map(row -> JSON_MAPPER.convertValue(row, new TypeReference<Map<String, String>>() {}))
+                    .collect(Collectors.toCollection(ArrayList::new));
+        }
     }
 
     private UpdateApplicationResult applyUpdates(List<Map<String, String>> updates, List<Map<String, String>> contributors) {

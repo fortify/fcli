@@ -145,8 +145,11 @@ public final class NcdReportMergeCommand extends AbstractReportGenerateCommand {
     private List<ContributorRecord> readContributors(NcdReportReader reader, String sourceRef) {
         try {
             var result = new ArrayList<ContributorRecord>();
-            for ( var row : reader.readContributors() ) {
-                result.add(ContributorRecord.fromRow(row, sourceRef));
+            try ( var contributors = reader.readContributorsAsObjectNodeStream() ) {
+                contributors.forEach(row -> {
+                    var mapRow = JsonHelper.getObjectMapper().convertValue(row, new TypeReference<Map<String, String>>() {});
+                    result.add(ContributorRecord.fromRow(mapRow, sourceRef));
+                });
             }
             return result;
         } catch ( Exception e ) {
