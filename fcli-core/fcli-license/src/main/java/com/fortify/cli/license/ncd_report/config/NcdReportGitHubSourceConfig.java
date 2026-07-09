@@ -43,6 +43,7 @@ public class NcdReportGitHubSourceConfig extends AbstractNcdReportRepoSelectorCo
     private int connectTimeoutInMillis = Config.DEFAULT_CONNECT_TIMEOUT;
     private int socketTimeoutInMillis = Config.DEFAULT_SOCKET_TIMEOUT;
     private Boolean insecureModeEnabled;
+    private NcdReportGitHubOrganizationConfig[] organizations;
     
     @Override
     public String getUrl() {
@@ -52,8 +53,6 @@ public class NcdReportGitHubSourceConfig extends AbstractNcdReportRepoSelectorCo
     public boolean hasUrlConfig() {
         return apiUrl!=null;
     }
-
-    private NcdReportGitHubOrganizationConfig[] organizations;
     
     @Override
     public IReportResultsGenerator generator(NcdReportContext reportContext) {
