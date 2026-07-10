@@ -17,7 +17,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260709.092517-dev_feat.v3.x.aviator.26.3" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260710.084631-dev_feat.v3.x.aviator.26.3" %}
 
 
 <div id="header">
@@ -33,7 +33,7 @@ fcli_version:
 </div>
 <h2>Name</h2>
 <div class="sectionbody">
-<p>fcli-ai-assist-mcp-start-http - (PREVIEW) Start import-only HTTP fcli MCP server for AI integration</p>
+<p>fcli-ai-assist-mcp-start-http - Start fcli HTTP MCP server.</p>
 </div>
 </div>
 <div id="content">
@@ -53,6 +53,30 @@ fcli_version:
 <div class="sectionbody">
 <div class="paragraph">
 <p>Start an HTTP MCP server exposing only exported functions from imported action YAML files defined in a config file. Generate a sample config file with 'fcli ai-assist mcp create-http-config --type &lt;ssc|fod&gt;' and customize the generated YAML for your environment. The server listens for MCP POST requests on the /mcp endpoint. Each request must include the product-specific auth header as semicolon-separated key=value pairs; escape literal '\', ';', or '=' characters as '\\', '\;', or '\='.</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
+For better user experience and potentially lower token usage, consider Fortify skills from <a href="https://github.com/fortify/skills" class="bare">https://github.com/fortify/skills</a>, which can be installed through your AI assistant marketplace (if available) or by utilizing the `fcli ai-assist extensions' commands.
+</td>
+</tr>
+</table>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
+The HTTP MCP server exposes a larger attack surface than local stdio MCP server; use HTTP MCP server only when needed and prefer HTTPS with properly configured certificates.
+</td>
+</tr>
+</table>
 </div>
 <div class="paragraph">
 <p>AUTH HEADERS (per HTTP request):
@@ -114,7 +138,7 @@ Exactly one FoD auth mode must be specified per request.</p>
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2026-07-09 09:28:01 UTC
+Last updated 2026-07-10 08:49:11 UTC
 </div>
 </div>
 </body>

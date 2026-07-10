@@ -1,0 +1,123 @@
+---
+title: 'fcli-license-ncd-report-update-contributor-status(1)'
+fcli_version: 
+---
+
+<!DOCTYPE html>
+<html lang="">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=">
+<meta name="generator" content="Asciidoctor 2.0.18">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>fcli-license-ncd-report-update-contributor-status(1)</title>
+
+{% include asciidoc-head.html %}
+{% include fcli-enhancements.html %}
+
+</head>
+<body class="manpage toc2 toc-left">
+
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260710.084631-dev_feat.v3.x.aviator.26.3" %}
+
+
+<div id="header">
+<h1>fcli-license-ncd-report-update-contributor-status(1) Manual Page</h1>
+<div id="toc" class="toc2">
+<div id="toctitle">Table of Contents</div>
+<ul class="sectlevel1">
+<li><a href="#_synopsis">Synopsis</a></li>
+<li><a href="#_description">Description</a></li>
+<li><a href="#_options">Options</a></li>
+<li><a href="#_generic_fcli_options_also_see_documentation_link_below">Generic fcli options (also see documentation link below)</a></li>
+</ul>
+</div>
+<h2>Name</h2>
+<div class="sectionbody">
+<p>fcli-license-ncd-report-update-contributor-status - Update contribution status in an NCD report</p>
+</div>
+</div>
+<div id="content">
+{% raw %}
+<div class="sect1">
+<h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p><strong>fcli license ncd-report update-contributor-status</strong> [<strong>-c</strong>=<em>&lt;contributorsPath&gt;</em>]
+[<strong>--min-confidence</strong>=<em>&lt;minConfidence&gt;</em>] <strong>-r</strong>=<em>&lt;reportPath&gt;</em> [[<strong>-h</strong>]
+[<strong>--env-prefix</strong>=<em>&lt;prefix&gt;</em>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>] [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]
+[<strong>--log-mask</strong>=<em>&lt;level&gt;</em>] [<strong>--debug</strong>]]</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_description"><a class="anchor" href="#_description"></a>Description</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>This command takes the edited output of the <code>list-contributors</code> command and applies requested contribution status updates to an existing NCD report. Please see the <code>list-contributors</code> command for details on how to prepare the updates.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_options"><a class="anchor" href="#_options"></a>Options</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><strong>-c</strong>, <strong>--contributors</strong>=<em>&lt;contributorsPath&gt;</em></dt>
+<dd>
+<p>Contributor updates file in CSV (with header row), JSON (object or array of objects), or YAML (object or array of objects) format. If omitted, updates are read from stdin. Input should use the <code>list-contributors</code> output format (typically exported with <code>-o json|csv|yaml</code>) and each update row should include <code>authorId</code>.</p>
+</dd>
+<dt class="hdlist1"><strong>--min-confidence</strong>=<em>&lt;minConfidence&gt;</em></dt>
+<dd>
+<p>Minimum confidence threshold (0.0-1.0); records below this value are warned and skipped (default: 0.8).</p>
+</dd>
+<dt class="hdlist1"><strong>-r</strong>, <strong>--report</strong>=<em>&lt;reportPath&gt;</em></dt>
+<dd>
+<p>Report path (zip file or directory).</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_generic_fcli_options_also_see_documentation_link_below"><a class="anchor" href="#_generic_fcli_options_also_see_documentation_link_below"></a>Generic fcli options (also see documentation link below)</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><strong>--debug</strong></dt>
+<dd>
+<p>Enable collection of debug logs.</p>
+</dd>
+<dt class="hdlist1"><strong>--env-prefix</strong>=<em>&lt;prefix&gt;</em></dt>
+<dd>
+<p>Prefix for resolving default option values. Default value: FCLI_DEFAULT.</p>
+</dd>
+<dt class="hdlist1"><strong>-h</strong>, <strong>--help</strong></dt>
+<dd>
+<p>Use 'fcli [command] -h' to display help for fcli (sub-)commands.</p>
+</dd>
+<dt class="hdlist1"><strong>--log-file</strong>=<em>&lt;logFile&gt;</em></dt>
+<dd>
+<p>Write log output to file. Default: ./fcli.log if logging is enabled.</p>
+</dd>
+<dt class="hdlist1"><strong>--log-level</strong>=<em>&lt;logLevel&gt;</em></dt>
+<dd>
+<p>Set logging level: TRACE, DEBUG, INFO, WARN, ERROR, NONE.</p>
+</dd>
+<dt class="hdlist1"><strong>--log-mask</strong>=<em>&lt;level&gt;</em></dt>
+<dd>
+<p>Log mask level: high, medium, low, none. Default: medium. Masking is done on a best-effort basis; no guarantee that all sensitive data will be masked.</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+{% endraw %}
+</div>
+<div id="footer">
+<div id="footer-text">
+Version <br>
+Last updated 2026-07-10 08:49:14 UTC
+</div>
+</div>
+</body>
+</html>
