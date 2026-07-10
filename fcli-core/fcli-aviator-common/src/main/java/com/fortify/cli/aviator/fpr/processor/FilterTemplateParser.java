@@ -39,6 +39,7 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
+import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
 import com.fortify.cli.aviator.fpr.filter.Filter;
 import com.fortify.cli.aviator.fpr.filter.FilterSet;
 import com.fortify.cli.aviator.fpr.filter.FilterTemplate;
@@ -114,9 +115,11 @@ public class FilterTemplateParser {
             auditProcessor.setFilterTemplateDoc(doc);
 
             return Optional.of(filterTemplate);
+        } catch (AviatorTechnicalException e) {
+            throw e;
         } catch (Exception e) {
             logger.error("Error parsing filtertemplate.xml", e);
-            throw new RuntimeException("Failed to parse filtertemplate.xml", e);
+            throw new AviatorTechnicalException("Failed to parse filtertemplate.xml", e);
         }
     }
 
@@ -230,7 +233,7 @@ public class FilterTemplateParser {
             logger.info("Successfully saved updated filtertemplate.xml");
         } catch (Exception e) {
             logger.error("Error saving XML document: {}", e.getMessage(), e);
-            throw new RuntimeException("Failed to save XML document", e);
+            throw new AviatorTechnicalException("Failed to save XML document", e);
         }
     }
 

@@ -30,6 +30,16 @@
     "allDeclaredFields": true, "allPublicFields": true
   },
   {
+    "name":"com.fortify.cli.aviator.config.LanguagesCommentConfig",
+    "allDeclaredConstructors": true,
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true,
+    "allDeclaredFields": true,
+    "allPublicFields": true,
+    "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"setLineCommentSymbols","parameterTypes":["java.util.Map"] }]
+  },
+  {
     "name":"com.fortify.cli.aviator.config.TagMappingConfig",
     "allDeclaredFields":true,
     "queryAllPublicMethods":true,

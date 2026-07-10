@@ -41,11 +41,12 @@ public class Constants {
     public static final String AVIATOR_STATUS_TAG_ID = "FB7B0462-2C2E-46D9-811A-DCC1F3C83051";
     public static final String AVIATOR_EXPECTED_OUTCOME_TAG_ID = "013cc66f-8651-4e39-bacb-beb918c5ef65";
     public static final String ANALYSIS_TAG_ID = "87f2364f-dcd4-49e6-861d-f8d3f351686b";
+    public static final String SUPPRESSED_TAG_ID = "22222222-2222-2222-2222-222222222222";
     public static final String AUDITOR_STATUS_TAG_ID = "ACB05E55-E74D-468C-8501-52E1FDC27D71";
     public static final String FOD_TAG_ID = "604f0fbe-b5fe-47cd-a9cb-587ad8ebe93a";
 
     // User Names
-    public static final String USER_NAME = "Fortify Aviator";
+    public static final String USER_NAME = "Fortify Remediation Aviator";
 
     // Other Constants
     public static final String AUDIT_NAMESPACE_URI = "xmlns://www.fortify.com/schema/audit";
@@ -55,11 +56,12 @@ public class Constants {
     //Limiting Constants
     public static final int MAX_PER_CATEGORY = 500;
     public static final int MAX_TOTAL = 2500;
-    public static final String MAX_PER_CATEGORY_EXCEEDED = "Fortify detected {issues_new_in_category} new issues in this (sub)category. Fortify Aviator auditing was limited to the first {MAX_PER_CATEGORY}.";
-    public static final String MAX_TOTAL_EXCEEDED = "Fortify detected {issues_new_total} new issues. Fortify Aviator auditing was limited to {MAX_TOTAL} issues in total, while ensuring that representative issues in each category were audited.";
+    public static final String MAX_PER_CATEGORY_EXCEEDED = "Fortify detected {issues_new_in_category} new issues in this (sub)category. Fortify Remediation Aviator auditing was limited to the first {MAX_PER_CATEGORY}.";
+    public static final String MAX_TOTAL_EXCEEDED = "Fortify detected {issues_new_total} new issues. Fortify Remediation Aviator auditing was limited to {MAX_TOTAL} issues in total, while ensuring that representative issues in each category were audited.";
 
     // Operation constants for error messages
     public static final String OP_CREATE_APP = "application creation";
+    public static final String OP_ADD_APP_ENTITLEMENT = "application entitlement increment";
     public static final String OP_UPDATE_APP = "application update";
     public static final String OP_DELETE_APP = "application deletion";
     public static final String OP_GET_APP = "retrieving application";
@@ -71,6 +73,7 @@ public class Constants {
     public static final String OP_DELETE_TOKEN = "deleting token";
     public static final String OP_VALIDATE_TOKEN = "validating token";
     public static final String OP_VALIDATE_USER_TOKEN = "validating user token";
+    public static final String OP_VALIDATE_ADMIN_SESSION = "admin session validation";
     public static final String OP_LIST_ENTITLEMENTS = "listing entitlements";
     public static final String OP_LIST_DAST_ENTITLEMENTS = "listing DAST entitlements";
     public static final String OP_GET_APP_BY_TOKEN = "retrieving application by token";

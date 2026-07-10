@@ -2,19 +2,19 @@
 
 author: Fortify
 usage:
-  header: (PREVIEW) Perform SAST Aviator audits of SSC application versions in bulk.
+  header: (PREVIEW) Perform Fortify Remediation Aviator audits of SSC application versions in bulk.
   description: |
     This action identifies SSC application versions with pending audit issues and
-    automatically submits them for auditing by Fortify SAST Aviator. The action
+    automatically submits them for auditing by Fortify Remediation Aviator. The action
     intelligently filters to only process versions with actual pending audit issues,
     while ignoring versions for which audit information needs to be refreshed.
 
-    For application versions that don't already exist in Aviator, the action will
+    For application versions that don't already exist in Fortify Aviator, the action will
     automatically create them before submitting for audit.
 
     By default (--aviator-app-mapping=app), SSC project versions map to a single
-    Aviator application per SSC project. Set --aviator-app-mapping=version to map
-    each SSC project version to its own Aviator application (project_name__version_name).
+    Fortify Aviator application per SSC project. Set --aviator-app-mapping=version to map
+    each SSC project version to its own Fortify Aviator application (project_name__version_name).
 
     When quota limits are exceeded for any application, issues are prioritized by
     folder using either the default order (Critical > High > Medium > Low) or a
@@ -23,11 +23,11 @@ usage:
 
     Either --tag-mapping or --add-aviator-tags must be specified. The default tag
     mapping leaves unsure issues unaudited, causing indefinite reselection. Use
-    a custom mapping file or 'fcli ssc aviator prepare' to configure Aviator-specific
+    a custom mapping file or 'fcli ssc aviator prepare' to configure Fortify Remediation Aviator-specific
     issue templates.
 
-    This action assumes active sessions with SSC, Aviator (user role for auditing),
-    and Aviator (admin role for application listing and creation).
+    This action assumes active sessions with SSC, Fortify Remediation Aviator (user role for auditing),
+    and Fortify Aviator (admin role for application listing and creation).
 
 config:
   output: immediate
@@ -45,7 +45,7 @@ cli.options:
     type: int
   aviator-app-mapping:
     names: --aviator-app-mapping
-    description: "Controls how SSC project versions map to Aviator applications. 'app' (default) maps one Aviator app per SSC project; 'version' maps one Aviator app per SSC project version (using project_name__version_name)."
+    description: "Controls how SSC project versions map to Fortify Aviator applications. 'app' (default) maps one Fortify Aviator app per SSC project; 'version' maps one Fortify Aviator app per SSC project version (using project_name__version_name)."
     required: false
     default: app
   filter:
@@ -66,7 +66,7 @@ cli.options:
     type: boolean
   tag-mapping:
     names: --tag-mapping, -t
-    description: "Path to tag mapping YAML file. This custom mapping ensures that SAST Aviator 'Unsure' audit results are properly handled. Required unless --add-aviator-tags is specified."
+    description: "Path to tag mapping YAML file. This custom mapping ensures that Fortify Remediation Aviator 'Unsure' audit results are properly handled. Required unless --add-aviator-tags is specified."
     required: false
   add-aviator-tags:
     names: --add-aviator-tags
@@ -87,13 +87,13 @@ cli.options:
     default: "60s"
   skip-if-exceeding-quota:
     names: --skip-if-exceeding-quota
-    description: "Skip audit if the number of open issues exceeds the available Aviator quota. When skipped, a summary with top unaudited categories is shown. Default: false"
+    description: "Skip audit if the number of open issues exceeds the available Fortify Remediation Aviator quota. When skipped, a summary with top unaudited categories is shown. Default: false"
     required: false
     default: false
     type: boolean
   test-exceeding-quota:
     names: --test-exceeding-quota
-    description: "Check whether the number of open issues exceeds the available Aviator quota and report the result without performing an audit. Default: false"
+    description: "Check whether the number of open issues exceeds the available Fortify Remediation Aviator quota and report the result without performing an audit. Default: false"
     required: false
     default: false
     type: boolean
@@ -128,10 +128,16 @@ steps:
       - log.progress: "ERROR: --dry-run and --skip-if-exceeding-quota cannot be used together. --dry-run prevents server interaction, but --skip-if-exceeding-quota requires quota retrieval."
       - throw: "--dry-run and --skip-if-exceeding-quota cannot be used together. --dry-run prevents server interaction, but --skip-if-exceeding-quota requires quota retrieval."
 
-  - log.progress: "Using Aviator app mapping: ${cli['aviator-app-mapping']}"
+  # Validate that --skip-if-exceeding-quota and --folder-priority-order are not used together
+  - if: ${cli['skip-if-exceeding-quota'] && cli['folder-priority-order'] != null && cli['folder-priority-order'] != ''}
+    do:
+      - log.progress: "ERROR: --skip-if-exceeding-quota and --folder-priority-order cannot be used together. --skip-if-exceeding-quota skips the audit when quota is insufficient, while --folder-priority-order only applies when auditing within quota constraints."
+      - throw: "--skip-if-exceeding-quota and --folder-priority-order cannot be used together. --skip-if-exceeding-quota skips the audit when quota is insufficient, while --folder-priority-order only applies when auditing within quota constraints."
 
-  # Get existing Aviator applications
-  - log.progress: Retrieving existing Aviator applications...
+  - log.progress: "Using Fortify Aviator app mapping: ${cli['aviator-app-mapping']}"
+
+  # Get existing Fortify Aviator applications
+  - log.progress: Retrieving existing Fortify Aviator applications...
   - run.fcli:
       aviator_apps:
         cmd: aviator app ls -o json
@@ -424,17 +430,17 @@ steps:
                       var.set:
                         stats.create_skipped_due_to_entitlement: ${stats.create_skipped_due_to_entitlement + 1}
 
-                    # Prepare Aviator tags if requested
+                    # Prepare Fortify Remediation Aviator tags if requested
                     - if: ${cli['add-aviator-tags']}
                       do:
-                        - log.progress: Preparing Aviator tags for ${project.project_name}:${project.version_name}
+                        - log.progress: Preparing Fortify Remediation Aviator tags for ${project.project_name}:${project.version_name}
                         - run.fcli:
                             prepare_tags:
                               cmd: aviator ssc prepare --av "${project.id}"
                               status.check: false
                         - if: ${prepare_tags.exitCode != 0}
                           do:
-                            - log.warn: Aviator tag preparation failed for ${project.project_name}:${project.version_name}
+                            - log.warn: Fortify Remediation Aviator tag preparation failed for ${project.project_name}:${project.version_name}
 
                     # Run audit if app is ready
                     - if: ${app_ready}

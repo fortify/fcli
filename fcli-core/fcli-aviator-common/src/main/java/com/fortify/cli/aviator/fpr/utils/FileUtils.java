@@ -32,6 +32,7 @@ import com.fortify.cli.aviator.util.FileTypeLanguageMapperUtil;
 import com.fortify.cli.aviator.util.FileUtil;
 import com.fortify.cli.aviator.util.FprHandle;
 import com.fortify.cli.aviator.util.LanguageCommentMapperUtil;
+import com.fortify.cli.aviator.util.StringUtil;
 
 public class FileUtils {
     private static final Logger logger = LoggerFactory.getLogger(FileUtils.class);
@@ -81,7 +82,7 @@ public class FileUtils {
 
         List<String> lines = readFileWithFallback(fullSourcePath);
         if (lineNumber > 0 && lines.size() >= lineNumber) {
-            return lines.get(lineNumber - 1);
+            return appendLineNumbers(lines.get(lineNumber - 1), relativePath, lineNumber - 1);
         }
         logger.info("Could not get line {} from file {} (total lines: {})", lineNumber, fullSourcePath, lines.size());
         return "";
@@ -109,7 +110,7 @@ public class FileUtils {
             sb.append(lines.get(i)).append(System.lineSeparator());
         }
 
-        return new Fragment(sb.toString(), startLine, endLine);
+        return new Fragment(appendLineNumbers(sb.toString(), relativePath, startLine - 1), startLine, endLine);
     }
 
     /**
@@ -143,8 +144,13 @@ public class FileUtils {
     }
 
     public String appendLineNumbers(String content, String fileName, int startLineNo) {
-        String fileExtension = FileUtil.getFileExtension(fileName);
-        String language = FileTypeLanguageMapperUtil.getProgrammingLanguage(fileExtension);
+        return appendLineNumbers(content, fileName, startLineNo, null);
+    }
+
+    public String appendLineNumbers(String content, String fileName, int startLineNo, String resolvedLanguage) {
+        String language = StringUtil.isEmpty(resolvedLanguage) || "Unknown".equalsIgnoreCase(resolvedLanguage)
+                ? FileTypeLanguageMapperUtil.getProgrammingLanguage(FileUtil.getFileExtension(fileName))
+                : resolvedLanguage;
         String commentSymbol = LanguageCommentMapperUtil.getProgrammingLanguageComment(language);
         if(commentSymbol.equals("Unknown")) {
             logger.warn("No Comment symbol is there so line numbers not appended");

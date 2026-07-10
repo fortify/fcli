@@ -21,15 +21,12 @@ import com.fortify.cli.aviator._common.config.admin.helper.AviatorAdminConfigDes
 import com.fortify.cli.common.crypto.helper.SignatureHelper;
 import com.fortify.cli.common.exception.FcliSimpleException;
 
-import lombok.SneakyThrows;
-
 public class AviatorSignatureUtils {
     public static String createMessage(String... params) {
         String timestamp = ZonedDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.ISO_INSTANT);
         return String.join(";", params) + ";" + timestamp;
     }
 
-    @SneakyThrows
     public static String createSignature(String message, AviatorAdminConfigDescriptor configDescriptor) {
         String privateKeyContent = configDescriptor.getPrivateKeyContents();
         if (privateKeyContent == null) {
@@ -38,7 +35,9 @@ public class AviatorSignatureUtils {
         try {
             return SignatureHelper.signer(privateKeyContent, (char[]) null).sign(message, StandardCharsets.UTF_8);
         } catch (Exception e) {
-            throw new RuntimeException("Failed to generate signature using resolved private key", e);
+            throw new FcliSimpleException(
+                    "Unable to sign the Aviator admin request with the provided private key. Verify that --private-key points to a valid PEM private key",
+                    e);
         }
     }
 

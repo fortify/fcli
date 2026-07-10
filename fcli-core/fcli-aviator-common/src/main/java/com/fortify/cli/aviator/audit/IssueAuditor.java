@@ -79,11 +79,15 @@ public class IssueAuditor {
     private final TagDefinition analysisTag;
     private TagDefinition humanAuditTag;
     private TagDefinition aviatorStatusTag;
+    private final SourceLanguageResolver sourceLanguageResolver;
 
     private final IAviatorLogger logger;
     private final List<String> customPriorityOrder;
 
-    public IssueAuditor(List<Vulnerability> vulnerabilities, AuditProcessor auditProcessor, Map<String, AuditIssue> auditIssueMap, FPRInfo fprInfo, String SSCApplicationName, String SSCApplicationVersion, FilterSelection filterSelection , IAviatorLogger logger, List<String> customPriorityOrder) {
+    public IssueAuditor(List<Vulnerability> vulnerabilities, AuditProcessor auditProcessor, Map<String, AuditIssue> auditIssueMap,
+                        FPRInfo fprInfo, String SSCApplicationName, String SSCApplicationVersion,
+                        FilterSelection filterSelection, IAviatorLogger logger, List<String> customPriorityOrder,
+                        SourceLanguageResolver sourceLanguageResolver) {
         this.logger = logger;
         this.customPriorityOrder = customPriorityOrder;
         this.MAX_PER_CATEGORY = Constants.MAX_PER_CATEGORY;
@@ -98,6 +102,7 @@ public class IssueAuditor {
         this.filterSelection = filterSelection;
         this.SSCApplicationName = SSCApplicationName;
         this.SSCApplicationVersion = SSCApplicationVersion;
+        this.sourceLanguageResolver = sourceLanguageResolver;
         this.analysisTag = fprInfo.getFilterTemplate().getTagDefinitions().stream().filter(t -> "Analysis".equalsIgnoreCase(t.getName())).findFirst().orElse(null);
         this.resultsTag = resolveResultTag("", "", analysisTag);
     }
@@ -207,7 +212,7 @@ public class IssueAuditor {
 
         // Convert the filtered vulnerabilities to UserPrompts
         List<UserPrompt> prompts = filteredVulnerabilities.stream()
-                .map(IssueObjBuilder::buildIssueObj)
+            .map(vulnerability -> IssueObjBuilder.buildIssueObj(vulnerability, sourceLanguageResolver))
                 .collect(Collectors.toList());
 
         // Apply secondary checks (like 'isAudited')
