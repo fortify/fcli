@@ -1,6 +1,6 @@
 ---
 title: 'Action Documentation: <a href="manpage/fcli-ssc-action.html"><code>fcli ssc action</code></a>'
-fcli_version: 0.20260701.153102-dev_v3.x
+fcli_version: 0.20260710.091910-dev_v3.x
 ---
 
 <!DOCTYPE html>
@@ -17,13 +17,13 @@ fcli_version: 0.20260701.153102-dev_v3.x
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260701.153102-dev_v3.x" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260710.091910-dev_v3.x" %}
 
 
 <div id="header">
 <h1>Action Documentation: <a href="manpage/fcli-ssc-action.html"><code>fcli ssc action</code></a></h1>
 <div class="details">
-<span id="revnumber">version 0.20260701.153102-dev_v3.x</span>
+<span id="revnumber">version 0.20260710.091910-dev_v3.x</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -56,17 +56,24 @@ fcli_version: 0.20260701.153102-dev_v3.x
 <li><a href="#_options_4">Options</a></li>
 </ul>
 </li>
-<li><a href="#_check_policy">check-policy</a>
+<li><a href="#_bulkcorrelate">bulkcorrelate</a>
 <ul class="sectlevel2">
 <li><a href="#_synopsis_5">Synopsis</a></li>
 <li><a href="#_description_5">Description</a></li>
 <li><a href="#_options_5">Options</a></li>
 </ul>
 </li>
-<li><a href="#_ci">ci</a>
+<li><a href="#_check_policy">check-policy</a>
 <ul class="sectlevel2">
 <li><a href="#_synopsis_6">Synopsis</a></li>
 <li><a href="#_description_6">Description</a></li>
+<li><a href="#_options_6">Options</a></li>
+</ul>
+</li>
+<li><a href="#_ci">ci</a>
+<ul class="sectlevel2">
+<li><a href="#_synopsis_7">Synopsis</a></li>
+<li><a href="#_description_7">Description</a></li>
 <li><a href="#_bootstrap_setup">Bootstrap &amp; Setup</a></li>
 <li><a href="#_application_version_management">Application Version Management</a></li>
 <li><a href="#_package_configuration">Package Configuration</a></li>
@@ -76,107 +83,107 @@ fcli_version: 0.20260701.153102-dev_v3.x
 </li>
 <li><a href="#_debricked_scan">debricked-scan</a>
 <ul class="sectlevel2">
-<li><a href="#_synopsis_7">Synopsis</a></li>
-<li><a href="#_description_7">Description</a></li>
-<li><a href="#_options_6">Options</a></li>
-</ul>
-</li>
-<li><a href="#_github_pr_comment">github-pr-comment</a>
-<ul class="sectlevel2">
 <li><a href="#_synopsis_8">Synopsis</a></li>
 <li><a href="#_description_8">Description</a></li>
 <li><a href="#_options_7">Options</a></li>
 </ul>
 </li>
-<li><a href="#_github_remediations_pr">github-remediations-pr</a>
+<li><a href="#_github_pr_comment">github-pr-comment</a>
 <ul class="sectlevel2">
 <li><a href="#_synopsis_9">Synopsis</a></li>
 <li><a href="#_description_9">Description</a></li>
 <li><a href="#_options_8">Options</a></li>
 </ul>
 </li>
-<li><a href="#_github_sast_report">github-sast-report</a>
+<li><a href="#_github_remediations_pr">github-remediations-pr</a>
 <ul class="sectlevel2">
 <li><a href="#_synopsis_10">Synopsis</a></li>
 <li><a href="#_description_10">Description</a></li>
 <li><a href="#_options_9">Options</a></li>
 </ul>
 </li>
-<li><a href="#_gitlab_codequality_report">gitlab-codequality-report</a>
+<li><a href="#_github_sast_report">github-sast-report</a>
 <ul class="sectlevel2">
 <li><a href="#_synopsis_11">Synopsis</a></li>
 <li><a href="#_description_11">Description</a></li>
 <li><a href="#_options_10">Options</a></li>
 </ul>
 </li>
-<li><a href="#_gitlab_dast_report">gitlab-dast-report</a>
+<li><a href="#_gitlab_codequality_report">gitlab-codequality-report</a>
 <ul class="sectlevel2">
 <li><a href="#_synopsis_12">Synopsis</a></li>
 <li><a href="#_description_12">Description</a></li>
 <li><a href="#_options_11">Options</a></li>
 </ul>
 </li>
-<li><a href="#_gitlab_debricked_report">gitlab-debricked-report</a>
+<li><a href="#_gitlab_dast_report">gitlab-dast-report</a>
 <ul class="sectlevel2">
 <li><a href="#_synopsis_13">Synopsis</a></li>
 <li><a href="#_description_13">Description</a></li>
 <li><a href="#_options_12">Options</a></li>
 </ul>
 </li>
-<li><a href="#_gitlab_sast_report">gitlab-sast-report</a>
+<li><a href="#_gitlab_debricked_report">gitlab-debricked-report</a>
 <ul class="sectlevel2">
 <li><a href="#_synopsis_14">Synopsis</a></li>
 <li><a href="#_description_14">Description</a></li>
 <li><a href="#_options_13">Options</a></li>
 </ul>
 </li>
-<li><a href="#_gitlab_sonatype_report">gitlab-sonatype-report</a>
+<li><a href="#_gitlab_sast_report">gitlab-sast-report</a>
 <ul class="sectlevel2">
 <li><a href="#_synopsis_15">Synopsis</a></li>
 <li><a href="#_description_15">Description</a></li>
 <li><a href="#_options_14">Options</a></li>
 </ul>
 </li>
-<li><a href="#_package">package</a>
+<li><a href="#_gitlab_sonatype_report">gitlab-sonatype-report</a>
 <ul class="sectlevel2">
 <li><a href="#_synopsis_16">Synopsis</a></li>
 <li><a href="#_description_16">Description</a></li>
 <li><a href="#_options_15">Options</a></li>
 </ul>
 </li>
-<li><a href="#_push_remediations">push-remediations</a>
+<li><a href="#_package">package</a>
 <ul class="sectlevel2">
 <li><a href="#_synopsis_17">Synopsis</a></li>
 <li><a href="#_description_17">Description</a></li>
 <li><a href="#_options_16">Options</a></li>
 </ul>
 </li>
-<li><a href="#_sarif_sast_report">sarif-sast-report</a>
+<li><a href="#_push_remediations">push-remediations</a>
 <ul class="sectlevel2">
 <li><a href="#_synopsis_18">Synopsis</a></li>
 <li><a href="#_description_18">Description</a></li>
 <li><a href="#_options_17">Options</a></li>
 </ul>
 </li>
-<li><a href="#_servicenow_csv_report">servicenow-csv-report</a>
+<li><a href="#_sarif_sast_report">sarif-sast-report</a>
 <ul class="sectlevel2">
 <li><a href="#_synopsis_19">Synopsis</a></li>
 <li><a href="#_description_19">Description</a></li>
 <li><a href="#_options_18">Options</a></li>
 </ul>
 </li>
-<li><a href="#_setup_appversion">setup-appversion</a>
+<li><a href="#_servicenow_csv_report">servicenow-csv-report</a>
 <ul class="sectlevel2">
 <li><a href="#_synopsis_20">Synopsis</a></li>
 <li><a href="#_description_20">Description</a></li>
 <li><a href="#_options_19">Options</a></li>
 </ul>
 </li>
-<li><a href="#_sonarqube_sast_report">sonarqube-sast-report</a>
+<li><a href="#_setup_appversion">setup-appversion</a>
 <ul class="sectlevel2">
 <li><a href="#_synopsis_21">Synopsis</a></li>
 <li><a href="#_description_21">Description</a></li>
 <li><a href="#_options_20">Options</a></li>
+</ul>
+</li>
+<li><a href="#_sonarqube_sast_report">sonarqube-sast-report</a>
+<ul class="sectlevel2">
+<li><a href="#_synopsis_22">Synopsis</a></li>
+<li><a href="#_description_22">Description</a></li>
+<li><a href="#_options_21">Options</a></li>
 </ul>
 </li>
 </ul>
@@ -364,7 +371,7 @@ With the --publish option, results are automatically uploaded to BitBucket pipel
 <h2 id="_bulkaudit"><a class="anchor" href="#_bulkaudit"></a>bulkaudit</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>(PREVIEW) Perform SAST Aviator audits of SSC application versions in bulk.</p>
+<p>(PREVIEW) Perform Fortify Remediation Aviator audits of SSC application versions in bulk.</p>
 </div>
 <div class="sect2">
 <h3 id="_synopsis_4"><a class="anchor" href="#_synopsis_4"></a>Synopsis</h3>
@@ -376,18 +383,18 @@ With the --publish option, results are automatically uploaded to BitBucket pipel
 <h3 id="_description_4"><a class="anchor" href="#_description_4"></a>Description</h3>
 <div class="paragraph">
 <p>This action identifies SSC application versions with pending audit issues and
-automatically submits them for auditing by Fortify SAST Aviator. The action
+automatically submits them for auditing by Fortify Remediation Aviator. The action
 intelligently filters to only process versions with actual pending audit issues,
 while ignoring versions for which audit information needs to be refreshed.</p>
 </div>
 <div class="paragraph">
-<p>For application versions that don&#8217;t already exist in Aviator, the action will
+<p>For application versions that don&#8217;t already exist in Fortify Aviator, the action will
 automatically create them before submitting for audit.</p>
 </div>
 <div class="paragraph">
 <p>By default (--aviator-app-mapping=app), SSC project versions map to a single
-Aviator application per SSC project. Set --aviator-app-mapping=version to map
-each SSC project version to its own Aviator application (project_name__version_name).</p>
+Fortify Aviator application per SSC project. Set --aviator-app-mapping=version to map
+each SSC project version to its own Fortify Aviator application (project_name__version_name).</p>
 </div>
 <div class="paragraph">
 <p>When quota limits are exceeded for any application, issues are prioritized by
@@ -398,12 +405,12 @@ order is applied to all audited versions in the bulk operation.</p>
 <div class="paragraph">
 <p>Either --tag-mapping or --add-aviator-tags must be specified. The default tag
 mapping leaves unsure issues unaudited, causing indefinite reselection. Use
-a custom mapping file or 'fcli ssc aviator prepare' to configure Aviator-specific
+a custom mapping file or 'fcli ssc aviator prepare' to configure Fortify Remediation Aviator-specific
 issue templates.</p>
 </div>
 <div class="paragraph">
-<p>This action assumes active sessions with SSC, Aviator (user role for auditing),
-and Aviator (admin role for application listing and creation).</p>
+<p>This action assumes active sessions with SSC, Fortify Remediation Aviator (user role for auditing),
+and Fortify Aviator (admin role for application listing and creation).</p>
 </div>
 </div>
 <div class="sect2">
@@ -416,7 +423,7 @@ and Aviator (admin role for application listing and creation).</p>
 </dd>
 <dt class="hdlist1">--aviator-app-mapping</dt>
 <dd>
-<p>Controls how SSC project versions map to Aviator applications. 'app' (default) maps one Aviator app per SSC project; 'version' maps one Aviator app per SSC project version (using project_name__version_name).</p>
+<p>Controls how SSC project versions map to Fortify Aviator applications. 'app' (default) maps one Fortify Aviator app per SSC project; 'version' maps one Fortify Aviator app per SSC project version (using project_name__version_name).</p>
 </dd>
 <dt class="hdlist1">--filter, -f</dt>
 <dd>
@@ -432,7 +439,7 @@ and Aviator (admin role for application listing and creation).</p>
 </dd>
 <dt class="hdlist1">--tag-mapping, -t</dt>
 <dd>
-<p>Path to tag mapping YAML file. This custom mapping ensures that SAST Aviator 'Unsure' audit results are properly handled. Required unless --add-aviator-tags is specified.</p>
+<p>Path to tag mapping YAML file. This custom mapping ensures that Fortify Remediation Aviator 'Unsure' audit results are properly handled. Required unless --add-aviator-tags is specified.</p>
 </dd>
 <dt class="hdlist1">--add-aviator-tags</dt>
 <dd>
@@ -448,15 +455,96 @@ and Aviator (admin role for application listing and creation).</p>
 </dd>
 <dt class="hdlist1">--skip-if-exceeding-quota</dt>
 <dd>
-<p>Skip audit if the number of open issues exceeds the available Aviator quota. When skipped, a summary with top unaudited categories is shown. Default: false</p>
+<p>Skip audit if the number of open issues exceeds the available Fortify Remediation Aviator quota. When skipped, a summary with top unaudited categories is shown. Default: false</p>
 </dd>
 <dt class="hdlist1">--test-exceeding-quota</dt>
 <dd>
-<p>Check whether the number of open issues exceeds the available Aviator quota and report the result without performing an audit. Default: false</p>
+<p>Check whether the number of open issues exceeds the available Fortify Remediation Aviator quota and report the result without performing an audit. Default: false</p>
 </dd>
 <dt class="hdlist1">--folder-priority-order</dt>
 <dd>
 <p>Custom priority order for folder-based filtering when quota is exceeded (comma-separated, highest priority first). Example: Critical,High,Medium,Low. Applied to all audited versions. Default: uses server default (Critical &gt; High &gt; Medium &gt; Low)</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_bulkcorrelate"><a class="anchor" href="#_bulkcorrelate"></a>bulkcorrelate</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>(PREVIEW) Perform Fortify Aviator SAST-DAST correlation for SSC application versions in bulk.</p>
+</div>
+<div class="sect2">
+<h3 id="_synopsis_5"><a class="anchor" href="#_synopsis_5"></a>Synopsis</h3>
+<div class="paragraph">
+<p><strong><a href="manpage/fcli-ssc-action-run.html">fcli ssc action run</a> bulkcorrelate [<a href="manpage/fcli-ssc-action-run.html">fcli ssc action run</a> options] [action options, see below]</strong></p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_description_5"><a class="anchor" href="#_description_5"></a>Description</h3>
+<div class="paragraph">
+<p>This action identifies SSC application versions that have both a processed
+SAST FPR and a processed DAST FPR, determines whether the scan data has
+changed since the last successful correlation, and runs
+<a href="manpage/fcli-aviator-ssc-correlate-sast-dast.html"><code>fcli aviator ssc correlate-sast-dast</code></a> for the selected versions.</p>
+</div>
+<div class="paragraph">
+<p>Versions missing either processed artifact are skipped before any attribute
+lookup is performed. For versions that have both artifact types, the action
+compares the most recent scan date with the SSC <code>last_correlation</code> custom
+attribute written by the correlation command.</p>
+</div>
+<div class="paragraph">
+<p>For application versions that don&#8217;t already exist in Fortify Aviator, the action
+will automatically create them before correlation.</p>
+</div>
+<div class="paragraph">
+<p>By default (--aviator-app-mapping=app), SSC project versions map to a
+single Fortify Aviator application per SSC project. Set
+--aviator-app-mapping=version to map each SSC project version to its own
+Fortify Aviator application (project_name__version_name).</p>
+</div>
+<div class="paragraph">
+<p>Before running correlation, the action automatically runs
+<a href="manpage/fcli-aviator-ssc-prepare.html"><code>fcli aviator ssc prepare</code></a> for each selected application version so the
+required SSC custom tags and <code>last_correlation</code> attribute are available.</p>
+</div>
+<div class="paragraph">
+<p>If entitlement is exhausted while creating applications, the action
+suppresses further create attempts and continues processing versions that
+already have a matching Fortify Aviator application.</p>
+</div>
+<div class="paragraph">
+<p>This action assumes active sessions with SSC, Fortify Aviator user access
+for prepare and correlation, and Fortify Aviator admin access for
+application listing and creation.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_options_5"><a class="anchor" href="#_options_5"></a>Options</h3>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">--max-correlations, -m</dt>
+<dd>
+<p>Maximum number of application versions to correlate. Default: -1 (unlimited)</p>
+</dd>
+<dt class="hdlist1">--aviator-app-mapping</dt>
+<dd>
+<p>Controls how SSC project versions map to Fortify Aviator applications. 'app' (default) maps one Fortify Aviator app per SSC project; 'version' maps one Fortify Aviator app per SSC project version (using project_name__version_name).</p>
+</dd>
+<dt class="hdlist1">--filter, -f</dt>
+<dd>
+<p>Optional SSC filter to include application versions. Example: 'Languages:java'. Default: no filtering</p>
+</dd>
+<dt class="hdlist1">--exclude-filter, -e</dt>
+<dd>
+<p>Optional SSC filter to exclude application versions. Example: 'Languages:c#'. Default: no exclusion</p>
+</dd>
+<dt class="hdlist1">--dry-run, -n</dt>
+<dd>
+<p>Show what aviator commands would be executed without actually running them. Default: false</p>
 </dd>
 </dl>
 </div>
@@ -470,20 +558,20 @@ and Aviator (admin role for application listing and creation).</p>
 <p>(SAMPLE) Check security policy.</p>
 </div>
 <div class="sect2">
-<h3 id="_synopsis_5"><a class="anchor" href="#_synopsis_5"></a>Synopsis</h3>
+<h3 id="_synopsis_6"><a class="anchor" href="#_synopsis_6"></a>Synopsis</h3>
 <div class="paragraph">
 <p><strong><a href="manpage/fcli-ssc-action-run.html">fcli ssc action run</a> check-policy [<a href="manpage/fcli-ssc-action-run.html">fcli ssc action run</a> options] [action options, see below]</strong></p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_description_5"><a class="anchor" href="#_description_5"></a>Description</h3>
+<h3 id="_description_6"><a class="anchor" href="#_description_6"></a>Description</h3>
 <div class="paragraph">
 <p>This sample action demonstrates how to implement a security policy using
 fcli actions, returning a non-zero exit code if any of the checks fail.</p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_options_5"><a class="anchor" href="#_options_5"></a>Options</h3>
+<h3 id="_options_6"><a class="anchor" href="#_options_6"></a>Options</h3>
 <div class="dlist">
 <dl>
 <dt class="hdlist1">--appversion, --av</dt>
@@ -506,13 +594,13 @@ fcli actions, returning a non-zero exit code if any of the checks fail.</p>
 <p>Run SSC CI pipeline</p>
 </div>
 <div class="sect2">
-<h3 id="_synopsis_6"><a class="anchor" href="#_synopsis_6"></a>Synopsis</h3>
+<h3 id="_synopsis_7"><a class="anchor" href="#_synopsis_7"></a>Synopsis</h3>
 <div class="paragraph">
 <p><strong><a href="manpage/fcli-ssc-action-run.html">fcli ssc action run</a> ci [<a href="manpage/fcli-ssc-action-run.html">fcli ssc action run</a> options] [action options, see below]</strong></p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_description_6"><a class="anchor" href="#_description_6"></a>Description</h3>
+<h3 id="_description_7"><a class="anchor" href="#_description_7"></a>Description</h3>
 <div class="paragraph">
 <p>This action can be used to run a full, standardized CI pipeline that performs the
 following activities:</p>
@@ -800,19 +888,19 @@ GIT_PUSH_TOKEN</p></td>
 <p>(PREVIEW) Run Debricked Scan</p>
 </div>
 <div class="sect2">
-<h3 id="_synopsis_7"><a class="anchor" href="#_synopsis_7"></a>Synopsis</h3>
+<h3 id="_synopsis_8"><a class="anchor" href="#_synopsis_8"></a>Synopsis</h3>
 <div class="paragraph">
 <p><strong><a href="manpage/fcli-ssc-action-run.html">fcli ssc action run</a> debricked-scan [<a href="manpage/fcli-ssc-action-run.html">fcli ssc action run</a> options] [action options, see below]</strong></p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_description_7"><a class="anchor" href="#_description_7"></a>Description</h3>
+<h3 id="_description_8"><a class="anchor" href="#_description_8"></a>Description</h3>
 <div class="paragraph">
 <p>This action can be used to run a debricked scan of the project.</p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_options_6"><a class="anchor" href="#_options_6"></a>Options</h3>
+<h3 id="_options_7"><a class="anchor" href="#_options_7"></a>Options</h3>
 <div class="dlist">
 <dl>
 <dt class="hdlist1">--source-dir, -s</dt>
@@ -880,13 +968,13 @@ Allowed values:</p>
 <p>(PREVIEW) Add GitHub Pull Request review comments.</p>
 </div>
 <div class="sect2">
-<h3 id="_synopsis_8"><a class="anchor" href="#_synopsis_8"></a>Synopsis</h3>
+<h3 id="_synopsis_9"><a class="anchor" href="#_synopsis_9"></a>Synopsis</h3>
 <div class="paragraph">
 <p><strong><a href="manpage/fcli-ssc-action-run.html">fcli ssc action run</a> github-pr-comment [<a href="manpage/fcli-ssc-action-run.html">fcli ssc action run</a> options] [action options, see below]</strong></p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_description_8"><a class="anchor" href="#_description_8"></a>Description</h3>
+<h3 id="_description_9"><a class="anchor" href="#_description_9"></a>Description</h3>
 <div class="paragraph">
 <p>This action adds review comments to a GitHub Pull Request. Currently
 this is marked as PREVIEW as we build out this functionality; later
@@ -914,7 +1002,7 @@ previous scan for this PR.</p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_options_7"><a class="anchor" href="#_options_7"></a>Options</h3>
+<h3 id="_options_8"><a class="anchor" href="#_options_8"></a>Options</h3>
 <div class="dlist">
 <dl>
 <dt class="hdlist1">--appversion, --av</dt>
@@ -969,13 +1057,13 @@ previous scan for this PR.</p>
 <p>Apply Aviator remediations and raise a GitHub pull request</p>
 </div>
 <div class="sect2">
-<h3 id="_synopsis_9"><a class="anchor" href="#_synopsis_9"></a>Synopsis</h3>
+<h3 id="_synopsis_10"><a class="anchor" href="#_synopsis_10"></a>Synopsis</h3>
 <div class="paragraph">
 <p><strong><a href="manpage/fcli-ssc-action-run.html">fcli ssc action run</a> github-remediations-pr [<a href="manpage/fcli-ssc-action-run.html">fcli ssc action run</a> options] [action options, see below]</strong></p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_description_9"><a class="anchor" href="#_description_9"></a>Description</h3>
+<h3 id="_description_10"><a class="anchor" href="#_description_10"></a>Description</h3>
 <div class="paragraph">
 <p>This action runs the <code>push-remediations</code> action to apply Aviator-generated remediations
 and push them to a new branch, then creates a GitHub pull request for that branch. If the
@@ -992,7 +1080,7 @@ remediation step produced no changes, no branch is pushed and no pull request is
 </div>
 </div>
 <div class="sect2">
-<h3 id="_options_8"><a class="anchor" href="#_options_8"></a>Options</h3>
+<h3 id="_options_9"><a class="anchor" href="#_options_9"></a>Options</h3>
 <div class="dlist">
 <dl>
 <dt class="hdlist1">--source-dir, -s</dt>
@@ -1031,13 +1119,13 @@ remediation step produced no changes, no branch is pushed and no pull request is
 <p>Integrate SSC SAST results with GitHub Code Scanning.</p>
 </div>
 <div class="sect2">
-<h3 id="_synopsis_10"><a class="anchor" href="#_synopsis_10"></a>Synopsis</h3>
+<h3 id="_synopsis_11"><a class="anchor" href="#_synopsis_11"></a>Synopsis</h3>
 <div class="paragraph">
 <p><strong><a href="manpage/fcli-ssc-action-run.html">fcli ssc action run</a> github-sast-report [<a href="manpage/fcli-ssc-action-run.html">fcli ssc action run</a> options] [action options, see below]</strong></p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_description_10"><a class="anchor" href="#_description_10"></a>Description</h3>
+<h3 id="_description_11"><a class="anchor" href="#_description_11"></a>Description</h3>
 <div class="paragraph">
 <p>This action generates and optionally publishes SSC SAST vulnerabilities to GitHub.
 With the --publish option, results are automatically uploaded as either SARIF reports
@@ -1050,7 +1138,7 @@ With the --publish option, results are automatically uploaded as either SARIF re
 </div>
 </div>
 <div class="sect2">
-<h3 id="_options_9"><a class="anchor" href="#_options_9"></a>Options</h3>
+<h3 id="_options_10"><a class="anchor" href="#_options_10"></a>Options</h3>
 <div class="dlist">
 <dl>
 <dt class="hdlist1">--file, -f</dt>
@@ -1101,13 +1189,13 @@ With the --publish option, results are automatically uploaded as either SARIF re
 <p>Integrate SSC SAST results with GitLab Code Quality.</p>
 </div>
 <div class="sect2">
-<h3 id="_synopsis_11"><a class="anchor" href="#_synopsis_11"></a>Synopsis</h3>
+<h3 id="_synopsis_12"><a class="anchor" href="#_synopsis_12"></a>Synopsis</h3>
 <div class="paragraph">
 <p><strong><a href="manpage/fcli-ssc-action-run.html">fcli ssc action run</a> gitlab-codequality-report [<a href="manpage/fcli-ssc-action-run.html">fcli ssc action run</a> options] [action options, see below]</strong></p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_description_11"><a class="anchor" href="#_description_11"></a>Description</h3>
+<h3 id="_description_12"><a class="anchor" href="#_description_12"></a>Description</h3>
 <div class="paragraph">
 <p>This action generates and optionally publishes SSC SAST vulnerabilities to GitLab.
 With the --publish option, results are automatically uploaded to GitLab pipelines.</p>
@@ -1118,7 +1206,7 @@ With the --publish option, results are automatically uploaded to GitLab pipeline
 </div>
 </div>
 <div class="sect2">
-<h3 id="_options_10"><a class="anchor" href="#_options_10"></a>Options</h3>
+<h3 id="_options_11"><a class="anchor" href="#_options_11"></a>Options</h3>
 <div class="dlist">
 <dl>
 <dt class="hdlist1">--file, -f</dt>
@@ -1161,13 +1249,13 @@ With the --publish option, results are automatically uploaded to GitLab pipeline
 <p>Integrate SSC DAST results with GitLab.</p>
 </div>
 <div class="sect2">
-<h3 id="_synopsis_12"><a class="anchor" href="#_synopsis_12"></a>Synopsis</h3>
+<h3 id="_synopsis_13"><a class="anchor" href="#_synopsis_13"></a>Synopsis</h3>
 <div class="paragraph">
 <p><strong><a href="manpage/fcli-ssc-action-run.html">fcli ssc action run</a> gitlab-dast-report [<a href="manpage/fcli-ssc-action-run.html">fcli ssc action run</a> options] [action options, see below]</strong></p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_description_12"><a class="anchor" href="#_description_12"></a>Description</h3>
+<h3 id="_description_13"><a class="anchor" href="#_description_13"></a>Description</h3>
 <div class="paragraph">
 <p>This action generates and optionally publishes SSC DAST vulnerabilities to GitLab.
 With the --publish option, results are automatically uploaded to GitLab pipelines.</p>
@@ -1178,7 +1266,7 @@ With the --publish option, results are automatically uploaded to GitLab pipeline
 </div>
 </div>
 <div class="sect2">
-<h3 id="_options_11"><a class="anchor" href="#_options_11"></a>Options</h3>
+<h3 id="_options_12"><a class="anchor" href="#_options_12"></a>Options</h3>
 <div class="dlist">
 <dl>
 <dt class="hdlist1">--file, -f</dt>
@@ -1213,13 +1301,13 @@ With the --publish option, results are automatically uploaded to GitLab pipeline
 <p>Integrate SSC Debricked results with GitLab Dependency Scanning.</p>
 </div>
 <div class="sect2">
-<h3 id="_synopsis_13"><a class="anchor" href="#_synopsis_13"></a>Synopsis</h3>
+<h3 id="_synopsis_14"><a class="anchor" href="#_synopsis_14"></a>Synopsis</h3>
 <div class="paragraph">
 <p><strong><a href="manpage/fcli-ssc-action-run.html">fcli ssc action run</a> gitlab-debricked-report [<a href="manpage/fcli-ssc-action-run.html">fcli ssc action run</a> options] [action options, see below]</strong></p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_description_13"><a class="anchor" href="#_description_13"></a>Description</h3>
+<h3 id="_description_14"><a class="anchor" href="#_description_14"></a>Description</h3>
 <div class="paragraph">
 <p>This action generates and optionally publishes SSC Debricked vulnerabilities to GitLab.
 With the --publish option, results are automatically uploaded to GitLab pipelines.</p>
@@ -1230,7 +1318,7 @@ With the --publish option, results are automatically uploaded to GitLab pipeline
 </div>
 </div>
 <div class="sect2">
-<h3 id="_options_12"><a class="anchor" href="#_options_12"></a>Options</h3>
+<h3 id="_options_13"><a class="anchor" href="#_options_13"></a>Options</h3>
 <div class="dlist">
 <dl>
 <dt class="hdlist1">--file, -f</dt>
@@ -1265,13 +1353,13 @@ With the --publish option, results are automatically uploaded to GitLab pipeline
 <p>Integrate SSC SAST results with GitLab.</p>
 </div>
 <div class="sect2">
-<h3 id="_synopsis_14"><a class="anchor" href="#_synopsis_14"></a>Synopsis</h3>
+<h3 id="_synopsis_15"><a class="anchor" href="#_synopsis_15"></a>Synopsis</h3>
 <div class="paragraph">
 <p><strong><a href="manpage/fcli-ssc-action-run.html">fcli ssc action run</a> gitlab-sast-report [<a href="manpage/fcli-ssc-action-run.html">fcli ssc action run</a> options] [action options, see below]</strong></p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_description_14"><a class="anchor" href="#_description_14"></a>Description</h3>
+<h3 id="_description_15"><a class="anchor" href="#_description_15"></a>Description</h3>
 <div class="paragraph">
 <p>This action generates and optionally publishes SSC SAST vulnerabilities to GitLab.
 With the --publish option, results are automatically uploaded to GitLab pipelines.</p>
@@ -1282,7 +1370,7 @@ With the --publish option, results are automatically uploaded to GitLab pipeline
 </div>
 </div>
 <div class="sect2">
-<h3 id="_options_13"><a class="anchor" href="#_options_13"></a>Options</h3>
+<h3 id="_options_14"><a class="anchor" href="#_options_14"></a>Options</h3>
 <div class="dlist">
 <dl>
 <dt class="hdlist1">--file, -f</dt>
@@ -1325,13 +1413,13 @@ With the --publish option, results are automatically uploaded to GitLab pipeline
 <p>Integrate SSC Sonatype results with GitLab Dependency Scanning.</p>
 </div>
 <div class="sect2">
-<h3 id="_synopsis_15"><a class="anchor" href="#_synopsis_15"></a>Synopsis</h3>
+<h3 id="_synopsis_16"><a class="anchor" href="#_synopsis_16"></a>Synopsis</h3>
 <div class="paragraph">
 <p><strong><a href="manpage/fcli-ssc-action-run.html">fcli ssc action run</a> gitlab-sonatype-report [<a href="manpage/fcli-ssc-action-run.html">fcli ssc action run</a> options] [action options, see below]</strong></p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_description_15"><a class="anchor" href="#_description_15"></a>Description</h3>
+<h3 id="_description_16"><a class="anchor" href="#_description_16"></a>Description</h3>
 <div class="paragraph">
 <p>This action generates and optionally publishes SSC Sonatype vulnerabilities to GitLab.
 With the --publish option, results are automatically uploaded to GitLab pipelines.</p>
@@ -1342,7 +1430,7 @@ With the --publish option, results are automatically uploaded to GitLab pipeline
 </div>
 </div>
 <div class="sect2">
-<h3 id="_options_14"><a class="anchor" href="#_options_14"></a>Options</h3>
+<h3 id="_options_15"><a class="anchor" href="#_options_15"></a>Options</h3>
 <div class="dlist">
 <dl>
 <dt class="hdlist1">--file, -f</dt>
@@ -1377,13 +1465,13 @@ With the --publish option, results are automatically uploaded to GitLab pipeline
 <p>Package source code</p>
 </div>
 <div class="sect2">
-<h3 id="_synopsis_16"><a class="anchor" href="#_synopsis_16"></a>Synopsis</h3>
+<h3 id="_synopsis_17"><a class="anchor" href="#_synopsis_17"></a>Synopsis</h3>
 <div class="paragraph">
 <p><strong><a href="manpage/fcli-ssc-action-run.html">fcli ssc action run</a> package [<a href="manpage/fcli-ssc-action-run.html">fcli ssc action run</a> options] [action options, see below]</strong></p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_description_16"><a class="anchor" href="#_description_16"></a>Description</h3>
+<h3 id="_description_17"><a class="anchor" href="#_description_17"></a>Description</h3>
 <div class="paragraph">
 <p>This action can be used to package source code using ScanCentral Client. It will
 take care of installing the specified ScanCentral Client version, followed by
@@ -1394,7 +1482,7 @@ only ScanCentral logs, not fcli logs.</p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_options_15"><a class="anchor" href="#_options_15"></a>Options</h3>
+<h3 id="_options_16"><a class="anchor" href="#_options_16"></a>Options</h3>
 <div class="dlist">
 <dl>
 <dt class="hdlist1">--use-package</dt>
@@ -1455,13 +1543,13 @@ sensors from all pools. This option is only used when --sc-client-version is not
 <p>Apply Aviator remediations and push them to a new branch</p>
 </div>
 <div class="sect2">
-<h3 id="_synopsis_17"><a class="anchor" href="#_synopsis_17"></a>Synopsis</h3>
+<h3 id="_synopsis_18"><a class="anchor" href="#_synopsis_18"></a>Synopsis</h3>
 <div class="paragraph">
 <p><strong><a href="manpage/fcli-ssc-action-run.html">fcli ssc action run</a> push-remediations [<a href="manpage/fcli-ssc-action-run.html">fcli ssc action run</a> options] [action options, see below]</strong></p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_description_17"><a class="anchor" href="#_description_17"></a>Description</h3>
+<h3 id="_description_18"><a class="anchor" href="#_description_18"></a>Description</h3>
 <div class="paragraph">
 <p>This action applies Aviator-generated remediations to the local source code, then
 commits and pushes only those changes to a new branch on the remote repository.</p>
@@ -1487,7 +1575,7 @@ configuration (for example an http.extraHeader injected by the CI checkout step)
 </div>
 </div>
 <div class="sect2">
-<h3 id="_options_16"><a class="anchor" href="#_options_16"></a>Options</h3>
+<h3 id="_options_17"><a class="anchor" href="#_options_17"></a>Options</h3>
 <div class="dlist">
 <dl>
 <dt class="hdlist1">--source-dir, -s</dt>
@@ -1526,13 +1614,13 @@ configuration (for example an http.extraHeader injected by the CI checkout step)
 <p>Generate SARIF report listing SSC SAST vulnerabilities.</p>
 </div>
 <div class="sect2">
-<h3 id="_synopsis_18"><a class="anchor" href="#_synopsis_18"></a>Synopsis</h3>
+<h3 id="_synopsis_19"><a class="anchor" href="#_synopsis_19"></a>Synopsis</h3>
 <div class="paragraph">
 <p><strong><a href="manpage/fcli-ssc-action-run.html">fcli ssc action run</a> sarif-sast-report [<a href="manpage/fcli-ssc-action-run.html">fcli ssc action run</a> options] [action options, see below]</strong></p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_description_18"><a class="anchor" href="#_description_18"></a>Description</h3>
+<h3 id="_description_19"><a class="anchor" href="#_description_19"></a>Description</h3>
 <div class="paragraph">
 <p>This action generates a SARIF report listing Fortify SAST vulnerabilities, which
 may be useful for integration with various 3rd-party tools that can ingest SARIF
@@ -1541,7 +1629,7 @@ reports. For more information about SARIF, please see
 </div>
 </div>
 <div class="sect2">
-<h3 id="_options_17"><a class="anchor" href="#_options_17"></a>Options</h3>
+<h3 id="_options_18"><a class="anchor" href="#_options_18"></a>Options</h3>
 <div class="dlist">
 <dl>
 <dt class="hdlist1">--file, -f</dt>
@@ -1580,13 +1668,13 @@ reports. For more information about SARIF, please see
 <p>(PREVIEW) Generate ServiceNow CSV report</p>
 </div>
 <div class="sect2">
-<h3 id="_synopsis_19"><a class="anchor" href="#_synopsis_19"></a>Synopsis</h3>
+<h3 id="_synopsis_20"><a class="anchor" href="#_synopsis_20"></a>Synopsis</h3>
 <div class="paragraph">
 <p><strong><a href="manpage/fcli-ssc-action-run.html">fcli ssc action run</a> servicenow-csv-report [<a href="manpage/fcli-ssc-action-run.html">fcli ssc action run</a> options] [action options, see below]</strong></p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_description_19"><a class="anchor" href="#_description_19"></a>Description</h3>
+<h3 id="_description_20"><a class="anchor" href="#_description_20"></a>Description</h3>
 <div class="paragraph">
 <p>This action generates a CSV report that can be imported into the ServiceNow
 Vulnerability Response module; please see the following link for details:
@@ -1596,7 +1684,7 @@ the given SSC application version and filter set.</p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_options_18"><a class="anchor" href="#_options_18"></a>Options</h3>
+<h3 id="_options_19"><a class="anchor" href="#_options_19"></a>Options</h3>
 <div class="dlist">
 <dl>
 <dt class="hdlist1">--file, -f</dt>
@@ -1627,13 +1715,13 @@ the given SSC application version and filter set.</p>
 <p>Set up application version.</p>
 </div>
 <div class="sect2">
-<h3 id="_synopsis_20"><a class="anchor" href="#_synopsis_20"></a>Synopsis</h3>
+<h3 id="_synopsis_21"><a class="anchor" href="#_synopsis_21"></a>Synopsis</h3>
 <div class="paragraph">
 <p><strong><a href="manpage/fcli-ssc-action-run.html">fcli ssc action run</a> setup-appversion [<a href="manpage/fcli-ssc-action-run.html">fcli ssc action run</a> options] [action options, see below]</strong></p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_description_20"><a class="anchor" href="#_description_20"></a>Description</h3>
+<h3 id="_description_21"><a class="anchor" href="#_description_21"></a>Description</h3>
 <div class="paragraph">
 <p>This action allows for preparing an application version for running an application
 security scan, creating the application and/or release if they do not exist yet.</p>
@@ -1657,7 +1745,7 @@ appropriate option values and setup commands to run.</p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_options_19"><a class="anchor" href="#_options_19"></a>Options</h3>
+<h3 id="_options_20"><a class="anchor" href="#_options_20"></a>Options</h3>
 <div class="dlist">
 <dl>
 <dt class="hdlist1">--appversion, --av</dt>
@@ -1708,20 +1796,20 @@ appropriate option values and setup commands to run.</p>
 <p>Generate a SonarQube External Issues report listing SSC SAST vulnerabilities.</p>
 </div>
 <div class="sect2">
-<h3 id="_synopsis_21"><a class="anchor" href="#_synopsis_21"></a>Synopsis</h3>
+<h3 id="_synopsis_22"><a class="anchor" href="#_synopsis_22"></a>Synopsis</h3>
 <div class="paragraph">
 <p><strong><a href="manpage/fcli-ssc-action-run.html">fcli ssc action run</a> sonarqube-sast-report [<a href="manpage/fcli-ssc-action-run.html">fcli ssc action run</a> options] [action options, see below]</strong></p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_description_21"><a class="anchor" href="#_description_21"></a>Description</h3>
+<h3 id="_description_22"><a class="anchor" href="#_description_22"></a>Description</h3>
 <div class="paragraph">
 <p>For information on how to import this report into SonarQube, see
 <a href="https://docs.sonarsource.com/sonarqube/latest/analyzing-source-code/importing-external-issues/external-analyzer-reports/" class="bare">https://docs.sonarsource.com/sonarqube/latest/analyzing-source-code/importing-external-issues/external-analyzer-reports/</a></p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_options_20"><a class="anchor" href="#_options_20"></a>Options</h3>
+<h3 id="_options_21"><a class="anchor" href="#_options_21"></a>Options</h3>
 <div class="dlist">
 <dl>
 <dt class="hdlist1">--file, -f</dt>
@@ -1761,8 +1849,8 @@ appropriate option values and setup commands to run.</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20260701.153102-dev_v3.x<br>
-Last updated 2026-07-01 15:34:24 UTC
+Version 0.20260710.091910-dev_v3.x<br>
+Last updated 2026-07-10 09:22:48 UTC
 </div>
 </div>
 </body>
