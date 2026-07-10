@@ -21,8 +21,8 @@ import com.fortify.cli.common.json.producer.IObjectNodeProducer;
 import com.fortify.cli.common.json.producer.ObjectNodeProducerApplyFrom;
 import com.fortify.cli.common.output.cli.cmd.AbstractOutputCommand;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
-import com.fortify.cli.license.ncd_report.cli.mixin.NcdReportListContributorsEmbedMixin;
-import com.fortify.cli.license.ncd_report.helper.NcdReportContributorsOutputHelper;
+import com.fortify.cli.license.ncd_report.cli.mixin.NcdReportListRepositoriesEmbedMixin;
+import com.fortify.cli.license.ncd_report.helper.NcdReportRepositoriesOutputHelper;
 import com.fortify.cli.license.ncd_report.reader.NcdReportReader;
 
 import lombok.Getter;
@@ -30,22 +30,23 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
-@Command(name = "list-contributors", aliases = {"lsc"})
-public final class NcdReportListContributorsCommand extends AbstractOutputCommand {
+@Command(name = "list-repositories", aliases = {"lsr"})
+public final class NcdReportListRepositoriesCommand extends AbstractOutputCommand {
+
     @Getter @Mixin private OutputHelperMixins.TableWithQuery outputHelper;
 
     @Option(names = {"-r", "--report"}, required = true)
     @Getter private Path reportPath;
 
-        @Mixin private NcdReportListContributorsEmbedMixin embedMixin;
+        @Mixin private NcdReportListRepositoriesEmbedMixin embedMixin;
 
     @Override
     protected IObjectNodeProducer getObjectNodeProducer() {
         var reader = new NcdReportReader(reportPath);
         try {
             return streamingObjectNodeProducerBuilder(ObjectNodeProducerApplyFrom.SPEC)
-                    .streamSupplier(() -> readContributorsStream(reader))
-                    .recordTransformer(n -> enrichContributorRecord(n, reader))
+                    .streamSupplier(() -> readRepositoriesStream(reader))
+                    .recordTransformer(n -> enrichRepositoryRecord(n, reader))
                     .build();
         } catch ( RuntimeException e ) {
             reader.close();
@@ -53,18 +54,18 @@ public final class NcdReportListContributorsCommand extends AbstractOutputComman
         }
     }
 
-    private Stream<ObjectNode> readContributorsStream(NcdReportReader reader) {
-        return new NcdReportContributorsOutputHelper(reader)
-                .readContributorsAsOutputRows()
+    @Override
+    public boolean isSingular() {
+        return false;
+    }
+
+    private Stream<ObjectNode> readRepositoriesStream(NcdReportReader reader) {
+        return new NcdReportRepositoriesOutputHelper(reader)
+                .readRepositoriesAsOutputRows()
                 .onClose(reader::close);
     }
 
-    private JsonNode enrichContributorRecord(JsonNode record, NcdReportReader reader) {
+    private JsonNode enrichRepositoryRecord(JsonNode record, NcdReportReader reader) {
         return embedMixin.enrichRecord(record, reader);
-    }
-
-    @Override
-    public final boolean isSingular() {
-        return false;
     }
 }

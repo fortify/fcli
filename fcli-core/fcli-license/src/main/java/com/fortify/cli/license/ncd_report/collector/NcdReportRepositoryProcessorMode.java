@@ -10,11 +10,9 @@
  * herein. The information contained herein is subject to change
  * without notice.
  */
-package com.fortify.cli.license.ncd_report.writer;
+package com.fortify.cli.license.ncd_report.collector;
 
-import com.fortify.cli.license.ncd_report.descriptor.INcdReportRepositoryDescriptor;
-import com.fortify.cli.license.ncd_report.descriptor.NcdReportProcessedAuthorDescriptor;
-
-public interface INcdReportAuthorsByRepositoryWriter {
-    void writeRepositoryAuthor(INcdReportRepositoryDescriptor repositoryDescriptor, NcdReportProcessedAuthorDescriptor contributorDescriptor, boolean dormant);
+public enum NcdReportRepositoryProcessorMode {
+    FULL_REPORT,
+    SELECTION_ONLY
 }
