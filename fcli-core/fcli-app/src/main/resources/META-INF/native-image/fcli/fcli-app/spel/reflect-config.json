@@ -89,6 +89,9 @@
   "name" : "java.lang.Class",
   "allPublicMethods" : true
 },{
+  "name" : "java.time.OffsetDateTime",
+  "allPublicMethods" : true
+},{
   "name" : "java.util.ArrayList",
   "allPublicMethods" : true
 },{

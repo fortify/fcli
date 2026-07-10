@@ -12,6 +12,7 @@
  */
 package com.fortify.cli.aviator.fpr.model;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -19,6 +20,10 @@ import java.util.Optional;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.stream.XMLInputFactory;
+import javax.xml.stream.XMLStreamConstants;
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.XMLStreamReader;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,6 +31,7 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
+import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
 import com.fortify.cli.aviator.fpr.filter.FilterSet;
 import com.fortify.cli.aviator.fpr.filter.FilterTemplate;
 import com.fortify.cli.aviator.util.FprHandle;
@@ -53,12 +59,7 @@ public class FPRInfo {
     public FPRInfo(FprHandle fprHandle) {
         FPRName = String.valueOf(fprHandle.getFprPath().getFileName());
         buildId = "";
-        try {
-            extractInfoFromAuditFvdlStreaming(fprHandle);
-        } catch (Exception e) {
-            // It's better to wrap this in a specific runtime exception
-            throw new RuntimeException("Failed to extract info from audit.fvdl", e);
-        }
+        extractInfoFromAuditFvdlStreaming(fprHandle);
     }
 
     /**
@@ -70,22 +71,22 @@ public class FPRInfo {
      * - Build information (BuildID, SourceBasePath, NumberFiles, ScanTime)
      *
      * @param fprHandle for getting path
-     * @throws Exception if parsing fails
+     * @throws AviatorTechnicalException if parsing fails
      */
-    private void extractInfoFromAuditFvdlStreaming(FprHandle fprHandle) throws Exception {
+    private void extractInfoFromAuditFvdlStreaming(FprHandle fprHandle) {
         Path auditPath = fprHandle.getPath("/audit.fvdl");
 
         if (!Files.exists(auditPath)) {
-            throw new IllegalStateException("audit.fvdl not found in FPR: " + fprHandle.getFprPath());
+            throw new AviatorTechnicalException("audit.fvdl not found in FPR: " + fprHandle.getFprPath());
         }
 
-        javax.xml.stream.XMLInputFactory factory = javax.xml.stream.XMLInputFactory.newInstance();
+        XMLInputFactory factory = XMLInputFactory.newInstance();
         // Security: Disable external entity processing
-        factory.setProperty(javax.xml.stream.XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, false);
-        factory.setProperty(javax.xml.stream.XMLInputFactory.SUPPORT_DTD, false);
+        factory.setProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, false);
+        factory.setProperty(XMLInputFactory.SUPPORT_DTD, false);
 
-        try (java.io.InputStream inputStream = Files.newInputStream(auditPath)) {
-            javax.xml.stream.XMLStreamReader reader = factory.createXMLStreamReader(inputStream);
+        try (InputStream inputStream = Files.newInputStream(auditPath)) {
+            XMLStreamReader reader = factory.createXMLStreamReader(inputStream);
 
             boolean inBuild = false;
             String currentElement = null;
@@ -93,7 +94,7 @@ public class FPRInfo {
             while (reader.hasNext()) {
                 int event = reader.next();
 
-                if (event == javax.xml.stream.XMLStreamConstants.START_ELEMENT) {
+                if (event == XMLStreamConstants.START_ELEMENT) {
                     String localName = reader.getLocalName();
 
                     if ("UUID".equals(localName)) {
@@ -109,7 +110,7 @@ public class FPRInfo {
                         currentElement = localName;
                     }
 
-                } else if (event == javax.xml.stream.XMLStreamConstants.CHARACTERS && inBuild && currentElement != null) {
+                } else if (event == XMLStreamConstants.CHARACTERS && inBuild && currentElement != null) {
                     // Read text content for Build child elements
                     String text = reader.getText().trim();
                     if (!text.isEmpty()) {
@@ -129,7 +130,7 @@ public class FPRInfo {
                         }
                     }
 
-                } else if (event == javax.xml.stream.XMLStreamConstants.END_ELEMENT) {
+                } else if (event == XMLStreamConstants.END_ELEMENT) {
                     String localName = reader.getLocalName();
 
                     if ("Build".equals(localName)) {
@@ -149,8 +150,8 @@ public class FPRInfo {
 
             reader.close();
 
-        } catch (javax.xml.stream.XMLStreamException e) {
-            throw new Exception("Failed to parse audit.fvdl using streaming parser", e);
+        } catch (IOException | XMLStreamException e) {
+            throw new AviatorTechnicalException("Failed to parse audit.fvdl using streaming parser", e);
         }
 
         if (buildId == null) {
@@ -164,15 +165,15 @@ public class FPRInfo {
      *
      * @param reader XMLStreamReader positioned at START_ELEMENT
      * @return Text content of the element, or empty string if no text
-     * @throws javax.xml.stream.XMLStreamException if reading fails
+     * @throws XMLStreamException if reading fails
      */
-    private String readElementText(javax.xml.stream.XMLStreamReader reader) throws javax.xml.stream.XMLStreamException {
+    private String readElementText(XMLStreamReader reader) throws XMLStreamException {
         StringBuilder text = new StringBuilder();
         while (reader.hasNext()) {
             int event = reader.next();
-            if (event == javax.xml.stream.XMLStreamConstants.CHARACTERS) {
+            if (event == XMLStreamConstants.CHARACTERS) {
                 text.append(reader.getText());
-            } else if (event == javax.xml.stream.XMLStreamConstants.END_ELEMENT) {
+            } else if (event == XMLStreamConstants.END_ELEMENT) {
                 break;
             }
         }
@@ -183,7 +184,7 @@ public class FPRInfo {
         Path auditPath = fprHandle.getPath("/audit.fvdl");
 
         if (!Files.exists(auditPath)) {
-            throw new IllegalStateException("audit.fvdl not found in FPR: " + fprHandle.getFprPath());
+            throw new AviatorTechnicalException("audit.fvdl not found in FPR: " + fprHandle.getFprPath());
         }
 
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();

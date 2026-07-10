@@ -16,21 +16,27 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fortify.cli.aviator._common.config.AviatorConfigManager;
 import com.fortify.cli.aviator._common.session.user.cli.mixin.AviatorUserSessionDescriptorSupplier;
 import com.fortify.cli.aviator._common.session.user.helper.AviatorUserSessionDescriptor;
 import com.fortify.cli.aviator.audit.AuditFPR;
 import com.fortify.cli.aviator.audit.model.AuditFprOptions;
 import com.fortify.cli.aviator.audit.model.FPRAuditResult;
 import com.fortify.cli.aviator.config.AviatorLoggerImpl;
+import com.fortify.cli.aviator.config.TagMappingConfig;
 import com.fortify.cli.aviator.ssc.helper.AviatorSSCAuditHelper;
+import com.fortify.cli.aviator.ssc.helper.AviatorSSCTagValidator;
 import com.fortify.cli.aviator.util.FprHandle;
+import com.fortify.cli.aviator.util.ResourceUtil;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.progress.cli.mixin.ProgressWriterFactoryMixin;
@@ -52,6 +58,7 @@ import com.fortify.cli.ssc.system_state.helper.SSCJobHelper;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import lombok.SneakyThrows;
+import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
@@ -69,15 +76,18 @@ public class AviatorSSCAuditCommand extends AbstractSSCJsonNodeOutputCommand imp
     @Option(names = {"--tag-mapping"}) private String tagMapping;
     @Option(names = {"--no-filterset"}) private boolean noFilterSet;
     @Option(names = {"--folder"}, split = ",") @DisableTest(DisableTest.TestType.MULTI_OPT_PLURAL_NAME) private List<String> folderNames;
-    @Option(names = {"--skip-if-exceeding-quota"}) private boolean skipIfExceedingQuota;
+    @ArgGroup(exclusive = true, multiplicity = "0..1") private QuotaHandlingArgGroup quotaHandlingArgGroup = new QuotaHandlingArgGroup();
     @Option(names = {"--test-exceeding-quota"}) private boolean testExceedingQuota;
     @Option(names = {"--default-quota-fallback"}) private boolean defaultQuotaFallback;
-    @Option(names = {"--folder-priority-order"}, split = ",",
-            description = "Custom priority order by folder (comma-separated, highest first). Example: Critical,High,Medium,Low")
-    @DisableTest(DisableTest.TestType.MULTI_OPT_PLURAL_NAME)
-    private List<String> folderPriorityOrder;
     private static final Logger LOG = LoggerFactory.getLogger(AviatorSSCAuditCommand.class);
     private Long checkedQuotaBefore;
+
+    private static final class QuotaHandlingArgGroup {
+        @Option(names = {"--skip-if-exceeding-quota"}) private boolean skipIfExceedingQuota;
+        @Option(names = {"--folder-priority-order"}, split = ",")
+        @DisableTest(DisableTest.TestType.MULTI_OPT_PLURAL_NAME)
+        private List<String> folderPriorityOrder;
+    }
 
     @Override
     @SneakyThrows
@@ -90,7 +100,7 @@ public class AviatorSSCAuditCommand extends AbstractSSCJsonNodeOutputCommand imp
 
             refreshMetricsIfNeeded(unirest, av, logger);
 
-            long auditableIssueCount = AviatorSSCAuditHelper.getAuditableIssueCount(unirest, av, logger, noFilterSet, filterSetOptions, folderNames);
+            long auditableIssueCount = AviatorSSCAuditHelper.getAuditableIssueCount(unirest, av, logger, isNoFilterSet(), getFilterSetTitleOrId(), folderNames);
             if (auditableIssueCount == 0) {
                 logger.progress("Audit skipped - no auditable issues found matching the specified filters.");
                 ObjectNode result = AviatorSSCAuditHelper.buildResultNode(av, null, "SKIPPED");
@@ -122,6 +132,14 @@ public class AviatorSSCAuditCommand extends AbstractSSCJsonNodeOutputCommand imp
         }
     }
 
+    String getFilterSetTitleOrId() {
+        return filterSetOptions.getFilterSetTitleOrId();
+    }
+
+    boolean isNoFilterSet() {
+        return noFilterSet;
+    }
+
     private void refreshMetricsIfNeeded(UnirestInstance unirest, SSCAppVersionDescriptor av, AviatorLoggerImpl logger) {
         if (refreshOptions.isRefresh() && av.isRefreshRequired()) {
             logger.progress("Status: Metrics for application version %s:%s are out of date, starting refresh...", av.getApplicationName(), av.getVersionName());
@@ -133,6 +151,14 @@ public class AviatorSSCAuditCommand extends AbstractSSCJsonNodeOutputCommand imp
         }
     }
 
+    private boolean isSkipIfExceedingQuota() {
+        return quotaHandlingArgGroup.skipIfExceedingQuota;
+    }
+
+    private List<String> getFolderPriorityOrder() {
+        return quotaHandlingArgGroup.folderPriorityOrder;
+    }
+
     /**
      * Checks quota constraints when --skip-if-exceeding-quota or --test-exceeding-quota is active.
      * @return a result JsonNode if the audit should be skipped/reported, or null if the audit should proceed.
@@ -140,7 +166,7 @@ public class AviatorSSCAuditCommand extends AbstractSSCJsonNodeOutputCommand imp
     private JsonNode checkQuota(UnirestInstance unirest, SSCAppVersionDescriptor av,
             AviatorUserSessionDescriptor sessionDescriptor,
             long auditableIssueCount, AviatorLoggerImpl logger) {
-        if (!skipIfExceedingQuota && !testExceedingQuota) {
+        if (!isSkipIfExceedingQuota() && !testExceedingQuota) {
             return null;
         }
 
@@ -245,10 +271,10 @@ public class AviatorSSCAuditCommand extends AbstractSSCJsonNodeOutputCommand imp
                     .sscAppVersion(av.getVersionName())
                     .logger(logger)
                     .tagMappingPath(tagMapping)
-                    .filterSetNameOrId(filterSetOptions.getFilterSetTitleOrId())
-                    .noFilterSet(noFilterSet)
+                    .filterSetNameOrId(getFilterSetTitleOrId())
+                    .noFilterSet(isNoFilterSet())
                     .folderNames(folderNames)
-                    .folderPriorityOrder(folderPriorityOrder)
+                    .folderPriorityOrder(getFolderPriorityOrder())
                     .build());
         } catch (Exception e) {
             LOG.error("FPR audit failed for {}:{}: {}", av.getApplicationName(), av.getVersionName(), e.getMessage(), e);
@@ -262,6 +288,7 @@ public class AviatorSSCAuditCommand extends AbstractSSCJsonNodeOutputCommand imp
 
         String artifactId = null;
         if (auditResult.getUpdatedFile() != null && !"SKIPPED".equals(action) && !"FAILED".equals(action)) {
+            validateSSCTagsBeforeUpload(unirest, av, logger);
             try {
                 artifactId = uploadAuditedFprToSSC(unirest, auditResult.getUpdatedFile(), av);
             } catch (Exception e) {
@@ -273,6 +300,46 @@ public class AviatorSSCAuditCommand extends AbstractSSCJsonNodeOutputCommand imp
         ObjectNode result = AviatorSSCAuditHelper.buildResultNode(av, artifactId, action);
         AviatorSSCAuditHelper.setAuditStats(result, auditResult);
         return result;
+    }
+
+    /**
+     * Validates that SSC has the required custom tags and Analysis tag values
+     * before uploading the audited FPR. Emits warnings for any missing tags or
+     * values so the user can take corrective action.
+     */
+    private void validateSSCTagsBeforeUpload(UnirestInstance unirest, SSCAppVersionDescriptor av,
+            AviatorLoggerImpl logger) {
+        LOG.info("Starting SSC tag validation before FPR upload for app version id={}.", av.getVersionId());
+        TagMappingConfig tagMappingConfig = loadTagMappingForValidation();
+        LOG.debug("Tag mapping config loaded: tag_id='{}', mapping={}", tagMappingConfig.getTag_id(), tagMappingConfig.getMapping());
+        Set<String> analysisTagValues = extractAnalysisTagValues(tagMappingConfig);
+        LOG.info("Analysis tag values to validate: {}", analysisTagValues);
+        List<String> warnings = AviatorSSCTagValidator.validatePreUpload(
+            unirest, av.getVersionId(), tagMappingConfig.getTag_id(), analysisTagValues, logger);
+        LOG.info("Tag validation complete. {} warning(s) found.", warnings.size());
+    }
+
+    private TagMappingConfig loadTagMappingForValidation() {
+        if (tagMapping != null && !tagMapping.isBlank()) {
+            return ResourceUtil.loadYamlFile(new java.io.File(tagMapping), TagMappingConfig.class);
+        }
+        return AviatorConfigManager.getInstance().getDefaultTagMappingConfig();
+    }
+
+    private Set<String> extractAnalysisTagValues(TagMappingConfig config) {
+        Set<String> values = new LinkedHashSet<>();
+        if (config.getMapping() != null) {
+            addTierValues(values, config.getMapping().getTier_1());
+            addTierValues(values, config.getMapping().getTier_2());
+        }
+        return values;
+    }
+
+    private void addTierValues(Set<String> values, TagMappingConfig.Tier tier) {
+        if (tier == null) return;
+        if (tier.getFp() != null && tier.getFp().getValue() != null) values.add(tier.getFp().getValue());
+        if (tier.getTp() != null && tier.getTp().getValue() != null) values.add(tier.getTp().getValue());
+        if (tier.getUnsure() != null && tier.getUnsure().getValue() != null) values.add(tier.getUnsure().getValue());
     }
 
     private Path downloadFpr(UnirestInstance unirest, SSCAppVersionDescriptor av, AviatorLoggerImpl logger) throws IOException {

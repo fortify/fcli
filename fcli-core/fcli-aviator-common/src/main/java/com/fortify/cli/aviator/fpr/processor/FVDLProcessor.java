@@ -272,7 +272,9 @@ public class FVDLProcessor {
             try {
                 if (Files.exists(actualSourcePath)) {
                     byte[] encodedBytes = Files.readAllBytes(actualSourcePath);
-                    file.setContent(new String(encodedBytes));
+                    String content = new String(encodedBytes);
+                    // Preserve numbered source lines for prompt fidelity; content is later forwarded as-is.
+                    file.setContent(fileUtils.appendLineNumbers(content, filename, 0));
                     file.setEndLine(fileUtils.countLines(actualSourcePath));
                 } else {
                     // This warning is now more accurate.

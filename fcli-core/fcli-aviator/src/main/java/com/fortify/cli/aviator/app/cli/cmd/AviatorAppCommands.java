@@ -20,6 +20,7 @@ import picocli.CommandLine;
         name = "app",
         subcommands = {
                 AviatorAppCreateCommand.class,
+                AviatorAppAddEntitlementCommand.class,
                 AviatorAppDeleteCommand.class,
                 AviatorAppGetCommand.class,
                 AviatorAppListCommand.class,

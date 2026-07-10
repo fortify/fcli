@@ -52,6 +52,23 @@ class FprHandleTest {
     }
 
     @Test
+    @DisplayName("parses Java properties XML with the standard DOCTYPE")
+    void parsesPropertiesXmlWithStandardDoctype() throws Exception {
+        Path fprPath = createFpr("""
+            <?xml version="1.0" encoding="UTF-8"?>
+            <!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+            <properties>
+                <comment>Fortify Source Archive Index V1.0</comment>
+                <entry key="Test.java">src-archive/Test.java</entry>
+            </properties>
+            """);
+
+        try (FprHandle handle = new FprHandle(fprPath)) {
+            assertEquals("src-archive/Test.java", handle.getSourceFileMap().get("Test.java"));
+        }
+    }
+
+    @Test
     @DisplayName("defers malformed source index parsing until source map is requested")
     void defersMalformedSourceIndexParsingUntilSourceMapIsRequested() throws Exception {
         Path fprPath = createFpr("""
@@ -64,6 +81,24 @@ class FprHandleTest {
             AviatorTechnicalException exception = assertThrows(AviatorTechnicalException.class, handle::getSourceFileMap);
 
             assertTrue(exception.getCause() instanceof SAXException);
+        }
+    }
+
+    @Test
+    @DisplayName("parses Java properties XML with the standard DOCTYPE split across lines")
+    void parsesPropertiesXmlWithMultilineStandardDoctype() throws Exception {
+        Path fprPath = createFpr("""
+            <?xml version="1.0" encoding="UTF-8"?>
+            <!DOCTYPE properties
+              SYSTEM "http://java.sun.com/dtd/properties.dtd">
+            <properties>
+                <comment>Fortify Source Archive Index V1.0</comment>
+                <entry key="Test.java">src-archive/Test.java</entry>
+            </properties>
+            """);
+
+        try (FprHandle handle = new FprHandle(fprPath)) {
+            assertEquals("src-archive/Test.java", handle.getSourceFileMap().get("Test.java"));
         }
     }
 
@@ -81,6 +116,48 @@ class FprHandleTest {
 
             assertTrue(exception.getCause() instanceof SAXException);
         }
+    }
+
+    @Test
+    @DisplayName("rejects unsupported external DOCTYPE declarations")
+    void rejectsUnsupportedExternalDoctypeDeclarations() throws Exception {
+        Path fprPath = createFpr("""
+            <?xml version="1.0" encoding="UTF-8"?>
+            <!DOCTYPE properties SYSTEM "http://example.com/properties.dtd">
+            <properties>
+                <entry key="Test.java">src-archive/Test.java</entry>
+            </properties>
+            """);
+
+        AviatorTechnicalException exception;
+        try (FprHandle handle = new FprHandle(fprPath)) {
+            exception = assertThrows(AviatorTechnicalException.class, handle::getSourceFileMap);
+        }
+
+        assertTrue(exception.getCause() instanceof IOException);
+        assertTrue(exception.getCause().getMessage().contains("unsupported DOCTYPE declaration"));
+    }
+
+    @Test
+    @DisplayName("rejects internal entity declarations in properties XML")
+    void rejectsInternalEntityDeclarations() throws Exception {
+        Path fprPath = createFpr("""
+            <?xml version="1.0" encoding="UTF-8"?>
+            <!DOCTYPE properties [
+                <!ENTITY bomb "boom">
+            ]>
+            <properties>
+                <entry key="Test.java">&bomb;</entry>
+            </properties>
+            """);
+
+        AviatorTechnicalException exception;
+        try (FprHandle handle = new FprHandle(fprPath)) {
+            exception = assertThrows(AviatorTechnicalException.class, handle::getSourceFileMap);
+        }
+
+        assertTrue(exception.getCause() instanceof IOException);
+        assertTrue(exception.getCause().getMessage().contains("ENTITY declarations"));
     }
 
     @Test

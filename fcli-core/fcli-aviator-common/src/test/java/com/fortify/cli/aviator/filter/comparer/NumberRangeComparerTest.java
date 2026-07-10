@@ -18,6 +18,7 @@ import java.math.BigDecimal;
 
 import org.junit.jupiter.api.Test;
 
+import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
 import com.fortify.cli.aviator.fpr.filter.comparer.NumberRangeComparer;
 import com.fortify.cli.aviator.fpr.filter.comparer.SearchComparer;
 
@@ -86,17 +87,17 @@ class NumberRangeComparerTest {
 
     @Test
     void testThrowsExceptionOnMalformedRangeMissingEnd() {
-        assertThrows(IllegalArgumentException.class, () -> new NumberRangeComparer("[1,5"));
+        assertThrows(AviatorSimpleException.class, () -> new NumberRangeComparer("[1,5"));
     }
 
     @Test
     void testThrowsExceptionOnMalformedRangeMissingStart() {
-        assertThrows(IllegalArgumentException.class, () -> new NumberRangeComparer("1,5]"));
+        assertThrows(AviatorSimpleException.class, () -> new NumberRangeComparer("1,5]"));
     }
 
     @Test
     void testThrowsExceptionOnMalformedRangeMissingSeparator() {
-        assertThrows(IllegalArgumentException.class, () -> new NumberRangeComparer("[1 5]"));
+        assertThrows(AviatorSimpleException.class, () -> new NumberRangeComparer("[1 5]"));
     }
 
 }
