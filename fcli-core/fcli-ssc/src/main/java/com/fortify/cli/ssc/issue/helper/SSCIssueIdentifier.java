@@ -31,9 +31,9 @@ public final class SSCIssueIdentifier {
     private String id;
     
     @JsonProperty("revision")
-    private Integer revision;
+    private Long revision;
     
-    public static final SSCIssueIdentifier fromIdAndRevision(String id, Integer revision) {
+    public static final SSCIssueIdentifier fromIdAndRevision(String id, Long revision) {
         return new SSCIssueIdentifier().id(id).revision(revision);
     }
     

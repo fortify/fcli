@@ -15,9 +15,9 @@ package com.fortify.cli.license.ncd_report.writer;
 import com.fortify.cli.license.ncd_report.descriptor.NcdReportProcessedAuthorDescriptor;
 
 public interface INcdReportAuthorsWriter extends AutoCloseable {
-    void writeIgnoredAuthor(NcdReportProcessedAuthorDescriptor descriptor);
-    void writeDuplicateAuthor(NcdReportProcessedAuthorDescriptor descriptor, String representativeAuthorId, int contributingAuthorNumber);
-    void writeContributor(NcdReportProcessedAuthorDescriptor descriptor, int contributingAuthorNumber);
+    void writeIgnoredAuthor(NcdReportProcessedAuthorDescriptor descriptor, boolean dormant);
+    void writeDuplicateAuthor(NcdReportProcessedAuthorDescriptor descriptor, String representativeAuthorId, int contributingAuthorNumber, boolean dormant);
+    void writeContributor(NcdReportProcessedAuthorDescriptor descriptor, int contributingAuthorNumber, boolean dormant);
     @Override
     void close();
 }

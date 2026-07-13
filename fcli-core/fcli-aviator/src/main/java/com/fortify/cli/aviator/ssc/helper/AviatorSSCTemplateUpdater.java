@@ -42,7 +42,7 @@ public class AviatorSSCTemplateUpdater {
 
     public void process(AviatorSSCPrepareHelper.PrepareOptions options, AviatorSSCPrepareHelper.PrepareResult result, List<JsonNode> aviatorTags, IProgressWriter progress) {
         progress.writeProgress("Discovering issue templates...");
-        Set<Integer> requiredTagIds = aviatorTags.stream().map(t -> t.get("id").asInt()).collect(Collectors.toSet());
+        Set<Long> requiredTagIds = aviatorTags.stream().map(t -> t.get("id").asLong()).collect(Collectors.toSet());
         if (requiredTagIds.contains(-1)) {
             result.addEntry("Issue Templates", "SKIPPED", "Processing skipped as one or more custom tags do not exist.");
             return;
@@ -55,7 +55,7 @@ public class AviatorSSCTemplateUpdater {
 
         List<SSCIssueTemplateDescriptor> templatesToUpdate = targetTemplates.stream().filter(t -> {
             ArrayNode currentTags = currentTagsByTemplateId.get(t.getId());
-            Set<Integer> existingTagIds = JsonHelper.stream(currentTags).map(tag -> tag.get("id").asInt()).collect(Collectors.toSet());
+            Set<Long> existingTagIds = JsonHelper.stream(currentTags).map(tag -> tag.get("id").asLong()).collect(Collectors.toSet());
             boolean hasAllTags = existingTagIds.containsAll(requiredTagIds);
             if (hasAllTags) counter.incrementSkipped();
             return !hasAllTags;
@@ -75,8 +75,8 @@ public class AviatorSSCTemplateUpdater {
             ArrayNode updatedTagsPayload = JsonHelper.getObjectMapper().createArrayNode();
 
             // Get the set of all unique tag IDs (existing + required)
-            Set<Integer> allTagIds = JsonHelper.stream(currentTagsByTemplateId.get(template.getId()))
-                    .map(tag -> tag.get("id").asInt())
+            Set<Long> allTagIds = JsonHelper.stream(currentTagsByTemplateId.get(template.getId()))
+                    .map(tag -> tag.get("id").asLong())
                     .collect(Collectors.toSet());
             allTagIds.addAll(requiredTagIds);
 

@@ -31,24 +31,25 @@ public final class NcdReportAuthorsWriter implements INcdReportAuthorsWriter {
     }
 
     @Override
-    public void writeIgnoredAuthor(NcdReportProcessedAuthorDescriptor descriptor) {
-        write(descriptor, "ignored", "");
+    public void writeIgnoredAuthor(NcdReportProcessedAuthorDescriptor descriptor, boolean dormant) {
+        write(descriptor, "ignored", "", dormant);
     }
 
     @Override
     public void writeDuplicateAuthor(NcdReportProcessedAuthorDescriptor descriptor, String representativeAuthorId,
-            int contributingAuthorNumber) {
-        write(descriptor, "duplicate", representativeAuthorId);
+            int contributingAuthorNumber, boolean dormant) {
+        write(descriptor, "duplicate", representativeAuthorId, dormant);
     }
 
     @Override
-    public void writeContributor(NcdReportProcessedAuthorDescriptor descriptor, int contributingAuthorNumber) {
-        write(descriptor, "contributing", "");
+    public void writeContributor(NcdReportProcessedAuthorDescriptor descriptor, int contributingAuthorNumber, boolean dormant) {
+        write(descriptor, "contributing", "", dormant);
     }
 
-    private void write(NcdReportProcessedAuthorDescriptor descriptor, String status, String duplicateOf) {
+    private void write(NcdReportProcessedAuthorDescriptor descriptor, String status, String duplicateOf, boolean dormant) {
         var record = descriptor.updateReportRecord(JsonHelper.getObjectMapper().createObjectNode())
                 .put("contributionStatus", status)
+                .put("dormant", dormant)
                 .put("duplicateOf", duplicateOf);
         buffer.add(record);
     }

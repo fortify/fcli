@@ -27,12 +27,12 @@ import lombok.NoArgsConstructor;
 @Reflectable @NoArgsConstructor
 @Data @EqualsAndHashCode(callSuper=true)
 public class SSCReportTemplateDescriptor extends JsonNodeHolder {
-    private int id;
+    private long id;
     private String name;
     private String description;
     private SSCReportType type;
     private String fileName;
-    private int templateDocId;
+    private long templateDocId;
     private SSCReportRenderingEngineType renderingEngine;
     private SSCReportTemplateParameter[] parameters;
     
@@ -44,12 +44,12 @@ public class SSCReportTemplateDescriptor extends JsonNodeHolder {
     @Reflectable @NoArgsConstructor
     @Data 
     public static final class SSCReportTemplateParameter {
-        private int id;
+        private long id;
         private String name;
         private SSCReportParameterType type;
         private String description;
         private String identifier;
-        private int paramOrder;
+        private long paramOrder;
         @JsonProperty("reportParameterOptions")
         private SSCReportTemplateParameterOption[] options; 
         
@@ -69,13 +69,13 @@ public class SSCReportTemplateDescriptor extends JsonNodeHolder {
     @Reflectable @NoArgsConstructor
     @Data
     public static final class SSCReportTemplateParameterOption {
-        private int id;
+        private long id;
         private String identifier;
         private String displayValue;
         private String reportValue;
         private boolean defaultValue;
         private String description;
-        private int order;
+        private long order;
         
         public final String getDisplayValueWithDefaultValueIndicator() {
             return String.format("%s%s", displayValue, defaultValue?"*":"");

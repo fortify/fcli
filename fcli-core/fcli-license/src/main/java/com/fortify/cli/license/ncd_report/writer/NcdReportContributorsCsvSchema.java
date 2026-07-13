@@ -40,6 +40,7 @@ public final class NcdReportContributorsCsvSchema {
 
     // Contribution status fields (immutable, set during create/merge)
     public static final String CONTRIBUTION_STATUS = "contributionStatus";
+    public static final String DORMANT = "dormant";
     public static final String CONTRIBUTING_AUTHOR_NUMBER = "contributingAuthorNumber";
 
     // Source report fields (immutable, from merged reports only)
@@ -67,7 +68,7 @@ public final class NcdReportContributorsCsvSchema {
     public static final Set<String> IMMUTABLE_FIELDS = Set.of(
         AUTHOR_ID, AUTHOR_NAME, AUTHOR_EMAIL, CLEAN_NAME, CLEAN_EMAIL_NAME,
         AUTHOR_STATE, AUTHOR_NUMBER,
-        CONTRIBUTION_STATUS, CONTRIBUTING_AUTHOR_NUMBER,
+        CONTRIBUTION_STATUS, DORMANT, CONTRIBUTING_AUTHOR_NUMBER,
         SOURCE_REPORTS, SOURCE_CONTRIBUTION_STATUS, SOURCE_CONTRIBUTING_AUTHOR_NUMBER,
         SOURCE_AUTHOR_ID, SOURCE_AUTHOR_STATE, SOURCE_AUTHOR_NUMBER,
         MERGED_AUTHOR_ID, MERGED_AUTHOR_STATE, MERGED_AUTHOR_NUMBER,
@@ -91,6 +92,7 @@ public final class NcdReportContributorsCsvSchema {
         CLEAN_EMAIL_NAME,
         AUTHOR_STATE,
         CONTRIBUTION_STATUS,
+        DORMANT,
         SOURCE_REPORTS,
         SOURCE_CONTRIBUTION_STATUS,
         SOURCE_AUTHOR_ID,

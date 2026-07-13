@@ -12,7 +12,6 @@
  */
 package com.fortify.cli.common.http.proxy.helper;
 
-import java.net.URI;
 import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
@@ -57,7 +56,7 @@ public class ProxyDescriptor extends JsonNodeHolder {
     }
     
     public boolean matches(String module, String url) {
-        return matchesModule(module) && matchesHost(URI.create(url).getHost());
+        return matchesModule(module) && matchesHost(getTargetHost(url));
     }
     
     public static enum ProxyMatchMode {
@@ -69,11 +68,20 @@ public class ProxyDescriptor extends JsonNodeHolder {
     }
     
     private boolean matchesHost(String host) {
+        if ( StringUtils.isBlank(host) ) { return false; }
         boolean matching = targetHostNames==null 
                 ? false
                 : targetHostNames.stream()
                     .anyMatch(hostPattern->matchesHost(hostPattern, host));
         return matching==ProxyMatchMode.include.equals(targetHostNamesMatchMode);
+    }
+
+    private String getTargetHost(String url) {
+        try {
+            return ProxyHelper.parseTargetUri(url).getHost();
+        } catch (Exception e) {
+            return null;
+        }
     }
     
     private boolean matchesHost(String hostPattern, String host) {

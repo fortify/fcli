@@ -31,13 +31,15 @@ public final class NcdReportCommitsByBranchWriter implements INcdReportCommitsBy
         var repositoryDescriptor = descriptor.getRepositoryDescriptor();
         var branchDescriptor = descriptor.getBranchDescriptor();
         var commitDescriptor = descriptor.getCommitDescriptor();
-        recordWriter.append(authorDescriptor.updateReportRecord(
+        var row = authorDescriptor.updateReportRecord(
                 JsonHelper.getObjectMapper().createObjectNode()
                     .put("repositoryUrl", repositoryDescriptor.getUrl())
                     .put("repositoryName", repositoryDescriptor.getFullName())
                     .put("branchName", branchDescriptor.getName())
                     .put("commitId", commitDescriptor.getId())
                     .put("commitDate", commitDescriptor.getDate().toString())
-                    .put("commitMessage", commitDescriptor.getMessage().split("\\R",2)[0])));
+                    .put("commitMessage", commitDescriptor.getMessage().split("\\R",2)[0]));
+        row.put("dormant", descriptor.isDormant());
+        recordWriter.append(row);
     }
 }
