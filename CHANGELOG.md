@@ -1,5 +1,14 @@
 # Changelog
 
+## [3.23.1](https://github.com/fortify/fcli/compare/v3.23.0...v3.23.1) (2026-07-13)
+
+
+### Bug Fixes
+
+* `fcli aviator`: Apply proxy settings on gRPC calls to Aviator backend ([8ab1131](https://github.com/fortify/fcli/commit/8ab11313311f38b8239802b5cc44dc240ec1b0b9))
+* `fcli license ncd-report`: Ignore unknown properties when reading reports for better forward-compatibility ([13079f8](https://github.com/fortify/fcli/commit/13079f83c0f2ac45b914fb7a9f9e2ae45a185efd))
+* SSC/Aviator: Fix potential 'out of range' errors (change data types from int to long) ([68007f3](https://github.com/fortify/fcli/commit/68007f3513ac8fdd9a300dc91dfcfdbfb03809c7))
+
 ## [3.23.0](https://github.com/fortify/fcli/compare/v3.22.0...v3.23.0) (2026-07-10)
 
 
