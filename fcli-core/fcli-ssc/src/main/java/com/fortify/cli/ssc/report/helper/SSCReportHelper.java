@@ -48,14 +48,14 @@ public final class SSCReportHelper {
     
     public static final SSCReportDescriptor getOptionalReportDescriptor(UnirestInstance unirest, String reportNameOrId) {
         try {
-            int reportId = Integer.parseInt(reportNameOrId);
+            long reportId = Long.parseLong(reportNameOrId);
             return getOptionalReportFromId(unirest, reportId);
         } catch (NumberFormatException nfe) {
             return getOptionalReportFromName(unirest, reportNameOrId);
         }
     }
     
-    public static final SSCReportDescriptor getOptionalReportFromId(UnirestInstance unirest, int reportId) {
+    public static final SSCReportDescriptor getOptionalReportFromId(UnirestInstance unirest, long reportId) {
         GetRequest request = getBaseRequest(unirest).queryString("q", String.format("id:%d", reportId));
         return getOptionalDescriptor(request);
     }

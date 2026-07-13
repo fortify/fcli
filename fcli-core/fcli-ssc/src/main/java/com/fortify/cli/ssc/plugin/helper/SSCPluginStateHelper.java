@@ -41,11 +41,11 @@ public final class SSCPluginStateHelper {
     @Data 
     @Reflectable @NoArgsConstructor
     private static final class PluginIdsData {
-        private int[] pluginIds = {};
+        private long[] pluginIds = {};
         
         // Even though SSC expects an array of plugin id's, it only accepts a single plugin id
         private PluginIdsData(String pluginId) {
-            this.pluginIds = new int[] {Integer.parseInt(pluginId)};
+            this.pluginIds = new long[] {Long.parseLong(pluginId)};
         }
     }
 }

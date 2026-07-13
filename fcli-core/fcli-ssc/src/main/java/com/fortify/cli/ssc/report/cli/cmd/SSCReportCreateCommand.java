@@ -153,9 +153,9 @@ public class SSCReportCreateCommand extends AbstractSSCJsonNodeOutputCommand imp
             var value = getValue(param, null);
             var reportValue = Stream.of(value.split("[\\[\\];]"))
                     .filter(StringUtils::isNotBlank)
-                .mapToInt(this::getAppVersionId)
+                .mapToLong(this::getAppVersionId)
                 .toArray();
-            return new SSCInputReportParameterMultiInt(reportValue);
+            return new SSCInputReportParameterMultiLong(reportValue);
         }
 
         private AbstractSSCInputReportParameter createProjectAttributeInputParameter(SSCReportTemplateParameter param) {
@@ -163,18 +163,18 @@ public class SSCReportCreateCommand extends AbstractSSCJsonNodeOutputCommand imp
             if ( attrDefinitionHelper==null ) {
                 attrDefinitionHelper = new SSCAttributeDefinitionHelper(unirest);
             }
-            var attrDefinitionId = Integer.parseInt(attrDefinitionHelper.getAttributeDefinitionDescriptor(value).getId());
-            return new SSCInputReportParameterSingleInt(attrDefinitionId);
+            var attrDefinitionId = Long.parseLong(attrDefinitionHelper.getAttributeDefinitionDescriptor(value).getId());
+            return new SSCInputReportParameterSingleLong(attrDefinitionId);
         }
 
         private AbstractSSCInputReportParameter createSingleProjectInputParameter(SSCReportTemplateParameter param) {
             var value = getValue(param, null);
             var appVersionId = getAppVersionId(value);
-            return new SSCInputReportParameterSingleInt(appVersionId);
+            return new SSCInputReportParameterSingleLong(appVersionId);
         }
 
-        private int getAppVersionId(String value) {
-            return SSCAppVersionHelper.getRequiredAppVersion(unirest, value, delimiter, "id").getIntVersionId();
+        private long getAppVersionId(String value) {
+            return SSCAppVersionHelper.getRequiredAppVersion(unirest, value, delimiter, "id").getLongVersionId();
         }
 
         private AbstractSSCInputReportParameter createSingleSelectDefaultInputParameter(SSCReportTemplateParameter param) {
@@ -246,14 +246,14 @@ public class SSCReportCreateCommand extends AbstractSSCJsonNodeOutputCommand imp
     
     @Reflectable @NoArgsConstructor @AllArgsConstructor
     @Data @EqualsAndHashCode(callSuper=true)
-    private static final class SSCInputReportParameterSingleInt extends AbstractSSCInputReportParameter {
-        private int paramValue;
+    private static final class SSCInputReportParameterSingleLong extends AbstractSSCInputReportParameter {
+        private long paramValue;
     }
     
     @Reflectable @NoArgsConstructor @AllArgsConstructor
     @Data @EqualsAndHashCode(callSuper=true)
-    private static final class SSCInputReportParameterMultiInt extends AbstractSSCInputReportParameter {
-        private int[] paramValue;
+    private static final class SSCInputReportParameterMultiLong extends AbstractSSCInputReportParameter {
+        private long[] paramValue;
     }
     
     @Reflectable @NoArgsConstructor @AllArgsConstructor

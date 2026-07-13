@@ -306,7 +306,7 @@ public final class SSCArtifactHelper {
     }
 
     public static final JsonNode approve(UnirestInstance unirest, String artifactId, String message){
-        int[] artifactIds = {Integer.parseInt(artifactId)};
+        long[] artifactIds = {Long.parseLong(artifactId)};
 
         JsonNode jsonNode = new ObjectMapper().createObjectNode()
                 .putPOJO("artifactIds", artifactIds)
