@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.23.2](https://github.com/fortify/fcli/compare/v3.23.1...v3.23.2) (2026-07-13)
+
+
+### Bug Fixes
+
+* SSC/Aviator: Fix additional potential 'out of range' errors (change data types from int to long) ([36a741c](https://github.com/fortify/fcli/commit/36a741c88f30c93bde57f82120ea43fffb2bd688))
+
 ## [3.23.1](https://github.com/fortify/fcli/compare/v3.23.0...v3.23.1) (2026-07-13)
 
 
