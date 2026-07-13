@@ -12,6 +12,8 @@
  */
 package com.fortify.cli.fod.aviator.helper;
 
+import java.nio.file.Path;
+import java.util.List;
 import java.util.Set;
 
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -59,10 +61,33 @@ public class AviatorFoDApplyRemediationsHelper {
         return result;
     }
 
+    public static ObjectNode buildLocalFprResultNode(List<Path> fprPaths, int totalRemediation, int appliedRemediation,
+            int skippedRemediation, Set<String> modifiedFiles, String action) {
+        ObjectNode result = JsonHelper.getObjectMapper().createObjectNode();
+        result.put("releaseId", "N/A");
+        result.put("applicationName", "N/A");
+        result.put("releaseName", "N/A");
+        result.put("totalRemediation", totalRemediation);
+        result.put("appliedRemediation", appliedRemediation);
+        result.put("skippedRemediation", skippedRemediation);
+        result.set("modifiedFiles", toArrayNode(modifiedFiles));
+        result.set("fprs", toPathArrayNode(fprPaths));
+        result.put(IActionCommandResultSupplier.actionFieldName, action);
+        return result;
+    }
+
     private static ArrayNode toArrayNode(Set<String> files) {
         ArrayNode array = JsonHelper.getObjectMapper().createArrayNode();
         if (files != null) {
             files.forEach(array::add);
+        }
+        return array;
+    }
+
+    private static ArrayNode toPathArrayNode(List<Path> paths) {
+        ArrayNode array = JsonHelper.getObjectMapper().createArrayNode();
+        if (paths != null) {
+            paths.stream().map(Path::toString).forEach(array::add);
         }
         return array;
     }

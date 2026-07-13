@@ -12,6 +12,8 @@
  */
 package com.fortify.cli.aviator.ssc.helper;
 
+import java.nio.file.Path;
+import java.util.List;
 import java.util.Set;
 
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -26,6 +28,16 @@ import com.fortify.cli.ssc.artifact.helper.SSCArtifactDescriptor;
  */
 public final class AviatorSSCApplyRemediationsHelper {
     private AviatorSSCApplyRemediationsHelper() {}
+
+    public record LocalFprResultData(
+            List<Path> fprPaths,
+            int fprsProcessed,
+            int fprsSkipped,
+            int totalRemediation,
+            int appliedRemediation,
+            int skippedRemediation,
+            Set<String> modifiedFiles,
+            String action) {}
 
     /**
      * Builds the unified JSON result node for a single-artifact remediation (--artifact-id or --latest).
@@ -78,10 +90,33 @@ public final class AviatorSSCApplyRemediationsHelper {
         return result;
     }
 
+    public static ObjectNode buildLocalFprResultNode(LocalFprResultData resultData) {
+        ObjectNode result = JsonHelper.getObjectMapper().createObjectNode();
+        result.put("appVersionId", "N/A");
+        result.put("artifactId", "N/A");
+        result.put("artifactsProcessed", resultData.fprsProcessed());
+        result.put("artifactsSkipped", resultData.fprsSkipped());
+        result.put("totalRemediation", resultData.totalRemediation());
+        result.put("appliedRemediation", resultData.appliedRemediation());
+        result.put("skippedRemediation", resultData.skippedRemediation());
+        result.set("modifiedFiles", toArrayNode(resultData.modifiedFiles()));
+        result.set("fprs", toPathArrayNode(resultData.fprPaths()));
+        result.put(IActionCommandResultSupplier.actionFieldName, resultData.action());
+        return result;
+    }
+
     private static ArrayNode toArrayNode(Set<String> files) {
         ArrayNode array = JsonHelper.getObjectMapper().createArrayNode();
         if (files != null) {
             files.forEach(array::add);
+        }
+        return array;
+    }
+
+    private static ArrayNode toPathArrayNode(List<Path> paths) {
+        ArrayNode array = JsonHelper.getObjectMapper().createArrayNode();
+        if (paths != null) {
+            paths.stream().map(Path::toString).forEach(array::add);
         }
         return array;
     }

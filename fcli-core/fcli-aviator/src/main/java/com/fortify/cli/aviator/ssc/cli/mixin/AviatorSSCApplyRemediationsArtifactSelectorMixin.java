@@ -12,9 +12,15 @@
  */
 package com.fortify.cli.aviator.ssc.cli.mixin;
 
+import java.nio.file.Path;
+import java.util.Collections;
+import java.util.List;
+
 import org.apache.commons.lang3.StringUtils;
 
 import com.fortify.cli.common.exception.FcliSimpleException;
+import com.fortify.cli.common.util.DisableTest;
+import com.fortify.cli.common.util.DisableTest.TestType;
 import com.fortify.cli.ssc.appversion.helper.SSCAppVersionDescriptor;
 import com.fortify.cli.ssc.appversion.helper.SSCAppVersionHelper;
 
@@ -53,6 +59,11 @@ public class AviatorSSCApplyRemediationsArtifactSelectorMixin {
 
         @Option(names = {"--all"}, required = true, descriptionKey = "fcli.aviator.ssc.apply-remediations.all")
         private boolean allOpenIssues;
+
+        @Option(names = {"--fpr"}, required = true, arity = "1..*", paramLabel = "<file>",
+                descriptionKey = "fcli.aviator.ssc.apply-remediations.fpr")
+        @DisableTest({TestType.MULTI_OPT_SPLIT, TestType.MULTI_OPT_PLURAL_NAME, TestType.OPT_ARITY_VARIABLE})
+        private List<Path> fprPaths;
     }
 
     public boolean isArtifactIdSelected() {
@@ -67,8 +78,16 @@ public class AviatorSSCApplyRemediationsArtifactSelectorMixin {
         return artifactSelection != null && artifactSelection.allOpenIssues;
     }
 
+    public boolean isLocalFprSelected() {
+        return artifactSelection != null && artifactSelection.fprPaths != null && !artifactSelection.fprPaths.isEmpty();
+    }
+
     public String getArtifactId() {
         return isArtifactIdSelected() ? artifactSelection.artifactId : null;
+    }
+
+    public List<Path> getFprPaths() {
+        return isLocalFprSelected() ? artifactSelection.fprPaths : Collections.emptyList();
     }
 
     public String getAppVersionNameOrId() {
@@ -85,6 +104,16 @@ public class AviatorSSCApplyRemediationsArtifactSelectorMixin {
     }
 
     public void validate() {
+        if (isLocalFprSelected()) {
+            if (StringUtils.isNotBlank(since)) {
+                throw new FcliSimpleException("--since cannot be used with --fpr");
+            }
+            if (StringUtils.isNotBlank(appVersionNameOrId)) {
+                throw new FcliSimpleException("--av/--appversion cannot be used with --fpr");
+            }
+            return;
+        }
+
         // Validate --since is only used with --latest or --all-open-issues
         if (since != null && !since.isBlank() && isArtifactIdSelected()) {
             throw new FcliSimpleException(

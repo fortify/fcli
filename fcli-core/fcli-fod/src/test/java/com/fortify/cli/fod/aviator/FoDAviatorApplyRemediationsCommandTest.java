@@ -17,6 +17,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.lang.reflect.Field;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Set;
 
@@ -92,6 +93,29 @@ class FoDAviatorApplyRemediationsCommandTest {
         assertEquals(List.of("ISSUE-1", "ISSUE-2"), field.get(command));
     }
 
+    @Test
+    void testFprOptionParsesOrderedPaths() throws Exception {
+        FoDAviatorApplyRemediationsCommand command = parseRaw("--fpr", "first.fpr", "second.fpr");
+
+        Field field = FoDAviatorApplyRemediationsCommand.class.getDeclaredField("fprPaths");
+        field.setAccessible(true);
+        assertEquals(List.of(Path.of("first.fpr"), Path.of("second.fpr")), field.get(command));
+    }
+
+    @Test
+    void testReleaseAndFprTogetherThrowsException() {
+        FoDAviatorApplyRemediationsCommand command = parseRaw("--release", "1", "--fpr", "local.fpr");
+
+        assertThrows(FcliSimpleException.class, () -> command.getJsonNode(null));
+    }
+
+    @Test
+    void testIssueIdsWithoutFprThrowsException() {
+        FoDAviatorApplyRemediationsCommand command = parse("--issue-ids", "ISSUE-1");
+
+        assertThrows(FcliSimpleException.class, () -> command.getJsonNode(null));
+    }
+
     private static FoDAviatorApplyRemediationsCommand parse(String... args) {
         FoDAviatorApplyRemediationsCommand command = new FoDAviatorApplyRemediationsCommand();
         var fullArgs = new java.util.ArrayList<String>();
@@ -99,6 +123,12 @@ class FoDAviatorApplyRemediationsCommandTest {
         fullArgs.add("1");
         java.util.Collections.addAll(fullArgs, args);
         new CommandLine(command).parseArgs(fullArgs.toArray(String[]::new));
+        return command;
+    }
+
+    private static FoDAviatorApplyRemediationsCommand parseRaw(String... args) {
+        FoDAviatorApplyRemediationsCommand command = new FoDAviatorApplyRemediationsCommand();
+        new CommandLine(command).parseArgs(args);
         return command;
     }
 

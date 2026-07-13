@@ -16,6 +16,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.lang.reflect.Field;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Set;
 
@@ -38,6 +39,25 @@ class AviatorSSCApplyRemediationsCommandTest {
     void testNormalizeIssueIdsRejectsOnlyBlankValues() throws Exception {
         AviatorSSCApplyRemediationsCommand command = parse("--artifact-id", "1", "--issue-ids", " ,  , ");
         assertThrows(FcliSimpleException.class, () -> AviatorIssueIdFilterUtils.normalizeIssueIds(getIssueIds(command)));
+    }
+
+    @Test
+    void testFprOptionParsesOrderedPaths() throws Exception {
+        AviatorSSCApplyRemediationsCommand command = parse("--fpr", "first.fpr", "second.fpr");
+
+        assertEquals(List.of(Path.of("first.fpr"), Path.of("second.fpr")), getFprPaths(command));
+    }
+
+    @Test
+    void testFprOptionCannotBeCombinedWithArtifactId() {
+        assertThrows(CommandLine.ParameterException.class, () -> parse("--artifact-id", "1", "--fpr", "local.fpr"));
+    }
+
+    @Test
+    void testIssueIdsWithoutFprThrowsException() {
+        AviatorSSCApplyRemediationsCommand command = parse("--artifact-id", "1", "--issue-ids", "ISSUE-1");
+
+        assertThrows(FcliSimpleException.class, () -> command.getJsonNode(null));
     }
 
     @Test
@@ -74,5 +94,13 @@ class AviatorSSCApplyRemediationsCommandTest {
         Field field = AviatorSSCApplyRemediationsCommand.class.getDeclaredField("issueIds");
         field.setAccessible(true);
         return (List<String>) field.get(command);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static List<Path> getFprPaths(AviatorSSCApplyRemediationsCommand command) throws Exception {
+        Field artifactSelectorField = AviatorSSCApplyRemediationsCommand.class.getDeclaredField("artifactSelector");
+        artifactSelectorField.setAccessible(true);
+        Object artifactSelector = artifactSelectorField.get(command);
+        return (List<Path>) artifactSelector.getClass().getMethod("getFprPaths").invoke(artifactSelector);
     }
 }

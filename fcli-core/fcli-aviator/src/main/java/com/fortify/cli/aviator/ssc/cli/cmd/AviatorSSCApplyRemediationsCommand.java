@@ -27,6 +27,7 @@ import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
 import com.fortify.cli.aviator._common.util.AviatorIssueIdFilterUtils;
+import com.fortify.cli.aviator._common.util.AviatorLocalFprHelper;
 import com.fortify.cli.aviator.applyRemediation.ApplyAutoRemediationOnSource;
 import com.fortify.cli.aviator.config.AviatorLoggerImpl;
 import com.fortify.cli.aviator.fpr.processor.RemediationProcessor.RemediationMetric;
@@ -72,11 +73,15 @@ public class AviatorSSCApplyRemediationsCommand extends AbstractSSCJsonNodeOutpu
         artifactSelector.validate();
         validateSourceCodeDirectory();
         Set<String> issueIdFilter = getIssueIdFilter();
-        OffsetDateTime sinceDate = SinceOptionHelper.parse(artifactSelector.getSince());
+        validateIssueIdFilterMode();
         try (IProgressWriter progressWriter = progressWriterFactoryMixin.create()) {
             AviatorLoggerImpl logger = new AviatorLoggerImpl(progressWriter);
             ArtifactProcessor processor = new ArtifactProcessor(unirest, logger, progressWriter, issueIdFilter);
 
+            if (artifactSelector.isLocalFprSelected()) {
+                return processor.processLocalFprRemediations(artifactSelector.getFprPaths());
+            }
+            OffsetDateTime sinceDate = SinceOptionHelper.parse(artifactSelector.getSince());
             if (artifactSelector.isAllOpenIssuesSelected()) {
                 return processor.processAllAviatorArtifacts(sinceDate);
             }
@@ -106,6 +111,12 @@ public class AviatorSSCApplyRemediationsCommand extends AbstractSSCJsonNodeOutpu
 
     private Set<String> getIssueIdFilter() {
         return AviatorIssueIdFilterUtils.normalizeIssueIds(issueIds);
+    }
+
+    private void validateIssueIdFilterMode() {
+        if (issueIds != null && !issueIds.isEmpty() && !artifactSelector.isLocalFprSelected()) {
+            throw new FcliSimpleException("--issue-ids can only be used with --fpr; download the FPR once with download-remediations-fpr and rerun with --fpr");
+        }
     }
 
     static RemediationMetric aggregateMetrics(Set<String> requestedIssueIds, Collection<RemediationMetric> metrics) {
@@ -216,6 +227,40 @@ public class AviatorSSCApplyRemediationsCommand extends AbstractSSCJsonNodeOutpu
         
         private boolean shouldStopProcessing(Set<String> remaining) {
             return remaining != null && remaining.isEmpty();
+        }
+
+        @SneakyThrows
+        JsonNode processLocalFprRemediations(List<Path> fprPaths) {
+            AviatorLocalFprHelper.validateLocalFprs(fprPaths);
+            List<RemediationMetric> metrics = new java.util.ArrayList<>();
+            Set<String> remaining = issueIdFilter == null ? null : new LinkedHashSet<>(issueIdFilter);
+
+            for (int i = 0; i < fprPaths.size(); i++) {
+                if (shouldStopProcessing(remaining)) {
+                    break;
+                }
+                Path fprPath = fprPaths.get(i);
+                logger.progress("Processing FPR " + (i + 1) + "/" + fprPaths.size() + " (" + fprPath + ")");
+                logger.progress("Status: Processing FPR with Aviator for Applying Auto Remediations");
+                try (FprHandle fprHandle = new FprHandle(fprPath)) {
+                    RemediationMetric metric = ApplyAutoRemediationOnSource.applyRemediations(fprHandle, sourceCodeDirectory, logger, remaining);
+                    metrics.add(metric);
+                    remaining = getRemainingIssueIds(remaining, metric);
+                }
+            }
+
+            RemediationMetric aggregatedMetric = aggregateMetrics(issueIdFilter, metrics);
+            String action = aggregatedMetric.appliedRemediations() > 0 ? "Remediation-Applied" : "No-Remediation-Applied";
+                return AviatorSSCApplyRemediationsHelper.buildLocalFprResultNode(
+                    new AviatorSSCApplyRemediationsHelper.LocalFprResultData(
+                        fprPaths,
+                        metrics.size(),
+                        0,
+                        aggregatedMetric.totalRemediations(),
+                        aggregatedMetric.appliedRemediations(),
+                        aggregatedMetric.skippedRemediations(),
+                        aggregatedMetric.modifiedFiles(),
+                        action));
         }
 
         @SneakyThrows
