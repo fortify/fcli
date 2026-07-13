@@ -27,6 +27,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.MappingIterator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -48,7 +49,7 @@ import lombok.Getter;
  * command. Supports both report directory and report zip input formats.
  */
 public final class NcdReportReader implements AutoCloseable {
-    private static final CsvMapper CSV_MAPPER = new CsvMapper();
+    private static final CsvMapper CSV_MAPPER = createCsvMapper();
     private static final ObjectMapper YAML_MAPPER = createYamlMapper();
 
     @Getter private final Path reportPath;
@@ -173,6 +174,13 @@ public final class NcdReportReader implements AutoCloseable {
         var mapper = new ObjectMapper(new YAMLFactory());
         mapper.registerModule(new Jdk8Module());
         mapper.registerModule(new JavaTimeModule());
+        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        return mapper;
+    }
+
+    private static CsvMapper createCsvMapper() {
+        var mapper = new CsvMapper();
+        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         return mapper;
     }
 
