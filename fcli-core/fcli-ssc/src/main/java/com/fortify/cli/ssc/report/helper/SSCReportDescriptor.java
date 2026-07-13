@@ -22,7 +22,7 @@ import lombok.NoArgsConstructor;
 @Reflectable @NoArgsConstructor
 @Data @EqualsAndHashCode(callSuper=true)
 public class SSCReportDescriptor extends JsonNodeHolder {
-    private int id;
+    private long id;
     private String name;
     private String type;
     //private String typeDefaultText;

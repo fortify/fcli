@@ -232,7 +232,7 @@ public class SSCReportCreateCommand extends AbstractSSCJsonNodeOutputCommand imp
         private String note;
         private String format;
         private AbstractSSCInputReportParameter[] inputReportParameters;
-        private int reportDefinitionId;
+        private long reportDefinitionId;
         private String type;
     }
     

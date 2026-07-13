@@ -207,8 +207,8 @@ public class SSCIssueCustomTagHelper {
                 String dateValue = processDateValue(value, tagName);
                 return SSCIssueCustomTagAuditValue.forDate(guid, dateValue);
             case LIST:
-                if (isUnset) return SSCIssueCustomTagAuditValue.forList(guid, -1);
-                Integer lookupIndex = getListValueIndex(value, tagName, tagInfo, extendPolicy);
+                if (isUnset) return SSCIssueCustomTagAuditValue.forList(guid, -1L);
+                Long lookupIndex = getListValueIndex(value, tagName, tagInfo, extendPolicy);
                 return SSCIssueCustomTagAuditValue.forList(guid, lookupIndex);
             default:
                 throw new FcliSimpleException("Unsupported custom tag value type: " + tagInfo.getValueType());
@@ -228,7 +228,7 @@ public class SSCIssueCustomTagHelper {
         return LocalDate.parse(value, DateTimeFormatter.ISO_LOCAL_DATE).format(DateTimeFormatter.ISO_LOCAL_DATE);
     }
     
-    private Integer getListValueIndex(String value, String tagName, CustomTagInfo tagInfo, ExtendPolicy extendPolicy) {
+    private Long getListValueIndex(String value, String tagName, CustomTagInfo tagInfo, ExtendPolicy extendPolicy) {
         var valueList = tagInfo.getValueList();
         if (valueList != null) {
             for (ValueListItem item : valueList) {
@@ -253,11 +253,11 @@ public class SSCIssueCustomTagHelper {
         String validValues = valueList == null || valueList.isEmpty() ? null
                 : valueList.stream().map(ValueListItem::getLookupValue).collect(Collectors.joining(", "));
         extendPolicy.throwExtendNotAllowedException(tagName, validValues);
-        return -1; // unreachable; throwExtendNotAllowedException always throws
+        return -1L; // unreachable; throwExtendNotAllowedException always throws
     }
     
-    private int extendTagWithValue(CustomTagInfo tagInfo, String newValue) {
-        int newIndex = new SSCCustomTagDefinitionHelper(unirest).addValueToListTag(tagInfo.getGuid(), newValue);
+    private long extendTagWithValue(CustomTagInfo tagInfo, String newValue) {
+        long newIndex = new SSCCustomTagDefinitionHelper(unirest).addValueToListTag(tagInfo.getGuid(), newValue);
         ValueListItem newItem = new ValueListItem();
         newItem.setLookupIndex(newIndex);
         newItem.setLookupValue(newValue);
@@ -300,7 +300,7 @@ public class SSCIssueCustomTagHelper {
         if (valueListNode != null && valueListNode.isArray()) {
             for (JsonNode valueNode : valueListNode) {
                 ValueListItem item = new ValueListItem();
-                item.setLookupIndex(valueNode.get("lookupIndex").asInt());
+                item.setLookupIndex(valueNode.get("lookupIndex").asLong());
                 item.setLookupValue(valueNode.get("lookupValue").asText());
                 tagInfo.getValueList().add(item);
             }
@@ -320,7 +320,7 @@ public class SSCIssueCustomTagHelper {
     
     @Getter @Setter
     public static class ValueListItem {
-        private int lookupIndex;
+        private long lookupIndex;
         private String lookupValue;
     }
 }
