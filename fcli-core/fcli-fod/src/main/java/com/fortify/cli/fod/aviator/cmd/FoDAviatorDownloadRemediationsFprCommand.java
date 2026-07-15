@@ -19,6 +19,7 @@ import java.nio.file.StandardCopyOption;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.exception.FcliSimpleException;
+import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.rest.unirest.HttpHeader;
@@ -73,7 +74,7 @@ public class FoDAviatorDownloadRemediationsFprCommand extends AbstractFoDJsonNod
             throw new FcliSimpleException("Timed out waiting for FoD remediations FPR download to complete after "
                     + MAX_RETRIES + " retries");
         }
-        return buildResultNode(releaseDescriptor, scanDescriptor, destination);
+        return buildResultNode(releaseDescriptor, destination);
     }
 
     private Path getDestination(FoDReleaseDescriptor releaseDescriptor) {
@@ -87,11 +88,11 @@ public class FoDAviatorDownloadRemediationsFprCommand extends AbstractFoDJsonNod
                 .queryString("scanType", scanDescriptor.getScanType());
     }
 
-    private ObjectNode buildResultNode(FoDReleaseDescriptor releaseDescriptor, FoDScanDescriptor scanDescriptor, Path destination) {
-        ObjectNode result = scanDescriptor.asObjectNode();
-        result.put("releaseId", releaseDescriptor.getReleaseId());
-        result.put("applicationName", releaseDescriptor.getApplicationName());
-        result.put("releaseName", releaseDescriptor.getReleaseName());
+    private ObjectNode buildResultNode(FoDReleaseDescriptor releaseDescriptor, Path destination) {
+        ObjectNode result = JsonHelper.getObjectMapper().createObjectNode();
+        result.put("releasesDownloaded", 1);
+        result.putArray("releaseIds").add(releaseDescriptor.getReleaseId());
+        result.putArray("files").add(destination.toString());
         result.put("file", destination.toString());
         result.put(IActionCommandResultSupplier.actionFieldName, getActionCommandResult());
         return result;
