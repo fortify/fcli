@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.23.3](https://github.com/fortify/fcli/compare/v3.23.2...v3.23.3) (2026-07-15)
+
+
+### Bug Fixes
+
+* FoD/SSC `github-remediations-pr` action: Use proper PR target branch on `pull_request` triggers ([15284b3](https://github.com/fortify/fcli/commit/15284b3f9bca9d61cf05bf6ec882985bb4d7b007))
+
 ## [3.23.2](https://github.com/fortify/fcli/compare/v3.23.1...v3.23.2) (2026-07-13)
 
 
