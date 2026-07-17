@@ -1,0 +1,113 @@
+/*
+ * Copyright 2021-2026 Open Text.
+ *
+ * The only warranties for products and services of Open Text
+ * and its affiliates and licensors ("Open Text") are as may
+ * be set forth in the express warranty statements accompanying
+ * such products and services. Nothing herein should be construed
+ * as constituting an additional warranty. Open Text shall not be
+ * liable for technical or editorial errors or omissions contained
+ * herein. The information contained herein is subject to change
+ * without notice.
+ */
+package com.fortify.cli.aviator._common.remediations_cache;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.Map;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+
+import com.fortify.cli.common.exception.FcliSimpleException;
+
+class RemediationsCacheRoundTripTest {
+    @TempDir Path tempDir;
+
+    @Test
+    void writeAndReadRoundTripPreservesOrderAndHashes() throws Exception {
+        Path fpr1 = tempDir.resolve("one.fpr");
+        Path fpr2 = tempDir.resolve("two.fpr");
+        Files.writeString(fpr1, "fpr-content-1");
+        Files.writeString(fpr2, "fpr-content-2");
+        Path zip = tempDir.resolve("cache.zip");
+
+        RemediationsCacheWriter.write(
+                zip,
+                RemediationsCacheConstants.PRODUCT_SSC,
+                Map.of("mode", "all", "appVersionId", "10001"),
+                List.of(
+                        RemediationsCacheWriter.FprSource.forSsc(fpr1, "123", "2026-07-10T08:00:00Z"),
+                        RemediationsCacheWriter.FprSource.forSsc(fpr2, "456", "2026-07-11T09:30:00Z")));
+
+        try (RemediationsCacheReader reader = RemediationsCacheReader.open(zip)) {
+            assertEquals(RemediationsCacheConstants.PRODUCT_SSC, reader.getManifest().getProduct());
+            assertEquals(2, reader.getOrderedFprPaths().size());
+            assertEquals("fpr-content-1", Files.readString(reader.getOrderedFprPaths().get(0)));
+            assertEquals("fpr-content-2", Files.readString(reader.getOrderedFprPaths().get(1)));
+            assertEquals("123", reader.getManifest().getEntries().get(0).getArtifactId());
+            assertEquals("456", reader.getManifest().getEntries().get(1).getArtifactId());
+        }
+    }
+
+    @Test
+    void emptySourcesRejected() {
+        Path zip = tempDir.resolve("empty.zip");
+        assertThrows(FcliSimpleException.class, () ->
+                RemediationsCacheWriter.write(zip, RemediationsCacheConstants.PRODUCT_SSC, Map.of(), List.of()));
+    }
+
+    @Test
+    void badSha256Rejected() throws Exception {
+        Path fpr = tempDir.resolve("one.fpr");
+        Files.writeString(fpr, "original");
+        Path zip = tempDir.resolve("cache.zip");
+        RemediationsCacheWriter.write(
+                zip,
+                RemediationsCacheConstants.PRODUCT_SSC,
+                Map.of("mode", "artifact-id"),
+                List.of(RemediationsCacheWriter.FprSource.forSsc(fpr, "1", null)));
+
+        // Rebuild zip with same manifest but corrupted FPR content
+        Path corruptZip = tempDir.resolve("corrupt.zip");
+        try (var zis = new java.util.zip.ZipInputStream(Files.newInputStream(zip));
+             ZipOutputStream zos = new ZipOutputStream(Files.newOutputStream(corruptZip))) {
+            ZipEntry entry;
+            while ((entry = zis.getNextEntry()) != null) {
+                zos.putNextEntry(new ZipEntry(entry.getName()));
+                if (entry.getName().endsWith(".fpr")) {
+                    zos.write("corrupted".getBytes(StandardCharsets.UTF_8));
+                } else {
+                    zis.transferTo(zos);
+                }
+                zos.closeEntry();
+            }
+        }
+
+        assertThrows(FcliSimpleException.class, () -> {
+            try (RemediationsCacheReader reader = RemediationsCacheReader.open(corruptZip)) {
+                // open validates
+            }
+        });
+    }
+
+    @Test
+    void missingManifestRejected() throws Exception {
+        Path zip = tempDir.resolve("no-manifest.zip");
+        try (ZipOutputStream zos = new ZipOutputStream(Files.newOutputStream(zip))) {
+            zos.putNextEntry(new ZipEntry("fprs/001.fpr"));
+            zos.write("x".getBytes(StandardCharsets.UTF_8));
+            zos.closeEntry();
+        }
+        FcliSimpleException ex = assertThrows(FcliSimpleException.class, () -> RemediationsCacheReader.open(zip));
+        assertTrue(ex.getMessage().contains("manifest.json"));
+    }
+}

@@ -23,35 +23,39 @@ public final class AviatorLocalFprHelper {
     private AviatorLocalFprHelper() {}
 
     public static void validateLocalFprs(List<Path> fprPaths) {
+        validateLocalFprs(fprPaths, "FPR file");
+    }
+
+    public static void validateLocalFprs(List<Path> fprPaths, String sourceLabel) {
         if (fprPaths == null || fprPaths.isEmpty()) {
-            throw new FcliSimpleException("--fpr must specify at least one FPR file");
+            throw new FcliSimpleException(sourceLabel + " list must contain at least one FPR file");
         }
         for (Path fprPath : fprPaths) {
-            validateLocalFpr(fprPath);
+            validateLocalFpr(fprPath, sourceLabel);
         }
     }
 
-    private static void validateLocalFpr(Path fprPath) {
+    private static void validateLocalFpr(Path fprPath, String sourceLabel) {
         if (fprPath == null) {
-            throw new FcliSimpleException("--fpr must specify a valid FPR file path");
+            throw new FcliSimpleException(sourceLabel + " path must be a valid FPR file path");
         }
         if (!Files.exists(fprPath)) {
-            throw new FcliSimpleException("FPR file specified by --fpr does not exist: " + fprPath);
+            throw new FcliSimpleException(sourceLabel + " does not exist: " + fprPath);
         }
         if (!Files.isRegularFile(fprPath)) {
-            throw new FcliSimpleException("FPR file specified by --fpr is not a regular file: " + fprPath);
+            throw new FcliSimpleException(sourceLabel + " is not a regular file: " + fprPath);
         }
         if (!Files.isReadable(fprPath)) {
-            throw new FcliSimpleException("FPR file specified by --fpr is not readable: " + fprPath);
+            throw new FcliSimpleException(sourceLabel + " is not readable: " + fprPath);
         }
         try (FprHandle fprHandle = new FprHandle(fprPath)) {
             fprHandle.validate();
         } catch (FcliSimpleException e) {
             throw e;
         } catch (RuntimeException e) {
-            throw new FcliSimpleException("FPR file specified by --fpr is not a valid audited SAST FPR: " + fprPath, e);
+            throw new FcliSimpleException(sourceLabel + " is not a valid audited SAST FPR: " + fprPath, e);
         } catch (java.io.IOException e) {
-            throw new FcliSimpleException("Failed to close FPR file specified by --fpr: " + fprPath, e);
+            throw new FcliSimpleException("Failed to close " + sourceLabel + ": " + fprPath, e);
         }
     }
 }

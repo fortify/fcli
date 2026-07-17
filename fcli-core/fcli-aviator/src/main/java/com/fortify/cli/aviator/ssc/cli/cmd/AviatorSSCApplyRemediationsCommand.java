@@ -26,23 +26,27 @@ import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
+import com.fortify.cli.aviator._common.remediations_cache.RemediationsCacheEntry;
+import com.fortify.cli.aviator._common.remediations_cache.RemediationsCacheReader;
 import com.fortify.cli.aviator._common.util.AviatorIssueIdFilterUtils;
 import com.fortify.cli.aviator._common.util.AviatorLocalFprHelper;
 import com.fortify.cli.aviator.applyRemediation.ApplyAutoRemediationOnSource;
 import com.fortify.cli.aviator.config.AviatorLoggerImpl;
 import com.fortify.cli.aviator.fpr.processor.RemediationProcessor.RemediationMetric;
-import com.fortify.cli.aviator.ssc.cli.mixin.AviatorSSCApplyRemediationsArtifactSelectorMixin;
+import com.fortify.cli.aviator.ssc.cli.mixin.AviatorSSCApplyRemediationsSourceMixin;
 import com.fortify.cli.aviator.ssc.helper.AviatorSSCApplyRemediationsHelper;
 import com.fortify.cli.aviator.ssc.helper.SinceOptionHelper;
 import com.fortify.cli.aviator.util.FprHandle;
 import com.fortify.cli.common.exception.FcliSimpleException;
+import com.fortify.cli.common.output.cli.cmd.AbstractOutputCommand;
+import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.output.transform.IRecordTransformer;
 import com.fortify.cli.common.progress.cli.mixin.ProgressWriterFactoryMixin;
 import com.fortify.cli.common.progress.helper.IProgressWriter;
-import com.fortify.cli.ssc._common.output.cli.cmd.AbstractSSCJsonNodeOutputCommand;
 import com.fortify.cli.ssc._common.rest.ssc.SSCUrls;
+import com.fortify.cli.ssc._common.rest.ssc.cli.mixin.SSCUnirestInstanceSupplierMixin;
 import com.fortify.cli.ssc._common.rest.ssc.transfer.SSCFileTransferHelper;
 import com.fortify.cli.ssc.artifact.helper.SSCArtifactDescriptor;
 import com.fortify.cli.ssc.artifact.helper.SSCArtifactHelper;
@@ -56,10 +60,12 @@ import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
 @Command(name = "apply-remediations")
-public class AviatorSSCApplyRemediationsCommand extends AbstractSSCJsonNodeOutputCommand  implements IRecordTransformer, IActionCommandResultSupplier {
+public class AviatorSSCApplyRemediationsCommand extends AbstractOutputCommand
+        implements IJsonNodeSupplier, IRecordTransformer, IActionCommandResultSupplier {
     @Getter @Mixin private OutputHelperMixins.DetailsNoQuery outputHelper;
     @Mixin private ProgressWriterFactoryMixin progressWriterFactoryMixin;
-    @Mixin private AviatorSSCApplyRemediationsArtifactSelectorMixin artifactSelector;
+    @Mixin private AviatorSSCApplyRemediationsSourceMixin sourceSelector;
+    @Mixin private SSCUnirestInstanceSupplierMixin unirestInstanceSupplier;
 
     private static final Logger LOG = LoggerFactory.getLogger(AviatorSSCApplyRemediationsCommand.class);
     @Option(names = {"--source-dir"}, descriptionKey = "fcli.aviator.ssc.apply-remediations.source-dir")
@@ -69,20 +75,20 @@ public class AviatorSSCApplyRemediationsCommand extends AbstractSSCJsonNodeOutpu
 
     @Override
     @SneakyThrows
-    public JsonNode getJsonNode(UnirestInstance unirest) {
-        artifactSelector.validate();
+    public JsonNode getJsonNode() {
+        sourceSelector.validate();
         validateSourceCodeDirectory();
         Set<String> issueIdFilter = getIssueIdFilter();
         validateIssueIdFilterMode();
         try (IProgressWriter progressWriter = progressWriterFactoryMixin.create()) {
             AviatorLoggerImpl logger = new AviatorLoggerImpl(progressWriter);
-            ArtifactProcessor processor = new ArtifactProcessor(unirest, logger, progressWriter, issueIdFilter);
-
-            if (artifactSelector.isLocalFprSelected()) {
-                return processor.processLocalFprRemediations(artifactSelector.getFprPaths());
+            if (sourceSelector.isFromCacheSelected()) {
+                return processFromCache(logger, issueIdFilter);
             }
-            OffsetDateTime sinceDate = SinceOptionHelper.parse(artifactSelector.getSince());
-            if (artifactSelector.isAllOpenIssuesSelected()) {
+            UnirestInstance unirest = unirestInstanceSupplier.getUnirestInstance();
+            ArtifactProcessor processor = new ArtifactProcessor(unirest, logger, progressWriter, issueIdFilter);
+            OffsetDateTime sinceDate = SinceOptionHelper.parse(sourceSelector.getSince());
+            if (sourceSelector.isAllSelected()) {
                 return processor.processAllAviatorArtifacts(sinceDate);
             }
             SSCArtifactDescriptor ad = resolveArtifactDescriptor(unirest, sinceDate);
@@ -90,17 +96,77 @@ public class AviatorSSCApplyRemediationsCommand extends AbstractSSCJsonNodeOutpu
         }
     }
 
-    private SSCArtifactDescriptor resolveArtifactDescriptor(UnirestInstance unirest, OffsetDateTime sinceDate) {
-        if (artifactSelector.isLatestSelected()) {
-            return getLatestAviatorArtifact(unirest, sinceDate);
-        } else {
-            return SSCArtifactHelper.getArtifactDescriptor(unirest, artifactSelector.getArtifactId());
+    @SneakyThrows
+    private JsonNode processFromCache(AviatorLoggerImpl logger, Set<String> issueIdFilter) {
+        Path cacheZip = sourceSelector.getFromCache();
+        try (RemediationsCacheReader cacheReader = RemediationsCacheReader.open(cacheZip)) {
+            List<Path> fprPaths = cacheReader.getOrderedFprPaths();
+            List<String> allEntryPaths = orderedEntryPaths(cacheReader);
+            List<String> allArtifactIds = orderedArtifactIds(cacheReader);
+            String appVersionId = cacheReader.getManifest().getSelection() != null
+                    ? cacheReader.getManifest().getSelection().get("appVersionId")
+                    : null;
+
+            AviatorLocalFprHelper.validateLocalFprs(fprPaths, "Cache FPR");
+            List<RemediationMetric> metrics = new java.util.ArrayList<>();
+            Set<String> remaining = issueIdFilter == null ? null : new LinkedHashSet<>(issueIdFilter);
+
+            for (int i = 0; i < fprPaths.size(); i++) {
+                if (remaining != null && remaining.isEmpty()) {
+                    break;
+                }
+                Path fprPath = fprPaths.get(i);
+                String entryLabel = i < allEntryPaths.size() ? allEntryPaths.get(i) : fprPath.getFileName().toString();
+                logger.progress("Processing FPR " + (i + 1) + "/" + fprPaths.size() + " (" + entryLabel + ")");
+                logger.progress("Status: Processing FPR with Aviator for Applying Auto Remediations");
+                try (FprHandle fprHandle = new FprHandle(fprPath)) {
+                    RemediationMetric metric = ApplyAutoRemediationOnSource.applyRemediations(fprHandle, sourceCodeDirectory, logger, remaining);
+                    metrics.add(metric);
+                    remaining = getRemainingIssueIds(remaining, metric);
+                }
+            }
+
+            RemediationMetric aggregatedMetric = aggregateMetrics(issueIdFilter, metrics);
+            String action = aggregatedMetric.appliedRemediations() > 0 ? "Remediation-Applied" : "No-Remediation-Applied";
+            // Only report durable zip-relative paths for entries actually processed this run
+            List<String> processedEntries = allEntryPaths.subList(0, Math.min(metrics.size(), allEntryPaths.size()));
+            List<String> processedArtifactIds = allArtifactIds.subList(0, Math.min(metrics.size(), allArtifactIds.size()));
+            return AviatorSSCApplyRemediationsHelper.buildCacheResultNode(
+                    new AviatorSSCApplyRemediationsHelper.CacheResultData(
+                            cacheZip,
+                            List.copyOf(processedEntries),
+                            List.copyOf(processedArtifactIds),
+                            appVersionId,
+                            metrics.size(),
+                            0,
+                            aggregatedMetric.totalRemediations(),
+                            aggregatedMetric.appliedRemediations(),
+                            aggregatedMetric.skippedRemediations(),
+                            aggregatedMetric.modifiedFiles(),
+                            action));
         }
     }
 
-    private SSCArtifactDescriptor getLatestAviatorArtifact(UnirestInstance unirest, OffsetDateTime sinceDate) {
-        String appVersionId = artifactSelector.getAppVersionId(unirest);
-        return SSCArtifactHelper.getLatestAviatorArtifact(unirest, appVersionId, sinceDate);
+    private static List<String> orderedEntryPaths(RemediationsCacheReader cacheReader) {
+        return cacheReader.getManifest().getEntries().stream()
+                .sorted(java.util.Comparator.comparingInt(RemediationsCacheEntry::getOrder))
+                .map(RemediationsCacheEntry::getPath)
+                .toList();
+    }
+
+    private static List<String> orderedArtifactIds(RemediationsCacheReader cacheReader) {
+        return cacheReader.getManifest().getEntries().stream()
+                .sorted(java.util.Comparator.comparingInt(RemediationsCacheEntry::getOrder))
+                .map(e -> e.getArtifactId() != null ? e.getArtifactId() : "")
+                .toList();
+    }
+
+    private SSCArtifactDescriptor resolveArtifactDescriptor(UnirestInstance unirest, OffsetDateTime sinceDate) {
+        if (sourceSelector.isLatestSelected()) {
+            String appVersionId = sourceSelector.getAppVersionId(unirest);
+            return SSCArtifactHelper.getLatestAviatorArtifact(unirest, appVersionId, sinceDate);
+        }
+        return SSCArtifactHelper.getArtifactDescriptor(unirest, sourceSelector.getArtifactId());
     }
 
     private void validateSourceCodeDirectory() {
@@ -114,8 +180,9 @@ public class AviatorSSCApplyRemediationsCommand extends AbstractSSCJsonNodeOutpu
     }
 
     private void validateIssueIdFilterMode() {
-        if (issueIds != null && !issueIds.isEmpty() && !artifactSelector.isLocalFprSelected()) {
-            throw new FcliSimpleException("--issue-ids can only be used with --fpr; download the FPR once with download-remediations-fpr and rerun with --fpr");
+        if (issueIds != null && !issueIds.isEmpty() && !sourceSelector.isFromCacheSelected()) {
+            throw new FcliSimpleException(
+                    "--issue-ids can only be used with --from-cache; create a cache with download-remediations-cache and rerun with --from-cache");
         }
     }
 
@@ -148,10 +215,6 @@ public class AviatorSSCApplyRemediationsCommand extends AbstractSSCJsonNodeOutpu
         return remainingIssueIds;
     }
 
-    /**
-     * Inner class to encapsulate artifact processing logic, avoiding the need to pass
-     * unirest, logger, and progressWriter through multiple method calls.
-     */
     @RequiredArgsConstructor
     private class ArtifactProcessor {
         private final UnirestInstance unirest;
@@ -161,30 +224,30 @@ public class AviatorSSCApplyRemediationsCommand extends AbstractSSCJsonNodeOutpu
 
         @SneakyThrows
         JsonNode processAllAviatorArtifacts(OffsetDateTime sinceDate) {
-            String appVersionId = artifactSelector.getAppVersionId(unirest);
+            String appVersionId = sourceSelector.getAppVersionId(unirest);
             List<SSCArtifactDescriptor> artifacts = SSCArtifactHelper.getAllAviatorArtifacts(unirest, appVersionId, sinceDate);
-            
+
             ArtifactBatchResult batchResult = processBatchOfArtifacts(artifacts);
             RemediationMetric aggregatedMetric = aggregateMetrics(issueIdFilter, batchResult.metrics());
             String action = aggregatedMetric.appliedRemediations() > 0 ? "Remediation-Applied" : "No-Remediation-Applied";
             return AviatorSSCApplyRemediationsHelper.buildAggregatedResultNode(
                     appVersionId, batchResult.processed(), batchResult.skipped(),
-                    aggregatedMetric.totalRemediations(), aggregatedMetric.appliedRemediations(), 
+                    aggregatedMetric.totalRemediations(), aggregatedMetric.appliedRemediations(),
                     aggregatedMetric.skippedRemediations(), aggregatedMetric.modifiedFiles(), action);
         }
-        
+
         private ArtifactBatchResult processBatchOfArtifacts(List<SSCArtifactDescriptor> artifacts) {
             int processed = 0, skipped = 0;
             List<RemediationMetric> metrics = new java.util.ArrayList<>();
             Set<String> remaining = issueIdFilter == null ? null : new LinkedHashSet<>(issueIdFilter);
-            
+
             for (int i = 0; i < artifacts.size(); i++) {
-                if (shouldStopProcessing(remaining)) {
+                if (remaining != null && remaining.isEmpty()) {
                     break;
                 }
                 int artifactIndex = i + 1;
                 SSCArtifactDescriptor ad = artifacts.get(i);
-                
+
                 ArtifactProcessResult result = processSingleArtifact(ad, artifactIndex, artifacts.size(), remaining);
                 if (result.isSuccess()) {
                     metrics.add(result.metric());
@@ -196,7 +259,7 @@ public class AviatorSSCApplyRemediationsCommand extends AbstractSSCJsonNodeOutpu
             }
             return new ArtifactBatchResult(processed, skipped, metrics);
         }
-        
+
         @SneakyThrows
         private ArtifactProcessResult processSingleArtifact(SSCArtifactDescriptor ad, int index, int total, Set<String> issueFilter) {
             logger.progress("Processing artifact " + index + "/" + total + " (id=" + ad.getId() + ")");
@@ -211,56 +274,14 @@ public class AviatorSSCApplyRemediationsCommand extends AbstractSSCJsonNodeOutpu
                 LOG.warn("Skipping artifact {} as {}", ad.getId(), e.getMessage());
                 return ArtifactProcessResult.failure();
             } finally {
-                cleanupFprFile(fprPath);
-            }
-        }
-        
-        private void cleanupFprFile(Path fprPath) {
-            if (fprPath != null) {
-                try {
-                    Files.deleteIfExists(fprPath);
-                } catch (IOException e) {
-                    LOG.warn("Failed to delete temporary FPR file: {}", fprPath, e);
+                if (fprPath != null) {
+                    try {
+                        Files.deleteIfExists(fprPath);
+                    } catch (IOException e) {
+                        LOG.warn("Failed to delete temporary FPR file: {}", fprPath, e);
+                    }
                 }
             }
-        }
-        
-        private boolean shouldStopProcessing(Set<String> remaining) {
-            return remaining != null && remaining.isEmpty();
-        }
-
-        @SneakyThrows
-        JsonNode processLocalFprRemediations(List<Path> fprPaths) {
-            AviatorLocalFprHelper.validateLocalFprs(fprPaths);
-            List<RemediationMetric> metrics = new java.util.ArrayList<>();
-            Set<String> remaining = issueIdFilter == null ? null : new LinkedHashSet<>(issueIdFilter);
-
-            for (int i = 0; i < fprPaths.size(); i++) {
-                if (shouldStopProcessing(remaining)) {
-                    break;
-                }
-                Path fprPath = fprPaths.get(i);
-                logger.progress("Processing FPR " + (i + 1) + "/" + fprPaths.size() + " (" + fprPath + ")");
-                logger.progress("Status: Processing FPR with Aviator for Applying Auto Remediations");
-                try (FprHandle fprHandle = new FprHandle(fprPath)) {
-                    RemediationMetric metric = ApplyAutoRemediationOnSource.applyRemediations(fprHandle, sourceCodeDirectory, logger, remaining);
-                    metrics.add(metric);
-                    remaining = getRemainingIssueIds(remaining, metric);
-                }
-            }
-
-            RemediationMetric aggregatedMetric = aggregateMetrics(issueIdFilter, metrics);
-            String action = aggregatedMetric.appliedRemediations() > 0 ? "Remediation-Applied" : "No-Remediation-Applied";
-                return AviatorSSCApplyRemediationsHelper.buildLocalFprResultNode(
-                    new AviatorSSCApplyRemediationsHelper.LocalFprResultData(
-                        fprPaths,
-                        metrics.size(),
-                        0,
-                        aggregatedMetric.totalRemediations(),
-                        aggregatedMetric.appliedRemediations(),
-                        aggregatedMetric.skippedRemediations(),
-                        aggregatedMetric.modifiedFiles(),
-                        action));
         }
 
         @SneakyThrows
@@ -284,7 +305,9 @@ public class AviatorSSCApplyRemediationsCommand extends AbstractSSCJsonNodeOutpu
                 try (FprHandle fprHandle = new FprHandle(fprPath)) {
                     var remediationMetric = ApplyAutoRemediationOnSource.applyRemediations(fprHandle, sourceCodeDirectory, logger, issueIdFilter);
                     String status = remediationMetric.appliedRemediations() > 0 ? "Remediation-Applied" : "No-Remediation-Applied";
-                    return AviatorSSCApplyRemediationsHelper.buildResultNode(ad, remediationMetric.totalRemediations(), remediationMetric.appliedRemediations(), remediationMetric.skippedRemediations(), remediationMetric.modifiedFiles(), status);
+                    return AviatorSSCApplyRemediationsHelper.buildResultNode(ad, remediationMetric.totalRemediations(),
+                            remediationMetric.appliedRemediations(), remediationMetric.skippedRemediations(),
+                            remediationMetric.modifiedFiles(), status);
                 }
             } finally {
                 try {
@@ -297,7 +320,9 @@ public class AviatorSSCApplyRemediationsCommand extends AbstractSSCJsonNodeOutpu
     }
 
     @Override
-    public boolean isSingular() { return true; }
+    public boolean isSingular() {
+        return true;
+    }
 
     @Override
     public String getActionCommandResult() {
@@ -308,17 +333,28 @@ public class AviatorSSCApplyRemediationsCommand extends AbstractSSCJsonNodeOutpu
     public JsonNode transformRecord(JsonNode record) {
         return record;
     }
-    
+
     private record ArtifactBatchResult(int processed, int skipped, List<RemediationMetric> metrics) {}
-    
+
     private sealed interface ArtifactProcessResult {
-        static ArtifactProcessResult success(RemediationMetric metric) { return new Success(metric); }
-        static ArtifactProcessResult failure() { return new Failure(); }
-        
+        static ArtifactProcessResult success(RemediationMetric metric) {
+            return new Success(metric);
+        }
+
+        static ArtifactProcessResult failure() {
+            return new Failure();
+        }
+
         record Success(RemediationMetric metric) implements ArtifactProcessResult {}
+
         record Failure() implements ArtifactProcessResult {}
-        
-        default boolean isSuccess() { return this instanceof Success; }
-        default RemediationMetric metric() { return ((Success) this).metric(); }
+
+        default boolean isSuccess() {
+            return this instanceof Success;
+        }
+
+        default RemediationMetric metric() {
+            return ((Success) this).metric();
+        }
     }
 }

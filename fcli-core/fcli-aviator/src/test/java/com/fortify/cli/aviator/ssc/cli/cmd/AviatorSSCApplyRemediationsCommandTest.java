@@ -14,6 +14,7 @@ package com.fortify.cli.aviator.ssc.cli.cmd;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.lang.reflect.Field;
 import java.nio.file.Path;
@@ -24,6 +25,7 @@ import org.junit.jupiter.api.Test;
 
 import com.fortify.cli.aviator._common.util.AviatorIssueIdFilterUtils;
 import com.fortify.cli.aviator.fpr.processor.RemediationProcessor.RemediationMetric;
+import com.fortify.cli.aviator.ssc.cli.mixin.AviatorSSCApplyRemediationsSourceMixin;
 import com.fortify.cli.common.exception.FcliSimpleException;
 
 import picocli.CommandLine;
@@ -31,33 +33,34 @@ import picocli.CommandLine;
 class AviatorSSCApplyRemediationsCommandTest {
     @Test
     void testNormalizeIssueIdsTrimsAndDeduplicates() throws Exception {
-        AviatorSSCApplyRemediationsCommand command = parse("--artifact-id", "1", "--issue-ids", " ISSUE-1 , , ISSUE-2,ISSUE-1 ");
+        AviatorSSCApplyRemediationsCommand command = parse("--from-cache", "cache.zip", "--issue-ids", " ISSUE-1 , , ISSUE-2,ISSUE-1 ");
         assertEquals(Set.of("ISSUE-1", "ISSUE-2"), AviatorIssueIdFilterUtils.normalizeIssueIds(getIssueIds(command)));
     }
 
     @Test
     void testNormalizeIssueIdsRejectsOnlyBlankValues() throws Exception {
-        AviatorSSCApplyRemediationsCommand command = parse("--artifact-id", "1", "--issue-ids", " ,  , ");
+        AviatorSSCApplyRemediationsCommand command = parse("--from-cache", "cache.zip", "--issue-ids", " ,  , ");
         assertThrows(FcliSimpleException.class, () -> AviatorIssueIdFilterUtils.normalizeIssueIds(getIssueIds(command)));
     }
 
     @Test
-    void testFprOptionParsesOrderedPaths() throws Exception {
-        AviatorSSCApplyRemediationsCommand command = parse("--fpr", "first.fpr", "second.fpr");
-
-        assertEquals(List.of(Path.of("first.fpr"), Path.of("second.fpr")), getFprPaths(command));
+    void testFromCacheParsesPath() throws Exception {
+        AviatorSSCApplyRemediationsCommand command = parse("--from-cache", "remediations.zip");
+        assertEquals(Path.of("remediations.zip"), getSourceMixin(command).getFromCache());
+        assertTrue(getSourceMixin(command).isFromCacheSelected());
     }
 
     @Test
-    void testFprOptionCannotBeCombinedWithArtifactId() {
-        assertThrows(CommandLine.ParameterException.class, () -> parse("--artifact-id", "1", "--fpr", "local.fpr"));
+    void testFromCacheCannotBeCombinedWithArtifactId() {
+        assertThrows(CommandLine.ParameterException.class,
+                () -> parse("--artifact-id", "1", "--from-cache", "cache.zip"));
     }
 
     @Test
-    void testIssueIdsWithoutFprThrowsException() {
+    void testIssueIdsWithoutFromCacheThrowsException() {
         AviatorSSCApplyRemediationsCommand command = parse("--artifact-id", "1", "--issue-ids", "ISSUE-1");
 
-        assertThrows(FcliSimpleException.class, () -> command.getJsonNode(null));
+        assertThrows(FcliSimpleException.class, command::getJsonNode);
     }
 
     @Test
@@ -96,11 +99,9 @@ class AviatorSSCApplyRemediationsCommandTest {
         return (List<String>) field.get(command);
     }
 
-    @SuppressWarnings("unchecked")
-    private static List<Path> getFprPaths(AviatorSSCApplyRemediationsCommand command) throws Exception {
-        Field artifactSelectorField = AviatorSSCApplyRemediationsCommand.class.getDeclaredField("artifactSelector");
-        artifactSelectorField.setAccessible(true);
-        Object artifactSelector = artifactSelectorField.get(command);
-        return (List<Path>) artifactSelector.getClass().getMethod("getFprPaths").invoke(artifactSelector);
+    private static AviatorSSCApplyRemediationsSourceMixin getSourceMixin(AviatorSSCApplyRemediationsCommand command) throws Exception {
+        Field field = AviatorSSCApplyRemediationsCommand.class.getDeclaredField("sourceSelector");
+        field.setAccessible(true);
+        return (AviatorSSCApplyRemediationsSourceMixin) field.get(command);
     }
 }

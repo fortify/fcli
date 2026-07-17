@@ -24,11 +24,11 @@ import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Option;
 
 @Getter
-public class AviatorSSCRemediationsFprDownloadSelectorMixin {
+public class AviatorSSCRemediationsCacheDownloadSelectorMixin {
     @ArgGroup(exclusive = true, multiplicity = "1")
     private ArtifactSelectionArgGroup artifactSelection;
 
-    @Option(names = {"--since"}, descriptionKey = "fcli.aviator.ssc.download-remediations-fpr.since")
+    @Option(names = {"--since"}, descriptionKey = "fcli.aviator.ssc.download-remediations-cache.since")
     private String since;
 
     @Option(names = {"--appversion", "--av"}, descriptionKey = "fcli.ssc.appversion.resolver.nameOrId")
@@ -39,14 +39,14 @@ public class AviatorSSCRemediationsFprDownloadSelectorMixin {
 
     @Getter
     public static class ArtifactSelectionArgGroup {
-        @Option(names = {"--artifact-id"}, required = true, descriptionKey = "fcli.aviator.ssc.download-remediations-fpr.artifact-id")
+        @Option(names = {"--artifact-id"}, required = true, descriptionKey = "fcli.aviator.ssc.download-remediations-cache.artifact-id")
         private String artifactId;
 
-        @Option(names = {"--latest"}, required = true, descriptionKey = "fcli.aviator.ssc.download-remediations-fpr.latest")
+        @Option(names = {"--latest"}, required = true, descriptionKey = "fcli.aviator.ssc.download-remediations-cache.latest")
         private boolean latest;
 
-        @Option(names = {"--all"}, required = true, descriptionKey = "fcli.aviator.ssc.download-remediations-fpr.all")
-        private boolean allOpenIssues;
+        @Option(names = {"--all"}, required = true, descriptionKey = "fcli.aviator.ssc.download-remediations-cache.all")
+        private boolean all;
     }
 
     public boolean isArtifactIdSelected() {
@@ -57,8 +57,8 @@ public class AviatorSSCRemediationsFprDownloadSelectorMixin {
         return artifactSelection != null && artifactSelection.latest;
     }
 
-    public boolean isAllOpenIssuesSelected() {
-        return artifactSelection != null && artifactSelection.allOpenIssues;
+    public boolean isAllSelected() {
+        return artifactSelection != null && artifactSelection.all;
     }
 
     public String getArtifactId() {
@@ -74,11 +74,24 @@ public class AviatorSSCRemediationsFprDownloadSelectorMixin {
         return descriptor.getVersionId();
     }
 
+    public String getSelectionMode() {
+        if (isArtifactIdSelected()) {
+            return "artifact-id";
+        }
+        if (isLatestSelected()) {
+            return "latest";
+        }
+        if (isAllSelected()) {
+            return "all";
+        }
+        return null;
+    }
+
     public void validate() {
         if (StringUtils.isNotBlank(since) && isArtifactIdSelected()) {
             throw new FcliSimpleException("--since cannot be used with --artifact-id; use --latest or --all");
         }
-        if ((isLatestSelected() || isAllOpenIssuesSelected()) && StringUtils.isBlank(appVersionNameOrId)) {
+        if ((isLatestSelected() || isAllSelected()) && StringUtils.isBlank(appVersionNameOrId)) {
             throw new FcliSimpleException("--av/--appversion is required when using --latest or --all");
         }
         if (isArtifactIdSelected() && StringUtils.isNotBlank(appVersionNameOrId)) {

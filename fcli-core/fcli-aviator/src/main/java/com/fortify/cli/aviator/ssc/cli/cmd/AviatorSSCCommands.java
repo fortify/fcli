@@ -22,7 +22,7 @@ import picocli.CommandLine;
                 AviatorSSCAuditCommand.class,
                 AviatorSSCPrepareCommand.class,
                 AviatorSSCApplyRemediationsCommand.class,
-                AviatorSSCDownloadRemediationsFprCommand.class,
+                AviatorSSCDownloadRemediationsCacheCommand.class,
                 AviatorSSCCorrelateSastDastCommand.class
         }
 

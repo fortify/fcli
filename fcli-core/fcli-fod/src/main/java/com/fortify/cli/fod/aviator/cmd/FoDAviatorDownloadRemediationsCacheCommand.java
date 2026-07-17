@@ -13,11 +13,20 @@
 package com.fortify.cli.fod.aviator.cmd;
 
 import java.io.File;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fortify.cli.aviator._common.remediations_cache.RemediationsCacheConstants;
+import com.fortify.cli.aviator._common.remediations_cache.RemediationsCacheManifest;
+import com.fortify.cli.aviator._common.remediations_cache.RemediationsCacheWriter;
+import com.fortify.cli.aviator._common.remediations_cache.RemediationsCacheWriter.FprSource;
+import com.fortify.cli.common.cli.mixin.CommonOptionMixins;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
@@ -39,24 +48,50 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
-@Command(name = "download-remediations-fpr")
-public class FoDAviatorDownloadRemediationsFprCommand extends AbstractFoDJsonNodeOutputCommand implements IActionCommandResultSupplier {
+@Command(name = "download-remediations-cache")
+public class FoDAviatorDownloadRemediationsCacheCommand extends AbstractFoDJsonNodeOutputCommand implements IActionCommandResultSupplier {
     private static final int MAX_RETRIES = 10;
 
     @Getter @Mixin private OutputHelperMixins.DetailsNoQuery outputHelper;
     @Mixin private FoDDelimiterMixin delimiterMixin;
     @Mixin private FoDReleaseByQualifiedNameOrIdResolverMixin.RequiredOption releaseResolver;
-    @Option(names = {"-f", "--file"}, paramLabel = "<file>", descriptionKey = "fcli.fod.aviator.download-remediations-fpr.file")
+    @Mixin private CommonOptionMixins.RequireConfirmation requireConfirmation;
+
+    @Option(names = {"-f", "--file"}, required = true, paramLabel = "<file>",
+            descriptionKey = "fcli.fod.aviator.download-remediations-cache.file")
     private File outputFile;
 
     @Override
     @SneakyThrows
     public JsonNode getJsonNode(UnirestInstance unirest) {
+        Path destination = outputFile.toPath();
+        if (Files.exists(destination)) {
+            requireConfirmation.checkConfirmed(destination);
+        }
+
         FoDReleaseDescriptor releaseDescriptor = releaseResolver.getReleaseDescriptor(unirest);
+        Path tempFpr = Files.createTempFile("aviator-cache-" + releaseDescriptor.getReleaseId() + "-", ".fpr");
+        try {
+            downloadFpr(unirest, releaseDescriptor, tempFpr);
+            Map<String, String> selection = new LinkedHashMap<>();
+            selection.put("mode", "release");
+            selection.put("releaseId", releaseDescriptor.getReleaseId());
+            RemediationsCacheManifest manifest = RemediationsCacheWriter.write(
+                    destination,
+                    RemediationsCacheConstants.PRODUCT_FOD,
+                    selection,
+                    List.of(FprSource.forFod(tempFpr, releaseDescriptor.getReleaseId())));
+            return buildResultNode(destination, releaseDescriptor, manifest);
+        } finally {
+            Files.deleteIfExists(tempFpr);
+        }
+    }
+
+    @SneakyThrows
+    private void downloadFpr(UnirestInstance unirest, FoDReleaseDescriptor releaseDescriptor, Path destination) {
         FoDScanDescriptor scanDescriptor = FoDScanHelper.getLatestScanDescriptor(unirest, releaseDescriptor.getReleaseId(),
                 FoDScanType.Static, false);
         FoDScanHelper.validateScanDate(scanDescriptor, FoDScanHelper.MAX_RETENTION_PERIOD);
-        Path destination = getDestination(releaseDescriptor);
         GetRequest request = getDownloadRequest(unirest, releaseDescriptor, scanDescriptor);
 
         int status = 202;
@@ -71,14 +106,15 @@ public class FoDAviatorDownloadRemediationsFprCommand extends AbstractFoDJsonNod
             }
         }
         if (status == 202) {
+            Files.deleteIfExists(destination);
             throw new FcliSimpleException("Timed out waiting for FoD remediations FPR download to complete after "
                     + MAX_RETRIES + " retries");
         }
-        return buildResultNode(releaseDescriptor, destination);
-    }
-
-    private Path getDestination(FoDReleaseDescriptor releaseDescriptor) {
-        return outputFile == null ? Path.of(String.format("remediations_release_%s.fpr", releaseDescriptor.getReleaseId())) : outputFile.toPath();
+        if (status < 200 || status >= 300) {
+            Files.deleteIfExists(destination);
+            throw new FcliSimpleException("FoD remediations FPR download failed with HTTP status " + status
+                    + " for release " + releaseDescriptor.getReleaseId());
+        }
     }
 
     private GetRequest getDownloadRequest(UnirestInstance unirest, FoDReleaseDescriptor releaseDescriptor, FoDScanDescriptor scanDescriptor) {
@@ -88,19 +124,17 @@ public class FoDAviatorDownloadRemediationsFprCommand extends AbstractFoDJsonNod
                 .queryString("scanType", scanDescriptor.getScanType());
     }
 
-    private ObjectNode buildResultNode(FoDReleaseDescriptor releaseDescriptor, Path destination) {
+    private ObjectNode buildResultNode(Path destination, FoDReleaseDescriptor releaseDescriptor, RemediationsCacheManifest manifest) {
         ObjectNode result = JsonHelper.getObjectMapper().createObjectNode();
-        result.put("releasesDownloaded", 1);
-        result.putArray("releaseIds").add(releaseDescriptor.getReleaseId());
-        result.putArray("files").add(destination.toString());
         result.put("file", destination.toString());
-        result.put(IActionCommandResultSupplier.actionFieldName, getActionCommandResult());
+        result.put("releasesDownloaded", manifest.getEntries().size());
+        result.putArray("releaseIds").add(releaseDescriptor.getReleaseId());
         return result;
     }
 
     @Override
     public String getActionCommandResult() {
-        return "REMEDIATIONS_FPR_DOWNLOADED";
+        return "REMEDIATIONS_CACHE_DOWNLOADED";
     }
 
     @Override

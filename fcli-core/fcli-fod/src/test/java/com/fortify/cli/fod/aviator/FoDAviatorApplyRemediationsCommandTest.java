@@ -15,6 +15,7 @@ package com.fortify.cli.fod.aviator;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.lang.reflect.Field;
 import java.nio.file.Path;
@@ -63,70 +64,67 @@ class FoDAviatorApplyRemediationsCommandTest {
 
     @Test
     void testBlankSourceCodeDirectoryThrowsException() throws Exception {
-        FoDAviatorApplyRemediationsCommand command = new FoDAviatorApplyRemediationsCommand();
+        FoDAviatorApplyRemediationsCommand command = parse("--from-cache", "cache.zip");
 
         Field field = FoDAviatorApplyRemediationsCommand.class.getDeclaredField("sourceCodeDirectory");
         field.setAccessible(true);
         field.set(command, "");
 
-        assertThrows(FcliSimpleException.class, () -> command.getJsonNode(null),
+        assertThrows(FcliSimpleException.class, command::getJsonNode,
             "Blank sourceCodeDirectory should throw FcliSimpleException");
     }
 
     @Test
     void testNormalizeIssueIdsTrimsAndDeduplicates() throws Exception {
-        FoDAviatorApplyRemediationsCommand command = parse("--issue-ids", " ISSUE-1 , , ISSUE-2,ISSUE-1 ");
+        FoDAviatorApplyRemediationsCommand command = parse("--from-cache", "cache.zip", "--issue-ids", " ISSUE-1 , , ISSUE-2,ISSUE-1 ");
         assertEquals(Set.of("ISSUE-1", "ISSUE-2"), AviatorIssueIdFilterUtils.normalizeIssueIds(getIssueIds(command)));
     }
 
     @Test
     void testNormalizeIssueIdsRejectsOnlyBlankValues() throws Exception {
-        FoDAviatorApplyRemediationsCommand command = parse("--issue-ids", " ,  , ");
+        FoDAviatorApplyRemediationsCommand command = parse("--from-cache", "cache.zip", "--issue-ids", " ,  , ");
         assertThrows(FcliSimpleException.class, () -> AviatorIssueIdFilterUtils.normalizeIssueIds(getIssueIds(command)));
     }
 
     @Test
     void testIssueIdsOptionParsesIntoField() throws Exception {
-        FoDAviatorApplyRemediationsCommand command = parse("--issue-ids", "ISSUE-1,ISSUE-2");
+        FoDAviatorApplyRemediationsCommand command = parse("--from-cache", "cache.zip", "--issue-ids", "ISSUE-1,ISSUE-2");
         Field field = FoDAviatorApplyRemediationsCommand.class.getDeclaredField("issueIds");
         field.setAccessible(true);
         assertEquals(List.of("ISSUE-1", "ISSUE-2"), field.get(command));
     }
 
     @Test
-    void testFprOptionParsesOrderedPaths() throws Exception {
-        FoDAviatorApplyRemediationsCommand command = parseRaw("--fpr", "first.fpr", "second.fpr");
-
-        Field field = FoDAviatorApplyRemediationsCommand.class.getDeclaredField("fprPaths");
-        field.setAccessible(true);
-        assertEquals(List.of(Path.of("first.fpr"), Path.of("second.fpr")), field.get(command));
+    void testFromCacheParsesPath() throws Exception {
+        FoDAviatorApplyRemediationsCommand command = parse("--from-cache", "remediations.zip");
+        Field sourceField = FoDAviatorApplyRemediationsCommand.class.getDeclaredField("source");
+        sourceField.setAccessible(true);
+        Object source = sourceField.get(command);
+        Field fromCacheField = source.getClass().getDeclaredField("fromCache");
+        fromCacheField.setAccessible(true);
+        assertEquals(Path.of("remediations.zip"), fromCacheField.get(source));
     }
 
     @Test
-    void testReleaseAndFprTogetherThrowsException() {
-        FoDAviatorApplyRemediationsCommand command = parseRaw("--release", "1", "--fpr", "local.fpr");
-
-        assertThrows(FcliSimpleException.class, () -> command.getJsonNode(null));
+    void testReleaseAndFromCacheTogetherThrowsException() {
+        assertThrows(CommandLine.ParameterException.class,
+                () -> parse("--release", "1", "--from-cache", "local.zip"));
     }
 
     @Test
-    void testIssueIdsWithoutFprThrowsException() {
-        FoDAviatorApplyRemediationsCommand command = parse("--issue-ids", "ISSUE-1");
+    void testIssueIdsWithoutFromCacheThrowsException() {
+        FoDAviatorApplyRemediationsCommand command = parse("--release", "1", "--issue-ids", "ISSUE-1");
 
-        assertThrows(FcliSimpleException.class, () -> command.getJsonNode(null));
+        assertThrows(FcliSimpleException.class, command::getJsonNode);
+    }
+
+    @Test
+    void testOnlineReleaseSelectionParses() {
+        FoDAviatorApplyRemediationsCommand command = parse("--release", "1");
+        assertTrue(command != null);
     }
 
     private static FoDAviatorApplyRemediationsCommand parse(String... args) {
-        FoDAviatorApplyRemediationsCommand command = new FoDAviatorApplyRemediationsCommand();
-        var fullArgs = new java.util.ArrayList<String>();
-        fullArgs.add("--release");
-        fullArgs.add("1");
-        java.util.Collections.addAll(fullArgs, args);
-        new CommandLine(command).parseArgs(fullArgs.toArray(String[]::new));
-        return command;
-    }
-
-    private static FoDAviatorApplyRemediationsCommand parseRaw(String... args) {
         FoDAviatorApplyRemediationsCommand command = new FoDAviatorApplyRemediationsCommand();
         new CommandLine(command).parseArgs(args);
         return command;

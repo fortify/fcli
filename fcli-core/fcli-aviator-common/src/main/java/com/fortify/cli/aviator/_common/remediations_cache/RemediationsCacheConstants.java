@@ -10,19 +10,15 @@
  * herein. The information contained herein is subject to change
  * without notice.
  */
-package com.fortify.cli.fod.aviator.cmd;
+package com.fortify.cli.aviator._common.remediations_cache;
 
-import com.fortify.cli.common.cli.cmd.AbstractContainerCommand;
+public final class RemediationsCacheConstants {
+    public static final int SCHEMA_VERSION = 1;
+    public static final String KIND = "aviator-remediations-cache";
+    public static final String MANIFEST_ENTRY = "manifest.json";
+    public static final String FPRS_DIR = "fprs";
+    public static final String PRODUCT_SSC = "ssc";
+    public static final String PRODUCT_FOD = "fod";
 
-import picocli.CommandLine;
-
-@CommandLine.Command(
-        name = "aviator",
-        subcommands = {
-                FoDAviatorApplyRemediationsCommand.class,
-                FoDAviatorDownloadRemediationsCacheCommand.class
-        }
-)
-
-public class FoDAviatorCommands extends AbstractContainerCommand {
+    private RemediationsCacheConstants() {}
 }

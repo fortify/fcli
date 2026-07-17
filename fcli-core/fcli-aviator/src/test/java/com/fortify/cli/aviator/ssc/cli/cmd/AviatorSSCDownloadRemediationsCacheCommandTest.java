@@ -20,36 +20,28 @@ import com.fortify.cli.common.exception.FcliSimpleException;
 
 import picocli.CommandLine;
 
-class AviatorSSCDownloadRemediationsFprCommandTest {
+class AviatorSSCDownloadRemediationsCacheCommandTest {
     @Test
     void testArtifactIdAndLatestAreMutuallyExclusive() {
         assertThrows(CommandLine.ParameterException.class,
-                () -> parse("--artifact-id", "1", "--latest"));
+                () -> parse("--artifact-id", "1", "--latest", "-f", "cache.zip"));
     }
 
     @Test
-    void testAllRejectsFileOption() {
-        AviatorSSCDownloadRemediationsFprCommand command = parse("--all", "--av", "1", "-f", "one.fpr");
-
-        assertThrows(FcliSimpleException.class, () -> command.getJsonNode(null));
-    }
-
-    @Test
-    void testAllRequiresDirectoryOption() {
-        AviatorSSCDownloadRemediationsFprCommand command = parse("--all", "--av", "1");
-
-        assertThrows(FcliSimpleException.class, () -> command.getJsonNode(null));
+    void testFileIsRequired() {
+        assertThrows(CommandLine.ParameterException.class,
+                () -> parse("--artifact-id", "1"));
     }
 
     @Test
     void testArtifactIdRejectsAppVersion() {
-        AviatorSSCDownloadRemediationsFprCommand command = parse("--artifact-id", "1", "--av", "2");
+        AviatorSSCDownloadRemediationsCacheCommand command = parse("--artifact-id", "1", "--av", "2", "-f", "cache.zip");
 
         assertThrows(FcliSimpleException.class, () -> command.getJsonNode(null));
     }
 
-    private static AviatorSSCDownloadRemediationsFprCommand parse(String... args) {
-        AviatorSSCDownloadRemediationsFprCommand command = new AviatorSSCDownloadRemediationsFprCommand();
+    private static AviatorSSCDownloadRemediationsCacheCommand parse(String... args) {
+        AviatorSSCDownloadRemediationsCacheCommand command = new AviatorSSCDownloadRemediationsCacheCommand();
         new CommandLine(command).parseArgs(args);
         return command;
     }
