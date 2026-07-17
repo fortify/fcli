@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -25,6 +26,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
 import com.fortify.cli.aviator._common.remediations_cache.RemediationsCacheReader;
 import com.fortify.cli.aviator._common.util.AviatorIssueIdFilterUtils;
 import com.fortify.cli.aviator._common.util.AviatorLocalFprHelper;
@@ -148,7 +150,9 @@ public class FoDAviatorApplyRemediationsCommand extends AbstractOutputCommand
                     .toList();
 
             AviatorLocalFprHelper.validateLocalFprs(fprPaths, "Cache FPR");
-            List<RemediationMetric> metrics = new java.util.ArrayList<>();
+            List<RemediationMetric> metrics = new ArrayList<>();
+            List<String> processedEntries = new ArrayList<>();
+            List<String> processedReleaseIds = new ArrayList<>();
             Set<String> remaining = issueIdFilter == null ? null : new LinkedHashSet<>(issueIdFilter);
 
             for (int i = 0; i < fprPaths.size(); i++) {
@@ -162,14 +166,16 @@ public class FoDAviatorApplyRemediationsCommand extends AbstractOutputCommand
                 try (FprHandle fprHandle = new FprHandle(fprPath)) {
                     RemediationMetric metric = ApplyAutoRemediationOnSource.applyRemediations(fprHandle, sourceCodeDirectory, logger, remaining);
                     metrics.add(metric);
+                    processedEntries.add(entryLabel);
+                    processedReleaseIds.add(i < allReleaseIds.size() ? allReleaseIds.get(i) : "");
                     remaining = getRemainingIssueIds(remaining, metric);
+                } catch (AviatorSimpleException e) {
+                    LOG.warn("Skipping cache entry {} as {}", entryLabel, e.getMessage());
                 }
             }
 
             RemediationMetric aggregatedMetric = aggregateMetrics(issueIdFilter, metrics);
             String status = aggregatedMetric.appliedRemediations() > 0 ? "Remediation-Applied" : "No-Remediation-Applied";
-            List<String> processedEntries = allEntryPaths.subList(0, Math.min(metrics.size(), allEntryPaths.size()));
-            List<String> processedReleaseIds = allReleaseIds.subList(0, Math.min(metrics.size(), allReleaseIds.size()));
             return AviatorFoDApplyRemediationsHelper.buildCacheResultNode(
                     cacheZip,
                     List.copyOf(processedEntries),

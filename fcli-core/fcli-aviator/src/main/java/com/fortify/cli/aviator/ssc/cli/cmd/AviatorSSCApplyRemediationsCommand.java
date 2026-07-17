@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -108,7 +109,10 @@ public class AviatorSSCApplyRemediationsCommand extends AbstractOutputCommand
                     : null;
 
             AviatorLocalFprHelper.validateLocalFprs(fprPaths, "Cache FPR");
-            List<RemediationMetric> metrics = new java.util.ArrayList<>();
+            List<RemediationMetric> metrics = new ArrayList<>();
+            List<String> processedEntries = new ArrayList<>();
+            List<String> processedArtifactIds = new ArrayList<>();
+            int skipped = 0;
             Set<String> remaining = issueIdFilter == null ? null : new LinkedHashSet<>(issueIdFilter);
 
             for (int i = 0; i < fprPaths.size(); i++) {
@@ -122,15 +126,17 @@ public class AviatorSSCApplyRemediationsCommand extends AbstractOutputCommand
                 try (FprHandle fprHandle = new FprHandle(fprPath)) {
                     RemediationMetric metric = ApplyAutoRemediationOnSource.applyRemediations(fprHandle, sourceCodeDirectory, logger, remaining);
                     metrics.add(metric);
+                    processedEntries.add(entryLabel);
+                    processedArtifactIds.add(i < allArtifactIds.size() ? allArtifactIds.get(i) : "");
                     remaining = getRemainingIssueIds(remaining, metric);
+                } catch (AviatorSimpleException e) {
+                    LOG.warn("Skipping cache entry {} as {}", entryLabel, e.getMessage());
+                    skipped++;
                 }
             }
 
             RemediationMetric aggregatedMetric = aggregateMetrics(issueIdFilter, metrics);
             String action = aggregatedMetric.appliedRemediations() > 0 ? "Remediation-Applied" : "No-Remediation-Applied";
-            // Only report durable zip-relative paths for entries actually processed this run
-            List<String> processedEntries = allEntryPaths.subList(0, Math.min(metrics.size(), allEntryPaths.size()));
-            List<String> processedArtifactIds = allArtifactIds.subList(0, Math.min(metrics.size(), allArtifactIds.size()));
             return AviatorSSCApplyRemediationsHelper.buildCacheResultNode(
                     new AviatorSSCApplyRemediationsHelper.CacheResultData(
                             cacheZip,
@@ -138,7 +144,7 @@ public class AviatorSSCApplyRemediationsCommand extends AbstractOutputCommand
                             List.copyOf(processedArtifactIds),
                             appVersionId,
                             metrics.size(),
-                            0,
+                            skipped,
                             aggregatedMetric.totalRemediations(),
                             aggregatedMetric.appliedRemediations(),
                             aggregatedMetric.skippedRemediations(),
