@@ -177,14 +177,15 @@ public class FoDAviatorApplyRemediationsCommand extends AbstractOutputCommand
             RemediationMetric aggregatedMetric = aggregateMetrics(issueIdFilter, metrics);
             String status = aggregatedMetric.appliedRemediations() > 0 ? "Remediation-Applied" : "No-Remediation-Applied";
             return AviatorFoDApplyRemediationsHelper.buildCacheResultNode(
-                    cacheZip,
-                    List.copyOf(processedEntries),
-                    List.copyOf(processedReleaseIds),
-                    aggregatedMetric.totalRemediations(),
-                    aggregatedMetric.appliedRemediations(),
-                    aggregatedMetric.skippedRemediations(),
-                    aggregatedMetric.modifiedFiles(),
-                    status);
+                    new AviatorFoDApplyRemediationsHelper.CacheResultData(
+                        cacheZip,
+                        List.copyOf(processedEntries),
+                        List.copyOf(processedReleaseIds),
+                        aggregatedMetric.totalRemediations(),
+                        aggregatedMetric.appliedRemediations(),
+                        aggregatedMetric.skippedRemediations(),
+                        aggregatedMetric.modifiedFiles(),
+                        status));
         }
     }
 

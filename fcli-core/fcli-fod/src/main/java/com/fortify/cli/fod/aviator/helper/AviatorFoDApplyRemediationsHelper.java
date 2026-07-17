@@ -59,23 +59,31 @@ public final class AviatorFoDApplyRemediationsHelper {
      * Result shape for --from-cache: durable cache zip path and zip-relative entry paths only
      * (never ephemeral extract-dir absolute paths).
      */
-    public static ObjectNode buildCacheResultNode(Path cacheZip, List<String> entryPaths, List<String> releaseIds,
-            int totalRemediation, int appliedRemediation, int skippedRemediation, Set<String> modifiedFiles,
-            String action) {
+    public static ObjectNode buildCacheResultNode(CacheResultData resultData) {
         ObjectNode result = JsonHelper.getObjectMapper().createObjectNode();
-        result.put("releaseId", releaseIds != null && !releaseIds.isEmpty() ? releaseIds.get(0) : "N/A");
+        result.put("releaseId", resultData.releaseIds() != null && !resultData.releaseIds().isEmpty() ? resultData.releaseIds().get(0) : "N/A");
         result.put("applicationName", "N/A");
         result.put("releaseName", "N/A");
-        result.put("file", cacheZip.toString());
-        result.put("totalRemediation", totalRemediation);
-        result.put("appliedRemediation", appliedRemediation);
-        result.put("skippedRemediation", skippedRemediation);
-        result.set("modifiedFiles", toArrayNode(modifiedFiles));
-        result.set("entries", toStringArrayNode(entryPaths));
-        result.set("releaseIds", toStringArrayNode(releaseIds));
-        result.put(IActionCommandResultSupplier.actionFieldName, action);
+        result.put("file", resultData.cacheZip().toString());
+        result.put("totalRemediation", resultData.totalRemediation());
+        result.put("appliedRemediation", resultData.appliedRemediation());
+        result.put("skippedRemediation", resultData.skippedRemediation());
+        result.set("modifiedFiles", toArrayNode(resultData.modifiedFiles()));
+        result.set("entries", toStringArrayNode(resultData.entryPaths()));
+        result.set("releaseIds", toStringArrayNode(resultData.releaseIds()));
+        result.put(IActionCommandResultSupplier.actionFieldName, resultData.action());
         return result;
     }
+
+    public record CacheResultData(
+            Path cacheZip,
+            List<String> entryPaths,
+            List<String> releaseIds,
+            int totalRemediation,
+            int appliedRemediation,
+            int skippedRemediation,
+            Set<String> modifiedFiles,
+            String action) {}
 
     private static ArrayNode toArrayNode(Set<String> files) {
         ArrayNode array = JsonHelper.getObjectMapper().createArrayNode();

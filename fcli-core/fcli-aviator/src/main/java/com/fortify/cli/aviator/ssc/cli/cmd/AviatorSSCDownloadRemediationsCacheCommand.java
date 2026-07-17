@@ -21,6 +21,9 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -52,6 +55,8 @@ import picocli.CommandLine.Option;
 
 @Command(name = "download-remediations-cache")
 public class AviatorSSCDownloadRemediationsCacheCommand extends AbstractSSCJsonNodeOutputCommand implements IActionCommandResultSupplier {
+    private static final Logger LOG = LoggerFactory.getLogger(AviatorSSCDownloadRemediationsCacheCommand.class);
+
     @Getter @Mixin private OutputHelperMixins.DetailsNoQuery outputHelper;
     @Mixin private ProgressWriterFactoryMixin progressWriterFactoryMixin;
     @Mixin private AviatorSSCRemediationsCacheDownloadSelectorMixin artifactSelector;
@@ -91,8 +96,8 @@ public class AviatorSSCDownloadRemediationsCacheCommand extends AbstractSSCJsonN
             for (Path temp : tempFiles) {
                 try {
                     Files.deleteIfExists(temp);
-                } catch (Exception ignored) {
-                    // best effort
+                } catch (Exception e) {
+                    LOG.warn("Failed to delete temp file: " + temp, e);
                 }
             }
         }
