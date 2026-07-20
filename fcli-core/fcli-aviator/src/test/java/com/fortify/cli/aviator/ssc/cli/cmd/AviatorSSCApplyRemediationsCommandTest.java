@@ -24,6 +24,7 @@ import java.util.Set;
 import org.junit.jupiter.api.Test;
 
 import com.fortify.cli.aviator._common.util.AviatorIssueIdFilterUtils;
+import com.fortify.cli.aviator._common.util.AviatorRemediationMetricsHelper;
 import com.fortify.cli.aviator.fpr.processor.RemediationProcessor.RemediationMetric;
 import com.fortify.cli.aviator.ssc.cli.mixin.AviatorSSCApplyRemediationsSourceMixin;
 import com.fortify.cli.common.exception.FcliSimpleException;
@@ -68,7 +69,8 @@ class AviatorSSCApplyRemediationsCommandTest {
         RemediationMetric metricOne = RemediationMetric.filtered(Set.of("ISSUE-1", "ISSUE-2"), Set.of("ISSUE-1"), Set.of("A.java"));
         RemediationMetric metricTwo = RemediationMetric.filtered(Set.of("ISSUE-1", "ISSUE-2"), Set.of("ISSUE-2"), Set.of("B.java"));
 
-        RemediationMetric aggregated = AviatorSSCApplyRemediationsCommand.aggregateMetrics(Set.of("ISSUE-1", "ISSUE-2"), List.of(metricOne, metricTwo));
+        RemediationMetric aggregated = AviatorRemediationMetricsHelper.aggregateMetrics(
+                Set.of("ISSUE-1", "ISSUE-2"), List.of(metricOne, metricTwo));
 
         assertEquals(2, aggregated.totalRemediations());
         assertEquals(2, aggregated.appliedRemediations());
@@ -81,7 +83,8 @@ class AviatorSSCApplyRemediationsCommandTest {
     void testGetRemainingIssueIdsRemovesAlreadyAppliedIds() {
         RemediationMetric metric = RemediationMetric.filtered(Set.of("ISSUE-1", "ISSUE-2"), Set.of("ISSUE-1"), Set.of("A.java"));
 
-        Set<String> remainingIssueIds = AviatorSSCApplyRemediationsCommand.getRemainingIssueIds(Set.of("ISSUE-1", "ISSUE-2"), metric);
+        Set<String> remainingIssueIds = AviatorRemediationMetricsHelper.getRemainingIssueIds(
+                Set.of("ISSUE-1", "ISSUE-2"), metric);
 
         assertEquals(Set.of("ISSUE-2"), remainingIssueIds);
     }

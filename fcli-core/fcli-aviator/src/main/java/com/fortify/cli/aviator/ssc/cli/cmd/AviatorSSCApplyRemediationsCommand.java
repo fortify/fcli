@@ -17,7 +17,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -27,10 +26,10 @@ import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
-import com.fortify.cli.aviator._common.remediations_cache.RemediationsCacheEntry;
 import com.fortify.cli.aviator._common.remediations_cache.RemediationsCacheReader;
 import com.fortify.cli.aviator._common.util.AviatorIssueIdFilterUtils;
 import com.fortify.cli.aviator._common.util.AviatorLocalFprHelper;
+import com.fortify.cli.aviator._common.util.AviatorRemediationMetricsHelper;
 import com.fortify.cli.aviator.applyRemediation.ApplyAutoRemediationOnSource;
 import com.fortify.cli.aviator.config.AviatorLoggerImpl;
 import com.fortify.cli.aviator.fpr.processor.RemediationProcessor.RemediationMetric;
@@ -39,6 +38,7 @@ import com.fortify.cli.aviator.ssc.helper.AviatorSSCApplyRemediationsHelper;
 import com.fortify.cli.aviator.ssc.helper.SinceOptionHelper;
 import com.fortify.cli.aviator.util.FprHandle;
 import com.fortify.cli.common.exception.FcliSimpleException;
+import com.fortify.cli.common.exception.FcliTechnicalException;
 import com.fortify.cli.common.output.cli.cmd.AbstractOutputCommand;
 import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
@@ -105,7 +105,8 @@ public class AviatorSSCApplyRemediationsCommand extends AbstractOutputCommand
                     ? cacheReader.getManifest().getSelection().get("appVersionId")
                     : null;
             CacheProcessingResult cacheResult = processCacheEntries(cacheReader, logger, issueIdFilter);
-            RemediationMetric aggregatedMetric = aggregateMetrics(issueIdFilter, cacheResult.metrics());
+            RemediationMetric aggregatedMetric = AviatorRemediationMetricsHelper.aggregateMetrics(
+                    issueIdFilter, cacheResult.metrics());
             String action = aggregatedMetric.appliedRemediations() > 0 ? "Remediation-Applied" : "No-Remediation-Applied";
             return AviatorSSCApplyRemediationsHelper.buildCacheResultNode(
                     new AviatorSSCApplyRemediationsHelper.CacheResultData(
@@ -126,8 +127,8 @@ public class AviatorSSCApplyRemediationsCommand extends AbstractOutputCommand
     private CacheProcessingResult processCacheEntries(RemediationsCacheReader cacheReader, AviatorLoggerImpl logger,
             Set<String> issueIdFilter) {
         List<Path> fprPaths = cacheReader.getOrderedFprPaths();
-        List<String> allEntryPaths = orderedEntryPaths(cacheReader);
-        List<String> allArtifactIds = orderedArtifactIds(cacheReader);
+        List<String> allEntryPaths = cacheReader.getOrderedEntryPaths();
+        List<String> allArtifactIds = cacheReader.getOrderedArtifactIds();
         AviatorLocalFprHelper.validateLocalFprs(fprPaths, "Cache FPR");
 
         List<RemediationMetric> metrics = new ArrayList<>();
@@ -148,7 +149,7 @@ public class AviatorSSCApplyRemediationsCommand extends AbstractOutputCommand
                 metrics.add(metric);
                 processedEntries.add(entryLabel);
                 processedArtifactIds.add(i < allArtifactIds.size() ? allArtifactIds.get(i) : "");
-                remaining = getRemainingIssueIds(remaining, metric);
+                remaining = AviatorRemediationMetricsHelper.getRemainingIssueIds(remaining, metric);
             }
         }
         return new CacheProcessingResult(List.copyOf(processedEntries), List.copyOf(processedArtifactIds), skipped, metrics);
@@ -164,7 +165,7 @@ public class AviatorSSCApplyRemediationsCommand extends AbstractOutputCommand
             LOG.warn("Skipping cache entry {} as {}", entryLabel, e.getMessage());
             return null;
         } catch (IOException e) {
-            throw new FcliSimpleException("Failed to close FPR handle for cache entry " + entryLabel, e);
+            throw new FcliTechnicalException("Failed to close FPR handle for cache entry " + entryLabel, e);
         }
     }
 
@@ -173,20 +174,6 @@ public class AviatorSSCApplyRemediationsCommand extends AbstractOutputCommand
             List<String> processedArtifactIds,
             int skipped,
             List<RemediationMetric> metrics) {}
-
-    private static List<String> orderedEntryPaths(RemediationsCacheReader cacheReader) {
-        return cacheReader.getManifest().getEntries().stream()
-                .sorted(java.util.Comparator.comparingInt(RemediationsCacheEntry::getOrder))
-                .map(RemediationsCacheEntry::getPath)
-                .toList();
-    }
-
-    private static List<String> orderedArtifactIds(RemediationsCacheReader cacheReader) {
-        return cacheReader.getManifest().getEntries().stream()
-                .sorted(java.util.Comparator.comparingInt(RemediationsCacheEntry::getOrder))
-                .map(e -> e.getArtifactId() != null ? e.getArtifactId() : "")
-                .toList();
-    }
 
     private SSCArtifactDescriptor resolveArtifactDescriptor(UnirestInstance unirest, OffsetDateTime sinceDate) {
         if (sourceSelector.isLatestSelected()) {
@@ -213,35 +200,6 @@ public class AviatorSSCApplyRemediationsCommand extends AbstractOutputCommand
         }
     }
 
-    static RemediationMetric aggregateMetrics(Set<String> requestedIssueIds, Collection<RemediationMetric> metrics) {
-        Set<String> modifiedFiles = new LinkedHashSet<>();
-        if (requestedIssueIds == null) {
-            int totalRemediations = 0;
-            int appliedRemediations = 0;
-            for (RemediationMetric metric : metrics) {
-                totalRemediations += metric.totalRemediations();
-                appliedRemediations += metric.appliedRemediations();
-                modifiedFiles.addAll(metric.modifiedFiles());
-            }
-            return RemediationMetric.unfiltered(totalRemediations, appliedRemediations, modifiedFiles);
-        }
-        Set<String> appliedIssueIds = new LinkedHashSet<>();
-        for (RemediationMetric metric : metrics) {
-            modifiedFiles.addAll(metric.modifiedFiles());
-            appliedIssueIds.addAll(metric.appliedIssueIds());
-        }
-        return RemediationMetric.filtered(requestedIssueIds, appliedIssueIds, modifiedFiles);
-    }
-
-    static Set<String> getRemainingIssueIds(Set<String> requestedIssueIds, RemediationMetric metric) {
-        if (requestedIssueIds == null || requestedIssueIds.isEmpty()) {
-            return requestedIssueIds;
-        }
-        Set<String> remainingIssueIds = new LinkedHashSet<>(requestedIssueIds);
-        remainingIssueIds.removeAll(metric.appliedIssueIds());
-        return remainingIssueIds;
-    }
-
     @RequiredArgsConstructor
     private class ArtifactProcessor {
         private final UnirestInstance unirest;
@@ -255,7 +213,8 @@ public class AviatorSSCApplyRemediationsCommand extends AbstractOutputCommand
             List<SSCArtifactDescriptor> artifacts = SSCArtifactHelper.getAllAviatorArtifacts(unirest, appVersionId, sinceDate);
 
             ArtifactBatchResult batchResult = processBatchOfArtifacts(artifacts);
-            RemediationMetric aggregatedMetric = aggregateMetrics(issueIdFilter, batchResult.metrics());
+            RemediationMetric aggregatedMetric = AviatorRemediationMetricsHelper.aggregateMetrics(
+                    issueIdFilter, batchResult.metrics());
             String action = aggregatedMetric.appliedRemediations() > 0 ? "Remediation-Applied" : "No-Remediation-Applied";
             return AviatorSSCApplyRemediationsHelper.buildAggregatedResultNode(
                     appVersionId, batchResult.processed(), batchResult.skipped(),
@@ -278,7 +237,7 @@ public class AviatorSSCApplyRemediationsCommand extends AbstractOutputCommand
                 ArtifactProcessResult result = processSingleArtifact(ad, artifactIndex, artifacts.size(), remaining);
                 if (result.isSuccess()) {
                     metrics.add(result.metric());
-                    remaining = getRemainingIssueIds(remaining, result.metric());
+                    remaining = AviatorRemediationMetricsHelper.getRemainingIssueIds(remaining, result.metric());
                     processed++;
                 } else {
                     skipped++;

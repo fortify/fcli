@@ -21,8 +21,11 @@ import java.util.Comparator;
 import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.fortify.cli.common.exception.FcliSimpleException;
+import com.fortify.cli.common.exception.FcliTechnicalException;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.util.ZipHelper;
 
@@ -31,16 +34,20 @@ import com.fortify.cli.common.util.ZipHelper;
  * and exposes FPR files directly from the zip file system for ordered processing.
  */
 public final class RemediationsCacheReader implements AutoCloseable {
+    private static final Logger logger = LoggerFactory.getLogger(RemediationsCacheReader.class);
+
     private final Path cacheZip;
     private final FileSystem cacheFs;
     private final RemediationsCacheManifest manifest;
+    private final List<RemediationsCacheEntry> orderedEntries;
     private final List<Path> orderedFprPaths;
 
     private RemediationsCacheReader(Path cacheZip, FileSystem cacheFs, RemediationsCacheManifest manifest,
-            List<Path> orderedFprPaths) {
+            List<RemediationsCacheEntry> orderedEntries, List<Path> orderedFprPaths) {
         this.cacheZip = cacheZip;
         this.cacheFs = cacheFs;
         this.manifest = manifest;
+        this.orderedEntries = orderedEntries;
         this.orderedFprPaths = orderedFprPaths;
     }
 
@@ -67,11 +74,11 @@ public final class RemediationsCacheReader implements AutoCloseable {
                         + ": " + cacheZip);
             }
 
-                RemediationsCacheManifest manifest;
-                try (var manifestInputStream = Files.newInputStream(manifestPath)) {
+            RemediationsCacheManifest manifest;
+            try (var manifestInputStream = Files.newInputStream(manifestPath)) {
                 manifest = JsonHelper.getObjectMapper()
-                    .readValue(manifestInputStream, RemediationsCacheManifest.class);
-                }
+                        .readValue(manifestInputStream, RemediationsCacheManifest.class);
+            }
             validateManifest(manifest, cacheZip);
 
             List<RemediationsCacheEntry> entries = new ArrayList<>(manifest.getEntries());
@@ -80,7 +87,7 @@ public final class RemediationsCacheReader implements AutoCloseable {
             List<Path> orderedFprs = new ArrayList<>();
             for (RemediationsCacheEntry entry : entries) {
                 Path fprPath = getEntryPath(cacheFs, entry.getPath());
-                if (fprPath == null || !Files.isRegularFile(fprPath)) {
+                if (!Files.isRegularFile(fprPath)) {
                     throw new FcliSimpleException("Remediations cache entry path not found in zip: " + entry.getPath());
                 }
                 String actualSha = RemediationsCacheSha256.hashFile(fprPath);
@@ -97,11 +104,11 @@ public final class RemediationsCacheReader implements AutoCloseable {
 
             FileSystem openCacheFs = cacheFs;
             cacheFs = null;
-            return new RemediationsCacheReader(cacheZip, openCacheFs, manifest, orderedFprs);
-        } catch (FcliSimpleException e) {
+            return new RemediationsCacheReader(cacheZip, openCacheFs, manifest, List.copyOf(entries), orderedFprs);
+        } catch (FcliSimpleException | FcliTechnicalException e) {
             throw e;
         } catch (IOException e) {
-            throw new FcliSimpleException("Failed to read remediations cache: " + cacheZip, e);
+            throw new FcliTechnicalException("Failed to read remediations cache: " + cacheZip, e);
         } finally {
             closeQuietly(cacheFs);
         }
@@ -111,8 +118,28 @@ public final class RemediationsCacheReader implements AutoCloseable {
         return manifest;
     }
 
+    public List<RemediationsCacheEntry> getOrderedEntries() {
+        return orderedEntries;
+    }
+
     public List<Path> getOrderedFprPaths() {
         return List.copyOf(orderedFprPaths);
+    }
+
+    public List<String> getOrderedEntryPaths() {
+        return orderedEntries.stream().map(RemediationsCacheEntry::getPath).toList();
+    }
+
+    public List<String> getOrderedArtifactIds() {
+        return orderedEntries.stream()
+                .map(e -> e.getArtifactId() != null ? e.getArtifactId() : "")
+                .toList();
+    }
+
+    public List<String> getOrderedReleaseIds() {
+        return orderedEntries.stream()
+                .map(e -> e.getReleaseId() != null ? e.getReleaseId() : "")
+                .toList();
     }
 
     public Path getCacheZip() {
@@ -174,8 +201,8 @@ public final class RemediationsCacheReader implements AutoCloseable {
         }
         try {
             cacheFs.close();
-        } catch (IOException ignored) {
-            // best effort
+        } catch (IOException e) {
+            logger.warn("Failed to close cache filesystem", e);
         }
     }
 }

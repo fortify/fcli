@@ -20,7 +20,7 @@ import java.security.DigestInputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
-import com.fortify.cli.common.exception.FcliSimpleException;
+import com.fortify.cli.common.exception.FcliTechnicalException;
 
 public final class RemediationsCacheSha256 {
     private RemediationsCacheSha256() {}
@@ -29,7 +29,7 @@ public final class RemediationsCacheSha256 {
         try (InputStream in = Files.newInputStream(path)) {
             return hashStream(in);
         } catch (IOException e) {
-            throw new FcliSimpleException("Failed to compute SHA-256 for " + path, e);
+            throw new FcliTechnicalException("Failed to compute SHA-256 for " + path, e);
         }
     }
 
@@ -44,9 +44,9 @@ public final class RemediationsCacheSha256 {
             }
             return toHex(digest.digest());
         } catch (NoSuchAlgorithmException e) {
-            throw new FcliSimpleException("SHA-256 algorithm not available", e);
+            throw new FcliTechnicalException("SHA-256 algorithm not available", e);
         } catch (IOException e) {
-            throw new FcliSimpleException("Failed to compute SHA-256", e);
+            throw new FcliTechnicalException("Failed to compute SHA-256", e);
         }
     }
 

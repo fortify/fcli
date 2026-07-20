@@ -18,6 +18,7 @@ import java.util.List;
 
 import com.fortify.cli.aviator.util.FprHandle;
 import com.fortify.cli.common.exception.FcliSimpleException;
+import com.fortify.cli.common.exception.FcliTechnicalException;
 
 public final class AviatorLocalFprHelper {
     private AviatorLocalFprHelper() {}
@@ -55,7 +56,7 @@ public final class AviatorLocalFprHelper {
         } catch (RuntimeException e) {
             throw new FcliSimpleException(sourceLabel + " is not a valid audited SAST FPR: " + fprPath, e);
         } catch (java.io.IOException e) {
-            throw new FcliSimpleException("Failed to close " + sourceLabel + ": " + fprPath, e);
+            throw new FcliTechnicalException("Failed to close " + sourceLabel + ": " + fprPath, e);
         }
     }
 }

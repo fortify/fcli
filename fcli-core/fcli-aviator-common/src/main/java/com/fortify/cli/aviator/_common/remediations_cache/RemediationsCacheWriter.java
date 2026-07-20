@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.fortify.cli.common.exception.FcliSimpleException;
+import com.fortify.cli.common.exception.FcliTechnicalException;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.util.ZipHelper;
 
@@ -52,7 +53,7 @@ public final class RemediationsCacheWriter {
             try {
                 Files.createDirectories(parent);
             } catch (IOException e) {
-                throw new FcliSimpleException("Failed to create parent directory for " + destination, e);
+                throw new FcliTechnicalException("Failed to create parent directory for " + destination, e);
             }
         }
 
@@ -79,14 +80,16 @@ public final class RemediationsCacheWriter {
             Files.move(tempZip, destination, StandardCopyOption.REPLACE_EXISTING);
             tempZip = null;
             return manifest;
+        } catch (FcliSimpleException | FcliTechnicalException e) {
+            throw e;
         } catch (IOException e) {
-            throw new FcliSimpleException("Failed to write remediations cache to " + destination, e);
+            throw new FcliTechnicalException("Failed to write remediations cache to " + destination, e);
         } finally {
             if (tempZip != null) {
                 try {
                     Files.deleteIfExists(tempZip);
                 } catch (IOException ignored) {
-                    // best effort
+                    // best effort cleanup of incomplete temp zip
                 }
             }
         }

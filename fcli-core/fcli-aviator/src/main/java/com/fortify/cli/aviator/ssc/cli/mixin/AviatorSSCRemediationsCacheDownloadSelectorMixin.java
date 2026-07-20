@@ -52,6 +52,8 @@ public class AviatorSSCRemediationsCacheDownloadSelectorMixin {
     }
 
     public void validate() {
-        onlineSelection.validate();
+        if (onlineSelection != null) {
+            onlineSelection.validate();
+        }
     }
 }
