@@ -45,13 +45,14 @@ import com.fortify.cli.common.progress.cli.mixin.ProgressWriterFactoryMixin;
 import com.fortify.cli.common.progress.helper.IProgressWriter;
 import com.fortify.cli.common.rest.unirest.HttpHeader;
 import com.fortify.cli.fod._common.cli.mixin.FoDDelimiterMixin;
+import com.fortify.cli.fod._common.cli.mixin.IFoDDelimiterMixinAware;
 import com.fortify.cli.fod._common.scan.helper.FoDScanDescriptor;
 import com.fortify.cli.fod._common.scan.helper.FoDScanHelper;
 import com.fortify.cli.fod._common.scan.helper.FoDScanType;
 import com.fortify.cli.fod._common.session.cli.mixin.FoDUnirestInstanceSupplierMixin;
 import com.fortify.cli.fod.aviator.helper.AviatorFoDApplyRemediationsHelper;
+import com.fortify.cli.fod.release.cli.mixin.FoDReleaseByQualifiedNameOrIdResolverMixin;
 import com.fortify.cli.fod.release.helper.FoDReleaseDescriptor;
-import com.fortify.cli.fod.release.helper.FoDReleaseHelper;
 
 import kong.unirest.GetRequest;
 import kong.unirest.UnirestInstance;
@@ -67,27 +68,64 @@ public class FoDAviatorApplyRemediationsCommand extends AbstractOutputCommand
         implements IJsonNodeSupplier, IRecordTransformer, IActionCommandResultSupplier {
     @Getter @Mixin private OutputHelperMixins.DetailsNoQuery outputHelper;
     @Mixin private ProgressWriterFactoryMixin progressWriterFactoryMixin;
-    @Mixin private FoDDelimiterMixin delimiterMixin;
+    @Mixin private FoDDelimiterMixin delimiterMixin; // Injected into sourceSelector
     @Mixin private FoDUnirestInstanceSupplierMixin unirestInstanceSupplier;
+    @Mixin private SourceMixin sourceSelector;
 
     private static final Logger LOG = LoggerFactory.getLogger(FoDAviatorApplyRemediationsCommand.class);
-
-    @ArgGroup(exclusive = true, multiplicity = "1")
-    private SourceArgGroup source;
 
     @Option(names = {"--source-dir"}, descriptionKey = "fcli.fod.aviator.apply-remediations.source-dir")
     private String sourceCodeDirectory = System.getProperty("user.dir");
     @Option(names = {"--issue-ids"}, split = ",", descriptionKey = "fcli.fod.aviator.apply-remediations.issue-ids")
     private List<String> issueIds;
 
+    /**
+     * Exclusive source selection: online FoD release (via standard release resolver) or local cache zip.
+     * Propagates {@link FoDDelimiterMixin} into the nested release resolver, matching FoD patterns such as
+     * {@code FoDAppOrReleaseMixin}.
+     */
+    public static final class SourceMixin implements IFoDDelimiterMixinAware {
+        @ArgGroup(exclusive = true, multiplicity = "1")
+        private SourceArgGroup source = new SourceArgGroup();
+
+        @Override
+        public void setDelimiterMixin(FoDDelimiterMixin delimiterMixin) {
+            if (source != null && source.online != null) {
+                source.online.setDelimiterMixin(delimiterMixin);
+            }
+        }
+
+        public boolean isFromCacheSelected() {
+            return source != null && source.fromCache != null;
+        }
+
+        public Path getFromCache() {
+            return isFromCacheSelected() ? source.fromCache : null;
+        }
+
+        public FoDReleaseDescriptor getReleaseDescriptor(UnirestInstance unirest) {
+            return source.online.getReleaseDescriptor(unirest);
+        }
+    }
+
     @Getter
     static class SourceArgGroup {
-        @ArgGroup(exclusive = false)
-        private FoDAviatorRemediationSelectorArgGroups.ReleaseArgGroup online;
+        @ArgGroup(exclusive = false, multiplicity = "1")
+        private OnlineReleaseArgGroup online = new OnlineReleaseArgGroup();
 
         @Option(names = {"--from-cache"}, required = true, paramLabel = "<zip>",
                 descriptionKey = "fcli.fod.aviator.apply-remediations.from-cache")
         private Path fromCache;
+    }
+
+    /**
+     * Online release branch reusing the standard FoD release option wiring/resolution.
+     */
+    static class OnlineReleaseArgGroup
+            extends FoDReleaseByQualifiedNameOrIdResolverMixin.AbstractFoDQualifiedReleaseNameOrIdResolverMixin {
+        @Option(names = {"--release", "--rel"}, required = true, paramLabel = "id|app[:ms]:rel",
+                descriptionKey = "fcli.fod.release.resolver.name-or-id")
+        @Getter private String qualifiedReleaseNameOrId;
     }
 
     @Override
@@ -98,12 +136,11 @@ public class FoDAviatorApplyRemediationsCommand extends AbstractOutputCommand
         validateSelection();
         try (IProgressWriter progressWriter = progressWriterFactoryMixin.create()) {
             AviatorLoggerImpl logger = new AviatorLoggerImpl(progressWriter);
-            if (isFromCacheSelected()) {
+            if (sourceSelector.isFromCacheSelected()) {
                 return processFromCache(logger, issueIdFilter);
             }
             UnirestInstance unirest = unirestInstanceSupplier.getUnirestInstance();
-            FoDReleaseDescriptor rd = FoDReleaseHelper.getReleaseDescriptor(
-                    unirest, source.online.getQualifiedReleaseNameOrId(), delimiterMixin.getDelimiter(), true);
+            FoDReleaseDescriptor rd = sourceSelector.getReleaseDescriptor(unirest);
             return processFprRemediations(unirest, rd, logger, issueIdFilter);
         }
     }
@@ -119,19 +156,15 @@ public class FoDAviatorApplyRemediationsCommand extends AbstractOutputCommand
     }
 
     private void validateSelection() {
-        if (issueIds != null && !issueIds.isEmpty() && !isFromCacheSelected()) {
+        if (issueIds != null && !issueIds.isEmpty() && !sourceSelector.isFromCacheSelected()) {
             throw new FcliSimpleException(
                     "--issue-ids can only be used with --from-cache; create a cache with download-remediations-cache and rerun with --from-cache");
         }
     }
 
-    private boolean isFromCacheSelected() {
-        return source != null && source.fromCache != null;
-    }
-
     @SneakyThrows
     private JsonNode processFromCache(AviatorLoggerImpl logger, Set<String> issueIdFilter) {
-        Path cacheZip = source.fromCache;
+        Path cacheZip = sourceSelector.getFromCache();
         try (RemediationsCacheReader cacheReader = RemediationsCacheReader.open(cacheZip)) {
             CacheProcessingResult cacheResult = processCacheEntries(cacheReader, logger, issueIdFilter);
             RemediationMetric aggregatedMetric = AviatorRemediationMetricsHelper.aggregateMetrics(

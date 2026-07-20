@@ -97,12 +97,12 @@ class FoDAviatorApplyRemediationsCommandTest {
     @Test
     void testFromCacheParsesPath() throws Exception {
         FoDAviatorApplyRemediationsCommand command = parse("--from-cache", "remediations.zip");
-        Field sourceField = FoDAviatorApplyRemediationsCommand.class.getDeclaredField("source");
-        sourceField.setAccessible(true);
-        Object source = sourceField.get(command);
-        Field fromCacheField = source.getClass().getDeclaredField("fromCache");
-        fromCacheField.setAccessible(true);
-        assertEquals(Path.of("remediations.zip"), fromCacheField.get(source));
+        Field sourceSelectorField = FoDAviatorApplyRemediationsCommand.class.getDeclaredField("sourceSelector");
+        sourceSelectorField.setAccessible(true);
+        FoDAviatorApplyRemediationsCommand.SourceMixin sourceSelector =
+                (FoDAviatorApplyRemediationsCommand.SourceMixin) sourceSelectorField.get(command);
+        assertEquals(Path.of("remediations.zip"), sourceSelector.getFromCache());
+        assertTrue(sourceSelector.isFromCacheSelected());
     }
 
     @Test

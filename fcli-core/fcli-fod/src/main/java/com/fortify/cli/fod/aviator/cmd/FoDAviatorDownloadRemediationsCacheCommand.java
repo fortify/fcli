@@ -37,14 +37,13 @@ import com.fortify.cli.fod._common.output.cli.cmd.AbstractFoDJsonNodeOutputComma
 import com.fortify.cli.fod._common.scan.helper.FoDScanDescriptor;
 import com.fortify.cli.fod._common.scan.helper.FoDScanHelper;
 import com.fortify.cli.fod._common.scan.helper.FoDScanType;
+import com.fortify.cli.fod.release.cli.mixin.FoDReleaseByQualifiedNameOrIdResolverMixin;
 import com.fortify.cli.fod.release.helper.FoDReleaseDescriptor;
-import com.fortify.cli.fod.release.helper.FoDReleaseHelper;
 
 import kong.unirest.GetRequest;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import lombok.SneakyThrows;
-import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
@@ -54,11 +53,9 @@ public class FoDAviatorDownloadRemediationsCacheCommand extends AbstractFoDJsonN
     private static final int MAX_RETRIES = 10;
 
     @Getter @Mixin private OutputHelperMixins.DetailsNoQuery outputHelper;
-    @Mixin private FoDDelimiterMixin delimiterMixin;
+    @Mixin private FoDDelimiterMixin delimiterMixin; // Injected into releaseResolver
+    @Mixin private FoDReleaseByQualifiedNameOrIdResolverMixin.RequiredOption releaseResolver;
     @Mixin private CommonOptionMixins.RequireConfirmation requireConfirmation;
-
-    @ArgGroup(exclusive = false, multiplicity = "1")
-    private FoDAviatorRemediationSelectorArgGroups.ReleaseArgGroup releaseSelection;
 
     @Option(names = {"-f", "--file"}, required = true, paramLabel = "<file>",
             descriptionKey = "fcli.fod.aviator.download-remediations-cache.file")
@@ -72,8 +69,7 @@ public class FoDAviatorDownloadRemediationsCacheCommand extends AbstractFoDJsonN
             requireConfirmation.checkConfirmed(destination);
         }
 
-        FoDReleaseDescriptor releaseDescriptor = FoDReleaseHelper.getReleaseDescriptor(
-            unirest, releaseSelection.getQualifiedReleaseNameOrId(), delimiterMixin.getDelimiter(), true);
+        FoDReleaseDescriptor releaseDescriptor = releaseResolver.getReleaseDescriptor(unirest);
         Path tempFpr = Files.createTempFile("aviator-cache-" + releaseDescriptor.getReleaseId() + "-", ".fpr");
         try {
             downloadFpr(unirest, releaseDescriptor, tempFpr);
