@@ -14,6 +14,11 @@ package com.fortify.cli.common.util;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Map;
 import java.util.function.Supplier;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -23,6 +28,27 @@ import com.fortify.cli.common.exception.FcliSimpleException;
 import lombok.SneakyThrows;
 
 public class ZipHelper {
+    public static final FileSystem openZipFileSystem(Path zipFile) {
+        try {
+            return FileSystems.newFileSystem(zipFile, (ClassLoader)null);
+        } catch (IOException e) {
+            throw new FcliSimpleException("Error opening zip file " + zipFile, e);
+        }
+    }
+
+    public static final FileSystem createZipFileSystem(Path zipFile) {
+        try {
+            var parent = zipFile.toAbsolutePath().getParent();
+            if (parent != null) {
+                Files.createDirectories(parent);
+            }
+            Files.deleteIfExists(zipFile);
+            return FileSystems.newFileSystem(zipFile, Map.of("create", "true"));
+        } catch (IOException e) {
+            throw new FcliSimpleException("Error creating zip file " + zipFile, e);
+        }
+    }
+
     /**
      * Helper method to process individual zip entries from a zip file
      * loaded from the given zipFileInputStream, calling the 

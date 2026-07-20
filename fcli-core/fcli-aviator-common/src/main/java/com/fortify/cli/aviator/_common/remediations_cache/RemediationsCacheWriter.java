@@ -19,11 +19,10 @@ import java.nio.file.StandardCopyOption;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
 
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonHelper;
+import com.fortify.cli.common.util.ZipHelper;
 
 public final class RemediationsCacheWriter {
     private RemediationsCacheWriter() {}
@@ -69,34 +68,12 @@ public final class RemediationsCacheWriter {
         Path tempZip = null;
         try {
             tempZip = Files.createTempFile("remediations-cache-", ".zip");
-            try (ZipOutputStream zos = new ZipOutputStream(Files.newOutputStream(tempZip))) {
-                for (int i = 0; i < fprSources.size(); i++) {
-                    FprSource source = fprSources.get(i);
-                    int order = i + 1;
-                    String entryPath = entryPath(source, order);
-                    String sha256 = RemediationsCacheSha256.hashFile(source.path());
-
-                    ZipEntry fprEntry = new ZipEntry(entryPath);
-                    zos.putNextEntry(fprEntry);
-                    Files.copy(source.path(), zos);
-                    zos.closeEntry();
-
-                    RemediationsCacheEntry entry = new RemediationsCacheEntry();
-                    entry.setOrder(order);
-                    entry.setArtifactId(source.artifactId());
-                    entry.setReleaseId(source.releaseId());
-                    entry.setUploadDate(source.uploadDate());
-                    entry.setPath(entryPath);
-                    entry.setSha256(sha256);
-                    manifest.getEntries().add(entry);
-                }
-
-                ZipEntry manifestEntry = new ZipEntry(RemediationsCacheConstants.MANIFEST_ENTRY);
-                zos.putNextEntry(manifestEntry);
+            try (var zipFs = ZipHelper.createZipFileSystem(tempZip)) {
+                Files.createDirectories(zipFs.getPath(RemediationsCacheConstants.FPRS_DIR));
+                addFprEntries(zipFs.getPath("/"), manifest, fprSources);
                 byte[] manifestBytes = JsonHelper.getObjectMapper().writerWithDefaultPrettyPrinter()
                         .writeValueAsBytes(manifest);
-                zos.write(manifestBytes);
-                zos.closeEntry();
+                Files.write(zipFs.getPath(RemediationsCacheConstants.MANIFEST_ENTRY), manifestBytes);
             }
 
             Files.move(tempZip, destination, StandardCopyOption.REPLACE_EXISTING);
@@ -113,6 +90,29 @@ public final class RemediationsCacheWriter {
                 }
             }
         }
+    }
+
+    private static void addFprEntries(Path zipRoot, RemediationsCacheManifest manifest, List<FprSource> fprSources) throws IOException {
+        for (int i = 0; i < fprSources.size(); i++) {
+            FprSource source = fprSources.get(i);
+            int order = i + 1;
+            String entryPath = entryPath(source, order);
+            String sha256 = RemediationsCacheSha256.hashFile(source.path());
+
+            Files.copy(source.path(), zipRoot.resolve(entryPath), StandardCopyOption.REPLACE_EXISTING);
+            manifest.getEntries().add(toManifestEntry(source, order, entryPath, sha256));
+        }
+    }
+
+    private static RemediationsCacheEntry toManifestEntry(FprSource source, int order, String entryPath, String sha256) {
+        RemediationsCacheEntry entry = new RemediationsCacheEntry();
+        entry.setOrder(order);
+        entry.setArtifactId(source.artifactId());
+        entry.setReleaseId(source.releaseId());
+        entry.setUploadDate(source.uploadDate());
+        entry.setPath(entryPath);
+        entry.setSha256(sha256);
+        return entry;
     }
 
     private static String entryPath(FprSource source, int order) {

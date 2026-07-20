@@ -12,90 +12,46 @@
  */
 package com.fortify.cli.aviator.ssc.cli.mixin;
 
-import org.apache.commons.lang3.StringUtils;
-
-import com.fortify.cli.common.exception.FcliSimpleException;
-import com.fortify.cli.ssc.appversion.helper.SSCAppVersionDescriptor;
-import com.fortify.cli.ssc.appversion.helper.SSCAppVersionHelper;
+import com.fortify.cli.aviator.ssc.cli.mixin.AviatorSSCRemediationsSelectorArgGroups.OnlineSelectionArgGroup;
 
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.ArgGroup;
-import picocli.CommandLine.Option;
 
 @Getter
 public class AviatorSSCRemediationsCacheDownloadSelectorMixin {
-    @ArgGroup(exclusive = true, multiplicity = "1")
-    private ArtifactSelectionArgGroup artifactSelection;
-
-    @Option(names = {"--since"}, descriptionKey = "fcli.aviator.ssc.download-remediations-cache.since")
-    private String since;
-
-    @Option(names = {"--appversion", "--av"}, descriptionKey = "fcli.ssc.appversion.resolver.nameOrId")
-    private String appVersionNameOrId;
-
-    @Option(names = {"--delim"}, defaultValue = ":")
-    private String delimiter;
-
-    @Getter
-    public static class ArtifactSelectionArgGroup {
-        @Option(names = {"--artifact-id"}, required = true, descriptionKey = "fcli.aviator.ssc.download-remediations-cache.artifact-id")
-        private String artifactId;
-
-        @Option(names = {"--latest"}, required = true, descriptionKey = "fcli.aviator.ssc.download-remediations-cache.latest")
-        private boolean latest;
-
-        @Option(names = {"--all"}, required = true, descriptionKey = "fcli.aviator.ssc.download-remediations-cache.all")
-        private boolean all;
-    }
+    @ArgGroup(exclusive = false, multiplicity = "1")
+    private OnlineSelectionArgGroup onlineSelection;
 
     public boolean isArtifactIdSelected() {
-        return artifactSelection != null && StringUtils.isNotBlank(artifactSelection.artifactId);
+        return onlineSelection != null && onlineSelection.isArtifactIdSelected();
     }
 
     public boolean isLatestSelected() {
-        return artifactSelection != null && artifactSelection.latest;
+        return onlineSelection != null && onlineSelection.isLatestSelected();
     }
 
     public boolean isAllSelected() {
-        return artifactSelection != null && artifactSelection.all;
+        return onlineSelection != null && onlineSelection.isAllSelected();
     }
 
     public String getArtifactId() {
-        return isArtifactIdSelected() ? artifactSelection.artifactId : null;
+        return onlineSelection != null ? onlineSelection.getArtifactId() : null;
+    }
+
+    public String getSince() {
+        return onlineSelection != null ? onlineSelection.getSince() : null;
     }
 
     public String getAppVersionId(UnirestInstance unirest) {
-        if (StringUtils.isBlank(appVersionNameOrId)) {
-            return null;
-        }
-        SSCAppVersionDescriptor descriptor = SSCAppVersionHelper.getRequiredAppVersion(
-                unirest, appVersionNameOrId, delimiter, "id");
-        return descriptor.getVersionId();
+        return onlineSelection != null ? onlineSelection.getAppVersionId(unirest) : null;
     }
 
     public String getSelectionMode() {
-        if (isArtifactIdSelected()) {
-            return "artifact-id";
-        }
-        if (isLatestSelected()) {
-            return "latest";
-        }
-        if (isAllSelected()) {
-            return "all";
-        }
-        return null;
+        return onlineSelection != null ? onlineSelection.getSelectionMode() : null;
     }
 
     public void validate() {
-        if (StringUtils.isNotBlank(since) && isArtifactIdSelected()) {
-            throw new FcliSimpleException("--since cannot be used with --artifact-id; use --latest or --all");
-        }
-        if ((isLatestSelected() || isAllSelected()) && StringUtils.isBlank(appVersionNameOrId)) {
-            throw new FcliSimpleException("--av/--appversion is required when using --latest or --all");
-        }
-        if (isArtifactIdSelected() && StringUtils.isNotBlank(appVersionNameOrId)) {
-            throw new FcliSimpleException("--av/--appversion cannot be used with --artifact-id");
-        }
+        onlineSelection.validate();
     }
 }

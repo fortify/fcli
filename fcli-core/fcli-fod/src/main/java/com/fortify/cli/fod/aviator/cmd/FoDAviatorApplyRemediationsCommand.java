@@ -82,18 +82,11 @@ public class FoDAviatorApplyRemediationsCommand extends AbstractOutputCommand
     @Getter
     static class SourceArgGroup {
         @ArgGroup(exclusive = false)
-        private OnlineSource online;
+        private FoDAviatorRemediationSelectorArgGroups.ReleaseArgGroup online;
 
         @Option(names = {"--from-cache"}, required = true, paramLabel = "<zip>",
                 descriptionKey = "fcli.fod.aviator.apply-remediations.from-cache")
         private Path fromCache;
-    }
-
-    @Getter
-    static class OnlineSource {
-        @Option(names = {"--release", "--rel"}, required = true, paramLabel = "id|app[:ms]:rel",
-                descriptionKey = "fcli.fod.release.resolver.name-or-id")
-        private String qualifiedReleaseNameOrId;
     }
 
     @Override
@@ -109,7 +102,7 @@ public class FoDAviatorApplyRemediationsCommand extends AbstractOutputCommand
             }
             UnirestInstance unirest = unirestInstanceSupplier.getUnirestInstance();
             FoDReleaseDescriptor rd = FoDReleaseHelper.getReleaseDescriptor(
-                    unirest, source.online.qualifiedReleaseNameOrId, delimiterMixin.getDelimiter(), true);
+                    unirest, source.online.getQualifiedReleaseNameOrId(), delimiterMixin.getDelimiter(), true);
             return processFprRemediations(unirest, rd, logger, issueIdFilter);
         }
     }
@@ -139,48 +132,14 @@ public class FoDAviatorApplyRemediationsCommand extends AbstractOutputCommand
     private JsonNode processFromCache(AviatorLoggerImpl logger, Set<String> issueIdFilter) {
         Path cacheZip = source.fromCache;
         try (RemediationsCacheReader cacheReader = RemediationsCacheReader.open(cacheZip)) {
-            List<Path> fprPaths = cacheReader.getOrderedFprPaths();
-            List<String> allEntryPaths = cacheReader.getManifest().getEntries().stream()
-                    .sorted(java.util.Comparator.comparingInt(e -> e.getOrder()))
-                    .map(e -> e.getPath())
-                    .toList();
-            List<String> allReleaseIds = cacheReader.getManifest().getEntries().stream()
-                    .sorted(java.util.Comparator.comparingInt(e -> e.getOrder()))
-                    .map(e -> e.getReleaseId() != null ? e.getReleaseId() : "")
-                    .toList();
-
-            AviatorLocalFprHelper.validateLocalFprs(fprPaths, "Cache FPR");
-            List<RemediationMetric> metrics = new ArrayList<>();
-            List<String> processedEntries = new ArrayList<>();
-            List<String> processedReleaseIds = new ArrayList<>();
-            Set<String> remaining = issueIdFilter == null ? null : new LinkedHashSet<>(issueIdFilter);
-
-            for (int i = 0; i < fprPaths.size(); i++) {
-                if (remaining != null && remaining.isEmpty()) {
-                    break;
-                }
-                Path fprPath = fprPaths.get(i);
-                String entryLabel = i < allEntryPaths.size() ? allEntryPaths.get(i) : fprPath.getFileName().toString();
-                logger.progress("Processing FPR " + (i + 1) + "/" + fprPaths.size() + " (" + entryLabel + ")");
-                logger.progress("Status: Processing FPR with Aviator for Applying Auto Remediations");
-                try (FprHandle fprHandle = new FprHandle(fprPath)) {
-                    RemediationMetric metric = ApplyAutoRemediationOnSource.applyRemediations(fprHandle, sourceCodeDirectory, logger, remaining);
-                    metrics.add(metric);
-                    processedEntries.add(entryLabel);
-                    processedReleaseIds.add(i < allReleaseIds.size() ? allReleaseIds.get(i) : "");
-                    remaining = getRemainingIssueIds(remaining, metric);
-                } catch (AviatorSimpleException e) {
-                    LOG.warn("Skipping cache entry {} as {}", entryLabel, e.getMessage());
-                }
-            }
-
-            RemediationMetric aggregatedMetric = aggregateMetrics(issueIdFilter, metrics);
+            CacheProcessingResult cacheResult = processCacheEntries(cacheReader, logger, issueIdFilter);
+            RemediationMetric aggregatedMetric = aggregateMetrics(issueIdFilter, cacheResult.metrics());
             String status = aggregatedMetric.appliedRemediations() > 0 ? "Remediation-Applied" : "No-Remediation-Applied";
             return AviatorFoDApplyRemediationsHelper.buildCacheResultNode(
                     new AviatorFoDApplyRemediationsHelper.CacheResultData(
                         cacheZip,
-                        List.copyOf(processedEntries),
-                        List.copyOf(processedReleaseIds),
+                        cacheResult.processedEntries(),
+                        cacheResult.processedReleaseIds(),
                         aggregatedMetric.totalRemediations(),
                         aggregatedMetric.appliedRemediations(),
                         aggregatedMetric.skippedRemediations(),
@@ -188,6 +147,67 @@ public class FoDAviatorApplyRemediationsCommand extends AbstractOutputCommand
                         status));
         }
     }
+
+    private CacheProcessingResult processCacheEntries(RemediationsCacheReader cacheReader, AviatorLoggerImpl logger,
+            Set<String> issueIdFilter) {
+        List<Path> fprPaths = cacheReader.getOrderedFprPaths();
+        List<String> allEntryPaths = orderedEntryPaths(cacheReader);
+        List<String> allReleaseIds = orderedReleaseIds(cacheReader);
+        AviatorLocalFprHelper.validateLocalFprs(fprPaths, "Cache FPR");
+
+        List<RemediationMetric> metrics = new ArrayList<>();
+        List<String> processedEntries = new ArrayList<>();
+        List<String> processedReleaseIds = new ArrayList<>();
+        Set<String> remaining = issueIdFilter == null ? null : new LinkedHashSet<>(issueIdFilter);
+
+        for (int i = 0; i < fprPaths.size(); i++) {
+            if (remaining != null && remaining.isEmpty()) {
+                break;
+            }
+            String entryLabel = i < allEntryPaths.size() ? allEntryPaths.get(i) : fprPaths.get(i).getFileName().toString();
+            RemediationMetric metric = processCacheEntry(fprPaths.get(i), entryLabel, i + 1, fprPaths.size(), logger, remaining);
+            if (metric != null) {
+                metrics.add(metric);
+                processedEntries.add(entryLabel);
+                processedReleaseIds.add(i < allReleaseIds.size() ? allReleaseIds.get(i) : "");
+                remaining = getRemainingIssueIds(remaining, metric);
+            }
+        }
+        return new CacheProcessingResult(List.copyOf(processedEntries), List.copyOf(processedReleaseIds), metrics);
+    }
+
+    private RemediationMetric processCacheEntry(Path fprPath, String entryLabel, int index, int total,
+            AviatorLoggerImpl logger, Set<String> issueFilter) {
+        logger.progress("Processing FPR " + index + "/" + total + " (" + entryLabel + ")");
+        logger.progress("Status: Processing FPR with Aviator for Applying Auto Remediations");
+        try (FprHandle fprHandle = new FprHandle(fprPath)) {
+            return ApplyAutoRemediationOnSource.applyRemediations(fprHandle, sourceCodeDirectory, logger, issueFilter);
+        } catch (AviatorSimpleException e) {
+            LOG.warn("Skipping cache entry {} as {}", entryLabel, e.getMessage());
+            return null;
+        } catch (IOException e) {
+            throw new FcliSimpleException("Failed to close FPR handle for cache entry " + entryLabel, e);
+        }
+    }
+
+    private static List<String> orderedEntryPaths(RemediationsCacheReader cacheReader) {
+        return cacheReader.getManifest().getEntries().stream()
+                .sorted(java.util.Comparator.comparingInt(e -> e.getOrder()))
+                .map(e -> e.getPath())
+                .toList();
+    }
+
+    private static List<String> orderedReleaseIds(RemediationsCacheReader cacheReader) {
+        return cacheReader.getManifest().getEntries().stream()
+                .sorted(java.util.Comparator.comparingInt(e -> e.getOrder()))
+                .map(e -> e.getReleaseId() != null ? e.getReleaseId() : "")
+                .toList();
+    }
+
+    private record CacheProcessingResult(
+            List<String> processedEntries,
+            List<String> processedReleaseIds,
+            List<RemediationMetric> metrics) {}
 
     static RemediationMetric aggregateMetrics(Set<String> requestedIssueIds, Collection<RemediationMetric> metrics) {
         Set<String> modifiedFiles = new LinkedHashSet<>();

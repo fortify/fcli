@@ -53,7 +53,7 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
-@Command(name = "download-remediations-cache")
+@Command(name = "download-remediations-cache", aliases = "drc")
 public class AviatorSSCDownloadRemediationsCacheCommand extends AbstractSSCJsonNodeOutputCommand implements IActionCommandResultSupplier {
     private static final Logger LOG = LoggerFactory.getLogger(AviatorSSCDownloadRemediationsCacheCommand.class);
 

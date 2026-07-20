@@ -13,36 +13,33 @@
 package com.fortify.cli.aviator._common.remediations_cache;
 
 import java.io.IOException;
-import java.io.InputStream;
+import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
 
 import org.apache.commons.lang3.StringUtils;
 
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonHelper;
+import com.fortify.cli.common.util.ZipHelper;
 
 /**
  * Opens a remediations cache zip, validates the manifest and entry checksums,
- * and extracts FPR files to a temp directory for ordered processing.
+ * and exposes FPR files directly from the zip file system for ordered processing.
  */
 public final class RemediationsCacheReader implements AutoCloseable {
     private final Path cacheZip;
-    private final Path extractDir;
+    private final FileSystem cacheFs;
     private final RemediationsCacheManifest manifest;
     private final List<Path> orderedFprPaths;
 
-    private RemediationsCacheReader(Path cacheZip, Path extractDir, RemediationsCacheManifest manifest,
+    private RemediationsCacheReader(Path cacheZip, FileSystem cacheFs, RemediationsCacheManifest manifest,
             List<Path> orderedFprPaths) {
         this.cacheZip = cacheZip;
-        this.extractDir = extractDir;
+        this.cacheFs = cacheFs;
         this.manifest = manifest;
         this.orderedFprPaths = orderedFprPaths;
     }
@@ -61,23 +58,20 @@ public final class RemediationsCacheReader implements AutoCloseable {
             throw new FcliSimpleException("Remediations cache file is not readable: " + cacheZip);
         }
 
-        Path extractDir;
+        FileSystem cacheFs = null;
         try {
-            extractDir = Files.createTempDirectory("remediations-cache-");
-        } catch (IOException e) {
-            throw new FcliSimpleException("Failed to create temporary directory for remediations cache", e);
-        }
-
-        try {
-            Map<String, Path> extracted = extractAll(cacheZip, extractDir);
-            Path manifestPath = extracted.get(RemediationsCacheConstants.MANIFEST_ENTRY);
-            if (manifestPath == null) {
+            cacheFs = ZipHelper.openZipFileSystem(cacheZip);
+            Path manifestPath = cacheFs.getPath(RemediationsCacheConstants.MANIFEST_ENTRY);
+            if (!Files.isRegularFile(manifestPath)) {
                 throw new FcliSimpleException("Remediations cache is missing " + RemediationsCacheConstants.MANIFEST_ENTRY
                         + ": " + cacheZip);
             }
 
-            RemediationsCacheManifest manifest = JsonHelper.getObjectMapper()
-                    .readValue(manifestPath.toFile(), RemediationsCacheManifest.class);
+                RemediationsCacheManifest manifest;
+                try (var manifestInputStream = Files.newInputStream(manifestPath)) {
+                manifest = JsonHelper.getObjectMapper()
+                    .readValue(manifestInputStream, RemediationsCacheManifest.class);
+                }
             validateManifest(manifest, cacheZip);
 
             List<RemediationsCacheEntry> entries = new ArrayList<>(manifest.getEntries());
@@ -85,7 +79,7 @@ public final class RemediationsCacheReader implements AutoCloseable {
 
             List<Path> orderedFprs = new ArrayList<>();
             for (RemediationsCacheEntry entry : entries) {
-                Path fprPath = extracted.get(normalizeZipPath(entry.getPath()));
+                Path fprPath = getEntryPath(cacheFs, entry.getPath());
                 if (fprPath == null || !Files.isRegularFile(fprPath)) {
                     throw new FcliSimpleException("Remediations cache entry path not found in zip: " + entry.getPath());
                 }
@@ -101,13 +95,15 @@ public final class RemediationsCacheReader implements AutoCloseable {
                 throw new FcliSimpleException("Remediations cache contains no FPR entries: " + cacheZip);
             }
 
-            return new RemediationsCacheReader(cacheZip, extractDir, manifest, orderedFprs);
+            FileSystem openCacheFs = cacheFs;
+            cacheFs = null;
+            return new RemediationsCacheReader(cacheZip, openCacheFs, manifest, orderedFprs);
         } catch (FcliSimpleException e) {
-            deleteRecursivelyQuietly(extractDir);
             throw e;
         } catch (IOException e) {
-            deleteRecursivelyQuietly(extractDir);
             throw new FcliSimpleException("Failed to read remediations cache: " + cacheZip, e);
+        } finally {
+            closeQuietly(cacheFs);
         }
     }
 
@@ -125,7 +121,7 @@ public final class RemediationsCacheReader implements AutoCloseable {
 
     @Override
     public void close() {
-        deleteRecursivelyQuietly(extractDir);
+        closeQuietly(cacheFs);
     }
 
     private static void validateManifest(RemediationsCacheManifest manifest, Path cacheZip) {
@@ -160,46 +156,24 @@ public final class RemediationsCacheReader implements AutoCloseable {
         }
     }
 
-    private static Map<String, Path> extractAll(Path cacheZip, Path extractDir) throws IOException {
-        Map<String, Path> extracted = new HashMap<>();
-        try (InputStream fis = Files.newInputStream(cacheZip); ZipInputStream zis = new ZipInputStream(fis)) {
-            ZipEntry entry;
-            while ((entry = zis.getNextEntry()) != null) {
-                if (entry.isDirectory()) {
-                    continue;
-                }
-                String name = normalizeZipPath(entry.getName());
-                if (name.contains("..")) {
-                    throw new FcliSimpleException("Remediations cache contains unsafe path: " + entry.getName());
-                }
-                Path out = extractDir.resolve(name).normalize();
-                if (!out.startsWith(extractDir)) {
-                    throw new FcliSimpleException("Remediations cache contains path outside extract dir: " + entry.getName());
-                }
-                Files.createDirectories(out.getParent());
-                Files.copy(zis, out);
-                extracted.put(name, out);
-            }
+    private static Path getEntryPath(FileSystem cacheFs, String entryPath) {
+        String normalizedPath = normalizeZipPath(entryPath);
+        if (normalizedPath.contains("..")) {
+            throw new FcliSimpleException("Remediations cache contains unsafe path: " + entryPath);
         }
-        return extracted;
+        return cacheFs.getPath(normalizedPath).normalize();
     }
 
     private static String normalizeZipPath(String path) {
         return path.replace('\\', '/');
     }
 
-    private static void deleteRecursivelyQuietly(Path root) {
-        if (root == null || !Files.exists(root)) {
+    private static void closeQuietly(FileSystem cacheFs) {
+        if (cacheFs == null || !cacheFs.isOpen()) {
             return;
         }
-        try (var walk = Files.walk(root)) {
-            walk.sorted(Comparator.reverseOrder()).forEach(p -> {
-                try {
-                    Files.deleteIfExists(p);
-                } catch (IOException ignored) {
-                    // best effort
-                }
-            });
+        try {
+            cacheFs.close();
         } catch (IOException ignored) {
             // best effort
         }

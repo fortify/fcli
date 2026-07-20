@@ -101,50 +101,20 @@ public class AviatorSSCApplyRemediationsCommand extends AbstractOutputCommand
     private JsonNode processFromCache(AviatorLoggerImpl logger, Set<String> issueIdFilter) {
         Path cacheZip = sourceSelector.getFromCache();
         try (RemediationsCacheReader cacheReader = RemediationsCacheReader.open(cacheZip)) {
-            List<Path> fprPaths = cacheReader.getOrderedFprPaths();
-            List<String> allEntryPaths = orderedEntryPaths(cacheReader);
-            List<String> allArtifactIds = orderedArtifactIds(cacheReader);
             String appVersionId = cacheReader.getManifest().getSelection() != null
                     ? cacheReader.getManifest().getSelection().get("appVersionId")
                     : null;
-
-            AviatorLocalFprHelper.validateLocalFprs(fprPaths, "Cache FPR");
-            List<RemediationMetric> metrics = new ArrayList<>();
-            List<String> processedEntries = new ArrayList<>();
-            List<String> processedArtifactIds = new ArrayList<>();
-            int skipped = 0;
-            Set<String> remaining = issueIdFilter == null ? null : new LinkedHashSet<>(issueIdFilter);
-
-            for (int i = 0; i < fprPaths.size(); i++) {
-                if (remaining != null && remaining.isEmpty()) {
-                    break;
-                }
-                Path fprPath = fprPaths.get(i);
-                String entryLabel = i < allEntryPaths.size() ? allEntryPaths.get(i) : fprPath.getFileName().toString();
-                logger.progress("Processing FPR " + (i + 1) + "/" + fprPaths.size() + " (" + entryLabel + ")");
-                logger.progress("Status: Processing FPR with Aviator for Applying Auto Remediations");
-                try (FprHandle fprHandle = new FprHandle(fprPath)) {
-                    RemediationMetric metric = ApplyAutoRemediationOnSource.applyRemediations(fprHandle, sourceCodeDirectory, logger, remaining);
-                    metrics.add(metric);
-                    processedEntries.add(entryLabel);
-                    processedArtifactIds.add(i < allArtifactIds.size() ? allArtifactIds.get(i) : "");
-                    remaining = getRemainingIssueIds(remaining, metric);
-                } catch (AviatorSimpleException e) {
-                    LOG.warn("Skipping cache entry {} as {}", entryLabel, e.getMessage());
-                    skipped++;
-                }
-            }
-
-            RemediationMetric aggregatedMetric = aggregateMetrics(issueIdFilter, metrics);
+            CacheProcessingResult cacheResult = processCacheEntries(cacheReader, logger, issueIdFilter);
+            RemediationMetric aggregatedMetric = aggregateMetrics(issueIdFilter, cacheResult.metrics());
             String action = aggregatedMetric.appliedRemediations() > 0 ? "Remediation-Applied" : "No-Remediation-Applied";
             return AviatorSSCApplyRemediationsHelper.buildCacheResultNode(
                     new AviatorSSCApplyRemediationsHelper.CacheResultData(
                             cacheZip,
-                            List.copyOf(processedEntries),
-                            List.copyOf(processedArtifactIds),
+                            cacheResult.processedEntries(),
+                            cacheResult.processedArtifactIds(),
                             appVersionId,
-                            metrics.size(),
-                            skipped,
+                            cacheResult.metrics().size(),
+                            cacheResult.skipped(),
                             aggregatedMetric.totalRemediations(),
                             aggregatedMetric.appliedRemediations(),
                             aggregatedMetric.skippedRemediations(),
@@ -152,6 +122,57 @@ public class AviatorSSCApplyRemediationsCommand extends AbstractOutputCommand
                             action));
         }
     }
+
+    private CacheProcessingResult processCacheEntries(RemediationsCacheReader cacheReader, AviatorLoggerImpl logger,
+            Set<String> issueIdFilter) {
+        List<Path> fprPaths = cacheReader.getOrderedFprPaths();
+        List<String> allEntryPaths = orderedEntryPaths(cacheReader);
+        List<String> allArtifactIds = orderedArtifactIds(cacheReader);
+        AviatorLocalFprHelper.validateLocalFprs(fprPaths, "Cache FPR");
+
+        List<RemediationMetric> metrics = new ArrayList<>();
+        List<String> processedEntries = new ArrayList<>();
+        List<String> processedArtifactIds = new ArrayList<>();
+        int skipped = 0;
+        Set<String> remaining = issueIdFilter == null ? null : new LinkedHashSet<>(issueIdFilter);
+
+        for (int i = 0; i < fprPaths.size(); i++) {
+            if (remaining != null && remaining.isEmpty()) {
+                break;
+            }
+            String entryLabel = i < allEntryPaths.size() ? allEntryPaths.get(i) : fprPaths.get(i).getFileName().toString();
+            RemediationMetric metric = processCacheEntry(fprPaths.get(i), entryLabel, i + 1, fprPaths.size(), logger, remaining);
+            if (metric == null) {
+                skipped++;
+            } else {
+                metrics.add(metric);
+                processedEntries.add(entryLabel);
+                processedArtifactIds.add(i < allArtifactIds.size() ? allArtifactIds.get(i) : "");
+                remaining = getRemainingIssueIds(remaining, metric);
+            }
+        }
+        return new CacheProcessingResult(List.copyOf(processedEntries), List.copyOf(processedArtifactIds), skipped, metrics);
+    }
+
+    private RemediationMetric processCacheEntry(Path fprPath, String entryLabel, int index, int total,
+            AviatorLoggerImpl logger, Set<String> issueFilter) {
+        logger.progress("Processing FPR " + index + "/" + total + " (" + entryLabel + ")");
+        logger.progress("Status: Processing FPR with Aviator for Applying Auto Remediations");
+        try (FprHandle fprHandle = new FprHandle(fprPath)) {
+            return ApplyAutoRemediationOnSource.applyRemediations(fprHandle, sourceCodeDirectory, logger, issueFilter);
+        } catch (AviatorSimpleException e) {
+            LOG.warn("Skipping cache entry {} as {}", entryLabel, e.getMessage());
+            return null;
+        } catch (IOException e) {
+            throw new FcliSimpleException("Failed to close FPR handle for cache entry " + entryLabel, e);
+        }
+    }
+
+    private record CacheProcessingResult(
+            List<String> processedEntries,
+            List<String> processedArtifactIds,
+            int skipped,
+            List<RemediationMetric> metrics) {}
 
     private static List<String> orderedEntryPaths(RemediationsCacheReader cacheReader) {
         return cacheReader.getManifest().getEntries().stream()

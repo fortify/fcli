@@ -14,11 +14,8 @@ package com.fortify.cli.aviator.ssc.cli.mixin;
 
 import java.nio.file.Path;
 
-import org.apache.commons.lang3.StringUtils;
-
+import com.fortify.cli.aviator.ssc.cli.mixin.AviatorSSCRemediationsSelectorArgGroups.OnlineSelectionArgGroup;
 import com.fortify.cli.common.exception.FcliSimpleException;
-import com.fortify.cli.ssc.appversion.helper.SSCAppVersionDescriptor;
-import com.fortify.cli.ssc.appversion.helper.SSCAppVersionHelper;
 
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
@@ -37,38 +34,11 @@ public class AviatorSSCApplyRemediationsSourceMixin {
     @Getter
     public static class SourceArgGroup {
         @ArgGroup(exclusive = false)
-        private OnlineSource online;
+        private OnlineSelectionArgGroup online;
 
         @Option(names = {"--from-cache"}, required = true, paramLabel = "<zip>",
                 descriptionKey = "fcli.aviator.ssc.apply-remediations.from-cache")
         private Path fromCache;
-    }
-
-    @Getter
-    public static class OnlineSource {
-        @ArgGroup(exclusive = true, multiplicity = "1")
-        private OnlineModeArgGroup mode;
-
-        @Option(names = {"--since"}, descriptionKey = "fcli.aviator.ssc.apply-remediations.since")
-        private String since;
-
-        @Option(names = {"--appversion", "--av"}, descriptionKey = "fcli.ssc.appversion.resolver.nameOrId")
-        private String appVersionNameOrId;
-
-        @Option(names = {"--delim"}, defaultValue = ":")
-        private String delimiter;
-    }
-
-    @Getter
-    public static class OnlineModeArgGroup {
-        @Option(names = {"--artifact-id"}, required = true, descriptionKey = "fcli.aviator.ssc.apply-remediations.artifact-id")
-        private String artifactId;
-
-        @Option(names = {"--latest"}, required = true, descriptionKey = "fcli.aviator.ssc.apply-remediations.latest")
-        private boolean latest;
-
-        @Option(names = {"--all"}, required = true, descriptionKey = "fcli.aviator.ssc.apply-remediations.all")
-        private boolean all;
     }
 
     public boolean isFromCacheSelected() {
@@ -84,39 +54,31 @@ public class AviatorSSCApplyRemediationsSourceMixin {
     }
 
     public boolean isArtifactIdSelected() {
-        return isOnlineSelected() && source.online.mode != null
-                && StringUtils.isNotBlank(source.online.mode.artifactId);
+        return isOnlineSelected() && source.online.isArtifactIdSelected();
     }
 
     public boolean isLatestSelected() {
-        return isOnlineSelected() && source.online.mode != null && source.online.mode.latest;
+        return isOnlineSelected() && source.online.isLatestSelected();
     }
 
     public boolean isAllSelected() {
-        return isOnlineSelected() && source.online.mode != null && source.online.mode.all;
+        return isOnlineSelected() && source.online.isAllSelected();
     }
 
     public String getArtifactId() {
-        return isArtifactIdSelected() ? source.online.mode.artifactId : null;
+        return isOnlineSelected() ? source.online.getArtifactId() : null;
     }
 
     public String getSince() {
-        return isOnlineSelected() ? source.online.since : null;
+        return isOnlineSelected() ? source.online.getSince() : null;
     }
 
     public String getAppVersionNameOrId() {
-        return isOnlineSelected() ? source.online.appVersionNameOrId : null;
+        return isOnlineSelected() ? source.online.getAppVersionNameOrId() : null;
     }
 
     public String getAppVersionId(UnirestInstance unirest) {
-        String appVersionNameOrId = getAppVersionNameOrId();
-        if (StringUtils.isBlank(appVersionNameOrId)) {
-            return null;
-        }
-        String delimiter = source.online.delimiter != null ? source.online.delimiter : ":";
-        SSCAppVersionDescriptor descriptor = SSCAppVersionHelper.getRequiredAppVersion(
-                unirest, appVersionNameOrId, delimiter, "id");
-        return descriptor.getVersionId();
+        return isOnlineSelected() ? source.online.getAppVersionId(unirest) : null;
     }
 
     public void validate() {
@@ -126,14 +88,6 @@ public class AviatorSSCApplyRemediationsSourceMixin {
         if (!isOnlineSelected()) {
             throw new FcliSimpleException("Exactly one of --from-cache or online selection (--artifact-id, --latest, --all) must be specified");
         }
-        if (StringUtils.isNotBlank(getSince()) && isArtifactIdSelected()) {
-            throw new FcliSimpleException("--since cannot be used with --artifact-id; use --latest or --all");
-        }
-        if ((isLatestSelected() || isAllSelected()) && StringUtils.isBlank(getAppVersionNameOrId())) {
-            throw new FcliSimpleException("--av/--appversion is required when using --latest or --all");
-        }
-        if (isArtifactIdSelected() && StringUtils.isNotBlank(getAppVersionNameOrId())) {
-            throw new FcliSimpleException("--av/--appversion cannot be used with --artifact-id");
-        }
+        source.online.validate();
     }
 }

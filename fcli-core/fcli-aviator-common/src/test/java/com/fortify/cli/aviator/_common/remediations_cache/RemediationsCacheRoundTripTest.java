@@ -27,6 +27,7 @@ import java.util.zip.ZipOutputStream;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import com.fortify.cli.aviator.util.FprHandle;
 import com.fortify.cli.common.exception.FcliSimpleException;
 
 class RemediationsCacheRoundTripTest {
@@ -63,6 +64,27 @@ class RemediationsCacheRoundTripTest {
         Path zip = tempDir.resolve("empty.zip");
         assertThrows(FcliSimpleException.class, () ->
                 RemediationsCacheWriter.write(zip, RemediationsCacheConstants.PRODUCT_SSC, Map.of(), List.of()));
+    }
+
+    @Test
+    void cachedFprCanBeOpenedAsNestedZipFileSystem() throws Exception {
+        Path fpr = tempDir.resolve("nested.fpr");
+        try (ZipOutputStream zos = new ZipOutputStream(Files.newOutputStream(fpr))) {
+            zos.putNextEntry(new ZipEntry("audit.fvdl"));
+            zos.write("<FVDL />".getBytes(StandardCharsets.UTF_8));
+            zos.closeEntry();
+        }
+        Path zip = tempDir.resolve("cache.zip");
+        RemediationsCacheWriter.write(
+                zip,
+                RemediationsCacheConstants.PRODUCT_SSC,
+                Map.of("mode", "artifact-id"),
+                List.of(RemediationsCacheWriter.FprSource.forSsc(fpr, "1", null)));
+
+        try (RemediationsCacheReader reader = RemediationsCacheReader.open(zip);
+             FprHandle fprHandle = new FprHandle(reader.getOrderedFprPaths().get(0))) {
+            assertTrue(Files.exists(fprHandle.getPath("/audit.fvdl")));
+        }
     }
 
     @Test
