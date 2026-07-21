@@ -23,10 +23,13 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.aviator._common.remediations_cache.RemediationsCacheConstants;
 import com.fortify.cli.aviator._common.remediations_cache.RemediationsCacheManifest;
 import com.fortify.cli.aviator._common.remediations_cache.RemediationsCacheWriter;
+import com.fortify.cli.aviator.config.AviatorLoggerImpl;
 import com.fortify.cli.common.cli.mixin.CommonOptionMixins;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
+import com.fortify.cli.common.progress.cli.mixin.ProgressWriterFactoryMixin;
+import com.fortify.cli.common.progress.helper.IProgressWriter;
 import com.fortify.cli.fod._common.cli.mixin.FoDDelimiterMixin;
 import com.fortify.cli.fod._common.output.cli.cmd.AbstractFoDJsonNodeOutputCommand;
 import com.fortify.cli.fod.aviator.helper.FoDRemediationsFprDownloadHelper;
@@ -43,6 +46,7 @@ import picocli.CommandLine.Option;
 @Command(name = "download-remediations-cache", aliases = "drc")
 public class FoDAviatorDownloadRemediationsCacheCommand extends AbstractFoDJsonNodeOutputCommand implements IActionCommandResultSupplier {
     @Getter @Mixin private OutputHelperMixins.DetailsNoQuery outputHelper;
+    @Mixin private ProgressWriterFactoryMixin progressWriterFactoryMixin;
     @Mixin private FoDDelimiterMixin delimiterMixin; // Injected into releaseResolver
     @Mixin private FoDReleaseByQualifiedNameOrIdResolverMixin.RequiredOption releaseResolver;
     @Mixin private CommonOptionMixins.RequireConfirmation requireConfirmation;
@@ -64,10 +68,15 @@ public class FoDAviatorDownloadRemediationsCacheCommand extends AbstractFoDJsonN
         selection.put("mode", "release");
         selection.put("releaseId", releaseDescriptor.getReleaseId());
 
-        try (RemediationsCacheWriter cacheWriter = RemediationsCacheWriter.create(
-                destination, RemediationsCacheConstants.PRODUCT_FOD, selection)) {
+        try (IProgressWriter progressWriter = progressWriterFactoryMixin.create();
+                RemediationsCacheWriter cacheWriter = RemediationsCacheWriter.create(
+                        destination, RemediationsCacheConstants.PRODUCT_FOD, selection)) {
+            AviatorLoggerImpl logger = new AviatorLoggerImpl(progressWriter);
+            logger.progress("Status: Downloading Audited FPR from FoD (release id="
+                    + releaseDescriptor.getReleaseId() + ")");
             cacheWriter.addFpr(null, releaseDescriptor.getReleaseId(), null, entryPath ->
                     FoDRemediationsFprDownloadHelper.downloadStaticRemediationsFpr(unirest, releaseDescriptor, entryPath));
+            logger.progress("Status: Writing remediations cache to " + destination);
             RemediationsCacheManifest manifest = cacheWriter.finish();
             return buildResultNode(destination, releaseDescriptor, manifest);
         }
