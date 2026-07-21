@@ -16,13 +16,9 @@ import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.OffsetDateTime;
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -30,7 +26,6 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.aviator._common.remediations_cache.RemediationsCacheConstants;
 import com.fortify.cli.aviator._common.remediations_cache.RemediationsCacheManifest;
 import com.fortify.cli.aviator._common.remediations_cache.RemediationsCacheWriter;
-import com.fortify.cli.aviator._common.remediations_cache.RemediationsCacheWriter.FprSource;
 import com.fortify.cli.aviator.config.AviatorLoggerImpl;
 import com.fortify.cli.aviator.ssc.cli.mixin.AviatorSSCRemediationsCacheDownloadSelectorMixin;
 import com.fortify.cli.aviator.ssc.helper.SinceOptionHelper;
@@ -55,8 +50,6 @@ import picocli.CommandLine.Option;
 
 @Command(name = "download-remediations-cache", aliases = "drc")
 public class AviatorSSCDownloadRemediationsCacheCommand extends AbstractSSCJsonNodeOutputCommand implements IActionCommandResultSupplier {
-    private static final Logger LOG = LoggerFactory.getLogger(AviatorSSCDownloadRemediationsCacheCommand.class);
-
     @Getter @Mixin private OutputHelperMixins.DetailsNoQuery outputHelper;
     @Mixin private ProgressWriterFactoryMixin progressWriterFactoryMixin;
     @Mixin private AviatorSSCRemediationsCacheDownloadSelectorMixin artifactSelector;
@@ -76,30 +69,19 @@ public class AviatorSSCDownloadRemediationsCacheCommand extends AbstractSSCJsonN
         }
 
         OffsetDateTime sinceDate = SinceOptionHelper.parse(artifactSelector.getSince());
-        List<Path> tempFiles = new ArrayList<>();
-        try (IProgressWriter progressWriter = progressWriterFactoryMixin.create()) {
-            AviatorLoggerImpl logger = new AviatorLoggerImpl(progressWriter);
-            List<SSCArtifactDescriptor> artifacts = resolveArtifacts(unirest, sinceDate);
-            List<FprSource> sources = new ArrayList<>();
-            for (SSCArtifactDescriptor artifact : artifacts) {
-                Path tempFpr = Files.createTempFile("aviator-cache-" + artifact.getId() + "-", ".fpr");
-                tempFiles.add(tempFpr);
-                downloadArtifact(unirest, artifact, tempFpr, logger, progressWriter);
-                sources.add(FprSource.forSsc(tempFpr, artifact.getId(), artifact.getUploadDate()));
-            }
+        List<SSCArtifactDescriptor> artifacts = resolveArtifacts(unirest, sinceDate);
+        Map<String, String> selection = buildSelectionMetadata(unirest, sinceDate);
 
-            Map<String, String> selection = buildSelectionMetadata(unirest, sinceDate);
-            RemediationsCacheManifest manifest = RemediationsCacheWriter.write(
-                    destination, RemediationsCacheConstants.PRODUCT_SSC, selection, sources);
-            return buildResultNode(destination, manifest);
-        } finally {
-            for (Path temp : tempFiles) {
-                try {
-                    Files.deleteIfExists(temp);
-                } catch (Exception e) {
-                    LOG.warn("Failed to delete temp file: " + temp, e);
-                }
+        try (IProgressWriter progressWriter = progressWriterFactoryMixin.create();
+                RemediationsCacheWriter cacheWriter = RemediationsCacheWriter.create(
+                        destination, RemediationsCacheConstants.PRODUCT_SSC, selection)) {
+            AviatorLoggerImpl logger = new AviatorLoggerImpl(progressWriter);
+            for (SSCArtifactDescriptor artifact : artifacts) {
+                cacheWriter.addFpr(artifact.getId(), null, artifact.getUploadDate(), entryPath ->
+                        downloadArtifact(unirest, artifact, entryPath, logger, progressWriter));
             }
+            RemediationsCacheManifest manifest = cacheWriter.finish();
+            return buildResultNode(destination, manifest);
         }
     }
 
@@ -139,7 +121,7 @@ public class AviatorSSCDownloadRemediationsCacheCommand extends AbstractSSCJsonN
         SSCFileTransferHelper.download(
                 unirest,
                 SSCUrls.DOWNLOAD_ARTIFACT(artifact.getId(), true),
-                destination.toFile(),
+                destination,
                 SSCFileTransferHelper.ISSCAddDownloadTokenFunction.ROUTEPARAM_DOWNLOADTOKEN,
                 progressWriter);
     }

@@ -16,12 +16,14 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
 import org.junit.jupiter.api.Test;
@@ -60,6 +62,27 @@ class RemediationsCacheRoundTripTest {
     }
 
     @Test
+    void writeDirectlyIntoDestinationZipWithoutTempStaging() throws Exception {
+        Path zip = tempDir.resolve("direct.zip");
+        try (RemediationsCacheWriter writer = RemediationsCacheWriter.create(
+                zip, RemediationsCacheConstants.PRODUCT_FOD, Map.of("mode", "release"))) {
+            writer.addFpr(null, "rel-1", null, path -> {
+                try {
+                    Files.writeString(path, "streamed-fpr");
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            });
+            writer.finish();
+        }
+        try (RemediationsCacheReader reader = RemediationsCacheReader.open(zip)) {
+            reader.requireProduct(RemediationsCacheConstants.PRODUCT_FOD);
+            assertEquals("streamed-fpr", Files.readString(reader.getOrderedFprPaths().get(0)));
+            assertEquals("rel-1", reader.getOrderedReleaseIds().get(0));
+        }
+    }
+
+    @Test
     void emptySourcesRejected() {
         Path zip = tempDir.resolve("empty.zip");
         assertThrows(FcliSimpleException.class, () ->
@@ -88,7 +111,7 @@ class RemediationsCacheRoundTripTest {
     }
 
     @Test
-    void badSha256Rejected() throws Exception {
+    void badSha256RejectedOnLazyPathLoad() throws Exception {
         Path fpr = tempDir.resolve("one.fpr");
         Files.writeString(fpr, "original");
         Path zip = tempDir.resolve("cache.zip");
@@ -98,9 +121,8 @@ class RemediationsCacheRoundTripTest {
                 Map.of("mode", "artifact-id"),
                 List.of(RemediationsCacheWriter.FprSource.forSsc(fpr, "1", null)));
 
-        // Rebuild zip with same manifest but corrupted FPR content
         Path corruptZip = tempDir.resolve("corrupt.zip");
-        try (var zis = new java.util.zip.ZipInputStream(Files.newInputStream(zip));
+        try (ZipInputStream zis = new ZipInputStream(Files.newInputStream(zip));
              ZipOutputStream zos = new ZipOutputStream(Files.newOutputStream(corruptZip))) {
             ZipEntry entry;
             while ((entry = zis.getNextEntry()) != null) {
@@ -116,20 +138,42 @@ class RemediationsCacheRoundTripTest {
 
         assertThrows(FcliSimpleException.class, () -> {
             try (RemediationsCacheReader reader = RemediationsCacheReader.open(corruptZip)) {
-                // open validates
+                reader.getOrderedFprPaths();
             }
         });
     }
 
     @Test
-    void missingManifestRejected() throws Exception {
+    void missingManifestRejectedOnLazyManifestLoad() throws Exception {
         Path zip = tempDir.resolve("no-manifest.zip");
         try (ZipOutputStream zos = new ZipOutputStream(Files.newOutputStream(zip))) {
             zos.putNextEntry(new ZipEntry("fprs/001.fpr"));
             zos.write("x".getBytes(StandardCharsets.UTF_8));
             zos.closeEntry();
         }
-        FcliSimpleException ex = assertThrows(FcliSimpleException.class, () -> RemediationsCacheReader.open(zip));
+        FcliSimpleException ex = assertThrows(FcliSimpleException.class, () -> {
+            try (RemediationsCacheReader reader = RemediationsCacheReader.open(zip)) {
+                reader.getManifest();
+            }
+        });
         assertTrue(ex.getMessage().contains("manifest.json"));
+    }
+
+    @Test
+    void requireProductRejectsMismatch() throws Exception {
+        Path fpr = tempDir.resolve("one.fpr");
+        Files.writeString(fpr, "x");
+        Path zip = tempDir.resolve("cache.zip");
+        RemediationsCacheWriter.write(
+                zip,
+                RemediationsCacheConstants.PRODUCT_SSC,
+                Map.of("mode", "artifact-id"),
+                List.of(RemediationsCacheWriter.FprSource.forSsc(fpr, "1", null)));
+
+        assertThrows(FcliSimpleException.class, () -> {
+            try (RemediationsCacheReader reader = RemediationsCacheReader.open(zip)) {
+                reader.requireProduct(RemediationsCacheConstants.PRODUCT_FOD);
+            }
+        });
     }
 }

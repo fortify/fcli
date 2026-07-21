@@ -24,178 +24,90 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fortify.cli.common.exception.AbstractFcliException;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.exception.FcliTechnicalException;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.util.ZipHelper;
 
+import lombok.Getter;
+
 /**
- * Opens a remediations cache zip, validates the manifest and entry checksums,
- * and exposes FPR files directly from the zip file system for ordered processing.
+ * Opens a remediations cache zip as a {@link FileSystem} and exposes manifest data and
+ * ordered FPR paths. Construction only validates the zip path and opens the filesystem;
+ * manifest/entry validation happens lazily via getters so a single try-with-resources on
+ * this reader owns {@code cacheFs} cleanup.
  */
 public final class RemediationsCacheReader implements AutoCloseable {
     private static final Logger logger = LoggerFactory.getLogger(RemediationsCacheReader.class);
 
     private final Path cacheZip;
     private final FileSystem cacheFs;
-    private final RemediationsCacheManifest manifest;
-    private final List<RemediationsCacheEntry> orderedEntries;
-    private final List<Path> orderedFprPaths;
 
-    private RemediationsCacheReader(Path cacheZip, FileSystem cacheFs, RemediationsCacheManifest manifest,
-            List<RemediationsCacheEntry> orderedEntries, List<Path> orderedFprPaths) {
-        this.cacheZip = cacheZip;
-        this.cacheFs = cacheFs;
-        this.manifest = manifest;
-        this.orderedEntries = orderedEntries;
-        this.orderedFprPaths = orderedFprPaths;
-    }
+    @Getter(lazy = true)
+    private final RemediationsCacheManifest manifest = loadAndValidateManifest();
 
-    public static RemediationsCacheReader open(Path cacheZip) {
-        if (cacheZip == null) {
-            throw new FcliSimpleException("--from-cache must specify a remediations cache zip path");
-        }
-        if (!Files.exists(cacheZip)) {
-            throw new FcliSimpleException("Remediations cache file does not exist: " + cacheZip);
-        }
-        if (!Files.isRegularFile(cacheZip)) {
-            throw new FcliSimpleException("Remediations cache path is not a regular file: " + cacheZip);
-        }
-        if (!Files.isReadable(cacheZip)) {
-            throw new FcliSimpleException("Remediations cache file is not readable: " + cacheZip);
-        }
+    @Getter(lazy = true)
+    private final List<RemediationsCacheEntry> orderedEntries = loadOrderedEntries();
 
-        FileSystem cacheFs = null;
+    @Getter(lazy = true)
+    private final List<Path> orderedFprPaths = loadOrderedFprPaths();
+
+    /**
+     * Validates {@code cacheZip} and opens it as a zip file system. Prefer use via
+     * try-with-resources so {@link #close()} always runs.
+     */
+    public RemediationsCacheReader(Path cacheZip) {
+        Path validated = validateCacheZip(cacheZip);
+        FileSystem opened;
         try {
-            cacheFs = ZipHelper.openZipFileSystem(cacheZip);
-            Path manifestPath = cacheFs.getPath(RemediationsCacheConstants.MANIFEST_ENTRY);
-            if (!Files.isRegularFile(manifestPath)) {
-                throw new FcliSimpleException("Remediations cache is missing " + RemediationsCacheConstants.MANIFEST_ENTRY
-                        + ": " + cacheZip);
-            }
-
-            RemediationsCacheManifest manifest;
-            try (var manifestInputStream = Files.newInputStream(manifestPath)) {
-                manifest = JsonHelper.getObjectMapper()
-                        .readValue(manifestInputStream, RemediationsCacheManifest.class);
-            }
-            validateManifest(manifest, cacheZip);
-
-            List<RemediationsCacheEntry> entries = new ArrayList<>(manifest.getEntries());
-            entries.sort(Comparator.comparingInt(RemediationsCacheEntry::getOrder));
-
-            List<Path> orderedFprs = new ArrayList<>();
-            for (RemediationsCacheEntry entry : entries) {
-                Path fprPath = getEntryPath(cacheFs, entry.getPath());
-                if (!Files.isRegularFile(fprPath)) {
-                    throw new FcliSimpleException("Remediations cache entry path not found in zip: " + entry.getPath());
-                }
-                String actualSha = RemediationsCacheSha256.hashFile(fprPath);
-                if (!actualSha.equalsIgnoreCase(entry.getSha256())) {
-                    throw new FcliSimpleException("SHA-256 mismatch for cache entry " + entry.getPath()
-                            + " (expected " + entry.getSha256() + ", actual " + actualSha + ")");
-                }
-                orderedFprs.add(fprPath);
-            }
-
-            if (orderedFprs.isEmpty()) {
-                throw new FcliSimpleException("Remediations cache contains no FPR entries: " + cacheZip);
-            }
-
-            FileSystem openCacheFs = cacheFs;
-            cacheFs = null;
-            return new RemediationsCacheReader(cacheZip, openCacheFs, manifest, List.copyOf(entries), orderedFprs);
-        } catch (FcliSimpleException | FcliTechnicalException e) {
+            opened = ZipHelper.openZipFileSystem(validated);
+        } catch (AbstractFcliException e) {
             throw e;
-        } catch (IOException e) {
-            throw new FcliTechnicalException("Failed to read remediations cache: " + cacheZip, e);
-        } finally {
-            closeQuietly(cacheFs);
+        } catch (RuntimeException e) {
+            throw new FcliTechnicalException("Failed to open remediations cache: " + validated, e);
         }
+        this.cacheZip = validated;
+        this.cacheFs = opened;
     }
 
-    public RemediationsCacheManifest getManifest() {
-        return manifest;
-    }
-
-    public List<RemediationsCacheEntry> getOrderedEntries() {
-        return orderedEntries;
-    }
-
-    public List<Path> getOrderedFprPaths() {
-        return List.copyOf(orderedFprPaths);
-    }
-
-    public List<String> getOrderedEntryPaths() {
-        return orderedEntries.stream().map(RemediationsCacheEntry::getPath).toList();
-    }
-
-    public List<String> getOrderedArtifactIds() {
-        return orderedEntries.stream()
-                .map(e -> e.getArtifactId() != null ? e.getArtifactId() : "")
-                .toList();
-    }
-
-    public List<String> getOrderedReleaseIds() {
-        return orderedEntries.stream()
-                .map(e -> e.getReleaseId() != null ? e.getReleaseId() : "")
-                .toList();
+    /** Factory alias for call sites that prefer a static open style. */
+    public static RemediationsCacheReader open(Path cacheZip) {
+        return new RemediationsCacheReader(cacheZip);
     }
 
     public Path getCacheZip() {
         return cacheZip;
     }
 
+    public List<String> getOrderedEntryPaths() {
+        return getOrderedEntries().stream().map(RemediationsCacheEntry::getPath).toList();
+    }
+
+    public List<String> getOrderedArtifactIds() {
+        return getOrderedEntries().stream()
+                .map(e -> e.getArtifactId() != null ? e.getArtifactId() : "")
+                .toList();
+    }
+
+    public List<String> getOrderedReleaseIds() {
+        return getOrderedEntries().stream()
+                .map(e -> e.getReleaseId() != null ? e.getReleaseId() : "")
+                .toList();
+    }
+
+    /**
+     * Ensures the cache was produced for the expected product ({@code ssc} or {@code fod}).
+     */
+    public void requireProduct(String expectedProduct) {
+        String actual = getManifest().getProduct();
+        FcliSimpleException.throwIf(!expectedProduct.equals(actual),
+                "Remediations cache product is '%s' but this command expects '%s': %s",
+                actual, expectedProduct, cacheZip);
+    }
+
     @Override
     public void close() {
-        closeQuietly(cacheFs);
-    }
-
-    private static void validateManifest(RemediationsCacheManifest manifest, Path cacheZip) {
-        if (manifest == null) {
-            throw new FcliSimpleException("Remediations cache manifest is empty: " + cacheZip);
-        }
-        if (manifest.getSchemaVersion() != RemediationsCacheConstants.SCHEMA_VERSION) {
-            throw new FcliSimpleException("Unsupported remediations cache schemaVersion "
-                    + manifest.getSchemaVersion() + " (expected " + RemediationsCacheConstants.SCHEMA_VERSION
-                    + "): " + cacheZip);
-        }
-        if (!RemediationsCacheConstants.KIND.equals(manifest.getKind())) {
-            throw new FcliSimpleException("Invalid remediations cache kind '" + manifest.getKind()
-                    + "' (expected " + RemediationsCacheConstants.KIND + "): " + cacheZip);
-        }
-        if (StringUtils.isBlank(manifest.getProduct())) {
-            throw new FcliSimpleException("Remediations cache manifest is missing product: " + cacheZip);
-        }
-        if (manifest.getEntries() == null || manifest.getEntries().isEmpty()) {
-            throw new FcliSimpleException("Remediations cache has no entries: " + cacheZip);
-        }
-        for (RemediationsCacheEntry entry : manifest.getEntries()) {
-            if (entry == null) {
-                throw new FcliSimpleException("Remediations cache contains a null entry: " + cacheZip);
-            }
-            if (StringUtils.isBlank(entry.getPath())) {
-                throw new FcliSimpleException("Remediations cache entry is missing path: " + cacheZip);
-            }
-            if (StringUtils.isBlank(entry.getSha256())) {
-                throw new FcliSimpleException("Remediations cache entry is missing sha256: " + entry.getPath());
-            }
-        }
-    }
-
-    private static Path getEntryPath(FileSystem cacheFs, String entryPath) {
-        String normalizedPath = normalizeZipPath(entryPath);
-        if (normalizedPath.contains("..")) {
-            throw new FcliSimpleException("Remediations cache contains unsafe path: " + entryPath);
-        }
-        return cacheFs.getPath(normalizedPath).normalize();
-    }
-
-    private static String normalizeZipPath(String path) {
-        return path.replace('\\', '/');
-    }
-
-    private static void closeQuietly(FileSystem cacheFs) {
         if (cacheFs == null || !cacheFs.isOpen()) {
             return;
         }
@@ -204,5 +116,89 @@ public final class RemediationsCacheReader implements AutoCloseable {
         } catch (IOException e) {
             logger.warn("Failed to close cache filesystem", e);
         }
+    }
+
+    private static Path validateCacheZip(Path cacheZip) {
+        FcliSimpleException.throwIf(cacheZip == null,
+                "--from-cache must specify a remediations cache zip path");
+        FcliSimpleException.throwIf(!Files.exists(cacheZip),
+                "Remediations cache file does not exist: %s", cacheZip);
+        FcliSimpleException.throwIf(!Files.isRegularFile(cacheZip),
+                "Remediations cache path is not a regular file: %s", cacheZip);
+        FcliSimpleException.throwIf(!Files.isReadable(cacheZip),
+                "Remediations cache file is not readable: %s", cacheZip);
+        return cacheZip;
+    }
+
+    private RemediationsCacheManifest loadAndValidateManifest() {
+        Path manifestPath = cacheFs.getPath(RemediationsCacheConstants.MANIFEST_ENTRY);
+        FcliSimpleException.throwIf(!Files.isRegularFile(manifestPath),
+                "Remediations cache is missing %s: %s",
+                RemediationsCacheConstants.MANIFEST_ENTRY, cacheZip);
+        try (var manifestInputStream = Files.newInputStream(manifestPath)) {
+            RemediationsCacheManifest manifest = JsonHelper.getObjectMapper()
+                    .readValue(manifestInputStream, RemediationsCacheManifest.class);
+            validateManifest(manifest);
+            return manifest;
+        } catch (AbstractFcliException e) {
+            throw e;
+        } catch (IOException e) {
+            throw new FcliTechnicalException("Failed to read remediations cache manifest: " + cacheZip, e);
+        } catch (RuntimeException e) {
+            throw new FcliTechnicalException("Failed to parse remediations cache manifest: " + cacheZip, e);
+        }
+    }
+
+    private void validateManifest(RemediationsCacheManifest manifest) {
+        FcliSimpleException.throwIf(manifest == null,
+                "Remediations cache manifest is empty: %s", cacheZip);
+        FcliSimpleException.throwIf(manifest.getSchemaVersion() != RemediationsCacheConstants.SCHEMA_VERSION,
+                "Unsupported remediations cache schemaVersion %s (expected %s): %s",
+                manifest.getSchemaVersion(), RemediationsCacheConstants.SCHEMA_VERSION, cacheZip);
+        FcliSimpleException.throwIf(!RemediationsCacheConstants.KIND.equals(manifest.getKind()),
+                "Invalid remediations cache kind '%s' (expected %s): %s",
+                manifest.getKind(), RemediationsCacheConstants.KIND, cacheZip);
+        FcliSimpleException.throwIf(StringUtils.isBlank(manifest.getProduct()),
+                "Remediations cache manifest is missing product: %s", cacheZip);
+        FcliSimpleException.throwIf(manifest.getEntries() == null || manifest.getEntries().isEmpty(),
+                "Remediations cache has no entries: %s", cacheZip);
+        for (RemediationsCacheEntry entry : manifest.getEntries()) {
+            FcliSimpleException.throwIf(entry == null,
+                    "Remediations cache contains a null entry: %s", cacheZip);
+            FcliSimpleException.throwIf(StringUtils.isBlank(entry.getPath()),
+                    "Remediations cache entry is missing path: %s", cacheZip);
+            FcliSimpleException.throwIf(StringUtils.isBlank(entry.getSha256()),
+                    "Remediations cache entry is missing sha256: %s", entry.getPath());
+        }
+    }
+
+    private List<RemediationsCacheEntry> loadOrderedEntries() {
+        List<RemediationsCacheEntry> entries = new ArrayList<>(getManifest().getEntries());
+        entries.sort(Comparator.comparingInt(RemediationsCacheEntry::getOrder));
+        return List.copyOf(entries);
+    }
+
+    private List<Path> loadOrderedFprPaths() {
+        List<Path> orderedFprs = new ArrayList<>();
+        for (RemediationsCacheEntry entry : getOrderedEntries()) {
+            Path fprPath = resolveEntryPath(entry.getPath());
+            FcliSimpleException.throwIf(!Files.isRegularFile(fprPath),
+                    "Remediations cache entry path not found in zip: %s", entry.getPath());
+            String actualSha = RemediationsCacheSha256.hashFile(fprPath);
+            FcliSimpleException.throwIf(!actualSha.equalsIgnoreCase(entry.getSha256()),
+                    "SHA-256 mismatch for cache entry %s (expected %s, actual %s)",
+                    entry.getPath(), entry.getSha256(), actualSha);
+            orderedFprs.add(fprPath);
+        }
+        FcliSimpleException.throwIf(orderedFprs.isEmpty(),
+                "Remediations cache contains no FPR entries: %s", cacheZip);
+        return List.copyOf(orderedFprs);
+    }
+
+    private Path resolveEntryPath(String entryPath) {
+        String normalizedPath = entryPath.replace('\\', '/');
+        FcliSimpleException.throwIf(normalizedPath.contains(".."),
+                "Remediations cache contains unsafe path: %s", entryPath);
+        return cacheFs.getPath(normalizedPath).normalize();
     }
 }

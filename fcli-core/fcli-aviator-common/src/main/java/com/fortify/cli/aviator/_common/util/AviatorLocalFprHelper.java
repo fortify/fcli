@@ -12,11 +12,13 @@
  */
 package com.fortify.cli.aviator._common.util;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
 import com.fortify.cli.aviator.util.FprHandle;
+import com.fortify.cli.common.exception.AbstractFcliException;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.exception.FcliTechnicalException;
 
@@ -51,11 +53,11 @@ public final class AviatorLocalFprHelper {
         }
         try (FprHandle fprHandle = new FprHandle(fprPath)) {
             fprHandle.validate();
-        } catch (FcliSimpleException e) {
+        } catch (AbstractFcliException e) {
             throw e;
         } catch (RuntimeException e) {
             throw new FcliSimpleException(sourceLabel + " is not a valid audited SAST FPR: " + fprPath, e);
-        } catch (java.io.IOException e) {
+        } catch (IOException e) {
             throw new FcliTechnicalException("Failed to close " + sourceLabel + ": " + fprPath, e);
         }
     }
