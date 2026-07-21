@@ -12,15 +12,14 @@
  */
 package com.fortify.cli.aviator.connection.cli.cmd;
 
-import java.util.List;
-
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.aviator._common.config.admin.helper.AviatorAdminConfigHelper;
+import com.fortify.cli.aviator._common.session.user.helper.AviatorUserSessionHelper;
 import com.fortify.cli.aviator.connection.cli.mixin.AviatorConnectionDiagnoseSourceArgGroup;
 import com.fortify.cli.aviator.connection.helper.AviatorConnectionDiagnoseHelper;
-import com.fortify.cli.aviator.diagnose.AviatorDiagnosticStageResult;
+import com.fortify.cli.aviator.connection.helper.AviatorConnectionDiagnoseHelper.DiagnoseRunResult;
+import com.fortify.cli.aviator.connection.helper.AviatorConnectionDiagnoseSource;
 import com.fortify.cli.common.exception.FcliSimpleException;
-import com.fortify.cli.common.exception.FcliTechnicalException;
-import com.fortify.cli.common.json.producer.ObjectNodeProducerApplyFrom;
 import com.fortify.cli.common.output.cli.cmd.AbstractOutputCommand;
 import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
@@ -42,13 +41,12 @@ public class AviatorConnectionDiagnoseCommand extends AbstractOutputCommand impl
     private int timeoutSeconds;
 
     private final AviatorConnectionDiagnoseHelper diagnoseHelper = new AviatorConnectionDiagnoseHelper();
-    private List<AviatorDiagnosticStageResult> lastResults;
+    private DiagnoseRunResult runResult;
 
     @Override
     public Integer call() {
-        var output = getJsonNode();
-        getOutputHelper().write(simpleObjectNodeProducerBuilder(ObjectNodeProducerApplyFrom.SPEC).source(output).build());
-        return diagnoseHelper.hasRequiredFailure(lastResults) ? 1 : 0;
+        getOutputHelper().write(getObjectNodeProducer());
+        return runResult.requiredFailure() ? 1 : 0;
     }
 
     @Override
@@ -56,8 +54,22 @@ public class AviatorConnectionDiagnoseCommand extends AbstractOutputCommand impl
         if (timeoutSeconds <= 0) {
             throw new FcliSimpleException("--timeout must be greater than 0");
         }
-        lastResults = diagnoseHelper.diagnose(sourceArgGroup, timeoutSeconds);
-        return diagnoseHelper.toArrayNode(lastResults);
+        if (runResult == null) {
+            runResult = diagnoseHelper.diagnose(resolveSource(), timeoutSeconds);
+        }
+        return runResult.json();
+    }
+
+    private AviatorConnectionDiagnoseSource resolveSource() {
+        if (sourceArgGroup.getUrl() != null) {
+            return AviatorConnectionDiagnoseSource.fromUrl(sourceArgGroup.getUrl());
+        }
+        if (sourceArgGroup.getAviatorSession() != null) {
+            var descriptor = AviatorUserSessionHelper.instance().get(sourceArgGroup.getAviatorSession(), true);
+            return AviatorConnectionDiagnoseSource.fromUserSession(descriptor);
+        }
+        var descriptor = AviatorAdminConfigHelper.instance().get(sourceArgGroup.getAdminConfig(), true);
+        return AviatorConnectionDiagnoseSource.fromAdminConfig(descriptor);
     }
 
     @Override

@@ -54,14 +54,17 @@ public class AviatorUserSessionLoginCommand extends AbstractSessionLoginCommand<
         String resolvedToken = tokenResolver.getToken();
         Date expiryDate = AviatorJwtUtils.extractExpiryDateFromToken(resolvedToken);
 
-        LOG.info("Default Aviator admin configuration found. Attempting to validate user token...");
+        LOG.info("Validating Aviator user token with the server...");
         try {
             var validationResponse = sessionHelper.validateToken(sessionLoginOptions.getAviatorUrl(), resolvedToken).response();
 
             if (!validationResponse.getValid()) {
                 String errorMsg = validationResponse.getErrorMessage();
                 String fullError = "Aviator user token validation failed: " +
-                        (errorMsg == null || errorMsg.isBlank() ? "The token is invalid. Please verify the token is correct and try again." : errorMsg);                throw new AviatorSimpleException(fullError);
+                        (errorMsg == null || errorMsg.isBlank()
+                                ? "The token is invalid. Please verify the token is correct and try again."
+                                : errorMsg);
+                throw new AviatorSimpleException(fullError);
             }
             LOG.info("Aviator user token validated successfully with the Aviator server.");
         } catch (AviatorTechnicalException e) {

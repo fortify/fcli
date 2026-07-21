@@ -48,6 +48,6 @@ public class AviatorUserTokenResolverMixin extends AbstractTextResolverMixin {
         if (StringUtils.isBlank(resolvedToken)) {
             throw new FcliSimpleException("Resolved token value for --token option is blank or empty.");
         }
-        return super.getText();
+        return resolvedToken;
     }
 }

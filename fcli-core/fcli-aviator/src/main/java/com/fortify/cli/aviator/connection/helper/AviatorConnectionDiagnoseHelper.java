@@ -21,7 +21,6 @@ import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
 import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
 import com.fortify.cli.aviator._common.session.user.helper.AviatorUserSessionDescriptor;
 import com.fortify.cli.aviator._common.session.user.helper.AviatorUserSessionHelper;
-import com.fortify.cli.aviator.connection.cli.mixin.AviatorConnectionDiagnoseSourceArgGroup;
 import com.fortify.cli.aviator.diagnose.AviatorConnectionDiagnostics;
 import com.fortify.cli.aviator.diagnose.AviatorDiagnosticStage;
 import com.fortify.cli.aviator.diagnose.AviatorDiagnosticStageResult;
@@ -34,44 +33,23 @@ import io.grpc.StatusRuntimeException;
 public class AviatorConnectionDiagnoseHelper {
     private final AviatorConnectionDiagnostics diagnostics = new AviatorConnectionDiagnostics();
 
-    public List<AviatorDiagnosticStageResult> diagnose(AviatorConnectionDiagnoseSourceArgGroup sourceArgGroup, int timeoutSeconds) {
-        var source = resolveSource(sourceArgGroup);
+    public DiagnoseRunResult diagnose(AviatorConnectionDiagnoseSource source, int timeoutSeconds) {
         var results = diagnostics.diagnose(source.url(), timeoutSeconds, source.type());
         appendCredentialStage(results, source);
-        return results;
+        return new DiagnoseRunResult(results, diagnostics.toArrayNode(results), diagnostics.hasRequiredFailure(results));
     }
 
-    public ArrayNode toArrayNode(List<AviatorDiagnosticStageResult> results) {
-        return diagnostics.toArrayNode(results);
-    }
-
-    public boolean hasRequiredFailure(List<AviatorDiagnosticStageResult> results) {
-        return diagnostics.hasRequiredFailure(results);
-    }
-
-    private DiagnoseSource resolveSource(AviatorConnectionDiagnoseSourceArgGroup sourceArgGroup) {
-        if (sourceArgGroup.getUrl() != null) {
-            return new DiagnoseSource("url", sourceArgGroup.getUrl(), null, null);
-        }
-        if (sourceArgGroup.getAviatorSession() != null) {
-            var descriptor = AviatorUserSessionHelper.instance().get(sourceArgGroup.getAviatorSession(), true);
-            return new DiagnoseSource("user-session", descriptor.getAviatorUrl(), descriptor, null);
-        }
-        var descriptor = AviatorAdminConfigHelper.instance().get(sourceArgGroup.getAdminConfig(), true);
-        return new DiagnoseSource("admin-config", descriptor.getAviatorUrl(), null, descriptor);
-    }
-
-    private void appendCredentialStage(List<AviatorDiagnosticStageResult> results, DiagnoseSource source) {
+    private void appendCredentialStage(List<AviatorDiagnosticStageResult> results, AviatorConnectionDiagnoseSource source) {
         var order = results.size() + 1;
         if (source.userSessionDescriptor() == null && source.adminConfigDescriptor() == null) {
-            results.add(AviatorConnectionDiagnostics.warn(order, AviatorDiagnosticStage.TOKEN,
+            results.add(AviatorDiagnosticStageResult.warn(order, AviatorDiagnosticStage.TOKEN,
                 "Credential check skipped",
                 "Use --aviator-session or --admin-config to check credentials", false,
                 JsonHelper.getObjectMapper().createObjectNode()));
             return;
         }
         if (!diagnostics.hasGrpcResponse(results)) {
-            results.add(AviatorConnectionDiagnostics.warn(order, stageForSource(source),
+            results.add(AviatorDiagnosticStageResult.warn(order, stageForSource(source),
                 "Credential check skipped",
                 "Fix the gRPC connection first", false, JsonHelper.getObjectMapper().createObjectNode()));
             return;
@@ -83,33 +61,35 @@ public class AviatorConnectionDiagnoseHelper {
         }
     }
 
-    private void validateUserToken(List<AviatorDiagnosticStageResult> results, int order, AviatorUserSessionDescriptor sessionDescriptor) {
+    private void validateUserToken(List<AviatorDiagnosticStageResult> results, int order,
+            AviatorUserSessionDescriptor sessionDescriptor) {
         try {
             var validationResult = AviatorUserSessionHelper.instance().validateToken(sessionDescriptor);
             var evidence = JsonHelper.getObjectMapper().createObjectNode();
             evidence.put("tenantNamePresent", validationResult.tenantName() != null);
-            var errorMessage = validationResult.response().getErrorMessage();
             if (validationResult.response().getValid()) {
                 results.add(AviatorDiagnosticStageResult.of(order, AviatorDiagnosticStage.TOKEN,
                     AviatorDiagnosticStatus.PASS, false,
                     "Aviator token is valid", "No action required", evidence));
             } else {
+                var errorMessage = validationResult.response().getErrorMessage();
                 if (errorMessage != null && !errorMessage.isBlank()) {
                     evidence.put("tokenValidationMessage", errorMessage);
                 }
-                results.add(AviatorConnectionDiagnostics.optionalFail(order, AviatorDiagnosticStage.TOKEN,
+                results.add(AviatorDiagnosticStageResult.optionalFail(order, AviatorDiagnosticStage.TOKEN,
                     "Aviator token is not valid",
                     "Use a current token for the expected tenant", evidence));
             }
         } catch (AviatorSimpleException | AviatorTechnicalException | StatusRuntimeException e) {
-            results.add(AviatorConnectionDiagnostics.optionalFail(order, AviatorDiagnosticStage.TOKEN,
+            results.add(AviatorDiagnosticStageResult.optionalFail(order, AviatorDiagnosticStage.TOKEN,
                 "Aviator token check failed",
                 "Use a current token for the expected tenant",
                 AviatorConnectionDiagnostics.errorEvidence(e)));
         }
     }
 
-    private void validateAdminConfig(List<AviatorDiagnosticStageResult> results, int order, AviatorAdminConfigDescriptor configDescriptor) {
+    private void validateAdminConfig(List<AviatorDiagnosticStageResult> results, int order,
+            AviatorAdminConfigDescriptor configDescriptor) {
         try {
             AviatorAdminConfigHelper.instance().validateConfig(configDescriptor);
             var evidence = JsonHelper.getObjectMapper().createObjectNode();
@@ -118,16 +98,15 @@ public class AviatorConnectionDiagnoseHelper {
                 AviatorDiagnosticStatus.PASS, false,
                 "Aviator admin credentials are valid", "No action required", evidence));
         } catch (FcliSimpleException | AviatorTechnicalException | StatusRuntimeException e) {
-            results.add(AviatorConnectionDiagnostics.optionalFail(order, AviatorDiagnosticStage.ADMIN,
+            results.add(AviatorDiagnosticStageResult.optionalFail(order, AviatorDiagnosticStage.ADMIN,
                 "Admin credentials are not valid",
                 "Check the tenant, public key, and private key", AviatorConnectionDiagnostics.errorEvidence(e)));
         }
     }
 
-    private AviatorDiagnosticStage stageForSource(DiagnoseSource source) {
+    private AviatorDiagnosticStage stageForSource(AviatorConnectionDiagnoseSource source) {
         return source.adminConfigDescriptor() == null ? AviatorDiagnosticStage.TOKEN : AviatorDiagnosticStage.ADMIN;
     }
 
-    private record DiagnoseSource(String type, String url, AviatorUserSessionDescriptor userSessionDescriptor,
-            AviatorAdminConfigDescriptor adminConfigDescriptor) {}
+    public record DiagnoseRunResult(List<AviatorDiagnosticStageResult> stages, ArrayNode json, boolean requiredFailure) {}
 }

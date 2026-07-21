@@ -16,11 +16,25 @@ public record AviatorGrpcReachabilityResult(
         boolean responseReceived,
         boolean httpResponseReceived,
         String statusCode,
-        String failureCategory,
+        AviatorGrpcFailureCategory failureCategory,
         String httpStatusCode,
         String httpContentType,
         String description) {
+
     public AviatorGrpcReachabilityResult(boolean responseReceived, String statusCode, String description) {
-        this(responseReceived, false, statusCode, null, null, null, description);
+        this(responseReceived, false, statusCode, AviatorGrpcFailureCategory.NONE, null, null, description);
+    }
+
+    public static AviatorGrpcReachabilityResult ok(String statusCode, String description) {
+        return new AviatorGrpcReachabilityResult(true, false, statusCode, AviatorGrpcFailureCategory.NONE, null, null, description);
+    }
+
+    public static AviatorGrpcReachabilityResult noResponse(String statusCode, AviatorGrpcFailureCategory category, String description) {
+        return new AviatorGrpcReachabilityResult(false, false, statusCode, category, null, null, description);
+    }
+
+    public static AviatorGrpcReachabilityResult nonGrpcHttp(String statusCode, String httpStatus, String contentType, String description) {
+        return new AviatorGrpcReachabilityResult(false, true, statusCode, AviatorGrpcFailureCategory.NON_GRPC_HTTP,
+            httpStatus, contentType, description);
     }
 }

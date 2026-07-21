@@ -12,29 +12,17 @@
  */
 package com.fortify.cli.aviator.diagnose;
 
-public enum AviatorDiagnosticStage {
-    ENDPOINT("endpoint", "Aviator endpoint configuration validation"),
-    DNS("dns", "DNS resolution"),
-    TCP("tcp", "TCP connectivity"),
-    PROXY("proxy", "HTTP proxy CONNECT"),
-    TLS("tls", "TLS handshake"),
-    GRPC("grpc", "gRPC request/response reachability"),
-    TOKEN("token", "Aviator token validation"),
-    ADMIN("admin", "Aviator admin credential validation");
+public enum AviatorTlsPhase {
+    CONNECT("connect"),
+    HANDSHAKE("handshake");
 
     private final String id;
-    private final String description;
 
-    AviatorDiagnosticStage(String id, String description) {
+    AviatorTlsPhase(String id) {
         this.id = id;
-        this.description = description;
     }
 
     public String id() {
         return id;
-    }
-
-    public String description() {
-        return description;
     }
 }

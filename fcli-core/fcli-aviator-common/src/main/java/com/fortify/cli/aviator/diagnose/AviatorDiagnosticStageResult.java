@@ -30,6 +30,26 @@ public record AviatorDiagnosticStageResult(
             evidence == null ? JsonHelper.getObjectMapper().createObjectNode() : evidence);
     }
 
+    public static AviatorDiagnosticStageResult pass(int order, AviatorDiagnosticStage stage, String summary,
+            String guidance, ObjectNode evidence) {
+        return of(order, stage, AviatorDiagnosticStatus.PASS, true, summary, guidance, evidence);
+    }
+
+    public static AviatorDiagnosticStageResult fail(int order, AviatorDiagnosticStage stage, String summary,
+            String guidance, ObjectNode evidence) {
+        return of(order, stage, AviatorDiagnosticStatus.FAIL, true, summary, guidance, evidence);
+    }
+
+    public static AviatorDiagnosticStageResult warn(int order, AviatorDiagnosticStage stage, String summary,
+            String guidance, boolean required, ObjectNode evidence) {
+        return of(order, stage, AviatorDiagnosticStatus.WARN, required, summary, guidance, evidence);
+    }
+
+    public static AviatorDiagnosticStageResult optionalFail(int order, AviatorDiagnosticStage stage, String summary,
+            String guidance, ObjectNode evidence) {
+        return of(order, stage, AviatorDiagnosticStatus.FAIL, false, summary, guidance, evidence);
+    }
+
     public boolean isRequiredFailure() {
         return required && AviatorDiagnosticStatus.FAIL.equals(status);
     }

@@ -14,17 +14,19 @@ package com.fortify.cli.aviator.diagnose;
 
 import java.io.IOException;
 import java.net.InetAddress;
-import java.util.Optional;
 
 import com.fortify.cli.aviator.grpc.AviatorGrpcClientHelper.AviatorConnectionPlan;
 
-public interface AviatorDiagnosticProbe {
+public interface IAviatorDiagnosticProbe {
     InetAddress[] resolve(String host) throws IOException;
-    void connect(String host, int port, int timeoutSeconds) throws IOException;
-    AviatorTlsHandshakeResult handshake(AviatorConnectionPlan connectionPlan, int timeoutSeconds) throws IOException;
-    AviatorGrpcReachabilityResult probeGrpc(String url, int timeoutSeconds) throws Exception;
 
-    default Optional<String> getProxySource() {
-        return Optional.empty();
-    }
+    void connect(String host, int port, int timeoutSeconds) throws IOException;
+
+    /**
+     * Single session: TCP to next hop, optional HTTP CONNECT, then TLS. Emits one
+     * structured result so PROXY and TLS stages share a tunnel (no re-CONNECT).
+     */
+    AviatorTunnelResult probeTunnel(AviatorConnectionPlan connectionPlan, int timeoutSeconds);
+
+    AviatorGrpcReachabilityResult probeGrpc(String url, int timeoutSeconds) throws Exception;
 }
