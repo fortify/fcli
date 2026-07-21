@@ -43,6 +43,28 @@ class AviatorGrpcClientHelperTest {
     }
 
     @Test
+    void shouldCreateConnectionPlanWithDefaultPortAndNormalizedUrl() {
+        var plan = AviatorGrpcClientHelper.createConnectionPlan("aviator.example.com");
+
+        assertEquals("aviator.example.com", plan.originalUrl());
+        assertEquals("https://aviator.example.com", plan.normalizedUrl());
+        assertEquals("aviator.example.com", plan.target().host());
+        assertNull(plan.target().port());
+        assertEquals(443, plan.effectivePort());
+    }
+
+    @Test
+    void shouldCreateConnectionPlanWithExplicitPort() {
+        var plan = AviatorGrpcClientHelper.createConnectionPlan("https://aviator.example.com:8443/");
+
+        assertEquals("https://aviator.example.com:8443/", plan.originalUrl());
+        assertEquals("https://aviator.example.com:8443/", plan.normalizedUrl());
+        assertEquals("aviator.example.com", plan.target().host());
+        assertEquals(8443, plan.target().port());
+        assertEquals(8443, plan.effectivePort());
+    }
+
+    @Test
     void shouldBuildHttpConnectProxyAddressWithCredentials() {
         var proxy = ProxyDescriptor.builder()
             .proxyHost("localhost")

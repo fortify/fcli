@@ -25,11 +25,8 @@ import com.fortify.cli.aviator._common.session.user.cli.mixin.AviatorUserTokenRe
 import com.fortify.cli.aviator._common.session.user.helper.AviatorUserSessionDescriptor;
 import com.fortify.cli.aviator._common.session.user.helper.AviatorUserSessionHelper;
 import com.fortify.cli.aviator._common.util.AviatorJwtUtils;
-import com.fortify.cli.aviator.grpc.AviatorGrpcClient;
-import com.fortify.cli.aviator.grpc.AviatorGrpcClientHelper;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.session.cli.cmd.AbstractSessionLoginCommand;
-import com.fortify.grpc.token.TokenValidationResponse;
 
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
@@ -56,12 +53,10 @@ public class AviatorUserSessionLoginCommand extends AbstractSessionLoginCommand<
     protected AviatorUserSessionDescriptor login(String sessionName) {
         String resolvedToken = tokenResolver.getToken();
         Date expiryDate = AviatorJwtUtils.extractExpiryDateFromToken(resolvedToken);
-        String tenantName = AviatorJwtUtils.extractTenantNameFromToken(resolvedToken);
 
         LOG.info("Default Aviator admin configuration found. Attempting to validate user token...");
-        try (AviatorGrpcClient client = AviatorGrpcClientHelper.createClient(sessionLoginOptions.getAviatorUrl())) {
-
-            TokenValidationResponse validationResponse = client.validateUserToken(resolvedToken, tenantName);
+        try {
+            var validationResponse = sessionHelper.validateToken(sessionLoginOptions.getAviatorUrl(), resolvedToken).response();
 
             if (!validationResponse.getValid()) {
                 String errorMsg = validationResponse.getErrorMessage();
