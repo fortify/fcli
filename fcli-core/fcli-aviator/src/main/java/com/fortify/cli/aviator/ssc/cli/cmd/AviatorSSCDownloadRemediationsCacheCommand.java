@@ -17,7 +17,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.OffsetDateTime;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -39,11 +38,9 @@ import com.fortify.cli.ssc._common.output.cli.cmd.AbstractSSCJsonNodeOutputComma
 import com.fortify.cli.ssc._common.rest.ssc.SSCUrls;
 import com.fortify.cli.ssc._common.rest.ssc.transfer.SSCFileTransferHelper;
 import com.fortify.cli.ssc.artifact.helper.SSCArtifactDescriptor;
-import com.fortify.cli.ssc.artifact.helper.SSCArtifactHelper;
 
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
-import lombok.SneakyThrows;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
@@ -55,12 +52,10 @@ public class AviatorSSCDownloadRemediationsCacheCommand extends AbstractSSCJsonN
     @Mixin private AviatorSSCRemediationsCacheDownloadSelectorMixin artifactSelector;
     @Mixin private CommonOptionMixins.RequireConfirmation requireConfirmation;
 
-    @Option(names = {"-f", "--file"}, required = true, paramLabel = "<file>",
-            descriptionKey = "fcli.aviator.ssc.download-remediations-cache.file")
+    @Option(names = {"-f", "--file"}, required = true, paramLabel = "<file>")
     private File outputFile;
 
     @Override
-    @SneakyThrows
     public JsonNode getJsonNode(UnirestInstance unirest) {
         artifactSelector.validate();
         Path destination = outputFile.toPath();
@@ -69,14 +64,15 @@ public class AviatorSSCDownloadRemediationsCacheCommand extends AbstractSSCJsonN
         }
 
         OffsetDateTime sinceDate = SinceOptionHelper.parse(artifactSelector.getSince());
-        List<SSCArtifactDescriptor> artifacts = resolveArtifacts(unirest, sinceDate);
-        Map<String, String> selection = buildSelectionMetadata(unirest, sinceDate);
+        // One resolve: artifacts + appVersionId (shared with apply-remediations).
+        var resolved = artifactSelector.resolveArtifacts(unirest, sinceDate);
+        Map<String, String> selection = buildSelectionMetadata(resolved.appVersionId(), sinceDate);
 
         try (IProgressWriter progressWriter = progressWriterFactoryMixin.create();
                 RemediationsCacheWriter cacheWriter = RemediationsCacheWriter.create(
                         destination, RemediationsCacheConstants.PRODUCT_SSC, selection)) {
             AviatorLoggerImpl logger = new AviatorLoggerImpl(progressWriter);
-            for (SSCArtifactDescriptor artifact : artifacts) {
+            for (SSCArtifactDescriptor artifact : resolved.artifacts()) {
                 cacheWriter.addFpr(artifact.getId(), null, artifact.getUploadDate(), entryPath ->
                         downloadArtifact(unirest, artifact, entryPath, logger, progressWriter));
             }
@@ -85,29 +81,13 @@ public class AviatorSSCDownloadRemediationsCacheCommand extends AbstractSSCJsonN
         }
     }
 
-    private List<SSCArtifactDescriptor> resolveArtifacts(UnirestInstance unirest, OffsetDateTime sinceDate) {
-        if (artifactSelector.isAllSelected()) {
-            String appVersionId = artifactSelector.getAppVersionId(unirest);
-            return SSCArtifactHelper.getAllAviatorArtifacts(unirest, appVersionId, sinceDate);
-        }
-        if (artifactSelector.isLatestSelected()) {
-            String appVersionId = artifactSelector.getAppVersionId(unirest);
-            return List.of(SSCArtifactHelper.getLatestAviatorArtifact(unirest, appVersionId, sinceDate));
-        }
-        return List.of(SSCArtifactHelper.requireAviatorArtifact(
-                SSCArtifactHelper.getArtifactDescriptor(unirest, artifactSelector.getArtifactId())));
-    }
-
-    private Map<String, String> buildSelectionMetadata(UnirestInstance unirest, OffsetDateTime sinceDate) {
+    private Map<String, String> buildSelectionMetadata(String appVersionId, OffsetDateTime sinceDate) {
         Map<String, String> selection = new LinkedHashMap<>();
         selection.put("mode", artifactSelector.getSelectionMode());
         if (artifactSelector.isArtifactIdSelected()) {
             selection.put("artifactId", artifactSelector.getArtifactId());
-        } else {
-            String appVersionId = artifactSelector.getAppVersionId(unirest);
-            if (appVersionId != null) {
-                selection.put("appVersionId", appVersionId);
-            }
+        } else if (appVersionId != null) {
+            selection.put("appVersionId", appVersionId);
         }
         if (sinceDate != null) {
             selection.put("since", sinceDate.toString());

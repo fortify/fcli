@@ -38,7 +38,6 @@ import com.fortify.cli.fod.release.helper.FoDReleaseDescriptor;
 
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
-import lombok.SneakyThrows;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
@@ -51,12 +50,10 @@ public class FoDAviatorDownloadRemediationsCacheCommand extends AbstractFoDJsonN
     @Mixin private FoDReleaseByQualifiedNameOrIdResolverMixin.RequiredOption releaseResolver;
     @Mixin private CommonOptionMixins.RequireConfirmation requireConfirmation;
 
-    @Option(names = {"-f", "--file"}, required = true, paramLabel = "<file>",
-            descriptionKey = "fcli.fod.aviator.download-remediations-cache.file")
+    @Option(names = {"-f", "--file"}, required = true, paramLabel = "<file>")
     private File outputFile;
 
     @Override
-    @SneakyThrows
     public JsonNode getJsonNode(UnirestInstance unirest) {
         Path destination = outputFile.toPath();
         if (Files.exists(destination)) {

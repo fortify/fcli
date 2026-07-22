@@ -51,7 +51,13 @@ public final class RemediationsCacheReader implements AutoCloseable {
     private final List<RemediationsCacheEntry> orderedEntries = loadOrderedEntries();
 
     @Getter(lazy = true)
+    private final List<ResolvedFpr> orderedResolvedFprs = loadOrderedResolvedFprs();
+
+    @Getter(lazy = true)
     private final List<Path> orderedFprPaths = loadOrderedFprPaths();
+
+    /** Manifest entry paired with its validated ZipFS path (same order as apply). */
+    public record ResolvedFpr(RemediationsCacheEntry entry, Path fprPath) {}
 
     /**
      * Validates {@code cacheZip} and opens it as a zip file system. Prefer use via
@@ -178,8 +184,8 @@ public final class RemediationsCacheReader implements AutoCloseable {
         return List.copyOf(entries);
     }
 
-    private List<Path> loadOrderedFprPaths() {
-        List<Path> orderedFprs = new ArrayList<>();
+    private List<ResolvedFpr> loadOrderedResolvedFprs() {
+        List<ResolvedFpr> resolved = new ArrayList<>();
         for (RemediationsCacheEntry entry : getOrderedEntries()) {
             Path fprPath = resolveEntryPath(entry.getPath());
             FcliSimpleException.throwIf(!Files.isRegularFile(fprPath),
@@ -188,17 +194,37 @@ public final class RemediationsCacheReader implements AutoCloseable {
             FcliSimpleException.throwIf(!actualSha.equalsIgnoreCase(entry.getSha256()),
                     "SHA-256 mismatch for cache entry %s (expected %s, actual %s)",
                     entry.getPath(), entry.getSha256(), actualSha);
-            orderedFprs.add(fprPath);
+            resolved.add(new ResolvedFpr(entry, fprPath));
         }
-        FcliSimpleException.throwIf(orderedFprs.isEmpty(),
+        FcliSimpleException.throwIf(resolved.isEmpty(),
                 "Remediations cache contains no FPR entries: %s", cacheZip);
-        return List.copyOf(orderedFprs);
+        return List.copyOf(resolved);
     }
 
+    private List<Path> loadOrderedFprPaths() {
+        return getOrderedResolvedFprs().stream().map(ResolvedFpr::fprPath).toList();
+    }
+
+    /**
+     * Resolves a manifest entry path inside the zip FS. Rejects empty, absolute, and parent-escape paths.
+     * ZipFS keeps paths in-archive (not host zip-slip), but untrusted manifests must still stay relative.
+     */
     private Path resolveEntryPath(String entryPath) {
-        String normalizedPath = entryPath.replace('\\', '/');
-        FcliSimpleException.throwIf(normalizedPath.contains(".."),
+        FcliSimpleException.throwIf(StringUtils.isBlank(entryPath),
+                "Remediations cache entry path is blank: %s", cacheZip);
+        String normalized = entryPath.replace('\\', '/').trim();
+        while (normalized.startsWith("./")) {
+            normalized = normalized.substring(2);
+        }
+        FcliSimpleException.throwIf(normalized.startsWith("/") || normalized.matches("^[A-Za-z]:.*"),
+                "Remediations cache contains absolute path: %s", entryPath);
+        FcliSimpleException.throwIf(normalized.contains(".."),
                 "Remediations cache contains unsafe path: %s", entryPath);
-        return cacheFs.getPath(normalizedPath).normalize();
+        Path resolved = cacheFs.getPath(normalized).normalize();
+        // After normalize, parent segments must not reappear.
+        String resolvedStr = resolved.toString().replace('\\', '/');
+        FcliSimpleException.throwIf(resolvedStr.contains("..") || resolvedStr.startsWith("/"),
+                "Remediations cache contains unsafe path: %s", entryPath);
+        return resolved;
     }
 }

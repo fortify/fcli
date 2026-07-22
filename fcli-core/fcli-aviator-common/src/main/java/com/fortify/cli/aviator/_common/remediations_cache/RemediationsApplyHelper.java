@@ -30,16 +30,11 @@ import com.fortify.cli.aviator.util.FprHandle;
 import com.fortify.cli.common.exception.FcliTechnicalException;
 
 /**
- * Shared apply-remediations logic for cache zip entries (SSC and FoD).
- * SHA-256 is verified by {@link RemediationsCacheReader#getOrderedFprPaths()} (no extra local FPR pass).
+ * Single apply-remediations loop for any {@link IRemediationsFprSource}
+ * (cache zip entries or online downloads). Soft-skips on {@link AviatorSimpleException}.
  */
-public final class RemediationsCacheApplyHelper {
-    private RemediationsCacheApplyHelper() {}
-
-    public enum EntryIdKind {
-        ARTIFACT_ID,
-        RELEASE_ID
-    }
+public final class RemediationsApplyHelper {
+    private RemediationsApplyHelper() {}
 
     public record ApplyResult(
             List<String> processedEntries,
@@ -48,55 +43,40 @@ public final class RemediationsCacheApplyHelper {
             List<RemediationMetric> metrics) {}
 
     /**
-     * Applies remediations for each ordered cache FPR until done or issue-id filter is exhausted.
+     * Applies remediations for each source entry until done or the issue-id filter is exhausted.
+     * Caller owns {@code source} lifecycle (try-with-resources).
      */
-    public static ApplyResult applyEntries(
-            RemediationsCacheReader cacheReader,
-            String expectedProduct,
+    public static ApplyResult apply(
+            IRemediationsFprSource source,
             String sourceCodeDirectory,
             IAviatorLogger logger,
             Set<String> issueIdFilter,
-            EntryIdKind idKind,
             Logger skipLog) {
-        cacheReader.requireProduct(expectedProduct);
-
-        List<Path> fprPaths = cacheReader.getOrderedFprPaths();
-        List<String> entryPaths = cacheReader.getOrderedEntryPaths();
-        List<String> entryIds = idKind == EntryIdKind.ARTIFACT_ID
-                ? cacheReader.getOrderedArtifactIds()
-                : cacheReader.getOrderedReleaseIds();
-
-        List<RemediationMetric> metrics = new ArrayList<>();
-        List<String> processedEntries = new ArrayList<>();
-        List<String> processedIds = new ArrayList<>();
-        int skipped = 0;
-        Set<String> remaining = issueIdFilter == null ? null : new LinkedHashSet<>(issueIdFilter);
-
-        for (int i = 0; i < fprPaths.size(); i++) {
-            if (remaining != null && remaining.isEmpty()) {
-                break;
+        Accumulator acc = new Accumulator(issueIdFilter);
+        source.forEachEntry((fprPath, label, id, index, total) -> {
+            if (acc.remaining != null && acc.remaining.isEmpty()) {
+                return false;
             }
-            String entryLabel = i < entryPaths.size() ? entryPaths.get(i) : fprPaths.get(i).getFileName().toString();
-            RemediationMetric metric = applyOneEntry(
-                    fprPaths.get(i), entryLabel, i + 1, fprPaths.size(), sourceCodeDirectory, logger, remaining, skipLog);
+            RemediationMetric metric = applyOne(
+                    fprPath, label, index, total, sourceCodeDirectory, logger, acc.remaining, skipLog);
             if (metric == null) {
-                skipped++;
+                acc.skipped++;
             } else {
-                metrics.add(metric);
-                processedEntries.add(entryLabel);
-                processedIds.add(i < entryIds.size() ? entryIds.get(i) : "");
-                remaining = AviatorRemediationMetricsHelper.getRemainingIssueIds(remaining, metric);
+                acc.metrics.add(metric);
+                acc.processedEntries.add(label);
+                acc.processedIds.add(id != null ? id : "");
+                acc.remaining = AviatorRemediationMetricsHelper.getRemainingIssueIds(acc.remaining, metric);
             }
-        }
-        return new ApplyResult(
-                List.copyOf(processedEntries), List.copyOf(processedIds), skipped, List.copyOf(metrics));
+            return true;
+        });
+        return acc.toResult();
     }
 
     public static String actionLabel(RemediationMetric metric) {
         return metric != null && metric.appliedRemediations() > 0 ? "Remediation-Applied" : "No-Remediation-Applied";
     }
 
-    private static RemediationMetric applyOneEntry(
+    private static RemediationMetric applyOne(
             Path fprPath,
             String entryLabel,
             int index,
@@ -110,10 +90,31 @@ public final class RemediationsCacheApplyHelper {
         try (FprHandle fprHandle = new FprHandle(fprPath)) {
             return ApplyAutoRemediationOnSource.applyRemediations(fprHandle, sourceCodeDirectory, logger, issueFilter);
         } catch (AviatorSimpleException e) {
-            skipLog.warn("Skipping cache entry {} as {}", entryLabel, e.getMessage());
+            skipLog.warn("Skipping entry {} as {}", entryLabel, e.getMessage());
             return null;
         } catch (IOException e) {
-            throw new FcliTechnicalException("Failed to close FPR handle for cache entry " + entryLabel, e);
+            throw new FcliTechnicalException("Failed to close FPR handle for entry " + entryLabel, e);
+        }
+    }
+
+    /** Sequential-loop state (not concurrent — avoids Atomic* only to satisfy lambda capture rules). */
+    private static final class Accumulator {
+        private final List<RemediationMetric> metrics = new ArrayList<>();
+        private final List<String> processedEntries = new ArrayList<>();
+        private final List<String> processedIds = new ArrayList<>();
+        private int skipped;
+        private Set<String> remaining;
+
+        private Accumulator(Set<String> issueIdFilter) {
+            this.remaining = issueIdFilter == null ? null : new LinkedHashSet<>(issueIdFilter);
+        }
+
+        private ApplyResult toResult() {
+            return new ApplyResult(
+                    List.copyOf(processedEntries),
+                    List.copyOf(processedIds),
+                    skipped,
+                    List.copyOf(metrics));
         }
     }
 }

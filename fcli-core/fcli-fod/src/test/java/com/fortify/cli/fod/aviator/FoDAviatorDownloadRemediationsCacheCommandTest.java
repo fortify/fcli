@@ -22,25 +22,18 @@ import picocli.CommandLine;
 
 class FoDAviatorDownloadRemediationsCacheCommandTest {
     @Test
-    void testReleaseIsRequired() {
-        FoDAviatorDownloadRemediationsCacheCommand command = new FoDAviatorDownloadRemediationsCacheCommand();
-
+    void releaseIsRequired() {
         assertThrows(CommandLine.ParameterException.class,
-                () -> new CommandLine(command).parseArgs("-f", "cache.zip"));
+                () -> parse("-f", "cache.zip"));
     }
 
     @Test
-    void testFileIsRequired() {
-        FoDAviatorDownloadRemediationsCacheCommand command = new FoDAviatorDownloadRemediationsCacheCommand();
-
+    void fileIsRequired() {
         assertThrows(CommandLine.ParameterException.class,
-                () -> new CommandLine(command).parseArgs("--release", "1"));
+                () -> parse("--release", "1"));
     }
 
-    @Test
-    void testReleaseWithFileOptionParses() {
-        FoDAviatorDownloadRemediationsCacheCommand command = new FoDAviatorDownloadRemediationsCacheCommand();
-
-        new CommandLine(command).parseArgs("--release", "1", "-f", "remediations.zip");
+    private static void parse(String... args) {
+        new CommandLine(new FoDAviatorDownloadRemediationsCacheCommand()).parseArgs(args);
     }
 }

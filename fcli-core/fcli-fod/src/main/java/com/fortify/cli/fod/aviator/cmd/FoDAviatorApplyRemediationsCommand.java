@@ -12,7 +12,6 @@
  */
 package com.fortify.cli.fod.aviator.cmd;
 
-import java.nio.file.Path;
 import java.util.List;
 import java.util.Set;
 
@@ -20,14 +19,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.aviator._common.remediations_cache.RemediationsCacheApplyHelper;
-import com.fortify.cli.aviator._common.remediations_cache.RemediationsCacheApplyHelper.ApplyResult;
+import com.fortify.cli.aviator._common.remediations_cache.CacheRemediationsFprSource;
+import com.fortify.cli.aviator._common.remediations_cache.RemediationsApplyHelper;
+import com.fortify.cli.aviator._common.remediations_cache.RemediationsApplyHelper.ApplyResult;
 import com.fortify.cli.aviator._common.remediations_cache.RemediationsCacheConstants;
-import com.fortify.cli.aviator._common.remediations_cache.RemediationsCacheReader;
 import com.fortify.cli.aviator._common.util.AviatorIssueIdFilterUtils;
-import com.fortify.cli.aviator._common.util.AviatorRemediationMetricsHelper;
 import com.fortify.cli.aviator.config.AviatorLoggerImpl;
-import com.fortify.cli.aviator.fpr.processor.RemediationProcessor.RemediationMetric;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.output.cli.cmd.AbstractOutputCommand;
 import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
@@ -37,17 +34,14 @@ import com.fortify.cli.common.output.transform.IRecordTransformer;
 import com.fortify.cli.common.progress.cli.mixin.ProgressWriterFactoryMixin;
 import com.fortify.cli.common.progress.helper.IProgressWriter;
 import com.fortify.cli.fod._common.cli.mixin.FoDDelimiterMixin;
-import com.fortify.cli.fod._common.cli.mixin.IFoDDelimiterMixinAware;
 import com.fortify.cli.fod._common.session.cli.mixin.FoDUnirestInstanceSupplierMixin;
+import com.fortify.cli.fod.aviator.cli.mixin.FoDAviatorApplyRemediationsSourceMixin;
 import com.fortify.cli.fod.aviator.helper.AviatorFoDApplyRemediationsHelper;
-import com.fortify.cli.fod.aviator.helper.AviatorFoDOnlineRemediationsApplier;
-import com.fortify.cli.fod.release.cli.mixin.FoDReleaseByQualifiedNameOrIdResolverMixin;
+import com.fortify.cli.fod.aviator.helper.FodOnlineRemediationsFprSource;
 import com.fortify.cli.fod.release.helper.FoDReleaseDescriptor;
 
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
-import lombok.SneakyThrows;
-import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
@@ -61,62 +55,14 @@ public class FoDAviatorApplyRemediationsCommand extends AbstractOutputCommand
     @Mixin private ProgressWriterFactoryMixin progressWriterFactoryMixin;
     @Mixin private FoDDelimiterMixin delimiterMixin; // Injected into sourceSelector
     @Mixin private FoDUnirestInstanceSupplierMixin unirestInstanceSupplier;
-    @Mixin private SourceMixin sourceSelector;
+    @Mixin private FoDAviatorApplyRemediationsSourceMixin sourceSelector;
 
-    @Option(names = {"--source-dir"}, descriptionKey = "fcli.fod.aviator.apply-remediations.source-dir")
+    @Option(names = {"--source-dir"})
     private String sourceCodeDirectory = System.getProperty("user.dir");
-    @Option(names = {"--issue-ids"}, split = ",", descriptionKey = "fcli.fod.aviator.apply-remediations.issue-ids")
+    @Option(names = {"--issue-ids"}, split = ",")
     private List<String> issueIds;
 
-    /**
-     * Exclusive source selection: online FoD release (via standard release resolver) or local cache zip.
-     * Propagates {@link FoDDelimiterMixin} into the nested release resolver, matching FoD patterns such as
-     * {@code FoDAppOrReleaseMixin}.
-     */
-    public static final class SourceMixin implements IFoDDelimiterMixinAware {
-        @ArgGroup(exclusive = true, multiplicity = "1")
-        private SourceArgGroup source = new SourceArgGroup();
-
-        @Override
-        public void setDelimiterMixin(FoDDelimiterMixin delimiterMixin) {
-            if (source != null && source.online != null) {
-                source.online.setDelimiterMixin(delimiterMixin);
-            }
-        }
-
-        public boolean isFromCacheSelected() {
-            return source != null && source.fromCache != null;
-        }
-
-        public Path getFromCache() {
-            return isFromCacheSelected() ? source.fromCache : null;
-        }
-
-        public FoDReleaseDescriptor getReleaseDescriptor(UnirestInstance unirest) {
-            return source.online.getReleaseDescriptor(unirest);
-        }
-    }
-
-    @Getter
-    static class SourceArgGroup {
-        @ArgGroup(exclusive = false, multiplicity = "1")
-        private OnlineReleaseArgGroup online = new OnlineReleaseArgGroup();
-
-        @Option(names = {"--from-cache"}, required = true, paramLabel = "<zip>",
-                descriptionKey = "fcli.fod.aviator.apply-remediations.from-cache")
-        private Path fromCache;
-    }
-
-    /** Online release branch reusing the standard FoD release option wiring/resolution. */
-    static class OnlineReleaseArgGroup
-            extends FoDReleaseByQualifiedNameOrIdResolverMixin.AbstractFoDQualifiedReleaseNameOrIdResolverMixin {
-        @Option(names = {"--release", "--rel"}, required = true, paramLabel = "id|app[:ms]:rel",
-                descriptionKey = "fcli.fod.release.resolver.name-or-id")
-        @Getter private String qualifiedReleaseNameOrId;
-    }
-
     @Override
-    @SneakyThrows
     public JsonNode getJsonNode() {
         validateSourceCodeDirectory();
         Set<String> issueIdFilter = AviatorIssueIdFilterUtils.normalizeIssueIds(issueIds);
@@ -127,53 +73,43 @@ public class FoDAviatorApplyRemediationsCommand extends AbstractOutputCommand
             if (sourceSelector.isFromCacheSelected()) {
                 return processFromCache(logger, issueIdFilter);
             }
-            UnirestInstance unirest = unirestInstanceSupplier.getUnirestInstance();
-            return AviatorFoDOnlineRemediationsApplier.apply(
-                    unirest,
-                    sourceSelector.getReleaseDescriptor(unirest),
-                    sourceCodeDirectory,
-                    logger,
-                    issueIdFilter);
+            return processOnline(logger, issueIdFilter);
+        }
+    }
+
+    private JsonNode processOnline(AviatorLoggerImpl logger, Set<String> issueIdFilter) {
+        UnirestInstance unirest = unirestInstanceSupplier.getUnirestInstance();
+        FoDReleaseDescriptor release = sourceSelector.getReleaseDescriptor(unirest);
+        try (FodOnlineRemediationsFprSource source =
+                new FodOnlineRemediationsFprSource(unirest, logger, release)) {
+            ApplyResult applyResult = RemediationsApplyHelper.apply(
+                    source, sourceCodeDirectory, logger, issueIdFilter, LOG);
+            return AviatorFoDApplyRemediationsHelper.buildOnlineResultNode(release, applyResult);
         }
     }
 
     private JsonNode processFromCache(AviatorLoggerImpl logger, Set<String> issueIdFilter) {
-        Path cacheZip = sourceSelector.getFromCache();
-        try (RemediationsCacheReader cacheReader = RemediationsCacheReader.open(cacheZip)) {
-            ApplyResult applyResult = RemediationsCacheApplyHelper.applyEntries(
-                    cacheReader,
-                    RemediationsCacheConstants.PRODUCT_FOD,
-                    sourceCodeDirectory,
-                    logger,
-                    issueIdFilter,
-                    RemediationsCacheApplyHelper.EntryIdKind.RELEASE_ID,
-                    LOG);
-            RemediationMetric aggregated = AviatorRemediationMetricsHelper.aggregateMetrics(
-                    issueIdFilter, applyResult.metrics());
+        try (CacheRemediationsFprSource source = CacheRemediationsFprSource.open(
+                sourceSelector.getFromCache(),
+                RemediationsCacheConstants.PRODUCT_FOD,
+                CacheRemediationsFprSource.IdKind.RELEASE_ID)) {
+            ApplyResult applyResult = RemediationsApplyHelper.apply(
+                    source, sourceCodeDirectory, logger, issueIdFilter, LOG);
             return AviatorFoDApplyRemediationsHelper.buildCacheResultNode(
-                    new AviatorFoDApplyRemediationsHelper.CacheResultData(
-                            cacheZip,
-                            applyResult.processedEntries(),
-                            applyResult.processedIds(),
-                            aggregated.totalRemediations(),
-                            aggregated.appliedRemediations(),
-                            aggregated.skippedRemediations(),
-                            aggregated.modifiedFiles(),
-                            RemediationsCacheApplyHelper.actionLabel(aggregated)));
+                    sourceSelector.getFromCache(), applyResult, issueIdFilter);
         }
     }
 
     private void validateSourceCodeDirectory() {
-        if (sourceCodeDirectory == null || sourceCodeDirectory.isBlank()) {
-            throw new FcliSimpleException("--source-dir must specify a valid directory path");
-        }
+        FcliSimpleException.throwIf(sourceCodeDirectory == null || sourceCodeDirectory.isBlank(),
+                "--source-dir must specify a valid directory path");
     }
 
     private void validateSelection() {
-        if (issueIds != null && !issueIds.isEmpty() && !sourceSelector.isFromCacheSelected()) {
-            throw new FcliSimpleException(
-                    "--issue-ids can only be used with --from-cache; create a cache with download-remediations-cache and rerun with --from-cache");
-        }
+        FcliSimpleException.throwIf(
+                issueIds != null && !issueIds.isEmpty() && !sourceSelector.isFromCacheSelected(),
+                "--issue-ids can only be used with --from-cache; "
+                        + "create a cache with download-remediations-cache and rerun with --from-cache");
     }
 
     @Override

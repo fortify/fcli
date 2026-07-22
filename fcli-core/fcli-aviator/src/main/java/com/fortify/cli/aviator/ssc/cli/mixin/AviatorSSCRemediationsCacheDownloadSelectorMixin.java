@@ -12,6 +12,8 @@
  */
 package com.fortify.cli.aviator.ssc.cli.mixin;
 
+import java.time.OffsetDateTime;
+
 import com.fortify.cli.aviator.ssc.cli.mixin.AviatorSSCRemediationsSelectorArgGroups.OnlineSelectionArgGroup;
 
 import kong.unirest.UnirestInstance;
@@ -49,6 +51,11 @@ public class AviatorSSCRemediationsCacheDownloadSelectorMixin {
 
     public String getSelectionMode() {
         return onlineSelection != null ? onlineSelection.getSelectionMode() : null;
+    }
+
+    public OnlineSelectionArgGroup.ResolvedOnlineArtifacts resolveArtifacts(
+            UnirestInstance unirest, OffsetDateTime sinceDate) {
+        return onlineSelection.resolveArtifacts(unirest, sinceDate);
     }
 
     public void validate() {

@@ -13,6 +13,7 @@
 package com.fortify.cli.aviator.ssc.cli.mixin;
 
 import java.nio.file.Path;
+import java.time.OffsetDateTime;
 
 import com.fortify.cli.aviator.ssc.cli.mixin.AviatorSSCRemediationsSelectorArgGroups.OnlineSelectionArgGroup;
 import com.fortify.cli.common.exception.FcliSimpleException;
@@ -36,6 +37,7 @@ public class AviatorSSCApplyRemediationsSourceMixin {
         @ArgGroup(exclusive = false)
         private OnlineSelectionArgGroup online;
 
+        /** Shared/arg-group option: keep descriptionKey (default picocli key uses FQCN). */
         @Option(names = {"--from-cache"}, required = true, paramLabel = "<zip>",
                 descriptionKey = "fcli.aviator.ssc.apply-remediations.from-cache")
         private Path fromCache;
@@ -81,13 +83,20 @@ public class AviatorSSCApplyRemediationsSourceMixin {
         return isOnlineSelected() ? source.online.getAppVersionId(unirest) : null;
     }
 
+    /** Online only; same resolution as download-remediations-cache. */
+    public OnlineSelectionArgGroup.ResolvedOnlineArtifacts resolveArtifacts(
+            UnirestInstance unirest, OffsetDateTime sinceDate) {
+        FcliSimpleException.throwIf(!isOnlineSelected(),
+                "Online artifact selection is required (not --from-cache)");
+        return source.online.resolveArtifacts(unirest, sinceDate);
+    }
+
     public void validate() {
         if (isFromCacheSelected()) {
             return;
         }
-        if (!isOnlineSelected()) {
-            throw new FcliSimpleException("Exactly one of --from-cache or online selection (--artifact-id, --latest, --all) must be specified");
-        }
+        FcliSimpleException.throwIf(!isOnlineSelected(),
+                "Exactly one of --from-cache or online selection (--artifact-id, --latest, --all) must be specified");
         source.online.validate();
     }
 }

@@ -31,4 +31,20 @@ public class RemediationsCacheEntry {
     private String uploadDate;
     private String path;
     private String sha256;
+
+    /**
+     * Factory for writers (not Jackson). Avoids multi-arg same-type call sites on the wire model.
+     * Do not add {@code @Builder} on this {@code @Reflectable} class.
+     */
+    public static RemediationsCacheEntry of(
+            int order, String path, String artifactId, String releaseId, String uploadDate, String sha256) {
+        RemediationsCacheEntry entry = new RemediationsCacheEntry();
+        entry.setOrder(order);
+        entry.setPath(path);
+        entry.setArtifactId(artifactId);
+        entry.setReleaseId(releaseId);
+        entry.setUploadDate(uploadDate);
+        entry.setSha256(sha256);
+        return entry;
+    }
 }

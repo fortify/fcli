@@ -13,6 +13,7 @@
 package com.fortify.cli.aviator._common.remediations_cache;
 
 import java.io.IOException;
+import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -33,58 +34,77 @@ import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.util.ZipHelper;
 
 /**
- * Builds a remediations cache zip at a destination path. Prefer opening a writer, writing
- * each FPR directly into the zip filesystem (for example via download APIs that accept
- * {@link Path}), then {@link #finish()} and close. No intermediate temp zip is used.
+ * Builds a remediations cache zip at a destination path. FPR content is written
+ * directly into a ZipFS (no per-FPR temp staging). The ZipFS is opened on a sibling
+ * {@code *.partial} work file; on successful {@link #finish()} + {@link #close()}, the
+ * work file is moved onto {@code destination} (atomic when the filesystem supports it),
+ * so an existing destination is not replaced until the archive is complete.
  *
- * <p>The destination is kept only when {@link #finish()} succeeded <em>and</em>
- * {@link #close()} closed the zip filesystem successfully (ZipFS finalizes the archive on close).
+ * <p>{@link #close()} is the sole owner of zip close, work-file cleanup, and publish.
  */
 public final class RemediationsCacheWriter implements AutoCloseable {
     private static final Logger logger = LoggerFactory.getLogger(RemediationsCacheWriter.class);
+    private static final String PARTIAL_SUFFIX = ".partial";
 
     private final Path destination;
+    /** Sibling work path where ZipFS content is written before publish. */
+    private final Path workPath;
+    /** May be null if initialization failed; {@link #close()} still cleans workPath. */
     private final FileSystem zipFs;
     private final RemediationsCacheManifest manifest;
+    private final Exception initError;
     private int nextOrder = 1;
-    /** True after manifest.json has been written into the open ZipFS (not yet durable until close). */
+    /** True after manifest.json has been written into the open ZipFS (not yet durable until close+publish). */
     private boolean manifestWritten;
     private boolean closed;
 
-    private RemediationsCacheWriter(Path destination, FileSystem zipFs, RemediationsCacheManifest manifest) {
+    /**
+     * Always constructs an instance so {@link #close()} remains the only cleanup path.
+     * Callers must use {@link #create(Path, String, Map)} which closes and rethrows on init failure.
+     */
+    private RemediationsCacheWriter(Path destination, String product, Map<String, String> selection) {
         this.destination = destination;
-        this.zipFs = zipFs;
-        this.manifest = manifest;
+        this.workPath = workPathFor(destination);
+        this.manifest = newManifest(product, selection);
+        FileSystem fs = null;
+        Exception error = null;
+        try {
+            // ZipFS on sibling work file; existing destination is left intact until publish.
+            fs = ZipHelper.createZipFileSystem(workPath);
+            Files.createDirectories(fs.getPath(RemediationsCacheConstants.FPRS_DIR));
+        } catch (AbstractFcliException e) {
+            error = e;
+        } catch (IOException | RuntimeException e) {
+            error = e;
+        }
+        this.zipFs = fs;
+        this.initError = error;
     }
 
     /**
-     * Opens (or recreates) the destination zip and prepares an empty manifest.
-     * Existing destination files are replaced by {@link ZipHelper#createZipFileSystem(Path)}.
+     * Opens a work zip next to {@code destination} and prepares an empty manifest.
+     * On initialization failure, {@link #close()} runs before the exception is rethrown so
+     * cleanup is not split across factory and AutoCloseable paths.
      */
     public static RemediationsCacheWriter create(Path destination, String product, Map<String, String> selection) {
         FcliSimpleException.throwIf(destination == null,
                 "-f/--file must specify a remediations cache zip path");
-        // ZipHelper.createZipFileSystem creates parent dirs and replaces any existing file.
-        FileSystem zipFs = ZipHelper.createZipFileSystem(destination);
-        try {
-            Files.createDirectories(zipFs.getPath(RemediationsCacheConstants.FPRS_DIR));
-            // On success, zipFs ownership transfers to the returned writer (not closed here).
-            return new RemediationsCacheWriter(destination, zipFs, newManifest(product, selection));
-        } catch (AbstractFcliException e) {
-            abortCreate(zipFs, destination);
-            throw e;
-        } catch (IOException e) {
-            abortCreate(zipFs, destination);
-            throw new FcliTechnicalException("Failed to initialize remediations cache zip: " + destination, e);
-        } catch (RuntimeException e) {
-            abortCreate(zipFs, destination);
-            throw new FcliTechnicalException("Failed to initialize remediations cache zip: " + destination, e);
+        RemediationsCacheWriter writer = new RemediationsCacheWriter(destination, product, selection);
+        if (writer.initError != null) {
+            Exception cause = writer.initError;
+            writer.close();
+            if (cause instanceof AbstractFcliException fcliException) {
+                throw fcliException;
+            }
+            throw new FcliTechnicalException(
+                    "Failed to initialize remediations cache zip: " + destination, cause);
         }
+        return writer;
     }
 
     /**
      * Convenience for callers that already have FPR files on disk (for example unit tests).
-     * Writes directly to {@code destination} (no temp zip).
+     * Writes via ZipFS into a work file, then publishes to {@code destination}.
      */
     public static RemediationsCacheManifest write(
             Path destination,
@@ -164,7 +184,8 @@ public final class RemediationsCacheWriter implements AutoCloseable {
 
     /**
      * Writes {@code manifest.json} into the open zip. Must be called before {@link #close()}
-     * for a successful cache. The archive is only durable after a successful {@link #close()}.
+     * for a successful cache. The archive is only published to {@code destination} after a
+     * successful {@link #close()}.
      * Returns the completed manifest.
      */
     public RemediationsCacheManifest finish() {
@@ -186,6 +207,10 @@ public final class RemediationsCacheWriter implements AutoCloseable {
         }
     }
 
+    /**
+     * Sole owner of zip filesystem close, work-file cleanup, and publish to destination.
+     * Destination is replaced only when finish() wrote the manifest and ZipFS closed cleanly.
+     */
     @Override
     public void close() {
         if (closed) {
@@ -199,17 +224,34 @@ public final class RemediationsCacheWriter implements AutoCloseable {
             }
             closeSucceeded = true;
         } catch (IOException e) {
-            // ZipFS finalizes the archive on close; failure means destination is not trustworthy.
+            // ZipFS finalizes the archive on close; failure means work file is not trustworthy.
             if (manifestWritten) {
-                deleteQuietly(destination);
+                deleteQuietly(workPath);
                 throw new FcliTechnicalException("Failed to finalize remediations cache zip: " + destination, e);
             }
-            logger.warn("Failed to close remediations cache zip: {}", destination, e);
+            logger.warn("Failed to close remediations cache zip work file: {}", workPath, e);
         } finally {
-            // Keep destination only when finish() wrote the manifest and ZipFS closed cleanly.
-            if (!(manifestWritten && closeSucceeded)) {
-                deleteQuietly(destination);
+            if (manifestWritten && closeSucceeded) {
+                publishWorkFile();
+            } else {
+                deleteQuietly(workPath);
             }
+        }
+    }
+
+    /** Moves the completed work zip onto {@link #destination}, preferring an atomic replace. */
+    private void publishWorkFile() {
+        try {
+            try {
+                Files.move(workPath, destination,
+                        StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
+            } catch (AtomicMoveNotSupportedException e) {
+                Files.move(workPath, destination, StandardCopyOption.REPLACE_EXISTING);
+            }
+        } catch (IOException e) {
+            deleteQuietly(workPath);
+            throw new FcliTechnicalException(
+                    "Failed to publish remediations cache zip to " + destination, e);
         }
     }
 
@@ -217,14 +259,20 @@ public final class RemediationsCacheWriter implements AutoCloseable {
         if (closed) {
             throw new FcliBugException("RemediationsCacheWriter is already closed: " + destination);
         }
+        if (initError != null) {
+            throw new FcliBugException("RemediationsCacheWriter failed to initialize: " + destination, initError);
+        }
         if (manifestWritten) {
             throw new FcliBugException("RemediationsCacheWriter is already finished: " + destination);
         }
     }
 
-    private static void abortCreate(FileSystem zipFs, Path destination) {
-        closeQuietly(zipFs);
-        deleteQuietly(destination);
+    private static Path workPathFor(Path destination) {
+        Path fileName = destination.getFileName();
+        String name = fileName != null ? fileName.toString() : "remediations-cache.zip";
+        Path parent = destination.toAbsolutePath().getParent();
+        Path workName = Path.of(name + PARTIAL_SUFFIX);
+        return parent != null ? parent.resolve(workName) : workName;
     }
 
     private static RemediationsCacheManifest newManifest(String product, Map<String, String> selection) {
@@ -241,37 +289,29 @@ public final class RemediationsCacheWriter implements AutoCloseable {
 
     private static RemediationsCacheEntry toManifestEntry(
             int order, String entryPath, String artifactId, String releaseId, String uploadDate, String sha256) {
-        RemediationsCacheEntry entry = new RemediationsCacheEntry();
-        entry.setOrder(order);
-        entry.setArtifactId(artifactId);
-        entry.setReleaseId(releaseId);
-        entry.setUploadDate(uploadDate);
-        entry.setPath(entryPath);
-        entry.setSha256(sha256);
-        return entry;
+        return RemediationsCacheEntry.of(order, entryPath, artifactId, releaseId, uploadDate, sha256);
     }
 
     private static String entryPath(String artifactId, String releaseId, int order) {
         if (artifactId != null && !artifactId.isBlank()) {
             return String.format("%s/%03d_artifact_%s.fpr",
-                    RemediationsCacheConstants.FPRS_DIR, order, artifactId);
+                    RemediationsCacheConstants.FPRS_DIR, order, sanitizePathSegment(artifactId));
         }
         if (releaseId != null && !releaseId.isBlank()) {
             return String.format("%s/%03d_release_%s.fpr",
-                    RemediationsCacheConstants.FPRS_DIR, order, releaseId);
+                    RemediationsCacheConstants.FPRS_DIR, order, sanitizePathSegment(releaseId));
         }
         return String.format("%s/%03d_remediations.fpr", RemediationsCacheConstants.FPRS_DIR, order);
     }
 
-    private static void closeQuietly(FileSystem zipFs) {
-        if (zipFs == null || !zipFs.isOpen()) {
-            return;
-        }
-        try {
-            zipFs.close();
-        } catch (IOException e) {
-            logger.warn("Failed to close zip filesystem during abort", e);
-        }
+    /**
+     * Keeps artifact/release ids from introducing extra path segments inside the zip
+     * ({@code /}, {@code \\}, {@code ..}). Dots are stripped so {@code ..} cannot appear.
+     * Manifest still stores the original id fields.
+     */
+    private static String sanitizePathSegment(String id) {
+        String cleaned = id.replaceAll("[^A-Za-z0-9_-]", "_");
+        return cleaned.isEmpty() ? "id" : cleaned;
     }
 
     private static void deleteQuietly(Path path) {
@@ -281,7 +321,7 @@ public final class RemediationsCacheWriter implements AutoCloseable {
         try {
             Files.deleteIfExists(path);
         } catch (IOException e) {
-            logger.warn("Failed to delete incomplete remediations cache file: {}", path, e);
+            logger.warn("Failed to delete incomplete remediations cache work file: {}", path, e);
         }
     }
 

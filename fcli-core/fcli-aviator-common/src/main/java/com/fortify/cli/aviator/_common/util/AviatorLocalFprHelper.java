@@ -30,27 +30,22 @@ public final class AviatorLocalFprHelper {
     }
 
     public static void validateLocalFprs(List<Path> fprPaths, String sourceLabel) {
-        if (fprPaths == null || fprPaths.isEmpty()) {
-            throw new FcliSimpleException(sourceLabel + " list must contain at least one FPR file");
-        }
+        FcliSimpleException.throwIf(fprPaths == null || fprPaths.isEmpty(),
+                "%s list must contain at least one FPR file", sourceLabel);
         for (Path fprPath : fprPaths) {
             validateLocalFpr(fprPath, sourceLabel);
         }
     }
 
     private static void validateLocalFpr(Path fprPath, String sourceLabel) {
-        if (fprPath == null) {
-            throw new FcliSimpleException(sourceLabel + " path must be a valid FPR file path");
-        }
-        if (!Files.exists(fprPath)) {
-            throw new FcliSimpleException(sourceLabel + " does not exist: " + fprPath);
-        }
-        if (!Files.isRegularFile(fprPath)) {
-            throw new FcliSimpleException(sourceLabel + " is not a regular file: " + fprPath);
-        }
-        if (!Files.isReadable(fprPath)) {
-            throw new FcliSimpleException(sourceLabel + " is not readable: " + fprPath);
-        }
+        FcliSimpleException.throwIf(fprPath == null,
+                "%s path must be a valid FPR file path", sourceLabel);
+        FcliSimpleException.throwIf(!Files.exists(fprPath),
+                "%s does not exist: %s", sourceLabel, fprPath);
+        FcliSimpleException.throwIf(!Files.isRegularFile(fprPath),
+                "%s is not a regular file: %s", sourceLabel, fprPath);
+        FcliSimpleException.throwIf(!Files.isReadable(fprPath),
+                "%s is not readable: %s", sourceLabel, fprPath);
         try (FprHandle fprHandle = new FprHandle(fprPath)) {
             fprHandle.validate();
         } catch (AbstractFcliException e) {

@@ -18,9 +18,15 @@ import java.util.Set;
 
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fortify.cli.aviator._common.remediations_cache.RemediationsApplyHelper;
+import com.fortify.cli.aviator._common.remediations_cache.RemediationsApplyHelper.ApplyResult;
+import com.fortify.cli.aviator._common.util.AviatorRemediationMetricsHelper;
+import com.fortify.cli.aviator.fpr.processor.RemediationProcessor.RemediationMetric;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.fod.release.helper.FoDReleaseDescriptor;
+
+import lombok.Builder;
 
 /**
  * Helper for FoD apply-remediations result JSON construction.
@@ -28,40 +34,66 @@ import com.fortify.cli.fod.release.helper.FoDReleaseDescriptor;
 public final class AviatorFoDApplyRemediationsHelper {
     private AviatorFoDApplyRemediationsHelper() {}
 
-    public static ObjectNode buildResultNode(FoDReleaseDescriptor rd, int totalRemediation, int appliedRemediation,
-            int skippedRemediation, String action) {
-        ObjectNode result = JsonHelper.getObjectMapper().createObjectNode();
-        result.put("releaseId", rd.getReleaseId());
-        result.put("applicationName", rd.getApplicationName());
-        result.put("releaseName", rd.getReleaseName());
-        result.put("totalRemediation", totalRemediation);
-        result.put("appliedRemediation", appliedRemediation);
-        result.put("skippedRemediation", skippedRemediation);
-        result.put(IActionCommandResultSupplier.actionFieldName, action);
-        return result;
-    }
-
-    public static ObjectNode buildResultNode(FoDReleaseDescriptor rd, int totalRemediation, int appliedRemediation,
-            int skippedRemediation, Set<String> modifiedFiles, String action) {
-        ObjectNode result = JsonHelper.getObjectMapper().createObjectNode();
-        result.put("releaseId", rd.getReleaseId());
-        result.put("applicationName", rd.getApplicationName());
-        result.put("releaseName", rd.getReleaseName());
-        result.put("totalRemediation", totalRemediation);
-        result.put("appliedRemediation", appliedRemediation);
-        result.put("skippedRemediation", skippedRemediation);
-        result.set("modifiedFiles", toArrayNode(modifiedFiles));
-        result.put(IActionCommandResultSupplier.actionFieldName, action);
-        return result;
+    /** Online apply outcome (success or soft-skip) → structured result node. */
+    public static ObjectNode buildOnlineResultNode(FoDReleaseDescriptor releaseDescriptor, ApplyResult applyResult) {
+        if (applyResult.metrics().isEmpty()) {
+            return toOnlineJson(OnlineResultData.builder()
+                    .releaseDescriptor(releaseDescriptor)
+                    .totalRemediation(0)
+                    .appliedRemediation(0)
+                    .skippedRemediation(0)
+                    .modifiedFiles(Set.of())
+                    .action(RemediationsApplyHelper.actionLabel(null))
+                    .build());
+        }
+        RemediationMetric metric = applyResult.metrics().get(0);
+        return toOnlineJson(OnlineResultData.builder()
+                .releaseDescriptor(releaseDescriptor)
+                .totalRemediation(metric.totalRemediations())
+                .appliedRemediation(metric.appliedRemediations())
+                .skippedRemediation(metric.skippedRemediations())
+                .modifiedFiles(metric.modifiedFiles())
+                .action(RemediationsApplyHelper.actionLabel(metric))
+                .build());
     }
 
     /**
-     * Result shape for --from-cache: durable cache zip path and zip-relative entry paths only
-     * (never ephemeral extract-dir absolute paths).
+     * Aggregates metrics and builds the cache apply result JSON (same fields as before).
      */
-    public static ObjectNode buildCacheResultNode(CacheResultData resultData) {
+    public static ObjectNode buildCacheResultNode(
+            Path cacheZip, ApplyResult applyResult, Set<String> issueIdFilter) {
+        RemediationMetric aggregated = AviatorRemediationMetricsHelper.aggregateMetrics(
+                issueIdFilter, applyResult.metrics());
+        return toCacheJson(CacheResultData.builder()
+                .cacheZip(cacheZip)
+                .entryPaths(applyResult.processedEntries())
+                .releaseIds(applyResult.processedIds())
+                .totalRemediation(aggregated.totalRemediations())
+                .appliedRemediation(aggregated.appliedRemediations())
+                .skippedRemediation(aggregated.skippedRemediations())
+                .modifiedFiles(aggregated.modifiedFiles())
+                .action(RemediationsApplyHelper.actionLabel(aggregated))
+                .build());
+    }
+
+    private static ObjectNode toOnlineJson(OnlineResultData data) {
+        FoDReleaseDescriptor rd = data.releaseDescriptor();
         ObjectNode result = JsonHelper.getObjectMapper().createObjectNode();
-        result.put("releaseId", resultData.releaseIds() != null && !resultData.releaseIds().isEmpty() ? resultData.releaseIds().get(0) : "N/A");
+        result.put("releaseId", rd.getReleaseId());
+        result.put("applicationName", rd.getApplicationName());
+        result.put("releaseName", rd.getReleaseName());
+        result.put("totalRemediation", data.totalRemediation());
+        result.put("appliedRemediation", data.appliedRemediation());
+        result.put("skippedRemediation", data.skippedRemediation());
+        result.set("modifiedFiles", toArrayNode(data.modifiedFiles()));
+        result.put(IActionCommandResultSupplier.actionFieldName, data.action());
+        return result;
+    }
+
+    private static ObjectNode toCacheJson(CacheResultData resultData) {
+        ObjectNode result = JsonHelper.getObjectMapper().createObjectNode();
+        result.put("releaseId", resultData.releaseIds() != null && !resultData.releaseIds().isEmpty()
+                ? resultData.releaseIds().get(0) : "N/A");
         result.put("applicationName", "N/A");
         result.put("releaseName", "N/A");
         result.put("file", resultData.cacheZip().toString());
@@ -75,7 +107,17 @@ public final class AviatorFoDApplyRemediationsHelper {
         return result;
     }
 
-    public record CacheResultData(
+    @Builder
+    private record OnlineResultData(
+            FoDReleaseDescriptor releaseDescriptor,
+            int totalRemediation,
+            int appliedRemediation,
+            int skippedRemediation,
+            Set<String> modifiedFiles,
+            String action) {}
+
+    @Builder
+    private record CacheResultData(
             Path cacheZip,
             List<String> entryPaths,
             List<String> releaseIds,

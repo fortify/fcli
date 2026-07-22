@@ -62,7 +62,7 @@ class RemediationsCacheRoundTripTest {
     }
 
     @Test
-    void writeDirectlyIntoDestinationZipWithoutTempStaging() throws Exception {
+    void streamAddFprWritesReadableCacheForFoD() throws Exception {
         Path zip = tempDir.resolve("direct.zip");
         try (RemediationsCacheWriter writer = RemediationsCacheWriter.create(
                 zip, RemediationsCacheConstants.PRODUCT_FOD, Map.of("mode", "release"))) {
@@ -87,6 +87,25 @@ class RemediationsCacheRoundTripTest {
         Path zip = tempDir.resolve("empty.zip");
         assertThrows(FcliSimpleException.class, () ->
                 RemediationsCacheWriter.write(zip, RemediationsCacheConstants.PRODUCT_SSC, Map.of(), List.of()));
+    }
+
+    @Test
+    void incompleteWriteDoesNotReplaceExistingDestination() throws Exception {
+        Path zip = tempDir.resolve("existing.zip");
+        Files.writeString(zip, "prior-cache-bytes");
+        try (RemediationsCacheWriter writer = RemediationsCacheWriter.create(
+                zip, RemediationsCacheConstants.PRODUCT_SSC, Map.of("mode", "all"))) {
+            writer.addFpr("1", null, null, path -> {
+                try {
+                    Files.writeString(path, "partial-fpr");
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            });
+            // Close without finish(): work file is discarded; destination stays intact.
+        }
+        assertEquals("prior-cache-bytes", Files.readString(zip));
+        assertTrue(Files.notExists(zip.resolveSibling("existing.zip.partial")));
     }
 
     @Test
@@ -175,5 +194,29 @@ class RemediationsCacheRoundTripTest {
                 reader.requireProduct(RemediationsCacheConstants.PRODUCT_FOD);
             }
         });
+    }
+
+    @Test
+    void entryPathSanitizesUnsafeIdCharacters() throws Exception {
+        Path fpr = tempDir.resolve("one.fpr");
+        Files.writeString(fpr, "content");
+        Path zip = tempDir.resolve("cache.zip");
+        RemediationsCacheWriter.write(
+                zip,
+                RemediationsCacheConstants.PRODUCT_SSC,
+                Map.of("mode", "artifact-id"),
+                List.of(RemediationsCacheWriter.FprSource.forSsc(fpr, "12/../evil", null)));
+
+        try (RemediationsCacheReader reader = RemediationsCacheReader.open(zip)) {
+            var resolved = reader.getOrderedResolvedFprs();
+            assertEquals(1, resolved.size());
+            // Manifest keeps the original id; zip entry path must not contain path separators or "..".
+            assertEquals("12/../evil", resolved.get(0).entry().getArtifactId());
+            String entryPath = resolved.get(0).entry().getPath();
+            assertTrue(entryPath.startsWith(RemediationsCacheConstants.FPRS_DIR + "/"));
+            assertTrue(!entryPath.contains(".."));
+            assertTrue(!entryPath.contains("/evil"));
+            assertEquals("content", Files.readString(resolved.get(0).fprPath()));
+        }
     }
 }
