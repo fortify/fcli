@@ -54,19 +54,12 @@ public final class FoDAviatorApplyRemediationsSourceMixin implements IFoDDelimit
     @Getter
     static class SourceArgGroup {
         @ArgGroup(exclusive = false, multiplicity = "1")
-        private OnlineReleaseArgGroup online = new OnlineReleaseArgGroup();
+        private FoDReleaseByQualifiedNameOrIdResolverMixin.RequiredOption online =
+            new FoDReleaseByQualifiedNameOrIdResolverMixin.RequiredOption();
 
         /** Shared description key: command-local option on an ArgGroup (default picocli key would use FQCN). */
         @Option(names = {"--from-cache"}, required = true, paramLabel = "<zip>",
                 descriptionKey = "fcli.fod.aviator.apply-remediations.from-cache")
         private Path fromCache;
-    }
-
-    /** Online release branch reusing the standard FoD release option wiring/resolution. */
-    static class OnlineReleaseArgGroup
-            extends FoDReleaseByQualifiedNameOrIdResolverMixin.AbstractFoDQualifiedReleaseNameOrIdResolverMixin {
-        @Option(names = {"--release", "--rel"}, required = true, paramLabel = "id|app[:ms]:rel",
-                descriptionKey = "fcli.fod.release.resolver.name-or-id")
-        @Getter private String qualifiedReleaseNameOrId;
     }
 }
