@@ -48,7 +48,8 @@ import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
 @Command(name = "apply-remediations")
-public class FoDAviatorApplyRemediationsCommand extends AbstractFoDJsonNodeOutputCommand implements IRecordTransformer, IActionCommandResultSupplier {
+public class FoDAviatorApplyRemediationsCommand extends AbstractFoDJsonNodeOutputCommand
+    implements IRecordTransformer, IActionCommandResultSupplier {
     @Getter @Mixin private OutputHelperMixins.DetailsNoQuery outputHelper;
     @Mixin private ProgressWriterFactoryMixin progressWriterFactoryMixin;
     @Mixin private FoDDelimiterMixin delimiterMixin; // Is automatically injected in resolver mixins
@@ -85,7 +86,9 @@ public class FoDAviatorApplyRemediationsCommand extends AbstractFoDJsonNodeOutpu
                 LOG.info("Applied remediation {}", remediationMetric.appliedRemediations());
                 LOG.info("Total remediation {}", remediationMetric.totalRemediations());
                 String status = remediationMetric.appliedRemediations() > 0 ? "Remediation-Applied" : "No-Remediation-Applied";
-                return AviatorFoDApplyRemediationsHelper.buildResultNode(rd, remediationMetric.totalRemediations(), remediationMetric.appliedRemediations(), remediationMetric.skippedRemediations(), remediationMetric.modifiedFiles(), status);
+                return AviatorFoDApplyRemediationsHelper.buildResultNode(rd, remediationMetric.totalRemediations(),
+                    remediationMetric.appliedRemediations(), remediationMetric.skippedRemediations(), remediationMetric.modifiedFiles(),
+                    remediationMetric.skippedByReason(), status);
             }
         } finally {
             if (downloadedFprPath != null) {
@@ -122,7 +125,8 @@ public class FoDAviatorApplyRemediationsCommand extends AbstractFoDJsonNodeOutpu
         return FoDScanType.Static;
     }
 
-    protected GetRequest getDownloadRequest(UnirestInstance unirest, FoDReleaseDescriptor releaseDescriptor, FoDScanDescriptor scanDescriptor) {
+        protected GetRequest getDownloadRequest(UnirestInstance unirest, FoDReleaseDescriptor releaseDescriptor,
+            FoDScanDescriptor scanDescriptor) {
         return unirest.get("/api/v3/releases/{releaseId}/fpr")
                 .routeParam("releaseId", releaseDescriptor.getReleaseId())
                 // Use headerReplace to replace rather than add the Accept header (avoid duplicates with defaults)
