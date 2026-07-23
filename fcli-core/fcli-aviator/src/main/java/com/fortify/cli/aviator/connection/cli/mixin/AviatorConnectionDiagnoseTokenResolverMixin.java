@@ -10,7 +10,7 @@
  * herein. The information contained herein is subject to change
  * without notice.
  */
-package com.fortify.cli.aviator._common.session.user.cli.mixin;
+package com.fortify.cli.aviator.connection.cli.mixin;
 
 import com.fortify.cli.aviator._common.session.user.helper.AviatorUserTokenTextResolver;
 import com.fortify.cli.common.cli.mixin.CommonOptionMixins.AbstractTextResolverMixin;
@@ -20,10 +20,12 @@ import com.fortify.cli.common.log.MaskValue;
 import picocli.CommandLine.Option;
 
 /**
- * Mixin for resolving an Aviator user token from various sources (direct string, file, environment variable).
+ * Optional token resolver for connection diagnose ({@code --url} + {@code --token}).
+ * Reuses the same source prefixes as session login (file:/string:/env:).
  */
-public class AviatorUserTokenResolverMixin extends AbstractTextResolverMixin {
-    @Option(names = {"--token", "-t"}, descriptionKey = "fcli.aviator.session.login.token", paramLabel = "source", required = true, order = 1)
+public class AviatorConnectionDiagnoseTokenResolverMixin extends AbstractTextResolverMixin {
+    @Option(names = {"--token", "-t"}, descriptionKey = "fcli.aviator.session.login.token",
+            paramLabel = "source", required = false, order = 2)
     @MaskValue(sensitivity = LogSensitivityLevel.high, description = "AVIATOR TOKEN")
     private String textSource;
 
@@ -33,9 +35,9 @@ public class AviatorUserTokenResolverMixin extends AbstractTextResolverMixin {
     }
 
     /**
-     * @return the resolved Aviator user token string
+     * @return resolved token, or {@code null} if {@code --token} was not provided
      */
-    public String getToken() {
-        return AviatorUserTokenTextResolver.resolveRequired(getTextSource(), this::getText);
+    public String getTokenOrNull() {
+        return AviatorUserTokenTextResolver.resolveOptional(getTextSource(), this::getText);
     }
 }

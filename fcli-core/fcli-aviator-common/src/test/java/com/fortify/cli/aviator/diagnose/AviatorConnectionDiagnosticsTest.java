@@ -65,7 +65,7 @@ class AviatorConnectionDiagnosticsTest {
     }
 
     @Test
-    void shouldReportTlsEstablishedGrpcNoResponsePattern() {
+    void shouldReportGrpcNoResponsePattern() {
         var probe = new FakeDiagnosticProbe();
         probe.grpcResult = AviatorGrpcReachabilityResult.noResponse("DEADLINE_EXCEEDED",
             AviatorGrpcFailureCategory.NO_RESPONSE, "deadline exceeded");
@@ -75,8 +75,9 @@ class AviatorConnectionDiagnosticsTest {
 
         assertStage(results.get(3), AviatorDiagnosticStage.TLS, AviatorDiagnosticStatus.PASS);
         assertStage(results.get(4), AviatorDiagnosticStage.GRPC, AviatorDiagnosticStatus.FAIL);
-        assertEquals(AviatorGrpcPattern.TLS_ESTABLISHED_GRPC_NO_RESPONSE.wireId(),
+        assertEquals(AviatorGrpcPattern.GRPC_NO_RESPONSE.wireId(),
             results.get(4).evidence().path("pattern").asText());
+        assertFalse(diagnostics.hasGrpcResponse(results));
     }
 
     @Test

@@ -17,21 +17,24 @@ import java.util.List;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fortify.cli.aviator._common.config.admin.helper.AviatorAdminConfigDescriptor;
 import com.fortify.cli.aviator._common.config.admin.helper.AviatorAdminConfigHelper;
-import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
-import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
-import com.fortify.cli.aviator._common.session.user.helper.AviatorUserSessionDescriptor;
 import com.fortify.cli.aviator._common.session.user.helper.AviatorUserSessionHelper;
 import com.fortify.cli.aviator.diagnose.AviatorConnectionDiagnostics;
 import com.fortify.cli.aviator.diagnose.AviatorDiagnosticStage;
 import com.fortify.cli.aviator.diagnose.AviatorDiagnosticStageResult;
 import com.fortify.cli.aviator.diagnose.AviatorDiagnosticStatus;
-import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonHelper;
 
-import io.grpc.StatusRuntimeException;
-
 public class AviatorConnectionDiagnoseHelper {
-    private final AviatorConnectionDiagnostics diagnostics = new AviatorConnectionDiagnostics();
+    private final AviatorConnectionDiagnostics diagnostics;
+
+    public AviatorConnectionDiagnoseHelper() {
+        this(new AviatorConnectionDiagnostics());
+    }
+
+    /** For tests that inject transport diagnostics with a fake probe. */
+    public AviatorConnectionDiagnoseHelper(AviatorConnectionDiagnostics diagnostics) {
+        this.diagnostics = diagnostics;
+    }
 
     public DiagnoseRunResult diagnose(AviatorConnectionDiagnoseSource source, int timeoutSeconds) {
         var results = diagnostics.diagnose(source.url(), timeoutSeconds, source.type());
@@ -40,31 +43,28 @@ public class AviatorConnectionDiagnoseHelper {
     }
 
     private void appendCredentialStage(List<AviatorDiagnosticStageResult> results, AviatorConnectionDiagnoseSource source) {
-        var order = results.size() + 1;
-        if (source.userSessionDescriptor() == null && source.adminConfigDescriptor() == null) {
-            results.add(AviatorDiagnosticStageResult.warn(order, AviatorDiagnosticStage.TOKEN,
-                "Credential check skipped",
-                "Use --aviator-session or --admin-config to check credentials", false,
-                JsonHelper.getObjectMapper().createObjectNode()));
+        if (!source.hasCredentials()) {
+            // Optional work that was never requested: omit the stage entirely.
             return;
         }
+        var order = results.size() + 1;
+        var stage = stageForSource(source);
         if (!diagnostics.hasGrpcResponse(results)) {
-            results.add(AviatorDiagnosticStageResult.warn(order, stageForSource(source),
+            results.add(AviatorDiagnosticStageResult.warn(order, stage,
                 "Credential check skipped",
                 "Fix the gRPC connection first", false, JsonHelper.getObjectMapper().createObjectNode()));
             return;
         }
-        if (source.userSessionDescriptor() != null) {
-            validateUserToken(results, order, source.userSessionDescriptor());
-        } else {
+        if (source.hasAdminConfig()) {
             validateAdminConfig(results, order, source.adminConfigDescriptor());
+        } else {
+            validateUserToken(results, order, source.url(), resolveToken(source));
         }
     }
 
-    private void validateUserToken(List<AviatorDiagnosticStageResult> results, int order,
-            AviatorUserSessionDescriptor sessionDescriptor) {
+    private void validateUserToken(List<AviatorDiagnosticStageResult> results, int order, String aviatorUrl, String token) {
         try {
-            var validationResult = AviatorUserSessionHelper.instance().validateToken(sessionDescriptor);
+            var validationResult = AviatorUserSessionHelper.instance().validateToken(aviatorUrl, token);
             var evidence = JsonHelper.getObjectMapper().createObjectNode();
             evidence.put("tenantNamePresent", validationResult.tenantName() != null);
             if (validationResult.response().getValid()) {
@@ -80,7 +80,8 @@ public class AviatorConnectionDiagnoseHelper {
                     "Aviator token is not valid",
                     "Use a current token for the expected tenant", evidence));
             }
-        } catch (AviatorSimpleException | AviatorTechnicalException | StatusRuntimeException e) {
+        } catch (Exception e) {
+            // Optional stage: always report, never abort the diagnose run.
             results.add(AviatorDiagnosticStageResult.optionalFail(order, AviatorDiagnosticStage.TOKEN,
                 "Aviator token check failed",
                 "Use a current token for the expected tenant",
@@ -97,15 +98,23 @@ public class AviatorConnectionDiagnoseHelper {
             results.add(AviatorDiagnosticStageResult.of(order, AviatorDiagnosticStage.ADMIN,
                 AviatorDiagnosticStatus.PASS, false,
                 "Aviator admin credentials are valid", "No action required", evidence));
-        } catch (FcliSimpleException | AviatorTechnicalException | StatusRuntimeException e) {
+        } catch (Exception e) {
+            // Optional stage: always report, never abort the diagnose run.
             results.add(AviatorDiagnosticStageResult.optionalFail(order, AviatorDiagnosticStage.ADMIN,
                 "Admin credentials are not valid",
                 "Check the tenant, public key, and private key", AviatorConnectionDiagnostics.errorEvidence(e)));
         }
     }
 
-    private AviatorDiagnosticStage stageForSource(AviatorConnectionDiagnoseSource source) {
-        return source.adminConfigDescriptor() == null ? AviatorDiagnosticStage.TOKEN : AviatorDiagnosticStage.ADMIN;
+    private static String resolveToken(AviatorConnectionDiagnoseSource source) {
+        if (source.userSessionDescriptor() != null) {
+            return source.userSessionDescriptor().getAviatorToken();
+        }
+        return source.rawToken();
+    }
+
+    private static AviatorDiagnosticStage stageForSource(AviatorConnectionDiagnoseSource source) {
+        return source.hasAdminConfig() ? AviatorDiagnosticStage.ADMIN : AviatorDiagnosticStage.TOKEN;
     }
 
     public record DiagnoseRunResult(List<AviatorDiagnosticStageResult> stages, ArrayNode json, boolean requiredFailure) {}

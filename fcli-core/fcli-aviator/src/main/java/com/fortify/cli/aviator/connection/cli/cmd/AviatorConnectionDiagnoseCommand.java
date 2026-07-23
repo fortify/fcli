@@ -19,6 +19,7 @@ import com.fortify.cli.aviator.connection.cli.mixin.AviatorConnectionDiagnoseSou
 import com.fortify.cli.aviator.connection.helper.AviatorConnectionDiagnoseHelper;
 import com.fortify.cli.aviator.connection.helper.AviatorConnectionDiagnoseHelper.DiagnoseRunResult;
 import com.fortify.cli.aviator.connection.helper.AviatorConnectionDiagnoseSource;
+import com.fortify.cli.common.exception.FcliBugException;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.output.cli.cmd.AbstractOutputCommand;
 import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
@@ -43,33 +44,47 @@ public class AviatorConnectionDiagnoseCommand extends AbstractOutputCommand impl
     private final AviatorConnectionDiagnoseHelper diagnoseHelper = new AviatorConnectionDiagnoseHelper();
     private DiagnoseRunResult runResult;
 
+    /**
+     * Overrides {@link AbstractOutputCommand#call()} so a required stage failure
+     * yields exit code 1 after the diagnostic table is written. Soft status cannot
+     * use exceptions without dropping structured stage output.
+     */
     @Override
     public Integer call() {
+        if (timeoutSeconds <= 0) {
+            throw new FcliSimpleException("--timeout must be greater than 0");
+        }
+        runResult = diagnoseHelper.diagnose(resolveSource(), timeoutSeconds);
         getOutputHelper().write(getObjectNodeProducer());
         return runResult.requiredFailure() ? 1 : 0;
     }
 
     @Override
     public JsonNode getJsonNode() {
-        if (timeoutSeconds <= 0) {
-            throw new FcliSimpleException("--timeout must be greater than 0");
-        }
         if (runResult == null) {
-            runResult = diagnoseHelper.diagnose(resolveSource(), timeoutSeconds);
+            throw new FcliBugException("Diagnose must run before output is written");
         }
         return runResult.json();
     }
 
     private AviatorConnectionDiagnoseSource resolveSource() {
-        if (sourceArgGroup.getUrl() != null) {
-            return AviatorConnectionDiagnoseSource.fromUrl(sourceArgGroup.getUrl());
+        if (sourceArgGroup.getUrlSource() != null) {
+            var urlSource = sourceArgGroup.getUrlSource();
+            var token = urlSource.getTokenResolver().getTokenOrNull();
+            if (token != null) {
+                return AviatorConnectionDiagnoseSource.fromUrlAndToken(urlSource.getUrl(), token);
+            }
+            return AviatorConnectionDiagnoseSource.fromUrl(urlSource.getUrl());
         }
         if (sourceArgGroup.getAviatorSession() != null) {
             var descriptor = AviatorUserSessionHelper.instance().get(sourceArgGroup.getAviatorSession(), true);
             return AviatorConnectionDiagnoseSource.fromUserSession(descriptor);
         }
-        var descriptor = AviatorAdminConfigHelper.instance().get(sourceArgGroup.getAdminConfig(), true);
-        return AviatorConnectionDiagnoseSource.fromAdminConfig(descriptor);
+        if (sourceArgGroup.getAdminConfig() != null) {
+            var descriptor = AviatorAdminConfigHelper.instance().get(sourceArgGroup.getAdminConfig(), true);
+            return AviatorConnectionDiagnoseSource.fromAdminConfig(descriptor);
+        }
+        throw new FcliBugException("No diagnose source selected; exclusive ArgGroup invariant was violated");
     }
 
     @Override

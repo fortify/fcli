@@ -49,11 +49,11 @@ class AviatorGrpcStageClassificationTest {
     }
 
     @Test
-    void shouldMapNoResponseAsTlsEstablishedPattern() {
+    void shouldMapNoResponseWithoutClaimingTlsEstablished() {
         var result = AviatorGrpcStageClassification.classify(
             AviatorGrpcReachabilityResult.noResponse("DEADLINE_EXCEEDED", AviatorGrpcFailureCategory.NO_RESPONSE, "deadline"));
 
-        assertEquals(AviatorGrpcPattern.TLS_ESTABLISHED_GRPC_NO_RESPONSE, result.pattern());
+        assertEquals(AviatorGrpcPattern.GRPC_NO_RESPONSE, result.pattern());
     }
 
     @Test

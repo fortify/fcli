@@ -183,13 +183,20 @@ public class AviatorDefaultDiagnosticProbe implements IAviatorDiagnosticProbe {
         writer.flush();
 
         var statusLine = readHttpHeaders(socket.getInputStream());
+        validateProxyConnectStatusLine(statusLine);
+        return statusLine;
+    }
+
+    /**
+     * Validates the CONNECT status line after headers are read. Package-visible for unit tests.
+     */
+    static void validateProxyConnectStatusLine(String statusLine) throws AviatorProxyConnectException {
         if (statusLine == null || !statusLine.startsWith("HTTP/")) {
             throw new AviatorProxyConnectException("Proxy did not return an HTTP CONNECT response");
         }
         if (!statusLine.matches("HTTP/\\d(?:\\.\\d)? 2\\d\\d.*")) {
             throw new AviatorProxyConnectException("Proxy CONNECT failed: " + statusLine);
         }
-        return statusLine;
     }
 
     static String readHttpHeaders(InputStream input) throws IOException {

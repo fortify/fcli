@@ -37,7 +37,7 @@ public final class AviatorGrpcStageClassification {
             return Result.fail("gRPC TLS handshake failed", TLS_GUIDANCE, AviatorGrpcPattern.GRPC_TLS_FAILED);
         }
         return Result.fail("No gRPC response received", NO_RESPONSE_GUIDANCE,
-            AviatorGrpcPattern.TLS_ESTABLISHED_GRPC_NO_RESPONSE);
+            AviatorGrpcPattern.GRPC_NO_RESPONSE);
     }
 
     public static Result classifyException(Exception e) {

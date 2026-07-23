@@ -22,17 +22,34 @@ public record AviatorConnectionDiagnoseSource(
         String type,
         String url,
         AviatorUserSessionDescriptor userSessionDescriptor,
-        AviatorAdminConfigDescriptor adminConfigDescriptor) {
+        AviatorAdminConfigDescriptor adminConfigDescriptor,
+        String rawToken) {
 
     public static AviatorConnectionDiagnoseSource fromUrl(String url) {
-        return new AviatorConnectionDiagnoseSource("url", url, null, null);
+        return new AviatorConnectionDiagnoseSource("url", url, null, null, null);
+    }
+
+    public static AviatorConnectionDiagnoseSource fromUrlAndToken(String url, String token) {
+        return new AviatorConnectionDiagnoseSource("url-token", url, null, null, token);
     }
 
     public static AviatorConnectionDiagnoseSource fromUserSession(AviatorUserSessionDescriptor descriptor) {
-        return new AviatorConnectionDiagnoseSource("user-session", descriptor.getAviatorUrl(), descriptor, null);
+        return new AviatorConnectionDiagnoseSource("user-session", descriptor.getAviatorUrl(), descriptor, null, null);
     }
 
     public static AviatorConnectionDiagnoseSource fromAdminConfig(AviatorAdminConfigDescriptor descriptor) {
-        return new AviatorConnectionDiagnoseSource("admin-config", descriptor.getAviatorUrl(), null, descriptor);
+        return new AviatorConnectionDiagnoseSource("admin-config", descriptor.getAviatorUrl(), null, descriptor, null);
+    }
+
+    public boolean hasAdminConfig() {
+        return adminConfigDescriptor != null;
+    }
+
+    public boolean hasUserToken() {
+        return userSessionDescriptor != null || rawToken != null;
+    }
+
+    public boolean hasCredentials() {
+        return hasAdminConfig() || hasUserToken();
     }
 }

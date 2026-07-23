@@ -14,7 +14,6 @@ package com.fortify.cli.aviator.diagnose;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -43,33 +42,23 @@ class AviatorDefaultDiagnosticProbeConnectTest {
     }
 
     @Test
-    void shouldRejectNonHttpConnectResponse() {
-        var payload = "Not an HTTP response";
-        var stream = new ByteArrayInputStream(payload.getBytes(StandardCharsets.ISO_8859_1));
-        // readHttpHeaders returns whatever it got; performProxyConnect validates HTTP/
-        // Unit-test the validation path via a minimal status check here.
-        assertThrows(IOException.class, () -> {
-            var status = AviatorDefaultDiagnosticProbe.readHttpHeaders(stream);
-            if (status == null || !status.startsWith("HTTP/")) {
-                throw new IOException("Proxy did not return an HTTP CONNECT response");
-            }
-            if (!status.matches("HTTP/\\d(?:\\.\\d)? 2\\d\\d.*")) {
-                throw new IOException("Proxy CONNECT failed: " + status);
-            }
-        });
+    void shouldRejectNonHttpConnectStatusLine() {
+        assertThrows(AviatorProxyConnectException.class,
+            () -> AviatorDefaultDiagnosticProbe.validateProxyConnectStatusLine("Not an HTTP response"));
+        assertThrows(AviatorProxyConnectException.class,
+            () -> AviatorDefaultDiagnosticProbe.validateProxyConnectStatusLine(null));
     }
 
     @Test
-    void shouldRejectNon2xxConnectStatusInHeaderBody() throws IOException {
-        var payload = "HTTP/1.1 407 Proxy Authentication Required\r\n\r\n";
-        var status = AviatorDefaultDiagnosticProbe.readHttpHeaders(
-            new ByteArrayInputStream(payload.getBytes(StandardCharsets.ISO_8859_1)));
+    void shouldRejectNon2xxConnectStatusLine() {
+        assertThrows(AviatorProxyConnectException.class,
+            () -> AviatorDefaultDiagnosticProbe.validateProxyConnectStatusLine(
+                "HTTP/1.1 407 Proxy Authentication Required"));
+    }
 
-        assertTrue(status.startsWith("HTTP/1.1 407"));
-        assertThrows(IOException.class, () -> {
-            if (!status.matches("HTTP/\\d(?:\\.\\d)? 2\\d\\d.*")) {
-                throw new IOException("Proxy CONNECT failed: " + status);
-            }
-        });
+    @Test
+    void shouldAccept2xxConnectStatusLine() throws AviatorProxyConnectException {
+        AviatorDefaultDiagnosticProbe.validateProxyConnectStatusLine("HTTP/1.1 200 Connection established");
+        AviatorDefaultDiagnosticProbe.validateProxyConnectStatusLine("HTTP/1.0 200 OK");
     }
 }

@@ -40,7 +40,8 @@ public class AviatorConnectionDiagnostics {
         this(new AviatorDefaultDiagnosticProbe());
     }
 
-    AviatorConnectionDiagnostics(IAviatorDiagnosticProbe probe) {
+    /** Visible for tests and product helpers that inject a probe. */
+    public AviatorConnectionDiagnostics(IAviatorDiagnosticProbe probe) {
         this.probe = probe;
     }
 
@@ -59,7 +60,7 @@ public class AviatorConnectionDiagnostics {
     /**
      * Run diagnostics for a pre-built connection plan (tests inject plans to avoid ambient proxy env).
      */
-    List<AviatorDiagnosticStageResult> diagnose(AviatorConnectionPlan connectionPlan, int timeoutSeconds, String sourceType) {
+    public List<AviatorDiagnosticStageResult> diagnose(AviatorConnectionPlan connectionPlan, int timeoutSeconds, String sourceType) {
         var results = new ArrayList<AviatorDiagnosticStageResult>();
         results.add(AviatorDiagnosticStageResult.pass(nextOrder(results), AviatorDiagnosticStage.ENDPOINT,
             "Endpoint is valid", "No action required", endpointEvidence(connectionPlan, sourceType)));
@@ -89,12 +90,14 @@ public class AviatorConnectionDiagnostics {
         return results.stream().anyMatch(AviatorDiagnosticStageResult::isRequiredFailure);
     }
 
+    /**
+     * True when the gRPC stage completed with a server response (stage status PASS).
+     * Uses typed stage status rather than evidence JSON keys.
+     */
     public boolean hasGrpcResponse(List<AviatorDiagnosticStageResult> results) {
         return results.stream()
-            .filter(result -> AviatorDiagnosticStage.GRPC.equals(result.stage()))
-            .findFirst()
-            .map(result -> result.evidence().path("grpcResponseReceived").asBoolean(false))
-            .orElse(false);
+            .anyMatch(result -> AviatorDiagnosticStage.GRPC.equals(result.stage())
+                    && AviatorDiagnosticStatus.PASS.equals(result.status()));
     }
 
     private boolean runDns(List<AviatorDiagnosticStageResult> results, AviatorConnectionPlan connectionPlan) {

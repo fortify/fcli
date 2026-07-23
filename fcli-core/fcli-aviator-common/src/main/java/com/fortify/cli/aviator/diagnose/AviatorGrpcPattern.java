@@ -14,7 +14,8 @@ package com.fortify.cli.aviator.diagnose;
 
 public enum AviatorGrpcPattern {
     HTTP_RESPONSE_NOT_GRPC("http-response-not-grpc"),
-    TLS_ESTABLISHED_GRPC_NO_RESPONSE("tls-established-grpc-no-response"),
+    /** gRPC path got no response (transport TLS may still have passed). */
+    GRPC_NO_RESPONSE("grpc-no-response"),
     GRPC_TLS_FAILED("grpc-tls-failed"),
     GRPC_PROBE_ERROR("grpc-probe-error");
 

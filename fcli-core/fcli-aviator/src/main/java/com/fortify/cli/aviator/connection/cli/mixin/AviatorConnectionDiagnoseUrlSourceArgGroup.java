@@ -12,23 +12,23 @@
  */
 package com.fortify.cli.aviator.connection.cli.mixin;
 
+import com.fortify.cli.common.log.LogSensitivityLevel;
+import com.fortify.cli.common.log.MaskValue;
+
 import lombok.Getter;
-import picocli.CommandLine.ArgGroup;
+import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
 /**
- * Exclusive diagnose source: URL (optional token), saved user session, or admin config.
+ * URL-based diagnose source: required {@code --url}, optional {@code --token} for direct token validation.
  */
-public class AviatorConnectionDiagnoseSourceArgGroup {
+public class AviatorConnectionDiagnoseUrlSourceArgGroup {
     @Getter
-    @ArgGroup(exclusive = false, multiplicity = "0..1", order = 1)
-    private AviatorConnectionDiagnoseUrlSourceArgGroup urlSource;
+    @Option(names = {"--url"}, required = true, order = 1)
+    @MaskValue(sensitivity = LogSensitivityLevel.low, description = "AVIATOR HOST NAME", pattern = MaskValue.URL_HOSTNAME_PATTERN)
+    private String url;
 
     @Getter
-    @Option(names = {"--aviator-session", "--av-session"}, order = 2)
-    private String aviatorSession;
-
-    @Getter
-    @Option(names = {"--admin-config"}, order = 3)
-    private String adminConfig;
+    @Mixin
+    private AviatorConnectionDiagnoseTokenResolverMixin tokenResolver;
 }
