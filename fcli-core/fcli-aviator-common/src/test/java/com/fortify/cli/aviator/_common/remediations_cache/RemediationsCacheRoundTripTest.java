@@ -48,8 +48,8 @@ class RemediationsCacheRoundTripTest {
                 RemediationsCacheConstants.PRODUCT_SSC,
                 Map.of("mode", "all", "appVersionId", "10001"),
                 List.of(
-                        RemediationsCacheWriter.FprSource.forSsc(fpr1, "123", "2026-07-10T08:00:00Z"),
-                        RemediationsCacheWriter.FprSource.forSsc(fpr2, "456", "2026-07-11T09:30:00Z")));
+                        new RemediationsCacheWriter.SscFpr(fpr1, "123", "2026-07-10T08:00:00Z"),
+                        new RemediationsCacheWriter.SscFpr(fpr2, "456", "2026-07-11T09:30:00Z")));
 
         try (RemediationsCacheReader reader = RemediationsCacheReader.open(zip)) {
             assertEquals(RemediationsCacheConstants.PRODUCT_SSC, reader.getManifest().getProduct());
@@ -66,14 +66,14 @@ class RemediationsCacheRoundTripTest {
         Path zip = tempDir.resolve("direct.zip");
         try (RemediationsCacheWriter writer = RemediationsCacheWriter.create(
                 zip, RemediationsCacheConstants.PRODUCT_FOD, Map.of("mode", "release"))) {
-            writer.addFpr(null, "rel-1", null, path -> {
+            writer.addFodFpr("rel-1", path -> {
                 try {
                     Files.writeString(path, "streamed-fpr");
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
             });
-            writer.finish();
+            // close() writes manifest and publishes
         }
         try (RemediationsCacheReader reader = RemediationsCacheReader.open(zip)) {
             reader.requireProduct(RemediationsCacheConstants.PRODUCT_FOD);
@@ -90,21 +90,35 @@ class RemediationsCacheRoundTripTest {
     }
 
     @Test
-    void incompleteWriteDoesNotReplaceExistingDestination() throws Exception {
+    void closeWithoutEntriesDoesNotReplaceExistingDestination() throws Exception {
+        Path zip = tempDir.resolve("existing.zip");
+        Files.writeString(zip, "prior-cache-bytes");
+        // open + close with no addFpr: work file discarded; destination untouched.
+        try (RemediationsCacheWriter writer = RemediationsCacheWriter.create(
+                zip, RemediationsCacheConstants.PRODUCT_SSC, Map.of("mode", "all"))) {
+            // intentionally empty
+        }
+        assertEquals("prior-cache-bytes", Files.readString(zip));
+        assertTrue(Files.notExists(zip.resolveSibling("existing.zip.partial")));
+    }
+
+    @Test
+    void closeWithEntriesPublishesAndReplacesDestination() throws Exception {
         Path zip = tempDir.resolve("existing.zip");
         Files.writeString(zip, "prior-cache-bytes");
         try (RemediationsCacheWriter writer = RemediationsCacheWriter.create(
                 zip, RemediationsCacheConstants.PRODUCT_SSC, Map.of("mode", "all"))) {
-            writer.addFpr("1", null, null, path -> {
+            writer.addSscFpr("1", null, path -> {
                 try {
-                    Files.writeString(path, "partial-fpr");
+                    Files.writeString(path, "new-fpr");
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
             });
-            // Close without finish(): work file is discarded; destination stays intact.
         }
-        assertEquals("prior-cache-bytes", Files.readString(zip));
+        try (RemediationsCacheReader reader = RemediationsCacheReader.open(zip)) {
+            assertEquals("new-fpr", Files.readString(reader.getOrderedFprPaths().get(0)));
+        }
         assertTrue(Files.notExists(zip.resolveSibling("existing.zip.partial")));
     }
 
@@ -121,7 +135,7 @@ class RemediationsCacheRoundTripTest {
                 zip,
                 RemediationsCacheConstants.PRODUCT_SSC,
                 Map.of("mode", "artifact-id"),
-                List.of(RemediationsCacheWriter.FprSource.forSsc(fpr, "1", null)));
+                List.of(new RemediationsCacheWriter.SscFpr(fpr, "1", null)));
 
         try (RemediationsCacheReader reader = RemediationsCacheReader.open(zip);
              FprHandle fprHandle = new FprHandle(reader.getOrderedFprPaths().get(0))) {
@@ -138,7 +152,7 @@ class RemediationsCacheRoundTripTest {
                 zip,
                 RemediationsCacheConstants.PRODUCT_SSC,
                 Map.of("mode", "artifact-id"),
-                List.of(RemediationsCacheWriter.FprSource.forSsc(fpr, "1", null)));
+                List.of(new RemediationsCacheWriter.SscFpr(fpr, "1", null)));
 
         Path corruptZip = tempDir.resolve("corrupt.zip");
         try (ZipInputStream zis = new ZipInputStream(Files.newInputStream(zip));
@@ -187,7 +201,7 @@ class RemediationsCacheRoundTripTest {
                 zip,
                 RemediationsCacheConstants.PRODUCT_SSC,
                 Map.of("mode", "artifact-id"),
-                List.of(RemediationsCacheWriter.FprSource.forSsc(fpr, "1", null)));
+                List.of(new RemediationsCacheWriter.SscFpr(fpr, "1", null)));
 
         assertThrows(FcliSimpleException.class, () -> {
             try (RemediationsCacheReader reader = RemediationsCacheReader.open(zip)) {
@@ -205,7 +219,7 @@ class RemediationsCacheRoundTripTest {
                 zip,
                 RemediationsCacheConstants.PRODUCT_SSC,
                 Map.of("mode", "artifact-id"),
-                List.of(RemediationsCacheWriter.FprSource.forSsc(fpr, "12/../evil", null)));
+                List.of(new RemediationsCacheWriter.SscFpr(fpr, "12/../evil", null)));
 
         try (RemediationsCacheReader reader = RemediationsCacheReader.open(zip)) {
             var resolved = reader.getOrderedResolvedFprs();

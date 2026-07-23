@@ -13,18 +13,17 @@
 package com.fortify.cli.aviator.ssc.cli.mixin;
 
 import java.nio.file.Path;
-import java.time.OffsetDateTime;
 
 import com.fortify.cli.aviator.ssc.cli.mixin.AviatorSSCRemediationsSelectorArgGroups.OnlineSelectionArgGroup;
 import com.fortify.cli.common.exception.FcliSimpleException;
 
-import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Option;
 
 /**
  * Source selection for apply-remediations: either online SSC selection or a local remediations cache zip.
+ * Online selection is the shared {@link OnlineSelectionArgGroup} (no pass-through accessors).
  */
 @Getter
 public class AviatorSSCApplyRemediationsSourceMixin {
@@ -55,40 +54,9 @@ public class AviatorSSCApplyRemediationsSourceMixin {
         return isFromCacheSelected() ? source.fromCache : null;
     }
 
-    public boolean isArtifactIdSelected() {
-        return isOnlineSelected() && source.online.isArtifactIdSelected();
-    }
-
-    public boolean isLatestSelected() {
-        return isOnlineSelected() && source.online.isLatestSelected();
-    }
-
-    public boolean isAllSelected() {
-        return isOnlineSelected() && source.online.isAllSelected();
-    }
-
-    public String getArtifactId() {
-        return isOnlineSelected() ? source.online.getArtifactId() : null;
-    }
-
-    public String getSince() {
-        return isOnlineSelected() ? source.online.getSince() : null;
-    }
-
-    public String getAppVersionNameOrId() {
-        return isOnlineSelected() ? source.online.getAppVersionNameOrId() : null;
-    }
-
-    public String getAppVersionId(UnirestInstance unirest) {
-        return isOnlineSelected() ? source.online.getAppVersionId(unirest) : null;
-    }
-
-    /** Online only; same resolution as download-remediations-cache. */
-    public OnlineSelectionArgGroup.ResolvedOnlineArtifacts resolveArtifacts(
-            UnirestInstance unirest, OffsetDateTime sinceDate) {
-        FcliSimpleException.throwIf(!isOnlineSelected(),
-                "Online artifact selection is required (not --from-cache)");
-        return source.online.resolveArtifacts(unirest, sinceDate);
+    /** Online ArgGroup when online mode is selected; null for --from-cache. */
+    public OnlineSelectionArgGroup getOnline() {
+        return isOnlineSelected() ? source.online : null;
     }
 
     public void validate() {

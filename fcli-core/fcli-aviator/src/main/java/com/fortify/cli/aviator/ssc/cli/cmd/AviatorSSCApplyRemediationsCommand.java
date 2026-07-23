@@ -96,9 +96,9 @@ public class AviatorSSCApplyRemediationsCommand extends AbstractOutputCommand
     private JsonNode processOnline(
             AviatorLoggerImpl logger, IProgressWriter progressWriter, Set<String> issueIdFilter) {
         UnirestInstance unirest = unirestInstanceSupplier.getUnirestInstance();
-        OffsetDateTime sinceDate = SinceOptionHelper.parse(sourceSelector.getSince());
+        OffsetDateTime sinceDate = SinceOptionHelper.parse(sourceSelector.getOnline().getSince());
         // One resolve: artifacts + appVersionId (no second getAppVersionId REST call).
-        ResolvedOnlineArtifacts resolved = sourceSelector.resolveArtifacts(unirest, sinceDate);
+        ResolvedOnlineArtifacts resolved = sourceSelector.getOnline().resolveArtifacts(unirest, sinceDate);
         try (SscOnlineRemediationsFprSource source = new SscOnlineRemediationsFprSource(
                 unirest, logger, progressWriter, resolved.artifacts())) {
             ApplyResult applyResult = RemediationsApplyHelper.apply(

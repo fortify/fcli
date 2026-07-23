@@ -57,15 +57,15 @@ public class AviatorSSCDownloadRemediationsCacheCommand extends AbstractSSCJsonN
 
     @Override
     public JsonNode getJsonNode(UnirestInstance unirest) {
-        artifactSelector.validate();
+        artifactSelector.getOnlineSelection().validate();
         Path destination = outputFile.toPath();
         if (Files.exists(destination)) {
             requireConfirmation.checkConfirmed(destination);
         }
 
-        OffsetDateTime sinceDate = SinceOptionHelper.parse(artifactSelector.getSince());
+        OffsetDateTime sinceDate = SinceOptionHelper.parse(artifactSelector.getOnlineSelection().getSince());
         // One resolve: artifacts + appVersionId (shared with apply-remediations).
-        var resolved = artifactSelector.resolveArtifacts(unirest, sinceDate);
+        var resolved = artifactSelector.getOnlineSelection().resolveArtifacts(unirest, sinceDate);
         Map<String, String> selection = buildSelectionMetadata(resolved.appVersionId(), sinceDate);
 
         try (IProgressWriter progressWriter = progressWriterFactoryMixin.create();
@@ -73,19 +73,21 @@ public class AviatorSSCDownloadRemediationsCacheCommand extends AbstractSSCJsonN
                         destination, RemediationsCacheConstants.PRODUCT_SSC, selection)) {
             AviatorLoggerImpl logger = new AviatorLoggerImpl(progressWriter);
             for (SSCArtifactDescriptor artifact : resolved.artifacts()) {
-                cacheWriter.addFpr(artifact.getId(), null, artifact.getUploadDate(), entryPath ->
+                cacheWriter.addSscFpr(artifact.getId(), artifact.getUploadDate(), entryPath ->
                         downloadArtifact(unirest, artifact, entryPath, logger, progressWriter));
             }
-            RemediationsCacheManifest manifest = cacheWriter.finish();
+            // close() writes manifest and publishes; capture entry count before close.
+            RemediationsCacheManifest manifest = cacheWriter.getManifest();
             return buildResultNode(destination, manifest);
         }
     }
 
     private Map<String, String> buildSelectionMetadata(String appVersionId, OffsetDateTime sinceDate) {
         Map<String, String> selection = new LinkedHashMap<>();
-        selection.put("mode", artifactSelector.getSelectionMode());
-        if (artifactSelector.isArtifactIdSelected()) {
-            selection.put("artifactId", artifactSelector.getArtifactId());
+        var online = artifactSelector.getOnlineSelection();
+        selection.put("mode", online.getSelectionMode());
+        if (online.isArtifactIdSelected()) {
+            selection.put("artifactId", online.getArtifactId());
         } else if (appVersionId != null) {
             selection.put("appVersionId", appVersionId);
         }

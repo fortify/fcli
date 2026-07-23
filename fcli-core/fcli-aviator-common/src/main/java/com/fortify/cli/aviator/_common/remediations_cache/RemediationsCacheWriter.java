@@ -27,7 +27,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fortify.cli.common.exception.AbstractFcliException;
-import com.fortify.cli.common.exception.FcliBugException;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.exception.FcliTechnicalException;
 import com.fortify.cli.common.json.JsonHelper;
@@ -36,99 +35,107 @@ import com.fortify.cli.common.util.ZipHelper;
 /**
  * Builds a remediations cache zip at a destination path. FPR content is written
  * directly into a ZipFS (no per-FPR temp staging). The ZipFS is opened on a sibling
- * {@code *.partial} work file; on successful {@link #finish()} + {@link #close()}, the
- * work file is moved onto {@code destination} (atomic when the filesystem supports it),
- * so an existing destination is not replaced until the archive is complete.
+ * {@code *.partial} work file; on successful {@link #close()}, the work file is moved
+ * onto {@code destination} (atomic when the filesystem supports it).
  *
- * <p>{@link #close()} is the sole owner of zip close, work-file cleanup, and publish.
+ * <p>Use with try-with-resources. {@link #close()} writes the manifest (when entries
+ * exist), closes ZipFS, and publishes or discards the work file.
  */
 public final class RemediationsCacheWriter implements AutoCloseable {
     private static final Logger logger = LoggerFactory.getLogger(RemediationsCacheWriter.class);
     private static final String PARTIAL_SUFFIX = ".partial";
 
     private final Path destination;
-    /** Sibling work path where ZipFS content is written before publish. */
     private final Path workPath;
-    /** May be null if initialization failed; {@link #close()} still cleans workPath. */
     private final FileSystem zipFs;
     private final RemediationsCacheManifest manifest;
-    private final Exception initError;
     private int nextOrder = 1;
-    /** True after manifest.json has been written into the open ZipFS (not yet durable until close+publish). */
-    private boolean manifestWritten;
-    private boolean closed;
 
     /**
-     * Always constructs an instance so {@link #close()} remains the only cleanup path.
-     * Callers must use {@link #create(Path, String, Map)} which closes and rethrows on init failure.
+     * Opens ZipFS on a sibling work file. Exceptions from open are thrown immediately.
+     * Entry parent dirs (including {@code fprs/}) are created lazily in {@link #prepareEntryPath}.
      */
     private RemediationsCacheWriter(Path destination, String product, Map<String, String> selection) {
         this.destination = destination;
         this.workPath = workPathFor(destination);
         this.manifest = newManifest(product, selection);
-        FileSystem fs = null;
-        Exception error = null;
-        try {
-            // ZipFS on sibling work file; existing destination is left intact until publish.
-            fs = ZipHelper.createZipFileSystem(workPath);
-            Files.createDirectories(fs.getPath(RemediationsCacheConstants.FPRS_DIR));
-        } catch (AbstractFcliException e) {
-            error = e;
-        } catch (IOException | RuntimeException e) {
-            error = e;
-        }
-        this.zipFs = fs;
-        this.initError = error;
+        this.zipFs = ZipHelper.createZipFileSystem(workPath);
     }
 
     /**
-     * Opens a work zip next to {@code destination} and prepares an empty manifest.
-     * On initialization failure, {@link #close()} runs before the exception is rethrown so
-     * cleanup is not split across factory and AutoCloseable paths.
+     * Opens a work zip next to {@code destination}. Use with try-with-resources.
      */
     public static RemediationsCacheWriter create(Path destination, String product, Map<String, String> selection) {
         FcliSimpleException.throwIf(destination == null,
                 "-f/--file must specify a remediations cache zip path");
-        RemediationsCacheWriter writer = new RemediationsCacheWriter(destination, product, selection);
-        if (writer.initError != null) {
-            Exception cause = writer.initError;
-            writer.close();
-            if (cause instanceof AbstractFcliException fcliException) {
-                throw fcliException;
-            }
-            throw new FcliTechnicalException(
-                    "Failed to initialize remediations cache zip: " + destination, cause);
-        }
-        return writer;
+        return new RemediationsCacheWriter(destination, product, selection);
     }
 
     /**
      * Convenience for callers that already have FPR files on disk (for example unit tests).
-     * Writes via ZipFS into a work file, then publishes to {@code destination}.
+     * Publishes on successful try-with-resources close.
      */
     public static RemediationsCacheManifest write(
             Path destination,
             String product,
             Map<String, String> selection,
-            List<FprSource> fprSources) {
+            List<? extends LocalFpr> fprSources) {
         FcliSimpleException.throwIf(fprSources == null || fprSources.isEmpty(),
                 "Cannot create remediations cache: no FPR files to include");
         try (RemediationsCacheWriter writer = create(destination, product, selection)) {
-            for (FprSource source : fprSources) {
-                writer.addFprFromFile(source);
+            for (LocalFpr source : fprSources) {
+                if (source instanceof SscFpr ssc) {
+                    writer.addFprFromFile(ssc);
+                } else if (source instanceof FodFpr fod) {
+                    writer.addFprFromFile(fod);
+                } else {
+                    throw new FcliTechnicalException("Unsupported local FPR type: " + source.getClass().getName());
+                }
             }
-            return writer.finish();
+            return writer.getManifest();
         }
     }
 
+    /** In-memory manifest (complete after successful close with entries). */
+    public RemediationsCacheManifest getManifest() {
+        return manifest;
+    }
+
     /**
-     * Allocates the next zip entry path, invokes {@code contentWriter} to populate it
-     * (for example download into the path), then records SHA-256 and manifest metadata.
+     * Writes an SSC artifact FPR into the next zip entry (for streaming downloads).
      */
-    public void addFpr(String artifactId, String releaseId, String uploadDate, Consumer<Path> contentWriter) {
-        requireWritable();
+    public void addSscFpr(String artifactId, String uploadDate, Consumer<Path> contentWriter) {
         int order = nextOrder++;
-        String entryPath = entryPath(artifactId, releaseId, order);
+        addEntry(order, sscEntryPath(order, artifactId), artifactId, null, uploadDate, contentWriter);
+    }
+
+    /**
+     * Writes a FoD release FPR into the next zip entry (for streaming downloads).
+     */
+    public void addFodFpr(String releaseId, Consumer<Path> contentWriter) {
+        int order = nextOrder++;
+        addEntry(order, fodEntryPath(order, releaseId), null, releaseId, null, contentWriter);
+    }
+
+    /** Copies an existing SSC FPR file into the cache zip and records its checksum. */
+    public void addFprFromFile(SscFpr source) {
+        validateLocalPath(source.path());
+        addSscFpr(source.artifactId(), source.uploadDate(), copyFrom(source.path()));
+    }
+
+    /** Copies an existing FoD FPR file into the cache zip and records its checksum. */
+    public void addFprFromFile(FodFpr source) {
+        validateLocalPath(source.path());
+        addFodFpr(source.releaseId(), copyFrom(source.path()));
+    }
+
+    private void addEntry(
+            int order,
+            String entryPath,
+            String artifactId,
+            String releaseId,
+            String uploadDate,
+            Consumer<Path> contentWriter) {
         try {
             Path target = prepareEntryPath(entryPath);
             writeEntryContent(target, entryPath, contentWriter);
@@ -142,23 +149,6 @@ public final class RemediationsCacheWriter implements AutoCloseable {
         }
     }
 
-    /** Copies an existing FPR file into the cache zip and records its checksum. */
-    public void addFprFromFile(FprSource source) {
-        requireWritable();
-        FcliSimpleException.throwIf(source == null || source.path() == null,
-                "FPR source path is required");
-        FcliSimpleException.throwIf(!Files.isRegularFile(source.path()),
-                "FPR source is not a readable regular file: %s", source.path());
-        addFpr(source.artifactId(), source.releaseId(), source.uploadDate(), target -> {
-            try {
-                Files.copy(source.path(), target, StandardCopyOption.REPLACE_EXISTING);
-            } catch (IOException e) {
-                throw new FcliTechnicalException("Failed to copy FPR into cache: " + source.path(), e);
-            }
-        });
-    }
-
-    /** Creates parent directories for a zip entry and returns its path. */
     private Path prepareEntryPath(String entryPath) throws IOException {
         Path target = zipFs.getPath(entryPath);
         Path parent = target.getParent();
@@ -168,36 +158,58 @@ public final class RemediationsCacheWriter implements AutoCloseable {
         return target;
     }
 
-    /** Invokes {@code contentWriter} and ensures a regular file was produced at {@code target}. */
     private static void writeEntryContent(Path target, String entryPath, Consumer<Path> contentWriter) {
         contentWriter.accept(target);
         FcliSimpleException.throwIf(!Files.isRegularFile(target),
                 "Cache entry was not written: %s", entryPath);
     }
 
-    /** Hashes the entry and appends it to the in-memory manifest. */
     private void recordEntry(
             int order, String entryPath, String artifactId, String releaseId, String uploadDate, Path target) {
         String sha256 = RemediationsCacheSha256.hashFile(target);
-        manifest.getEntries().add(toManifestEntry(order, entryPath, artifactId, releaseId, uploadDate, sha256));
+        manifest.getEntries().add(RemediationsCacheEntry.of(
+                order, entryPath, artifactId, releaseId, uploadDate, sha256));
     }
 
     /**
-     * Writes {@code manifest.json} into the open zip. Must be called before {@link #close()}
-     * for a successful cache. The archive is only published to {@code destination} after a
-     * successful {@link #close()}.
-     * Returns the completed manifest.
+     * Writes manifest when entries exist, closes ZipFS, then publishes the work file
+     * or deletes it if incomplete. Intended for try-with-resources (single close).
      */
-    public RemediationsCacheManifest finish() {
-        requireWritable();
-        FcliSimpleException.throwIf(manifest.getEntries().isEmpty(),
-                "Cannot create remediations cache: no FPR files to include");
+    @Override
+    public void close() {
+        try {
+            if (zipFs.isOpen()) {
+                if (!manifest.getEntries().isEmpty()) {
+                    writeManifest();
+                }
+                zipFs.close();
+            }
+        } catch (AbstractFcliException e) {
+            deleteQuietly(workPath);
+            throw e;
+        } catch (IOException e) {
+            deleteQuietly(workPath);
+            throw new FcliTechnicalException("Failed to finalize remediations cache zip: " + destination, e);
+        } catch (RuntimeException e) {
+            deleteQuietly(workPath);
+            throw new FcliTechnicalException("Failed to finalize remediations cache zip: " + destination, e);
+        }
+        // Guard with workPath existence so a second close is a no-op after publish/delete.
+        if (!Files.exists(workPath)) {
+            return;
+        }
+        if (!manifest.getEntries().isEmpty()) {
+            publishWorkFile();
+        } else {
+            deleteQuietly(workPath);
+        }
+    }
+
+    private void writeManifest() {
         try {
             byte[] manifestBytes = JsonHelper.getObjectMapper().writerWithDefaultPrettyPrinter()
                     .writeValueAsBytes(manifest);
             Files.write(zipFs.getPath(RemediationsCacheConstants.MANIFEST_ENTRY), manifestBytes);
-            manifestWritten = true;
-            return manifest;
         } catch (AbstractFcliException e) {
             throw e;
         } catch (IOException e) {
@@ -207,39 +219,6 @@ public final class RemediationsCacheWriter implements AutoCloseable {
         }
     }
 
-    /**
-     * Sole owner of zip filesystem close, work-file cleanup, and publish to destination.
-     * Destination is replaced only when finish() wrote the manifest and ZipFS closed cleanly.
-     */
-    @Override
-    public void close() {
-        if (closed) {
-            return;
-        }
-        closed = true;
-        boolean closeSucceeded = false;
-        try {
-            if (zipFs != null && zipFs.isOpen()) {
-                zipFs.close();
-            }
-            closeSucceeded = true;
-        } catch (IOException e) {
-            // ZipFS finalizes the archive on close; failure means work file is not trustworthy.
-            if (manifestWritten) {
-                deleteQuietly(workPath);
-                throw new FcliTechnicalException("Failed to finalize remediations cache zip: " + destination, e);
-            }
-            logger.warn("Failed to close remediations cache zip work file: {}", workPath, e);
-        } finally {
-            if (manifestWritten && closeSucceeded) {
-                publishWorkFile();
-            } else {
-                deleteQuietly(workPath);
-            }
-        }
-    }
-
-    /** Moves the completed work zip onto {@link #destination}, preferring an atomic replace. */
     private void publishWorkFile() {
         try {
             try {
@@ -255,16 +234,20 @@ public final class RemediationsCacheWriter implements AutoCloseable {
         }
     }
 
-    private void requireWritable() {
-        if (closed) {
-            throw new FcliBugException("RemediationsCacheWriter is already closed: " + destination);
-        }
-        if (initError != null) {
-            throw new FcliBugException("RemediationsCacheWriter failed to initialize: " + destination, initError);
-        }
-        if (manifestWritten) {
-            throw new FcliBugException("RemediationsCacheWriter is already finished: " + destination);
-        }
+    private static void validateLocalPath(Path path) {
+        FcliSimpleException.throwIf(path == null, "FPR source path is required");
+        FcliSimpleException.throwIf(!Files.isRegularFile(path),
+                "FPR source is not a readable regular file: %s", path);
+    }
+
+    private static Consumer<Path> copyFrom(Path source) {
+        return target -> {
+            try {
+                Files.copy(source, target, StandardCopyOption.REPLACE_EXISTING);
+            } catch (IOException e) {
+                throw new FcliTechnicalException("Failed to copy FPR into cache: " + source, e);
+            }
+        };
     }
 
     private static Path workPathFor(Path destination) {
@@ -287,29 +270,18 @@ public final class RemediationsCacheWriter implements AutoCloseable {
         return manifest;
     }
 
-    private static RemediationsCacheEntry toManifestEntry(
-            int order, String entryPath, String artifactId, String releaseId, String uploadDate, String sha256) {
-        return RemediationsCacheEntry.of(order, entryPath, artifactId, releaseId, uploadDate, sha256);
+    private static String sscEntryPath(int order, String artifactId) {
+        return String.format("%s/%03d_artifact_%s.fpr",
+                RemediationsCacheConstants.FPRS_DIR, order, sanitizePathSegment(artifactId));
     }
 
-    private static String entryPath(String artifactId, String releaseId, int order) {
-        if (artifactId != null && !artifactId.isBlank()) {
-            return String.format("%s/%03d_artifact_%s.fpr",
-                    RemediationsCacheConstants.FPRS_DIR, order, sanitizePathSegment(artifactId));
-        }
-        if (releaseId != null && !releaseId.isBlank()) {
-            return String.format("%s/%03d_release_%s.fpr",
-                    RemediationsCacheConstants.FPRS_DIR, order, sanitizePathSegment(releaseId));
-        }
-        return String.format("%s/%03d_remediations.fpr", RemediationsCacheConstants.FPRS_DIR, order);
+    private static String fodEntryPath(int order, String releaseId) {
+        return String.format("%s/%03d_release_%s.fpr",
+                RemediationsCacheConstants.FPRS_DIR, order, sanitizePathSegment(releaseId));
     }
 
-    /**
-     * Keeps artifact/release ids from introducing extra path segments inside the zip
-     * ({@code /}, {@code \\}, {@code ..}). Dots are stripped so {@code ..} cannot appear.
-     * Manifest still stores the original id fields.
-     */
     private static String sanitizePathSegment(String id) {
+        FcliSimpleException.throwIf(id == null || id.isBlank(), "Entry id is required for cache path");
         String cleaned = id.replaceAll("[^A-Za-z0-9_-]", "_");
         return cleaned.isEmpty() ? "id" : cleaned;
     }
@@ -325,13 +297,14 @@ public final class RemediationsCacheWriter implements AutoCloseable {
         }
     }
 
-    public record FprSource(Path path, String artifactId, String releaseId, String uploadDate) {
-        public static FprSource forSsc(Path path, String artifactId, String uploadDate) {
-            return new FprSource(path, artifactId, null, uploadDate);
-        }
-
-        public static FprSource forFod(Path path, String releaseId) {
-            return new FprSource(path, null, releaseId, null);
-        }
+    /** Local on-disk FPR to copy into the cache (product-specific; no shared null fields). */
+    public sealed interface LocalFpr permits SscFpr, FodFpr {
+        Path path();
     }
+
+    /** SSC artifact FPR for cache write helpers/tests. */
+    public record SscFpr(Path path, String artifactId, String uploadDate) implements LocalFpr {}
+
+    /** FoD release FPR for cache write helpers/tests. */
+    public record FodFpr(Path path, String releaseId) implements LocalFpr {}
 }

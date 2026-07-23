@@ -71,10 +71,11 @@ public class FoDAviatorDownloadRemediationsCacheCommand extends AbstractFoDJsonN
             AviatorLoggerImpl logger = new AviatorLoggerImpl(progressWriter);
             logger.progress("Status: Downloading Audited FPR from FoD (release id="
                     + releaseDescriptor.getReleaseId() + ")");
-            cacheWriter.addFpr(null, releaseDescriptor.getReleaseId(), null, entryPath ->
+            cacheWriter.addFodFpr(releaseDescriptor.getReleaseId(), entryPath ->
                     FoDRemediationsFprDownloadHelper.downloadStaticRemediationsFpr(unirest, releaseDescriptor, entryPath));
             logger.progress("Status: Writing remediations cache to " + destination);
-            RemediationsCacheManifest manifest = cacheWriter.finish();
+            // close() writes manifest and publishes.
+            RemediationsCacheManifest manifest = cacheWriter.getManifest();
             return buildResultNode(destination, releaseDescriptor, manifest);
         }
     }
