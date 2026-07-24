@@ -118,6 +118,13 @@ public class AviatorConnectionDiagnostics {
         }
     }
 
+    /**
+     * Probes TCP to the next hop (proxy or Aviator host) and closes the socket.
+     * <p>
+     * Intentional second open: {@link #runTunnelStages} opens a new connection for
+     * CONNECT/TLS so a pure next-hop TCP failure stays distinct from proxy CONNECT or TLS
+     * handshake failure. Do not fold TCP into the tunnel solely to avoid a double connect.
+     */
     private boolean runTcp(List<AviatorDiagnosticStageResult> results, AviatorConnectionPlan connectionPlan, int timeoutSeconds) {
         var proxyDescriptor = connectionPlan.proxyDescriptor();
         var nextHopHost = proxyDescriptor.map(proxy -> proxy.getProxyHost()).orElse(connectionPlan.target().host());
@@ -141,6 +148,9 @@ public class AviatorConnectionDiagnostics {
 
     /**
      * PROXY + TLS from one tunnel session (single CONNECT when proxy is configured).
+     * Runs after the TCP stage, which already opened and closed a next-hop probe socket
+     * so stage failures remain isolated (see {@link #runTcp}).
+     *
      * @return true if TLS stage continued the pipeline (pass or alpn warn)
      */
     private boolean runTunnelStages(List<AviatorDiagnosticStageResult> results, AviatorConnectionPlan connectionPlan,

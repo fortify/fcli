@@ -20,11 +20,16 @@ import com.fortify.cli.aviator.grpc.AviatorGrpcClientHelper.AviatorConnectionPla
 public interface IAviatorDiagnosticProbe {
     InetAddress[] resolve(String host) throws IOException;
 
+    /**
+     * Short-lived TCP connect used only for the TCP diagnostic stage (open then close).
+     * The tunnel probe opens a separate connection afterward on purpose.
+     */
     void connect(String host, int port, int timeoutSeconds) throws IOException;
 
     /**
      * Single session: TCP to next hop, optional HTTP CONNECT, then TLS. Emits one
-     * structured result so PROXY and TLS stages share a tunnel (no re-CONNECT).
+     * structured result so PROXY and TLS stages share a tunnel (no re-CONNECT between
+     * those stages). Called after {@link #connect}; the second TCP open is intentional.
      */
     AviatorTunnelResult probeTunnel(AviatorConnectionPlan connectionPlan, int timeoutSeconds);
 
