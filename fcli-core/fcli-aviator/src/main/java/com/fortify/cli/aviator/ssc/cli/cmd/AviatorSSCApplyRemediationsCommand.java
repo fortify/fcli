@@ -29,8 +29,8 @@ import com.fortify.cli.aviator.config.AviatorLoggerImpl;
 import com.fortify.cli.aviator.ssc.cli.mixin.AviatorSSCApplyRemediationsSourceMixin;
 import com.fortify.cli.aviator.ssc.cli.mixin.AviatorSSCRemediationsSelectorArgGroups.OnlineSelectionArgGroup.ResolvedOnlineArtifacts;
 import com.fortify.cli.aviator.ssc.helper.AviatorSSCApplyRemediationsHelper;
+import com.fortify.cli.aviator.ssc.helper.SSCOnlineRemediationsFprSource;
 import com.fortify.cli.aviator.ssc.helper.SinceOptionHelper;
-import com.fortify.cli.aviator.ssc.helper.SscOnlineRemediationsFprSource;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.output.cli.cmd.AbstractOutputCommand;
 import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
@@ -81,8 +81,7 @@ public class AviatorSSCApplyRemediationsCommand extends AbstractOutputCommand
     private JsonNode processFromCache(AviatorLoggerImpl logger, Set<String> issueIdFilter) {
         try (CacheRemediationsFprSource source = CacheRemediationsFprSource.open(
                 sourceSelector.getFromCache(),
-                RemediationsCacheConstants.PRODUCT_SSC,
-                CacheRemediationsFprSource.IdKind.ARTIFACT_ID)) {
+                RemediationsCacheConstants.PRODUCT_SSC)) {
             ApplyResult applyResult = RemediationsApplyHelper.apply(
                     source, sourceCodeDirectory, logger, issueIdFilter, LOG);
             return AviatorSSCApplyRemediationsHelper.buildCacheResultNode(
@@ -99,7 +98,7 @@ public class AviatorSSCApplyRemediationsCommand extends AbstractOutputCommand
         OffsetDateTime sinceDate = SinceOptionHelper.parse(sourceSelector.getOnline().getSince());
         // One resolve: artifacts + appVersionId (no second getAppVersionId REST call).
         ResolvedOnlineArtifacts resolved = sourceSelector.getOnline().resolveArtifacts(unirest, sinceDate);
-        try (SscOnlineRemediationsFprSource source = new SscOnlineRemediationsFprSource(
+        try (SSCOnlineRemediationsFprSource source = new SSCOnlineRemediationsFprSource(
                 unirest, logger, progressWriter, resolved.artifacts())) {
             ApplyResult applyResult = RemediationsApplyHelper.apply(
                     source, sourceCodeDirectory, logger, issueIdFilter, LOG);

@@ -71,15 +71,19 @@ public final class AviatorSSCRemediationsSelectorArgGroups {
             return descriptor.getVersionId();
         }
 
-        public String getSelectionMode() {
+        /**
+         * Selected online mode, or {@code null} if none (should not occur after validate /
+         * exclusive ArgGroup). Used for manifest {@code selection.mode} wire values.
+         */
+        public SSCRemediationsSelectionMode getSelectionMode() {
             if (isArtifactIdSelected()) {
-                return "artifact-id";
+                return SSCRemediationsSelectionMode.ARTIFACT_ID;
             }
             if (isLatestSelected()) {
-                return "latest";
+                return SSCRemediationsSelectionMode.LATEST;
             }
             if (isAllSelected()) {
-                return "all";
+                return SSCRemediationsSelectionMode.ALL;
             }
             return null;
         }

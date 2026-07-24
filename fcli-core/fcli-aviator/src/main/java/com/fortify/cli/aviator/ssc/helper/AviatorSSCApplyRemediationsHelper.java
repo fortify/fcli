@@ -31,13 +31,16 @@ import lombok.Builder;
 
 /**
  * Helper for Aviator SSC apply-remediations result JSON construction.
+ * <p>
+ * Always-present fields live in {@link CommonApplyResult} (online = common only).
+ * Cache mode adds mode-specific fields via {@link CacheResultData#toJson()}.
  */
 public final class AviatorSSCApplyRemediationsHelper {
     private AviatorSSCApplyRemediationsHelper() {}
 
     /**
-     * Builds a single online-result shape for any apply outcome (one or many artifacts).
-     * Table columns use the same fields for --artifact-id, --latest, and --all.
+     * Builds online-result JSON (always-present fields only).
+     * Table columns stay stable for --artifact-id, --latest, and --all.
      */
     public static ObjectNode buildOnlineResultNode(
             List<SSCArtifactDescriptor> artifacts,
@@ -48,7 +51,7 @@ public final class AviatorSSCApplyRemediationsHelper {
                 issueIdFilter, applyResult.metrics());
 
         String versionId = appVersionId;
-        String artifactId = "N/A";
+        String artifactId = null;
         if (artifacts.size() == 1) {
             SSCArtifactDescriptor only = artifacts.get(0);
             if (versionId == null) {
@@ -60,23 +63,14 @@ public final class AviatorSSCApplyRemediationsHelper {
             }
         }
 
-        return toOnlineJson(OnlineResultData.builder()
-                .appVersionId(versionId != null ? versionId : "N/A")
-                .artifactId(artifactId)
-                .artifactsProcessed(applyResult.metrics().size())
-                .artifactsSkipped(applyResult.skipped())
-                .totalRemediation(aggregated.totalRemediations())
-                .appliedRemediation(aggregated.appliedRemediations())
-                .skippedRemediation(aggregated.skippedRemediations())
-                .modifiedFiles(aggregated.modifiedFiles())
-                .action(RemediationsApplyHelper.actionLabel(aggregated))
-                .build());
+        return commonFrom(versionId, artifactId, applyResult, aggregated).toJson();
     }
 
     /**
-     * Aggregates metrics and builds the cache apply result JSON (same fields as before).
+     * Aggregates metrics and builds the cache apply result JSON.
+     * Always-present fields match online table columns; cache-only fields are appended.
      *
-     * @param selection manifest selection map; may be null (appVersionId becomes null / "N/A")
+     * @param selection manifest selection map; may be null (appVersionId becomes "N/A")
      */
     public static ObjectNode buildCacheResultNode(
             Path cacheZip,
@@ -86,54 +80,39 @@ public final class AviatorSSCApplyRemediationsHelper {
         RemediationMetric aggregated = AviatorRemediationMetricsHelper.aggregateMetrics(
                 issueIdFilter, applyResult.metrics());
         String appVersionId = selection != null ? selection.get("appVersionId") : null;
-        return toCacheJson(CacheResultData.builder()
+        return CacheResultData.builder()
+                .common(commonFrom(appVersionId, null, applyResult, aggregated))
                 .cacheZip(cacheZip)
                 .entryPaths(applyResult.processedEntries())
                 .artifactIds(applyResult.processedIds())
+                .build()
+                .toJson();
+    }
+
+    private static CommonApplyResult commonFrom(
+            String appVersionId,
+            String artifactId,
+            ApplyResult applyResult,
+            RemediationMetric aggregated) {
+        return CommonApplyResult.builder()
                 .appVersionId(appVersionId)
-                .fprsProcessed(applyResult.metrics().size())
-                .fprsSkipped(applyResult.skipped())
+                .artifactId(artifactId)
+                .artifactsProcessed(applyResult.metrics().size())
+                .artifactsSkipped(applyResult.skipped())
                 .totalRemediation(aggregated.totalRemediations())
                 .appliedRemediation(aggregated.appliedRemediations())
                 .skippedRemediation(aggregated.skippedRemediations())
                 .modifiedFiles(aggregated.modifiedFiles())
                 .action(RemediationsApplyHelper.actionLabel(aggregated))
-                .build());
+                .build();
     }
 
-    private static ObjectNode toOnlineJson(OnlineResultData data) {
-        ObjectNode result = JsonHelper.getObjectMapper().createObjectNode();
-        result.put("appVersionId", data.appVersionId() != null ? data.appVersionId() : "N/A");
-        result.put("artifactId", data.artifactId() != null ? data.artifactId() : "N/A");
-        result.put("artifactsProcessed", data.artifactsProcessed());
-        result.put("artifactsSkipped", data.artifactsSkipped());
-        result.put("totalRemediation", data.totalRemediation());
-        result.put("appliedRemediation", data.appliedRemediation());
-        result.put("skippedRemediation", data.skippedRemediation());
-        result.set("modifiedFiles", toArrayNode(data.modifiedFiles()));
-        result.put(IActionCommandResultSupplier.actionFieldName, data.action());
-        return result;
-    }
-
-    private static ObjectNode toCacheJson(CacheResultData resultData) {
-        ObjectNode result = JsonHelper.getObjectMapper().createObjectNode();
-        result.put("appVersionId", resultData.appVersionId() != null ? resultData.appVersionId() : "N/A");
-        result.put("artifactId", "N/A");
-        result.put("file", resultData.cacheZip().toString());
-        result.put("artifactsProcessed", resultData.fprsProcessed());
-        result.put("artifactsSkipped", resultData.fprsSkipped());
-        result.put("totalRemediation", resultData.totalRemediation());
-        result.put("appliedRemediation", resultData.appliedRemediation());
-        result.put("skippedRemediation", resultData.skippedRemediation());
-        result.set("modifiedFiles", toArrayNode(resultData.modifiedFiles()));
-        result.set("entries", toStringArrayNode(resultData.entryPaths()));
-        result.set("artifactIds", toStringArrayNode(resultData.artifactIds()));
-        result.put(IActionCommandResultSupplier.actionFieldName, resultData.action());
-        return result;
-    }
-
+    /**
+     * Properties always written for SSC apply-remediations, independent of online vs cache.
+     * Keeps table columns stable across modes.
+     */
     @Builder
-    private record OnlineResultData(
+    private record CommonApplyResult(
             String appVersionId,
             String artifactId,
             int artifactsProcessed,
@@ -142,21 +121,41 @@ public final class AviatorSSCApplyRemediationsHelper {
             int appliedRemediation,
             int skippedRemediation,
             Set<String> modifiedFiles,
-            String action) {}
+            String action) {
+        ObjectNode toJson() {
+            ObjectNode result = JsonHelper.getObjectMapper().createObjectNode();
+            result.put("appVersionId", na(appVersionId));
+            result.put("artifactId", na(artifactId));
+            result.put("artifactsProcessed", artifactsProcessed);
+            result.put("artifactsSkipped", artifactsSkipped);
+            result.put("totalRemediation", totalRemediation);
+            result.put("appliedRemediation", appliedRemediation);
+            result.put("skippedRemediation", skippedRemediation);
+            result.set("modifiedFiles", toArrayNode(modifiedFiles));
+            result.put(IActionCommandResultSupplier.actionFieldName, action);
+            return result;
+        }
+    }
 
+    /** Cache mode: always-present fields plus cache path, entry paths, and artifact id list. */
     @Builder
     private record CacheResultData(
+            CommonApplyResult common,
             Path cacheZip,
             List<String> entryPaths,
-            List<String> artifactIds,
-            String appVersionId,
-            int fprsProcessed,
-            int fprsSkipped,
-            int totalRemediation,
-            int appliedRemediation,
-            int skippedRemediation,
-            Set<String> modifiedFiles,
-            String action) {}
+            List<String> artifactIds) {
+        ObjectNode toJson() {
+            ObjectNode result = common.toJson();
+            result.put("file", cacheZip.toString());
+            result.set("entries", toStringArrayNode(entryPaths));
+            result.set("artifactIds", toStringArrayNode(artifactIds));
+            return result;
+        }
+    }
+
+    private static String na(String value) {
+        return value != null ? value : "N/A";
+    }
 
     private static ArrayNode toArrayNode(Set<String> files) {
         ArrayNode array = JsonHelper.getObjectMapper().createArrayNode();

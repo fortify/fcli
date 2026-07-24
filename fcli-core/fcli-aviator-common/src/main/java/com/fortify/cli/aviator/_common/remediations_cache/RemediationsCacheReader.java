@@ -92,13 +92,13 @@ public final class RemediationsCacheReader implements AutoCloseable {
 
     public List<String> getOrderedArtifactIds() {
         return getOrderedEntries().stream()
-                .map(e -> e.getArtifactId() != null ? e.getArtifactId() : "")
+                .map(e -> e.getSscData() != null ? e.getSscData().getArtifactId() : "")
                 .toList();
     }
 
     public List<String> getOrderedReleaseIds() {
         return getOrderedEntries().stream()
-                .map(e -> e.getReleaseId() != null ? e.getReleaseId() : "")
+                .map(e -> e.getFodData() != null ? e.getFodData().getReleaseId() : "")
                 .toList();
     }
 
@@ -144,7 +144,10 @@ public final class RemediationsCacheReader implements AutoCloseable {
         try (var manifestInputStream = Files.newInputStream(manifestPath)) {
             RemediationsCacheManifest manifest = JsonHelper.getObjectMapper()
                     .readValue(manifestInputStream, RemediationsCacheManifest.class);
-            validateManifest(manifest);
+            FcliSimpleException.throwIf(manifest == null,
+                    "Remediations cache manifest is empty: %s", cacheZip);
+            // Model owns field invariants; Reader only loads and delegates.
+            manifest.validate(cacheZip);
             return manifest;
         } catch (AbstractFcliException e) {
             throw e;
@@ -152,29 +155,6 @@ public final class RemediationsCacheReader implements AutoCloseable {
             throw new FcliTechnicalException("Failed to read remediations cache manifest: " + cacheZip, e);
         } catch (RuntimeException e) {
             throw new FcliTechnicalException("Failed to parse remediations cache manifest: " + cacheZip, e);
-        }
-    }
-
-    private void validateManifest(RemediationsCacheManifest manifest) {
-        FcliSimpleException.throwIf(manifest == null,
-                "Remediations cache manifest is empty: %s", cacheZip);
-        FcliSimpleException.throwIf(manifest.getSchemaVersion() != RemediationsCacheConstants.SCHEMA_VERSION,
-                "Unsupported remediations cache schemaVersion %s (expected %s): %s",
-                manifest.getSchemaVersion(), RemediationsCacheConstants.SCHEMA_VERSION, cacheZip);
-        FcliSimpleException.throwIf(!RemediationsCacheConstants.KIND.equals(manifest.getKind()),
-                "Invalid remediations cache kind '%s' (expected %s): %s",
-                manifest.getKind(), RemediationsCacheConstants.KIND, cacheZip);
-        FcliSimpleException.throwIf(StringUtils.isBlank(manifest.getProduct()),
-                "Remediations cache manifest is missing product: %s", cacheZip);
-        FcliSimpleException.throwIf(manifest.getEntries() == null || manifest.getEntries().isEmpty(),
-                "Remediations cache has no entries: %s", cacheZip);
-        for (RemediationsCacheEntry entry : manifest.getEntries()) {
-            FcliSimpleException.throwIf(entry == null,
-                    "Remediations cache contains a null entry: %s", cacheZip);
-            FcliSimpleException.throwIf(StringUtils.isBlank(entry.getPath()),
-                    "Remediations cache entry is missing path: %s", cacheZip);
-            FcliSimpleException.throwIf(StringUtils.isBlank(entry.getSha256()),
-                    "Remediations cache entry is missing sha256: %s", entry.getPath());
         }
     }
 

@@ -27,6 +27,7 @@ import com.fortify.cli.aviator._common.remediations_cache.RemediationsCacheManif
 import com.fortify.cli.aviator._common.remediations_cache.RemediationsCacheWriter;
 import com.fortify.cli.aviator.config.AviatorLoggerImpl;
 import com.fortify.cli.aviator.ssc.cli.mixin.AviatorSSCRemediationsCacheDownloadSelectorMixin;
+import com.fortify.cli.aviator.ssc.cli.mixin.SSCRemediationsSelectionMode;
 import com.fortify.cli.aviator.ssc.helper.SinceOptionHelper;
 import com.fortify.cli.common.cli.mixin.CommonOptionMixins;
 import com.fortify.cli.common.json.JsonHelper;
@@ -85,7 +86,10 @@ public class AviatorSSCDownloadRemediationsCacheCommand extends AbstractSSCJsonN
     private Map<String, String> buildSelectionMetadata(String appVersionId, OffsetDateTime sinceDate) {
         Map<String, String> selection = new LinkedHashMap<>();
         var online = artifactSelector.getOnlineSelection();
-        selection.put("mode", online.getSelectionMode());
+        SSCRemediationsSelectionMode mode = online.getSelectionMode();
+        if (mode != null) {
+            selection.put("mode", mode.wireValue());
+        }
         if (online.isArtifactIdSelected()) {
             selection.put("artifactId", online.getArtifactId());
         } else if (appVersionId != null) {
@@ -114,8 +118,8 @@ public class AviatorSSCDownloadRemediationsCacheCommand extends AbstractSSCJsonN
         result.put("artifactsDownloaded", manifest.getEntries().size());
         ArrayNode artifactIds = result.putArray("artifactIds");
         for (var entry : manifest.getEntries()) {
-            if (entry.getArtifactId() != null) {
-                artifactIds.add(entry.getArtifactId());
+            if (entry.getSscData() != null && entry.getSscData().getArtifactId() != null) {
+                artifactIds.add(entry.getSscData().getArtifactId());
             }
         }
         return result;

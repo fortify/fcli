@@ -37,7 +37,7 @@ import com.fortify.cli.fod._common.cli.mixin.FoDDelimiterMixin;
 import com.fortify.cli.fod._common.session.cli.mixin.FoDUnirestInstanceSupplierMixin;
 import com.fortify.cli.fod.aviator.cli.mixin.FoDAviatorApplyRemediationsSourceMixin;
 import com.fortify.cli.fod.aviator.helper.AviatorFoDApplyRemediationsHelper;
-import com.fortify.cli.fod.aviator.helper.FodOnlineRemediationsFprSource;
+import com.fortify.cli.fod.aviator.helper.FoDOnlineRemediationsFprSource;
 import com.fortify.cli.fod.release.helper.FoDReleaseDescriptor;
 
 import kong.unirest.UnirestInstance;
@@ -80,8 +80,8 @@ public class FoDAviatorApplyRemediationsCommand extends AbstractOutputCommand
     private JsonNode processOnline(AviatorLoggerImpl logger, Set<String> issueIdFilter) {
         UnirestInstance unirest = unirestInstanceSupplier.getUnirestInstance();
         FoDReleaseDescriptor release = sourceSelector.getReleaseDescriptor(unirest);
-        try (FodOnlineRemediationsFprSource source =
-                new FodOnlineRemediationsFprSource(unirest, logger, release)) {
+        try (FoDOnlineRemediationsFprSource source =
+                new FoDOnlineRemediationsFprSource(unirest, logger, release)) {
             ApplyResult applyResult = RemediationsApplyHelper.apply(
                     source, sourceCodeDirectory, logger, issueIdFilter, LOG);
             return AviatorFoDApplyRemediationsHelper.buildOnlineResultNode(release, applyResult);
@@ -91,8 +91,7 @@ public class FoDAviatorApplyRemediationsCommand extends AbstractOutputCommand
     private JsonNode processFromCache(AviatorLoggerImpl logger, Set<String> issueIdFilter) {
         try (CacheRemediationsFprSource source = CacheRemediationsFprSource.open(
                 sourceSelector.getFromCache(),
-                RemediationsCacheConstants.PRODUCT_FOD,
-                CacheRemediationsFprSource.IdKind.RELEASE_ID)) {
+                RemediationsCacheConstants.PRODUCT_FOD)) {
             ApplyResult applyResult = RemediationsApplyHelper.apply(
                     source, sourceCodeDirectory, logger, issueIdFilter, LOG);
             return AviatorFoDApplyRemediationsHelper.buildCacheResultNode(

@@ -48,16 +48,17 @@ class RemediationsCacheRoundTripTest {
                 RemediationsCacheConstants.PRODUCT_SSC,
                 Map.of("mode", "all", "appVersionId", "10001"),
                 List.of(
-                        new RemediationsCacheWriter.SscFpr(fpr1, "123", "2026-07-10T08:00:00Z"),
-                        new RemediationsCacheWriter.SscFpr(fpr2, "456", "2026-07-11T09:30:00Z")));
+                        new RemediationsCacheWriter.SSCFpr(fpr1, "123", "2026-07-10T08:00:00Z"),
+                        new RemediationsCacheWriter.SSCFpr(fpr2, "456", "2026-07-11T09:30:00Z")));
 
         try (RemediationsCacheReader reader = RemediationsCacheReader.open(zip)) {
             assertEquals(RemediationsCacheConstants.PRODUCT_SSC, reader.getManifest().getProduct());
             assertEquals(2, reader.getOrderedFprPaths().size());
             assertEquals("fpr-content-1", Files.readString(reader.getOrderedFprPaths().get(0)));
             assertEquals("fpr-content-2", Files.readString(reader.getOrderedFprPaths().get(1)));
-            assertEquals("123", reader.getManifest().getEntries().get(0).getArtifactId());
-            assertEquals("456", reader.getManifest().getEntries().get(1).getArtifactId());
+            assertEquals("123", reader.getManifest().getEntries().get(0).getSscData().getArtifactId());
+            assertEquals("456", reader.getManifest().getEntries().get(1).getSscData().getArtifactId());
+            assertEquals(null, reader.getManifest().getEntries().get(0).getFodData());
         }
     }
 
@@ -135,7 +136,7 @@ class RemediationsCacheRoundTripTest {
                 zip,
                 RemediationsCacheConstants.PRODUCT_SSC,
                 Map.of("mode", "artifact-id"),
-                List.of(new RemediationsCacheWriter.SscFpr(fpr, "1", null)));
+                List.of(new RemediationsCacheWriter.SSCFpr(fpr, "1", null)));
 
         try (RemediationsCacheReader reader = RemediationsCacheReader.open(zip);
              FprHandle fprHandle = new FprHandle(reader.getOrderedFprPaths().get(0))) {
@@ -152,7 +153,7 @@ class RemediationsCacheRoundTripTest {
                 zip,
                 RemediationsCacheConstants.PRODUCT_SSC,
                 Map.of("mode", "artifact-id"),
-                List.of(new RemediationsCacheWriter.SscFpr(fpr, "1", null)));
+                List.of(new RemediationsCacheWriter.SSCFpr(fpr, "1", null)));
 
         Path corruptZip = tempDir.resolve("corrupt.zip");
         try (ZipInputStream zis = new ZipInputStream(Files.newInputStream(zip));
@@ -201,13 +202,42 @@ class RemediationsCacheRoundTripTest {
                 zip,
                 RemediationsCacheConstants.PRODUCT_SSC,
                 Map.of("mode", "artifact-id"),
-                List.of(new RemediationsCacheWriter.SscFpr(fpr, "1", null)));
+                List.of(new RemediationsCacheWriter.SSCFpr(fpr, "1", null)));
 
         assertThrows(FcliSimpleException.class, () -> {
             try (RemediationsCacheReader reader = RemediationsCacheReader.open(zip)) {
                 reader.requireProduct(RemediationsCacheConstants.PRODUCT_FOD);
             }
         });
+    }
+
+    @Test
+    void entryValidateRejectsMissingProductBlockAndDualProduct() {
+        RemediationsCacheEntry bare = new RemediationsCacheEntry();
+        bare.setOrder(1);
+        bare.setPath("fprs/001.fpr");
+        bare.setSha256("abc");
+        assertThrows(FcliSimpleException.class, bare::validate);
+
+        RemediationsCacheEntry dual = RemediationsCacheEntry.forSsc(
+                1, "fprs/001.fpr", "abc", RemediationsCacheEntry.SSCData.of("1", null));
+        dual.setFodData(RemediationsCacheEntry.FoDData.of("r1"));
+        assertThrows(FcliSimpleException.class, dual::validate);
+
+        RemediationsCacheEntry ssc = RemediationsCacheEntry.forSsc(
+                1, "fprs/001.fpr", "abc", RemediationsCacheEntry.SSCData.of("1", null));
+        ssc.validate();
+    }
+
+    @Test
+    void manifestValidateRejectsProductEntryMismatch() {
+        RemediationsCacheManifest manifest = new RemediationsCacheManifest();
+        manifest.setSchemaVersion(RemediationsCacheConstants.SCHEMA_VERSION);
+        manifest.setKind(RemediationsCacheConstants.KIND);
+        manifest.setProduct(RemediationsCacheConstants.PRODUCT_SSC);
+        manifest.getEntries().add(RemediationsCacheEntry.forFod(
+                1, "fprs/001.fpr", "abc", RemediationsCacheEntry.FoDData.of("rel-1")));
+        assertThrows(FcliSimpleException.class, manifest::validate);
     }
 
     @Test
@@ -219,13 +249,13 @@ class RemediationsCacheRoundTripTest {
                 zip,
                 RemediationsCacheConstants.PRODUCT_SSC,
                 Map.of("mode", "artifact-id"),
-                List.of(new RemediationsCacheWriter.SscFpr(fpr, "12/../evil", null)));
+                List.of(new RemediationsCacheWriter.SSCFpr(fpr, "12/../evil", null)));
 
         try (RemediationsCacheReader reader = RemediationsCacheReader.open(zip)) {
             var resolved = reader.getOrderedResolvedFprs();
             assertEquals(1, resolved.size());
             // Manifest keeps the original id; zip entry path must not contain path separators or "..".
-            assertEquals("12/../evil", resolved.get(0).entry().getArtifactId());
+            assertEquals("12/../evil", resolved.get(0).entry().getSscData().getArtifactId());
             String entryPath = resolved.get(0).entry().getPath();
             assertTrue(entryPath.startsWith(RemediationsCacheConstants.FPRS_DIR + "/"));
             assertTrue(!entryPath.contains(".."));

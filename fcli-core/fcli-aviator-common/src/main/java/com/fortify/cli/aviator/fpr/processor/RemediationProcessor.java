@@ -97,9 +97,11 @@ public class RemediationProcessor {
             for (int i = 0; i < remediationNodes.getLength(); i++) {
                 processRemediation((Element) remediationNodes.item(i), sourceBasePath, processingState);
             }
-            // Log requested issue IDs that were not found in any remediation entries
-            for (String notFoundIssueId : processingState.getRequestedButNotApplied()) {
-                logger.debug("Requested issue ID '{}' was not found in any remediation entries in remediations.xml", notFoundIssueId);
+            // Remaining IDs may be absent from remediations.xml or present but not successfully applied.
+            for (String unappliedIssueId : processingState.getRequestedButNotApplied()) {
+                logger.debug(
+                        "Requested issue ID '{}' was not successfully applied (missing from remediations.xml or remediation could not be applied)",
+                        unappliedIssueId);
             }
             return processingState.toMetric(remediationNodes.getLength());
         } catch (ParserConfigurationException | SAXException | IOException e) {

@@ -16,29 +16,24 @@ import java.nio.file.Path;
 import java.util.List;
 
 import com.fortify.cli.aviator._common.remediations_cache.RemediationsCacheReader.ResolvedFpr;
+import com.fortify.cli.common.exception.FcliBugException;
 
 /**
  * Offline remediations source: ordered FPR paths from a remediations cache zip.
+ * Product identity (and thus artifact vs release id) comes from the validated entry model.
  */
 public final class CacheRemediationsFprSource implements IRemediationsFprSource {
-    public enum IdKind {
-        ARTIFACT_ID,
-        RELEASE_ID
-    }
-
     private final RemediationsCacheReader reader;
-    private final IdKind idKind;
 
-    private CacheRemediationsFprSource(RemediationsCacheReader reader, IdKind idKind) {
+    private CacheRemediationsFprSource(RemediationsCacheReader reader) {
         this.reader = reader;
-        this.idKind = idKind;
     }
 
-    public static CacheRemediationsFprSource open(Path cacheZip, String expectedProduct, IdKind idKind) {
+    public static CacheRemediationsFprSource open(Path cacheZip, String expectedProduct) {
         RemediationsCacheReader reader = RemediationsCacheReader.open(cacheZip);
         try {
             reader.requireProduct(expectedProduct);
-            return new CacheRemediationsFprSource(reader, idKind);
+            return new CacheRemediationsFprSource(reader);
         } catch (RuntimeException e) {
             reader.close();
             throw e;
@@ -59,12 +54,25 @@ public final class CacheRemediationsFprSource implements IRemediationsFprSource 
             String label = entry.getPath() != null
                     ? entry.getPath()
                     : unit.fprPath().getFileName().toString();
-            String raw = idKind == IdKind.ARTIFACT_ID ? entry.getArtifactId() : entry.getReleaseId();
-            String id = raw != null ? raw : "";
-            if (!action.accept(unit.fprPath(), label, id, i + 1, total)) {
+            if (!action.accept(unit.fprPath(), label, productId(entry), i + 1, total)) {
                 break;
             }
         }
+    }
+
+    /**
+     * Id for progress/result lists: artifactId (SSC) or releaseId (FoD).
+     * Entries are validated before resolve, so exactly one product block is present.
+     */
+    private static String productId(RemediationsCacheEntry entry) {
+        if (entry.getSscData() != null) {
+            return entry.getSscData().getArtifactId();
+        }
+        if (entry.getFodData() != null) {
+            return entry.getFodData().getReleaseId();
+        }
+        throw new FcliBugException(
+                "Remediations cache entry missing product data after validation: " + entry.getPath());
     }
 
     @Override

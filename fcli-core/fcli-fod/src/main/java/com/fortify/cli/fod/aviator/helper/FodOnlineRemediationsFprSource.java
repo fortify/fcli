@@ -27,12 +27,12 @@ import kong.unirest.UnirestInstance;
  * Implements {@link AutoCloseable} so callers share one try-with-resources pattern with
  * cache sources.
  */
-public final class FodOnlineRemediationsFprSource implements IRemediationsFprSource {
+public final class FoDOnlineRemediationsFprSource implements IRemediationsFprSource {
     private final UnirestInstance unirest;
     private final IAviatorLogger logger;
     private final FoDReleaseDescriptor releaseDescriptor;
 
-    public FodOnlineRemediationsFprSource(
+    public FoDOnlineRemediationsFprSource(
             UnirestInstance unirest,
             IAviatorLogger logger,
             FoDReleaseDescriptor releaseDescriptor) {

@@ -33,13 +33,13 @@ import kong.unirest.UnirestInstance;
  * The type implements {@link AutoCloseable} so callers can use one try-with-resources
  * pattern for all {@link IRemediationsFprSource} implementations.
  */
-public final class SscOnlineRemediationsFprSource implements IRemediationsFprSource {
+public final class SSCOnlineRemediationsFprSource implements IRemediationsFprSource {
     private final UnirestInstance unirest;
     private final IAviatorLogger logger;
     private final IProgressWriter progressWriter;
     private final List<SSCArtifactDescriptor> artifacts;
 
-    public SscOnlineRemediationsFprSource(
+    public SSCOnlineRemediationsFprSource(
             UnirestInstance unirest,
             IAviatorLogger logger,
             IProgressWriter progressWriter,

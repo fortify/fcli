@@ -84,9 +84,9 @@ public final class RemediationsCacheWriter implements AutoCloseable {
                 "Cannot create remediations cache: no FPR files to include");
         try (RemediationsCacheWriter writer = create(destination, product, selection)) {
             for (LocalFpr source : fprSources) {
-                if (source instanceof SscFpr ssc) {
+                if (source instanceof SSCFpr ssc) {
                     writer.addFprFromFile(ssc);
-                } else if (source instanceof FodFpr fod) {
+                } else if (source instanceof FoDFpr fod) {
                     writer.addFprFromFile(fod);
                 } else {
                     throw new FcliTechnicalException("Unsupported local FPR type: " + source.getClass().getName());
@@ -106,7 +106,11 @@ public final class RemediationsCacheWriter implements AutoCloseable {
      */
     public void addSscFpr(String artifactId, String uploadDate, Consumer<Path> contentWriter) {
         int order = nextOrder++;
-        addEntry(order, sscEntryPath(order, artifactId), artifactId, null, uploadDate, contentWriter);
+        writeAndRecord(
+                sscEntryPath(order, artifactId),
+                contentWriter,
+                (entryPath, sha256) -> RemediationsCacheEntry.forSsc(
+                        order, entryPath, sha256, RemediationsCacheEntry.SSCData.of(artifactId, uploadDate)));
     }
 
     /**
@@ -114,32 +118,25 @@ public final class RemediationsCacheWriter implements AutoCloseable {
      */
     public void addFodFpr(String releaseId, Consumer<Path> contentWriter) {
         int order = nextOrder++;
-        addEntry(order, fodEntryPath(order, releaseId), null, releaseId, null, contentWriter);
+        writeAndRecord(
+                fodEntryPath(order, releaseId),
+                contentWriter,
+                (entryPath, sha256) -> RemediationsCacheEntry.forFod(
+                        order, entryPath, sha256, RemediationsCacheEntry.FoDData.of(releaseId)));
     }
 
-    /** Copies an existing SSC FPR file into the cache zip and records its checksum. */
-    public void addFprFromFile(SscFpr source) {
-        validateLocalPath(source.path());
-        addSscFpr(source.artifactId(), source.uploadDate(), copyFrom(source.path()));
+    @FunctionalInterface
+    private interface EntryBuilder {
+        RemediationsCacheEntry build(String entryPath, String sha256);
     }
 
-    /** Copies an existing FoD FPR file into the cache zip and records its checksum. */
-    public void addFprFromFile(FodFpr source) {
-        validateLocalPath(source.path());
-        addFodFpr(source.releaseId(), copyFrom(source.path()));
-    }
-
-    private void addEntry(
-            int order,
-            String entryPath,
-            String artifactId,
-            String releaseId,
-            String uploadDate,
-            Consumer<Path> contentWriter) {
+    private void writeAndRecord(String entryPath, Consumer<Path> contentWriter, EntryBuilder entryBuilder) {
         try {
             Path target = prepareEntryPath(entryPath);
             writeEntryContent(target, entryPath, contentWriter);
-            recordEntry(order, entryPath, artifactId, releaseId, uploadDate, target);
+            RemediationsCacheEntry entry = entryBuilder.build(entryPath, RemediationsCacheSha256.hashFile(target));
+            entry.validate(destination);
+            manifest.getEntries().add(entry);
         } catch (AbstractFcliException e) {
             throw e;
         } catch (IOException e) {
@@ -147,6 +144,18 @@ public final class RemediationsCacheWriter implements AutoCloseable {
         } catch (RuntimeException e) {
             throw new FcliTechnicalException("Failed to add remediations cache entry " + entryPath, e);
         }
+    }
+
+    /** Copies an existing SSC FPR file into the cache zip and records its checksum. */
+    public void addFprFromFile(SSCFpr source) {
+        validateLocalPath(source.path());
+        addSscFpr(source.artifactId(), source.uploadDate(), copyFrom(source.path()));
+    }
+
+    /** Copies an existing FoD FPR file into the cache zip and records its checksum. */
+    public void addFprFromFile(FoDFpr source) {
+        validateLocalPath(source.path());
+        addFodFpr(source.releaseId(), copyFrom(source.path()));
     }
 
     private Path prepareEntryPath(String entryPath) throws IOException {
@@ -162,13 +171,6 @@ public final class RemediationsCacheWriter implements AutoCloseable {
         contentWriter.accept(target);
         FcliSimpleException.throwIf(!Files.isRegularFile(target),
                 "Cache entry was not written: %s", entryPath);
-    }
-
-    private void recordEntry(
-            int order, String entryPath, String artifactId, String releaseId, String uploadDate, Path target) {
-        String sha256 = RemediationsCacheSha256.hashFile(target);
-        manifest.getEntries().add(RemediationsCacheEntry.of(
-                order, entryPath, artifactId, releaseId, uploadDate, sha256));
     }
 
     /**
@@ -207,6 +209,7 @@ public final class RemediationsCacheWriter implements AutoCloseable {
 
     private void writeManifest() {
         try {
+            manifest.validate(destination);
             byte[] manifestBytes = JsonHelper.getObjectMapper().writerWithDefaultPrettyPrinter()
                     .writeValueAsBytes(manifest);
             Files.write(zipFs.getPath(RemediationsCacheConstants.MANIFEST_ENTRY), manifestBytes);
@@ -298,13 +301,13 @@ public final class RemediationsCacheWriter implements AutoCloseable {
     }
 
     /** Local on-disk FPR to copy into the cache (product-specific; no shared null fields). */
-    public sealed interface LocalFpr permits SscFpr, FodFpr {
+    public sealed interface LocalFpr permits SSCFpr, FoDFpr {
         Path path();
     }
 
     /** SSC artifact FPR for cache write helpers/tests. */
-    public record SscFpr(Path path, String artifactId, String uploadDate) implements LocalFpr {}
+    public record SSCFpr(Path path, String artifactId, String uploadDate) implements LocalFpr {}
 
     /** FoD release FPR for cache write helpers/tests. */
-    public record FodFpr(Path path, String releaseId) implements LocalFpr {}
+    public record FoDFpr(Path path, String releaseId) implements LocalFpr {}
 }
