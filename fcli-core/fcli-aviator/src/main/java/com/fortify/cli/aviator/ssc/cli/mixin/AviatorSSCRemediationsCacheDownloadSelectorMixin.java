@@ -10,19 +10,18 @@
  * herein. The information contained herein is subject to change
  * without notice.
  */
-package com.fortify.cli.fod.aviator.cmd;
+package com.fortify.cli.aviator.ssc.cli.mixin;
 
-import com.fortify.cli.common.cli.cmd.AbstractContainerCommand;
+import com.fortify.cli.aviator.ssc.cli.mixin.AviatorSSCRemediationsSelectorArgGroups.OnlineSelectionArgGroup;
 
-import picocli.CommandLine;
+import lombok.Getter;
+import picocli.CommandLine.ArgGroup;
 
-@CommandLine.Command(
-        name = "aviator",
-        subcommands = {
-                FoDAviatorApplyRemediationsCommand.class,
-                FoDAviatorDownloadRemediationsCacheCommand.class
-        }
-)
-
-public class FoDAviatorCommands extends AbstractContainerCommand {
+/**
+ * Download-remediations-cache selector: thin wrapper over shared {@link OnlineSelectionArgGroup}.
+ */
+@Getter
+public class AviatorSSCRemediationsCacheDownloadSelectorMixin {
+    @ArgGroup(exclusive = false, multiplicity = "1")
+    private OnlineSelectionArgGroup onlineSelection;
 }

@@ -156,6 +156,19 @@ public final class SSCArtifactHelper {
     /**
      * Check if artifact is Aviator-processed based on filename prefix.
      */
+    public static boolean isAviatorArtifact(SSCArtifactDescriptor artifact) {
+        return artifact != null && isAviatorArtifact(artifact.asJsonNode());
+    }
+
+    public static SSCArtifactDescriptor requireAviatorArtifact(SSCArtifactDescriptor artifact) {
+        if (!isAviatorArtifact(artifact)) {
+            String artifactId = artifact == null ? "<unknown>" : artifact.getId();
+            throw new FcliSimpleException("Artifact " + artifactId
+                    + " is not a Fortify Remediation Aviator-processed artifact; expected originalFileName to start with aviator_");
+        }
+        return artifact;
+    }
+
     private static boolean isAviatorArtifact(JsonNode artifact) {
         String originalFileName = artifact.path("originalFileName").asText("");
         return originalFileName.startsWith("aviator_");
