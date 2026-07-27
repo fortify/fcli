@@ -134,6 +134,24 @@ class AviatorConnectionDiagnoseHelperTest {
     }
 
     @Test
+    void urlAndTokenOptionalFailWhenValidatorThrows() {
+        TokenValidator tokenBad = (url, token) -> {
+            throw new IllegalStateException("validator error");
+        };
+        var helper = helperWithGrpcAndValidators(
+            AviatorGrpcReachabilityResult.ok("OK", "ok"), tokenBad, d -> {});
+        var result = helper.diagnose(
+            AviatorConnectionDiagnoseSource.fromUrlAndToken("https://aviator.example.com", "tok"), 5);
+
+        var cred = lastStage(result.stages());
+        assertEquals(AviatorDiagnosticStage.TOKEN, cred.stage());
+        assertEquals(AviatorDiagnosticStatus.FAIL, cred.status());
+        assertFalse(cred.required());
+        assertFalse(result.requiredFailure());
+        assertEquals("java.lang.IllegalStateException", cred.evidence().path("exceptionType").asText());
+    }
+
+    @Test
     void adminPassWhenValidatorAccepts() {
         var adminCalled = new AtomicBoolean();
         AdminValidator adminOk = d -> adminCalled.set(true);

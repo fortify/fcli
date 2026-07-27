@@ -70,7 +70,7 @@ public class AviatorConnectionDiagnoseCommand extends AbstractOutputCommand impl
     private AviatorConnectionDiagnoseSource resolveSource() {
         if (sourceArgGroup.getUrlSource() != null) {
             var urlSource = sourceArgGroup.getUrlSource();
-            var token = urlSource.getTokenResolver().getTokenOrNull();
+            var token = urlSource.getTokenOrNull();
             if (token != null) {
                 return AviatorConnectionDiagnoseSource.fromUrlAndToken(urlSource.getUrl(), token);
             }

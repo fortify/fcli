@@ -112,7 +112,7 @@ public class AviatorConnectionDiagnoseHelper {
             results.add(AviatorDiagnosticStageResult.optionalFail(order, AviatorDiagnosticStage.TOKEN,
                 "Aviator token is not valid",
                 "Use a current token for the expected tenant", evidence));
-        } catch (Exception e) {
+        } catch (RuntimeException e) {
             results.add(AviatorDiagnosticStageResult.optionalFail(order, AviatorDiagnosticStage.TOKEN,
                 "Aviator token check failed",
                 "Use a current token for the expected tenant",
@@ -128,7 +128,7 @@ public class AviatorConnectionDiagnoseHelper {
             evidence.put("tenant", configDescriptor.getTenant());
             results.add(optionalPass(order, AviatorDiagnosticStage.ADMIN,
                 "Aviator admin credentials are valid", evidence));
-        } catch (Exception e) {
+        } catch (RuntimeException e) {
             results.add(AviatorDiagnosticStageResult.optionalFail(order, AviatorDiagnosticStage.ADMIN,
                 "Admin credentials are not valid",
                 "Check the tenant, public key, and private key", AviatorConnectionDiagnostics.errorEvidence(e)));

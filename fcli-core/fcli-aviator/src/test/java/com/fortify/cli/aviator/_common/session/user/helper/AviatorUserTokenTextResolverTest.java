@@ -37,6 +37,14 @@ class AviatorUserTokenTextResolverTest {
     }
 
     @Test
+    void resolveOptionalRejectsUrlPrefix() {
+        assertThrows(FcliSimpleException.class,
+            () -> AviatorUserTokenTextResolver.resolveOptional("url:http://evil", () -> "token"));
+        assertThrows(FcliSimpleException.class,
+            () -> AviatorUserTokenTextResolver.resolveOptional("URL:http://evil", () -> "token"));
+    }
+
+    @Test
     void resolveRequiredRejectsBlankToken() {
         assertThrows(FcliSimpleException.class,
             () -> AviatorUserTokenTextResolver.resolveRequired("string: ", () -> "  "));
