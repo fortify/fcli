@@ -17,7 +17,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260713.143810-dev_feat.v3.x.aviator.26.4" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260727.131737-dev_feat.v3.x.aviator.26.4" %}
 
 
 <div id="header">
@@ -44,20 +44,21 @@ fcli_version:
 <h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli aviator ssc apply-remediations</strong> [<strong>--av</strong>=<em>&lt;appVersionNameOrId&gt;</em>]
-                                    [<strong>--delim</strong>=<em>&lt;delimiter&gt;</em>] [<strong>--progress</strong>=<em>&lt;type&gt;</em>]
-                                    [<strong>--since</strong>=<em>&lt;since&gt;</em>]
-                                    [<strong>--source-dir</strong>=<em>&lt;sourceCodeDirectory&gt;</em>] [[<strong>-h</strong>]
-                                    [<strong>--env-prefix</strong>=<em>&lt;prefix&gt;</em>]
+<p><strong>fcli aviator ssc apply-remediations</strong> [<strong>--progress</strong>=<em>&lt;type&gt;</em>]
+                                    [<strong>--source-dir</strong>=<em>&lt;sourceCodeDirectory&gt;</em>]
+                                    [<strong>--issue-ids</strong>=<em>&lt;issueIds&gt;</em>[,<em>&lt;issueIds&gt;</em>&#8230;&#8203;]]&#8230;&#8203;
+                                    [[<strong>-h</strong>] [<strong>--env-prefix</strong>=<em>&lt;prefix&gt;</em>]
                                     [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
                                     [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]
                                     [<strong>--log-mask</strong>=<em>&lt;level&gt;</em>] [<strong>--debug</strong>]]
-                                    [[<strong>--ssc-session</strong>=<em>&lt;sessionName&gt;</em>]]
                                     [[<strong>-o</strong>=<em>&lt;type+args&gt;</em>] [<strong>--style*<em>=&lt;style&gt;,&#8230;&#8203;</em>]&#8230;&#8203;
                                     <em class="</strong>--store*=_&lt;var&gt;[:&lt;prop&gt;">]
                                     [<strong>--to-file</strong>=</em>&lt;outputFile&gt;_]]
+                                    (<strong>--from-cache</strong>=<em>&lt;zip&gt;</em> | [[<strong>--since</strong>=<em>&lt;since&gt;</em>]
+                                    [<strong>--av</strong>=<em>&lt;appVersionNameOrId&gt;</em>]
+                                    [<strong>--delim</strong>=<em>&lt;delimiter&gt;</em>]
                                     (<strong>--artifact-id</strong>=<em>&lt;artifactId&gt;</em> | <strong>--latest</strong> |
-                                    <strong>--all</strong>)</p>
+                                    <strong>--all</strong>)]) [[<strong>--ssc-session</strong>=<em>&lt;sessionName&gt;</em>]]</p>
 </div>
 </div>
 </div>
@@ -65,10 +66,22 @@ fcli_version:
 <h2 id="_description"><a class="anchor" href="#_description"></a>Description</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Downloads FPR artifact(s) and applies Fortify Remediation Aviator-generated remediations to the specified source directory. Exactly one of --artifact-id, --latest, or --all must be specified. This command requires an active user session. Use 'fcli aviator session login' to create a session.</p>
+<p>Downloads FPR artifact(s) from SSC, or reads a local remediations cache zip, and applies Fortify Remediation Aviator-generated remediations to the specified source directory. Exactly one of --from-cache, --artifact-id, --latest, or --all must be specified. Online selection requires an active SSC session; --from-cache does not.</p>
 </div>
 <div class="paragraph">
 <p>Examples:</p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>Apply remediations from a remediations cache zip:
+  fcli aviator ssc apply-remediations --from-cache ./remediations.zip</pre>
+</div>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>Apply selected issue IDs from a cache zip:
+  fcli aviator ssc apply-remediations --from-cache ./remediations.zip --issue-ids id1,id2</pre>
+</div>
 </div>
 <div class="literalblock">
 <div class="content">
@@ -115,7 +128,7 @@ fcli_version:
 <dl>
 <dt class="hdlist1"><strong>--all</strong></dt>
 <dd>
-<p>Apply remediations from all Fortify Remediation Aviator-processed artifacts for the given application version, in chronological order. Aggregates remediation statistics across all artifacts. Requires --av/--appversion. Mutually exclusive with --artifact-id and --latest.</p>
+<p>Select all Fortify Remediation Aviator-processed artifacts for the given application version, in chronological order. Requires --av/--appversion. Mutually exclusive with --artifact-id and --latest.</p>
 </dd>
 <dt class="hdlist1"><strong>--artifact-id</strong>=<em>&lt;artifactId&gt;</em></dt>
 <dd>
@@ -129,9 +142,17 @@ fcli_version:
 <dd>
 <p>Change the default delimiter character when using options that accept "application:version" as an argument or parameter.</p>
 </dd>
+<dt class="hdlist1"><strong>--from-cache</strong>=<em>&lt;zip&gt;</em></dt>
+<dd>
+<p>Local remediations cache zip produced by download-remediations-cache. Mutually exclusive with online selection options. Does not require an SSC session.</p>
+</dd>
+<dt class="hdlist1"><strong>--issue-ids</strong>=<em>&lt;issueIds&gt;</em>[,<em>&lt;issueIds&gt;</em>&#8230;&#8203;]</dt>
+<dd>
+<p>Comma-separated list of issue IDs to apply. Matches requested values against remediations.xml instanceId values. Requires --from-cache so integrations can download once via download-remediations-cache and apply selected remediations without repeated SSC downloads.</p>
+</dd>
 <dt class="hdlist1"><strong>--latest</strong></dt>
 <dd>
-<p>Automatically select the most recent Fortify Remediation Aviator-processed artifact. Requires --av/--appversion. Mutually exclusive with --artifact-id and --all.</p>
+<p>Select the most recent Fortify Remediation Aviator-processed artifact. Requires --av/--appversion. Mutually exclusive with --artifact-id and --all.</p>
 </dd>
 <dt class="hdlist1"><strong>--progress</strong>=<em>&lt;type&gt;</em></dt>
 <dd>
@@ -139,7 +160,7 @@ fcli_version:
 </dd>
 <dt class="hdlist1"><strong>--since</strong>=<em>&lt;since&gt;</em></dt>
 <dd>
-<p>Filter artifacts by upload date. Supports relative durations (e.g. 7d, 2w, 1M, 90d) or absolute dates (e.g. 2025-01-01, 2025-01-01T10:30:00, 2025-01-01T10:30:00Z). Can only be used with --latest or --all; not compatible with --artifact-id.</p>
+<p>Filter artifacts by upload date. Supports relative durations (e.g. 7d, 2w, 1M, 90d) or absolute dates. Can only be used with --latest or --all.</p>
 </dd>
 <dt class="hdlist1"><strong>--source-dir</strong>=<em>&lt;sourceCodeDirectory&gt;</em></dt>
 <dd>
@@ -225,7 +246,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2026-07-13 14:41:11 UTC
+Last updated 2026-07-27 13:20:26 UTC
 </div>
 </div>
 </body>

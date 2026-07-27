@@ -1,5 +1,5 @@
 ---
-title: 'fcli-tool-vuln-exporter-list(1)'
+title: 'fcli-fod-aviator-download-remediations-cache(1)'
 fcli_version: 
 ---
 
@@ -9,7 +9,7 @@ fcli_version:
 <meta http-equiv="Content-Type" content="text/html; charset=">
 <meta name="generator" content="Asciidoctor 2.0.18">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>fcli-tool-vuln-exporter-list(1)</title>
+<title>fcli-fod-aviator-download-remediations-cache(1)</title>
 
 {% include asciidoc-head.html %}
 {% include fcli-enhancements.html %}
@@ -21,20 +21,21 @@ fcli_version:
 
 
 <div id="header">
-<h1>fcli-tool-vuln-exporter-list(1) Manual Page</h1>
+<h1>fcli-fod-aviator-download-remediations-cache(1) Manual Page</h1>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
 <ul class="sectlevel1">
 <li><a href="#_synopsis">Synopsis</a></li>
 <li><a href="#_description">Description</a></li>
 <li><a href="#_options">Options</a></li>
+<li><a href="#_fod_session_name_options">FoD session name options</a></li>
 <li><a href="#_output_options_also_see_documentation_link_below">Output options (also see documentation link below)</a></li>
 <li><a href="#_generic_fcli_options_also_see_documentation_link_below">Generic fcli options (also see documentation link below)</a></li>
 </ul>
 </div>
 <h2>Name</h2>
 <div class="sectionbody">
-<p>fcli-tool-vuln-exporter-list - List available and installed Fortify Vulnerability Exporter versions.</p>
+<p>fcli-fod-aviator-download-remediations-cache - Download a remediations cache zip containing Fortify Remediation Aviator remediations from FoD.</p>
 </div>
 </div>
 <div id="content">
@@ -43,12 +44,12 @@ fcli_version:
 <h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli tool vuln-exporter list</strong> [<strong>-q</strong>=<em>&lt;SpEL expression&gt;</em>] [[<strong>-h</strong>]
-                             [<strong>--env-prefix</strong>=<em>&lt;prefix&gt;</em>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
-                             [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>] [<strong>--log-mask</strong>=<em>&lt;level&gt;</em>]
-                             [<strong>--debug</strong>]] [[<strong>-o</strong>=<em>&lt;type+args&gt;</em>]
-                             [<strong>--style*<em>=&lt;style&gt;,&#8230;&#8203;</em>]&#8230;&#8203; <em class="</strong>--store*=_&lt;var&gt;[:&lt;prop&gt;">]
-                             [<strong>--to-file</strong>=</em>&lt;outputFile&gt;_]]</p>
+<p><strong>fcli fod aviator download-remediations-cache</strong> [<strong>-y</strong>] [<strong>--delim</strong>=<em>&lt;delimiter&gt;</em>]
+<strong>-f</strong>=<em>&lt;file&gt;</em> [<strong>--progress</strong>=<em>&lt;type&gt;</em>] <strong>--rel</strong>=<em>id|app[:ms]:rel</em> [[<strong>-h</strong>]
+[<strong>--env-prefix</strong>=<em>&lt;prefix&gt;</em>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>] [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]
+[<strong>--log-mask</strong>=<em>&lt;level&gt;</em>] [<strong>--debug</strong>]] [[<strong>--fod-session</strong>=<em>&lt;sessionName&gt;</em>]]
+[[<strong>-o</strong>=<em>&lt;type+args&gt;</em>] [<strong>--style*<em>=&lt;style&gt;,&#8230;&#8203;</em>]&#8230;&#8203; <em class="</strong>--store*=_&lt;var&gt;[:&lt;prop&gt;">]
+[<strong>--to-file</strong>=</em>&lt;outputFile&gt;_]]</p>
 </div>
 </div>
 </div>
@@ -56,7 +57,7 @@ fcli_version:
 <h2 id="_description"><a class="anchor" href="#_description"></a>Description</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Use the 'fcli tool definitions update' command to update the list of available versions.</p>
+<p>Downloads the latest static audited FPR for a FoD release into a remediations cache zip for use with apply-remediations --from-cache. Requires -f/--file. Overwriting an existing file requires confirmation (-y/--confirm).</p>
 </div>
 </div>
 </div>
@@ -65,9 +66,38 @@ fcli_version:
 <div class="sectionbody">
 <div class="dlist">
 <dl>
-<dt class="hdlist1"><strong>-q</strong>, <strong>--query</strong>=<em>&lt;SpEL expression&gt;</em></dt>
+<dt class="hdlist1"><strong>--delim</strong>=<em>&lt;delimiter&gt;</em></dt>
 <dd>
-<p>Only display records for which the given Spring Expression Language (SpEL) expression returns true.</p>
+<p>Change the default delimiter character when using options that accept "application[:microservice]:release" as an argument or parameter.</p>
+</dd>
+<dt class="hdlist1"><strong>-f</strong>, <strong>--file</strong>=<em>&lt;file&gt;</em></dt>
+<dd>
+<p>Destination remediations cache zip path. Required. Existing files require confirmation (-y/--confirm) before overwrite.</p>
+</dd>
+<dt class="hdlist1"><strong>--progress</strong>=<em>&lt;type&gt;</em></dt>
+<dd>
+<p>Configure progress output. Allowed values: auto, none, simple, stderr, single-line, ansi. Default value: auto. Proper output of single-line and ansi depends on console capabilities.</p>
+</dd>
+<dt class="hdlist1"><strong>--rel, --release</strong>=<em>id|app[:ms]:rel</em></dt>
+<dd>
+<p>Release id or &lt;application&gt;[:&lt;microservice&gt;]:&lt;release&gt; name.</p>
+</dd>
+<dt class="hdlist1"><strong>-y</strong>, <strong>--confirm</strong></dt>
+<dd>
+<p>Confirm overwriting existing remediations cache file.</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_fod_session_name_options"><a class="anchor" href="#_fod_session_name_options"></a>FoD session name options</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><strong>--fod-session</strong>=<em>&lt;sessionName&gt;</em></dt>
+<dd>
+<p>Name of the FoD session to use for executing this command. Default value: default.</p>
 </dd>
 </dl>
 </div>
@@ -136,7 +166,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2026-07-27 13:20:28 UTC
+Last updated 2026-07-27 13:20:26 UTC
 </div>
 </div>
 </body>

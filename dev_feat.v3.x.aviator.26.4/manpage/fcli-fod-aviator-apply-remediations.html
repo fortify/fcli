@@ -17,7 +17,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260713.143810-dev_feat.v3.x.aviator.26.4" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260727.131737-dev_feat.v3.x.aviator.26.4" %}
 
 
 <div id="header">
@@ -45,23 +45,26 @@ fcli_version:
 <div class="sectionbody">
 <div class="paragraph">
 <p><strong>fcli fod aviator apply-remediations</strong> [<strong>--delim</strong>=<em>&lt;delimiter&gt;</em>] [<strong>--progress</strong>=<em>&lt;type&gt;</em>]
-                                    <strong>--rel</strong>=<em>id|app[:ms]:rel</em>
-                                    [<strong>--source-dir</strong>=<em>&lt;sourceCodeDirectory&gt;</em>] [[<strong>-h</strong>]
-                                    [<strong>--env-prefix</strong>=<em>&lt;prefix&gt;</em>]
+                                    [<strong>--source-dir</strong>=<em>&lt;sourceCodeDirectory&gt;</em>]
+                                    [<strong>--issue-ids</strong>=<em>&lt;issueIds&gt;</em>[,<em>&lt;issueIds&gt;</em>&#8230;&#8203;]]&#8230;&#8203;
+                                    [[<strong>-h</strong>] [<strong>--env-prefix</strong>=<em>&lt;prefix&gt;</em>]
                                     [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
                                     [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]
                                     [<strong>--log-mask</strong>=<em>&lt;level&gt;</em>] [<strong>--debug</strong>]]
-                                    [[<strong>--fod-session</strong>=<em>&lt;sessionName&gt;</em>]]
                                     [[<strong>-o</strong>=<em>&lt;type+args&gt;</em>] [<strong>--style*<em>=&lt;style&gt;,&#8230;&#8203;</em>]&#8230;&#8203;
                                     <em class="</strong>--store*=_&lt;var&gt;[:&lt;prop&gt;">]
-                                    [<strong>--to-file</strong>=</em>&lt;outputFile&gt;_]]</p>
+                                    [<strong>--to-file</strong>=</em>&lt;outputFile&gt;_]]
+                                    [[<strong>--fod-session</strong>=<em>&lt;sessionName&gt;</em>]]
+                                    (<strong>--from-cache</strong>=<em>&lt;zip&gt;</em> | <strong>--rel</strong>=<em>id|app[:ms]:rel</em>)</p>
 </div>
 </div>
 </div>
 <div class="sect1">
 <h2 id="_description"><a class="anchor" href="#_description"></a>Description</h2>
 <div class="sectionbody">
-
+<div class="paragraph">
+<p>Downloads the FPR from a FoD release, or reads a local remediations cache zip, and applies Fortify Remediation Aviator remediations to the source directory. Exactly one of --release/--rel or --from-cache must be specified. Online selection requires an FoD session; --from-cache does not.</p>
+</div>
 </div>
 </div>
 <div class="sect1">
@@ -72,6 +75,14 @@ fcli_version:
 <dt class="hdlist1"><strong>--delim</strong>=<em>&lt;delimiter&gt;</em></dt>
 <dd>
 <p>Change the default delimiter character when using options that accept "application[:microservice]:release" as an argument or parameter.</p>
+</dd>
+<dt class="hdlist1"><strong>--from-cache</strong>=<em>&lt;zip&gt;</em></dt>
+<dd>
+<p>Local remediations cache zip produced by download-remediations-cache. Mutually exclusive with --release/--rel. Does not require an FoD session.</p>
+</dd>
+<dt class="hdlist1"><strong>--issue-ids</strong>=<em>&lt;issueIds&gt;</em>[,<em>&lt;issueIds&gt;</em>&#8230;&#8203;]</dt>
+<dd>
+<p>Comma-separated list of issue IDs to apply. Matches requested values against remediations.xml instanceId entries. Requires --from-cache so integrations can download once via download-remediations-cache and apply selected remediations without repeated FoD downloads.</p>
 </dd>
 <dt class="hdlist1"><strong>--progress</strong>=<em>&lt;type&gt;</em></dt>
 <dd>
@@ -165,7 +176,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2026-07-13 14:41:12 UTC
+Last updated 2026-07-27 13:20:26 UTC
 </div>
 </div>
 </body>
