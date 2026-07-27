@@ -259,15 +259,17 @@ public class AviatorConnectionDiagnostics {
         }
     }
 
+    /**
+     * Public gRPC stage evidence uses a single automation vocabulary: {@code pattern}
+     * (from classification). Probe-internal {@link AviatorGrpcFailureCategory} is not
+     * emitted on the wire to avoid dual near-synonym ids.
+     */
     private static ObjectNode grpcEvidence(AviatorGrpcReachabilityResult grpc) {
         var evidence = JsonHelper.getObjectMapper().createObjectNode();
         evidence.put("grpcResponseReceived", grpc.responseReceived());
         evidence.put("grpcStatusCode", grpc.statusCode());
         if (grpc.description() != null) {
             evidence.put("grpcDescription", grpc.description());
-        }
-        if (grpc.failureCategory() != null && grpc.failureCategory().wireId() != null) {
-            evidence.put("failureCategory", grpc.failureCategory().wireId());
         }
         evidence.put("httpResponseReceived", grpc.httpResponseReceived());
         if (grpc.httpStatusCode() != null) {

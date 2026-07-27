@@ -22,13 +22,12 @@ import picocli.CommandLine.Option;
 /**
  * URL-based diagnose source: required {@code --url}, optional {@code --token} for direct token validation.
  */
+@Getter
 public class AviatorConnectionDiagnoseUrlSourceArgGroup {
-    @Getter
     @Option(names = {"--url"}, required = true, order = 1)
     @MaskValue(sensitivity = LogSensitivityLevel.low, description = "AVIATOR HOST NAME", pattern = MaskValue.URL_HOSTNAME_PATTERN)
     private String url;
 
-    @Getter
     @Mixin
     private AviatorConnectionDiagnoseTokenResolverMixin tokenResolver;
 }

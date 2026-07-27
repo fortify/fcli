@@ -12,20 +12,14 @@
  */
 package com.fortify.cli.aviator.diagnose;
 
+/**
+ * Probe-internal gRPC failure taxonomy used by classification.
+ * Not emitted on stage evidence JSON; public automation should use
+ * {@link AviatorGrpcPattern} / evidence {@code pattern} only.
+ */
 public enum AviatorGrpcFailureCategory {
-    NONE(null),
-    NON_GRPC_HTTP("non-grpc-http-response"),
-    TLS("grpc-tls-handshake-failed"),
-    NO_RESPONSE("grpc-no-response");
-
-    private final String wireId;
-
-    AviatorGrpcFailureCategory(String wireId) {
-        this.wireId = wireId;
-    }
-
-    /** Machine-readable id for evidence JSON; null for {@link #NONE}. */
-    public String wireId() {
-        return wireId;
-    }
+    NONE,
+    NON_GRPC_HTTP,
+    TLS,
+    NO_RESPONSE;
 }

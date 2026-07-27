@@ -66,9 +66,16 @@ public class AviatorDefaultDiagnosticProbe implements IAviatorDiagnosticProbe {
             if (opened instanceof OpenFailed failed) {
                 return failed.result();
             }
-            var openedOk = (OpenedSocket) opened;
-            return handshakeTls(rawSocket, connectionPlan, timeoutSeconds, proxyConfigured, openedOk.proxyConnectStatus());
+            if (opened instanceof OpenedSocket openedOk) {
+                return handshakeTls(rawSocket, connectionPlan, timeoutSeconds, proxyConfigured,
+                    openedOk.proxyConnectStatus());
+            }
+            // Sealed OpenResult exhaustiveness; should be unreachable.
+            throw new AviatorBugException("Unhandled tunnel open result: " + opened.getClass().getName());
         } catch (Exception e) {
+            if (e instanceof AviatorBugException bug) {
+                throw bug;
+            }
             return new AviatorTunnelResult.TlsFailed(proxyConfigured, "not-used", AviatorTlsPhase.CONNECT, e);
         }
     }

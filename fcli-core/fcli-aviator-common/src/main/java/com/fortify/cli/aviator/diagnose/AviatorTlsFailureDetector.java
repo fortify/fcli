@@ -45,23 +45,32 @@ public final class AviatorTlsFailureDetector {
         return false;
     }
 
+    private static final String[] TLS_MESSAGE_MARKERS = {
+        "sslhandshakeexception",
+        "sslexception",
+        "sslengine",
+        "openssl",
+        "pkix path",
+        "unable to find valid certification path",
+        "certificateexception",
+        "certpathbuilderexception",
+        "certpathvalidatorexception",
+        "certificate_unknown",
+        "unknown_ca",
+        "certificate_required",
+        "handshake_failure"
+    };
+
     static boolean isTlsFailureMessage(String description) {
         if (description == null || description.isBlank()) {
             return false;
         }
         var text = description.toLowerCase(Locale.ROOT);
-        return text.contains("sslhandshakeexception")
-                || text.contains("sslexception")
-                || text.contains("sslengine")
-                || text.contains("openssl")
-                || text.contains("pkix path")
-                || text.contains("unable to find valid certification path")
-                || text.contains("certificateexception")
-                || text.contains("certpathbuilderexception")
-                || text.contains("certpathvalidatorexception")
-                || text.contains("certificate_unknown")
-                || text.contains("unknown_ca")
-                || text.contains("certificate_required")
-                || text.contains("handshake_failure");
+        for (var marker : TLS_MESSAGE_MARKERS) {
+            if (text.contains(marker)) {
+                return true;
+            }
+        }
+        return false;
     }
 }

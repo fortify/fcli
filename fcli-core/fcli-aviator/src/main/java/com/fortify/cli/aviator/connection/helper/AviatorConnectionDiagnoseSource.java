@@ -12,44 +12,114 @@
  */
 package com.fortify.cli.aviator.connection.helper;
 
+import java.util.Objects;
+
 import com.fortify.cli.aviator._common.config.admin.helper.AviatorAdminConfigDescriptor;
 import com.fortify.cli.aviator._common.session.user.helper.AviatorUserSessionDescriptor;
 
 /**
  * Domain source for Aviator connection diagnostics (no Picocli types).
+ * <p>
+ * Sealed variants make exclusive modes unrepresentable as dual-null bags:
+ * bare URL, URL+token, saved user session, or admin config.
  */
-public record AviatorConnectionDiagnoseSource(
-        String type,
-        String url,
-        AviatorUserSessionDescriptor userSessionDescriptor,
-        AviatorAdminConfigDescriptor adminConfigDescriptor,
-        String rawToken) {
+public sealed interface AviatorConnectionDiagnoseSource {
 
-    public static AviatorConnectionDiagnoseSource fromUrl(String url) {
-        return new AviatorConnectionDiagnoseSource("url", url, null, null, null);
+    String url();
+
+    /** Machine-readable source id for endpoint evidence ({@code sourceType}). */
+    SourceType sourceType();
+
+    default String type() {
+        return sourceType().id();
     }
 
-    public static AviatorConnectionDiagnoseSource fromUrlAndToken(String url, String token) {
-        return new AviatorConnectionDiagnoseSource("url-token", url, null, null, token);
+    static AviatorConnectionDiagnoseSource fromUrl(String url) {
+        return new UrlOnly(url);
     }
 
-    public static AviatorConnectionDiagnoseSource fromUserSession(AviatorUserSessionDescriptor descriptor) {
-        return new AviatorConnectionDiagnoseSource("user-session", descriptor.getAviatorUrl(), descriptor, null, null);
+    static AviatorConnectionDiagnoseSource fromUrlAndToken(String url, String token) {
+        return new UrlAndToken(url, token);
     }
 
-    public static AviatorConnectionDiagnoseSource fromAdminConfig(AviatorAdminConfigDescriptor descriptor) {
-        return new AviatorConnectionDiagnoseSource("admin-config", descriptor.getAviatorUrl(), null, descriptor, null);
+    static AviatorConnectionDiagnoseSource fromUserSession(AviatorUserSessionDescriptor descriptor) {
+        return new UserSession(descriptor);
     }
 
-    public boolean hasAdminConfig() {
-        return adminConfigDescriptor != null;
+    static AviatorConnectionDiagnoseSource fromAdminConfig(AviatorAdminConfigDescriptor descriptor) {
+        return new AdminConfig(descriptor);
     }
 
-    public boolean hasUserToken() {
-        return userSessionDescriptor != null || rawToken != null;
+    /** Wire ids for endpoint evidence {@code sourceType}. */
+    enum SourceType {
+        URL("url"),
+        URL_TOKEN("url-token"),
+        USER_SESSION("user-session"),
+        ADMIN_CONFIG("admin-config");
+
+        private final String id;
+
+        SourceType(String id) {
+            this.id = id;
+        }
+
+        public String id() {
+            return id;
+        }
     }
 
-    public boolean hasCredentials() {
-        return hasAdminConfig() || hasUserToken();
+    record UrlOnly(String url) implements AviatorConnectionDiagnoseSource {
+        public UrlOnly {
+            Objects.requireNonNull(url, "url");
+        }
+
+        @Override
+        public SourceType sourceType() {
+            return SourceType.URL;
+        }
+    }
+
+    record UrlAndToken(String url, String token) implements AviatorConnectionDiagnoseSource {
+        public UrlAndToken {
+            Objects.requireNonNull(url, "url");
+            Objects.requireNonNull(token, "token");
+        }
+
+        @Override
+        public SourceType sourceType() {
+            return SourceType.URL_TOKEN;
+        }
+    }
+
+    record UserSession(AviatorUserSessionDescriptor descriptor) implements AviatorConnectionDiagnoseSource {
+        public UserSession {
+            Objects.requireNonNull(descriptor, "descriptor");
+        }
+
+        @Override
+        public String url() {
+            return descriptor.getAviatorUrl();
+        }
+
+        @Override
+        public SourceType sourceType() {
+            return SourceType.USER_SESSION;
+        }
+    }
+
+    record AdminConfig(AviatorAdminConfigDescriptor descriptor) implements AviatorConnectionDiagnoseSource {
+        public AdminConfig {
+            Objects.requireNonNull(descriptor, "descriptor");
+        }
+
+        @Override
+        public String url() {
+            return descriptor.getAviatorUrl();
+        }
+
+        @Override
+        public SourceType sourceType() {
+            return SourceType.ADMIN_CONFIG;
+        }
     }
 }

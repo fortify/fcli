@@ -19,16 +19,14 @@ import picocli.CommandLine.Option;
 /**
  * Exclusive diagnose source: URL (optional token), saved user session, or admin config.
  */
+@Getter
 public class AviatorConnectionDiagnoseSourceArgGroup {
-    @Getter
     @ArgGroup(exclusive = false, multiplicity = "0..1", order = 1)
     private AviatorConnectionDiagnoseUrlSourceArgGroup urlSource;
 
-    @Getter
     @Option(names = {"--aviator-session", "--av-session"}, order = 2)
     private String aviatorSession;
 
-    @Getter
     @Option(names = {"--admin-config"}, order = 3)
     private String adminConfig;
 }
