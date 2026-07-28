@@ -28,6 +28,14 @@ public interface IObjectNodeProducer {
      */
     default ObjectNode getResponseMetadata() { return null; }
 
+    /**
+     * Return the exit code to be used by the command that produced/wrote the records
+     * from this producer. Available after {@link #forEach} has been invoked, allowing
+     * implementations to derive the exit code from the produced records without
+     * sharing state through command instance fields. Defaults to {@code 0}.
+     */
+    default int getExitCode() { return 0; }
+
     @FunctionalInterface
     interface IObjectNodeConsumer { Break accept(ObjectNode node); }
 }
