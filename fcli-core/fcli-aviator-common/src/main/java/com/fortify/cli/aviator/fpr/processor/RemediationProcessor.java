@@ -154,6 +154,8 @@ public class RemediationProcessor {
                     } else {
                         recordSkipped(skippedByReason, SkipReason.NO_CHANGES);
                     }
+                } catch (AviatorTechnicalException e) {
+                    throw e;
                 } catch (SkipRemediationException e) {
                     recordSkipped(skippedByReason, e.reason);
                     LOG.info("Skipping remediation {}: {}", remediation.getAttribute("instanceId"), e.getMessage());
@@ -331,7 +333,7 @@ public class RemediationProcessor {
         return originalBytesByPath;
     }
 
-        private void rollbackRemediationWrites(String instanceId, List<PendingFileWrite> attemptedWrites,
+    private void rollbackRemediationWrites(String instanceId, List<PendingFileWrite> attemptedWrites,
             Map<Path, byte[]> originalBytesByPath) {
         for (PendingFileWrite pendingWrite : attemptedWrites) {
             byte[] originalBytes = originalBytesByPath.get(pendingWrite.filePath());
@@ -343,6 +345,8 @@ public class RemediationProcessor {
                 LOG.warn("Rolled back remediation {} changes for '{}' after write failure", instanceId, pendingWrite.filename());
             } catch (IOException rollbackException) {
                 LOG.error("Failed to roll back remediation {} changes for '{}'", instanceId, pendingWrite.filename(), rollbackException);
+                throw new AviatorTechnicalException("Failed to roll back remediation changes for '" + pendingWrite.filename() +
+                        "'. Source files may be partially modified; inspect the source tree before retrying", rollbackException);
             }
         }
     }
