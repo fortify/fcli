@@ -20,7 +20,7 @@ public final class AviatorGrpcStageClassification {
     private static final String TLS_GUIDANCE =
         "Check certificate trust, SNI, TLS inspection, and that the proxy does not break TLS to aviator-grpc-server";
     private static final String NO_RESPONSE_GUIDANCE =
-        "Allow HTTP/2 gRPC traffic through the proxy, VPN, gateway, or load balancer to aviator-server/aviator-grpc-server";
+        "Allow HTTP/2 gRPC traffic through the proxy, VPN, gateway, or load balancer to aviator-grpc-server";
 
     private AviatorGrpcStageClassification() {}
 
@@ -30,7 +30,7 @@ public final class AviatorGrpcStageClassification {
         }
         if (grpc.httpResponseReceived() || grpc.failureCategory() == AviatorGrpcFailureCategory.NON_GRPC_HTTP) {
             return Result.fail("Received an HTTP page instead of gRPC",
-                "A VPN, proxy, or gateway returned a block, login, or error page; allow direct gRPC/HTTP2 to aviator-server/aviator-grpc-server",
+                "A VPN, proxy, or gateway returned a block, login, or error page; allow direct gRPC/HTTP2 to aviator-grpc-server",
                 AviatorGrpcPattern.HTTP_RESPONSE_NOT_GRPC);
         }
         if (grpc.failureCategory() == AviatorGrpcFailureCategory.TLS) {
