@@ -28,6 +28,7 @@ import java.util.zip.ZipOutputStream;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import com.fortify.cli.aviator.fpr.processor.RemediationProcessor.RemediationMetric.Mode;
 import com.fortify.cli.aviator.util.FprHandle;
 
 class RemediationProcessorTest {
@@ -55,11 +56,14 @@ class RemediationProcessorTest {
             var processor = new RemediationProcessor(fprHandle, sourceDir.toString(), Set.of("ISSUE-2", "ISSUE-404"));
             var metric = processor.processRemediationXML();
 
+            assertTrue(metric.isFiltered());
+            assertEquals(Mode.FILTERED, metric.mode());
             assertEquals(2, metric.totalRemediations());
             assertEquals(1, metric.appliedRemediations());
             assertEquals(1, metric.skippedRemediations());
             assertEquals(Set.of("ISSUE-2"), metric.appliedIssueIds());
             assertEquals(Set.of("Example.java"), metric.modifiedFiles());
+            assertEquals(1, metric.skippedByReason().get("Requested issue not found in remediations"));
             String updatedContent = Files.readString(sourceFile, StandardCharsets.UTF_8).replace("\r\n", "\n");
             assertTrue(updatedContent.contains("        oldOne();"));
             assertTrue(updatedContent.contains("        newTwo();"));
@@ -87,11 +91,13 @@ class RemediationProcessorTest {
             var processor = new RemediationProcessor(fprHandle, sourceDir.toString(), new LinkedHashSet<>(Set.of("ISSUE-404", "ISSUE-405")));
             var metric = processor.processRemediationXML();
 
+            assertTrue(metric.isFiltered());
             assertEquals(2, metric.totalRemediations());
             assertEquals(0, metric.appliedRemediations());
             assertEquals(2, metric.skippedRemediations());
             assertEquals(Set.of(), metric.appliedIssueIds());
             assertEquals(Set.of(), metric.modifiedFiles());
+            assertEquals(2, metric.skippedByReason().get("Requested issue not found in remediations"));
             assertEquals(originalContent, Files.readString(sourceFile, StandardCharsets.UTF_8));
         }
     }
@@ -116,9 +122,12 @@ class RemediationProcessorTest {
             var processor = new RemediationProcessor(fprHandle, sourceDir.toString(), null);
             var metric = processor.processRemediationXML();
 
+            assertFalse(metric.isFiltered());
+            assertEquals(Mode.UNFILTERED, metric.mode());
             assertEquals(2, metric.totalRemediations());
             assertEquals(1, metric.appliedRemediations());
             assertEquals(1, metric.skippedRemediations());
+            assertEquals(1, metric.skippedByReason().get("Source file outside source directory"));
             String updatedContent = Files.readString(sourceFile, StandardCharsets.UTF_8).replace("\r\n", "\n");
             assertTrue(updatedContent.contains("        newOne();"));
         }
@@ -127,7 +136,19 @@ class RemediationProcessorTest {
     private Path createFpr(String remediationsXml) throws IOException {
         Path fprPath = tempDir.resolve("test.fpr");
         try (ZipOutputStream zipOutputStream = new ZipOutputStream(Files.newOutputStream(fprPath))) {
-            writeEntry(zipOutputStream, "audit.fvdl", "<FVDL />");
+            // Encoding metadata is required by RemediationProcessor (FVDL Build/SourceFiles).
+            writeEntry(zipOutputStream, "audit.fvdl", """
+                    <?xml version="1.0" encoding="UTF-8"?>
+                    <FVDL>
+                      <Build>
+                        <SourceFiles>
+                          <File type="JAVA" encoding="UTF-8">
+                            <Name>Example.java</Name>
+                          </File>
+                        </SourceFiles>
+                      </Build>
+                    </FVDL>
+                    """);
             writeEntry(zipOutputStream, "remediations.xml", remediationsXml);
         }
         return fprPath;

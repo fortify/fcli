@@ -36,7 +36,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.zip.ZipFile;
 
-import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
@@ -49,6 +48,7 @@ import org.xml.sax.SAXException;
 
 import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
 import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
+import com.fortify.cli.aviator._common.util.AviatorRemediationMetricsHelper;
 import com.fortify.cli.aviator.fpr.model.FVDLMetadata;
 import com.fortify.cli.aviator.util.FprHandle;
 import com.fortify.cli.aviator.util.FuzzyContextSearcher;
@@ -61,22 +61,41 @@ public class RemediationProcessor {
     private final String sourceCodeDirectory;
     private final Set<String> issueIdFilter;
 
-    public record RemediationMetric(int totalRemediations, int appliedRemediations, int skippedRemediations, Set<String> modifiedFiles,
-            Map<String, Integer> skippedByReason, Set<String> requestedIssueIds, Set<String> appliedIssueIds) {
+    /**
+     * Apply-remediations summary. Mode is explicit: unfiltered counts XML remediations;
+     * filtered counts requested issue IDs. Factories are the only public construction path.
+     */
+    public record RemediationMetric(
+            Mode mode,
+            int totalRemediations,
+            int appliedRemediations,
+            int skippedRemediations,
+            Set<String> modifiedFiles,
+            Map<String, Integer> skippedByReason,
+            Set<String> requestedIssueIds,
+            Set<String> appliedIssueIds) {
+
+        public enum Mode {
+            UNFILTERED,
+            FILTERED
+        }
+
         public RemediationMetric {
+            if (mode == null) {
+                throw new IllegalArgumentException("RemediationMetric mode is required");
+            }
             modifiedFiles = immutableCopy(modifiedFiles);
-            skippedByReason = skippedByReason == null ? Map.of() : Map.copyOf(skippedByReason);
-            requestedIssueIds = immutableCopy(requestedIssueIds);
-            appliedIssueIds = immutableCopy(appliedIssueIds);
-        }
-
-        public RemediationMetric(int totalRemediations, int appliedRemediations, int skippedRemediations, Set<String> modifiedFiles) {
-            this(totalRemediations, appliedRemediations, skippedRemediations, modifiedFiles, Map.of(), Set.of(), Set.of());
-        }
-
-        public RemediationMetric(int totalRemediations, int appliedRemediations, int skippedRemediations, Set<String> modifiedFiles,
-                Map<String, Integer> skippedByReason) {
-            this(totalRemediations, appliedRemediations, skippedRemediations, modifiedFiles, skippedByReason, Set.of(), Set.of());
+            // Preserve insertion order (LinkedHashMap) for stable skippedReasons table text.
+            skippedByReason = skippedByReason == null || skippedByReason.isEmpty()
+                    ? Map.of()
+                    : Collections.unmodifiableMap(new LinkedHashMap<>(skippedByReason));
+            if (mode == Mode.UNFILTERED) {
+                requestedIssueIds = Set.of();
+                appliedIssueIds = Set.of();
+            } else {
+                requestedIssueIds = immutableCopy(requestedIssueIds);
+                appliedIssueIds = immutableCopy(appliedIssueIds);
+            }
         }
 
         public static RemediationMetric unfiltered(int totalRemediations, int appliedRemediations, Set<String> modifiedFiles) {
@@ -85,8 +104,8 @@ public class RemediationProcessor {
 
         public static RemediationMetric unfiltered(int totalRemediations, int appliedRemediations, Set<String> modifiedFiles,
                 Map<String, Integer> skippedByReason) {
-            return new RemediationMetric(totalRemediations, appliedRemediations, totalRemediations - appliedRemediations,
-                    modifiedFiles, skippedByReason, Set.of(), Set.of());
+            return new RemediationMetric(Mode.UNFILTERED, totalRemediations, appliedRemediations,
+                    totalRemediations - appliedRemediations, modifiedFiles, skippedByReason, Set.of(), Set.of());
         }
 
         public static RemediationMetric filtered(Set<String> requestedIssueIds, Set<String> appliedIssueIds, Set<String> modifiedFiles) {
@@ -95,14 +114,16 @@ public class RemediationProcessor {
 
         public static RemediationMetric filtered(Set<String> requestedIssueIds, Set<String> appliedIssueIds, Set<String> modifiedFiles,
                 Map<String, Integer> skippedByReason) {
-            int totalRemediations = requestedIssueIds.size();
-            int appliedRemediations = appliedIssueIds.size();
-            return new RemediationMetric(totalRemediations, appliedRemediations, totalRemediations - appliedRemediations,
-                    modifiedFiles, skippedByReason, requestedIssueIds, appliedIssueIds);
+            Set<String> requested = requestedIssueIds == null ? Set.of() : requestedIssueIds;
+            Set<String> applied = appliedIssueIds == null ? Set.of() : appliedIssueIds;
+            int totalRemediations = requested.size();
+            int appliedRemediations = applied.size();
+            return new RemediationMetric(Mode.FILTERED, totalRemediations, appliedRemediations,
+                    totalRemediations - appliedRemediations, modifiedFiles, skippedByReason, requested, applied);
         }
 
         public boolean isFiltered() {
-            return !requestedIssueIds.isEmpty();
+            return mode == Mode.FILTERED;
         }
 
         private static Set<String> immutableCopy(Set<String> values) {
@@ -131,6 +152,7 @@ public class RemediationProcessor {
         REMEDIATION_ENCODE_FAILED("Remediation encode failed"),
         SOURCE_WRITE_FAILED("Source file write failed"),
         NO_CHANGES("No file changes found"),
+        REQUESTED_ISSUE_NOT_FOUND("Requested issue not found in remediations"),
         UNEXPECTED_ERROR("Unexpected remediation processing error");
 
         private final String displayName;
@@ -191,52 +213,27 @@ public class RemediationProcessor {
 
     public RemediationMetric processRemediationXML() {
         Path remediationPath = fprHandle.getPath("/remediations.xml");
-        int totalRemediations;
-        int appliedRemediations;
-        Set<String> modifiedFiles = new LinkedHashSet<>();
-        Map<String, Integer> skippedByReason = new LinkedHashMap<>();
-        Set<String> appliedIssueIds = new LinkedHashSet<>();
-
-        // Sanitize and normalize the base source directory path once.
-        String trimmedSourceDir = sourceCodeDirectory.trim();
-        if (trimmedSourceDir.length() > 1 &&
-            ((trimmedSourceDir.startsWith("\"") && trimmedSourceDir.endsWith("\"")) ||
-             (trimmedSourceDir.startsWith("'") && trimmedSourceDir.endsWith("'")))) {
-            trimmedSourceDir = trimmedSourceDir.substring(1, trimmedSourceDir.length() - 1);
-        }
-        final Path sourceBasePath = Paths.get(trimmedSourceDir).toAbsolutePath().normalize();
+        Path sourceBasePath = getSourceBasePath();
         LOG.debug("Applying remediations from {} to source directory {}", remediationPath, sourceBasePath);
-        final FvdlMetadataResult fvdlMetadataResult = loadFvdlMetadata();
+        FvdlMetadataResult fvdlMetadataResult = loadFvdlMetadata();
+        ProcessingState state = new ProcessingState(issueIdFilter);
 
         try (InputStream remediationStream = Files.newInputStream(remediationPath)) {
-            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-            factory.setNamespaceAware(true);
-            factory.setFeature("http://xml.org/sax/features/external-general-entities", false);
-            factory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
-            factory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
-            factory.setXIncludeAware(false);
-            factory.setExpandEntityReferences(false);
-            DocumentBuilder builder = factory.newDocumentBuilder();
-            Document remediationDoc = builder.parse(remediationStream);
-
+            Document remediationDoc = parseRemediationDocument(remediationStream);
             NodeList remediationNodes = remediationDoc.getElementsByTagNameNS(NAMESPACE_URI, "Remediation");
-            totalRemediations = remediationNodes.getLength();
-            LOG.debug("Loaded {} remediation entries from {}", totalRemediations, remediationPath);
-            appliedRemediations = 0;
+            state.setXmlEntryCount(remediationNodes.getLength());
+            LOG.debug("Loaded {} remediation entries from {}", remediationNodes.getLength(), remediationPath);
             for (int i = 0; i < remediationNodes.getLength(); i++) {
                 Element remediation = (Element) remediationNodes.item(i);
                 String instanceId = remediation.getAttribute("instanceId");
-                if (issueIdFilter != null && !issueIdFilter.contains(instanceId)) {
+                if (!state.shouldProcess(instanceId)) {
                     continue;
                 }
-                if (processRemediation(remediation, sourceBasePath, fvdlMetadataResult, modifiedFiles, skippedByReason)) {
-                    appliedRemediations++;
-                    if (issueIdFilter != null) {
-                        appliedIssueIds.add(instanceId);
-                    }
+                state.markSeen(instanceId);
+                if (processRemediation(remediation, sourceBasePath, fvdlMetadataResult, state)) {
+                    state.recordApplied(instanceId);
                 }
             }
-
         } catch (ParserConfigurationException | SAXException | IOException e) {
             LOG.error("Error parsing remediations.xml file: {}", remediationPath, e);
             throw new AviatorTechnicalException("Error processing remediation.xml file.", e);
@@ -247,56 +244,131 @@ public class RemediationProcessor {
             throw new AviatorTechnicalException("Unexpected error processing remediations.xml.", e);
         }
 
-        if (issueIdFilter != null) {
-            for (String unappliedIssueId : issueIdFilter) {
-                if (!appliedIssueIds.contains(unappliedIssueId)) {
-                    LOG.debug(
-                            "Requested issue ID '{}' was not successfully applied (missing from remediations.xml or remediation could not be applied)",
-                            unappliedIssueId);
-                }
-            }
-            RemediationMetric filtered = RemediationMetric.filtered(issueIdFilter, appliedIssueIds, modifiedFiles, skippedByReason);
-            LOG.info("Auto-remediation summary (filtered): total={}, applied={}, skipped={}",
-                    filtered.totalRemediations(), filtered.appliedRemediations(), filtered.skippedRemediations());
-            if (!skippedByReason.isEmpty()) {
-                LOG.info("Skipped remediations by reason: {}", formatSkippedReasons(skippedByReason));
-            }
-            return filtered;
-        }
-
-        int skippedRemediations = totalRemediations - appliedRemediations;
-        LOG.info("Auto-remediation summary: total={}, applied={}, skipped={}", totalRemediations, appliedRemediations, skippedRemediations);
-        if (!skippedByReason.isEmpty()) {
-            LOG.info("Skipped remediations by reason: {}", formatSkippedReasons(skippedByReason));
-        }
-        return new RemediationMetric(totalRemediations, appliedRemediations, skippedRemediations, modifiedFiles, skippedByReason);
+        RemediationMetric metric = state.toMetric();
+        logSummary(metric);
+        return metric;
     }
 
-    private boolean processRemediation(Element remediation, Path sourceBasePath, FvdlMetadataResult fvdlMetadataResult,
-            Set<String> modifiedFiles, Map<String, Integer> skippedByReason) {
+    private Path getSourceBasePath() {
+        String trimmedSourceDir = sourceCodeDirectory.trim();
+        if (trimmedSourceDir.length() > 1
+                && ((trimmedSourceDir.startsWith("\"") && trimmedSourceDir.endsWith("\""))
+                        || (trimmedSourceDir.startsWith("'") && trimmedSourceDir.endsWith("'")))) {
+            trimmedSourceDir = trimmedSourceDir.substring(1, trimmedSourceDir.length() - 1);
+        }
+        return Paths.get(trimmedSourceDir).toAbsolutePath().normalize();
+    }
+
+    private Document parseRemediationDocument(InputStream remediationStream)
+            throws ParserConfigurationException, SAXException, IOException {
+        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+        factory.setNamespaceAware(true);
+        factory.setFeature("http://xml.org/sax/features/external-general-entities", false);
+        factory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+        factory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
+        factory.setXIncludeAware(false);
+        factory.setExpandEntityReferences(false);
+        return factory.newDocumentBuilder().parse(remediationStream);
+    }
+
+    private void logSummary(RemediationMetric metric) {
+        String label = metric.isFiltered() ? "Auto-remediation summary (filtered)" : "Auto-remediation summary";
+        LOG.info("{}: total={}, applied={}, skipped={}", label, metric.totalRemediations(), metric.appliedRemediations(),
+                metric.skippedRemediations());
+        if (!metric.skippedByReason().isEmpty()) {
+            LOG.info("Skipped remediations by reason: {}",
+                    AviatorRemediationMetricsHelper.formatSkippedReasons(metric.skippedByReason()));
+        }
+    }
+
+    /**
+     * Owns filter accounting, skip reasons, modified files, and metric construction so
+     * {@link #processRemediationXML()} has a single exit path.
+     */
+    private static final class ProcessingState {
+        /** Null means unfiltered (all XML remediations). Non-null means FILTERED mode. */
+        private final Set<String> requestedIssueIds;
+        private final Set<String> appliedIssueIds = new LinkedHashSet<>();
+        private final Set<String> seenRequestedIssueIds = new LinkedHashSet<>();
+        private final Set<String> modifiedFiles = new LinkedHashSet<>();
+        private final Map<String, Integer> skippedByReason = new LinkedHashMap<>();
+        private int xmlEntryCount;
+        private int appliedRemediations;
+
+        private ProcessingState(Set<String> issueIdFilter) {
+            this.requestedIssueIds = issueIdFilter == null ? null : new LinkedHashSet<>(issueIdFilter);
+        }
+
+        private void setXmlEntryCount(int xmlEntryCount) {
+            this.xmlEntryCount = xmlEntryCount;
+        }
+
+        private boolean shouldProcess(String instanceId) {
+            return requestedIssueIds == null || requestedIssueIds.contains(instanceId);
+        }
+
+        private void markSeen(String instanceId) {
+            if (requestedIssueIds != null) {
+                seenRequestedIssueIds.add(instanceId);
+            }
+        }
+
+        private void recordApplied(String instanceId) {
+            appliedRemediations++;
+            if (requestedIssueIds != null) {
+                appliedIssueIds.add(instanceId);
+            }
+        }
+
+        private void recordSkip(SkipReason reason) {
+            skippedByReason.merge(reason.displayName, 1, Integer::sum);
+        }
+
+        private RemediationMetric toMetric() {
+            if (requestedIssueIds == null) {
+                return RemediationMetric.unfiltered(xmlEntryCount, appliedRemediations, modifiedFiles, skippedByReason);
+            }
+            for (String requestedId : requestedIssueIds) {
+                if (appliedIssueIds.contains(requestedId)) {
+                    continue;
+                }
+                if (!seenRequestedIssueIds.contains(requestedId)) {
+                    recordSkip(SkipReason.REQUESTED_ISSUE_NOT_FOUND);
+                    LOG.debug("Requested issue ID '{}' was not found in remediations.xml", requestedId);
+                } else {
+                    LOG.debug("Requested issue ID '{}' was present in remediations.xml but could not be applied",
+                            requestedId);
+                }
+            }
+            return RemediationMetric.filtered(requestedIssueIds, appliedIssueIds, modifiedFiles, skippedByReason);
+        }
+    }
+
+    private boolean processRemediation(
+            Element remediation, Path sourceBasePath, FvdlMetadataResult fvdlMetadataResult, ProcessingState state) {
         String instanceId = remediation.getAttribute("instanceId");
         try {
             Map<Path, PendingFileWrite> pendingWrites = prepareFileChanges(remediation, sourceBasePath, fvdlMetadataResult);
             if (pendingWrites.isEmpty()) {
-                recordSkipped(skippedByReason, SkipReason.NO_CHANGES);
+                state.recordSkip(SkipReason.NO_CHANGES);
                 return false;
             }
             try {
-                commitRemediationWrites(instanceId, pendingWrites, modifiedFiles);
+                commitRemediationWrites(instanceId, pendingWrites, state.modifiedFiles);
                 return true;
             } catch (RemediationCommitException e) {
                 rollbackRemediationWrites(instanceId, e.getRollbacks());
                 throw new SkipRemediationException(SkipReason.SOURCE_WRITE_FAILED, e.getMessage(), e);
             }
         } catch (SkipRemediationException e) {
-            recordSkipped(skippedByReason, e.reason);
+            state.recordSkip(e.reason);
             LOG.info("Skipping remediation {}: {}", instanceId, e.getMessage());
             LOG.debug("Skip reason for remediation {}: {}", instanceId, e.reason.displayName, e);
             return false;
         } catch (RollbackRemediationException e) {
             throw e;
         } catch (Exception e) {
-            recordSkipped(skippedByReason, SkipReason.UNEXPECTED_ERROR);
+            state.recordSkip(SkipReason.UNEXPECTED_ERROR);
             LOG.info("Skipping remediation {} due to an unexpected processing error", instanceId);
             LOG.debug("Unexpected error while processing remediation {}", instanceId, e);
             return false;
@@ -317,7 +389,7 @@ public class RemediationProcessor {
         return pendingWrites;
     }
 
-    private boolean processFileChanges(Element remediation, Element fileChanges, Path sourceBasePath, FvdlMetadataResult fvdlMetadataResult,
+    private void processFileChanges(Element remediation, Element fileChanges, Path sourceBasePath, FvdlMetadataResult fvdlMetadataResult,
             Map<Path, PendingFileWrite> pendingWrites) {
         String instanceId = remediation.getAttribute("instanceId");
         String filename = getRequiredElementText(fileChanges, "Filename");
@@ -351,7 +423,6 @@ public class RemediationProcessor {
         pendingWrites.put(filePath, new PendingFileWrite(filename, filePath, updatedContent, updatedBytes));
         LOG.debug("Staged remediation {} for '{}' using FVDL encoding {}; changes={}, encodedBytes={}", instanceId, filename,
                 sourceEncoding.name(), changesNodes.getLength(), updatedBytes.length);
-        return true;
     }
 
     private String applyChange(String instanceId, String filename, String fileHash, Charset sourceEncoding, String originalContent,
@@ -398,7 +469,7 @@ public class RemediationProcessor {
         }
 
         validateLineRange(lineFrom, lineTo, originalLines.size(), filename);
-        List<String> newCodeLines = Arrays.asList(getRequiredElementText(change, "NewCode").split("\n"));
+        List<String> newCodeLines = Arrays.asList(getRequiredElementText(change, "NewCode").split("\\r?\\n"));
         List<String> updatedLines = new ArrayList<>();
         updatedLines.addAll(originalLines.subList(0, lineFrom - 1));
         updatedLines.addAll(newCodeLines);
@@ -618,13 +689,4 @@ public class RemediationProcessor {
         }
     }
 
-    private void recordSkipped(Map<String, Integer> skippedByReason, SkipReason reason) {
-        skippedByReason.merge(reason.displayName, 1, Integer::sum);
-    }
-
-    private String formatSkippedReasons(Map<String, Integer> skippedByReason) {
-        List<String> parts = new ArrayList<>();
-        skippedByReason.forEach((reason, count) -> parts.add(reason + "=" + count));
-        return String.join(", ", parts);
-    }
 }

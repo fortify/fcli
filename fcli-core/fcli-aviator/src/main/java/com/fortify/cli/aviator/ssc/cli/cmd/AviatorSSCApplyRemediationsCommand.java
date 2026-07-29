@@ -24,14 +24,13 @@ import com.fortify.cli.aviator._common.remediations_cache.CacheRemediationsFprSo
 import com.fortify.cli.aviator._common.remediations_cache.RemediationsApplyHelper;
 import com.fortify.cli.aviator._common.remediations_cache.RemediationsApplyHelper.ApplyResult;
 import com.fortify.cli.aviator._common.remediations_cache.RemediationsCacheConstants;
-import com.fortify.cli.aviator._common.util.AviatorIssueIdFilterUtils;
+import com.fortify.cli.aviator._common.util.AviatorApplyRemediationsCliSupport;
 import com.fortify.cli.aviator.config.AviatorLoggerImpl;
 import com.fortify.cli.aviator.ssc.cli.mixin.AviatorSSCApplyRemediationsSourceMixin;
 import com.fortify.cli.aviator.ssc.cli.mixin.AviatorSSCRemediationsSelectorArgGroups.OnlineSelectionArgGroup.ResolvedOnlineArtifacts;
 import com.fortify.cli.aviator.ssc.helper.AviatorSSCApplyRemediationsHelper;
 import com.fortify.cli.aviator.ssc.helper.SSCOnlineRemediationsFprSource;
 import com.fortify.cli.aviator.ssc.helper.SinceOptionHelper;
-import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.output.cli.cmd.AbstractOutputCommand;
 import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
@@ -65,9 +64,9 @@ public class AviatorSSCApplyRemediationsCommand extends AbstractOutputCommand
     @Override
     public JsonNode getJsonNode() {
         sourceSelector.validate();
-        validateSourceCodeDirectory();
-        Set<String> issueIdFilter = AviatorIssueIdFilterUtils.normalizeIssueIds(issueIds);
-        validateIssueIdFilterMode();
+        AviatorApplyRemediationsCliSupport.requireSourceDir(sourceCodeDirectory);
+        Set<String> issueIdFilter = AviatorApplyRemediationsCliSupport.normalizeIssueIdsForCacheOnly(
+                issueIds, sourceSelector.isFromCacheSelected());
 
         try (IProgressWriter progressWriter = progressWriterFactoryMixin.create()) {
             AviatorLoggerImpl logger = new AviatorLoggerImpl(progressWriter);
@@ -107,18 +106,6 @@ public class AviatorSSCApplyRemediationsCommand extends AbstractOutputCommand
         }
     }
 
-    private void validateSourceCodeDirectory() {
-        FcliSimpleException.throwIf(sourceCodeDirectory == null || sourceCodeDirectory.isBlank(),
-                "--source-dir must specify a valid directory path");
-    }
-
-    private void validateIssueIdFilterMode() {
-        FcliSimpleException.throwIf(
-                issueIds != null && !issueIds.isEmpty() && !sourceSelector.isFromCacheSelected(),
-                "--issue-ids can only be used with --from-cache; "
-                        + "create a cache with download-remediations-cache and rerun with --from-cache");
-    }
-
     @Override
     public boolean isSingular() {
         return true;
@@ -126,7 +113,8 @@ public class AviatorSSCApplyRemediationsCommand extends AbstractOutputCommand
 
     @Override
     public String getActionCommandResult() {
-        return "Remediations Applied";
+        // Fallback only if result JSON has no __action__; helpers set Remediation-Applied / No-Remediation-Applied.
+        return "Remediation-Applied";
     }
 
     @Override
