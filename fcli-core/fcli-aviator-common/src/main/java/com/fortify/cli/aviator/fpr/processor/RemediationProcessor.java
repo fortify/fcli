@@ -28,8 +28,10 @@ import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.zip.ZipFile;
 
@@ -44,18 +46,94 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
+import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
 import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
 import com.fortify.cli.aviator.fpr.model.FVDLMetadata;
 import com.fortify.cli.aviator.util.FprHandle;
 import com.fortify.cli.aviator.util.FuzzyContextSearcher;
-public class RemediationProcessor {
-    Logger logger = LoggerFactory.getLogger(RemediationProcessor.class);
-    private static final String NAMESPACE_URI = "xmlns://www.fortify.com/schema/remediations";
 
+public class RemediationProcessor {
+    private static final Logger LOG = LoggerFactory.getLogger(RemediationProcessor.class);
+    private static final String NAMESPACE_URI = "xmlns://www.fortify.com/schema/remediations";
 
     private final FprHandle fprHandle;
     private final String sourceCodeDirectory;
-    public record RemediationMetric(int totalRemediations, int appliedRemediations, int skippedRemediations, Set<String> modifiedFiles){}
+
+    public record RemediationMetric(int totalRemediations, int appliedRemediations, int skippedRemediations, Set<String> modifiedFiles,
+                                    Map<String, Integer> skippedByReason) {
+        public RemediationMetric(int totalRemediations, int appliedRemediations, int skippedRemediations, Set<String> modifiedFiles) {
+            this(totalRemediations, appliedRemediations, skippedRemediations, modifiedFiles, Map.of());
+        }
+    }
+
+    private record FvdlMetadataResult(FVDLMetadata metadata, SkipReason skipReason) {}
+
+    private record PendingFileWrite(String filename, Path filePath, String content, byte[] updatedBytes) {}
+
+    private record RollbackFileWrite(String filename, Path filePath, byte[] originalBytes) {}
+
+    private enum SkipReason {
+        FVDL_METADATA_UNAVAILABLE("FVDL metadata unavailable"),
+        FVDL_ENCODING_MISSING("FVDL source encoding missing"),
+        FVDL_ENCODING_UNSUPPORTED("FVDL source encoding unsupported"),
+        SOURCE_FILE_MISSING("Source file missing"),
+        SOURCE_FILE_OUTSIDE_SOURCE_DIR("Source file outside source directory"),
+        SOURCE_READ_FAILED("Source file read failed"),
+        SOURCE_DECODE_FAILED("Source file decode failed"),
+        REMEDIATION_DATA_INVALID("Remediation data invalid"),
+        REMEDIATION_LINE_RANGE_INVALID("Remediation line range invalid"),
+        SOURCE_CONTEXT_NOT_FOUND("Source context not found"),
+        ORIGINAL_CODE_NOT_FOUND("Original code not found"),
+        REMEDIATION_ENCODE_FAILED("Remediation encode failed"),
+        SOURCE_WRITE_FAILED("Source file write failed"),
+        NO_CHANGES("No file changes found"),
+        UNEXPECTED_ERROR("Unexpected remediation processing error");
+
+        private final String displayName;
+
+        SkipReason(String displayName) {
+            this.displayName = displayName;
+        }
+    }
+
+    private static class SkipRemediationException extends AviatorSimpleException {
+        private static final long serialVersionUID = 1L;
+
+        private final SkipReason reason;
+
+        SkipRemediationException(SkipReason reason, String message) {
+            super(message);
+            this.reason = reason;
+        }
+
+        SkipRemediationException(SkipReason reason, String message, Throwable cause) {
+            super(message, cause);
+            this.reason = reason;
+        }
+    }
+
+    private static class RemediationCommitException extends AviatorTechnicalException {
+        private static final long serialVersionUID = 1L;
+
+        private final List<RollbackFileWrite> rollbacks;
+
+        RemediationCommitException(String message, Throwable cause, List<RollbackFileWrite> rollbacks) {
+            super(message, cause);
+            this.rollbacks = rollbacks;
+        }
+
+        List<RollbackFileWrite> getRollbacks() {
+            return rollbacks;
+        }
+    }
+
+    private static class RollbackRemediationException extends AviatorTechnicalException {
+        private static final long serialVersionUID = 1L;
+
+        RollbackRemediationException(String message, Throwable cause) {
+            super(message, cause);
+        }
+    }
 
     public RemediationProcessor(FprHandle fprHandle, String sourceCodeDirectory) {
         this.fprHandle = fprHandle;
@@ -68,6 +146,7 @@ public class RemediationProcessor {
         int totalRemediations;
         int appliedRemediations;
         Set<String> modifiedFiles = new LinkedHashSet<>();
+        Map<String, Integer> skippedByReason = new LinkedHashMap<>();
 
         // Sanitize and normalize the base source directory path once.
         String trimmedSourceDir = sourceCodeDirectory.trim();
@@ -77,8 +156,8 @@ public class RemediationProcessor {
             trimmedSourceDir = trimmedSourceDir.substring(1, trimmedSourceDir.length() - 1);
         }
         final Path sourceBasePath = Paths.get(trimmedSourceDir).toAbsolutePath().normalize();
-        logger.debug("Applying remediations from {} to source directory {}", remediationPath, sourceBasePath);
-        final FVDLMetadata fvdlMetadata = loadFvdlMetadata();
+        LOG.debug("Applying remediations from {} to source directory {}", remediationPath, sourceBasePath);
+        final FvdlMetadataResult fvdlMetadataResult = loadFvdlMetadata();
 
         try (InputStream remediationStream = Files.newInputStream(remediationPath)) {
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
@@ -93,162 +172,264 @@ public class RemediationProcessor {
 
             NodeList remediationNodes = remediationDoc.getElementsByTagNameNS(NAMESPACE_URI, "Remediation");
             totalRemediations = remediationNodes.getLength();
-            logger.debug("Loaded {} remediation entries from {}", totalRemediations, remediationPath);
-            appliedRemediations=0;
+            LOG.debug("Loaded {} remediation entries from {}", totalRemediations, remediationPath);
+            appliedRemediations = 0;
             for (int i = 0; i < remediationNodes.getLength(); i++) {
                 Element remediation = (Element) remediationNodes.item(i);
-                NodeList fileChangesNodes = remediation.getElementsByTagNameNS(NAMESPACE_URI, "FileChanges");
-                boolean remediationAppliedOnIssue = false;
-                for (int j = 0; j < fileChangesNodes.getLength(); j++) {
-                    Element fileChanges = (Element) fileChangesNodes.item(j);
-                    String filename = fileChanges.getElementsByTagNameNS(NAMESPACE_URI, "Filename").item(0).getTextContent();
-
-                    Path filePath = sourceBasePath.resolve(filename).normalize();
-                    String instanceId = remediation.getAttribute("instanceId");
-                    logger.debug("Processing remediation {} file change for '{}' resolved to '{}'", instanceId, filename, filePath);
-
-                    if (!filePath.startsWith(sourceBasePath)) {
-                        logger.error("Skipping file '{}' as it resolves to a path outside the source directory (potential path traversal attack)", filename);
-                        continue;
-                    }
-
-                    if (!isFilePresent(filePath)) {
-                        logger.error("Source code file not present at: {}", filePath.toString());
-                        throw new AviatorTechnicalException("Source code file not present at: " + filePath.toString());
-                    }
-
-                    String fileHash = fileChanges.getElementsByTagNameNS(NAMESPACE_URI, "Hash").item(0).getTextContent();
-                    Charset sourceEncoding = getRequiredSourceEncoding(filename, fvdlMetadata);
-
-                    NodeList changesNodes = fileChanges.getElementsByTagNameNS(NAMESPACE_URI, "Change");
-                    logger.debug("Remediation {} has {} change(s) for '{}' using FVDL encoding {}", instanceId, changesNodes.getLength(), filename,
-                            sourceEncoding.name());
-                    for (int k = 0; k < changesNodes.getLength(); k++) {
-                        Element change = (Element) changesNodes.item(k);
-
-
-                        String originalContent = readSourceFile(filePath, filename, sourceEncoding);
-                        String lineSeparator = detectLineSeparator(originalContent);
-                        String content = normalizeLineEndings(originalContent);
-
-                        List<String> originalLines = Arrays.asList(content.split("\n", -1));
-                        logger.debug("Decoded '{}' using {}; lineSeparator={}, normalizedLines={}", filename, sourceEncoding.name(),
-                                describeLineSeparator(lineSeparator), originalLines.size());
-
-                        int lineFrom = Integer.parseInt(change.getElementsByTagNameNS(NAMESPACE_URI, "LineFrom").item(0).getTextContent());
-                        int lineTo = Integer.parseInt(change.getElementsByTagNameNS(NAMESPACE_URI, "LineTo").item(0).getTextContent());
-                        logger.debug("Remediation {} change {} for '{}' targets lines {}-{}", instanceId, k + 1, filename, lineFrom, lineTo);
-
-
-                        String calculatedHash = calculateHashBase64(content, "SHA-256");
-                        boolean fileHashMatches = calculatedHash.equals(fileHash);
-                        logger.debug("Remediation {} hash check for '{}': {}", instanceId, filename, fileHashMatches ? "matched" : "mismatched");
-                        if (!fileHashMatches) {
-                            logger.debug("File hash mismatch for remediation {} in {}; searching changed source content", instanceId, filename);
-                            Element contextElem = (Element) change.getElementsByTagNameNS(NAMESPACE_URI, "Context").item(0);
-                            String contextText = contextElem.getTextContent();
-
-                            //spliting a string into a list of lines, using both Unix (\n) and Windows (\r\n) line endings.
-                            List<String> contextLine = Arrays.asList(contextText.split("\\r?\\n"));
-                            int contextLineFrom = FuzzyContextSearcher.fuzzySearchContext(originalLines, contextLine, 0) ;
-                            if(contextLineFrom==-1) {
-                                logger.debug("Context search failed for remediation {} in {}; context lines={}, source lines={}", instanceId, filename,
-                                        contextLine.size(), originalLines.size());
-                                logger.info("File content has changed. Context Lines not found. Remediation not possible for {}", instanceId);
-                                continue;
-                            }
-                            logger.debug("Context for remediation {} in {} matched at line {}", instanceId, filename, contextLineFrom + 1);
-                            Element OriginalCodeElem = (Element) change.getElementsByTagNameNS(NAMESPACE_URI, "OriginalCode").item(0);
-                            String OriginalCodeText = OriginalCodeElem.getTextContent();
-
-                            //spliting a string into a list of lines, using both Unix (\n) and Windows (\r\n) line endings.
-                            List<String> OriginalCodeLine = Arrays.asList(OriginalCodeText.split("\\r?\\n"));
-
-                            int[] lineFromTo = FuzzyContextSearcher.fuzzySearchOriginalCode(originalLines, OriginalCodeLine, 0, contextLineFrom);
-                            if(lineFromTo[0]==-1 || lineFromTo[1]==-1) {
-                                logger.debug("Original code search failed for remediation {} in {}; context line={}, original code lines={}, source lines={}",
-                                        instanceId, filename, contextLineFrom + 1, OriginalCodeLine.size(), originalLines.size());
-                                logger.info("File content has changed. Original Code lines not found. Remediation not possible for {}", instanceId);
-                                continue;
-                            }
-                            lineFrom = lineFromTo[0]+1; //Adding 1 for 1-based indexing
-                            lineTo = lineFromTo[1] + 1; //Adding 1 for 1-based indexing
-                            logger.debug("Original code for remediation {} in {} matched at lines {}-{}", instanceId, filename, lineFrom, lineTo);
-                        }
-
-
-                        //File hash is matched i,e the file has not been changed
-
-                        String newCodeRaw = change.getElementsByTagNameNS(NAMESPACE_URI, "NewCode").item(0).getTextContent();
-
-                        List<String> newCodeLines = Arrays.asList(newCodeRaw.split("\n"));
-
-
-                        // Replace lines
-                        List<String> updatedLines = new ArrayList<>();
-                        updatedLines.addAll(originalLines.subList(0, lineFrom - 1));
-                        updatedLines.addAll(newCodeLines);
-                        updatedLines.addAll(originalLines.subList(lineTo, originalLines.size()));
-                        byte[] updatedBytes = encodeStrict(String.join(lineSeparator, updatedLines), sourceEncoding, filename);
-                        logger.debug("Writing remediation {} to '{}' using FVDL encoding {}; updatedLines={}, encodedBytes={}", instanceId, filename,
-                            sourceEncoding.name(), updatedLines.size(), updatedBytes.length);
-                        Files.write(filePath, updatedBytes);
-                        modifiedFiles.add(filename);
-                        logger.info("Remediation applied for {} in file {}", instanceId, filename);
-                        if(!remediationAppliedOnIssue) {
-                            remediationAppliedOnIssue = true;
-                            appliedRemediations++;
-                        }
-                    }
-
+                if (processRemediation(remediation, sourceBasePath, fvdlMetadataResult, modifiedFiles, skippedByReason)) {
+                    appliedRemediations++;
                 }
             }
 
         } catch (ParserConfigurationException | SAXException | IOException e) {
-            logger.error("Error parsing remediations.xml file: {}", remediationPath, e);
+            LOG.error("Error parsing remediations.xml file: {}", remediationPath, e);
             throw new AviatorTechnicalException("Error processing remediation.xml file.", e);
         } catch (AviatorTechnicalException e) {
             throw e;
         } catch (Exception e) {
-            logger.error("Unexpected error processing remediation.xml: {}", remediationPath, e);
+            LOG.error("Unexpected error processing remediation.xml: {}", remediationPath, e);
             throw new AviatorTechnicalException("Unexpected error processing remediations.xml.", e);
         }
-        return new RemediationMetric(totalRemediations, appliedRemediations, totalRemediations-appliedRemediations, modifiedFiles);
+        int skippedRemediations = totalRemediations - appliedRemediations;
+        LOG.info("Auto-remediation summary: total={}, applied={}, skipped={}", totalRemediations, appliedRemediations, skippedRemediations);
+        if (!skippedByReason.isEmpty()) {
+            LOG.info("Skipped remediations by reason: {}", formatSkippedReasons(skippedByReason));
+        }
+        return new RemediationMetric(totalRemediations, appliedRemediations, skippedRemediations, modifiedFiles, skippedByReason);
+    }
+
+    private boolean processRemediation(Element remediation, Path sourceBasePath, FvdlMetadataResult fvdlMetadataResult,
+            Set<String> modifiedFiles, Map<String, Integer> skippedByReason) {
+        String instanceId = remediation.getAttribute("instanceId");
+        try {
+            Map<Path, PendingFileWrite> pendingWrites = prepareFileChanges(remediation, sourceBasePath, fvdlMetadataResult);
+            if (pendingWrites.isEmpty()) {
+                recordSkipped(skippedByReason, SkipReason.NO_CHANGES);
+                return false;
+            }
+            try {
+                commitRemediationWrites(instanceId, pendingWrites, modifiedFiles);
+                return true;
+            } catch (RemediationCommitException e) {
+                rollbackRemediationWrites(instanceId, e.getRollbacks());
+                throw new SkipRemediationException(SkipReason.SOURCE_WRITE_FAILED, e.getMessage(), e);
+            }
+        } catch (SkipRemediationException e) {
+            recordSkipped(skippedByReason, e.reason);
+            LOG.info("Skipping remediation {}: {}", instanceId, e.getMessage());
+            LOG.debug("Skip reason for remediation {}: {}", instanceId, e.reason.displayName, e);
+            return false;
+        } catch (RollbackRemediationException e) {
+            throw e;
+        } catch (Exception e) {
+            recordSkipped(skippedByReason, SkipReason.UNEXPECTED_ERROR);
+            LOG.info("Skipping remediation {} due to an unexpected processing error", instanceId);
+            LOG.debug("Unexpected error while processing remediation {}", instanceId, e);
+            return false;
+        }
+    }
+
+    private Map<Path, PendingFileWrite> prepareFileChanges(Element remediation, Path sourceBasePath,
+            FvdlMetadataResult fvdlMetadataResult) {
+        NodeList fileChangesNodes = remediation.getElementsByTagNameNS(NAMESPACE_URI, "FileChanges");
+        if (fileChangesNodes.getLength() == 0) {
+            throw new SkipRemediationException(SkipReason.NO_CHANGES, "No file changes found");
+        }
+
+        Map<Path, PendingFileWrite> pendingWrites = new LinkedHashMap<>();
+        for (int j = 0; j < fileChangesNodes.getLength(); j++) {
+            processFileChanges(remediation, (Element) fileChangesNodes.item(j), sourceBasePath, fvdlMetadataResult, pendingWrites);
+        }
+        return pendingWrites;
+    }
+
+    private boolean processFileChanges(Element remediation, Element fileChanges, Path sourceBasePath, FvdlMetadataResult fvdlMetadataResult,
+            Map<Path, PendingFileWrite> pendingWrites) {
+        String instanceId = remediation.getAttribute("instanceId");
+        String filename = getRequiredElementText(fileChanges, "Filename");
+        Path filePath = sourceBasePath.resolve(filename).normalize();
+        LOG.debug("Processing remediation {} file change for '{}' resolved to '{}'", instanceId, filename, filePath);
+
+        if (!filePath.startsWith(sourceBasePath)) {
+            throw new SkipRemediationException(SkipReason.SOURCE_FILE_OUTSIDE_SOURCE_DIR,
+                    "Source file resolves outside source directory: " + filename);
+        }
+
+        if (!isFilePresent(filePath)) {
+            throw new SkipRemediationException(SkipReason.SOURCE_FILE_MISSING, "Source code file not present at: " + filePath);
+        }
+
+        String fileHash = getRequiredElementText(fileChanges, "Hash");
+        Charset sourceEncoding = getRequiredSourceEncoding(filename, fvdlMetadataResult);
+        NodeList changesNodes = fileChanges.getElementsByTagNameNS(NAMESPACE_URI, "Change");
+        if (changesNodes.getLength() == 0) {
+            throw new SkipRemediationException(SkipReason.NO_CHANGES, "No changes found for file: " + filename);
+        }
+        LOG.debug("Remediation {} has {} change(s) for '{}' using FVDL encoding {}", instanceId, changesNodes.getLength(), filename,
+                sourceEncoding.name());
+
+        String updatedContent = getPendingOrSourceContent(filePath, filename, sourceEncoding, pendingWrites);
+        for (int k = 0; k < changesNodes.getLength(); k++) {
+            updatedContent = applyChange(instanceId, filename, fileHash, sourceEncoding, updatedContent,
+                    (Element) changesNodes.item(k), k + 1);
+        }
+        byte[] updatedBytes = encodeStrict(updatedContent, sourceEncoding, filename);
+        pendingWrites.put(filePath, new PendingFileWrite(filename, filePath, updatedContent, updatedBytes));
+        LOG.debug("Staged remediation {} for '{}' using FVDL encoding {}; changes={}, encodedBytes={}", instanceId, filename,
+                sourceEncoding.name(), changesNodes.getLength(), updatedBytes.length);
+        return true;
+    }
+
+    private String applyChange(String instanceId, String filename, String fileHash, Charset sourceEncoding, String originalContent,
+            Element change, int changeIndex) {
+        String lineSeparator = detectLineSeparator(originalContent);
+        String content = normalizeLineEndings(originalContent);
+
+        List<String> originalLines = Arrays.asList(content.split("\n", -1));
+        LOG.debug("Decoded '{}' using {}; lineSeparator={}, normalizedLines={}", filename, sourceEncoding.name(),
+                describeLineSeparator(lineSeparator), originalLines.size());
+
+        int lineFrom = parseRequiredInt(change, "LineFrom");
+        int lineTo = parseRequiredInt(change, "LineTo");
+        LOG.debug("Remediation {} change {} for '{}' targets lines {}-{}", instanceId, changeIndex, filename, lineFrom, lineTo);
+
+        String calculatedHash = calculateHashBase64(content, "SHA-256");
+        boolean fileHashMatches = calculatedHash.equals(fileHash);
+        LOG.debug("Remediation {} hash check for '{}': {}", instanceId, filename, fileHashMatches ? "matched" : "mismatched");
+        if (!fileHashMatches) {
+            LOG.debug("File hash mismatch for remediation {} in {}; searching changed source content", instanceId, filename);
+            String contextText = getRequiredElementText(change, "Context");
+            List<String> contextLine = Arrays.asList(contextText.split("\\r?\\n"));
+            int contextLineFrom = fuzzySearchContext(instanceId, filename, originalLines, contextLine);
+            if (contextLineFrom == -1) {
+                LOG.debug("Context search failed for remediation {} in {}; context lines={}, source lines={}", instanceId, filename,
+                        contextLine.size(), originalLines.size());
+                throw new SkipRemediationException(SkipReason.SOURCE_CONTEXT_NOT_FOUND, "Source context not found for file '" + filename +
+                    "'; file may have changed or remediation may overlap a previous change");
+            }
+            LOG.debug("Context for remediation {} in {} matched at line {}", instanceId, filename, contextLineFrom + 1);
+
+            String originalCodeText = getRequiredElementText(change, "OriginalCode");
+            List<String> originalCodeLine = Arrays.asList(originalCodeText.split("\\r?\\n"));
+            int[] lineFromTo = fuzzySearchOriginalCode(instanceId, filename, originalLines, originalCodeLine, contextLineFrom);
+            if (lineFromTo[0] == -1 || lineFromTo[1] == -1) {
+                LOG.debug("Original code search failed for remediation {} in {}; context line={}, original code lines={}, source lines={}",
+                        instanceId, filename, contextLineFrom + 1, originalCodeLine.size(), originalLines.size());
+                throw new SkipRemediationException(SkipReason.ORIGINAL_CODE_NOT_FOUND, "Original code not found for file '" + filename +
+                    "'; file may have changed or remediation may overlap a previous change");
+            }
+            lineFrom = lineFromTo[0] + 1;
+            lineTo = lineFromTo[1] + 1;
+            LOG.debug("Original code for remediation {} in {} matched at lines {}-{}", instanceId, filename, lineFrom, lineTo);
+        }
+
+        validateLineRange(lineFrom, lineTo, originalLines.size(), filename);
+        List<String> newCodeLines = Arrays.asList(getRequiredElementText(change, "NewCode").split("\n"));
+        List<String> updatedLines = new ArrayList<>();
+        updatedLines.addAll(originalLines.subList(0, lineFrom - 1));
+        updatedLines.addAll(newCodeLines);
+        updatedLines.addAll(originalLines.subList(lineTo, originalLines.size()));
+        LOG.debug("Staged remediation {} change {} for '{}' using FVDL encoding {}; updatedLines={}", instanceId, changeIndex,
+                filename, sourceEncoding.name(), updatedLines.size());
+        return String.join(lineSeparator, updatedLines);
+    }
+
+    private String getPendingOrSourceContent(Path filePath, String filename, Charset sourceEncoding,
+            Map<Path, PendingFileWrite> pendingWrites) {
+        PendingFileWrite pendingWrite = pendingWrites.get(filePath);
+        return pendingWrite == null ? readSourceFile(filePath, filename, sourceEncoding) : pendingWrite.content();
+    }
+
+    private void commitRemediationWrites(String instanceId, Map<Path, PendingFileWrite> pendingWrites, Set<String> modifiedFiles)
+            throws RemediationCommitException {
+        List<RollbackFileWrite> rollbacks = new ArrayList<>();
+        for (PendingFileWrite pendingWrite : pendingWrites.values()) {
+            try {
+                byte[] originalBytes = Files.readAllBytes(pendingWrite.filePath());
+                rollbacks.add(new RollbackFileWrite(pendingWrite.filename(), pendingWrite.filePath(), originalBytes));
+                LOG.debug("Writing remediation {} to '{}' using staged bytes; encodedBytes={}", instanceId, pendingWrite.filename(),
+                        pendingWrite.updatedBytes().length);
+                Files.write(pendingWrite.filePath(), pendingWrite.updatedBytes());
+            } catch (Exception e) {
+                throw new RemediationCommitException("Error writing source code file '" + pendingWrite.filename() + "'", e, rollbacks);
+            }
+        }
+
+        for (PendingFileWrite pendingWrite : pendingWrites.values()) {
+            modifiedFiles.add(pendingWrite.filename());
+            LOG.info("Remediation applied for {} in file {}", instanceId, pendingWrite.filename());
+        }
+    }
+
+    private void rollbackRemediationWrites(String instanceId, List<RollbackFileWrite> rollbacks) {
+        for (RollbackFileWrite rollback : rollbacks) {
+            try {
+                Files.write(rollback.filePath(), rollback.originalBytes());
+                LOG.warn("Rolled back remediation {} changes for '{}' after write failure", instanceId, rollback.filename());
+            } catch (IOException rollbackException) {
+                LOG.error("Failed to roll back remediation {} changes for '{}'", instanceId, rollback.filename(), rollbackException);
+                throw new RollbackRemediationException("Failed to roll back remediation changes for '" + rollback.filename() +
+                        "'. Source files may be partially modified; inspect the source tree before retrying", rollbackException);
+            }
+        }
+    }
+
+    private int fuzzySearchContext(String instanceId, String filename, List<String> originalLines, List<String> contextLine) {
+        try {
+            return FuzzyContextSearcher.fuzzySearchContext(originalLines, contextLine, 0);
+        } catch (IOException e) {
+            throw new SkipRemediationException(SkipReason.SOURCE_CONTEXT_NOT_FOUND,
+                    "Error searching source context for remediation '" + instanceId + "' in file '" + filename + "'", e);
+        }
+    }
+
+    private int[] fuzzySearchOriginalCode(String instanceId, String filename, List<String> originalLines, List<String> originalCodeLine,
+            int contextLineFrom) {
+        return FuzzyContextSearcher.fuzzySearchOriginalCode(originalLines, originalCodeLine, 0, contextLineFrom);
     }
 
     private boolean isFilePresent(Path path) {
         return Files.exists(path) && Files.isRegularFile(path);
     }
 
-    private FVDLMetadata loadFvdlMetadata() {
+    private FvdlMetadataResult loadFvdlMetadata() {
         if (!Files.exists(fprHandle.getPath("/audit.fvdl"))) {
-            throw new AviatorTechnicalException("FVDL file '/audit.fvdl' is missing; cannot determine source file encodings for applying remediations");
+            LOG.warn("FVDL file '/audit.fvdl' is missing; source remediations will be skipped");
+            return new FvdlMetadataResult(null, SkipReason.FVDL_METADATA_UNAVAILABLE);
         }
 
         try (ZipFile zipFile = new ZipFile(fprHandle.getFprPath().toFile())) {
-            logger.debug("Loading FVDL build metadata from '{}' to resolve source encodings", fprHandle.getFprPath());
+            LOG.debug("Loading FVDL build metadata from '{}' to resolve source encodings", fprHandle.getFprPath());
             StreamingFVDLProcessor processor = new StreamingFVDLProcessor(fprHandle);
             processor.parseBuildMetadata(zipFile, "audit.fvdl");
-            logger.debug("Loaded FVDL build metadata from '{}'", fprHandle.getFprPath());
-            return processor.getFvdlMetadata();
+            LOG.debug("Loaded FVDL build metadata from '{}'", fprHandle.getFprPath());
+            return new FvdlMetadataResult(processor.getFvdlMetadata(), null);
         } catch (Exception e) {
-            throw new AviatorTechnicalException("Error reading source file encodings from audit.fvdl", e);
+            LOG.warn("Error reading source file encodings from audit.fvdl; source remediations will be skipped", e);
+            return new FvdlMetadataResult(null, SkipReason.FVDL_METADATA_UNAVAILABLE);
         }
     }
 
-    private Charset getRequiredSourceEncoding(String filename, FVDLMetadata fvdlMetadata) {
-        String encoding = fvdlMetadata.findSourceFileEncodingForFileName(filename);
+    private Charset getRequiredSourceEncoding(String filename, FvdlMetadataResult fvdlMetadataResult) {
+        if (fvdlMetadataResult.skipReason() != null || fvdlMetadataResult.metadata() == null) {
+            throw new SkipRemediationException(SkipReason.FVDL_METADATA_UNAVAILABLE,
+                    "FVDL metadata is unavailable; cannot determine source encoding for file '" + filename + "'");
+        }
+
+        String encoding = fvdlMetadataResult.metadata().findSourceFileEncodingForFileName(filename);
         if (encoding == null || encoding.isBlank()) {
-            logger.debug("FVDL source encoding lookup failed for '{}'", filename);
-            throw new AviatorTechnicalException("FVDL does not declare a source encoding for file '" + filename + "'; cannot safely apply remediation");
+            LOG.debug("FVDL source encoding lookup failed for '{}'", filename);
+            throw new SkipRemediationException(SkipReason.FVDL_ENCODING_MISSING,
+                    "FVDL does not declare a source encoding for file '" + filename + "'");
         }
 
         try {
             Charset charset = Charset.forName(encoding);
-            logger.debug("FVDL source encoding for '{}' resolved to '{}'", filename, charset.name());
+            LOG.debug("FVDL source encoding for '{}' resolved to '{}'", filename, charset.name());
             return charset;
         } catch (Exception e) {
-            throw new AviatorTechnicalException("FVDL declares unsupported source encoding '" + encoding + "' for file '" + filename + "'", e);
+            throw new SkipRemediationException(SkipReason.FVDL_ENCODING_UNSUPPORTED,
+                    "FVDL declares unsupported source encoding '" + encoding + "' for file '" + filename + "'", e);
         }
     }
 
@@ -256,13 +437,15 @@ public class RemediationProcessor {
         try {
             byte[] sourceBytes = Files.readAllBytes(filePath);
             String decodedContent = decodeStrict(sourceBytes, sourceEncoding);
-            logger.debug("Strict decoded '{}' using {}; sourceBytes={}, decodedChars={}", filename, sourceEncoding.name(), sourceBytes.length,
+            LOG.debug("Strict decoded '{}' using {}; sourceBytes={}, decodedChars={}", filename, sourceEncoding.name(), sourceBytes.length,
                     decodedContent.length());
             return decodedContent;
         } catch (CharacterCodingException e) {
-            throw new AviatorTechnicalException("FVDL declares source encoding '" + sourceEncoding.name() + "' for file '" + filename + "', but the source file cannot be decoded using that encoding", e);
+            throw new SkipRemediationException(SkipReason.SOURCE_DECODE_FAILED,
+                    "FVDL declares source encoding '" + sourceEncoding.name() + "' for file '" + filename +
+                            "', but the source file cannot be decoded using that encoding", e);
         } catch (IOException e) {
-            throw new AviatorTechnicalException("Error reading source code file '" + filePath + "'", e);
+            throw new SkipRemediationException(SkipReason.SOURCE_READ_FAILED, "Error reading source code file '" + filePath + "'", e);
         }
     }
 
@@ -284,7 +467,35 @@ public class RemediationProcessor {
             buffer.get(result);
             return result;
         } catch (CharacterCodingException e) {
-            throw new AviatorTechnicalException("Remediation content for file '" + filename + "' cannot be encoded using FVDL source encoding '" + charset.name() + "'", e);
+            throw new SkipRemediationException(SkipReason.REMEDIATION_ENCODE_FAILED,
+                    "Remediation content for file '" + filename + "' cannot be encoded using FVDL source encoding '" +
+                            charset.name() + "'", e);
+        }
+    }
+
+    private String getRequiredElementText(Element parent, String elementName) {
+        NodeList nodes = parent.getElementsByTagNameNS(NAMESPACE_URI, elementName);
+        if (nodes.getLength() == 0 || nodes.item(0) == null) {
+            throw new SkipRemediationException(SkipReason.REMEDIATION_DATA_INVALID,
+                    "Missing required remediation element '" + elementName + "'");
+        }
+        return nodes.item(0).getTextContent();
+    }
+
+    private int parseRequiredInt(Element parent, String elementName) {
+        String value = getRequiredElementText(parent, elementName);
+        try {
+            return Integer.parseInt(value);
+        } catch (NumberFormatException e) {
+            throw new SkipRemediationException(SkipReason.REMEDIATION_DATA_INVALID,
+                    "Invalid integer value for remediation element '" + elementName + "': " + value, e);
+        }
+    }
+
+    private void validateLineRange(int lineFrom, int lineTo, int sourceLineCount, String filename) {
+        if (lineFrom < 1 || lineTo < lineFrom || lineTo > sourceLineCount) {
+            throw new SkipRemediationException(SkipReason.REMEDIATION_LINE_RANGE_INVALID,
+                    "Invalid remediation line range " + lineFrom + "-" + lineTo + " for file '" + filename + "'");
         }
     }
 
@@ -320,7 +531,9 @@ public class RemediationProcessor {
 
     private String calculateHashBase64(String content, String algorithm) {
         String hash;
-        if (content == null) return "";
+        if (content == null) {
+            return "";
+        }
         try {
             MessageDigest md = MessageDigest.getInstance(algorithm);
             byte[] digest = md.digest(content.getBytes(StandardCharsets.UTF_8));
@@ -331,5 +544,13 @@ public class RemediationProcessor {
         }
     }
 
+    private void recordSkipped(Map<String, Integer> skippedByReason, SkipReason reason) {
+        skippedByReason.merge(reason.displayName, 1, Integer::sum);
+    }
 
+    private String formatSkippedReasons(Map<String, Integer> skippedByReason) {
+        List<String> parts = new ArrayList<>();
+        skippedByReason.forEach((reason, count) -> parts.add(reason + "=" + count));
+        return String.join(", ", parts);
+    }
 }
