@@ -46,6 +46,7 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
+import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
 import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
 import com.fortify.cli.aviator.fpr.model.FVDLMetadata;
 import com.fortify.cli.aviator.util.FprHandle;
@@ -68,6 +69,8 @@ public class RemediationProcessor {
     private record FvdlMetadataResult(FVDLMetadata metadata, SkipReason skipReason) {}
 
     private record PendingFileWrite(String filename, Path filePath, String content, byte[] updatedBytes) {}
+
+    private record RollbackFileWrite(String filename, Path filePath, byte[] originalBytes) {}
 
     private enum SkipReason {
         FVDL_METADATA_UNAVAILABLE("FVDL metadata unavailable"),
@@ -93,7 +96,9 @@ public class RemediationProcessor {
         }
     }
 
-    private static class SkipRemediationException extends RuntimeException {
+    private static class SkipRemediationException extends AviatorSimpleException {
+        private static final long serialVersionUID = 1L;
+
         private final SkipReason reason;
 
         SkipRemediationException(SkipReason reason, String message) {
@@ -104,6 +109,29 @@ public class RemediationProcessor {
         SkipRemediationException(SkipReason reason, String message, Throwable cause) {
             super(message, cause);
             this.reason = reason;
+        }
+    }
+
+    private static class RemediationCommitException extends AviatorTechnicalException {
+        private static final long serialVersionUID = 1L;
+
+        private final List<RollbackFileWrite> rollbacks;
+
+        RemediationCommitException(String message, Throwable cause, List<RollbackFileWrite> rollbacks) {
+            super(message, cause);
+            this.rollbacks = rollbacks;
+        }
+
+        List<RollbackFileWrite> getRollbacks() {
+            return rollbacks;
+        }
+    }
+
+    private static class RollbackRemediationException extends AviatorTechnicalException {
+        private static final long serialVersionUID = 1L;
+
+        RollbackRemediationException(String message, Throwable cause) {
+            super(message, cause);
         }
     }
 
@@ -148,22 +176,8 @@ public class RemediationProcessor {
             appliedRemediations = 0;
             for (int i = 0; i < remediationNodes.getLength(); i++) {
                 Element remediation = (Element) remediationNodes.item(i);
-                try {
-                    if (processRemediation(remediation, sourceBasePath, fvdlMetadataResult, modifiedFiles)) {
-                        appliedRemediations++;
-                    } else {
-                        recordSkipped(skippedByReason, SkipReason.NO_CHANGES);
-                    }
-                } catch (AviatorTechnicalException e) {
-                    throw e;
-                } catch (SkipRemediationException e) {
-                    recordSkipped(skippedByReason, e.reason);
-                    LOG.info("Skipping remediation {}: {}", remediation.getAttribute("instanceId"), e.getMessage());
-                    LOG.debug("Skip reason for remediation {}: {}", remediation.getAttribute("instanceId"), e.reason.displayName, e);
-                } catch (Exception e) {
-                    recordSkipped(skippedByReason, SkipReason.UNEXPECTED_ERROR);
-                    LOG.info("Skipping remediation {} due to an unexpected processing error", remediation.getAttribute("instanceId"));
-                    LOG.debug("Unexpected error while processing remediation {}", remediation.getAttribute("instanceId"), e);
+                if (processRemediation(remediation, sourceBasePath, fvdlMetadataResult, modifiedFiles, skippedByReason)) {
+                    appliedRemediations++;
                 }
             }
 
@@ -185,7 +199,38 @@ public class RemediationProcessor {
     }
 
     private boolean processRemediation(Element remediation, Path sourceBasePath, FvdlMetadataResult fvdlMetadataResult,
-            Set<String> modifiedFiles) {
+            Set<String> modifiedFiles, Map<String, Integer> skippedByReason) {
+        String instanceId = remediation.getAttribute("instanceId");
+        try {
+            Map<Path, PendingFileWrite> pendingWrites = prepareFileChanges(remediation, sourceBasePath, fvdlMetadataResult);
+            if (pendingWrites.isEmpty()) {
+                recordSkipped(skippedByReason, SkipReason.NO_CHANGES);
+                return false;
+            }
+            try {
+                commitRemediationWrites(instanceId, pendingWrites, modifiedFiles);
+                return true;
+            } catch (RemediationCommitException e) {
+                rollbackRemediationWrites(instanceId, e.getRollbacks());
+                throw new SkipRemediationException(SkipReason.SOURCE_WRITE_FAILED, e.getMessage(), e);
+            }
+        } catch (SkipRemediationException e) {
+            recordSkipped(skippedByReason, e.reason);
+            LOG.info("Skipping remediation {}: {}", instanceId, e.getMessage());
+            LOG.debug("Skip reason for remediation {}: {}", instanceId, e.reason.displayName, e);
+            return false;
+        } catch (RollbackRemediationException e) {
+            throw e;
+        } catch (Exception e) {
+            recordSkipped(skippedByReason, SkipReason.UNEXPECTED_ERROR);
+            LOG.info("Skipping remediation {} due to an unexpected processing error", instanceId);
+            LOG.debug("Unexpected error while processing remediation {}", instanceId, e);
+            return false;
+        }
+    }
+
+    private Map<Path, PendingFileWrite> prepareFileChanges(Element remediation, Path sourceBasePath,
+            FvdlMetadataResult fvdlMetadataResult) {
         NodeList fileChangesNodes = remediation.getElementsByTagNameNS(NAMESPACE_URI, "FileChanges");
         if (fileChangesNodes.getLength() == 0) {
             throw new SkipRemediationException(SkipReason.NO_CHANGES, "No file changes found");
@@ -195,11 +240,7 @@ public class RemediationProcessor {
         for (int j = 0; j < fileChangesNodes.getLength(); j++) {
             processFileChanges(remediation, (Element) fileChangesNodes.item(j), sourceBasePath, fvdlMetadataResult, pendingWrites);
         }
-        if (pendingWrites.isEmpty()) {
-            return false;
-        }
-        commitRemediationWrites(remediation.getAttribute("instanceId"), pendingWrites, modifiedFiles);
-        return true;
+        return pendingWrites;
     }
 
     private boolean processFileChanges(Element remediation, Element fileChanges, Path sourceBasePath, FvdlMetadataResult fvdlMetadataResult,
@@ -239,7 +280,7 @@ public class RemediationProcessor {
         return true;
     }
 
-        private String applyChange(String instanceId, String filename, String fileHash, Charset sourceEncoding, String originalContent,
+    private String applyChange(String instanceId, String filename, String fileHash, Charset sourceEncoding, String originalContent,
             Element change, int changeIndex) {
         String lineSeparator = detectLineSeparator(originalContent);
         String content = normalizeLineEndings(originalContent);
@@ -293,25 +334,25 @@ public class RemediationProcessor {
         return String.join(lineSeparator, updatedLines);
     }
 
-        private String getPendingOrSourceContent(Path filePath, String filename, Charset sourceEncoding,
+    private String getPendingOrSourceContent(Path filePath, String filename, Charset sourceEncoding,
             Map<Path, PendingFileWrite> pendingWrites) {
         PendingFileWrite pendingWrite = pendingWrites.get(filePath);
         return pendingWrite == null ? readSourceFile(filePath, filename, sourceEncoding) : pendingWrite.content();
     }
 
-    private void commitRemediationWrites(String instanceId, Map<Path, PendingFileWrite> pendingWrites, Set<String> modifiedFiles) {
-        Map<Path, byte[]> originalBytesByPath = readOriginalBytesForRollback(pendingWrites);
-        List<PendingFileWrite> attemptedWrites = new ArrayList<>();
-        try {
-            for (PendingFileWrite pendingWrite : pendingWrites.values()) {
-                attemptedWrites.add(pendingWrite);
+    private void commitRemediationWrites(String instanceId, Map<Path, PendingFileWrite> pendingWrites, Set<String> modifiedFiles)
+            throws RemediationCommitException {
+        List<RollbackFileWrite> rollbacks = new ArrayList<>();
+        for (PendingFileWrite pendingWrite : pendingWrites.values()) {
+            try {
+                byte[] originalBytes = Files.readAllBytes(pendingWrite.filePath());
+                rollbacks.add(new RollbackFileWrite(pendingWrite.filename(), pendingWrite.filePath(), originalBytes));
                 LOG.debug("Writing remediation {} to '{}' using staged bytes; encodedBytes={}", instanceId, pendingWrite.filename(),
                         pendingWrite.updatedBytes().length);
-                writeSourceFile(pendingWrite.filePath(), pendingWrite.updatedBytes(), pendingWrite.filename());
+                Files.write(pendingWrite.filePath(), pendingWrite.updatedBytes());
+            } catch (Exception e) {
+                throw new RemediationCommitException("Error writing source code file '" + pendingWrite.filename() + "'", e, rollbacks);
             }
-        } catch (SkipRemediationException e) {
-            rollbackRemediationWrites(instanceId, attemptedWrites, originalBytesByPath);
-            throw e;
         }
 
         for (PendingFileWrite pendingWrite : pendingWrites.values()) {
@@ -320,32 +361,14 @@ public class RemediationProcessor {
         }
     }
 
-    private Map<Path, byte[]> readOriginalBytesForRollback(Map<Path, PendingFileWrite> pendingWrites) {
-        Map<Path, byte[]> originalBytesByPath = new LinkedHashMap<>();
-        for (PendingFileWrite pendingWrite : pendingWrites.values()) {
+    private void rollbackRemediationWrites(String instanceId, List<RollbackFileWrite> rollbacks) {
+        for (RollbackFileWrite rollback : rollbacks) {
             try {
-                originalBytesByPath.put(pendingWrite.filePath(), Files.readAllBytes(pendingWrite.filePath()));
-            } catch (IOException e) {
-                throw new SkipRemediationException(SkipReason.SOURCE_READ_FAILED,
-                        "Error reading source code file '" + pendingWrite.filename() + "' before writing remediation", e);
-            }
-        }
-        return originalBytesByPath;
-    }
-
-    private void rollbackRemediationWrites(String instanceId, List<PendingFileWrite> attemptedWrites,
-            Map<Path, byte[]> originalBytesByPath) {
-        for (PendingFileWrite pendingWrite : attemptedWrites) {
-            byte[] originalBytes = originalBytesByPath.get(pendingWrite.filePath());
-            if (originalBytes == null) {
-                continue;
-            }
-            try {
-                Files.write(pendingWrite.filePath(), originalBytes);
-                LOG.warn("Rolled back remediation {} changes for '{}' after write failure", instanceId, pendingWrite.filename());
+                Files.write(rollback.filePath(), rollback.originalBytes());
+                LOG.warn("Rolled back remediation {} changes for '{}' after write failure", instanceId, rollback.filename());
             } catch (IOException rollbackException) {
-                LOG.error("Failed to roll back remediation {} changes for '{}'", instanceId, pendingWrite.filename(), rollbackException);
-                throw new AviatorTechnicalException("Failed to roll back remediation changes for '" + pendingWrite.filename() +
+                LOG.error("Failed to roll back remediation {} changes for '{}'", instanceId, rollback.filename(), rollbackException);
+                throw new RollbackRemediationException("Failed to roll back remediation changes for '" + rollback.filename() +
                         "'. Source files may be partially modified; inspect the source tree before retrying", rollbackException);
             }
         }
@@ -447,14 +470,6 @@ public class RemediationProcessor {
             throw new SkipRemediationException(SkipReason.REMEDIATION_ENCODE_FAILED,
                     "Remediation content for file '" + filename + "' cannot be encoded using FVDL source encoding '" +
                             charset.name() + "'", e);
-        }
-    }
-
-    private void writeSourceFile(Path filePath, byte[] updatedBytes, String filename) {
-        try {
-            Files.write(filePath, updatedBytes);
-        } catch (IOException e) {
-            throw new SkipRemediationException(SkipReason.SOURCE_WRITE_FAILED, "Error writing source code file '" + filename + "'", e);
         }
     }
 
