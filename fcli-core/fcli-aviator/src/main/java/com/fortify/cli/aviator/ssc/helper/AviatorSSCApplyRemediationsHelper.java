@@ -13,6 +13,7 @@
 package com.fortify.cli.aviator.ssc.helper;
 
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -102,6 +103,7 @@ public final class AviatorSSCApplyRemediationsHelper {
                 .totalRemediation(aggregated.totalRemediations())
                 .appliedRemediation(aggregated.appliedRemediations())
                 .skippedRemediation(aggregated.skippedRemediations())
+                .skippedByReason(aggregated.skippedByReason())
                 .modifiedFiles(aggregated.modifiedFiles())
                 .action(RemediationsApplyHelper.actionLabel(aggregated))
                 .build();
@@ -120,6 +122,7 @@ public final class AviatorSSCApplyRemediationsHelper {
             int totalRemediation,
             int appliedRemediation,
             int skippedRemediation,
+            Map<String, Integer> skippedByReason,
             Set<String> modifiedFiles,
             String action) {
         ObjectNode toJson() {
@@ -131,6 +134,8 @@ public final class AviatorSSCApplyRemediationsHelper {
             result.put("totalRemediation", totalRemediation);
             result.put("appliedRemediation", appliedRemediation);
             result.put("skippedRemediation", skippedRemediation);
+            result.put("skippedReasons", formatSkippedReasons(skippedByReason));
+            result.set("skippedByReason", toObjectNode(skippedByReason));
             result.set("modifiedFiles", toArrayNode(modifiedFiles));
             result.put(IActionCommandResultSupplier.actionFieldName, action);
             return result;
@@ -163,6 +168,23 @@ public final class AviatorSSCApplyRemediationsHelper {
             files.forEach(array::add);
         }
         return array;
+    }
+
+    private static ObjectNode toObjectNode(Map<String, Integer> skippedByReason) {
+        ObjectNode object = JsonHelper.getObjectMapper().createObjectNode();
+        if (skippedByReason != null) {
+            skippedByReason.forEach(object::put);
+        }
+        return object;
+    }
+
+    private static String formatSkippedReasons(Map<String, Integer> skippedByReason) {
+        if (skippedByReason == null || skippedByReason.isEmpty()) {
+            return "";
+        }
+        List<String> parts = new ArrayList<>();
+        skippedByReason.forEach((reason, count) -> parts.add(reason + "=" + count));
+        return String.join(", ", parts);
     }
 
     private static ArrayNode toStringArrayNode(List<String> values) {

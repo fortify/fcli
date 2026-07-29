@@ -15,5 +15,10 @@ package com.fortify.cli.common.output.cli.mixin;
 import com.fortify.cli.common.json.producer.IObjectNodeProducer;
 
 public interface IOutputHelper {
-    void write(IObjectNodeProducer objectNodeProducer);
+    /**
+     * Write the records provided by the given producer to the configured output(s),
+     * and return the exit code as reported by {@link IObjectNodeProducer#getExitCode()}
+     * (or {@code 0} if {@code objectNodeProducer} is {@code null}).
+     */
+    int write(IObjectNodeProducer objectNodeProducer);
 }

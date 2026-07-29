@@ -13,7 +13,9 @@
 package com.fortify.cli.fod.aviator.helper;
 
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -47,6 +49,7 @@ public final class AviatorFoDApplyRemediationsHelper {
                 .totalRemediation(metric == null ? 0 : metric.totalRemediations())
                 .appliedRemediation(metric == null ? 0 : metric.appliedRemediations())
                 .skippedRemediation(metric == null ? 0 : metric.skippedRemediations())
+                .skippedByReason(metric == null ? Map.of() : metric.skippedByReason())
                 .modifiedFiles(metric == null ? Set.of() : metric.modifiedFiles())
                 .action(RemediationsApplyHelper.actionLabel(metric))
                 .build()
@@ -71,6 +74,7 @@ public final class AviatorFoDApplyRemediationsHelper {
                         .totalRemediation(aggregated.totalRemediations())
                         .appliedRemediation(aggregated.appliedRemediations())
                         .skippedRemediation(aggregated.skippedRemediations())
+                        .skippedByReason(aggregated.skippedByReason())
                         .modifiedFiles(aggregated.modifiedFiles())
                         .action(RemediationsApplyHelper.actionLabel(aggregated))
                         .build())
@@ -93,6 +97,7 @@ public final class AviatorFoDApplyRemediationsHelper {
             int totalRemediation,
             int appliedRemediation,
             int skippedRemediation,
+            Map<String, Integer> skippedByReason,
             Set<String> modifiedFiles,
             String action) {
         ObjectNode toJson() {
@@ -103,6 +108,8 @@ public final class AviatorFoDApplyRemediationsHelper {
             result.put("totalRemediation", totalRemediation);
             result.put("appliedRemediation", appliedRemediation);
             result.put("skippedRemediation", skippedRemediation);
+            result.put("skippedReasons", formatSkippedReasons(skippedByReason));
+            result.set("skippedByReason", toObjectNode(skippedByReason));
             result.set("modifiedFiles", toArrayNode(modifiedFiles));
             result.put(IActionCommandResultSupplier.actionFieldName, action);
             return result;
@@ -134,6 +141,23 @@ public final class AviatorFoDApplyRemediationsHelper {
             files.forEach(array::add);
         }
         return array;
+    }
+
+    private static ObjectNode toObjectNode(Map<String, Integer> skippedByReason) {
+        ObjectNode object = JsonHelper.getObjectMapper().createObjectNode();
+        if (skippedByReason != null) {
+            skippedByReason.forEach(object::put);
+        }
+        return object;
+    }
+
+    private static String formatSkippedReasons(Map<String, Integer> skippedByReason) {
+        if (skippedByReason == null || skippedByReason.isEmpty()) {
+            return "";
+        }
+        List<String> parts = new ArrayList<>();
+        skippedByReason.forEach((reason, count) -> parts.add(reason + "=" + count));
+        return String.join(", ", parts);
     }
 
     private static ArrayNode toStringArrayNode(List<String> values) {

@@ -13,7 +13,9 @@
 package com.fortify.cli.aviator._common.util;
 
 import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.Map;
 import java.util.Set;
 
 import com.fortify.cli.aviator.fpr.processor.RemediationProcessor.RemediationMetric;
@@ -26,6 +28,7 @@ public final class AviatorRemediationMetricsHelper {
 
     public static RemediationMetric aggregateMetrics(Set<String> requestedIssueIds, Collection<RemediationMetric> metrics) {
         Set<String> modifiedFiles = new LinkedHashSet<>();
+        Map<String, Integer> skippedByReason = new LinkedHashMap<>();
         if (requestedIssueIds == null) {
             int totalRemediations = 0;
             int appliedRemediations = 0;
@@ -33,15 +36,17 @@ public final class AviatorRemediationMetricsHelper {
                 totalRemediations += metric.totalRemediations();
                 appliedRemediations += metric.appliedRemediations();
                 modifiedFiles.addAll(metric.modifiedFiles());
+                mergeSkippedByReason(skippedByReason, metric.skippedByReason());
             }
-            return RemediationMetric.unfiltered(totalRemediations, appliedRemediations, modifiedFiles);
+            return RemediationMetric.unfiltered(totalRemediations, appliedRemediations, modifiedFiles, skippedByReason);
         }
         Set<String> appliedIssueIds = new LinkedHashSet<>();
         for (RemediationMetric metric : metrics) {
             modifiedFiles.addAll(metric.modifiedFiles());
             appliedIssueIds.addAll(metric.appliedIssueIds());
+            mergeSkippedByReason(skippedByReason, metric.skippedByReason());
         }
-        return RemediationMetric.filtered(requestedIssueIds, appliedIssueIds, modifiedFiles);
+        return RemediationMetric.filtered(requestedIssueIds, appliedIssueIds, modifiedFiles, skippedByReason);
     }
 
     public static Set<String> getRemainingIssueIds(Set<String> requestedIssueIds, RemediationMetric metric) {
@@ -51,5 +56,12 @@ public final class AviatorRemediationMetricsHelper {
         Set<String> remainingIssueIds = new LinkedHashSet<>(requestedIssueIds);
         remainingIssueIds.removeAll(metric.appliedIssueIds());
         return remainingIssueIds;
+    }
+
+    public static void mergeSkippedByReason(Map<String, Integer> target, Map<String, Integer> source) {
+        if (source == null || source.isEmpty()) {
+            return;
+        }
+        source.forEach((reason, count) -> target.merge(reason, count, Integer::sum));
     }
 }

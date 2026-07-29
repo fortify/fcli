@@ -403,6 +403,36 @@ public class StreamingFVDLProcessor {
         }
     }
 
+    public void parseBuildMetadata(ZipFile zipFile, String entryName) throws Exception {
+        logger.debug("Parsing FVDL build metadata entry '{}'", entryName);
+        ZipEntry fvdlEntry = zipFile.getEntry(entryName);
+        if (fvdlEntry == null) {
+            throw new IOException("audit.fvdl not found in FPR file");
+        }
+
+        try (InputStream inputStream = zipFile.getInputStream(fvdlEntry)) {
+            parseBuildMetadata(inputStream);
+        }
+        logger.debug("Parsed FVDL build metadata entry '{}'", entryName);
+    }
+
+    private void parseBuildMetadata(InputStream inputStream) throws XMLStreamException {
+        XMLStreamReader reader = xmlInputFactory.createXMLStreamReader(inputStream);
+
+        try {
+            while (reader.hasNext()) {
+                int event = reader.next();
+                if (event == XMLStreamConstants.START_ELEMENT && "Build".equals(reader.getLocalName())) {
+                    parseBuild(reader);
+                    return;
+                }
+            }
+            logger.debug("No Build section found while parsing FVDL build metadata");
+        } finally {
+            reader.close();
+        }
+    }
+
     private void parseRuntimeConfiguration(XMLStreamReader reader) throws XMLStreamException {
         updateAnalysisType("SECURITYSCOPE");
         skipSection(reader, "RuntimeConfiguration");
@@ -456,6 +486,7 @@ public class StreamingFVDLProcessor {
 
     private void parseSourceFile(XMLStreamReader reader) throws XMLStreamException {
         String fileType = reader.getAttributeValue(null, "type");
+        String fileEncoding = reader.getAttributeValue(null, "encoding");
         String fileName = null;
 
         while (reader.hasNext()) {
@@ -469,6 +500,7 @@ public class StreamingFVDLProcessor {
         }
 
         fvdlMetadata.registerSourceFileType(fileName, fileType);
+        fvdlMetadata.registerSourceFileEncoding(fileName, fileEncoding);
     }
 
     /**

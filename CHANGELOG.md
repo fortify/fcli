@@ -1,5 +1,19 @@
 # Changelog
 
+## [3.23.3](https://github.com/fortify/fcli/compare/v3.23.2...v3.23.3) (2026-07-15)
+
+
+### Bug Fixes
+
+* FoD/SSC `github-remediations-pr` action: Use proper PR target branch on `pull_request` triggers ([15284b3](https://github.com/fortify/fcli/commit/15284b3f9bca9d61cf05bf6ec882985bb4d7b007))
+
+## [3.23.2](https://github.com/fortify/fcli/compare/v3.23.1...v3.23.2) (2026-07-13)
+
+
+### Bug Fixes
+
+* SSC/Aviator: Fix additional potential 'out of range' errors (change data types from int to long) ([36a741c](https://github.com/fortify/fcli/commit/36a741c88f30c93bde57f82120ea43fffb2bd688))
+
 ## [3.23.1](https://github.com/fortify/fcli/compare/v3.23.0...v3.23.1) (2026-07-13)
 
 
