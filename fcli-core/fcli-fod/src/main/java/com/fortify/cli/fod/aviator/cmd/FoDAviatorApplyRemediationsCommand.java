@@ -23,9 +23,8 @@ import com.fortify.cli.aviator._common.remediations_cache.CacheRemediationsFprSo
 import com.fortify.cli.aviator._common.remediations_cache.RemediationsApplyHelper;
 import com.fortify.cli.aviator._common.remediations_cache.RemediationsApplyHelper.ApplyResult;
 import com.fortify.cli.aviator._common.remediations_cache.RemediationsCacheConstants;
-import com.fortify.cli.aviator._common.util.AviatorIssueIdFilterUtils;
+import com.fortify.cli.aviator._common.util.AviatorApplyRemediationsCliSupport;
 import com.fortify.cli.aviator.config.AviatorLoggerImpl;
-import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.output.cli.cmd.AbstractOutputCommand;
 import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
@@ -64,9 +63,9 @@ public class FoDAviatorApplyRemediationsCommand extends AbstractOutputCommand
 
     @Override
     public JsonNode getJsonNode() {
-        validateSourceCodeDirectory();
-        Set<String> issueIdFilter = AviatorIssueIdFilterUtils.normalizeIssueIds(issueIds);
-        validateSelection();
+        AviatorApplyRemediationsCliSupport.requireSourceDir(sourceCodeDirectory);
+        Set<String> issueIdFilter = AviatorApplyRemediationsCliSupport.normalizeIssueIdsForCacheOnly(
+                issueIds, sourceSelector.isFromCacheSelected());
 
         try (IProgressWriter progressWriter = progressWriterFactoryMixin.create()) {
             AviatorLoggerImpl logger = new AviatorLoggerImpl(progressWriter);
@@ -97,18 +96,6 @@ public class FoDAviatorApplyRemediationsCommand extends AbstractOutputCommand
             return AviatorFoDApplyRemediationsHelper.buildCacheResultNode(
                     sourceSelector.getFromCache(), applyResult, issueIdFilter);
         }
-    }
-
-    private void validateSourceCodeDirectory() {
-        FcliSimpleException.throwIf(sourceCodeDirectory == null || sourceCodeDirectory.isBlank(),
-                "--source-dir must specify a valid directory path");
-    }
-
-    private void validateSelection() {
-        FcliSimpleException.throwIf(
-                issueIds != null && !issueIds.isEmpty() && !sourceSelector.isFromCacheSelected(),
-                "--issue-ids can only be used with --from-cache; "
-                        + "create a cache with download-remediations-cache and rerun with --from-cache");
     }
 
     @Override

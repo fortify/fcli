@@ -79,7 +79,7 @@ class RemediationsCacheRoundTripTest {
         try (RemediationsCacheReader reader = RemediationsCacheReader.open(zip)) {
             reader.requireProduct(RemediationsCacheConstants.PRODUCT_FOD);
             assertEquals("streamed-fpr", Files.readString(reader.getOrderedFprPaths().get(0)));
-            assertEquals("rel-1", reader.getOrderedReleaseIds().get(0));
+            assertEquals("rel-1", reader.getOrderedEntries().get(0).getFodData().getReleaseId());
         }
     }
 

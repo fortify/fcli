@@ -90,18 +90,6 @@ public final class RemediationsCacheReader implements AutoCloseable {
         return getOrderedEntries().stream().map(RemediationsCacheEntry::getPath).toList();
     }
 
-    public List<String> getOrderedArtifactIds() {
-        return getOrderedEntries().stream()
-                .map(e -> e.getSscData() != null ? e.getSscData().getArtifactId() : "")
-                .toList();
-    }
-
-    public List<String> getOrderedReleaseIds() {
-        return getOrderedEntries().stream()
-                .map(e -> e.getFodData() != null ? e.getFodData().getReleaseId() : "")
-                .toList();
-    }
-
     /**
      * Ensures the cache was produced for the expected product ({@code ssc} or {@code fod}).
      */

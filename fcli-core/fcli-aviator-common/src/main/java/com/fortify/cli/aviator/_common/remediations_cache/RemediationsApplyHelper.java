@@ -72,8 +72,9 @@ public final class RemediationsApplyHelper {
         return acc.toResult();
     }
 
+    /** @see AviatorRemediationMetricsHelper#actionLabel(RemediationMetric) */
     public static String actionLabel(RemediationMetric metric) {
-        return metric != null && metric.appliedRemediations() > 0 ? "Remediation-Applied" : "No-Remediation-Applied";
+        return AviatorRemediationMetricsHelper.actionLabel(metric);
     }
 
     private static RemediationMetric applyOne(
