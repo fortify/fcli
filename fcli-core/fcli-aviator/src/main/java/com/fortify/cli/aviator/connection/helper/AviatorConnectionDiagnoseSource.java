@@ -13,6 +13,7 @@
 package com.fortify.cli.aviator.connection.helper;
 
 import java.util.Objects;
+import java.util.Optional;
 
 import com.fortify.cli.aviator._common.config.admin.helper.AviatorAdminConfigDescriptor;
 import com.fortify.cli.aviator._common.session.user.helper.AviatorUserSessionDescriptor;
@@ -28,11 +29,13 @@ public sealed interface AviatorConnectionDiagnoseSource {
     String url();
 
     /** Machine-readable source id for endpoint evidence ({@code sourceType}). */
-    SourceType sourceType();
+    String sourceTypeId();
 
-    default String type() {
-        return sourceType().id();
-    }
+    /**
+     * Credential check to run after transport stages, if any.
+     * Bare URL returns empty (no credential stage).
+     */
+    Optional<CredentialRequest> credentialRequest();
 
     static AviatorConnectionDiagnoseSource fromUrl(String url) {
         return new UrlOnly(url);
@@ -50,21 +53,43 @@ public sealed interface AviatorConnectionDiagnoseSource {
         return new AdminConfig(descriptor);
     }
 
-    /** Wire ids for endpoint evidence {@code sourceType}. */
-    enum SourceType {
-        URL("url"),
-        URL_TOKEN("url-token"),
-        USER_SESSION("user-session"),
-        ADMIN_CONFIG("admin-config");
+    /** Product credential stage (not transport stages). */
+    sealed interface CredentialRequest {
+        void accept(Visitor visitor);
 
-        private final String id;
+        /**
+         * Exhaustive dispatch over credential modes (Java 17-friendly; no pattern switch).
+         */
+        interface Visitor {
+            void visitToken(Token token);
 
-        SourceType(String id) {
-            this.id = id;
+            void visitAdmin(Admin admin);
         }
 
-        public String id() {
-            return id;
+        /**
+         * User token validation. {@code token} is non-null for {@code --url --token};
+         * session-sourced tokens may be null/blank (corrupted store) and fail optionally.
+         */
+        record Token(String url, String token) implements CredentialRequest {
+            public Token {
+                Objects.requireNonNull(url, "url");
+            }
+
+            @Override
+            public void accept(Visitor visitor) {
+                visitor.visitToken(this);
+            }
+        }
+
+        record Admin(AviatorAdminConfigDescriptor descriptor) implements CredentialRequest {
+            public Admin {
+                Objects.requireNonNull(descriptor, "descriptor");
+            }
+
+            @Override
+            public void accept(Visitor visitor) {
+                visitor.visitAdmin(this);
+            }
         }
     }
 
@@ -74,8 +99,13 @@ public sealed interface AviatorConnectionDiagnoseSource {
         }
 
         @Override
-        public SourceType sourceType() {
-            return SourceType.URL;
+        public String sourceTypeId() {
+            return "url";
+        }
+
+        @Override
+        public Optional<CredentialRequest> credentialRequest() {
+            return Optional.empty();
         }
     }
 
@@ -83,11 +113,19 @@ public sealed interface AviatorConnectionDiagnoseSource {
         public UrlAndToken {
             Objects.requireNonNull(url, "url");
             Objects.requireNonNull(token, "token");
+            if (token.isBlank()) {
+                throw new IllegalArgumentException("token must not be blank");
+            }
         }
 
         @Override
-        public SourceType sourceType() {
-            return SourceType.URL_TOKEN;
+        public String sourceTypeId() {
+            return "url-token";
+        }
+
+        @Override
+        public Optional<CredentialRequest> credentialRequest() {
+            return Optional.of(new CredentialRequest.Token(url, token));
         }
     }
 
@@ -102,8 +140,13 @@ public sealed interface AviatorConnectionDiagnoseSource {
         }
 
         @Override
-        public SourceType sourceType() {
-            return SourceType.USER_SESSION;
+        public String sourceTypeId() {
+            return "user-session";
+        }
+
+        @Override
+        public Optional<CredentialRequest> credentialRequest() {
+            return Optional.of(new CredentialRequest.Token(url(), descriptor.getAviatorToken()));
         }
     }
 
@@ -118,8 +161,13 @@ public sealed interface AviatorConnectionDiagnoseSource {
         }
 
         @Override
-        public SourceType sourceType() {
-            return SourceType.ADMIN_CONFIG;
+        public String sourceTypeId() {
+            return "admin-config";
+        }
+
+        @Override
+        public Optional<CredentialRequest> credentialRequest() {
+            return Optional.of(new CredentialRequest.Admin(descriptor));
         }
     }
 }

@@ -20,6 +20,17 @@ public sealed interface AviatorTunnelResult {
 
     boolean proxyConfigured();
 
+    /** CONNECT status line or {@code not-used} when no proxy status applies. */
+    default String proxyConnectStatus() {
+        if (this instanceof TlsSucceeded s) {
+            return s.proxyConnectStatusLine();
+        }
+        if (this instanceof TlsFailed f) {
+            return f.proxyConnectStatusLine();
+        }
+        return "not-used";
+    }
+
     record ProxyConnectFailed(Exception error) implements AviatorTunnelResult {
         @Override
         public boolean proxyConfigured() {
@@ -29,13 +40,13 @@ public sealed interface AviatorTunnelResult {
 
     record TlsFailed(
             boolean proxyConfigured,
-            String proxyConnectStatus,
+            String proxyConnectStatusLine,
             AviatorTlsPhase phase,
             Exception error) implements AviatorTunnelResult {}
 
     record TlsSucceeded(
             boolean proxyConfigured,
-            String proxyConnectStatus,
+            String proxyConnectStatusLine,
             String protocol,
             String cipherSuite,
             String peerSubject,

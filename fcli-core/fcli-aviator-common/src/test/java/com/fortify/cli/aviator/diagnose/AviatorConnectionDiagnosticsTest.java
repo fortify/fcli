@@ -17,25 +17,21 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
-import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.Optional;
 
 import javax.net.ssl.SSLHandshakeException;
 
 import org.junit.jupiter.api.Test;
 
-import com.fortify.cli.aviator.grpc.AviatorGrpcClientHelper.AviatorConnectionPlan;
-import com.fortify.cli.aviator.grpc.AviatorGrpcClientHelper.ParsedTarget;
-import com.fortify.cli.common.http.proxy.helper.ProxyDescriptor;
+import com.fortify.cli.aviator.diagnose.support.ConfigurableDiagnosticProbe;
+import com.fortify.cli.aviator.diagnose.support.OfflineConnectionPlan;
 
 class AviatorConnectionDiagnosticsTest {
     @Test
     void shouldSkipDependentStagesWhenEndpointIsInvalid() {
-        var probe = new FakeDiagnosticProbe();
-        var diagnostics = new AviatorConnectionDiagnostics(probe);
-
-        var results = diagnostics.diagnose(" ", 5, "url");
+        var probe = new ConfigurableDiagnosticProbe();
+        var report = new AviatorConnectionDiagnostics(probe).diagnose(" ", 5, "url");
+        var results = report.stages();
 
         assertEquals(5, results.size());
         assertStage(results.get(0), AviatorDiagnosticStage.ENDPOINT, AviatorDiagnosticStatus.FAIL);
@@ -43,17 +39,16 @@ class AviatorConnectionDiagnosticsTest {
         assertStage(results.get(2), AviatorDiagnosticStage.TCP, AviatorDiagnosticStatus.WARN);
         assertStage(results.get(3), AviatorDiagnosticStage.TLS, AviatorDiagnosticStatus.WARN);
         assertStage(results.get(4), AviatorDiagnosticStage.GRPC, AviatorDiagnosticStatus.WARN);
-        assertTrue(diagnostics.hasRequiredFailure(results));
+        assertTrue(report.hasRequiredFailure());
         assertFalse(probe.tunnelCalled);
     }
 
     @Test
     void shouldSkipTransportStagesWhenDnsFails() {
-        var probe = new FakeDiagnosticProbe();
+        var probe = new ConfigurableDiagnosticProbe();
         probe.resolveException = new UnknownHostException("host not found");
-        var diagnostics = new AviatorConnectionDiagnostics(probe);
-
-        var results = diagnostics.diagnose(planNoProxy(), 5, "url");
+        var report = new AviatorConnectionDiagnostics(probe).diagnose(OfflineConnectionPlan.noProxy(), 5, "url");
+        var results = report.stages();
 
         assertEquals(5, results.size());
         assertStage(results.get(1), AviatorDiagnosticStage.DNS, AviatorDiagnosticStatus.FAIL);
@@ -66,55 +61,38 @@ class AviatorConnectionDiagnosticsTest {
 
     @Test
     void shouldReportGrpcNoResponsePattern() {
-        var probe = new FakeDiagnosticProbe();
-        probe.grpcResult = AviatorGrpcReachabilityResult.noResponse("DEADLINE_EXCEEDED",
-            AviatorGrpcFailureCategory.NO_RESPONSE, "deadline exceeded");
-        var diagnostics = new AviatorConnectionDiagnostics(probe);
-
-        var results = diagnostics.diagnose(planNoProxy(), 5, "url");
+        var probe = new ConfigurableDiagnosticProbe(
+            AviatorGrpcReachabilityResult.noResponse("DEADLINE_EXCEEDED", "deadline exceeded"));
+        var report = new AviatorConnectionDiagnostics(probe).diagnose(OfflineConnectionPlan.noProxy(), 5, "url");
+        var results = report.stages();
 
         assertStage(results.get(3), AviatorDiagnosticStage.TLS, AviatorDiagnosticStatus.PASS);
         assertStage(results.get(4), AviatorDiagnosticStage.GRPC, AviatorDiagnosticStatus.FAIL);
         assertEquals(AviatorGrpcPattern.GRPC_NO_RESPONSE.wireId(),
             results.get(4).evidence().path("pattern").asText());
-        assertFalse(diagnostics.hasGrpcResponse(results));
-    }
-
-    @Test
-    void shouldReportGrpcTlsFailureNotAsTlsEstablishedNoResponse() {
-        var probe = new FakeDiagnosticProbe();
-        probe.grpcResult = AviatorGrpcReachabilityResult.noResponse("UNAVAILABLE", AviatorGrpcFailureCategory.TLS,
-            "SSLHandshakeException");
-        var diagnostics = new AviatorConnectionDiagnostics(probe);
-
-        var results = diagnostics.diagnose(planNoProxy(), 5, "url");
-
-        assertEquals(AviatorGrpcPattern.GRPC_TLS_FAILED.wireId(), results.get(4).evidence().path("pattern").asText());
+        assertFalse(report.hasGrpcStagePass());
     }
 
     @Test
     void shouldContinueAfterTlsAlpnWarningWhenGrpcResponds() {
-        var probe = new FakeDiagnosticProbe();
+        var probe = new ConfigurableDiagnosticProbe(
+            AviatorGrpcReachabilityResult.responseReceived("UNAUTHENTICATED", "token required"));
         probe.tunnelResult = new AviatorTunnelResult.TlsSucceeded(false, "not-used",
             "TLSv1.3", "TLS_AES_128_GCM_SHA256", "CN=aviator.invalid", "");
-        probe.grpcResult = AviatorGrpcReachabilityResult.ok("UNAUTHENTICATED", "token required");
-        var diagnostics = new AviatorConnectionDiagnostics(probe);
-
-        var results = diagnostics.diagnose(planNoProxy(), 5, "url");
+        var report = new AviatorConnectionDiagnostics(probe).diagnose(OfflineConnectionPlan.noProxy(), 5, "url");
+        var results = report.stages();
 
         assertStage(results.get(3), AviatorDiagnosticStage.TLS, AviatorDiagnosticStatus.WARN);
         assertStage(results.get(4), AviatorDiagnosticStage.GRPC, AviatorDiagnosticStatus.PASS);
-        assertTrue(diagnostics.hasGrpcResponse(results));
+        assertTrue(report.hasGrpcStagePass());
     }
 
     @Test
     void shouldReportNonGrpcHttpResponsePattern() {
-        var probe = new FakeDiagnosticProbe();
-        probe.grpcResult = AviatorGrpcReachabilityResult.nonGrpcHttp("UNAVAILABLE", "503", "text/html",
-            "HTTP status code 503 invalid content-type: text/html");
-        var diagnostics = new AviatorConnectionDiagnostics(probe);
-
-        var results = diagnostics.diagnose(planNoProxy(), 5, "url");
+        var probe = new ConfigurableDiagnosticProbe(AviatorGrpcReachabilityResult.nonGrpcHttp(
+            "UNAVAILABLE", "503", "text/html", "HTTP status code 503 invalid content-type: text/html"));
+        var results = new AviatorConnectionDiagnostics(probe)
+            .diagnose(OfflineConnectionPlan.noProxy(), 5, "url").stages();
 
         assertEquals(AviatorGrpcPattern.HTTP_RESPONSE_NOT_GRPC.wireId(),
             results.get(4).evidence().path("pattern").asText());
@@ -123,25 +101,22 @@ class AviatorConnectionDiagnosticsTest {
 
     @Test
     void shouldPassAllTransportStagesWithoutProxy() {
-        var probe = new FakeDiagnosticProbe();
-        var diagnostics = new AviatorConnectionDiagnostics(probe);
+        var probe = new ConfigurableDiagnosticProbe();
+        var report = new AviatorConnectionDiagnostics(probe).diagnose(OfflineConnectionPlan.noProxy(), 5, "url");
 
-        var results = diagnostics.diagnose(planNoProxy(), 5, "url");
-
-        assertEquals(5, results.size());
-        assertStage(results.get(0), AviatorDiagnosticStage.ENDPOINT, AviatorDiagnosticStatus.PASS);
-        assertStage(results.get(4), AviatorDiagnosticStage.GRPC, AviatorDiagnosticStatus.PASS);
+        assertEquals(5, report.stages().size());
+        assertStage(report.stages().get(0), AviatorDiagnosticStage.ENDPOINT, AviatorDiagnosticStatus.PASS);
+        assertStage(report.stages().get(4), AviatorDiagnosticStage.GRPC, AviatorDiagnosticStatus.PASS);
         assertTrue(probe.tunnelCalled);
-        assertFalse(diagnostics.hasRequiredFailure(results));
+        assertFalse(report.hasRequiredFailure());
     }
 
     @Test
     void shouldSkipTlsAndGrpcWhenTcpFails() {
-        var probe = new FakeDiagnosticProbe();
+        var probe = new ConfigurableDiagnosticProbe();
         probe.connectException = new IOException("Connection refused");
-        var diagnostics = new AviatorConnectionDiagnostics(probe);
-
-        var results = diagnostics.diagnose(planNoProxy("127.0.0.1", 1), 3, "url");
+        var results = new AviatorConnectionDiagnostics(probe)
+            .diagnose(OfflineConnectionPlan.noProxy("127.0.0.1", 1), 3, "url").stages();
 
         assertStage(results.get(2), AviatorDiagnosticStage.TCP, AviatorDiagnosticStatus.FAIL);
         assertEquals("aviator", results.get(2).evidence().path("nextHopType").asText());
@@ -152,12 +127,11 @@ class AviatorConnectionDiagnosticsTest {
 
     @Test
     void shouldSkipGrpcWhenTlsFails() {
-        var probe = new FakeDiagnosticProbe();
+        var probe = new ConfigurableDiagnosticProbe();
         probe.tunnelResult = new AviatorTunnelResult.TlsFailed(false, "not-used", AviatorTlsPhase.HANDSHAKE,
             new SSLHandshakeException("PKIX path building failed"));
-        var diagnostics = new AviatorConnectionDiagnostics(probe);
-
-        var results = diagnostics.diagnose(planNoProxy(), 5, "url");
+        var results = new AviatorConnectionDiagnostics(probe)
+            .diagnose(OfflineConnectionPlan.noProxy(), 5, "url").stages();
 
         assertStage(results.get(3), AviatorDiagnosticStage.TLS, AviatorDiagnosticStatus.FAIL);
         assertEquals(AviatorTlsPhase.HANDSHAKE.id(), results.get(3).evidence().path("tlsPhase").asText());
@@ -167,12 +141,11 @@ class AviatorConnectionDiagnosticsTest {
 
     @Test
     void shouldLabelConnectPhaseWhenOpenFails() {
-        var probe = new FakeDiagnosticProbe();
+        var probe = new ConfigurableDiagnosticProbe();
         probe.tunnelResult = new AviatorTunnelResult.TlsFailed(false, "not-used", AviatorTlsPhase.CONNECT,
             new IOException("Connection refused"));
-        var diagnostics = new AviatorConnectionDiagnostics(probe);
-
-        var results = diagnostics.diagnose(planNoProxy(), 5, "url");
+        var results = new AviatorConnectionDiagnostics(probe)
+            .diagnose(OfflineConnectionPlan.noProxy(), 5, "url").stages();
 
         assertEquals(AviatorTlsPhase.CONNECT.id(), results.get(3).evidence().path("tlsPhase").asText());
         assertTrue(results.get(3).summary().toLowerCase().contains("connection"));
@@ -180,12 +153,11 @@ class AviatorConnectionDiagnosticsTest {
 
     @Test
     void shouldIncludeProxyStageFromSingleTunnelSession() {
-        var probe = new FakeDiagnosticProbe();
+        var probe = new ConfigurableDiagnosticProbe();
         probe.tunnelResult = new AviatorTunnelResult.TlsSucceeded(true, "HTTP/1.1 200 Connection established",
             "TLSv1.3", "TLS_AES_128_GCM_SHA256", "CN=aviator.invalid", "h2");
-        var diagnostics = new AviatorConnectionDiagnostics(probe);
-
-        var results = diagnostics.diagnose(planWithProxy(), 5, "url");
+        var results = new AviatorConnectionDiagnostics(probe)
+            .diagnose(OfflineConnectionPlan.withProxy(), 5, "url").stages();
 
         assertEquals(6, results.size());
         assertStage(results.get(2), AviatorDiagnosticStage.TCP, AviatorDiagnosticStatus.PASS);
@@ -198,12 +170,11 @@ class AviatorConnectionDiagnosticsTest {
 
     @Test
     void shouldSkipTlsAndGrpcWhenProxyConnectFailsInTunnel() {
-        var probe = new FakeDiagnosticProbe();
+        var probe = new ConfigurableDiagnosticProbe();
         probe.tunnelResult = new AviatorTunnelResult.ProxyConnectFailed(
             new AviatorProxyConnectException("Proxy CONNECT failed: HTTP/1.1 403"));
-        var diagnostics = new AviatorConnectionDiagnostics(probe);
-
-        var results = diagnostics.diagnose(planWithProxy(), 5, "url");
+        var results = new AviatorConnectionDiagnostics(probe)
+            .diagnose(OfflineConnectionPlan.withProxy(), 5, "url").stages();
 
         assertEquals(6, results.size());
         assertStage(results.get(3), AviatorDiagnosticStage.PROXY, AviatorDiagnosticStatus.FAIL);
@@ -215,11 +186,10 @@ class AviatorConnectionDiagnosticsTest {
 
     @Test
     void shouldSkipProxyWhenTcpToProxyFails() {
-        var probe = new FakeDiagnosticProbe();
+        var probe = new ConfigurableDiagnosticProbe();
         probe.connectException = new IOException("Connection refused");
-        var diagnostics = new AviatorConnectionDiagnostics(probe);
-
-        var results = diagnostics.diagnose(planWithProxy(), 3, "url");
+        var results = new AviatorConnectionDiagnostics(probe)
+            .diagnose(OfflineConnectionPlan.withProxy(), 3, "url").stages();
 
         assertEquals(6, results.size());
         assertStage(results.get(2), AviatorDiagnosticStage.TCP, AviatorDiagnosticStatus.FAIL);
@@ -230,74 +200,17 @@ class AviatorConnectionDiagnosticsTest {
 
     @Test
     void shouldTreatApplicationGrpcErrorAsResponseReceived() {
-        var probe = new FakeDiagnosticProbe();
-        probe.grpcResult = AviatorGrpcReachabilityResult.ok("INVALID_ARGUMENT", "invalid argument");
-        var diagnostics = new AviatorConnectionDiagnostics(probe);
+        var probe = new ConfigurableDiagnosticProbe(
+            AviatorGrpcReachabilityResult.responseReceived("INVALID_ARGUMENT", "invalid argument"));
+        var report = new AviatorConnectionDiagnostics(probe).diagnose(OfflineConnectionPlan.noProxy(), 5, "url");
 
-        var results = diagnostics.diagnose(planNoProxy(), 5, "url");
-
-        assertStage(results.get(4), AviatorDiagnosticStage.GRPC, AviatorDiagnosticStatus.PASS);
-        assertTrue(diagnostics.hasGrpcResponse(results));
-    }
-
-    private static AviatorConnectionPlan planNoProxy() {
-        return planNoProxy("aviator.invalid", 443);
-    }
-
-    private static AviatorConnectionPlan planNoProxy(String host, int port) {
-        Integer targetPort = port == 443 ? null : port;
-        return new AviatorConnectionPlan(host, "https://" + host,
-            new ParsedTarget(host, targetPort), port, Optional.empty());
-    }
-
-    private static AviatorConnectionPlan planWithProxy() {
-        var proxy = ProxyDescriptor.builder().proxyHost("proxy.invalid").proxyPort(8080).build();
-        return new AviatorConnectionPlan("aviator.invalid", "https://aviator.invalid",
-            new ParsedTarget("aviator.invalid", null), 443, Optional.of(proxy));
+        assertStage(report.stages().get(4), AviatorDiagnosticStage.GRPC, AviatorDiagnosticStatus.PASS);
+        assertTrue(report.hasGrpcStagePass());
     }
 
     private static void assertStage(AviatorDiagnosticStageResult result, AviatorDiagnosticStage stage,
             AviatorDiagnosticStatus status) {
-        assertEquals(stage, result.stage());
+        assertTrue(result.isStage(stage), "expected stage " + stage.id() + " but was " + result.stage());
         assertEquals(status, result.status());
-    }
-
-    private static final class FakeDiagnosticProbe implements IAviatorDiagnosticProbe {
-        private IOException resolveException;
-        private IOException connectException;
-        private AviatorTunnelResult tunnelResult = new AviatorTunnelResult.TlsSucceeded(false, "not-used",
-            "TLSv1.3", "TLS_AES_128_GCM_SHA256", "CN=aviator.invalid", "h2");
-        private AviatorGrpcReachabilityResult grpcResult = AviatorGrpcReachabilityResult.ok("OK", "response received");
-        private boolean tunnelCalled;
-        private int tunnelCallCount;
-        private boolean grpcCalled;
-
-        @Override
-        public InetAddress[] resolve(String host) throws IOException {
-            if (resolveException != null) {
-                throw resolveException;
-            }
-            return new InetAddress[] {InetAddress.getByName("127.0.0.1")};
-        }
-
-        @Override
-        public void connect(String host, int port, int timeoutSeconds) throws IOException {
-            if (connectException != null) {
-                throw connectException;
-            }
-        }
-
-        @Override
-        public AviatorTunnelResult probeTunnel(AviatorConnectionPlan connectionPlan, int timeoutSeconds) {
-            tunnelCalled = true;
-            tunnelCallCount++;
-            return tunnelResult;
-        }
-
-        @Override
-        public AviatorGrpcReachabilityResult probeGrpc(String url, int timeoutSeconds) {
-            grpcCalled = true;
-            return grpcResult;
-        }
     }
 }

@@ -14,11 +14,9 @@ package com.fortify.cli.aviator.diagnose;
 
 import java.io.IOException;
 import java.net.InetAddress;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.aviator._common.exception.AviatorBugException;
 import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
@@ -45,62 +43,43 @@ public class AviatorConnectionDiagnostics {
         this.probe = probe;
     }
 
-    public List<AviatorDiagnosticStageResult> diagnose(String url, int timeoutSeconds, String sourceType) {
+    public AviatorDiagnosticReport diagnose(String url, int timeoutSeconds, String sourceType) {
         try {
             return diagnose(AviatorGrpcClientHelper.createConnectionPlan(url), timeoutSeconds, sourceType);
         } catch (AviatorSimpleException e) {
-            var results = new ArrayList<AviatorDiagnosticStageResult>();
-            results.add(AviatorDiagnosticStageResult.fail(nextOrder(results), AviatorDiagnosticStage.ENDPOINT,
-                "Endpoint is invalid", "Use a valid Aviator host name and optional port", errorEvidence(e)));
-            skipAfter(results, null, AviatorDiagnosticStage.ENDPOINT, "endpoint configuration failed");
-            return results;
+            var report = new AviatorDiagnosticReport();
+            report.fail(AviatorDiagnosticStage.ENDPOINT,
+                "Endpoint is invalid", "Use a valid Aviator host name and optional port",
+                AviatorDiagnosticEvidence.errorEvidence(e));
+            skipAfter(report, null, AviatorDiagnosticStage.ENDPOINT, "endpoint configuration failed");
+            return report;
         }
     }
 
     /**
      * Run diagnostics for a pre-built connection plan (tests inject plans to avoid ambient proxy env).
      */
-    public List<AviatorDiagnosticStageResult> diagnose(AviatorConnectionPlan connectionPlan, int timeoutSeconds, String sourceType) {
-        var results = new ArrayList<AviatorDiagnosticStageResult>();
-        results.add(AviatorDiagnosticStageResult.pass(nextOrder(results), AviatorDiagnosticStage.ENDPOINT,
-            "Endpoint is valid", "No action required", endpointEvidence(connectionPlan, sourceType)));
+    public AviatorDiagnosticReport diagnose(AviatorConnectionPlan connectionPlan, int timeoutSeconds, String sourceType) {
+        var report = new AviatorDiagnosticReport();
+        report.pass(AviatorDiagnosticStage.ENDPOINT,
+            "Endpoint is valid", "No action required", endpointEvidence(connectionPlan, sourceType));
 
-        if (!runDns(results, connectionPlan)) {
-            skipAfter(results, connectionPlan, AviatorDiagnosticStage.DNS, "DNS resolution failed");
-            return results;
+        if (!runDns(report, connectionPlan)) {
+            skipAfter(report, connectionPlan, AviatorDiagnosticStage.DNS, "DNS resolution failed");
+            return report;
         }
-        if (!runTcp(results, connectionPlan, timeoutSeconds)) {
-            skipAfter(results, connectionPlan, AviatorDiagnosticStage.TCP, "TCP connectivity failed");
-            return results;
+        if (!runTcp(report, connectionPlan, timeoutSeconds)) {
+            skipAfter(report, connectionPlan, AviatorDiagnosticStage.TCP, "TCP connectivity failed");
+            return report;
         }
-        if (!runTunnelStages(results, connectionPlan, timeoutSeconds)) {
-            return results;
+        if (!runTunnelStages(report, connectionPlan, timeoutSeconds)) {
+            return report;
         }
-        runGrpc(results, connectionPlan, timeoutSeconds);
-        return results;
+        runGrpc(report, connectionPlan, timeoutSeconds);
+        return report;
     }
 
-    public ArrayNode toArrayNode(List<AviatorDiagnosticStageResult> results) {
-        var array = JsonHelper.getObjectMapper().createArrayNode();
-        results.stream().map(AviatorDiagnosticStageResult::asObjectNode).forEach(array::add);
-        return array;
-    }
-
-    public boolean hasRequiredFailure(List<AviatorDiagnosticStageResult> results) {
-        return results.stream().anyMatch(AviatorDiagnosticStageResult::isRequiredFailure);
-    }
-
-    /**
-     * True when the gRPC stage completed with a server response (stage status PASS).
-     * Uses typed stage status rather than evidence JSON keys.
-     */
-    public boolean hasGrpcResponse(List<AviatorDiagnosticStageResult> results) {
-        return results.stream()
-            .anyMatch(result -> AviatorDiagnosticStage.GRPC.equals(result.stage())
-                    && AviatorDiagnosticStatus.PASS.equals(result.status()));
-    }
-
-    private boolean runDns(List<AviatorDiagnosticStageResult> results, AviatorConnectionPlan connectionPlan) {
+    private boolean runDns(AviatorDiagnosticReport report, AviatorConnectionPlan connectionPlan) {
         try {
             var evidence = JsonHelper.getObjectMapper().createObjectNode();
             addAddresses(evidence, "resolvedAddresses", probe.resolve(connectionPlan.target().host()));
@@ -108,12 +87,12 @@ public class AviatorConnectionDiagnostics {
                 var proxy = connectionPlan.proxyDescriptor().get();
                 addAddresses(evidence, "proxyResolvedAddresses", probe.resolve(proxy.getProxyHost()));
             }
-            results.add(AviatorDiagnosticStageResult.pass(nextOrder(results), AviatorDiagnosticStage.DNS,
-                "Host name resolved", "No action required", evidence));
+            report.pass(AviatorDiagnosticStage.DNS, "Host name resolved", "No action required", evidence);
             return true;
         } catch (IOException e) {
-            results.add(AviatorDiagnosticStageResult.fail(nextOrder(results), AviatorDiagnosticStage.DNS,
-                "DNS resolution failed", "Check the Aviator host name, DNS, VPN, or proxy settings", errorEvidence(e)));
+            report.fail(AviatorDiagnosticStage.DNS,
+                "DNS resolution failed", "Check the Aviator host name, DNS, VPN, or proxy settings",
+                AviatorDiagnosticEvidence.errorEvidence(e));
             return false;
         }
     }
@@ -125,23 +104,21 @@ public class AviatorConnectionDiagnostics {
      * CONNECT/TLS so a pure next-hop TCP failure stays distinct from proxy CONNECT or TLS
      * handshake failure. Do not fold TCP into the tunnel solely to avoid a double connect.
      */
-    private boolean runTcp(List<AviatorDiagnosticStageResult> results, AviatorConnectionPlan connectionPlan, int timeoutSeconds) {
+    private boolean runTcp(AviatorDiagnosticReport report, AviatorConnectionPlan connectionPlan, int timeoutSeconds) {
         var proxyDescriptor = connectionPlan.proxyDescriptor();
         var nextHopHost = proxyDescriptor.map(proxy -> proxy.getProxyHost()).orElse(connectionPlan.target().host());
         var nextHopPort = proxyDescriptor.map(proxy -> proxy.getProxyPort()).orElse(connectionPlan.effectivePort());
         var evidence = nextHopEvidence(nextHopHost, nextHopPort, proxyDescriptor.isPresent());
         try {
             probe.connect(nextHopHost, nextHopPort, timeoutSeconds);
-            results.add(AviatorDiagnosticStageResult.pass(nextOrder(results), AviatorDiagnosticStage.TCP,
-                "TCP connection opened", "No action required", evidence));
+            report.pass(AviatorDiagnosticStage.TCP, "TCP connection opened", "No action required", evidence);
             return true;
         } catch (Exception e) {
             putError(evidence, e);
             var guidance = proxyDescriptor.isPresent()
                     ? "Check proxy host, port, credentials, and firewall access"
                     : "Check firewall, VPN, proxy, and port 443 access";
-            results.add(AviatorDiagnosticStageResult.fail(nextOrder(results), AviatorDiagnosticStage.TCP,
-                "TCP connection failed", guidance, evidence));
+            report.fail(AviatorDiagnosticStage.TCP, "TCP connection failed", guidance, evidence);
             return false;
         }
     }
@@ -153,132 +130,101 @@ public class AviatorConnectionDiagnostics {
      *
      * @return true if TLS stage continued the pipeline (pass or alpn warn)
      */
-    private boolean runTunnelStages(List<AviatorDiagnosticStageResult> results, AviatorConnectionPlan connectionPlan,
+    private boolean runTunnelStages(AviatorDiagnosticReport report, AviatorConnectionPlan connectionPlan,
             int timeoutSeconds) {
         var tunnel = probe.probeTunnel(connectionPlan, timeoutSeconds);
         if (tunnel instanceof AviatorTunnelResult.ProxyConnectFailed failed) {
-            appendProxyFailure(results, connectionPlan, failed);
-            skipAfter(results, connectionPlan, AviatorDiagnosticStage.PROXY, "proxy CONNECT failed");
+            appendProxyFailure(report, connectionPlan, failed);
+            skipAfter(report, connectionPlan, AviatorDiagnosticStage.PROXY, "proxy CONNECT failed");
             return false;
         }
-        appendProxyPassIfConfigured(results, connectionPlan, tunnel);
+        appendProxyPassIfConfigured(report, connectionPlan, tunnel);
         if (tunnel instanceof AviatorTunnelResult.TlsFailed failed) {
-            appendTlsFailure(results, connectionPlan, failed);
-            skipAfter(results, connectionPlan, AviatorDiagnosticStage.TLS, "TLS handshake failed");
+            appendTlsFailure(report, connectionPlan, failed);
+            skipAfter(report, connectionPlan, AviatorDiagnosticStage.TLS, "TLS handshake failed");
             return false;
         }
         if (tunnel instanceof AviatorTunnelResult.TlsSucceeded ok) {
-            appendTlsSuccess(results, ok);
+            appendTlsSuccess(report, ok);
             return true;
         }
         throw new AviatorBugException("Unhandled tunnel result: " + tunnel);
     }
 
-    private void appendProxyFailure(List<AviatorDiagnosticStageResult> results, AviatorConnectionPlan connectionPlan,
+    private void appendProxyFailure(AviatorDiagnosticReport report, AviatorConnectionPlan connectionPlan,
             AviatorTunnelResult.ProxyConnectFailed failed) {
-        var evidence = errorEvidence(failed.error());
+        var evidence = AviatorDiagnosticEvidence.errorEvidence(failed.error());
         putProxyEvidence(evidence, connectionPlan);
-        results.add(AviatorDiagnosticStageResult.fail(nextOrder(results), AviatorDiagnosticStage.PROXY,
-            "Proxy CONNECT failed",
-            "Check proxy host, port, credentials, CONNECT allow-list, and authentication method", evidence));
+        report.fail(AviatorDiagnosticStage.PROXY, "Proxy CONNECT failed",
+            "Check proxy host, port, credentials, CONNECT allow-list, and authentication method", evidence);
     }
 
-    private void appendProxyPassIfConfigured(List<AviatorDiagnosticStageResult> results,
+    private void appendProxyPassIfConfigured(AviatorDiagnosticReport report,
             AviatorConnectionPlan connectionPlan, AviatorTunnelResult tunnel) {
         if (connectionPlan.proxyDescriptor().isEmpty()) {
             return;
         }
         var evidence = JsonHelper.getObjectMapper().createObjectNode();
-        evidence.put("proxyConnectStatus", proxyStatusFrom(tunnel));
+        evidence.put("proxyConnectStatus", tunnel.proxyConnectStatus());
         putProxyEvidence(evidence, connectionPlan);
-        results.add(AviatorDiagnosticStageResult.pass(nextOrder(results), AviatorDiagnosticStage.PROXY,
-            "Proxy CONNECT succeeded", "No action required", evidence));
+        report.pass(AviatorDiagnosticStage.PROXY, "Proxy CONNECT succeeded", "No action required", evidence);
     }
 
-    private void appendTlsSuccess(List<AviatorDiagnosticStageResult> results, AviatorTunnelResult.TlsSucceeded ok) {
+    private void appendTlsSuccess(AviatorDiagnosticReport report, AviatorTunnelResult.TlsSucceeded ok) {
         var evidence = JsonHelper.getObjectMapper().createObjectNode();
         evidence.put("tlsProtocol", ok.protocol());
         evidence.put("tlsCipherSuite", ok.cipherSuite());
         evidence.put("tlsPeerSubject", ok.peerSubject());
         evidence.put("tlsAlpnProtocol", ok.applicationProtocol());
-        evidence.put("proxyConnectStatus", ok.proxyConnectStatus());
+        evidence.put("proxyConnectStatus", ok.proxyConnectStatusLine());
         evidence.put("tlsPhase", AviatorTlsPhase.HANDSHAKE.id());
         if (!"h2".equals(ok.applicationProtocol())) {
-            results.add(AviatorDiagnosticStageResult.warn(nextOrder(results), AviatorDiagnosticStage.TLS,
+            report.warn(AviatorDiagnosticStage.TLS,
                 "TLS works, but HTTP/2 was not enabled",
-                "Allow ALPN h2 through the proxy or gateway to aviator-grpc-server", true, evidence));
+                "Allow ALPN h2 through the proxy or gateway to aviator-grpc-server", true, evidence);
         } else {
-            results.add(AviatorDiagnosticStageResult.pass(nextOrder(results), AviatorDiagnosticStage.TLS,
-                "TLS and HTTP/2 are available", "No action required", evidence));
+            report.pass(AviatorDiagnosticStage.TLS, "TLS and HTTP/2 are available", "No action required", evidence);
         }
     }
 
-    private void appendTlsFailure(List<AviatorDiagnosticStageResult> results, AviatorConnectionPlan connectionPlan,
+    private void appendTlsFailure(AviatorDiagnosticReport report, AviatorConnectionPlan connectionPlan,
             AviatorTunnelResult.TlsFailed failed) {
-        var evidence = errorEvidence(failed.error());
+        var evidence = AviatorDiagnosticEvidence.errorEvidence(failed.error());
         evidence.put("tlsPhase", failed.phase().id());
-        if (failed.proxyConnectStatus() != null) {
-            evidence.put("proxyConnectStatus", failed.proxyConnectStatus());
+        if (failed.proxyConnectStatusLine() != null) {
+            evidence.put("proxyConnectStatus", failed.proxyConnectStatusLine());
         }
         putProxyEvidence(evidence, connectionPlan);
         if (failed.phase() == AviatorTlsPhase.HANDSHAKE) {
-            results.add(AviatorDiagnosticStageResult.fail(nextOrder(results), AviatorDiagnosticStage.TLS,
-                "TLS handshake failed",
-                "Check certificate trust, SNI, and TLS inspection settings", evidence));
+            report.fail(AviatorDiagnosticStage.TLS, "TLS handshake failed",
+                "Check certificate trust, SNI, and TLS inspection settings", evidence);
             return;
         }
         var guidance = connectionPlan.proxyDescriptor().isPresent()
                 ? "Check proxy host, port, credentials, and firewall access to the proxy"
                 : "Check firewall, VPN, proxy, and port access to the Aviator host";
-        results.add(AviatorDiagnosticStageResult.fail(nextOrder(results), AviatorDiagnosticStage.TLS,
-            "Could not open connection for TLS probe", guidance, evidence));
+        report.fail(AviatorDiagnosticStage.TLS, "Could not open connection for TLS probe", guidance, evidence);
     }
 
-    private void runGrpc(List<AviatorDiagnosticStageResult> results, AviatorConnectionPlan connectionPlan, int timeoutSeconds) {
+    private void runGrpc(AviatorDiagnosticReport report, AviatorConnectionPlan connectionPlan, int timeoutSeconds) {
         try {
-            var grpc = probe.probeGrpc(connectionPlan.originalUrl(), timeoutSeconds);
-            applyGrpcClassification(results, grpcEvidence(grpc), AviatorGrpcStageClassification.classify(grpc));
+            applyGrpc(report, probe.probeGrpc(connectionPlan.originalUrl(), timeoutSeconds));
         } catch (Exception e) {
-            var evidence = errorEvidence(e);
-            evidence.put("grpcResponseReceived", false);
-            applyGrpcClassification(results, evidence, AviatorGrpcStageClassification.classifyException(e));
+            applyGrpc(report, AviatorGrpcReachabilityResult.probeError(e));
         }
     }
 
-    private void applyGrpcClassification(List<AviatorDiagnosticStageResult> results, ObjectNode evidence,
-            AviatorGrpcStageClassification.Result classification) {
-        if (classification.pattern() != null) {
-            evidence.put("pattern", classification.pattern().wireId());
-        }
-        if (classification.pass()) {
-            results.add(AviatorDiagnosticStageResult.pass(nextOrder(results), AviatorDiagnosticStage.GRPC,
-                classification.summary(), classification.guidance(), evidence));
-        } else {
-            results.add(AviatorDiagnosticStageResult.fail(nextOrder(results), AviatorDiagnosticStage.GRPC,
-                classification.summary(), classification.guidance(), evidence));
-        }
-    }
-
-    /**
-     * Public gRPC stage evidence uses a single automation vocabulary: {@code pattern}
-     * (from classification). Probe-internal {@link AviatorGrpcFailureCategory} is not
-     * emitted on the wire to avoid dual near-synonym ids.
-     */
-    private static ObjectNode grpcEvidence(AviatorGrpcReachabilityResult grpc) {
+    private void applyGrpc(AviatorDiagnosticReport report, AviatorGrpcReachabilityResult grpc) {
         var evidence = JsonHelper.getObjectMapper().createObjectNode();
-        evidence.put("grpcResponseReceived", grpc.responseReceived());
-        evidence.put("grpcStatusCode", grpc.statusCode());
-        if (grpc.description() != null) {
-            evidence.put("grpcDescription", grpc.description());
+        grpc.putEvidence(evidence);
+        if (grpc.pattern() != null) {
+            evidence.put("pattern", grpc.pattern().wireId());
         }
-        evidence.put("httpResponseReceived", grpc.httpResponseReceived());
-        if (grpc.httpStatusCode() != null) {
-            evidence.put("httpStatusCode", grpc.httpStatusCode());
+        if (grpc.stagePass()) {
+            report.pass(AviatorDiagnosticStage.GRPC, grpc.stageSummary(), grpc.stageGuidance(), evidence);
+        } else {
+            report.fail(AviatorDiagnosticStage.GRPC, grpc.stageSummary(), grpc.stageGuidance(), evidence);
         }
-        if (grpc.httpContentType() != null) {
-            evidence.put("httpContentType", grpc.httpContentType());
-        }
-        return evidence;
     }
 
     private ObjectNode endpointEvidence(AviatorConnectionPlan connectionPlan, String sourceType) {
@@ -308,25 +254,14 @@ public class AviatorConnectionDiagnostics {
     }
 
     private static void putError(ObjectNode evidence, Exception e) {
-        var err = errorEvidence(e);
-        err.fields().forEachRemaining(entry -> evidence.set(entry.getKey(), entry.getValue()));
-    }
-
-    private static String proxyStatusFrom(AviatorTunnelResult tunnel) {
-        if (tunnel instanceof AviatorTunnelResult.TlsSucceeded s) {
-            return s.proxyConnectStatus();
-        }
-        if (tunnel instanceof AviatorTunnelResult.TlsFailed f) {
-            return f.proxyConnectStatus();
-        }
-        return "not-used";
+        AviatorDiagnosticEvidence.merge(evidence, AviatorDiagnosticEvidence.errorEvidence(e));
     }
 
     /**
      * Append WARN skips for every transport stage strictly after {@code failedStage}.
      * PROXY is omitted when the plan has no proxy (or plan is null after endpoint failure).
      */
-    private static void skipAfter(List<AviatorDiagnosticStageResult> results, AviatorConnectionPlan connectionPlan,
+    private static void skipAfter(AviatorDiagnosticReport report, AviatorConnectionPlan connectionPlan,
             AviatorDiagnosticStage failedStage, String reason) {
         var hasProxy = connectionPlan != null && connectionPlan.proxyDescriptor().isPresent();
         var afterFailed = failedStage == AviatorDiagnosticStage.ENDPOINT;
@@ -340,35 +275,14 @@ public class AviatorConnectionDiagnostics {
             if (stage == AviatorDiagnosticStage.PROXY && !hasProxy) {
                 continue;
             }
-            results.add(AviatorDiagnosticStageResult.warn(nextOrder(results), stage,
-                "Skipped because " + reason, "Resolve the previous failed required stage first", true,
-                JsonHelper.getObjectMapper().createObjectNode()));
+            report.skipWarn(stage, "Skipped because " + reason,
+                "Resolve the previous failed required stage first",
+                AviatorDiagnosticEvidence.empty());
         }
     }
 
     private static void addAddresses(ObjectNode evidence, String fieldName, InetAddress[] addresses) {
         var array = evidence.putArray(fieldName);
         Arrays.stream(addresses).map(InetAddress::getHostAddress).forEach(array::add);
-    }
-
-    private static int nextOrder(List<AviatorDiagnosticStageResult> results) {
-        return results.size() + 1;
-    }
-
-    public static ObjectNode errorEvidence(Exception e) {
-        var evidence = JsonHelper.getObjectMapper().createObjectNode();
-        evidence.put("exceptionType", e.getClass().getName());
-        evidence.put("exceptionMessage", e.getMessage());
-        var cause = e.getCause();
-        if (cause != null) {
-            evidence.put("causeType", cause.getClass().getName());
-            evidence.put("causeMessage", cause.getMessage());
-            var nested = cause.getCause();
-            if (nested != null) {
-                evidence.put("rootCauseType", nested.getClass().getName());
-                evidence.put("rootCauseMessage", nested.getMessage());
-            }
-        }
-        return evidence;
     }
 }

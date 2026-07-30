@@ -12,6 +12,9 @@
  */
 package com.fortify.cli.aviator.diagnose;
 
+/**
+ * Public gRPC stage evidence {@code pattern} wire ids. Sole automation vocabulary for gRPC failures.
+ */
 public enum AviatorGrpcPattern {
     HTTP_RESPONSE_NOT_GRPC("http-response-not-grpc"),
     /** gRPC path got no response (transport TLS may still have passed). */

@@ -18,28 +18,46 @@ import com.fortify.cli.common.log.LogSensitivityLevel;
 import com.fortify.cli.common.log.MaskValue;
 
 import lombok.Getter;
+import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Option;
 
 /**
  * URL-based diagnose source: required {@code --url}, optional {@code --token} for direct token validation.
+ * <p>
+ * Token resolution is a nested {@link AbstractTextResolverMixin} so class-level
+ * {@link MaskValue} applies only to the resolved token (not the URL host).
  */
 @Getter
-public class AviatorConnectionDiagnoseUrlSourceArgGroup extends AbstractTextResolverMixin {
+public class AviatorConnectionDiagnoseUrlSourceArgGroup {
     @Option(names = {"--url"}, required = true, order = 1)
     @MaskValue(sensitivity = LogSensitivityLevel.low, description = "AVIATOR HOST NAME", pattern = MaskValue.URL_HOSTNAME_PATTERN)
     private String url;
 
-    @Option(names = {"--token", "-t"}, descriptionKey = "fcli.aviator.connection.diagnose.token",
-        paramLabel = "source", required = false, order = 2)
-    @MaskValue(sensitivity = LogSensitivityLevel.high, description = "AVIATOR TOKEN")
-    private String tokenSource;
-
-    @Override
-    public String getTextSource() {
-        return tokenSource;
-    }
+    /** Present only when {@code --token} is supplied (optional ArgGroup). */
+    @ArgGroup(exclusive = false, multiplicity = "0..1", order = 2)
+    private TokenSource tokenSource;
 
     public String getTokenOrNull() {
-        return AviatorUserTokenTextResolver.resolveOptional(getTextSource(), this::getText);
+        return tokenSource == null ? null : tokenSource.getTokenOrNull();
+    }
+
+    /**
+     * Optional token text source. Class-level {@link MaskValue} registers the resolved token
+     * for log masking ({@link AbstractTextResolverMixin#getText()}); field-level masks the raw option.
+     */
+    @MaskValue(sensitivity = LogSensitivityLevel.high, description = "AVIATOR TOKEN")
+    public static final class TokenSource extends AbstractTextResolverMixin {
+        @Option(names = {"--token", "-t"}, paramLabel = "source", required = true, order = 2)
+        @MaskValue(sensitivity = LogSensitivityLevel.high, description = "AVIATOR TOKEN")
+        private String textSource;
+
+        @Override
+        public String getTextSource() {
+            return textSource;
+        }
+
+        String getTokenOrNull() {
+            return AviatorUserTokenTextResolver.resolveOptional(getTextSource(), this::getText);
+        }
     }
 }

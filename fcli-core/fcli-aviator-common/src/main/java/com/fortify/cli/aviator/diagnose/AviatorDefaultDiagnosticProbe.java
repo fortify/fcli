@@ -142,7 +142,7 @@ public class AviatorDefaultDiagnosticProbe implements IAviatorDiagnosticProbe {
     public AviatorGrpcReachabilityResult probeGrpc(String url, int timeoutSeconds) throws Exception {
         try (var client = AviatorGrpcClientHelper.createClient(url)) {
             client.probeGetDefaultQuota(timeoutSeconds);
-            return AviatorGrpcReachabilityResult.ok("OK", "Default quota response received");
+            return AviatorGrpcReachabilityResult.responseReceived("OK", "Default quota response received");
         } catch (StatusRuntimeException e) {
             var status = e.getStatus();
             var responseReceived = isResponseReceived(status.getCode());
@@ -152,13 +152,15 @@ public class AviatorDefaultDiagnosticProbe implements IAviatorDiagnosticProbe {
                 return AviatorGrpcReachabilityResult.nonGrpcHttp(status.getCode().name(),
                     httpResponse.statusCode(), httpResponse.contentType(), description);
             }
+            if (responseReceived) {
+                return AviatorGrpcReachabilityResult.responseReceived(status.getCode().name(), description);
+            }
             var tlsFailure = AviatorTlsFailureDetector.isTlsFailure(e, description)
                     || AviatorTlsFailureDetector.isTlsFailure(status.getCause(), description);
-            if (responseReceived) {
-                return AviatorGrpcReachabilityResult.ok(status.getCode().name(), description);
+            if (tlsFailure) {
+                return AviatorGrpcReachabilityResult.tlsFailed(status.getCode().name(), description);
             }
-            var category = tlsFailure ? AviatorGrpcFailureCategory.TLS : AviatorGrpcFailureCategory.NO_RESPONSE;
-            return AviatorGrpcReachabilityResult.noResponse(status.getCode().name(), category, description);
+            return AviatorGrpcReachabilityResult.noResponse(status.getCode().name(), description);
         }
     }
 

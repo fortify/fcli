@@ -57,21 +57,22 @@ public class AviatorConnectionDiagnoseCommand extends AbstractOutputCommand {
     }
 
     private AviatorConnectionDiagnoseSource resolveSource() {
-        if (sourceArgGroup.getUrlSource() != null) {
-            var urlSource = sourceArgGroup.getUrlSource();
+        var urlSource = sourceArgGroup.getUrlSource();
+        if (urlSource != null) {
             var token = urlSource.getTokenOrNull();
-            if (token != null) {
-                return AviatorConnectionDiagnoseSource.fromUrlAndToken(urlSource.getUrl(), token);
-            }
-            return AviatorConnectionDiagnoseSource.fromUrl(urlSource.getUrl());
+            return token != null
+                ? AviatorConnectionDiagnoseSource.fromUrlAndToken(urlSource.getUrl(), token)
+                : AviatorConnectionDiagnoseSource.fromUrl(urlSource.getUrl());
         }
-        if (sourceArgGroup.getAviatorSession() != null) {
-            var descriptor = AviatorUserSessionHelper.instance().get(sourceArgGroup.getAviatorSession(), true);
-            return AviatorConnectionDiagnoseSource.fromUserSession(descriptor);
+        var sessionName = sourceArgGroup.getAviatorSession();
+        if (sessionName != null) {
+            return AviatorConnectionDiagnoseSource.fromUserSession(
+                AviatorUserSessionHelper.instance().get(sessionName, true));
         }
-        if (sourceArgGroup.getAdminConfig() != null) {
-            var descriptor = AviatorAdminConfigHelper.instance().get(sourceArgGroup.getAdminConfig(), true);
-            return AviatorConnectionDiagnoseSource.fromAdminConfig(descriptor);
+        var adminName = sourceArgGroup.getAdminConfig();
+        if (adminName != null) {
+            return AviatorConnectionDiagnoseSource.fromAdminConfig(
+                AviatorAdminConfigHelper.instance().get(adminName, true));
         }
         throw new FcliBugException("No diagnose source selected; exclusive ArgGroup invariant was violated");
     }

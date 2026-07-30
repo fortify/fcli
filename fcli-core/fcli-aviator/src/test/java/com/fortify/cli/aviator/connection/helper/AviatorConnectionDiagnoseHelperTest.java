@@ -14,15 +14,17 @@ package com.fortify.cli.aviator.connection.helper;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.io.IOException;
-import java.net.InetAddress;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Stream;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import com.fortify.cli.aviator._common.config.admin.helper.AviatorAdminConfigDescriptor;
 import com.fortify.cli.aviator._common.session.user.helper.AviatorUserSessionDescriptor;
@@ -30,121 +32,111 @@ import com.fortify.cli.aviator._common.session.user.helper.AviatorUserSessionHel
 import com.fortify.cli.aviator.connection.helper.AviatorConnectionDiagnoseHelper.AdminValidator;
 import com.fortify.cli.aviator.connection.helper.AviatorConnectionDiagnoseHelper.TokenValidator;
 import com.fortify.cli.aviator.diagnose.AviatorConnectionDiagnostics;
-import com.fortify.cli.aviator.diagnose.AviatorDiagnosticStage;
+import com.fortify.cli.aviator.diagnose.AviatorDiagnosticReport;
 import com.fortify.cli.aviator.diagnose.AviatorDiagnosticStageResult;
 import com.fortify.cli.aviator.diagnose.AviatorDiagnosticStatus;
-import com.fortify.cli.aviator.diagnose.AviatorGrpcFailureCategory;
 import com.fortify.cli.aviator.diagnose.AviatorGrpcReachabilityResult;
-import com.fortify.cli.aviator.diagnose.AviatorTunnelResult;
 import com.fortify.cli.aviator.diagnose.IAviatorDiagnosticProbe;
-import com.fortify.cli.aviator.grpc.AviatorGrpcClientHelper.AviatorConnectionPlan;
-import com.fortify.cli.aviator.grpc.AviatorGrpcClientHelper.ParsedTarget;
+import com.fortify.cli.aviator.diagnose.support.ConfigurableDiagnosticProbe;
+import com.fortify.cli.aviator.diagnose.support.OfflineConnectionPlan;
+import com.fortify.cli.common.exception.FcliBugException;
 import com.fortify.grpc.token.TokenValidationResponse;
 
+/**
+ * Product-layer credential policy: omit / skip / optional pass-fail + sourceType matrix.
+ * Transport skip chains live in {@code AviatorConnectionDiagnosticsTest}.
+ */
 class AviatorConnectionDiagnoseHelperTest {
 
-    @Test
-    void bareUrlOmitsCredentialStage() {
-        var helper = helperWithGrpc(AviatorGrpcReachabilityResult.ok("OK", "ok"));
-        var result = helper.diagnose(AviatorConnectionDiagnoseSource.fromUrl("https://aviator.invalid"), 5);
-
-        assertTrue(result.stages().stream().noneMatch(s ->
-            s.stage() == AviatorDiagnosticStage.TOKEN || s.stage() == AviatorDiagnosticStage.ADMIN));
-        assertFalse(result.requiredFailure());
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("sourceTypes")
+    void endpointSourceType(String label, AviatorConnectionDiagnoseSource source, String expectedSourceType) {
+        var result = helperWithGrpc(AviatorGrpcReachabilityResult.responseReceived("OK", "ok"))
+            .diagnose(source, 5);
+        assertEquals(expectedSourceType, result.stages().get(0).evidence().path("sourceType").asText());
     }
 
-    @Test
-    void urlAndTokenSkipsCredentialWhenGrpcDidNotRespond() {
-        var helper = helperWithGrpc(AviatorGrpcReachabilityResult.noResponse(
-            "DEADLINE_EXCEEDED", AviatorGrpcFailureCategory.NO_RESPONSE, "deadline"));
-        var result = helper.diagnose(
-            AviatorConnectionDiagnoseSource.fromUrlAndToken("https://aviator.invalid", "tok"), 5);
+    static Stream<Arguments> sourceTypes() {
+        return Stream.of(
+            Arguments.of("url", AviatorConnectionDiagnoseSource.fromUrl("https://aviator.invalid"), "url"),
+            Arguments.of("url-token",
+                AviatorConnectionDiagnoseSource.fromUrlAndToken("https://aviator.invalid", "tok"), "url-token"),
+            Arguments.of("user-session",
+                AviatorConnectionDiagnoseSource.fromUserSession(session("session-tok")), "user-session"),
+            Arguments.of("admin-config",
+                AviatorConnectionDiagnoseSource.fromAdminConfig(admin()), "admin-config"));
+    }
 
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("credentialSources")
+    void credentialSkippedWhenGrpcDidNotRespond(String label, AviatorConnectionDiagnoseSource source,
+            String expectedStage) {
+        var result = helperWithGrpc(AviatorGrpcReachabilityResult.noResponse("DEADLINE_EXCEEDED", "deadline"))
+            .diagnose(source, 5);
         var cred = lastStage(result.stages());
-        assertEquals(AviatorDiagnosticStage.TOKEN, cred.stage());
+        assertEquals(expectedStage, cred.stage());
         assertEquals(AviatorDiagnosticStatus.WARN, cred.status());
         assertFalse(cred.required());
         assertTrue(cred.summary().toLowerCase().contains("skipped"));
     }
 
-    @Test
-    void userSessionSkipsAsTokenStageWhenGrpcDidNotRespond() {
-        var session = AviatorUserSessionDescriptor.builder()
-            .aviatorUrl("https://aviator.invalid")
-            .aviatorToken("session-tok")
-            .build();
-        var helper = helperWithGrpc(AviatorGrpcReachabilityResult.noResponse(
-            "DEADLINE_EXCEEDED", AviatorGrpcFailureCategory.NO_RESPONSE, "deadline"));
-        var result = helper.diagnose(AviatorConnectionDiagnoseSource.fromUserSession(session), 5);
-
-        var cred = lastStage(result.stages());
-        assertEquals(AviatorDiagnosticStage.TOKEN, cred.stage());
-        assertEquals(AviatorDiagnosticStatus.WARN, cred.status());
-        assertFalse(result.stages().stream().anyMatch(s -> s.stage() == AviatorDiagnosticStage.ADMIN));
+    static Stream<Arguments> credentialSources() {
+        return Stream.of(
+            Arguments.of("url-token",
+                AviatorConnectionDiagnoseSource.fromUrlAndToken("https://aviator.invalid", "tok"),
+                AviatorConnectionDiagnoseHelper.STAGE_TOKEN),
+            Arguments.of("user-session",
+                AviatorConnectionDiagnoseSource.fromUserSession(session("session-tok")),
+                AviatorConnectionDiagnoseHelper.STAGE_TOKEN),
+            Arguments.of("admin-config",
+                AviatorConnectionDiagnoseSource.fromAdminConfig(admin()),
+                AviatorConnectionDiagnoseHelper.STAGE_ADMIN));
     }
 
     @Test
-    void adminConfigSkipsAsAdminStageWhenGrpcDidNotRespond() {
-        var admin = AviatorAdminConfigDescriptor.builder()
-            .aviatorUrl("https://aviator.invalid")
-            .tenant("demo")
-            .build();
-        var helper = helperWithGrpc(AviatorGrpcReachabilityResult.noResponse(
-            "DEADLINE_EXCEEDED", AviatorGrpcFailureCategory.NO_RESPONSE, "deadline"));
-        var result = helper.diagnose(AviatorConnectionDiagnoseSource.fromAdminConfig(admin), 5);
+    void bareUrlOmitsCredentialStage() {
+        var result = helperWithGrpc(AviatorGrpcReachabilityResult.responseReceived("OK", "ok"))
+            .diagnose(AviatorConnectionDiagnoseSource.fromUrl("https://aviator.invalid"), 5);
 
-        var cred = lastStage(result.stages());
-        assertEquals(AviatorDiagnosticStage.ADMIN, cred.stage());
-        assertEquals(AviatorDiagnosticStatus.WARN, cred.status());
-        assertFalse(result.stages().stream().anyMatch(s -> s.stage() == AviatorDiagnosticStage.TOKEN));
-    }
-
-    @Test
-    void urlAndTokenPassWhenValidatorAccepts() {
-        TokenValidator tokenOk = (url, token) ->
-            new AviatorUserTokenValidationResult("tenant", TokenValidationResponse.newBuilder().setValid(true).build());
-        var helper = helperWithGrpcAndValidators(
-            AviatorGrpcReachabilityResult.ok("OK", "ok"), tokenOk, d -> {});
-        var result = helper.diagnose(
-            AviatorConnectionDiagnoseSource.fromUrlAndToken("https://aviator.invalid", "tok"), 5);
-
-        var cred = lastStage(result.stages());
-        assertEquals(AviatorDiagnosticStage.TOKEN, cred.stage());
-        assertEquals(AviatorDiagnosticStatus.PASS, cred.status());
-        assertFalse(cred.required());
+        assertTrue(result.stages().stream().noneMatch(s ->
+            AviatorConnectionDiagnoseHelper.STAGE_TOKEN.equals(s.stage())
+                || AviatorConnectionDiagnoseHelper.STAGE_ADMIN.equals(s.stage())));
         assertFalse(result.requiredFailure());
     }
 
     @Test
-    void urlAndTokenOptionalFailDoesNotSetRequiredFailure() {
+    void tokenPassAndOptionalFailDoNotForceRequiredFailure() {
+        TokenValidator tokenOk = (url, token) ->
+            new AviatorUserTokenValidationResult("tenant", TokenValidationResponse.newBuilder().setValid(true).build());
+        var pass = helperWithGrpcAndValidators(
+            AviatorGrpcReachabilityResult.responseReceived("OK", "ok"), tokenOk, d -> {})
+            .diagnose(AviatorConnectionDiagnoseSource.fromUrlAndToken("https://aviator.invalid", "tok"), 5);
+        assertEquals(AviatorDiagnosticStatus.PASS, lastStage(pass.stages()).status());
+        assertFalse(lastStage(pass.stages()).required());
+        assertFalse(pass.requiredFailure());
+
         TokenValidator tokenBad = (url, token) ->
             new AviatorUserTokenValidationResult("tenant",
                 TokenValidationResponse.newBuilder().setValid(false).setErrorMessage("expired").build());
-        var helper = helperWithGrpcAndValidators(
-            AviatorGrpcReachabilityResult.ok("OK", "ok"), tokenBad, d -> {});
-        var result = helper.diagnose(
-            AviatorConnectionDiagnoseSource.fromUrlAndToken("https://aviator.invalid", "tok"), 5);
-
-        var cred = lastStage(result.stages());
-        assertEquals(AviatorDiagnosticStage.TOKEN, cred.stage());
-        assertEquals(AviatorDiagnosticStatus.FAIL, cred.status());
-        assertFalse(cred.required());
-        assertFalse(result.requiredFailure());
-        assertEquals("expired", cred.evidence().path("tokenValidationMessage").asText());
+        var fail = helperWithGrpcAndValidators(
+            AviatorGrpcReachabilityResult.responseReceived("OK", "ok"), tokenBad, d -> {})
+            .diagnose(AviatorConnectionDiagnoseSource.fromUrlAndToken("https://aviator.invalid", "tok"), 5);
+        assertEquals(AviatorDiagnosticStatus.FAIL, lastStage(fail.stages()).status());
+        assertFalse(lastStage(fail.stages()).required());
+        assertFalse(fail.requiredFailure());
+        assertEquals("expired", lastStage(fail.stages()).evidence().path("tokenValidationMessage").asText());
     }
 
     @Test
-    void urlAndTokenOptionalFailWhenValidatorThrows() {
+    void tokenValidatorExceptionIsOptionalFailWithExceptionEvidence() {
         TokenValidator tokenBad = (url, token) -> {
             throw new IllegalStateException("validator error");
         };
-        var helper = helperWithGrpcAndValidators(
-            AviatorGrpcReachabilityResult.ok("OK", "ok"), tokenBad, d -> {});
-        var result = helper.diagnose(
-            AviatorConnectionDiagnoseSource.fromUrlAndToken("https://aviator.invalid", "tok"), 5);
+        var result = helperWithGrpcAndValidators(
+            AviatorGrpcReachabilityResult.responseReceived("OK", "ok"), tokenBad, d -> {})
+            .diagnose(AviatorConnectionDiagnoseSource.fromUrlAndToken("https://aviator.invalid", "tok"), 5);
 
         var cred = lastStage(result.stages());
-        assertEquals(AviatorDiagnosticStage.TOKEN, cred.stage());
         assertEquals(AviatorDiagnosticStatus.FAIL, cred.status());
         assertFalse(cred.required());
         assertFalse(result.requiredFailure());
@@ -152,49 +144,70 @@ class AviatorConnectionDiagnoseHelperTest {
     }
 
     @Test
-    void adminPassWhenValidatorAccepts() {
-        var adminCalled = new AtomicBoolean();
-        AdminValidator adminOk = d -> adminCalled.set(true);
-        var admin = AviatorAdminConfigDescriptor.builder()
-            .aviatorUrl("https://aviator.invalid")
-            .tenant("demo")
-            .build();
-        var helper = helperWithGrpcAndValidators(
-            AviatorGrpcReachabilityResult.ok("OK", "ok"),
+    void tokenValidatorBugExceptionIsNotSwallowed() {
+        TokenValidator tokenBug = (url, token) -> {
+            throw new FcliBugException("internal invariant broken");
+        };
+        assertThrows(FcliBugException.class, () -> helperWithGrpcAndValidators(
+            AviatorGrpcReachabilityResult.responseReceived("OK", "ok"), tokenBug, d -> {})
+            .diagnose(AviatorConnectionDiagnoseSource.fromUrlAndToken("https://aviator.invalid", "tok"), 5));
+    }
+
+    @Test
+    void adminValidatorBugExceptionIsNotSwallowed() {
+        AdminValidator adminBug = d -> {
+            throw new FcliBugException("admin path bug");
+        };
+        assertThrows(FcliBugException.class, () -> helperWithGrpcAndValidators(
+            AviatorGrpcReachabilityResult.responseReceived("OK", "ok"),
             (u, t) -> {
                 throw new IllegalStateException("token path should not run");
             },
-            adminOk);
-        var result = helper.diagnose(AviatorConnectionDiagnoseSource.fromAdminConfig(admin), 5);
+            adminBug).diagnose(AviatorConnectionDiagnoseSource.fromAdminConfig(admin()), 5));
+    }
+
+    @Test
+    void adminPassUsesAdminStageAndValidator() {
+        var adminCalled = new AtomicBoolean();
+        AdminValidator adminOk = d -> adminCalled.set(true);
+        var result = helperWithGrpcAndValidators(
+            AviatorGrpcReachabilityResult.responseReceived("OK", "ok"),
+            (u, t) -> {
+                throw new IllegalStateException("token path should not run");
+            },
+            adminOk).diagnose(AviatorConnectionDiagnoseSource.fromAdminConfig(admin()), 5);
 
         assertTrue(adminCalled.get());
-        var cred = lastStage(result.stages());
-        assertEquals(AviatorDiagnosticStage.ADMIN, cred.stage());
-        assertEquals(AviatorDiagnosticStatus.PASS, cred.status());
+        assertEquals(AviatorConnectionDiagnoseHelper.STAGE_ADMIN, lastStage(result.stages()).stage());
+        assertEquals(AviatorDiagnosticStatus.PASS, lastStage(result.stages()).status());
         assertFalse(result.requiredFailure());
     }
 
     @Test
-    void adminOptionalFailWhenValidatorThrows() {
-        var admin = AviatorAdminConfigDescriptor.builder()
-            .aviatorUrl("https://aviator.invalid")
-            .tenant("demo")
-            .build();
-        var helper = helperWithGrpcAndValidators(
-            AviatorGrpcReachabilityResult.ok("OK", "ok"),
-            (u, t) -> {
-                throw new IllegalStateException("token path should not run");
-            },
-            d -> {
-                throw new RuntimeException("bad keys");
-            });
-        var result = helper.diagnose(AviatorConnectionDiagnoseSource.fromAdminConfig(admin), 5);
+    void userSessionWithMissingTokenOptionalFailsWithoutNpe() {
+        var result = helperWithGrpc(AviatorGrpcReachabilityResult.responseReceived("OK", "ok"))
+            .diagnose(AviatorConnectionDiagnoseSource.fromUserSession(session(null)), 5);
 
         var cred = lastStage(result.stages());
-        assertEquals(AviatorDiagnosticStage.ADMIN, cred.stage());
+        assertEquals(AviatorConnectionDiagnoseHelper.STAGE_TOKEN, cred.stage());
         assertEquals(AviatorDiagnosticStatus.FAIL, cred.status());
         assertFalse(cred.required());
         assertFalse(result.requiredFailure());
+        assertTrue(cred.summary().toLowerCase().contains("missing"));
+    }
+
+    private static AviatorUserSessionDescriptor session(String token) {
+        return AviatorUserSessionDescriptor.builder()
+            .aviatorUrl("https://aviator.invalid")
+            .aviatorToken(token)
+            .build();
+    }
+
+    private static AviatorAdminConfigDescriptor admin() {
+        return AviatorAdminConfigDescriptor.builder()
+            .aviatorUrl("https://aviator.invalid")
+            .tenant("demo")
+            .build();
     }
 
     private static AviatorDiagnosticStageResult lastStage(List<AviatorDiagnosticStageResult> stages) {
@@ -216,53 +229,17 @@ class AviatorConnectionDiagnoseHelperTest {
             TokenValidator tokenValidator,
             AdminValidator adminValidator) {
         return new AviatorConnectionDiagnoseHelper(
-            new OfflineDiagnostics(new FakeProbe(grpc)), tokenValidator, adminValidator);
+            new OfflineDiagnostics(new ConfigurableDiagnosticProbe(grpc)), tokenValidator, adminValidator);
     }
 
-    /**
-     * Uses a fixed connection plan so tests never touch ambient proxy env or real DNS policy.
-     */
     private static final class OfflineDiagnostics extends AviatorConnectionDiagnostics {
         OfflineDiagnostics(IAviatorDiagnosticProbe probe) {
             super(probe);
         }
 
         @Override
-        public List<AviatorDiagnosticStageResult> diagnose(String url, int timeoutSeconds, String sourceType) {
-            var plan = new AviatorConnectionPlan(url, url,
-                new ParsedTarget("aviator.invalid", null), 443, Optional.empty());
-            return diagnose(plan, timeoutSeconds, sourceType);
-        }
-    }
-
-    private static final class FakeProbe implements IAviatorDiagnosticProbe {
-        private final AviatorGrpcReachabilityResult grpcResult;
-
-        FakeProbe(AviatorGrpcReachabilityResult grpcResult) {
-            this.grpcResult = grpcResult;
-        }
-
-        @Override
-        public InetAddress[] resolve(String host) {
-            try {
-                return new InetAddress[] {InetAddress.getByName("127.0.0.1")};
-            } catch (IOException e) {
-                throw new IllegalStateException(e);
-            }
-        }
-
-        @Override
-        public void connect(String host, int port, int timeoutSeconds) {}
-
-        @Override
-        public AviatorTunnelResult probeTunnel(AviatorConnectionPlan connectionPlan, int timeoutSeconds) {
-            return new AviatorTunnelResult.TlsSucceeded(false, "not-used",
-                "TLSv1.3", "TLS_AES_128_GCM_SHA256", "CN=aviator.invalid", "h2");
-        }
-
-        @Override
-        public AviatorGrpcReachabilityResult probeGrpc(String url, int timeoutSeconds) {
-            return grpcResult;
+        public AviatorDiagnosticReport diagnose(String url, int timeoutSeconds, String sourceType) {
+            return diagnose(OfflineConnectionPlan.fixedUrl(url), timeoutSeconds, sourceType);
         }
     }
 }

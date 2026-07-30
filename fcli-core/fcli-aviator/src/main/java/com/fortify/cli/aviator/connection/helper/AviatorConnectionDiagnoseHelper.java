@@ -13,24 +13,18 @@
 package com.fortify.cli.aviator.connection.helper;
 
 import java.util.List;
-import java.util.function.IntConsumer;
 
 import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.aviator._common.config.admin.helper.AviatorAdminConfigDescriptor;
 import com.fortify.cli.aviator._common.config.admin.helper.AviatorAdminConfigHelper;
 import com.fortify.cli.aviator._common.session.user.helper.AviatorUserSessionHelper;
 import com.fortify.cli.aviator._common.session.user.helper.AviatorUserSessionHelper.AviatorUserTokenValidationResult;
-import com.fortify.cli.aviator.connection.helper.AviatorConnectionDiagnoseSource.AdminConfig;
-import com.fortify.cli.aviator.connection.helper.AviatorConnectionDiagnoseSource.UrlAndToken;
-import com.fortify.cli.aviator.connection.helper.AviatorConnectionDiagnoseSource.UrlOnly;
-import com.fortify.cli.aviator.connection.helper.AviatorConnectionDiagnoseSource.UserSession;
+import com.fortify.cli.aviator.connection.helper.AviatorConnectionDiagnoseSource.CredentialRequest;
 import com.fortify.cli.aviator.diagnose.AviatorConnectionDiagnostics;
-import com.fortify.cli.aviator.diagnose.AviatorDiagnosticStage;
+import com.fortify.cli.aviator.diagnose.AviatorDiagnosticEvidence;
+import com.fortify.cli.aviator.diagnose.AviatorDiagnosticReport;
 import com.fortify.cli.aviator.diagnose.AviatorDiagnosticStageResult;
-import com.fortify.cli.aviator.diagnose.AviatorDiagnosticStatus;
 import com.fortify.cli.common.exception.FcliBugException;
-import com.fortify.cli.common.json.JsonHelper;
 
 import lombok.RequiredArgsConstructor;
 
@@ -39,9 +33,15 @@ import lombok.RequiredArgsConstructor;
  * <p>
  * Soft-exit policy lives in the command: credential failures are optional
  * ({@code required=false}) so they never alone force a non-zero process exit.
+ * Product credential stage ids ({@code token}/{@code admin}) are not transport stages.
  */
 @RequiredArgsConstructor
 public class AviatorConnectionDiagnoseHelper {
+    public static final String STAGE_TOKEN = "token";
+    public static final String STAGE_TOKEN_DESCRIPTION = "Aviator token validation";
+    public static final String STAGE_ADMIN = "admin";
+    public static final String STAGE_ADMIN_DESCRIPTION = "Aviator admin credential validation";
+
     private final AviatorConnectionDiagnostics diagnostics;
     private final TokenValidator tokenValidator;
     private final AdminValidator adminValidator;
@@ -53,96 +53,94 @@ public class AviatorConnectionDiagnoseHelper {
     }
 
     public DiagnoseRunResult diagnose(AviatorConnectionDiagnoseSource source, int timeoutSeconds) {
-        var results = diagnostics.diagnose(source.url(), timeoutSeconds, source.type());
-        appendCredentialStage(results, source);
-        return new DiagnoseRunResult(results, diagnostics.toArrayNode(results), diagnostics.hasRequiredFailure(results));
+        var report = diagnostics.diagnose(source.url(), timeoutSeconds, source.sourceTypeId());
+        appendCredentialStage(report, source);
+        return new DiagnoseRunResult(report.stages(), report.toArrayNode(), report.hasRequiredFailure());
     }
 
-    private void appendCredentialStage(List<AviatorDiagnosticStageResult> results, AviatorConnectionDiagnoseSource source) {
-        if (source instanceof UrlOnly) {
-            // Credentials were not requested: omit the stage entirely.
-            return;
-        }
-        if (source instanceof UrlAndToken urlAndToken) {
-            runCredentialStage(results, AviatorDiagnosticStage.TOKEN,
-                order -> validateUserToken(results, order, urlAndToken.url(), urlAndToken.token()));
-            return;
-        }
-        if (source instanceof UserSession userSession) {
-            runCredentialStage(results, AviatorDiagnosticStage.TOKEN,
-                order -> validateUserToken(results, order, userSession.url(),
-                    userSession.descriptor().getAviatorToken()));
-            return;
-        }
-        if (source instanceof AdminConfig adminConfig) {
-            runCredentialStage(results, AviatorDiagnosticStage.ADMIN,
-                order -> validateAdminConfig(results, order, adminConfig.descriptor()));
-            return;
-        }
-        throw new FcliBugException("Unhandled diagnose source: " + source);
+    private void appendCredentialStage(AviatorDiagnosticReport report, AviatorConnectionDiagnoseSource source) {
+        source.credentialRequest().ifPresent(cred -> cred.accept(new CredentialRequest.Visitor() {
+            @Override
+            public void visitToken(CredentialRequest.Token token) {
+                runCredentialStage(report, STAGE_TOKEN, STAGE_TOKEN_DESCRIPTION,
+                    () -> validateUserToken(report, token.url(), token.token()));
+            }
+
+            @Override
+            public void visitAdmin(CredentialRequest.Admin admin) {
+                runCredentialStage(report, STAGE_ADMIN, STAGE_ADMIN_DESCRIPTION,
+                    () -> validateAdminConfig(report, admin.descriptor()));
+            }
+        }));
     }
 
-    /** Skip when gRPC did not respond; otherwise run {@code validate} with the next stage order. */
-    private void runCredentialStage(List<AviatorDiagnosticStageResult> results, AviatorDiagnosticStage stage,
-            IntConsumer validate) {
-        var order = results.size() + 1;
-        if (!diagnostics.hasGrpcResponse(results)) {
-            results.add(AviatorDiagnosticStageResult.warn(order, stage,
+    /** Skip when gRPC did not respond; otherwise run {@code validate}. */
+    private void runCredentialStage(AviatorDiagnosticReport report, String stage, String description,
+            Runnable validate) {
+        if (!report.hasGrpcStagePass()) {
+            report.optionalSkipWarn(stage, description,
                 "Credential check skipped",
-                "Fix the gRPC connection first", false, emptyEvidence()));
+                "Fix the gRPC connection first", AviatorDiagnosticEvidence.empty());
             return;
         }
-        validate.accept(order);
+        validate.run();
     }
 
-    private void validateUserToken(List<AviatorDiagnosticStageResult> results, int order, String aviatorUrl, String token) {
+    private void validateUserToken(AviatorDiagnosticReport report, String aviatorUrl, String token) {
+        if (token == null || token.isBlank()) {
+            report.optionalFail(STAGE_TOKEN, STAGE_TOKEN_DESCRIPTION,
+                "Aviator token is missing",
+                "Create or update the session with a valid user token", AviatorDiagnosticEvidence.empty());
+            return;
+        }
         try {
             var validationResult = tokenValidator.validate(aviatorUrl, token);
-            var evidence = emptyEvidence();
+            var evidence = AviatorDiagnosticEvidence.empty();
             evidence.put("tenantNamePresent", validationResult.tenantName() != null);
             if (validationResult.response().getValid()) {
-                results.add(optionalPass(order, AviatorDiagnosticStage.TOKEN,
-                    "Aviator token is valid", evidence));
+                report.optionalPass(STAGE_TOKEN, STAGE_TOKEN_DESCRIPTION,
+                    "Aviator token is valid", "No action required", evidence);
                 return;
             }
             var errorMessage = validationResult.response().getErrorMessage();
             if (errorMessage != null && !errorMessage.isBlank()) {
                 evidence.put("tokenValidationMessage", errorMessage);
             }
-            results.add(AviatorDiagnosticStageResult.optionalFail(order, AviatorDiagnosticStage.TOKEN,
+            report.optionalFail(STAGE_TOKEN, STAGE_TOKEN_DESCRIPTION,
                 "Aviator token is not valid",
-                "Use a current token for the expected tenant", evidence));
+                "Use a current token for the expected tenant", evidence);
         } catch (RuntimeException e) {
-            results.add(AviatorDiagnosticStageResult.optionalFail(order, AviatorDiagnosticStage.TOKEN,
+            rethrowIfBug(e);
+            report.optionalFail(STAGE_TOKEN, STAGE_TOKEN_DESCRIPTION,
                 "Aviator token check failed",
                 "Use a current token for the expected tenant",
-                AviatorConnectionDiagnostics.errorEvidence(e)));
+                AviatorDiagnosticEvidence.errorEvidence(e));
         }
     }
 
-    private void validateAdminConfig(List<AviatorDiagnosticStageResult> results, int order,
-            AviatorAdminConfigDescriptor configDescriptor) {
+    private void validateAdminConfig(AviatorDiagnosticReport report, AviatorAdminConfigDescriptor configDescriptor) {
         try {
             adminValidator.validate(configDescriptor);
-            var evidence = emptyEvidence();
+            var evidence = AviatorDiagnosticEvidence.empty();
             evidence.put("tenant", configDescriptor.getTenant());
-            results.add(optionalPass(order, AviatorDiagnosticStage.ADMIN,
-                "Aviator admin credentials are valid", evidence));
+            report.optionalPass(STAGE_ADMIN, STAGE_ADMIN_DESCRIPTION,
+                "Aviator admin credentials are valid", "No action required", evidence);
         } catch (RuntimeException e) {
-            results.add(AviatorDiagnosticStageResult.optionalFail(order, AviatorDiagnosticStage.ADMIN,
+            rethrowIfBug(e);
+            report.optionalFail(STAGE_ADMIN, STAGE_ADMIN_DESCRIPTION,
                 "Admin credentials are not valid",
-                "Check the tenant, public key, and private key", AviatorConnectionDiagnostics.errorEvidence(e)));
+                "Check the tenant, public key, and private key", AviatorDiagnosticEvidence.errorEvidence(e));
         }
     }
 
-    private static AviatorDiagnosticStageResult optionalPass(int order, AviatorDiagnosticStage stage,
-            String summary, ObjectNode evidence) {
-        return AviatorDiagnosticStageResult.of(order, stage, AviatorDiagnosticStatus.PASS, false,
-            summary, "No action required", evidence);
-    }
-
-    private static ObjectNode emptyEvidence() {
-        return JsonHelper.getObjectMapper().createObjectNode();
+    /**
+     * Credential stages soft-fail expected validation problems into the report, but must not
+     * swallow product defects ({@link FcliBugException} / {@code AviatorBugException}).
+     */
+    private static void rethrowIfBug(RuntimeException e) {
+        if (e instanceof FcliBugException bug) {
+            throw bug;
+        }
     }
 
     @FunctionalInterface

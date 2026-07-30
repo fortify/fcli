@@ -34,9 +34,22 @@ class AviatorConnectionDiagnoseCommandTest {
 
         assertNotNull(sourceArgGroup.getUrlSource());
         assertEquals("aviator.invalid", sourceArgGroup.getUrlSource().getUrl());
-        assertEquals("string:abc", sourceArgGroup.getUrlSource().getTextSource());
+        assertNotNull(sourceArgGroup.getUrlSource().getTokenSource());
+        assertEquals("string:abc", sourceArgGroup.getUrlSource().getTokenSource().getTextSource());
+        assertEquals("abc", sourceArgGroup.getUrlSource().getTokenOrNull());
         assertNull(sourceArgGroup.getAviatorSession());
         assertNull(sourceArgGroup.getAdminConfig());
+    }
+
+    @Test
+    void parseAllowsUrlWithoutToken() throws ReflectiveOperationException {
+        var cmd = parse("--url", "aviator.invalid");
+        var sourceArgGroup = getSourceArgGroup(cmd);
+
+        assertNotNull(sourceArgGroup.getUrlSource());
+        assertEquals("aviator.invalid", sourceArgGroup.getUrlSource().getUrl());
+        assertNull(sourceArgGroup.getUrlSource().getTokenSource());
+        assertNull(sourceArgGroup.getUrlSource().getTokenOrNull());
     }
 
     @Test
