@@ -12,17 +12,16 @@
  */
 package com.fortify.cli.aviator.connection.cli.cmd;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.aviator._common.config.admin.helper.AviatorAdminConfigHelper;
 import com.fortify.cli.aviator._common.session.user.helper.AviatorUserSessionHelper;
 import com.fortify.cli.aviator.connection.cli.mixin.AviatorConnectionDiagnoseSourceArgGroup;
 import com.fortify.cli.aviator.connection.helper.AviatorConnectionDiagnoseHelper;
-import com.fortify.cli.aviator.connection.helper.AviatorConnectionDiagnoseHelper.DiagnoseRunResult;
 import com.fortify.cli.aviator.connection.helper.AviatorConnectionDiagnoseSource;
 import com.fortify.cli.common.exception.FcliBugException;
 import com.fortify.cli.common.exception.FcliSimpleException;
+import com.fortify.cli.common.json.producer.IObjectNodeProducer;
+import com.fortify.cli.common.json.producer.ObjectNodeProducerApplyFrom;
 import com.fortify.cli.common.output.cli.cmd.AbstractOutputCommand;
-import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 
 import lombok.Getter;
@@ -32,7 +31,7 @@ import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
 @Command(name = "diagnose")
-public class AviatorConnectionDiagnoseCommand extends AbstractOutputCommand implements IJsonNodeSupplier {
+public class AviatorConnectionDiagnoseCommand extends AbstractOutputCommand {
     @Getter @Mixin private OutputHelperMixins.TableNoQuery outputHelper;
 
     @ArgGroup(exclusive = true, multiplicity = "1", headingKey = "aviator.connection.diagnose.source.arggroup")
@@ -41,30 +40,20 @@ public class AviatorConnectionDiagnoseCommand extends AbstractOutputCommand impl
     @Option(names = "--timeout", defaultValue = "30", paramLabel = "<seconds>")
     private int timeoutSeconds;
 
-    private final AviatorConnectionDiagnoseHelper diagnoseHelper = new AviatorConnectionDiagnoseHelper();
-    private DiagnoseRunResult runResult;
-
     /**
-     * Overrides {@link AbstractOutputCommand#call()} so a required stage failure
-     * yields exit code 1 after the diagnostic table is written. Soft status cannot
-     * use exceptions without dropping structured stage output.
+     * Runs diagnostics and returns a producer that writes the stage table and
+     * reports exit code 1 when a required stage failed (soft exit after output).
      */
     @Override
-    public Integer call() {
+    protected IObjectNodeProducer getObjectNodeProducer() {
         if (timeoutSeconds <= 0) {
             throw new FcliSimpleException("--timeout must be greater than 0");
         }
-        runResult = diagnoseHelper.diagnose(resolveSource(), timeoutSeconds);
-        getOutputHelper().write(getObjectNodeProducer());
-        return runResult.requiredFailure() ? 1 : 0;
-    }
-
-    @Override
-    public JsonNode getJsonNode() {
-        if (runResult == null) {
-            throw new FcliBugException("Diagnose must run before output is written");
-        }
-        return runResult.json();
+        var runResult = new AviatorConnectionDiagnoseHelper().diagnose(resolveSource(), timeoutSeconds);
+        return simpleObjectNodeProducerBuilder(ObjectNodeProducerApplyFrom.SPEC)
+                .source(runResult.json())
+                .exitCode(runResult.requiredFailure() ? 1 : 0)
+                .build();
     }
 
     private AviatorConnectionDiagnoseSource resolveSource() {

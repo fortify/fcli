@@ -46,7 +46,7 @@ class AviatorConnectionDiagnoseHelperTest {
     @Test
     void bareUrlOmitsCredentialStage() {
         var helper = helperWithGrpc(AviatorGrpcReachabilityResult.ok("OK", "ok"));
-        var result = helper.diagnose(AviatorConnectionDiagnoseSource.fromUrl("https://aviator.example.com"), 5);
+        var result = helper.diagnose(AviatorConnectionDiagnoseSource.fromUrl("https://aviator.invalid"), 5);
 
         assertTrue(result.stages().stream().noneMatch(s ->
             s.stage() == AviatorDiagnosticStage.TOKEN || s.stage() == AviatorDiagnosticStage.ADMIN));
@@ -58,7 +58,7 @@ class AviatorConnectionDiagnoseHelperTest {
         var helper = helperWithGrpc(AviatorGrpcReachabilityResult.noResponse(
             "DEADLINE_EXCEEDED", AviatorGrpcFailureCategory.NO_RESPONSE, "deadline"));
         var result = helper.diagnose(
-            AviatorConnectionDiagnoseSource.fromUrlAndToken("https://aviator.example.com", "tok"), 5);
+            AviatorConnectionDiagnoseSource.fromUrlAndToken("https://aviator.invalid", "tok"), 5);
 
         var cred = lastStage(result.stages());
         assertEquals(AviatorDiagnosticStage.TOKEN, cred.stage());
@@ -70,7 +70,7 @@ class AviatorConnectionDiagnoseHelperTest {
     @Test
     void userSessionSkipsAsTokenStageWhenGrpcDidNotRespond() {
         var session = AviatorUserSessionDescriptor.builder()
-            .aviatorUrl("https://aviator.example.com")
+            .aviatorUrl("https://aviator.invalid")
             .aviatorToken("session-tok")
             .build();
         var helper = helperWithGrpc(AviatorGrpcReachabilityResult.noResponse(
@@ -86,7 +86,7 @@ class AviatorConnectionDiagnoseHelperTest {
     @Test
     void adminConfigSkipsAsAdminStageWhenGrpcDidNotRespond() {
         var admin = AviatorAdminConfigDescriptor.builder()
-            .aviatorUrl("https://aviator.example.com")
+            .aviatorUrl("https://aviator.invalid")
             .tenant("demo")
             .build();
         var helper = helperWithGrpc(AviatorGrpcReachabilityResult.noResponse(
@@ -106,7 +106,7 @@ class AviatorConnectionDiagnoseHelperTest {
         var helper = helperWithGrpcAndValidators(
             AviatorGrpcReachabilityResult.ok("OK", "ok"), tokenOk, d -> {});
         var result = helper.diagnose(
-            AviatorConnectionDiagnoseSource.fromUrlAndToken("https://aviator.example.com", "tok"), 5);
+            AviatorConnectionDiagnoseSource.fromUrlAndToken("https://aviator.invalid", "tok"), 5);
 
         var cred = lastStage(result.stages());
         assertEquals(AviatorDiagnosticStage.TOKEN, cred.stage());
@@ -123,7 +123,7 @@ class AviatorConnectionDiagnoseHelperTest {
         var helper = helperWithGrpcAndValidators(
             AviatorGrpcReachabilityResult.ok("OK", "ok"), tokenBad, d -> {});
         var result = helper.diagnose(
-            AviatorConnectionDiagnoseSource.fromUrlAndToken("https://aviator.example.com", "tok"), 5);
+            AviatorConnectionDiagnoseSource.fromUrlAndToken("https://aviator.invalid", "tok"), 5);
 
         var cred = lastStage(result.stages());
         assertEquals(AviatorDiagnosticStage.TOKEN, cred.stage());
@@ -141,7 +141,7 @@ class AviatorConnectionDiagnoseHelperTest {
         var helper = helperWithGrpcAndValidators(
             AviatorGrpcReachabilityResult.ok("OK", "ok"), tokenBad, d -> {});
         var result = helper.diagnose(
-            AviatorConnectionDiagnoseSource.fromUrlAndToken("https://aviator.example.com", "tok"), 5);
+            AviatorConnectionDiagnoseSource.fromUrlAndToken("https://aviator.invalid", "tok"), 5);
 
         var cred = lastStage(result.stages());
         assertEquals(AviatorDiagnosticStage.TOKEN, cred.stage());
@@ -156,7 +156,7 @@ class AviatorConnectionDiagnoseHelperTest {
         var adminCalled = new AtomicBoolean();
         AdminValidator adminOk = d -> adminCalled.set(true);
         var admin = AviatorAdminConfigDescriptor.builder()
-            .aviatorUrl("https://aviator.example.com")
+            .aviatorUrl("https://aviator.invalid")
             .tenant("demo")
             .build();
         var helper = helperWithGrpcAndValidators(
@@ -177,7 +177,7 @@ class AviatorConnectionDiagnoseHelperTest {
     @Test
     void adminOptionalFailWhenValidatorThrows() {
         var admin = AviatorAdminConfigDescriptor.builder()
-            .aviatorUrl("https://aviator.example.com")
+            .aviatorUrl("https://aviator.invalid")
             .tenant("demo")
             .build();
         var helper = helperWithGrpcAndValidators(
@@ -230,7 +230,7 @@ class AviatorConnectionDiagnoseHelperTest {
         @Override
         public List<AviatorDiagnosticStageResult> diagnose(String url, int timeoutSeconds, String sourceType) {
             var plan = new AviatorConnectionPlan(url, url,
-                new ParsedTarget("aviator.example.com", null), 443, Optional.empty());
+                new ParsedTarget("aviator.invalid", null), 443, Optional.empty());
             return diagnose(plan, timeoutSeconds, sourceType);
         }
     }
@@ -257,7 +257,7 @@ class AviatorConnectionDiagnoseHelperTest {
         @Override
         public AviatorTunnelResult probeTunnel(AviatorConnectionPlan connectionPlan, int timeoutSeconds) {
             return new AviatorTunnelResult.TlsSucceeded(false, "not-used",
-                "TLSv1.3", "TLS_AES_128_GCM_SHA256", "CN=aviator.example.com", "h2");
+                "TLSv1.3", "TLS_AES_128_GCM_SHA256", "CN=aviator.invalid", "h2");
         }
 
         @Override

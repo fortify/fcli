@@ -29,11 +29,11 @@ import picocli.CommandLine.ParameterException;
 class AviatorConnectionDiagnoseCommandTest {
     @Test
     void parseAllowsUrlWithOptionalToken() throws ReflectiveOperationException {
-        var cmd = parse("--url", "aviator.example.com", "--token", "string:abc");
+        var cmd = parse("--url", "aviator.invalid", "--token", "string:abc");
         var sourceArgGroup = getSourceArgGroup(cmd);
 
         assertNotNull(sourceArgGroup.getUrlSource());
-        assertEquals("aviator.example.com", sourceArgGroup.getUrlSource().getUrl());
+        assertEquals("aviator.invalid", sourceArgGroup.getUrlSource().getUrl());
         assertEquals("string:abc", sourceArgGroup.getUrlSource().getTextSource());
         assertNull(sourceArgGroup.getAviatorSession());
         assertNull(sourceArgGroup.getAdminConfig());
@@ -52,7 +52,7 @@ class AviatorConnectionDiagnoseCommandTest {
     @Test
     void parseRejectsMultipleSourceModes() {
         assertThrows(ParameterException.class,
-            () -> parse("--url", "aviator.example.com", "--aviator-session", "default"));
+            () -> parse("--url", "aviator.invalid", "--aviator-session", "default"));
     }
 
     private static AviatorConnectionDiagnoseCommand parse(String... args) {

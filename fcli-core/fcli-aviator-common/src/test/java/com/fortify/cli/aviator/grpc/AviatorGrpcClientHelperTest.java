@@ -28,38 +28,38 @@ import io.grpc.HttpConnectProxiedSocketAddress;
 class AviatorGrpcClientHelperTest {
     @Test
     void shouldParseSchemeLessHostAndPort() {
-        var parsed = AviatorGrpcClientHelper.parseTarget("aviator.example.com:443");
+        var parsed = AviatorGrpcClientHelper.parseTarget("aviator.invalid:443");
 
-        assertEquals("aviator.example.com", parsed.host());
+        assertEquals("aviator.invalid", parsed.host());
         assertEquals(443, parsed.port());
     }
 
     @Test
     void shouldParseTargetWithoutPort() {
-        var parsed = AviatorGrpcClientHelper.parseTarget("aviator.example.com");
+        var parsed = AviatorGrpcClientHelper.parseTarget("aviator.invalid");
 
-        assertEquals("aviator.example.com", parsed.host());
+        assertEquals("aviator.invalid", parsed.host());
         assertNull(parsed.port());
     }
 
     @Test
     void shouldCreateConnectionPlanWithDefaultPortAndNormalizedUrl() {
-        var plan = AviatorGrpcClientHelper.createConnectionPlan("aviator.example.com");
+        var plan = AviatorGrpcClientHelper.createConnectionPlan("aviator.invalid");
 
-        assertEquals("aviator.example.com", plan.originalUrl());
-        assertEquals("https://aviator.example.com", plan.normalizedUrl());
-        assertEquals("aviator.example.com", plan.target().host());
+        assertEquals("aviator.invalid", plan.originalUrl());
+        assertEquals("https://aviator.invalid", plan.normalizedUrl());
+        assertEquals("aviator.invalid", plan.target().host());
         assertNull(plan.target().port());
         assertEquals(443, plan.effectivePort());
     }
 
     @Test
     void shouldCreateConnectionPlanWithExplicitPort() {
-        var plan = AviatorGrpcClientHelper.createConnectionPlan("https://aviator.example.com:8443/");
+        var plan = AviatorGrpcClientHelper.createConnectionPlan("https://aviator.invalid:8443/");
 
-        assertEquals("https://aviator.example.com:8443/", plan.originalUrl());
-        assertEquals("https://aviator.example.com:8443/", plan.normalizedUrl());
-        assertEquals("aviator.example.com", plan.target().host());
+        assertEquals("https://aviator.invalid:8443/", plan.originalUrl());
+        assertEquals("https://aviator.invalid:8443/", plan.normalizedUrl());
+        assertEquals("aviator.invalid", plan.target().host());
         assertEquals(8443, plan.target().port());
         assertEquals(8443, plan.effectivePort());
     }
@@ -72,7 +72,7 @@ class AviatorGrpcClientHelperTest {
             .proxyUser("user")
             .proxyPassword("pwd".toCharArray())
             .build();
-        var target = new InetSocketAddress("aviator.example.com", 443);
+        var target = new InetSocketAddress("aviator.invalid", 443);
 
         var proxied = AviatorGrpcClientHelper.toProxiedSocketAddress(target, proxy);
 
@@ -86,7 +86,7 @@ class AviatorGrpcClientHelperTest {
 
     @Test
     void shouldIgnoreUnsupportedSocketAddressTypes() {
-        var proxy = ProxyDescriptor.builder().proxyHost("proxy.example.com").proxyPort(8443).build();
+        var proxy = ProxyDescriptor.builder().proxyHost("proxy.invalid").proxyPort(8443).build();
         SocketAddress unsupportedTarget = new SocketAddress() { private static final long serialVersionUID = 1L; };
 
         var proxied = AviatorGrpcClientHelper.toProxiedSocketAddress(unsupportedTarget, proxy);

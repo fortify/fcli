@@ -96,7 +96,7 @@ class AviatorConnectionDiagnosticsTest {
     void shouldContinueAfterTlsAlpnWarningWhenGrpcResponds() {
         var probe = new FakeDiagnosticProbe();
         probe.tunnelResult = new AviatorTunnelResult.TlsSucceeded(false, "not-used",
-            "TLSv1.3", "TLS_AES_128_GCM_SHA256", "CN=aviator.example.com", "");
+            "TLSv1.3", "TLS_AES_128_GCM_SHA256", "CN=aviator.invalid", "");
         probe.grpcResult = AviatorGrpcReachabilityResult.ok("UNAUTHENTICATED", "token required");
         var diagnostics = new AviatorConnectionDiagnostics(probe);
 
@@ -182,7 +182,7 @@ class AviatorConnectionDiagnosticsTest {
     void shouldIncludeProxyStageFromSingleTunnelSession() {
         var probe = new FakeDiagnosticProbe();
         probe.tunnelResult = new AviatorTunnelResult.TlsSucceeded(true, "HTTP/1.1 200 Connection established",
-            "TLSv1.3", "TLS_AES_128_GCM_SHA256", "CN=aviator.example.com", "h2");
+            "TLSv1.3", "TLS_AES_128_GCM_SHA256", "CN=aviator.invalid", "h2");
         var diagnostics = new AviatorConnectionDiagnostics(probe);
 
         var results = diagnostics.diagnose(planWithProxy(), 5, "url");
@@ -241,7 +241,7 @@ class AviatorConnectionDiagnosticsTest {
     }
 
     private static AviatorConnectionPlan planNoProxy() {
-        return planNoProxy("aviator.example.com", 443);
+        return planNoProxy("aviator.invalid", 443);
     }
 
     private static AviatorConnectionPlan planNoProxy(String host, int port) {
@@ -251,9 +251,9 @@ class AviatorConnectionDiagnosticsTest {
     }
 
     private static AviatorConnectionPlan planWithProxy() {
-        var proxy = ProxyDescriptor.builder().proxyHost("proxy.example.com").proxyPort(8080).build();
-        return new AviatorConnectionPlan("aviator.example.com", "https://aviator.example.com",
-            new ParsedTarget("aviator.example.com", null), 443, Optional.of(proxy));
+        var proxy = ProxyDescriptor.builder().proxyHost("proxy.invalid").proxyPort(8080).build();
+        return new AviatorConnectionPlan("aviator.invalid", "https://aviator.invalid",
+            new ParsedTarget("aviator.invalid", null), 443, Optional.of(proxy));
     }
 
     private static void assertStage(AviatorDiagnosticStageResult result, AviatorDiagnosticStage stage,
@@ -266,7 +266,7 @@ class AviatorConnectionDiagnosticsTest {
         private IOException resolveException;
         private IOException connectException;
         private AviatorTunnelResult tunnelResult = new AviatorTunnelResult.TlsSucceeded(false, "not-used",
-            "TLSv1.3", "TLS_AES_128_GCM_SHA256", "CN=aviator.example.com", "h2");
+            "TLSv1.3", "TLS_AES_128_GCM_SHA256", "CN=aviator.invalid", "h2");
         private AviatorGrpcReachabilityResult grpcResult = AviatorGrpcReachabilityResult.ok("OK", "response received");
         private boolean tunnelCalled;
         private int tunnelCallCount;
