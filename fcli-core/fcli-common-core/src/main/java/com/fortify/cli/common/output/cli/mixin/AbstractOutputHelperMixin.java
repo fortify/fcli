@@ -19,8 +19,10 @@ import com.fortify.cli.common.output.writer.record.RecordWriterStyle;
 
 public abstract class AbstractOutputHelperMixin implements IOutputHelper {
     @Override
-    public void write(IObjectNodeProducer objectNodeProducer) {
+    public int write(IObjectNodeProducer objectNodeProducer) {
+        if ( objectNodeProducer==null ) { return 0; }
         getOutputWriterFactory().createOutputWriter(getBasicOutputConfig()).write(objectNodeProducer);
+        return objectNodeProducer.getExitCode();
     }
 
     /** Indicates whether selected output format supports streaming (table returns false). */

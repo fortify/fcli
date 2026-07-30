@@ -26,9 +26,11 @@ import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.xml.XMLConstants;
@@ -84,6 +86,21 @@ public class AuditProcessor {
 
     public AuditProcessor(FprHandle fprHandle) {
         this.fprHandle = fprHandle;
+    }
+
+    /**
+     * Per-save result of applying Aviator responses to the in-memory {@code audit.xml} DOM.
+     * {@code writtenInstanceIds} is the local retain set for upload isolation (no processor state).
+     */
+    private static final class AuditXmlUpdateResult {
+        private final Map<String, String> remediationCommentTimestamps;
+        private final Set<String> writtenInstanceIds;
+
+        private AuditXmlUpdateResult(Map<String, String> remediationCommentTimestamps,
+                Set<String> writtenInstanceIds) {
+            this.remediationCommentTimestamps = remediationCommentTimestamps;
+            this.writtenInstanceIds = writtenInstanceIds;
+        }
     }
 
     public Map<String, AuditIssue> processAuditXML() throws AviatorTechnicalException {
@@ -247,13 +264,10 @@ public class AuditProcessor {
         updateOrAddTag(issueElement, tagId, tagValue);
     }
 
-    private Map<String, String> updateAuditXml(Map<String, AuditResponse> auditResponses, TagMappingConfig tagMappingConfig) throws AviatorTechnicalException {
-        return updateAuditXml(auditResponses, tagMappingConfig, Map.of());
-    }
-
-    private Map<String, String> updateAuditXml(Map<String, AuditResponse> auditResponses,
+    private AuditXmlUpdateResult updateAuditXml(Map<String, AuditResponse> auditResponses,
             TagMappingConfig tagMappingConfig, Map<String, String> issueCategoryLookup) throws AviatorTechnicalException {
         Map<String, String> remediationCommentTimestamps = new HashMap<>();
+        Set<String> writtenInstanceIds = new HashSet<>();
         for (Map.Entry<String, AuditResponse> entry : auditResponses.entrySet()) {
             String instanceId = entry.getKey();
             AuditResponse response = entry.getValue();
@@ -277,6 +291,8 @@ public class AuditProcessor {
                 } else {
                     commentTimestamp = addNewIssueElement(instanceId, response, tagMappingConfig, issueCategoryLookup);
                 }
+                // Local retain set for this save only — instance IDs successfully written here.
+                writtenInstanceIds.add(instanceId);
                 if (commentTimestamp != null &&
                         response.getAuditResult().getAutoremediation() != null &&
                         response.getAuditResult().getAutoremediation().getChanges() != null &&
@@ -287,7 +303,7 @@ public class AuditProcessor {
                 logger.debug("Issue {} skipped or no audit result provided.", response.getIssueId());
             }
         }
-        return remediationCommentTimestamps;
+        return new AuditXmlUpdateResult(remediationCommentTimestamps, writtenInstanceIds);
     }
     public Element findIssueElement(String instanceId) {
         NodeList issueNodes = auditDoc.getElementsByTagNameNS(AUDIT_NAMESPACE_URI, "Issue");
@@ -693,19 +709,24 @@ public class AuditProcessor {
     public File updateAndSaveAuditAndRemediationsXml(Map<String, AuditResponse> auditResponses,
             TagMappingConfig tagMappingConfig, Map<String, String> issueCategoryLookup,
             FPRInfo fprInfo) throws AviatorTechnicalException {
-        // Step 1: Update the in-memory audit.xml document. This returns timestamps needed for remediations.
+        // Step 1: Apply this save's audit responses. writtenInstanceIds is the local retain set.
         Map<String, String> effectiveIssueCategoryLookup = issueCategoryLookup == null ? Map.of() : issueCategoryLookup;
-        Map<String, String> remediationCommentTimestamps = updateAuditXml(
+        AuditXmlUpdateResult updateResult = updateAuditXml(
                 auditResponses, tagMappingConfig, effectiveIssueCategoryLookup);
+        Map<String, String> remediationCommentTimestamps = updateResult.remediationCommentTimestamps;
 
-        // Step 2: Check if there are any remediations to generate.
+        // Step 2: Keep only Issue nodes written in this save so SSC does not overwrite concurrent
+        // tag edits on Non-SAST / non-audited SAST findings. In-memory only — before any zip I/O.
+        AuditXmlIssuePruner.retainOnly(auditDoc, updateResult.writtenInstanceIds);
+
+        // Step 3: Check if there are any remediations to generate.
         boolean hasRemediations = auditResponses.values().stream()
                 .anyMatch(ar -> ar.getAuditResult() != null &&
                         ar.getAuditResult().getAutoremediation() != null &&
                         ar.getAuditResult().getAutoremediation().getChanges() != null &&
                         !ar.getAuditResult().getAutoremediation().getChanges().isEmpty());
 
-        // Step 3: Generate the in-memory remediations.xml document if needed.
+        // Step 4: Generate the in-memory remediations.xml document if needed.
         if (hasRemediations && !remediationCommentTimestamps.isEmpty()) {
             this.remediationsDoc = generateRemediationsXml(auditResponses, remediationCommentTimestamps, fprInfo);
         } else {
@@ -715,7 +736,7 @@ public class AuditProcessor {
             }
         }
 
-        // Step 4: Write the modified XML documents directly back into the open FPR file system.
+        // Step 5: Write the modified XML documents directly back into the open FPR file system.
         try {
             if (auditDoc != null) {
                 // Get the path to 'audit.xml' *inside* the zip and overwrite it.

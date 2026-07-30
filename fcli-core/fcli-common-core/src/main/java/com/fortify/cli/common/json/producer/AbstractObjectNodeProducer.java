@@ -14,6 +14,7 @@ package com.fortify.cli.common.json.producer;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.function.IntSupplier;
 import java.util.function.UnaryOperator;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -32,6 +33,7 @@ import com.fortify.cli.common.spel.query.QueryExpression;
 import com.fortify.cli.common.util.Break;
 
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.Singular;
 import lombok.experimental.SuperBuilder;
@@ -52,10 +54,14 @@ public abstract class AbstractObjectNodeProducer implements IObjectNodeProducer 
     @Getter @Singular private final List<UnaryOperator<JsonNode>> recordTransformers;
     @Getter private final QueryExpression queryExpression;
     @Getter private final IResponseMetadataCollector responseMetadataCollector;
+    @Builder.Default private final IntSupplier exitCodeSupplier = () -> 0;
     private ObjectNode responseMetadata;
 
     @Override
     public ObjectNode getResponseMetadata() { return responseMetadata; }
+
+    @Override
+    public int getExitCode() { return exitCodeSupplier.getAsInt(); }
 
     /**
      * Template method used by subclasses to feed input JSON to this base class for processing.
@@ -141,6 +147,18 @@ public abstract class AbstractObjectNodeProducer implements IObjectNodeProducer 
          */
         public B productHelper(IProductHelper productHelper) { this.explicitProductHelper = productHelper; return self(); }
         public B commandHelper(ICommandHelper commandHelper) { this.commandHelper = commandHelper; return self(); }
+
+        /**
+         * Configure a fixed exit code to be reported by the command producing/writing
+         * these records. Convenience for {@code exitCodeSupplier(() -> exitCode)}; use the
+         * generated {@code exitCodeSupplier(IntSupplier)} setter instead when the exit code
+         * must be derived only after records/metadata have been produced (e.g. from
+         * {@link AbstractObjectNodeProducer#getResponseMetadata()} or a counter updated
+         * during iteration), as is typically the case for request/streaming producers.
+         * @param exitCode Fixed exit code (typically 0 for success, non-zero for failure).
+         * @return This builder instance for fluent chaining.
+         */
+        public B exitCode(int exitCode) { return exitCodeSupplier(() -> exitCode); }
         
         public B applyAllFrom(ObjectNodeProducerApplyFrom applyFrom) {
             if ( applyFrom==null || applyFrom==ObjectNodeProducerApplyFrom.NONE ) { return self(); }

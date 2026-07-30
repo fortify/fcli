@@ -12,56 +12,61 @@
  */
 package com.fortify.cli.fod.aviator;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.lang.reflect.Field;
+import java.nio.file.Path;
 
 import org.junit.jupiter.api.Test;
 
 import com.fortify.cli.common.exception.FcliSimpleException;
+import com.fortify.cli.fod.aviator.cli.mixin.FoDAviatorApplyRemediationsSourceMixin;
 import com.fortify.cli.fod.aviator.cmd.FoDAviatorApplyRemediationsCommand;
 
+import picocli.CommandLine;
+
+/**
+ * CLI wiring and product rules for FoD apply-remediations (not default-field or util tests).
+ */
 class FoDAviatorApplyRemediationsCommandTest {
+
     @Test
-    void testSourceCodeDirectoryHasDefaultValue() throws Exception {
-        FoDAviatorApplyRemediationsCommand command = new FoDAviatorApplyRemediationsCommand();
-
-        Field field = FoDAviatorApplyRemediationsCommand.class.getDeclaredField("sourceCodeDirectory");
-        field.setAccessible(true);
-        String fieldValue = (String) field.get(command);
-
-        assertNotNull(fieldValue,
-            "sourceCodeDirectory must have default value to prevent NPE when --source-dir not specified");
-
-        assertEquals(System.getProperty("user.dir"), fieldValue,
-            "sourceCodeDirectory default should be current working directory");
+    void fromCacheParsesPath() throws Exception {
+        FoDAviatorApplyRemediationsCommand command = parse("--from-cache", "remediations.zip");
+        Field sourceSelectorField = FoDAviatorApplyRemediationsCommand.class.getDeclaredField("sourceSelector");
+        sourceSelectorField.setAccessible(true);
+        FoDAviatorApplyRemediationsSourceMixin sourceSelector =
+                (FoDAviatorApplyRemediationsSourceMixin) sourceSelectorField.get(command);
+        assertEquals(Path.of("remediations.zip"), sourceSelector.getFromCache());
+        assertTrue(sourceSelector.isFromCacheSelected());
     }
 
     @Test
-    void testSourceCodeDirectoryCanBeOverridden() throws Exception {
-        FoDAviatorApplyRemediationsCommand command = new FoDAviatorApplyRemediationsCommand();
-
-        Field field = FoDAviatorApplyRemediationsCommand.class.getDeclaredField("sourceCodeDirectory");
-        field.setAccessible(true);
-
-        String customPath = "/custom/source/directory";
-        field.set(command, customPath);
-
-        String fieldValue = (String) field.get(command);
-
-        assertEquals(customPath, fieldValue,
-            "sourceCodeDirectory should be overridable when --source-dir option is provided");
+    void releaseAndFromCacheAreExclusive() {
+        assertThrows(CommandLine.ParameterException.class,
+                () -> parse("--release", "1", "--from-cache", "local.zip"));
     }
 
     @Test
-    void testBlankSourceCodeDirectoryThrowsException() throws Exception {
-        FoDAviatorApplyRemediationsCommand command = new FoDAviatorApplyRemediationsCommand();
+    void issueIdsRequireFromCache() {
+        FoDAviatorApplyRemediationsCommand command = parse("--release", "1", "--issue-ids", "ISSUE-1");
+        assertThrows(FcliSimpleException.class, command::getJsonNode);
+    }
 
+    @Test
+    void blankSourceDirIsRejected() throws Exception {
+        FoDAviatorApplyRemediationsCommand command = parse("--from-cache", "cache.zip");
         Field field = FoDAviatorApplyRemediationsCommand.class.getDeclaredField("sourceCodeDirectory");
         field.setAccessible(true);
         field.set(command, "");
+        assertThrows(FcliSimpleException.class, command::getJsonNode);
+    }
 
-        assertThrows(FcliSimpleException.class, () -> command.getJsonNode(null),
-            "Blank sourceCodeDirectory should throw FcliSimpleException");
+    private static FoDAviatorApplyRemediationsCommand parse(String... args) {
+        FoDAviatorApplyRemediationsCommand command = new FoDAviatorApplyRemediationsCommand();
+        new CommandLine(command).parseArgs(args);
+        return command;
     }
 }

@@ -60,6 +60,12 @@ public class FVDLMetadata {
     private Set<String> ambiguousSourceBaseNamesIgnoreCase = ConcurrentHashMap.newKeySet();
     private Set<String> ambiguousSourceExtensions = ConcurrentHashMap.newKeySet();
 
+    // Source file encodings from Build/SourceFiles/File Name + @encoding
+    private Map<String, String> sourceFileEncodingsByPath = new ConcurrentHashMap<>();
+    private Map<String, String> sourceFileEncodingsByPathIgnoreCase = new ConcurrentHashMap<>();
+    private Set<String> ambiguousSourceEncodingPaths = ConcurrentHashMap.newKeySet();
+    private Set<String> ambiguousSourceEncodingPathsIgnoreCase = ConcurrentHashMap.newKeySet();
+
     // Statistics
     private long totalVulnerabilities;
     private long totalNodes;
@@ -91,6 +97,22 @@ public class FVDLMetadata {
         if (!extension.isEmpty()) {
             registerUniqueMapping(sourceFileTypesByExtension, ambiguousSourceExtensions, extension, normalizedType);
         }
+    }
+
+    public void registerSourceFileEncoding(String fileName, String encoding) {
+        if (fileName == null || encoding == null) {
+            return;
+        }
+
+        String normalizedPath = normalizeFileName(fileName);
+        String normalizedEncoding = normalizeEncoding(encoding);
+        if (normalizedPath.isEmpty() || normalizedEncoding.isEmpty()) {
+            return;
+        }
+
+        registerUniqueMapping(sourceFileEncodingsByPath, ambiguousSourceEncodingPaths, normalizedPath, normalizedEncoding);
+        registerUniqueMapping(sourceFileEncodingsByPathIgnoreCase, ambiguousSourceEncodingPathsIgnoreCase,
+            foldCase(normalizedPath), normalizedEncoding);
     }
 
     public String findSourceFileTypeForFileName(String fileName) {
@@ -133,6 +155,21 @@ public class FVDLMetadata {
         return getUniqueMapping(sourceFileTypesByExtension, ambiguousSourceExtensions, normalizedExtension);
     }
 
+    public String findSourceFileEncodingForFileName(String fileName) {
+        String normalizedPath = normalizeFileName(fileName);
+        if (normalizedPath.isEmpty()) {
+            return null;
+        }
+
+        String exactPathEncoding = getUniqueMapping(sourceFileEncodingsByPath, ambiguousSourceEncodingPaths, normalizedPath);
+        if (exactPathEncoding != null) {
+            return exactPathEncoding;
+        }
+
+        return getUniqueMapping(sourceFileEncodingsByPathIgnoreCase, ambiguousSourceEncodingPathsIgnoreCase,
+            foldCase(normalizedPath));
+    }
+
     private static void registerUniqueMapping(Map<String, String> mappings, Set<String> ambiguousKeys,
                                               String key, String value) {
         if (ambiguousKeys.contains(key)) {
@@ -166,6 +203,10 @@ public class FVDLMetadata {
 
     private static String normalizeType(String fileType) {
         return fileType == null ? "" : fileType.trim().toUpperCase(Locale.ROOT);
+    }
+
+    private static String normalizeEncoding(String encoding) {
+        return encoding == null ? "" : encoding.trim();
     }
 
     private static String extractBaseName(String normalizedPath) {
