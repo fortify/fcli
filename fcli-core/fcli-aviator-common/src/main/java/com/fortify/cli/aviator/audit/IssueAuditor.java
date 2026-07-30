@@ -48,7 +48,9 @@ import com.fortify.cli.aviator.fpr.filter.TagDefinition;
 import com.fortify.cli.aviator.fpr.filter.VulnerabilityFilterer;
 import com.fortify.cli.aviator.fpr.model.AuditIssue;
 import com.fortify.cli.aviator.fpr.model.FPRInfo;
+import com.fortify.cli.aviator.fpr.model.FVDLMetadata;
 import com.fortify.cli.aviator.fpr.processor.AuditProcessor;
+import com.fortify.cli.aviator.fpr.utils.SourceEncodingOptions;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClient;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClientHelper;
 import com.fortify.cli.aviator.util.Constants;
@@ -80,6 +82,8 @@ public class IssueAuditor {
     private TagDefinition humanAuditTag;
     private TagDefinition aviatorStatusTag;
     private final SourceLanguageResolver sourceLanguageResolver;
+    private final SourceEncodingOptions sourceEncodingOptions;
+    private final FVDLMetadata fvdlMetadata;
 
     private final IAviatorLogger logger;
     private final List<String> customPriorityOrder;
@@ -88,6 +92,15 @@ public class IssueAuditor {
                         FPRInfo fprInfo, String SSCApplicationName, String SSCApplicationVersion,
                         FilterSelection filterSelection, IAviatorLogger logger, List<String> customPriorityOrder,
                         SourceLanguageResolver sourceLanguageResolver) {
+        this(vulnerabilities, auditProcessor, auditIssueMap, fprInfo, SSCApplicationName, SSCApplicationVersion,
+                filterSelection, logger, customPriorityOrder, sourceLanguageResolver, SourceEncodingOptions.defaults(), null);
+    }
+
+    public IssueAuditor(List<Vulnerability> vulnerabilities, AuditProcessor auditProcessor, Map<String, AuditIssue> auditIssueMap,
+                        FPRInfo fprInfo, String SSCApplicationName, String SSCApplicationVersion,
+                        FilterSelection filterSelection, IAviatorLogger logger, List<String> customPriorityOrder,
+                        SourceLanguageResolver sourceLanguageResolver, SourceEncodingOptions sourceEncodingOptions,
+                        FVDLMetadata fvdlMetadata) {
         this.logger = logger;
         this.customPriorityOrder = customPriorityOrder;
         this.MAX_PER_CATEGORY = Constants.MAX_PER_CATEGORY;
@@ -103,6 +116,8 @@ public class IssueAuditor {
         this.SSCApplicationName = SSCApplicationName;
         this.SSCApplicationVersion = SSCApplicationVersion;
         this.sourceLanguageResolver = sourceLanguageResolver;
+        this.sourceEncodingOptions = sourceEncodingOptions == null ? SourceEncodingOptions.defaults() : sourceEncodingOptions;
+        this.fvdlMetadata = fvdlMetadata;
         this.analysisTag = fprInfo.getFilterTemplate().getTagDefinitions().stream().filter(t -> "Analysis".equalsIgnoreCase(t.getName())).findFirst().orElse(null);
         this.resultsTag = resolveResultTag("", "", analysisTag);
     }
@@ -162,7 +177,8 @@ public class IssueAuditor {
         } else {
             try (AviatorGrpcClient client = AviatorGrpcClientHelper.createClient(url, logger, DEFAULT_PING_INTERVAL_SECONDS)) {
                 CompletableFuture<Map<String, AuditResponse>> future =
-                        client.processBatchRequests(promptsToAudit, projectName, fprInfo.getBuildId(), SSCApplicationName, SSCApplicationVersion, token, fprHandle, customPriorityOrder);
+                        client.processBatchRequests(promptsToAudit, projectName, fprInfo.getBuildId(), SSCApplicationName,
+                            SSCApplicationVersion, token, fprHandle, customPriorityOrder, sourceEncodingOptions, fvdlMetadata);
                 Map<String, AuditResponse> responses = future.get(500, TimeUnit.MINUTES);
                 responses.forEach((requestId, response) -> auditResponses.put(response.getIssueId(), response));
                 logger.progress("Audit completed");

@@ -59,7 +59,9 @@ import com.fortify.cli.aviator.audit.model.AuditResponse;
 import com.fortify.cli.aviator.config.TagMappingConfig;
 import com.fortify.cli.aviator.fpr.model.AuditIssue;
 import com.fortify.cli.aviator.fpr.model.FPRInfo;
+import com.fortify.cli.aviator.fpr.model.FVDLMetadata;
 import com.fortify.cli.aviator.fpr.utils.FileUtils;
+import com.fortify.cli.aviator.fpr.utils.SourceEncodingOptions;
 import com.fortify.cli.aviator.util.Constants;
 import com.fortify.cli.aviator.util.FprHandle;
 
@@ -83,9 +85,15 @@ public class AuditProcessor {
 
     private final Map<String, AuditIssue> auditIssueMap = new HashMap<>();
     private final FprHandle fprHandle;
+    private final SourceEncodingOptions sourceEncodingOptions;
 
     public AuditProcessor(FprHandle fprHandle) {
+        this(fprHandle, SourceEncodingOptions.defaults());
+    }
+
+    public AuditProcessor(FprHandle fprHandle, SourceEncodingOptions sourceEncodingOptions) {
         this.fprHandle = fprHandle;
+        this.sourceEncodingOptions = sourceEncodingOptions == null ? SourceEncodingOptions.defaults() : sourceEncodingOptions;
     }
 
     /**
@@ -709,6 +717,16 @@ public class AuditProcessor {
     public File updateAndSaveAuditAndRemediationsXml(Map<String, AuditResponse> auditResponses,
             TagMappingConfig tagMappingConfig, Map<String, String> issueCategoryLookup,
             FPRInfo fprInfo) throws AviatorTechnicalException {
+        return updateAndSaveAuditAndRemediationsXml(auditResponses, tagMappingConfig, issueCategoryLookup, fprInfo, null,
+                sourceEncodingOptions);
+    }
+
+    public File updateAndSaveAuditAndRemediationsXml(Map<String, AuditResponse> auditResponses,
+            TagMappingConfig tagMappingConfig, Map<String, String> issueCategoryLookup,
+            FPRInfo fprInfo, FVDLMetadata fvdlMetadata, SourceEncodingOptions sourceEncodingOptions) throws AviatorTechnicalException {
+        SourceEncodingOptions effectiveSourceEncodingOptions = sourceEncodingOptions == null
+                ? this.sourceEncodingOptions
+                : sourceEncodingOptions;
         // Step 1: Apply this save's audit responses. writtenInstanceIds is the local retain set.
         Map<String, String> effectiveIssueCategoryLookup = issueCategoryLookup == null ? Map.of() : issueCategoryLookup;
         AuditXmlUpdateResult updateResult = updateAuditXml(
@@ -728,7 +746,8 @@ public class AuditProcessor {
 
         // Step 4: Generate the in-memory remediations.xml document if needed.
         if (hasRemediations && !remediationCommentTimestamps.isEmpty()) {
-            this.remediationsDoc = generateRemediationsXml(auditResponses, remediationCommentTimestamps, fprInfo);
+            this.remediationsDoc = generateRemediationsXml(auditResponses, remediationCommentTimestamps, fprInfo,
+                    fvdlMetadata, effectiveSourceEncodingOptions);
         } else {
             this.remediationsDoc = null;
             if (hasRemediations) {
@@ -765,7 +784,8 @@ public class AuditProcessor {
 
     private Document generateRemediationsXml(Map<String, AuditResponse> auditResponses,
                                             Map<String, String> remediationCommentTimestamps,
-                                            FPRInfo fprInfo) throws AviatorTechnicalException {
+                                            FPRInfo fprInfo, FVDLMetadata fvdlMetadata,
+                                            SourceEncodingOptions sourceEncodingOptions) throws AviatorTechnicalException {
         try {
             DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
             docFactory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
@@ -829,7 +849,7 @@ public class AuditProcessor {
                         fileChangesElement.appendChild(filenameElement);
 
                         //Optional<String> originalFileContentOptional = fvdlProcessor.getSourceFileContent(filename);
-                        FileUtils fileUtils = new FileUtils();
+                        FileUtils fileUtils = new FileUtils(sourceEncodingOptions, fvdlMetadata);
                         Optional<String> originalFileContentOptional =  fileUtils.getSourceFileContent(fprHandle, filename);
 
                         if (originalFileContentOptional.isEmpty()) {

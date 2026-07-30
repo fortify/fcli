@@ -29,6 +29,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
 import com.fortify.cli.aviator.applyRemediation.ApplyAutoRemediationOnSource;
 import com.fortify.cli.aviator.config.AviatorLoggerImpl;
+import com.fortify.cli.aviator.fpr.utils.SourceEncodingOptions;
 import com.fortify.cli.aviator.ssc.cli.mixin.AviatorSSCApplyRemediationsArtifactSelectorMixin;
 import com.fortify.cli.aviator.ssc.helper.AviatorSSCApplyRemediationsHelper;
 import com.fortify.cli.aviator.ssc.helper.SinceOptionHelper;
@@ -63,6 +64,8 @@ public class AviatorSSCApplyRemediationsCommand extends AbstractSSCJsonNodeOutpu
     private static final Logger LOG = LoggerFactory.getLogger(AviatorSSCApplyRemediationsCommand.class);
     @Option(names = {"--source-dir"}, descriptionKey = "fcli.aviator.ssc.apply-remediations.source-dir")
     private String sourceCodeDirectory = System.getProperty("user.dir");
+    @Option(names = {"--source-encodings"}, descriptionKey = "fcli.aviator.ssc.apply-remediations.source-encodings")
+    private String sourceEncodings = SourceEncodingOptions.DEFAULT_SOURCE_ENCODINGS;
 
     @Override
     @SneakyThrows
@@ -128,7 +131,8 @@ public class AviatorSSCApplyRemediationsCommand extends AbstractSSCJsonNodeOutpu
                 try {
                     fprPath = downloadArtifactFpr(ad);
                     try (FprHandle fprHandle = new FprHandle(fprPath)) {
-                        var metric = ApplyAutoRemediationOnSource.applyRemediations(fprHandle, sourceCodeDirectory, logger);
+                        var metric = ApplyAutoRemediationOnSource.applyRemediations(fprHandle, sourceCodeDirectory,
+                            SourceEncodingOptions.parse(sourceEncodings), logger);
                         totalRemediations   += metric.totalRemediations();
                         appliedRemediations += metric.appliedRemediations();
                         skippedRemediations += metric.skippedRemediations();
@@ -181,7 +185,8 @@ public class AviatorSSCApplyRemediationsCommand extends AbstractSSCJsonNodeOutpu
             try {
                 logger.progress("Status: Processing FPR with Aviator for Applying Auto Remediations");
                 try (FprHandle fprHandle = new FprHandle(fprPath)) {
-                    var remediationMetric = ApplyAutoRemediationOnSource.applyRemediations(fprHandle, sourceCodeDirectory, logger);
+                        var remediationMetric = ApplyAutoRemediationOnSource.applyRemediations(fprHandle, sourceCodeDirectory,
+                            SourceEncodingOptions.parse(sourceEncodings), logger);
                     String status = remediationMetric.appliedRemediations() > 0
                         ? "Remediation-Applied"
                         : "No-Remediation-Applied";

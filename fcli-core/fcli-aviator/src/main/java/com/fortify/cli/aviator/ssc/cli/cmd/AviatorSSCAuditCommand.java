@@ -33,6 +33,7 @@ import com.fortify.cli.aviator.audit.model.AuditFprOptions;
 import com.fortify.cli.aviator.audit.model.FPRAuditResult;
 import com.fortify.cli.aviator.config.AviatorLoggerImpl;
 import com.fortify.cli.aviator.config.TagMappingConfig;
+import com.fortify.cli.aviator.fpr.utils.SourceEncodingOptions;
 import com.fortify.cli.aviator.ssc.helper.AviatorSSCAuditHelper;
 import com.fortify.cli.aviator.ssc.helper.AviatorSSCTagValidator;
 import com.fortify.cli.aviator.util.FprHandle;
@@ -79,6 +80,8 @@ public class AviatorSSCAuditCommand extends AbstractSSCJsonNodeOutputCommand imp
     @ArgGroup(exclusive = true, multiplicity = "0..1") private QuotaHandlingArgGroup quotaHandlingArgGroup = new QuotaHandlingArgGroup();
     @Option(names = {"--test-exceeding-quota"}) private boolean testExceedingQuota;
     @Option(names = {"--default-quota-fallback"}) private boolean defaultQuotaFallback;
+    @Option(names = {"--source-encodings"}, descriptionKey = "fcli.aviator.ssc.audit.source-encodings")
+    private String sourceEncodings = SourceEncodingOptions.DEFAULT_SOURCE_ENCODINGS;
     private static final Logger LOG = LoggerFactory.getLogger(AviatorSSCAuditCommand.class);
     private Long checkedQuotaBefore;
 
@@ -275,6 +278,7 @@ public class AviatorSSCAuditCommand extends AbstractSSCJsonNodeOutputCommand imp
                     .noFilterSet(isNoFilterSet())
                     .folderNames(folderNames)
                     .folderPriorityOrder(getFolderPriorityOrder())
+                    .sourceEncodingOptions(SourceEncodingOptions.parse(sourceEncodings))
                     .build());
         } catch (Exception e) {
             LOG.error("FPR audit failed for {}:{}: {}", av.getApplicationName(), av.getVersionName(), e.getMessage(), e);

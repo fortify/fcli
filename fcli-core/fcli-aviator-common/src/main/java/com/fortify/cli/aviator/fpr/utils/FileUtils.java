@@ -14,7 +14,6 @@ package com.fortify.cli.aviator.fpr.utils;
 
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
@@ -28,6 +27,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fortify.cli.aviator.audit.model.Fragment;
+import com.fortify.cli.aviator.fpr.model.FVDLMetadata;
 import com.fortify.cli.aviator.util.FileTypeLanguageMapperUtil;
 import com.fortify.cli.aviator.util.FileUtil;
 import com.fortify.cli.aviator.util.FprHandle;
@@ -37,6 +37,17 @@ import com.fortify.cli.aviator.util.StringUtil;
 public class FileUtils {
     private static final Logger logger = LoggerFactory.getLogger(FileUtils.class);
     private final Map<Path, List<String>> fileContentCache = new ConcurrentHashMap<>();
+    private final SourceEncodingOptions sourceEncodingOptions;
+    private final FVDLMetadata fvdlMetadata;
+
+    public FileUtils() {
+        this(SourceEncodingOptions.defaults(), null);
+    }
+
+    public FileUtils(SourceEncodingOptions sourceEncodingOptions, FVDLMetadata fvdlMetadata) {
+        this.sourceEncodingOptions = sourceEncodingOptions == null ? SourceEncodingOptions.defaults() : sourceEncodingOptions;
+        this.fvdlMetadata = fvdlMetadata;
+    }
 
     /**
      * Reads all lines from a file, caching the result to avoid repeated reads.
@@ -46,12 +57,16 @@ public class FileUtils {
      * @return List of lines, or empty list if file not found or error occurs
      */
     public List<String> readFileWithFallback(Path filePath) {
+        return readFileWithFallback(filePath, filePath.getFileName().toString());
+    }
+
+    private List<String> readFileWithFallback(Path filePath, String filename) {
         return fileContentCache.computeIfAbsent(filePath, path -> {
             try {
                 byte[] fileBytes = Files.readAllBytes(path);
-                String content = new String(fileBytes, StandardCharsets.UTF_8);
+                String content = sourceEncodingOptions.decode(fileBytes, filename, fvdlMetadata).content();
                 return Arrays.asList(content.split("\\r?\\n"));
-            } catch (IOException e) {
+            } catch (IOException | SourceEncodingOptions.SourceDecodeException e) {
                 logger.error("Failed to read file: {}", path, e);
                 return Collections.emptyList();
             }
@@ -80,7 +95,7 @@ public class FileUtils {
         Path fullSourcePath = resolveFullPath(fprHandle, relativePath);
         if (fullSourcePath == null) return "";
 
-        List<String> lines = readFileWithFallback(fullSourcePath);
+        List<String> lines = readFileWithFallback(fullSourcePath, relativePath);
         if (lineNumber > 0 && lines.size() >= lineNumber) {
             return appendLineNumbers(lines.get(lineNumber - 1), relativePath, lineNumber - 1);
         }
@@ -97,7 +112,7 @@ public class FileUtils {
             return new Fragment("", 0, 0);
         }
 
-        List<String> lines = readFileWithFallback(fullSourcePath);
+        List<String> lines = readFileWithFallback(fullSourcePath, relativePath);
         if (lines.isEmpty() || lineNumber <= 0) {
             return new Fragment("", 0, 0);
         }
@@ -136,7 +151,7 @@ public class FileUtils {
         }
 
         try {
-            return Optional.of(String.join(System.lineSeparator(), readFileWithFallback(actualSourcePath)));
+            return Optional.of(String.join(System.lineSeparator(), readFileWithFallback(actualSourcePath, relativePath)));
         } catch (Exception e) {
             logger.warn("Could not read source file content for path: {}", relativePath, e);
             return Optional.empty();

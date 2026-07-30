@@ -24,6 +24,7 @@ import org.slf4j.LoggerFactory;
 
 import com.fortify.cli.aviator.audit.model.File;
 import com.fortify.cli.aviator.audit.model.StackTraceElement;
+import com.fortify.cli.aviator.fpr.model.FVDLMetadata;
 import com.fortify.cli.aviator.util.FprHandle;
 import com.fortify.cli.aviator.util.StringUtil;
 
@@ -43,6 +44,8 @@ public class SourceCodeEnricher {
     private final Map<String, String> sourceFileMap;*/
     private final FprHandle fprHandle;
     private final FileUtils fileUtils;
+    private final SourceEncodingOptions sourceEncodingOptions;
+    private final FVDLMetadata fvdlMetadata;
 
     /**
      * Creates a new SourceCodeEnricher with the required dependencies.
@@ -55,8 +58,14 @@ public class SourceCodeEnricher {
     }*/
 
     public SourceCodeEnricher(FprHandle fprHandle){
+        this(fprHandle, SourceEncodingOptions.defaults(), null);
+    }
+
+    public SourceCodeEnricher(FprHandle fprHandle, SourceEncodingOptions sourceEncodingOptions, FVDLMetadata fvdlMetadata){
         this.fprHandle = fprHandle;
         this.fileUtils = new FileUtils();
+        this.sourceEncodingOptions = sourceEncodingOptions == null ? SourceEncodingOptions.defaults() : sourceEncodingOptions;
+        this.fvdlMetadata = fvdlMetadata;
     }
 
     /**
@@ -135,10 +144,10 @@ public class SourceCodeEnricher {
             try {
                 if (Files.exists(actualSourcePath)) {
                     byte[] encodedBytes = Files.readAllBytes(actualSourcePath);
-                    String content = new String(encodedBytes);
+                    String content = sourceEncodingOptions.decode(encodedBytes, filename, fvdlMetadata).content();
                     // Keep line markers in prompt file content; downstream gRPC/template rendering is pass-through.
                     file.setContent(fileUtils.appendLineNumbers(content, filename, 0));
-                    file.setEndLine(fileUtils.countLines(actualSourcePath));
+                    file.setEndLine(content.split("\\R", -1).length);
                 } else {
                     // This warning is now more accurate.
                     logger.warn("Source file not found at internal path: {}. This may indicate a corrupt FPR.", actualSourcePath);

@@ -20,6 +20,7 @@ import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
 import com.fortify.cli.aviator.config.IAviatorLogger;
 import com.fortify.cli.aviator.fpr.processor.RemediationProcessor;
 import com.fortify.cli.aviator.fpr.processor.RemediationProcessor.RemediationMetric;
+import com.fortify.cli.aviator.fpr.utils.SourceEncodingOptions;
 import com.fortify.cli.aviator.util.FprHandle;
 
 
@@ -27,6 +28,12 @@ public class ApplyAutoRemediationOnSource {
     private static final Logger LOG = LoggerFactory.getLogger(ApplyAutoRemediationOnSource.class);
 
     public static RemediationMetric applyRemediations(FprHandle fprHandle, String sourceCodeDirectory, IAviatorLogger logger)
+            throws AviatorSimpleException, AviatorTechnicalException {
+        return applyRemediations(fprHandle, sourceCodeDirectory, SourceEncodingOptions.defaults(), logger);
+        }
+
+        public static RemediationMetric applyRemediations(FprHandle fprHandle, String sourceCodeDirectory,
+            SourceEncodingOptions sourceEncodingOptions, IAviatorLogger logger)
             throws AviatorSimpleException, AviatorTechnicalException {
 
         LOG.info("Starting apply auto-remediation process for file: {}", fprHandle.getFprPath());
@@ -37,7 +44,7 @@ public class ApplyAutoRemediationOnSource {
         }
         LOG.info("FPR validation successful");
 
-        RemediationProcessor remediationProcessor = new RemediationProcessor(fprHandle, sourceCodeDirectory);
+        RemediationProcessor remediationProcessor = new RemediationProcessor(fprHandle, sourceCodeDirectory, sourceEncodingOptions);
         return remediationProcessor.processRemediationXML();
 
     }

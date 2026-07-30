@@ -14,11 +14,7 @@ package com.fortify.cli.aviator.fpr.processor;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.ByteBuffer;
-import java.nio.CharBuffer;
-import java.nio.charset.CharacterCodingException;
 import java.nio.charset.Charset;
-import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -49,6 +45,10 @@ import org.xml.sax.SAXException;
 import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
 import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
 import com.fortify.cli.aviator.fpr.model.FVDLMetadata;
+import com.fortify.cli.aviator.fpr.utils.SourceEncodingOptions;
+import com.fortify.cli.aviator.fpr.utils.SourceEncodingOptions.DecodeResult;
+import com.fortify.cli.aviator.fpr.utils.SourceEncodingOptions.SourceDecodeException;
+import com.fortify.cli.aviator.fpr.utils.SourceEncodingOptions.SourceEncodeException;
 import com.fortify.cli.aviator.util.FprHandle;
 import com.fortify.cli.aviator.util.FuzzyContextSearcher;
 
@@ -58,6 +58,7 @@ public class RemediationProcessor {
 
     private final FprHandle fprHandle;
     private final String sourceCodeDirectory;
+    private final SourceEncodingOptions sourceEncodingOptions;
 
     public record RemediationMetric(int totalRemediations, int appliedRemediations, int skippedRemediations, Set<String> modifiedFiles,
                                     Map<String, Integer> skippedByReason) {
@@ -68,7 +69,10 @@ public class RemediationProcessor {
 
     private record FvdlMetadataResult(FVDLMetadata metadata, SkipReason skipReason) {}
 
-    private record PendingFileWrite(String filename, Path filePath, String content, byte[] updatedBytes) {}
+    private record SourceFileContent(String content, Charset charset, String encodingSource) {}
+
+    private record PendingFileWrite(String filename, Path filePath, String content, Charset charset, String encodingSource,
+                                    byte[] updatedBytes) {}
 
     private record RollbackFileWrite(String filename, Path filePath, byte[] originalBytes) {}
 
@@ -136,8 +140,13 @@ public class RemediationProcessor {
     }
 
     public RemediationProcessor(FprHandle fprHandle, String sourceCodeDirectory) {
+        this(fprHandle, sourceCodeDirectory, SourceEncodingOptions.defaults());
+    }
+
+    public RemediationProcessor(FprHandle fprHandle, String sourceCodeDirectory, SourceEncodingOptions sourceEncodingOptions) {
         this.fprHandle = fprHandle;
         this.sourceCodeDirectory = sourceCodeDirectory;
+        this.sourceEncodingOptions = sourceEncodingOptions == null ? SourceEncodingOptions.defaults() : sourceEncodingOptions;
     }
 
     public RemediationMetric processRemediationXML() {
@@ -260,23 +269,25 @@ public class RemediationProcessor {
         }
 
         String fileHash = getRequiredElementText(fileChanges, "Hash");
-        Charset sourceEncoding = getRequiredSourceEncoding(filename, fvdlMetadataResult);
         NodeList changesNodes = fileChanges.getElementsByTagNameNS(NAMESPACE_URI, "Change");
         if (changesNodes.getLength() == 0) {
             throw new SkipRemediationException(SkipReason.NO_CHANGES, "No changes found for file: " + filename);
         }
-        LOG.debug("Remediation {} has {} change(s) for '{}' using FVDL encoding {}", instanceId, changesNodes.getLength(), filename,
-                sourceEncoding.name());
+        SourceFileContent sourceFileContent = getPendingOrSourceContent(filePath, filename, fvdlMetadataResult, pendingWrites);
+        Charset sourceEncoding = sourceFileContent.charset();
+        LOG.debug("Remediation {} has {} change(s) for '{}' using source encoding {}", instanceId, changesNodes.getLength(), filename,
+            sourceFileContent.encodingSource());
 
-        String updatedContent = getPendingOrSourceContent(filePath, filename, sourceEncoding, pendingWrites);
+        String updatedContent = sourceFileContent.content();
         for (int k = 0; k < changesNodes.getLength(); k++) {
             updatedContent = applyChange(instanceId, filename, fileHash, sourceEncoding, updatedContent,
                     (Element) changesNodes.item(k), k + 1);
         }
-        byte[] updatedBytes = encodeStrict(updatedContent, sourceEncoding, filename);
-        pendingWrites.put(filePath, new PendingFileWrite(filename, filePath, updatedContent, updatedBytes));
-        LOG.debug("Staged remediation {} for '{}' using FVDL encoding {}; changes={}, encodedBytes={}", instanceId, filename,
-                sourceEncoding.name(), changesNodes.getLength(), updatedBytes.length);
+        byte[] updatedBytes = encodeSourceFile(updatedContent, sourceEncoding, filename);
+        pendingWrites.put(filePath, new PendingFileWrite(filename, filePath, updatedContent, sourceEncoding,
+            sourceFileContent.encodingSource(), updatedBytes));
+        LOG.debug("Staged remediation {} for '{}' using source encoding {}; changes={}, encodedBytes={}", instanceId, filename,
+            sourceFileContent.encodingSource(), changesNodes.getLength(), updatedBytes.length);
         return true;
     }
 
@@ -334,10 +345,12 @@ public class RemediationProcessor {
         return String.join(lineSeparator, updatedLines);
     }
 
-    private String getPendingOrSourceContent(Path filePath, String filename, Charset sourceEncoding,
+    private SourceFileContent getPendingOrSourceContent(Path filePath, String filename, FvdlMetadataResult fvdlMetadataResult,
             Map<Path, PendingFileWrite> pendingWrites) {
         PendingFileWrite pendingWrite = pendingWrites.get(filePath);
-        return pendingWrite == null ? readSourceFile(filePath, filename, sourceEncoding) : pendingWrite.content();
+        return pendingWrite == null
+                ? readSourceFile(filePath, filename, fvdlMetadataResult)
+                : new SourceFileContent(pendingWrite.content(), pendingWrite.charset(), pendingWrite.encodingSource());
     }
 
     private void commitRemediationWrites(String instanceId, Map<Path, PendingFileWrite> pendingWrites, Set<String> modifiedFiles)
@@ -410,66 +423,26 @@ public class RemediationProcessor {
         }
     }
 
-    private Charset getRequiredSourceEncoding(String filename, FvdlMetadataResult fvdlMetadataResult) {
-        if (fvdlMetadataResult.skipReason() != null || fvdlMetadataResult.metadata() == null) {
-            throw new SkipRemediationException(SkipReason.FVDL_METADATA_UNAVAILABLE,
-                    "FVDL metadata is unavailable; cannot determine source encoding for file '" + filename + "'");
-        }
-
-        String encoding = fvdlMetadataResult.metadata().findSourceFileEncodingForFileName(filename);
-        if (encoding == null || encoding.isBlank()) {
-            LOG.debug("FVDL source encoding lookup failed for '{}'", filename);
-            throw new SkipRemediationException(SkipReason.FVDL_ENCODING_MISSING,
-                    "FVDL does not declare a source encoding for file '" + filename + "'");
-        }
-
-        try {
-            Charset charset = Charset.forName(encoding);
-            LOG.debug("FVDL source encoding for '{}' resolved to '{}'", filename, charset.name());
-            return charset;
-        } catch (Exception e) {
-            throw new SkipRemediationException(SkipReason.FVDL_ENCODING_UNSUPPORTED,
-                    "FVDL declares unsupported source encoding '" + encoding + "' for file '" + filename + "'", e);
-        }
-    }
-
-    private String readSourceFile(Path filePath, String filename, Charset sourceEncoding) {
+    private SourceFileContent readSourceFile(Path filePath, String filename, FvdlMetadataResult fvdlMetadataResult) {
         try {
             byte[] sourceBytes = Files.readAllBytes(filePath);
-            String decodedContent = decodeStrict(sourceBytes, sourceEncoding);
-            LOG.debug("Strict decoded '{}' using {}; sourceBytes={}, decodedChars={}", filename, sourceEncoding.name(), sourceBytes.length,
-                    decodedContent.length());
-            return decodedContent;
-        } catch (CharacterCodingException e) {
-            throw new SkipRemediationException(SkipReason.SOURCE_DECODE_FAILED,
-                    "FVDL declares source encoding '" + sourceEncoding.name() + "' for file '" + filename +
-                            "', but the source file cannot be decoded using that encoding", e);
+            FVDLMetadata fvdlMetadata = fvdlMetadataResult.skipReason() == null ? fvdlMetadataResult.metadata() : null;
+            DecodeResult decodeResult = sourceEncodingOptions.decode(sourceBytes, filename, fvdlMetadata);
+            LOG.debug("Strict decoded '{}' using {}; sourceBytes={}, decodedChars={}", filename, decodeResult.source(), sourceBytes.length,
+                    decodeResult.content().length());
+            return new SourceFileContent(decodeResult.content(), decodeResult.charset(), decodeResult.source());
+        } catch (SourceDecodeException e) {
+            throw new SkipRemediationException(SkipReason.SOURCE_DECODE_FAILED, e.getMessage(), e);
         } catch (IOException e) {
             throw new SkipRemediationException(SkipReason.SOURCE_READ_FAILED, "Error reading source code file '" + filePath + "'", e);
         }
     }
 
-    private String decodeStrict(byte[] bytes, Charset charset) throws CharacterCodingException {
-        return charset.newDecoder()
-                .onMalformedInput(CodingErrorAction.REPORT)
-                .onUnmappableCharacter(CodingErrorAction.REPORT)
-                .decode(ByteBuffer.wrap(bytes))
-                .toString();
-    }
-
-    private byte[] encodeStrict(String content, Charset charset, String filename) {
+    private byte[] encodeSourceFile(String content, Charset charset, String filename) {
         try {
-            ByteBuffer buffer = charset.newEncoder()
-                    .onMalformedInput(CodingErrorAction.REPORT)
-                    .onUnmappableCharacter(CodingErrorAction.REPORT)
-                    .encode(CharBuffer.wrap(content));
-            byte[] result = new byte[buffer.remaining()];
-            buffer.get(result);
-            return result;
-        } catch (CharacterCodingException e) {
-            throw new SkipRemediationException(SkipReason.REMEDIATION_ENCODE_FAILED,
-                    "Remediation content for file '" + filename + "' cannot be encoded using FVDL source encoding '" +
-                            charset.name() + "'", e);
+            return sourceEncodingOptions.encode(content, charset, filename);
+        } catch (SourceEncodeException e) {
+            throw new SkipRemediationException(SkipReason.REMEDIATION_ENCODE_FAILED, e.getMessage(), e);
         }
     }
 
