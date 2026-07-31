@@ -14,6 +14,7 @@ package com.fortify.cli.aviator.audit;
 
 import java.io.File;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -176,6 +177,8 @@ public class AuditFPR {
         long issuesSuccessfullyAudited = auditResponses.values().stream()
                 .filter(response -> "SUCCESS".equalsIgnoreCase(response.getStatus()))
                 .count();
+        Map<String, Integer> skippedByReason = getSkippedAuditReasons(auditResponses, totalIssuesToAudit);
+        int issuesSkipped = skippedByReason.values().stream().mapToInt(Integer::intValue).sum();
 
         String status;
         String message = null;
@@ -204,8 +207,64 @@ public class AuditFPR {
                     auditResponses, tagMappingConfig, issueCategoryLookup, fprInfo,
                     streamingFVDLProcessor.getFvdlMetadata(), sourceEncodingOptions);
         }
+        AuditProcessor.RemediationGenerationMetric remediationGenerationMetric = auditProcessor.getLastRemediationGenerationMetric();
+
+        if (!skippedByReason.isEmpty()) {
+            LOG.info("Skipped audit issues by reason: {}", skippedByReason);
+        }
+        if (!remediationGenerationMetric.skippedByReason().isEmpty()) {
+            LOG.info("Skipped audit remediation generation by reason: {}", remediationGenerationMetric.skippedByReason());
+        }
 
         LOG.info("FPR audit process completed with status: {}", status);
-        return new FPRAuditResult(updatedFile, status, message, (int) issuesSuccessfullyAudited, totalIssuesToAudit);
+        return new FPRAuditResult(updatedFile, status, message, (int) issuesSuccessfullyAudited, totalIssuesToAudit,
+                issuesSkipped, skippedByReason, remediationGenerationMetric.skippedRemediations(),
+                remediationGenerationMetric.skippedByReason());
+    }
+
+    private static Map<String, Integer> getSkippedAuditReasons(Map<String, AuditResponse> auditResponses, int totalIssuesToAudit) {
+        Map<String, Integer> skippedByReason = new LinkedHashMap<>();
+        auditResponses.values().stream()
+                .filter(response -> !"SUCCESS".equalsIgnoreCase(response.getStatus()))
+                .map(AuditFPR::getSkippedAuditReason)
+                .forEach(reason -> recordSkipped(skippedByReason, reason));
+        int missingResponses = Math.max(0, totalIssuesToAudit - auditResponses.size());
+        if (missingResponses > 0) {
+            skippedByReason.merge("No audit response received", missingResponses, Integer::sum);
+        }
+        return skippedByReason;
+    }
+
+    private static String getSkippedAuditReason(AuditResponse response) {
+        String statusMessage = response == null ? null : response.getStatusMessage();
+        String message = statusMessage == null || statusMessage.isBlank()
+                ? response == null ? null : response.getStatus()
+                : statusMessage;
+        if (message == null || message.isBlank()) {
+            return "Unknown audit failure";
+        }
+        if (message.startsWith("Client-side pre-processing error: ")) {
+            message = message.substring("Client-side pre-processing error: ".length());
+        }
+        if (message.startsWith("Could not decode source file")) {
+            return "Source file decode failed";
+        }
+        if (message.contains("was not found in the FPR")) {
+            return "Source file not found in FPR";
+        }
+        if (message.contains("could not be read from the FPR")) {
+            return "Source file read failed";
+        }
+        if ("FAILED".equalsIgnoreCase(message)) {
+            return "Audit failed";
+        }
+        if ("SKIPPED".equalsIgnoreCase(message)) {
+            return "Skipped by Aviator";
+        }
+        return message;
+    }
+
+    private static void recordSkipped(Map<String, Integer> skippedByReason, String reason) {
+        skippedByReason.merge(reason, 1, Integer::sum);
     }
 }

@@ -27,6 +27,7 @@ import java.util.Base64;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -86,6 +87,26 @@ public class AuditProcessor {
     private final Map<String, AuditIssue> auditIssueMap = new HashMap<>();
     private final FprHandle fprHandle;
     private final SourceEncodingOptions sourceEncodingOptions;
+    private RemediationGenerationMetric lastRemediationGenerationMetric = RemediationGenerationMetric.empty();
+
+    public record RemediationGenerationMetric(int skippedRemediations, Map<String, Integer> skippedByReason) {
+        public static RemediationGenerationMetric empty() {
+            return new RemediationGenerationMetric(0, Map.of());
+        }
+    }
+
+    private enum RemediationSkipReason {
+        SOURCE_READ_OR_DECODE_FAILED("Source file read/decode failed"),
+        INVALID_LINE_NUMBER("Invalid line number"),
+        STRUCTURALLY_INVALID("Structurally invalid remediation"),
+        NO_VALID_CHANGES("No valid changes");
+
+        private final String label;
+
+        RemediationSkipReason(String label) {
+            this.label = label;
+        }
+    }
 
     public AuditProcessor(FprHandle fprHandle) {
         this(fprHandle, SourceEncodingOptions.defaults());
@@ -94,6 +115,10 @@ public class AuditProcessor {
     public AuditProcessor(FprHandle fprHandle, SourceEncodingOptions sourceEncodingOptions) {
         this.fprHandle = fprHandle;
         this.sourceEncodingOptions = sourceEncodingOptions == null ? SourceEncodingOptions.defaults() : sourceEncodingOptions;
+    }
+
+    public RemediationGenerationMetric getLastRemediationGenerationMetric() {
+        return lastRemediationGenerationMetric;
     }
 
     /**
@@ -727,6 +752,7 @@ public class AuditProcessor {
         SourceEncodingOptions effectiveSourceEncodingOptions = sourceEncodingOptions == null
                 ? this.sourceEncodingOptions
                 : sourceEncodingOptions;
+        lastRemediationGenerationMetric = RemediationGenerationMetric.empty();
         // Step 1: Apply this save's audit responses. writtenInstanceIds is the local retain set.
         Map<String, String> effectiveIssueCategoryLookup = issueCategoryLookup == null ? Map.of() : issueCategoryLookup;
         AuditXmlUpdateResult updateResult = updateAuditXml(
@@ -746,8 +772,10 @@ public class AuditProcessor {
 
         // Step 4: Generate the in-memory remediations.xml document if needed.
         if (hasRemediations && !remediationCommentTimestamps.isEmpty()) {
+            Map<String, Integer> skippedByReason = new LinkedHashMap<>();
             this.remediationsDoc = generateRemediationsXml(auditResponses, remediationCommentTimestamps, fprInfo,
-                    fvdlMetadata, effectiveSourceEncodingOptions);
+                    fvdlMetadata, effectiveSourceEncodingOptions, skippedByReason);
+            lastRemediationGenerationMetric = toRemediationGenerationMetric(skippedByReason);
         } else {
             this.remediationsDoc = null;
             if (hasRemediations) {
@@ -785,7 +813,8 @@ public class AuditProcessor {
     private Document generateRemediationsXml(Map<String, AuditResponse> auditResponses,
                                             Map<String, String> remediationCommentTimestamps,
                                             FPRInfo fprInfo, FVDLMetadata fvdlMetadata,
-                                            SourceEncodingOptions sourceEncodingOptions) throws AviatorTechnicalException {
+                                            SourceEncodingOptions sourceEncodingOptions,
+                                            Map<String, Integer> skippedByReason) throws AviatorTechnicalException {
         try {
             DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
             docFactory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
@@ -854,6 +883,7 @@ public class AuditProcessor {
 
                         if (originalFileContentOptional.isEmpty()) {
                             logger.warn("WARN: Could not retrieve source code for file '{}'. Skipping remediation generation for this file for instanceId '{}'.", filename, instanceId);
+                            recordSkipped(skippedByReason, RemediationSkipReason.SOURCE_READ_OR_DECODE_FAILED);
                             continue;
                         }
 
@@ -920,6 +950,7 @@ public class AuditProcessor {
                                 fileChangesElement.appendChild(changeElement);
                             } catch (NumberFormatException e) {
                                 logger.error("Skipping change for issue {} due to invalid line number format. Details: {}", instanceId, e.getMessage());
+                                recordSkipped(skippedByReason, RemediationSkipReason.INVALID_LINE_NUMBER);
                             }
                         }
                         if (fileChangesElement.getElementsByTagNameNS(REMEDIATIONS_NAMESPACE_URI, "Change").getLength() > 0) {
@@ -935,9 +966,11 @@ public class AuditProcessor {
                             validRemediationCount++;
                         } else {
                             logger.warn("WARN: Skipping structurally invalid remediation for issue instanceId: {}", instanceId);
+                            recordSkipped(skippedByReason, RemediationSkipReason.STRUCTURALLY_INVALID);
                         }
                     } else {
                         logger.warn("WARN: Skipping remediation for instanceId '{}' because all of its proposed changes were invalid and could not be processed.", instanceId);
+                        recordSkipped(skippedByReason, RemediationSkipReason.NO_VALID_CHANGES);
                     }
 
                 }
@@ -947,6 +980,15 @@ public class AuditProcessor {
         } catch (ParserConfigurationException e) {
             throw new AviatorTechnicalException("Error creating XML document for remediations", e);
         }
+    }
+
+    private RemediationGenerationMetric toRemediationGenerationMetric(Map<String, Integer> skippedByReason) {
+        int skippedRemediations = skippedByReason.values().stream().mapToInt(Integer::intValue).sum();
+        return new RemediationGenerationMetric(skippedRemediations, Map.copyOf(skippedByReason));
+    }
+
+    private void recordSkipped(Map<String, Integer> skippedByReason, RemediationSkipReason reason) {
+        skippedByReason.merge(reason.label, 1, Integer::sum);
     }
 
     private String calculateHashBase64(String content, String algorithm) {

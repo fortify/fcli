@@ -22,6 +22,7 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
 import com.fortify.cli.aviator.audit.model.File;
 import com.fortify.cli.aviator.audit.model.StackTraceElement;
 import com.fortify.cli.aviator.fpr.model.FVDLMetadata;
@@ -149,15 +150,10 @@ public class SourceCodeEnricher {
                     file.setContent(fileUtils.appendLineNumbers(content, filename, 0));
                     file.setEndLine(content.split("\\R", -1).length);
                 } else {
-                    // This warning is now more accurate.
-                    logger.warn("Source file not found at internal path: {}. This may indicate a corrupt FPR.", actualSourcePath);
-                    file.setContent("");
-                    file.setEndLine(0);
+                    throw new AviatorSimpleException("Source file '" + filename + "' was not found in the FPR");
                 }
             } catch (IOException e) {
-                logger.warn("Error processing file: {}", filename, e);
-                file.setContent("");
-                file.setEndLine(0);
+                throw new AviatorSimpleException("Source file '" + filename + "' could not be read from the FPR", e);
             }
             uniqueFiles.put(filename, file);
         }

@@ -151,8 +151,9 @@ public class FileUtils {
         }
 
         try {
-            return Optional.of(String.join(System.lineSeparator(), readFileWithFallback(actualSourcePath, relativePath)));
-        } catch (Exception e) {
+            byte[] fileBytes = Files.readAllBytes(actualSourcePath);
+            return Optional.of(sourceEncodingOptions.decode(fileBytes, relativePath, fvdlMetadata).content());
+        } catch (IOException | SourceEncodingOptions.SourceDecodeException e) {
             logger.warn("Could not read source file content for path: {}", relativePath, e);
             return Optional.empty();
         }
