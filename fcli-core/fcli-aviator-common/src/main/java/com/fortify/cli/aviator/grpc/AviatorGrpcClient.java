@@ -218,6 +218,11 @@ public class AviatorGrpcClient implements AutoCloseable {
         return response.getDefaultQuota();
     }
 
+    public void probeGetDefaultQuota(long timeoutSeconds) {
+        blockingStub.withDeadlineAfter(timeoutSeconds, TimeUnit.SECONDS)
+            .getDefaultQuota(GetDefaultQuotaRequest.getDefaultInstance());
+    }
+
     public void validateAdminSession(String tenantName, String signature, String message) {
         ValidateAdminSessionRequest request = ValidateAdminSessionRequest.newBuilder()
             .setTenantName(tenantName)
