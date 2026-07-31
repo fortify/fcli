@@ -1,5 +1,5 @@
 ---
-title: 'fcli-sc-dast(1)'
+title: 'fcli-aviator-connection(1)'
 fcli_version: 
 ---
 
@@ -9,7 +9,7 @@ fcli_version:
 <meta http-equiv="Content-Type" content="text/html; charset=">
 <meta name="generator" content="Asciidoctor 2.0.18">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>fcli-sc-dast(1)</title>
+<title>fcli-aviator-connection(1)</title>
 
 {% include asciidoc-head.html %}
 {% include fcli-enhancements.html %}
@@ -21,7 +21,7 @@ fcli_version:
 
 
 <div id="header">
-<h1>fcli-sc-dast(1) Manual Page</h1>
+<h1>fcli-aviator-connection(1) Manual Page</h1>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
 <ul class="sectlevel1">
@@ -33,7 +33,7 @@ fcli_version:
 </div>
 <h2>Name</h2>
 <div class="sectionbody">
-<p>fcli-sc-dast - Interact with Fortify ScanCentral DAST (SC-DAST).</p>
+<p>fcli-aviator-connection - Diagnose Fortify Aviator connectivity.</p>
 </div>
 </div>
 <div id="content">
@@ -42,7 +42,7 @@ fcli_version:
 <h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli sc-dast</strong> [<strong>-h</strong>] [COMMAND]</p>
+<p><strong>fcli aviator connection</strong> [<strong>-h</strong>] [COMMAND]</p>
 </div>
 </div>
 </div>
@@ -50,10 +50,7 @@ fcli_version:
 <h2 id="_description"><a class="anchor" href="#_description"></a>Description</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>The commands in this module allow for interacting with Fortify ScanCentral DAST (SC-DAST). This includes functionality like submitting and managing DAST scan requests and results.</p>
-</div>
-<div class="paragraph">
-<p>All commands in this module require require an SSC session that has been configured for interacting with ScanCentral DAST. Such an SSC session can be created through the 'fcli ssc session login' command. As a best practice, the 'fcli ssc session logout' command should be run to terminate the session when there are no more activities to be performed.</p>
+<p>Commands for diagnosing Fortify Aviator endpoint and credential connectivity.</p>
 </div>
 </div>
 </div>
@@ -75,25 +72,9 @@ fcli_version:
 <div class="sectionbody">
 <div class="dlist">
 <dl>
-<dt class="hdlist1"><a href="fcli-sc-dast-scan.html"><strong>scan</strong></a></dt>
+<dt class="hdlist1"><a href="fcli-aviator-connection-diagnose.html"><strong>diagnose</strong></a></dt>
 <dd>
-<p>Manage ScanCentral DAST scans and results.</p>
-</dd>
-<dt class="hdlist1"><a href="fcli-sc-dast-scan-policy.html"><strong>scan-policy</strong></a></dt>
-<dd>
-<p>Manage ScanCentral DAST scan policies.</p>
-</dd>
-<dt class="hdlist1"><a href="fcli-sc-dast-scan-settings.html"><strong>scan-settings</strong></a></dt>
-<dd>
-<p>Manage ScanCentral DAST scan settings.</p>
-</dd>
-<dt class="hdlist1"><a href="fcli-sc-dast-sensor.html"><strong>sensor</strong></a></dt>
-<dd>
-<p>Manage ScanCentral DAST sensors.</p>
-</dd>
-<dt class="hdlist1"><a href="fcli-sc-dast-rest.html"><strong>rest</strong></a></dt>
-<dd>
-<p>Interact with ScanCentral DAST REST API endpoints.</p>
+<p>Run Fortify Aviator connectivity diagnostics.</p>
 </dd>
 </dl>
 </div>
@@ -104,7 +85,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2026-07-31 08:26:21 UTC
+Last updated 2026-07-31 08:26:20 UTC
 </div>
 </div>
 </body>

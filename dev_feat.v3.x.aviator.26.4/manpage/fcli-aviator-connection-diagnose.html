@@ -1,5 +1,5 @@
 ---
-title: 'fcli-sc-sast-scan-cancel(1)'
+title: 'fcli-aviator-connection-diagnose(1)'
 fcli_version: 
 ---
 
@@ -9,7 +9,7 @@ fcli_version:
 <meta http-equiv="Content-Type" content="text/html; charset=">
 <meta name="generator" content="Asciidoctor 2.0.18">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>fcli-sc-sast-scan-cancel(1)</title>
+<title>fcli-aviator-connection-diagnose(1)</title>
 
 {% include asciidoc-head.html %}
 {% include fcli-enhancements.html %}
@@ -21,21 +21,21 @@ fcli_version:
 
 
 <div id="header">
-<h1>fcli-sc-sast-scan-cancel(1) Manual Page</h1>
+<h1>fcli-aviator-connection-diagnose(1) Manual Page</h1>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
 <ul class="sectlevel1">
 <li><a href="#_synopsis">Synopsis</a></li>
 <li><a href="#_description">Description</a></li>
-<li><a href="#_ssc_session_name_options">SSC session name options</a></li>
+<li><a href="#_options">Options</a></li>
+<li><a href="#_fortify_aviator_diagnostics_source_options">Fortify Aviator diagnostics source options</a></li>
 <li><a href="#_output_options_also_see_documentation_link_below">Output options (also see documentation link below)</a></li>
 <li><a href="#_generic_fcli_options_also_see_documentation_link_below">Generic fcli options (also see documentation link below)</a></li>
-<li><a href="#_arguments">Arguments</a></li>
 </ul>
 </div>
 <h2>Name</h2>
 <div class="sectionbody">
-<p>fcli-sc-sast-scan-cancel - Cancel a previously submitted scan request.</p>
+<p>fcli-aviator-connection-diagnose - Run Fortify Aviator connectivity diagnostics.</p>
 </div>
 </div>
 <div id="content">
@@ -44,29 +44,94 @@ fcli_version:
 <h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli sc-sast scan cancel</strong> [[<strong>-h</strong>] [<strong>--env-prefix</strong>=<em>&lt;prefix&gt;</em>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
-                         [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>] [<strong>--log-mask</strong>=<em>&lt;level&gt;</em>]
-                         [<strong>--debug</strong>]] [[<strong>--ssc-session</strong>=<em>&lt;sessionName&gt;</em>]]
-                         [[<strong>-o</strong>=<em>&lt;type+args&gt;</em>] [<strong>--style*<em>=&lt;style&gt;,&#8230;&#8203;</em>]&#8230;&#8203;
-                         <em class="</strong>--store*=_&lt;var&gt;[:&lt;prop&gt;">] [<strong>--to-file</strong>=</em>&lt;outputFile&gt;_]]
-                         <em>scan-job-token</em></p>
+<p><strong>fcli aviator connection diagnose</strong> [<strong>--timeout</strong>=<em>&lt;seconds&gt;</em>] [[<strong>-h</strong>]
+                                 [<strong>--env-prefix</strong>=<em>&lt;prefix&gt;</em>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
+                                 [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>] [<strong>--log-mask</strong>=<em>&lt;level&gt;</em>]
+                                 [<strong>--debug</strong>]] [[<strong>-o</strong>=<em>&lt;type+args&gt;</em>]
+                                 [<strong>--style*<em>=&lt;style&gt;,&#8230;&#8203;</em>]&#8230;&#8203; <em class="</strong>--store*=_&lt;var&gt;[:_
+                          _       &lt;prop&gt;">] [<strong>--to-file</strong>=</em>&lt;outputFile&gt;_]]
+                                 (<strong>--av-session</strong>=<em>&lt;aviatorSession&gt;</em> |
+                                 <strong>--admin-config</strong>=<em>&lt;adminConfig&gt;</em> | [<strong>--url</strong>=<em>&lt;url&gt;</em>
+                                 [<strong>-t</strong>=<em>source</em>]])</p>
 </div>
 </div>
 </div>
 <div class="sect1">
 <h2 id="_description"><a class="anchor" href="#_description"></a>Description</h2>
 <div class="sectionbody">
-
+<div class="paragraph">
+<p>Runs ordered connectivity checks for Fortify Aviator endpoint configuration, DNS, TCP, optional HTTP proxy CONNECT (when a proxy is configured), TLS, gRPC reachability, and optional credential validation. Use --url with optional --token, or a saved --aviator-session / --admin-config.</p>
+</div>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_ssc_session_name_options"><a class="anchor" href="#_ssc_session_name_options"></a>SSC session name options</h2>
+<h2 id="_options"><a class="anchor" href="#_options"></a>Options</h2>
 <div class="sectionbody">
 <div class="dlist">
 <dl>
-<dt class="hdlist1"><strong>--ssc-session</strong>=<em>&lt;sessionName&gt;</em></dt>
+<dt class="hdlist1"><strong>--timeout</strong>=<em>&lt;seconds&gt;</em></dt>
 <dd>
-<p>Name of the SSC session to use for executing this command. Default value: default.</p>
+<p>Timeout in seconds for TCP, proxy CONNECT, TLS, and gRPC diagnostic stages. Default value: 30.</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_fortify_aviator_diagnostics_source_options"><a class="anchor" href="#_fortify_aviator_diagnostics_source_options"></a>Fortify Aviator diagnostics source options</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><strong>--admin-config</strong>=<em>&lt;adminConfig&gt;</em></dt>
+<dd>
+<p>Name of the Fortify Aviator administrator configuration to diagnose and validate.</p>
+</dd>
+<dt class="hdlist1"><strong>--av-session, --aviator-session</strong>=<em>&lt;aviatorSession&gt;</em></dt>
+<dd>
+<p>Name of the Fortify Aviator user session to diagnose and validate.</p>
+</dd>
+<dt class="hdlist1"><strong>-t</strong>, <strong>--token</strong>=<em>source</em></dt>
+<dd>
+<p>Fortify Aviator user access token. Can be specified as one of:</p>
+<div class="literalblock">
+<div class="content">
+<pre>file:&lt;local file containing token&gt;</pre>
+</div>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>string:&lt;token string value&gt;</pre>
+</div>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>env:&lt;env-var name containing token&gt;</pre>
+</div>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>If no prefix is given, &lt;local file&gt; is assumed.</pre>
+</div>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>The url: prefix is not supported for this option.</pre>
+</div>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>For security reasons, avoid specifying sensitive tokens directly</pre>
+</div>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>on the command line (using string:). Prefer using files or env:.</pre>
+</div>
+</div>
+</dd>
+<dt class="hdlist1"><strong>--url</strong>=<em>&lt;url&gt;</em></dt>
+<dd>
+<p>Fortify Aviator URL to diagnose. Optionally pair with --token to validate a user token without a saved session.</p>
 </dd>
 </dl>
 </div>
@@ -130,25 +195,12 @@ fcli_version:
 </div>
 </div>
 </div>
-<div class="sect1">
-<h2 id="_arguments"><a class="anchor" href="#_arguments"></a>Arguments</h2>
-<div class="sectionbody">
-<div class="dlist">
-<dl>
-<dt class="hdlist1"><em>scan-job-token</em></dt>
-<dd>
-<p>Scan job token.</p>
-</dd>
-</dl>
-</div>
-</div>
-</div>
 {% endraw %}
 </div>
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2026-07-31 08:26:21 UTC
+Last updated 2026-07-31 08:26:20 UTC
 </div>
 </div>
 </body>
