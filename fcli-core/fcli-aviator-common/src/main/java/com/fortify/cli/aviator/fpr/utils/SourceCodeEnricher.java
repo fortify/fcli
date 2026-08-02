@@ -12,17 +12,15 @@
  */
 package com.fortify.cli.aviator.fpr.utils;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
 import com.fortify.cli.aviator.audit.model.File;
 import com.fortify.cli.aviator.audit.model.StackTraceElement;
 import com.fortify.cli.aviator.fpr.model.FVDLMetadata;
@@ -41,32 +39,17 @@ import com.fortify.cli.aviator.util.StringUtil;
 public class SourceCodeEnricher {
     private static final Logger logger = LoggerFactory.getLogger(SourceCodeEnricher.class);
 
-    /*private final Path extractedPath;
-    private final Map<String, String> sourceFileMap;*/
     private final FprHandle fprHandle;
     private final FileUtils fileUtils;
-    private final SourceEncodingOptions sourceEncodingOptions;
-    private final FVDLMetadata fvdlMetadata;
 
-    /**
-     * Creates a new SourceCodeEnricher with the required dependencies.
-     * @param fprHandle      Utility for file operations (line numbering, line counting)
-     */
-    /*public SourceCodeEnricher(Path extractedPath, Map<String, String> sourceFileMap, FileUtils fileUtils) {
-        this.extractedPath = extractedPath;
-        this.sourceFileMap = sourceFileMap;
-        this.fileUtils = fileUtils;
-    }*/
-
-    public SourceCodeEnricher(FprHandle fprHandle){
-        this(fprHandle, SourceEncodingOptions.defaults(), null);
+    public SourceCodeEnricher(FprHandle fprHandle) {
+        this(fprHandle, SourceDecoders.defaults(), null);
     }
 
-    public SourceCodeEnricher(FprHandle fprHandle, SourceEncodingOptions sourceEncodingOptions, FVDLMetadata fvdlMetadata){
+    public SourceCodeEnricher(FprHandle fprHandle, ISourceDecoder sourceDecoder, FVDLMetadata fvdlMetadata) {
         this.fprHandle = fprHandle;
-        this.fileUtils = new FileUtils();
-        this.sourceEncodingOptions = sourceEncodingOptions == null ? SourceEncodingOptions.defaults() : sourceEncodingOptions;
-        this.fvdlMetadata = fvdlMetadata;
+        // Single soft-fail decode path via FileUtils (same policy as snippets/lines).
+        this.fileUtils = new FileUtils(Objects.requireNonNull(sourceDecoder, "sourceDecoder"), fvdlMetadata);
     }
 
     /**
@@ -132,29 +115,19 @@ public class SourceCodeEnricher {
 
         String filename = element.getFilename();
         if (!StringUtil.isEmpty(filename) && fprHandle.getSourceFileMap().containsKey(filename) && !uniqueFiles.containsKey(filename)) {
-            String internalPath = fprHandle.getSourceFileMap().get(filename);
-            if (internalPath == null) { return; } // Should not happen due to containsKey check, but safe.
-
-            Path actualSourcePath = fprHandle.getPath("/" + internalPath);
-
+            // Soft-fail decode via FileUtils: omit file rather than fail the whole issue.
+            Optional<String> contentOpt = fileUtils.getSourceFileContent(fprHandle, filename);
+            if (contentOpt.isEmpty()) {
+                return;
+            }
+            String content = contentOpt.get();
             File file = new File();
             file.setName(filename);
             file.setSegment(false);
             file.setStartLine(1);
-
-            try {
-                if (Files.exists(actualSourcePath)) {
-                    byte[] encodedBytes = Files.readAllBytes(actualSourcePath);
-                    String content = sourceEncodingOptions.decode(encodedBytes, filename, fvdlMetadata).content();
-                    // Keep line markers in prompt file content; downstream gRPC/template rendering is pass-through.
-                    file.setContent(fileUtils.appendLineNumbers(content, filename, 0));
-                    file.setEndLine(content.split("\\R", -1).length);
-                } else {
-                    throw new AviatorSimpleException("Source file '" + filename + "' was not found in the FPR");
-                }
-            } catch (IOException e) {
-                throw new AviatorSimpleException("Source file '" + filename + "' could not be read from the FPR", e);
-            }
+            // Keep line markers in prompt file content; downstream gRPC/template rendering is pass-through.
+            file.setContent(fileUtils.appendLineNumbers(content, filename, 0));
+            file.setEndLine(content.split("\\R", -1).length);
             uniqueFiles.put(filename, file);
         }
     }

@@ -17,6 +17,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Queue;
 import java.util.Set;
 import java.util.UUID;
@@ -49,8 +50,8 @@ import com.fortify.cli.aviator.audit.model.AuditResponse;
 import com.fortify.cli.aviator.audit.model.UserPrompt;
 import com.fortify.cli.aviator.config.IAviatorLogger;
 import com.fortify.cli.aviator.fpr.model.FVDLMetadata;
+import com.fortify.cli.aviator.fpr.utils.ISourceDecoder;
 import com.fortify.cli.aviator.fpr.utils.SourceCodeEnricher;
-import com.fortify.cli.aviator.fpr.utils.SourceEncodingOptions;
 import com.fortify.cli.aviator.util.Constants;
 import com.fortify.cli.aviator.util.FprHandle;
 import com.fortify.cli.aviator.util.StringUtil;
@@ -94,12 +95,12 @@ class AviatorStreamProcessor implements AutoCloseable {
     private volatile Future<?> processingTask;
     private final Object retryLock = new Object();
     private final FprHandle fprHandle;
-        private final SourceEncodingOptions sourceEncodingOptions;
-        private final FVDLMetadata fvdlMetadata;
+    private final ISourceDecoder sourceDecoder;
+    private final FVDLMetadata fvdlMetadata;
 
-        public AviatorStreamProcessor(AviatorGrpcClient client, IAviatorLogger logger, AuditorServiceGrpc.AuditorServiceStub asyncStub,
+    public AviatorStreamProcessor(AviatorGrpcClient client, IAviatorLogger logger, AuditorServiceGrpc.AuditorServiceStub asyncStub,
             ExecutorService processingExecutor, ScheduledExecutorService pingScheduler, long pingIntervalSeconds,
-            long defaultTimeoutSeconds, FprHandle fprHandle, SourceEncodingOptions sourceEncodingOptions,
+            long defaultTimeoutSeconds, FprHandle fprHandle, ISourceDecoder sourceDecoder,
             FVDLMetadata fvdlMetadata) {
         this.client = client;
         this.logger = logger;
@@ -109,7 +110,7 @@ class AviatorStreamProcessor implements AutoCloseable {
         this.pingIntervalSeconds = pingIntervalSeconds;
         this.defaultTimeoutSeconds = defaultTimeoutSeconds;
         this.fprHandle = fprHandle;
-        this.sourceEncodingOptions = sourceEncodingOptions == null ? SourceEncodingOptions.defaults() : sourceEncodingOptions;
+        this.sourceDecoder = Objects.requireNonNull(sourceDecoder, "sourceDecoder");
         this.fvdlMetadata = fvdlMetadata;
     }
 
@@ -717,7 +718,7 @@ class AviatorStreamProcessor implements AutoCloseable {
                 String instanceId = wrapper.userPrompt.getIssueData().getInstanceID();
 
                 // Lazy Loading of source code files for individual issue
-                SourceCodeEnricher sourceCodeEnricher = new SourceCodeEnricher(fprHandle, sourceEncodingOptions, fvdlMetadata);
+                SourceCodeEnricher sourceCodeEnricher = new SourceCodeEnricher(fprHandle, sourceDecoder, fvdlMetadata);
 
                 Map<String, com.fortify.cli.aviator.audit.model.File> enrichedFiles =
                     sourceCodeEnricher.enrichWithSourceCode(wrapper.userPrompt.getStackTrace());

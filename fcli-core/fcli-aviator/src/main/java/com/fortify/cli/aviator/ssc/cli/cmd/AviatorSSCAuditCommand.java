@@ -25,6 +25,7 @@ import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fortify.cli.aviator._common.cli.mixin.SourceEncodingsMixin;
 import com.fortify.cli.aviator._common.config.AviatorConfigManager;
 import com.fortify.cli.aviator._common.session.user.cli.mixin.AviatorUserSessionDescriptorSupplier;
 import com.fortify.cli.aviator._common.session.user.helper.AviatorUserSessionDescriptor;
@@ -33,7 +34,6 @@ import com.fortify.cli.aviator.audit.model.AuditFprOptions;
 import com.fortify.cli.aviator.audit.model.FPRAuditResult;
 import com.fortify.cli.aviator.config.AviatorLoggerImpl;
 import com.fortify.cli.aviator.config.TagMappingConfig;
-import com.fortify.cli.aviator.fpr.utils.SourceEncodingOptions;
 import com.fortify.cli.aviator.ssc.helper.AviatorSSCAuditHelper;
 import com.fortify.cli.aviator.ssc.helper.AviatorSSCTagValidator;
 import com.fortify.cli.aviator.util.FprHandle;
@@ -80,8 +80,7 @@ public class AviatorSSCAuditCommand extends AbstractSSCJsonNodeOutputCommand imp
     @ArgGroup(exclusive = true, multiplicity = "0..1") private QuotaHandlingArgGroup quotaHandlingArgGroup = new QuotaHandlingArgGroup();
     @Option(names = {"--test-exceeding-quota"}) private boolean testExceedingQuota;
     @Option(names = {"--default-quota-fallback"}) private boolean defaultQuotaFallback;
-    @Option(names = {"--source-encodings"}, descriptionKey = "fcli.aviator.ssc.audit.source-encodings")
-    private String sourceEncodings = SourceEncodingOptions.DEFAULT_SOURCE_ENCODINGS;
+    @Mixin private SourceEncodingsMixin sourceEncodingsMixin;
     private static final Logger LOG = LoggerFactory.getLogger(AviatorSSCAuditCommand.class);
     private Long checkedQuotaBefore;
 
@@ -278,7 +277,7 @@ public class AviatorSSCAuditCommand extends AbstractSSCJsonNodeOutputCommand imp
                     .noFilterSet(isNoFilterSet())
                     .folderNames(folderNames)
                     .folderPriorityOrder(getFolderPriorityOrder())
-                    .sourceEncodingOptions(SourceEncodingOptions.parse(sourceEncodings))
+                    .sourceDecoder(sourceEncodingsMixin.getSourceDecoder())
                     .build());
         } catch (Exception e) {
             LOG.error("FPR audit failed for {}:{}: {}", av.getApplicationName(), av.getVersionName(), e.getMessage(), e);

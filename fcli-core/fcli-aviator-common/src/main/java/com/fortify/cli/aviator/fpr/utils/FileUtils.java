@@ -20,6 +20,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -34,18 +35,22 @@ import com.fortify.cli.aviator.util.FprHandle;
 import com.fortify.cli.aviator.util.LanguageCommentMapperUtil;
 import com.fortify.cli.aviator.util.StringUtil;
 
+/**
+ * Source file helpers. Decode failures are soft (empty result + log): snippets/lines are best-effort.
+ * Callers that must fail or skip with metrics (e.g. remediation apply) should decode themselves.
+ */
 public class FileUtils {
     private static final Logger logger = LoggerFactory.getLogger(FileUtils.class);
     private final Map<Path, List<String>> fileContentCache = new ConcurrentHashMap<>();
-    private final SourceEncodingOptions sourceEncodingOptions;
+    private final ISourceDecoder sourceDecoder;
     private final FVDLMetadata fvdlMetadata;
 
     public FileUtils() {
-        this(SourceEncodingOptions.defaults(), null);
+        this(SourceDecoders.defaults(), null);
     }
 
-    public FileUtils(SourceEncodingOptions sourceEncodingOptions, FVDLMetadata fvdlMetadata) {
-        this.sourceEncodingOptions = sourceEncodingOptions == null ? SourceEncodingOptions.defaults() : sourceEncodingOptions;
+    public FileUtils(ISourceDecoder sourceDecoder, FVDLMetadata fvdlMetadata) {
+        this.sourceDecoder = Objects.requireNonNull(sourceDecoder, "sourceDecoder");
         this.fvdlMetadata = fvdlMetadata;
     }
 
@@ -64,9 +69,9 @@ public class FileUtils {
         return fileContentCache.computeIfAbsent(filePath, path -> {
             try {
                 byte[] fileBytes = Files.readAllBytes(path);
-                String content = sourceEncodingOptions.decode(fileBytes, filename, fvdlMetadata).content();
+                String content = sourceDecoder.decode(fileBytes, filename, fvdlMetadata).content();
                 return Arrays.asList(content.split("\\r?\\n"));
-            } catch (IOException | SourceEncodingOptions.SourceDecodeException e) {
+            } catch (IOException | ISourceDecoder.SourceDecodeException e) {
                 logger.error("Failed to read file: {}", path, e);
                 return Collections.emptyList();
             }
@@ -152,8 +157,8 @@ public class FileUtils {
 
         try {
             byte[] fileBytes = Files.readAllBytes(actualSourcePath);
-            return Optional.of(sourceEncodingOptions.decode(fileBytes, relativePath, fvdlMetadata).content());
-        } catch (IOException | SourceEncodingOptions.SourceDecodeException e) {
+            return Optional.of(sourceDecoder.decode(fileBytes, relativePath, fvdlMetadata).content());
+        } catch (IOException | ISourceDecoder.SourceDecodeException e) {
             logger.warn("Could not read source file content for path: {}", relativePath, e);
             return Optional.empty();
         }

@@ -30,6 +30,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -62,7 +63,8 @@ import com.fortify.cli.aviator.fpr.model.AuditIssue;
 import com.fortify.cli.aviator.fpr.model.FPRInfo;
 import com.fortify.cli.aviator.fpr.model.FVDLMetadata;
 import com.fortify.cli.aviator.fpr.utils.FileUtils;
-import com.fortify.cli.aviator.fpr.utils.SourceEncodingOptions;
+import com.fortify.cli.aviator.fpr.utils.ISourceDecoder;
+import com.fortify.cli.aviator.fpr.utils.SourceDecoders;
 import com.fortify.cli.aviator.util.Constants;
 import com.fortify.cli.aviator.util.FprHandle;
 
@@ -86,7 +88,7 @@ public class AuditProcessor {
 
     private final Map<String, AuditIssue> auditIssueMap = new HashMap<>();
     private final FprHandle fprHandle;
-    private final SourceEncodingOptions sourceEncodingOptions;
+    private final ISourceDecoder sourceDecoder;
     private RemediationGenerationMetric lastRemediationGenerationMetric = RemediationGenerationMetric.empty();
 
     public record RemediationGenerationMetric(int skippedRemediations, Map<String, Integer> skippedByReason) {
@@ -109,12 +111,12 @@ public class AuditProcessor {
     }
 
     public AuditProcessor(FprHandle fprHandle) {
-        this(fprHandle, SourceEncodingOptions.defaults());
+        this(fprHandle, SourceDecoders.defaults());
     }
 
-    public AuditProcessor(FprHandle fprHandle, SourceEncodingOptions sourceEncodingOptions) {
+    public AuditProcessor(FprHandle fprHandle, ISourceDecoder sourceDecoder) {
         this.fprHandle = fprHandle;
-        this.sourceEncodingOptions = sourceEncodingOptions == null ? SourceEncodingOptions.defaults() : sourceEncodingOptions;
+        this.sourceDecoder = Objects.requireNonNull(sourceDecoder, "sourceDecoder");
     }
 
     public RemediationGenerationMetric getLastRemediationGenerationMetric() {
@@ -742,16 +744,12 @@ public class AuditProcessor {
     public File updateAndSaveAuditAndRemediationsXml(Map<String, AuditResponse> auditResponses,
             TagMappingConfig tagMappingConfig, Map<String, String> issueCategoryLookup,
             FPRInfo fprInfo) throws AviatorTechnicalException {
-        return updateAndSaveAuditAndRemediationsXml(auditResponses, tagMappingConfig, issueCategoryLookup, fprInfo, null,
-                sourceEncodingOptions);
+        return updateAndSaveAuditAndRemediationsXml(auditResponses, tagMappingConfig, issueCategoryLookup, fprInfo, null);
     }
 
     public File updateAndSaveAuditAndRemediationsXml(Map<String, AuditResponse> auditResponses,
             TagMappingConfig tagMappingConfig, Map<String, String> issueCategoryLookup,
-            FPRInfo fprInfo, FVDLMetadata fvdlMetadata, SourceEncodingOptions sourceEncodingOptions) throws AviatorTechnicalException {
-        SourceEncodingOptions effectiveSourceEncodingOptions = sourceEncodingOptions == null
-                ? this.sourceEncodingOptions
-                : sourceEncodingOptions;
+            FPRInfo fprInfo, FVDLMetadata fvdlMetadata) throws AviatorTechnicalException {
         lastRemediationGenerationMetric = RemediationGenerationMetric.empty();
         // Step 1: Apply this save's audit responses. writtenInstanceIds is the local retain set.
         Map<String, String> effectiveIssueCategoryLookup = issueCategoryLookup == null ? Map.of() : issueCategoryLookup;
@@ -774,7 +772,7 @@ public class AuditProcessor {
         if (hasRemediations && !remediationCommentTimestamps.isEmpty()) {
             Map<String, Integer> skippedByReason = new LinkedHashMap<>();
             this.remediationsDoc = generateRemediationsXml(auditResponses, remediationCommentTimestamps, fprInfo,
-                    fvdlMetadata, effectiveSourceEncodingOptions, skippedByReason);
+                    fvdlMetadata, skippedByReason);
             lastRemediationGenerationMetric = toRemediationGenerationMetric(skippedByReason);
         } else {
             this.remediationsDoc = null;
@@ -813,7 +811,6 @@ public class AuditProcessor {
     private Document generateRemediationsXml(Map<String, AuditResponse> auditResponses,
                                             Map<String, String> remediationCommentTimestamps,
                                             FPRInfo fprInfo, FVDLMetadata fvdlMetadata,
-                                            SourceEncodingOptions sourceEncodingOptions,
                                             Map<String, Integer> skippedByReason) throws AviatorTechnicalException {
         try {
             DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
@@ -843,6 +840,7 @@ public class AuditProcessor {
             Element remediationListElement = finalDoc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "RemediationList");
             rootElement.appendChild(remediationListElement);
 
+            FileUtils fileUtils = new FileUtils(this.sourceDecoder, fvdlMetadata);
             int validRemediationCount = 0;
 
             for (Map.Entry<String, AuditResponse> entry : auditResponses.entrySet()) {
@@ -877,9 +875,7 @@ public class AuditProcessor {
                         filenameElement.setTextContent(filename);
                         fileChangesElement.appendChild(filenameElement);
 
-                        //Optional<String> originalFileContentOptional = fvdlProcessor.getSourceFileContent(filename);
-                        FileUtils fileUtils = new FileUtils(sourceEncodingOptions, fvdlMetadata);
-                        Optional<String> originalFileContentOptional =  fileUtils.getSourceFileContent(fprHandle, filename);
+                        Optional<String> originalFileContentOptional = fileUtils.getSourceFileContent(fprHandle, filename);
 
                         if (originalFileContentOptional.isEmpty()) {
                             logger.warn("WARN: Could not retrieve source code for file '{}'. Skipping remediation generation for this file for instanceId '{}'.", filename, instanceId);

@@ -53,7 +53,7 @@ import com.fortify.cli.aviator.audit.model.AuditResponse;
 import com.fortify.cli.aviator.audit.model.UserPrompt;
 import com.fortify.cli.aviator.config.IAviatorLogger;
 import com.fortify.cli.aviator.fpr.model.FVDLMetadata;
-import com.fortify.cli.aviator.fpr.utils.SourceEncodingOptions;
+import com.fortify.cli.aviator.fpr.utils.ISourceDecoder;
 import com.fortify.cli.aviator.util.Constants;
 import com.fortify.cli.aviator.util.FprHandle;
 import com.fortify.grpc.token.DeleteTokenRequest;
@@ -127,9 +127,9 @@ public class AviatorGrpcClient implements AutoCloseable {
 
     public CompletableFuture<Map<String, AuditResponse>> processBatchRequests(Queue<UserPrompt> requests, String projectName,
             String FPRBuildId, String SSCApplicationName, String SSCApplicationVersion, String token, FprHandle fprHandle,
-            List<String> customPriorityOrder, SourceEncodingOptions sourceEncodingOptions, FVDLMetadata fvdlMetadata) {
+            List<String> customPriorityOrder, ISourceDecoder sourceDecoder, FVDLMetadata fvdlMetadata) {
         AviatorStreamProcessor processor = new AviatorStreamProcessor(this, logger, asyncStub, processingExecutor, pingScheduler,
-                pingIntervalSeconds, defaultTimeoutSeconds, fprHandle, sourceEncodingOptions, fvdlMetadata);
+                pingIntervalSeconds, defaultTimeoutSeconds, fprHandle, sourceDecoder, fvdlMetadata);
         CompletableFuture<Map<String, AuditResponse>> future = processor.processBatchRequests(requests, projectName, FPRBuildId, SSCApplicationName, SSCApplicationVersion, token, customPriorityOrder);
         future.whenComplete((res, th) -> processor.close());
         return future.exceptionally(ex -> {

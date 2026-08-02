@@ -14,7 +14,8 @@ package com.fortify.cli.aviator.audit.model;
 import java.util.List;
 
 import com.fortify.cli.aviator.config.IAviatorLogger;
-import com.fortify.cli.aviator.fpr.utils.SourceEncodingOptions;
+import com.fortify.cli.aviator.fpr.utils.ISourceDecoder;
+import com.fortify.cli.aviator.fpr.utils.SourceDecoders;
 import com.fortify.cli.aviator.util.FprHandle;
 
 import lombok.Builder;
@@ -35,5 +36,5 @@ public class AuditFprOptions {
     private final boolean noFilterSet;
     private final List<String> folderNames;
     private final List<String> folderPriorityOrder;
-    @Builder.Default private final SourceEncodingOptions sourceEncodingOptions = SourceEncodingOptions.defaults();
+    @Builder.Default private final ISourceDecoder sourceDecoder = SourceDecoders.defaults();
 }

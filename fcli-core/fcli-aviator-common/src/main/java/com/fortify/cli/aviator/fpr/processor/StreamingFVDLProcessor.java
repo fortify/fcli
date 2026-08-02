@@ -32,6 +32,8 @@ import com.fortify.cli.aviator.fpr.Vulnerability;
 import com.fortify.cli.aviator.fpr.filter.AnalyzerType;
 import com.fortify.cli.aviator.fpr.model.*;
 import com.fortify.cli.aviator.fpr.utils.FileUtils;
+import com.fortify.cli.aviator.fpr.utils.ISourceDecoder;
+import com.fortify.cli.aviator.fpr.utils.SourceDecoders;
 import com.fortify.cli.aviator.fpr.utils.XmlUtils;
 import com.fortify.cli.aviator.util.FprHandle;
 import com.fortify.cli.aviator.util.StringUtil;
@@ -70,17 +72,26 @@ public class StreamingFVDLProcessor {
     private long peakMemoryPass2 = 0;
     private long peakMemoryPostProcessing = 0;
 
-    public StreamingFVDLProcessor(FprHandle fprHandle){
+    public StreamingFVDLProcessor(FprHandle fprHandle) {
+        this(fprHandle, SourceDecoders.defaults());
+    }
+
+    /**
+     * @param sourceDecoder used for stack-trace line/fragment source reads; shares {@link #fvdlMetadata}
+     *                      so FPR encoding candidates resolve after build metadata is parsed.
+     */
+    public StreamingFVDLProcessor(FprHandle fprHandle, ISourceDecoder sourceDecoder) {
         this.vulnFinalizer = new VulnFinalizer();
-        this.fileUtils = new FileUtils();
         this.fprHandle = fprHandle;
         this.sourceFileMap = fprHandle.getSourceFileMap();
         this.xmlInputFactory = XMLInputFactory.newInstance();
         // Security: Disable external entity processing
         xmlInputFactory.setProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, false);
         xmlInputFactory.setProperty(XMLInputFactory.SUPPORT_DTD, false);
-        //this.parsingMetadata = new ParsingMetadata();
         this.fvdlMetadata = new FVDLMetadata();
+        // Same metadata instance FileUtils will see once encodings are registered during parse.
+        this.fileUtils = new FileUtils(
+                Objects.requireNonNull(sourceDecoder, "sourceDecoder"), this.fvdlMetadata);
         this.rawVulnerabilities = new ArrayList<>();
         this.vulnerabilities = new ArrayList<>();
         this.descriptionProcessor = new DescriptionProcessor();
@@ -92,8 +103,6 @@ public class StreamingFVDLProcessor {
         this.traceParser.setNodeParser(nodeParser); // Circular dependency for Reason parsing
         this.descriptionParser = new DescriptionParser();
         this.metadataParser = new MetadataParser();
-        /*this.extractedPath = extractedPath;
-        this.indexXMLProcessor = new IndexXMLProcessor(extractedPath, sourceFileMap);*/
     }
 
 

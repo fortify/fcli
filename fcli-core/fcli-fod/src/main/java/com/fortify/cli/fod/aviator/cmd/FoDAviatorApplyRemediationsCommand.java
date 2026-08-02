@@ -20,9 +20,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.aviator._common.cli.mixin.SourceEncodingsMixin;
 import com.fortify.cli.aviator.applyRemediation.ApplyAutoRemediationOnSource;
 import com.fortify.cli.aviator.config.AviatorLoggerImpl;
-import com.fortify.cli.aviator.fpr.utils.SourceEncodingOptions;
 import com.fortify.cli.aviator.util.FprHandle;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
@@ -57,8 +57,7 @@ public class FoDAviatorApplyRemediationsCommand extends AbstractFoDJsonNodeOutpu
     @Mixin private FoDReleaseByQualifiedNameOrIdResolverMixin.RequiredOption releaseResolver;
     private static final Logger LOG = LoggerFactory.getLogger(FoDAviatorApplyRemediationsCommand.class);
     @Option(names = {"--source-dir"}) private String sourceCodeDirectory = System.getProperty("user.dir");
-    @Option(names = {"--source-encodings"}, descriptionKey = "fcli.fod.aviator.apply-remediations.source-encodings")
-    private String sourceEncodings = SourceEncodingOptions.DEFAULT_SOURCE_ENCODINGS;
+    @Mixin private SourceEncodingsMixin sourceEncodingsMixin;
 
     @Override @SneakyThrows
     public JsonNode getJsonNode(UnirestInstance unirest) {
@@ -86,7 +85,7 @@ public class FoDAviatorApplyRemediationsCommand extends AbstractFoDJsonNodeOutpu
             logger.progress("Status: Processing FPR with Aviator for Applying Auto Remediations");
             try (FprHandle fprHandle = new FprHandle(downloadedFprPath)) {
                 var remediationMetric = ApplyAutoRemediationOnSource.applyRemediations(fprHandle, sourceCodeDirectory,
-                    SourceEncodingOptions.parse(sourceEncodings), logger);
+                    sourceEncodingsMixin.getSourceDecoder(), logger);
                 LOG.info("Applied remediation {}", remediationMetric.appliedRemediations());
                 LOG.info("Total remediation {}", remediationMetric.totalRemediations());
                 String status = remediationMetric.appliedRemediations() > 0 ? "Remediation-Applied" : "No-Remediation-Applied";
