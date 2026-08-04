@@ -61,6 +61,9 @@ public final class WindowsCommandLineArgs {
         if (!isWindows()) {
             return args;
         }
+        if (!hasPotentialWindowsArgCorruption(args)) {
+            return args;
+        }
         try {
             String[] wideAppArgs = readWideApplicationArgs(args.length);
             if (wideAppArgs == null || wideAppArgs.length != args.length) {
@@ -71,6 +74,18 @@ public final class WindowsCommandLineArgs {
             LOG.debug("Windows wide argv recovery skipped: {}", t.toString());
             return args;
         }
+    }
+
+    static boolean hasPotentialWindowsArgCorruption(String[] args) {
+        if (args == null) {
+            return false;
+        }
+        for (String arg : args) {
+            if (arg != null && (arg.indexOf('?') >= 0 || arg.indexOf(REPLACEMENT) >= 0)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     static String[] mergeCorruptedArgs(String[] jvmArgs, String[] wideArgs, Charset jnu) {

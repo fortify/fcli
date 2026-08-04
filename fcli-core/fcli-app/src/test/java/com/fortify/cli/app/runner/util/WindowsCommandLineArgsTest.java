@@ -90,6 +90,27 @@ class WindowsCommandLineArgsTest {
     }
 
     @Test
+    void hasPotentialWindowsArgCorruptionReturnsFalseForPlainArgs() {
+        String[] args = {"--help", "aviator", "ssc", "apply-remediations"};
+
+        assertFalse(WindowsCommandLineArgs.hasPotentialWindowsArgCorruption(args));
+        assertFalse(WindowsCommandLineArgs.hasPotentialWindowsArgCorruption(null));
+    }
+
+    @Test
+    void hasPotentialWindowsArgCorruptionDetectsLossMarkers() {
+        assertTrue(WindowsCommandLineArgs.hasPotentialWindowsArgCorruption(new String[] {"C:\\tmp\\??\\cache.zip"}));
+        assertTrue(WindowsCommandLineArgs.hasPotentialWindowsArgCorruption(new String[] {"C:\\tmp\\" + REPLACEMENT + "\\cache.zip"}));
+    }
+
+    @Test
+    void fixIfNeededReturnsSameArrayForPlainArgsWithoutLoadingWideApi() {
+        String[] args = {"aviator", "ssc", "--help"};
+
+        assertSame(args, WindowsCommandLineArgs.fixIfNeeded(args));
+    }
+
+    @Test
     void fixIfNeededReturnsSameArrayWhenEmpty() {
         String[] empty = new String[0];
         assertSame(empty, WindowsCommandLineArgs.fixIfNeeded(empty));
