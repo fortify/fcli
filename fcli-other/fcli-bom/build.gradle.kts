@@ -17,6 +17,7 @@ dependencies {
         api("com.formkiq:graalvm-annotations:1.2.0")
         api("com.formkiq:graalvm-annotations-processor:1.5.2")
         api("org.fusesource.jansi:jansi:2.4.3")
+        api("net.java.dev.jna:jna:5.17.0")
         api("org.slf4j:slf4j-api:2.0.17")
         api("org.slf4j:jcl-over-slf4j:2.0.17")
         api("ch.qos.logback:logback-classic:1.5.23")

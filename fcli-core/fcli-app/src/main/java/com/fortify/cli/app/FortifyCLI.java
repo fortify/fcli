@@ -13,6 +13,7 @@
 package com.fortify.cli.app;
 
 import com.fortify.cli.app.runner.DefaultFortifyCLIRunner;
+import com.fortify.cli.app.runner.util.WindowsCommandLineArgs;
 import com.fortify.cli.common.util.ConsoleHelper;
 
 /**
@@ -28,7 +29,7 @@ public class FortifyCLI {
      * @param args Command line options passed to Fortify CLI
      */
     public static final void main(String[] args) {
-        System.exit(execute(args));
+        System.exit(execute(WindowsCommandLineArgs.fixIfNeeded(args)));
     }
 
     private static final int execute(String[] args) {

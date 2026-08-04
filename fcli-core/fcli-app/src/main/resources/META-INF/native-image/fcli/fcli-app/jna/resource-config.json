@@ -1,0 +1,15 @@
+{
+  "resources": {
+    "includes": [
+      {
+        "pattern": "\\Qcom/sun/jna/win32-x86-64/jnidispatch.dll\\E"
+      },
+      {
+        "pattern": "\\Qcom/sun/jna/win32-x86/jnidispatch.dll\\E"
+      },
+      {
+        "pattern": "\\Qcom/sun/jna/win32-aarch64/jnidispatch.dll\\E"
+      }
+    ]
+  }
+}
