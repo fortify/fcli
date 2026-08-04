@@ -80,7 +80,7 @@ public class FoDScanDastAutomatedHelper extends FoDScanHelper {
                     .queryString("fields", "scanId,scanType,analysisStatusType")
                     .asObject(JsonNode.class).getBody();
             JsonNode itemsNode = response.path("items");
-            if (!itemsNode.isArray() || itemsNode.isEmpty()) continue;
+            if (!itemsNode.isArray() || itemsNode.isEmpty()) return null; // no scans exist, so it's fine to run a new scan
 
             boolean foundActive = false;
             for (JsonNode node : itemsNode) {
