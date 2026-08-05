@@ -15,13 +15,10 @@ package com.fortify.cli.aviator.diagnose;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.json.JsonHelper;
@@ -69,7 +66,7 @@ public final class AviatorDiagnosticReport {
             return;
         }
         switch (result.status()) {
-        case PASS -> LOG.info("{}: PASS{}", name, passDetail(result));
+        case PASS -> LOG.info("{}: PASS - {}", name, nullToEmpty(result.summary()));
         case FAIL -> LOG.error("{}: FAIL - {}", name, failDetail(result));
         case WARN -> LOG.info("{}: WARN - {}", name, nullToEmpty(result.summary()));
         }
@@ -86,21 +83,6 @@ public final class AviatorDiagnosticReport {
             return summary;
         }
         return summary+" ("+exceptionMessage+")";
-    }
-
-    private static String passDetail(AviatorDiagnosticStageResult result) {
-        var evidence = result.evidence();
-        if (evidence == null || !evidence.has("resolvedAddresses") || !evidence.get("resolvedAddresses").isArray()) {
-            return "";
-        }
-        var addresses = StreamSupport.stream(evidence.get("resolvedAddresses").spliterator(), false)
-            .map(JsonNode::asText)
-            .filter(s -> s != null && !s.isBlank())
-            .collect(Collectors.toList());
-        if (addresses.isEmpty()) {
-            return "";
-        }
-        return " ("+String.join(", ", addresses)+")";
     }
 
     private static String nullToEmpty(String value) {

@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.util.Arrays;
 import java.util.List;
+import java.util.StringJoiner;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.aviator._common.exception.AviatorBugException;
@@ -69,7 +70,8 @@ public class AviatorConnectionDiagnostics {
     private AviatorDiagnosticReport diagnoseValidated(AviatorDiagnosticReport report,
             AviatorConnectionPlan connectionPlan, int timeoutSeconds, String sourceType) {
         report.pass(AviatorDiagnosticStage.ENDPOINT,
-            "Endpoint is valid", "No action required", endpointEvidence(connectionPlan, sourceType));
+            "Endpoint is valid: "+connectionPlan.normalizedUrl(), "No action required",
+            endpointEvidence(connectionPlan, sourceType));
 
         if (!runDns(report, connectionPlan)) {
             skipAfter(report, connectionPlan, AviatorDiagnosticStage.DNS, "DNS resolution failed");
@@ -110,7 +112,8 @@ public class AviatorConnectionDiagnostics {
                 var proxy = connectionPlan.proxyDescriptor().get();
                 addAddresses(evidence, "proxyResolvedAddresses", probe.resolve(proxy.getProxyHost()));
             }
-            report.pass(AviatorDiagnosticStage.DNS, "Host name resolved", "No action required", evidence);
+            report.pass(AviatorDiagnosticStage.DNS,
+                "Host name resolved: "+addresses(evidence, "resolvedAddresses"), "No action required", evidence);
             return true;
         } catch (IOException e) {
             report.fail(AviatorDiagnosticStage.DNS,
@@ -135,7 +138,8 @@ public class AviatorConnectionDiagnostics {
         var evidence = nextHopEvidence(nextHopHost, nextHopPort, proxyDescriptor.isPresent());
         try {
             probe.connect(nextHopHost, nextHopPort, timeoutSeconds);
-            report.pass(AviatorDiagnosticStage.TCP, "TCP connection opened", "No action required", evidence);
+            report.pass(AviatorDiagnosticStage.TCP,
+                "TCP connection opened to "+nextHopHost+":"+nextHopPort, "No action required", evidence);
             return true;
         } catch (Exception e) {
             putError(evidence, e);
@@ -197,7 +201,8 @@ public class AviatorConnectionDiagnostics {
         var evidence = JsonHelper.getObjectMapper().createObjectNode();
         evidence.put("proxyConnectStatus", tunnel.proxyConnectStatus());
         putProxyEvidence(evidence, connectionPlan);
-        report.pass(AviatorDiagnosticStage.PROXY, "Proxy CONNECT succeeded", "No action required", evidence);
+        report.pass(AviatorDiagnosticStage.PROXY,
+            "Proxy CONNECT succeeded through "+proxyEndpoint(evidence), "No action required", evidence);
     }
 
     private void appendTlsSuccess(AviatorDiagnosticReport report, AviatorTunnelResult.TlsSucceeded ok) {
@@ -210,10 +215,11 @@ public class AviatorConnectionDiagnostics {
         evidence.put("tlsPhase", AviatorTlsPhase.HANDSHAKE.id());
         if (!"h2".equals(ok.applicationProtocol())) {
             report.warn(AviatorDiagnosticStage.TLS,
-                "TLS works, but HTTP/2 was not enabled",
+                tlsSummary("TLS works, but HTTP/2 was not enabled", ok),
                 "Allow ALPN h2 through the proxy or gateway to aviator-grpc-server", true, evidence);
         } else {
-            report.pass(AviatorDiagnosticStage.TLS, "TLS and HTTP/2 are available", "No action required", evidence);
+            report.pass(AviatorDiagnosticStage.TLS,
+                tlsSummary("TLS and HTTP/2 are available", ok), "No action required", evidence);
         }
     }
 
@@ -251,10 +257,11 @@ public class AviatorConnectionDiagnostics {
         if (grpc.pattern() != null) {
             evidence.put("pattern", grpc.pattern().wireId());
         }
+        var summary = grpc.stageSummary();
         if (grpc.stagePass()) {
-            report.pass(AviatorDiagnosticStage.GRPC, grpc.stageSummary(), grpc.stageGuidance(), evidence);
+            report.pass(AviatorDiagnosticStage.GRPC, summary, grpc.stageGuidance(), evidence);
         } else {
-            report.fail(AviatorDiagnosticStage.GRPC, grpc.stageSummary(), grpc.stageGuidance(), evidence);
+            report.fail(AviatorDiagnosticStage.GRPC, summary, grpc.stageGuidance(), evidence);
         }
     }
 
@@ -315,5 +322,19 @@ public class AviatorConnectionDiagnostics {
     private static void addAddresses(ObjectNode evidence, String fieldName, InetAddress[] addresses) {
         var array = evidence.putArray(fieldName);
         Arrays.stream(addresses).map(InetAddress::getHostAddress).forEach(array::add);
+    }
+
+    private static String addresses(ObjectNode evidence, String fieldName) {
+        var result = new StringJoiner(", ");
+        evidence.withArray(fieldName).forEach(address -> result.add(address.asText()));
+        return result.toString();
+    }
+
+    private static String proxyEndpoint(ObjectNode evidence) {
+        return evidence.path("proxyHost").asText()+":"+evidence.path("proxyPort").asInt();
+    }
+
+    private static String tlsSummary(String summary, AviatorTunnelResult.TlsSucceeded result) {
+        return summary+": "+result.protocol()+", ALPN "+result.applicationProtocol();
     }
 }

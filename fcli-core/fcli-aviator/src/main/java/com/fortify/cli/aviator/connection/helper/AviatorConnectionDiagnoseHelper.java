@@ -100,7 +100,7 @@ public class AviatorConnectionDiagnoseHelper {
             evidence.put("tenantNamePresent", validationResult.tenantName() != null);
             if (validationResult.response().getValid()) {
                 report.optionalPass(STAGE_TOKEN, STAGE_TOKEN_DESCRIPTION,
-                    "Aviator token is valid", "No action required", evidence);
+                    "Aviator token is valid for the requested tenant", "No action required", evidence);
                 return;
             }
             var errorMessage = validationResult.response().getErrorMessage();
@@ -125,7 +125,7 @@ public class AviatorConnectionDiagnoseHelper {
             var evidence = AviatorDiagnosticEvidence.empty();
             evidence.put("tenant", configDescriptor.getTenant());
             report.optionalPass(STAGE_ADMIN, STAGE_ADMIN_DESCRIPTION,
-                "Aviator admin credentials are valid", "No action required", evidence);
+                "Aviator admin credentials are valid for tenant "+configDescriptor.getTenant(), "No action required", evidence);
         } catch (RuntimeException e) {
             rethrowIfBug(e);
             report.optionalFail(STAGE_ADMIN, STAGE_ADMIN_DESCRIPTION,
