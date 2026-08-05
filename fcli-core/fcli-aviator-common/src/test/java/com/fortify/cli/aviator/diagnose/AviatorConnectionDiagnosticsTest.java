@@ -23,6 +23,7 @@ import javax.net.ssl.SSLHandshakeException;
 
 import org.junit.jupiter.api.Test;
 
+import com.fortify.cli.aviator._common.exception.UnsupportedAviatorUrlSchemeException;
 import com.fortify.cli.aviator.diagnose.support.ConfigurableDiagnosticProbe;
 import com.fortify.cli.aviator.diagnose.support.OfflineConnectionPlan;
 
@@ -35,11 +36,59 @@ class AviatorConnectionDiagnosticsTest {
 
         assertEquals(5, results.size());
         assertStage(results.get(0), AviatorDiagnosticStage.ENDPOINT, AviatorDiagnosticStatus.FAIL);
+        assertEquals("Endpoint is invalid", results.get(0).summary());
         assertStage(results.get(1), AviatorDiagnosticStage.DNS, AviatorDiagnosticStatus.WARN);
+        assertTrue(results.get(1).summary().contains("endpoint validation failed"));
         assertStage(results.get(2), AviatorDiagnosticStage.TCP, AviatorDiagnosticStatus.WARN);
         assertStage(results.get(3), AviatorDiagnosticStage.TLS, AviatorDiagnosticStatus.WARN);
         assertStage(results.get(4), AviatorDiagnosticStage.GRPC, AviatorDiagnosticStatus.WARN);
         assertTrue(report.hasRequiredFailure());
+        assertFalse(probe.tunnelCalled);
+    }
+
+    @Test
+    void shouldFailEndpointForUnsupportedUrlScheme() {
+        var probe = new ConfigurableDiagnosticProbe();
+        var report = new AviatorConnectionDiagnostics(probe).diagnose("mttp://vacant", 5, "url");
+        var results = report.stages();
+
+        assertEquals(5, results.size());
+        assertStage(results.get(0), AviatorDiagnosticStage.ENDPOINT, AviatorDiagnosticStatus.FAIL);
+        assertEquals(UnsupportedAviatorUrlSchemeException.STAGE_SUMMARY, results.get(0).summary());
+        assertEquals(UnsupportedAviatorUrlSchemeException.STAGE_GUIDANCE, results.get(0).guidance());
+        assertEquals("mttp", results.get(0).evidence().path("scheme").asText());
+        assertEquals("mttp://vacant", results.get(0).evidence().path("providedUrl").asText());
+        assertStage(results.get(1), AviatorDiagnosticStage.DNS, AviatorDiagnosticStatus.WARN);
+        assertEquals("Skipped because endpoint validation failed", results.get(1).summary());
+        assertStage(results.get(2), AviatorDiagnosticStage.TCP, AviatorDiagnosticStatus.WARN);
+        assertStage(results.get(3), AviatorDiagnosticStage.TLS, AviatorDiagnosticStatus.WARN);
+        assertStage(results.get(4), AviatorDiagnosticStage.GRPC, AviatorDiagnosticStatus.WARN);
+        assertTrue(report.hasRequiredFailure());
+        assertFalse(probe.tunnelCalled);
+        assertFalse(probe.grpcCalled);
+    }
+
+    @Test
+    void shouldFailEndpointForFtpSchemeEvenWithValidLookingHost() {
+        var probe = new ConfigurableDiagnosticProbe();
+        var report = new AviatorConnectionDiagnostics(probe)
+            .diagnose("ftp://aviator-qa01.example.com", 5, "url");
+
+        assertStage(report.stages().get(0), AviatorDiagnosticStage.ENDPOINT, AviatorDiagnosticStatus.FAIL);
+        assertEquals(UnsupportedAviatorUrlSchemeException.STAGE_SUMMARY, report.stages().get(0).summary());
+        assertEquals("ftp", report.stages().get(0).evidence().path("scheme").asText());
+        assertTrue(report.hasRequiredFailure());
+        assertFalse(probe.tunnelCalled);
+    }
+
+    @Test
+    void shouldFailEndpointForHttpScheme() {
+        var probe = new ConfigurableDiagnosticProbe();
+        var report = new AviatorConnectionDiagnostics(probe).diagnose("http://aviator.invalid", 5, "url");
+
+        assertStage(report.stages().get(0), AviatorDiagnosticStage.ENDPOINT, AviatorDiagnosticStatus.FAIL);
+        assertEquals(UnsupportedAviatorUrlSchemeException.STAGE_SUMMARY, report.stages().get(0).summary());
+        assertEquals("http", report.stages().get(0).evidence().path("scheme").asText());
         assertFalse(probe.tunnelCalled);
     }
 

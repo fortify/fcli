@@ -77,9 +77,10 @@ public class AviatorConnectionDiagnoseHelper {
     /** Skip when gRPC did not respond; otherwise run {@code validate}. */
     private void runCredentialStage(AviatorDiagnosticReport report, String stage, String description,
             Runnable validate) {
+        report.begin(stage);
         if (!report.hasGrpcStagePass()) {
             report.optionalSkipWarn(stage, description,
-                "Credential check skipped",
+                "gRPC did not respond",
                 "Fix the gRPC connection first", AviatorDiagnosticEvidence.empty());
             return;
         }
