@@ -72,7 +72,7 @@ public class FileUtils {
                 String content = sourceDecoder.decode(fileBytes, filename, fvdlMetadata).content();
                 return Arrays.asList(content.split("\\r?\\n"));
             } catch (IOException | ISourceDecoder.SourceDecodeException e) {
-                logger.error("Failed to read file: {}", path, e);
+                logger.warn("Could not read or decode source file {}: {}", path, e.getMessage());
                 return Collections.emptyList();
             }
         });
@@ -147,21 +147,24 @@ public class FileUtils {
         return fprHandle.getPath(internalPath);
     }
 
-
-    // Assumes you have already updated the signature to accept extractedPath
     public Optional<String> getSourceFileContent(FprHandle fprHandle, String relativePath) {
+        try {
+            return Optional.of(readSourceFileContentStrict(fprHandle, relativePath));
+        } catch (IOException | ISourceDecoder.SourceDecodeException e) {
+            logger.warn("Could not read source file content for path {}: {}", relativePath, e.getMessage());
+            return Optional.empty();
+        }
+    }
+
+    /** Reads and decodes source content while preserving read or decode failures for the caller. */
+    String readSourceFileContentStrict(FprHandle fprHandle, String relativePath) throws IOException {
         Path actualSourcePath = resolveFullPath(fprHandle, relativePath);
         if (actualSourcePath == null) {
-            return Optional.empty();
+            throw new IOException("Source file key not found in sourceFileMap: " + relativePath);
         }
 
-        try {
-            byte[] fileBytes = Files.readAllBytes(actualSourcePath);
-            return Optional.of(sourceDecoder.decode(fileBytes, relativePath, fvdlMetadata).content());
-        } catch (IOException | ISourceDecoder.SourceDecodeException e) {
-            logger.warn("Could not read source file content for path: {}", relativePath, e);
-            return Optional.empty();
-        }
+        byte[] fileBytes = Files.readAllBytes(actualSourcePath);
+        return sourceDecoder.decode(fileBytes, relativePath, fvdlMetadata).content();
     }
 
     public String appendLineNumbers(String content, String fileName, int startLineNo) {

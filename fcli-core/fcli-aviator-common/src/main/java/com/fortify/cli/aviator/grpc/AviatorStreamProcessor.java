@@ -37,6 +37,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -399,7 +400,7 @@ class AviatorStreamProcessor implements AutoCloseable {
                             response.getRequestId(), instanceId, response.getStatus(), metrics.getDuration());
                 }
 
-                outstandingRequests.decrementAndGet();
+                decrementOutstanding(completedWrapper);
                 requestSemaphore.release();
 
                 AuditResponse auditResponse = GrpcUtil.convertToAuditResponse(response);
@@ -446,11 +447,14 @@ class AviatorStreamProcessor implements AutoCloseable {
 
                     if (infinite || currentStreamState.streamRetryCount < Constants.MAX_STREAM_RETRIES) {
                         LOG.debug("Stream encountered retryable error: {}. Will retry...", t.getMessage());
-                        int reAdded = inflightRequests.size();
-                        inflightRequests.values().forEach(processingQueue::addFirst);
+                        int requeuedRequestCount = inflightRequests.size();
+                        inflightRequests.values().forEach(wrapper -> {
+                            wrapper.outstandingTracked = false;
+                            processingQueue.addFirst(wrapper);
+                        });
                         inflightRequests.clear();
-                        outstandingRequests.addAndGet(-reAdded);
-                        requestSemaphore.release(reAdded);
+                        outstandingRequests.addAndGet(-requeuedRequestCount);
+                        requestSemaphore.release(requeuedRequestCount);
                         if (outstandingRequests.get() < 0) {
                             outstandingRequests.set(0);
                         }
@@ -720,10 +724,15 @@ class AviatorStreamProcessor implements AutoCloseable {
                 // Lazy Loading of source code files for individual issue
                 SourceCodeEnricher sourceCodeEnricher = new SourceCodeEnricher(fprHandle, sourceDecoder, fvdlMetadata);
 
-                Map<String, com.fortify.cli.aviator.audit.model.File> enrichedFiles =
-                    sourceCodeEnricher.enrichWithSourceCode(wrapper.userPrompt.getStackTrace());
-                List<com.fortify.cli.aviator.audit.model.File> sourceCodeFiles  = new ArrayList<>(enrichedFiles.values());
+                SourceCodeEnricher.EnrichmentResult enrichmentResult =
+                    sourceCodeEnricher.enrichWithSourceCodeDetailed(wrapper.userPrompt.getStackTrace());
+                if (enrichmentResult.hasFailures()) {
+                    completeSkippedRequest(wrapper, enrichmentResult, responses, processedRequests, totalRequests,
+                            resultFuture, streamLatch);
+                    continue;
+                }
 
+                List<com.fortify.cli.aviator.audit.model.File> sourceCodeFiles = new ArrayList<>(enrichmentResult.files().values());
                 wrapper.userPrompt.getFiles().addAll(sourceCodeFiles);
 
                 logger.info("Size of files {}", wrapper.userPrompt.getFiles().size());
@@ -734,8 +743,8 @@ class AviatorStreamProcessor implements AutoCloseable {
                     continue;
                 }
 
-                if (wrapper.attemptCount == 0) {
-                    outstandingRequests.incrementAndGet();
+                if (!wrapper.outstandingTracked) {
+                    incrementOutstanding(wrapper);
                 }
 
                 if (wrapper.attemptCount > 0) {
@@ -771,7 +780,7 @@ class AviatorStreamProcessor implements AutoCloseable {
                     currentStreamState.pendingIssueIds.remove(instanceId);
 
                     int completed = processedRequests.incrementAndGet();
-                    outstandingRequests.decrementAndGet();
+                    decrementOutstanding(wrapper);
                     requestSemaphore.release();
 
                     logger.progress("Processed " + completed + " out of " + totalRequests + " issues (1 failed).");
@@ -802,6 +811,70 @@ class AviatorStreamProcessor implements AutoCloseable {
                 processingQueue.size(), processedRequests.get(), totalRequests, outstandingRequests.get());
     }
 
+    private void incrementOutstanding(RequestWrapper wrapper) {
+        if (!wrapper.outstandingTracked) {
+            outstandingRequests.incrementAndGet();
+            wrapper.outstandingTracked = true;
+        }
+    }
+
+    private void decrementOutstanding(RequestWrapper wrapper) {
+        if (wrapper != null && wrapper.outstandingTracked) {
+            wrapper.outstandingTracked = false;
+            if (outstandingRequests.decrementAndGet() < 0) {
+                outstandingRequests.set(0);
+            }
+        }
+    }
+
+    private void completeSkippedRequest(RequestWrapper wrapper, SourceCodeEnricher.EnrichmentResult enrichmentResult,
+                                        Map<String, AuditResponse> responses, AtomicInteger processedRequests,
+                                        int totalRequests, CompletableFuture<Map<String, AuditResponse>> resultFuture,
+                                        CountDownLatch streamLatch) {
+        String instanceId = wrapper.userPrompt.getIssueData().getInstanceID();
+        AuditResponse skippedResponse = new AuditResponse();
+        skippedResponse.setIssueId(instanceId);
+        skippedResponse.setStatus("SKIPPED");
+        skippedResponse.setStatusMessage(formatSourceFailureMessage(enrichmentResult));
+        responses.put(instanceId, skippedResponse);
+
+        currentStreamState.processedIssueIds.add(instanceId);
+        currentStreamState.pendingIssueIds.remove(instanceId);
+        decrementOutstanding(wrapper);
+        requestSemaphore.release();
+
+        int completed = processedRequests.incrementAndGet();
+        logger.warn("Skipping issue %s because required source files could not be loaded", instanceId);
+        logger.progress("Processed " + completed + " out of " + totalRequests + " issues (1 skipped).");
+
+        if (completed >= totalRequests) {
+            logger.info("All requests accounted for, completing stream.");
+            if (requestHandler != null && !requestHandler.isCompleted()) {
+                requestHandler.complete();
+            }
+            streamLatch.countDown();
+            if (!resultFuture.isDone()) {
+                resultFuture.complete(responses);
+            }
+        }
+    }
+
+    private String formatSourceFailureMessage(SourceCodeEnricher.EnrichmentResult enrichmentResult) {
+        List<String> filenames = enrichmentResult.failures().stream()
+                .map(SourceCodeEnricher.SourceFileFailure::filename)
+                .distinct()
+                .collect(Collectors.toList());
+        String prefix = filenames.size() == 1
+            ? "Could not decode source file: "
+            : "Could not decode source files: ";
+        String details = enrichmentResult.failures().stream()
+                .map(SourceCodeEnricher.SourceFileFailure::message)
+                .filter(message -> message != null && !message.isBlank())
+                .distinct()
+                .collect(Collectors.joining("; "));
+        return prefix + String.join(", ", filenames) + (details.isBlank() ? "" : " (" + details + ")");
+    }
+
     private void handleServerBusy(String requestId, int totalRequests, AtomicInteger processedRequests, Map<String, AuditResponse> responses, CompletableFuture<Map<String, AuditResponse>> resultFuture, CountDownLatch streamLatch) {
         RequestWrapper wrapperToRetry = inflightRequests.remove(requestId);
         if (wrapperToRetry == null) {
@@ -825,7 +898,8 @@ class AviatorStreamProcessor implements AutoCloseable {
             int completed = processedRequests.incrementAndGet();
 
             logger.progress("Request permanently failed due to server busy - Processed " + completed + " out of " + totalRequests + " issues");
-            int stillOutstanding = outstandingRequests.decrementAndGet();
+            decrementOutstanding(wrapperToRetry);
+            int stillOutstanding = outstandingRequests.get();
             LOG.warn("WARN: Request for instance {} permanently failed. Remaining outstanding requests: {}", wrapperToRetry.userPrompt.getIssueData().getInstanceID(), stillOutstanding);
             if (completed >= totalRequests) {
                 logger.info("All requests accounted for after permanent failure, completing stream.");
@@ -858,7 +932,7 @@ class AviatorStreamProcessor implements AutoCloseable {
             LOG.error("Failed to send request for instance {} after all retries. Re-queueing for later attempt.", wrapper.userPrompt.getIssueData().getInstanceID());
             inflightRequests.remove(requestId);
             requestMetricsMap.remove(requestId);
-            outstandingRequests.decrementAndGet();
+            decrementOutstanding(wrapper);
             requestSemaphore.release();
             wrapper.attemptCount++;
             processingQueue.addLast(wrapper);

@@ -180,13 +180,12 @@ public class AuditFPR {
         String status;
         String message = null;
 
-        if (issuesSuccessfullyAudited == totalIssuesToAudit) {
-            status = "AUDITED";
-        } else if (issuesSuccessfullyAudited > 0) {
-            status = "PARTIALLY_AUDITED";
-        } else {
-            status = "FAILED";
+        status = determineAuditStatus(issuesSuccessfullyAudited, issuesSkipped, totalIssuesToAudit, auditResponses.size());
+        if ("SKIPPED".equals(status)) {
+            message = String.format("All %d issues were skipped", totalIssuesToAudit);
+        } else if ("FAILED".equals(status)) {
             String commonFailureReason = auditResponses.values().stream()
+                    .filter(response -> !"SKIPPED".equalsIgnoreCase(response.getStatus()))
                     .map(AuditResponse::getStatusMessage)
                     .filter(msg -> msg != null && !msg.isBlank())
                     .findFirst()
@@ -195,7 +194,8 @@ public class AuditFPR {
             if (commonFailureReason.startsWith("Client-side pre-processing error: ")) {
                 commonFailureReason = commonFailureReason.substring("Client-side pre-processing error: ".length());
             }
-            message = String.format("All %d issues failed (%s)", totalIssuesToAudit, commonFailureReason);
+            message = String.format("No issues were audited (%d skipped; failure details: %s)",
+                    issuesSkipped, commonFailureReason);
         }
 
         File updatedFile = null;
@@ -219,10 +219,24 @@ public class AuditFPR {
                 remediationGenerationMetric.skippedByReason());
     }
 
-    private static Map<String, Integer> getSkippedAuditReasons(Map<String, AuditResponse> auditResponses, int totalIssuesToAudit) {
+    static String determineAuditStatus(long issuesSuccessfullyAudited, int issuesSkipped,
+                                       int totalIssuesToAudit, int responseCount) {
+        if (issuesSuccessfullyAudited == totalIssuesToAudit) {
+            return "AUDITED";
+        }
+        if (issuesSuccessfullyAudited > 0) {
+            return "PARTIALLY_AUDITED";
+        }
+        if (issuesSkipped == totalIssuesToAudit && responseCount == totalIssuesToAudit) {
+            return "SKIPPED";
+        }
+        return "FAILED";
+    }
+
+    static Map<String, Integer> getSkippedAuditReasons(Map<String, AuditResponse> auditResponses, int totalIssuesToAudit) {
         Map<String, Integer> skippedByReason = new LinkedHashMap<>();
         auditResponses.values().stream()
-                .filter(response -> !"SUCCESS".equalsIgnoreCase(response.getStatus()))
+                .filter(response -> "SKIPPED".equalsIgnoreCase(response.getStatus()))
                 .map(AuditFPR::getSkippedAuditReason)
                 .forEach(reason -> recordSkipped(skippedByReason, reason));
         int missingResponses = Math.max(0, totalIssuesToAudit - auditResponses.size());

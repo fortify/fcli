@@ -197,7 +197,8 @@ public final class AviatorSSCAuditHelper {
     public static String getProgressMessage(FPRAuditResult auditResult) {
         switch (auditResult.getStatus()) {
             case "SKIPPED":
-                return "No issues to audit, skipping upload";
+                return (auditResult.getMessage() != null ? auditResult.getMessage() : "No issues to audit")
+                        + ", skipping upload";
             case "FAILED":
                 String message = auditResult.getMessage() != null ? auditResult.getMessage() : "Unknown error";
                 return "Audit failed: " + message;

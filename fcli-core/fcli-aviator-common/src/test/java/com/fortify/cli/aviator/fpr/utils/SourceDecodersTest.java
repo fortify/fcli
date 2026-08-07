@@ -67,6 +67,19 @@ class SourceDecodersTest {
     }
 
     @Test
+    void decode_usesWindows1252FromFprMetadata() {
+        FVDLMetadata metadata = new FVDLMetadata();
+        metadata.registerSourceFileEncoding("payments.c", "windows-1252");
+        byte[] windows1252 = new byte[] {(byte) 0x93, 'p', 'r', 'e', 'm', 'i', 'u', 'm', (byte) 0x94};
+
+        DecodeResult result = SourceDecoders.defaults().decode(windows1252, "payments.c", metadata);
+
+        assertEquals("\u201cpremium\u201d", result.content());
+        assertEquals("windows-1252", result.charset().name());
+        assertEquals("FPR(windows-1252)", result.source());
+    }
+
+    @Test
     void decode_allCandidatesFail_messageListsAttempts() {
         ISourceDecoder decoder = SourceDecoders.fromCsv("UTF-8,US-ASCII");
         byte[] invalid = new byte[] {(byte) 0xFF, (byte) 0xFE, (byte) 0x00};

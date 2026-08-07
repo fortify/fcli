@@ -17,6 +17,7 @@ import com.fortify.cli.aviator.audit.model.UserPrompt;
 class RequestWrapper {
     final UserPrompt userPrompt;
     int attemptCount = 0;
+    volatile boolean outstandingTracked;
 
     RequestWrapper(UserPrompt userPrompt) {
         this.userPrompt = userPrompt;

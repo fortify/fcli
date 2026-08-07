@@ -12,11 +12,13 @@
  */
 package com.fortify.cli.aviator.fpr.utils;
 
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,7 +50,6 @@ public class SourceCodeEnricher {
 
     public SourceCodeEnricher(FprHandle fprHandle, ISourceDecoder sourceDecoder, FVDLMetadata fvdlMetadata) {
         this.fprHandle = fprHandle;
-        // Single soft-fail decode path via FileUtils (same policy as snippets/lines).
         this.fileUtils = new FileUtils(Objects.requireNonNull(sourceDecoder, "sourceDecoder"), fvdlMetadata);
     }
 
@@ -67,36 +68,41 @@ public class SourceCodeEnricher {
      * @return Map of filename → File objects with content loaded
      */
     public Map<String, File> enrichWithSourceCode(List<List<StackTraceElement>> stackTraces) {
-        Map<String, File> uniqueFiles = new HashMap<>();
+        return new HashMap<>(enrichWithSourceCodeDetailed(stackTraces).files());
+    }
+
+    public EnrichmentResult enrichWithSourceCodeDetailed(List<List<StackTraceElement>> stackTraces) {
+        Map<String, File> uniqueFiles = new LinkedHashMap<>();
+        Map<String, SourceFileFailure> failuresByFilename = new LinkedHashMap<>();
 
         if (stackTraces == null || stackTraces.isEmpty()) {
             logger.debug("No stack traces to enrich");
-            return uniqueFiles;
+            return new EnrichmentResult(uniqueFiles, List.of());
         }
 
-        processStackTraces(stackTraces, uniqueFiles);
+        processStackTraces(stackTraces, uniqueFiles, failuresByFilename);
 
         logger.debug("Enriched {} unique source files from {} stack traces",
                     uniqueFiles.size(), stackTraces.size());
 
-        return uniqueFiles;
+        return new EnrichmentResult(uniqueFiles, new ArrayList<>(failuresByFilename.values()));
     }
 
     /**
      * Processes all stack traces to extract and load unique source files.
      * Replicates FVDLProcessor.processStackTraceElements() logic.
      */
-    private void processStackTraces(List<List<StackTraceElement>> stackTraces, Map<String, File> uniqueFiles) {
+    private void processStackTraces(List<List<StackTraceElement>> stackTraces, Map<String, File> uniqueFiles,
+                                    Map<String, SourceFileFailure> failuresByFilename) {
         for (List<StackTraceElement> stackTrace : stackTraces) {
             if (stackTrace == null) continue;
 
             for (StackTraceElement element : stackTrace) {
-                processFileForElement(element, uniqueFiles);
+                processFileForElement(element, uniqueFiles, failuresByFilename);
 
-                // Process inner stack traces recursively
                 if (element.getInnerStackTrace() != null) {
                     for (StackTraceElement innerElement : element.getInnerStackTrace()) {
-                        processFileForElement(innerElement, uniqueFiles);
+                        processFileForElement(innerElement, uniqueFiles, failuresByFilename);
                     }
                 }
             }
@@ -110,25 +116,34 @@ public class SourceCodeEnricher {
      * @param element     The stack trace element to process
      * @param uniqueFiles Map to store loaded files (deduplicated by filename)
      */
-    private void processFileForElement(StackTraceElement element, Map<String, File> uniqueFiles) {
+    private void processFileForElement(StackTraceElement element, Map<String, File> uniqueFiles,
+                                       Map<String, SourceFileFailure> failuresByFilename) {
         if (element == null) return;
 
         String filename = element.getFilename();
-        if (!StringUtil.isEmpty(filename) && fprHandle.getSourceFileMap().containsKey(filename) && !uniqueFiles.containsKey(filename)) {
-            // Soft-fail decode via FileUtils: omit file rather than fail the whole issue.
-            Optional<String> contentOpt = fileUtils.getSourceFileContent(fprHandle, filename);
-            if (contentOpt.isEmpty()) {
-                return;
+        if (!StringUtil.isEmpty(filename) && fprHandle.getSourceFileMap().containsKey(filename)
+                && !uniqueFiles.containsKey(filename) && !failuresByFilename.containsKey(filename)) {
+            try {
+                String content = fileUtils.readSourceFileContentStrict(fprHandle, filename);
+                File file = new File();
+                file.setName(filename);
+                file.setSegment(false);
+                file.setStartLine(1);
+                file.setContent(fileUtils.appendLineNumbers(content, filename, 0));
+                file.setEndLine(content.split("\\R", -1).length);
+                uniqueFiles.put(filename, file);
+            } catch (IOException | ISourceDecoder.SourceDecodeException e) {
+                logger.warn("Could not read source file content for path {}: {}", filename, e.getMessage());
+                failuresByFilename.put(filename, new SourceFileFailure(filename, e.getMessage()));
             }
-            String content = contentOpt.get();
-            File file = new File();
-            file.setName(filename);
-            file.setSegment(false);
-            file.setStartLine(1);
-            // Keep line markers in prompt file content; downstream gRPC/template rendering is pass-through.
-            file.setContent(fileUtils.appendLineNumbers(content, filename, 0));
-            file.setEndLine(content.split("\\R", -1).length);
-            uniqueFiles.put(filename, file);
         }
     }
+
+    public record EnrichmentResult(Map<String, File> files, List<SourceFileFailure> failures) {
+        public boolean hasFailures() {
+            return !failures.isEmpty();
+        }
+    }
+
+    public record SourceFileFailure(String filename, String message) {}
 }
