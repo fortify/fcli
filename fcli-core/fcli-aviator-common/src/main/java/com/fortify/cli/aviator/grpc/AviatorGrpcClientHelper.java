@@ -24,8 +24,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
+import com.fortify.cli.aviator._common.exception.UnsupportedAviatorUrlSchemeException;
 import com.fortify.cli.aviator.config.IAviatorLogger;
 import com.fortify.cli.aviator.util.Constants;
+import com.fortify.cli.common.http.UrlSchemes;
 import com.fortify.cli.common.http.proxy.helper.ProxyDescriptor;
 import com.fortify.cli.common.http.proxy.helper.ProxyHelper;
 import com.fortify.cli.common.http.ssl.trust.FcliTrustManager;
@@ -103,12 +105,29 @@ public class AviatorGrpcClientHelper {
         }
     }
 
+    /**
+     * Normalizes an Aviator target to an https URL.
+     * <ul>
+     *   <li>Scheme-less input ({@code host} or {@code host:port}) gets {@code https://} prepended.</li>
+     *   <li>{@code https} (any casing) is accepted and canonicalized to lowercase {@code https}.</li>
+     *   <li>Any other scheme ({@code http}, {@code ftp}, typos like {@code mttp}, …) is rejected.</li>
+     * </ul>
+     */
     public static String normalizeUrl(String url) {
         var trimmed = url.trim();
-        if ( trimmed.matches("^[a-zA-Z][a-zA-Z0-9+\\-.]*://.*$") ) {
+        if ( !UrlSchemes.hasScheme(trimmed) ) {
+            return "https://"+trimmed;
+        }
+        var schemeSeparator = trimmed.indexOf("://");
+        var scheme = trimmed.substring(0, schemeSeparator);
+        if ( !"https".equalsIgnoreCase(scheme) ) {
+            throw new UnsupportedAviatorUrlSchemeException(scheme, url);
+        }
+        if ( "https".equals(scheme) ) {
             return trimmed;
         }
-        return "https://"+trimmed;
+        // Canonicalize scheme casing (HTTPS://host → https://host)
+        return "https"+trimmed.substring(schemeSeparator);
     }
 
     private static NettyChannelBuilder configureBuilder(NettyChannelBuilder builder, Optional<ProxyDescriptor> proxyDescriptor) {

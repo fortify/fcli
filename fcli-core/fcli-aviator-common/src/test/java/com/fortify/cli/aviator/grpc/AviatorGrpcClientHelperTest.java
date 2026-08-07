@@ -15,12 +15,17 @@ package com.fortify.cli.aviator.grpc;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
+import com.fortify.cli.aviator._common.exception.UnsupportedAviatorUrlSchemeException;
 import com.fortify.cli.common.http.proxy.helper.ProxyDescriptor;
 
 import io.grpc.HttpConnectProxiedSocketAddress;
@@ -62,6 +67,26 @@ class AviatorGrpcClientHelperTest {
         assertEquals("aviator.invalid", plan.target().host());
         assertEquals(8443, plan.target().port());
         assertEquals(8443, plan.effectivePort());
+    }
+
+    @Test
+    void shouldCanonicalizeHttpsSchemeCasing() {
+        assertEquals("https://aviator.invalid", AviatorGrpcClientHelper.normalizeUrl("HTTPS://aviator.invalid"));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+        "mttp://vacant",
+        "ftp://aviator.invalid",
+        "http://aviator.invalid",
+        "grpc://aviator.invalid"
+    })
+    void shouldRejectNonHttpsSchemes(String url) {
+        var ex = assertThrows(UnsupportedAviatorUrlSchemeException.class,
+            () -> AviatorGrpcClientHelper.createConnectionPlan(url));
+        assertEquals(url.substring(0, url.indexOf("://")), ex.getScheme());
+        assertEquals(url, ex.getProvidedUrl());
+        assertTrue(ex.getMessage().contains(UnsupportedAviatorUrlSchemeException.STAGE_SUMMARY));
     }
 
     @Test
