@@ -18,6 +18,7 @@ class RequestWrapper {
     final UserPrompt userPrompt;
     int attemptCount = 0;
     volatile boolean outstandingTracked;
+    volatile boolean sourceCodeEnriched;
 
     RequestWrapper(UserPrompt userPrompt) {
         this.userPrompt = userPrompt;

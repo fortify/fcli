@@ -19,6 +19,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,6 +44,7 @@ public class SourceCodeEnricher {
 
     private final FprHandle fprHandle;
     private final FileUtils fileUtils;
+    private final Map<String, CachedSourceResult> sourceFileCache = new ConcurrentHashMap<>();
 
     public SourceCodeEnricher(FprHandle fprHandle) {
         this(fprHandle, SourceDecoders.defaults(), null);
@@ -123,21 +125,40 @@ public class SourceCodeEnricher {
         String filename = element.getFilename();
         if (!StringUtil.isEmpty(filename) && fprHandle.getSourceFileMap().containsKey(filename)
                 && !uniqueFiles.containsKey(filename) && !failuresByFilename.containsKey(filename)) {
-            try {
-                String content = fileUtils.readSourceFileContentStrict(fprHandle, filename);
-                File file = new File();
-                file.setName(filename);
-                file.setSegment(false);
-                file.setStartLine(1);
-                file.setContent(fileUtils.appendLineNumbers(content, filename, 0));
-                file.setEndLine(content.split("\\R", -1).length);
-                uniqueFiles.put(filename, file);
-            } catch (IOException | ISourceDecoder.SourceDecodeException e) {
-                logger.warn("Could not read source file content for path {}: {}", filename, e.getMessage());
-                failuresByFilename.put(filename, new SourceFileFailure(filename, e.getMessage()));
+            CachedSourceResult result = sourceFileCache.computeIfAbsent(filename, this::loadSourceFile);
+            if (result.failure() != null) {
+                failuresByFilename.put(filename, result.failure());
+            } else {
+                uniqueFiles.put(filename, result.sourceFile().toFile(filename));
             }
         }
     }
+
+    private CachedSourceResult loadSourceFile(String filename) {
+        try {
+            String content = fileUtils.readSourceFileContentStrict(fprHandle, filename);
+            CachedSourceFile sourceFile = new CachedSourceFile(
+                    fileUtils.appendLineNumbers(content, filename, 0), content.split("\\R", -1).length);
+            return new CachedSourceResult(sourceFile, null);
+        } catch (IOException | ISourceDecoder.SourceDecodeException e) {
+            logger.warn("Could not read source file content for path {}: {}", filename, e.getMessage());
+            return new CachedSourceResult(null, new SourceFileFailure(filename, e.getMessage()));
+        }
+    }
+
+    private record CachedSourceFile(String content, int endLine) {
+        private File toFile(String filename) {
+            File file = new File();
+            file.setName(filename);
+            file.setSegment(false);
+            file.setStartLine(1);
+            file.setContent(content);
+            file.setEndLine(endLine);
+            return file;
+        }
+    }
+
+    private record CachedSourceResult(CachedSourceFile sourceFile, SourceFileFailure failure) {}
 
     public record EnrichmentResult(Map<String, File> files, List<SourceFileFailure> failures) {
         public boolean hasFailures() {

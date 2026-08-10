@@ -22,6 +22,12 @@ import java.nio.file.Path;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -29,6 +35,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import com.fortify.cli.aviator.audit.model.StackTraceElement;
+import com.fortify.cli.aviator.fpr.model.FVDLMetadata;
 import com.fortify.cli.aviator.util.FprHandle;
 
 class SourceCodeEnricherTest {
@@ -57,6 +64,148 @@ class SourceCodeEnricherTest {
             assertEquals(List.of("bad-one.java", "bad-two.java"),
                     result.failures().stream().map(SourceCodeEnricher.SourceFileFailure::filename).toList());
             assertEquals(List.of("good.java"), result.files().keySet().stream().toList());
+        }
+    }
+
+    @Test
+    void cachesSuccessfulAndFailedLoadsAcrossEnrichmentCalls() throws Exception {
+        Map<String, byte[]> sourceFiles = new LinkedHashMap<>();
+        sourceFiles.put("good.java", "class Good {}".getBytes(StandardCharsets.UTF_8));
+        sourceFiles.put("bad.java", new byte[] {(byte) 0xFF});
+        Path fprPath = createFpr(sourceFiles);
+        AtomicInteger decodeCalls = new AtomicInteger();
+        ISourceDecoder decoder = new ISourceDecoder() {
+            @Override
+            public DecodeResult decode(byte[] bytes, String filename, FVDLMetadata metadata) {
+                decodeCalls.incrementAndGet();
+                if (bytes.length > 0 && bytes[0] == (byte) 0xFF) {
+                    throw new SourceDecodeException("decode failed");
+                }
+                return new DecodeResult(new String(bytes, StandardCharsets.UTF_8), StandardCharsets.UTF_8, "test");
+            }
+
+            @Override
+            public String describe() {
+                return "test";
+            }
+        };
+
+        try (FprHandle fprHandle = new FprHandle(fprPath)) {
+            SourceCodeEnricher enricher = new SourceCodeEnricher(fprHandle, decoder, null);
+            List<List<StackTraceElement>> stackTraces = List.of(List.of(element("good.java"), element("bad.java")));
+
+            SourceCodeEnricher.EnrichmentResult firstResult = enricher.enrichWithSourceCodeDetailed(stackTraces);
+            SourceCodeEnricher.EnrichmentResult secondResult = enricher.enrichWithSourceCodeDetailed(stackTraces);
+
+            assertEquals(2, decodeCalls.get());
+            assertEquals(List.of("good.java"), secondResult.files().keySet().stream().toList());
+            assertEquals(List.of("bad.java"), secondResult.failures().stream()
+                    .map(SourceCodeEnricher.SourceFileFailure::filename).toList());
+            assertEquals(firstResult.files().get("good.java").getContent(), secondResult.files().get("good.java").getContent());
+        }
+    }
+
+    @Test
+    void loadsAFileOnceWhenEnrichmentCallsAreConcurrent() throws Exception {
+        Map<String, byte[]> sourceFiles = Map.of("good.java", "class Good {}".getBytes(StandardCharsets.UTF_8));
+        Path fprPath = createFpr(sourceFiles);
+        AtomicInteger decodeCalls = new AtomicInteger();
+        CountDownLatch decodeStarted = new CountDownLatch(1);
+        CountDownLatch allowDecode = new CountDownLatch(1);
+        ISourceDecoder decoder = new ISourceDecoder() {
+            @Override
+            public DecodeResult decode(byte[] bytes, String filename, FVDLMetadata metadata) {
+                decodeCalls.incrementAndGet();
+                decodeStarted.countDown();
+                try {
+                    if (!allowDecode.await(5, TimeUnit.SECONDS)) {
+                        throw new SourceDecodeException("Timed out waiting to decode");
+                    }
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    throw new SourceDecodeException("Interrupted while decoding", e);
+                }
+                return new DecodeResult(new String(bytes, StandardCharsets.UTF_8), StandardCharsets.UTF_8, "test");
+            }
+
+            @Override
+            public String describe() {
+                return "test";
+            }
+        };
+
+        try (FprHandle fprHandle = new FprHandle(fprPath)) {
+            ExecutorService executor = Executors.newFixedThreadPool(2);
+            try {
+            SourceCodeEnricher enricher = new SourceCodeEnricher(fprHandle, decoder, null);
+            List<List<StackTraceElement>> stackTraces = List.of(List.of(element("good.java")));
+            Future<SourceCodeEnricher.EnrichmentResult> first = executor.submit(
+                    () -> enricher.enrichWithSourceCodeDetailed(stackTraces));
+            Future<SourceCodeEnricher.EnrichmentResult> second = executor.submit(
+                    () -> enricher.enrichWithSourceCodeDetailed(stackTraces));
+
+            assertTrue(decodeStarted.await(5, TimeUnit.SECONDS));
+            allowDecode.countDown();
+
+            assertEquals(List.of("good.java"), first.get(5, TimeUnit.SECONDS).files().keySet().stream().toList());
+            assertEquals(List.of("good.java"), second.get(5, TimeUnit.SECONDS).files().keySet().stream().toList());
+            assertEquals(1, decodeCalls.get());
+            } finally {
+                executor.shutdownNow();
+            }
+        }
+    }
+
+    @Test
+    void cachesConcurrentDecodeFailureOnce() throws Exception {
+        Map<String, byte[]> sourceFiles = Map.of("bad.java", new byte[] {(byte) 0xFF});
+        Path fprPath = createFpr(sourceFiles);
+        AtomicInteger decodeCalls = new AtomicInteger();
+        CountDownLatch decodeStarted = new CountDownLatch(1);
+        CountDownLatch allowDecode = new CountDownLatch(1);
+        ISourceDecoder decoder = new ISourceDecoder() {
+            @Override
+            public DecodeResult decode(byte[] bytes, String filename, FVDLMetadata metadata) {
+                decodeCalls.incrementAndGet();
+                decodeStarted.countDown();
+                try {
+                    if (!allowDecode.await(5, TimeUnit.SECONDS)) {
+                        throw new SourceDecodeException("Timed out waiting to decode");
+                    }
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    throw new SourceDecodeException("Interrupted while decoding", e);
+                }
+                throw new SourceDecodeException("decode failed");
+            }
+
+            @Override
+            public String describe() {
+                return "test";
+            }
+        };
+
+        try (FprHandle fprHandle = new FprHandle(fprPath)) {
+            ExecutorService executor = Executors.newFixedThreadPool(2);
+            try {
+                SourceCodeEnricher enricher = new SourceCodeEnricher(fprHandle, decoder, null);
+                List<List<StackTraceElement>> stackTraces = List.of(List.of(element("bad.java")));
+                Future<SourceCodeEnricher.EnrichmentResult> first = executor.submit(
+                        () -> enricher.enrichWithSourceCodeDetailed(stackTraces));
+                Future<SourceCodeEnricher.EnrichmentResult> second = executor.submit(
+                        () -> enricher.enrichWithSourceCodeDetailed(stackTraces));
+
+                assertTrue(decodeStarted.await(5, TimeUnit.SECONDS));
+                allowDecode.countDown();
+
+                assertEquals(List.of("bad.java"), first.get(5, TimeUnit.SECONDS).failures().stream()
+                        .map(SourceCodeEnricher.SourceFileFailure::filename).toList());
+                assertEquals(List.of("bad.java"), second.get(5, TimeUnit.SECONDS).failures().stream()
+                        .map(SourceCodeEnricher.SourceFileFailure::filename).toList());
+                assertEquals(1, decodeCalls.get());
+            } finally {
+                executor.shutdownNow();
+            }
         }
     }
 

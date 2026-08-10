@@ -98,6 +98,9 @@ class AviatorStreamProcessor implements AutoCloseable {
     private final FprHandle fprHandle;
     private final ISourceDecoder sourceDecoder;
     private final FVDLMetadata fvdlMetadata;
+    private final SourceCodeEnricher sourceCodeEnricher;
+    private final AtomicInteger skippedRequests = new AtomicInteger();
+    private final AtomicInteger failedRequests = new AtomicInteger();
 
     public AviatorStreamProcessor(AviatorGrpcClient client, IAviatorLogger logger, AuditorServiceGrpc.AuditorServiceStub asyncStub,
             ExecutorService processingExecutor, ScheduledExecutorService pingScheduler, long pingIntervalSeconds,
@@ -113,6 +116,7 @@ class AviatorStreamProcessor implements AutoCloseable {
         this.fprHandle = fprHandle;
         this.sourceDecoder = Objects.requireNonNull(sourceDecoder, "sourceDecoder");
         this.fvdlMetadata = fvdlMetadata;
+        this.sourceCodeEnricher = new SourceCodeEnricher(fprHandle, this.sourceDecoder, fvdlMetadata);
     }
 
     public CompletableFuture<Map<String, AuditResponse>> processBatchRequests(Queue<UserPrompt> requests, String projectName, String FPRBuildId, String SSCApplicationName, String SSCApplicationVersion, String token, List<String> customPriorityOrder) {
@@ -721,19 +725,12 @@ class AviatorStreamProcessor implements AutoCloseable {
 
                 String instanceId = wrapper.userPrompt.getIssueData().getInstanceID();
 
-                // Lazy Loading of source code files for individual issue
-                SourceCodeEnricher sourceCodeEnricher = new SourceCodeEnricher(fprHandle, sourceDecoder, fvdlMetadata);
-
-                SourceCodeEnricher.EnrichmentResult enrichmentResult =
-                    sourceCodeEnricher.enrichWithSourceCodeDetailed(wrapper.userPrompt.getStackTrace());
-                if (enrichmentResult.hasFailures()) {
+                SourceCodeEnricher.EnrichmentResult enrichmentResult = enrichSourceCode(wrapper);
+                if (enrichmentResult != null && enrichmentResult.hasFailures()) {
                     completeSkippedRequest(wrapper, enrichmentResult, responses, processedRequests, totalRequests,
                             resultFuture, streamLatch);
                     continue;
                 }
-
-                List<com.fortify.cli.aviator.audit.model.File> sourceCodeFiles = new ArrayList<>(enrichmentResult.files().values());
-                wrapper.userPrompt.getFiles().addAll(sourceCodeFiles);
 
                 logger.info("Size of files {}", wrapper.userPrompt.getFiles().size());
                 logger.info("Size of programming language {}", wrapper.userPrompt.getProgrammingLanguages().size());
@@ -780,10 +777,11 @@ class AviatorStreamProcessor implements AutoCloseable {
                     currentStreamState.pendingIssueIds.remove(instanceId);
 
                     int completed = processedRequests.incrementAndGet();
+                    int failed = failedRequests.incrementAndGet();
                     decrementOutstanding(wrapper);
                     requestSemaphore.release();
 
-                    logger.progress("Processed " + completed + " out of " + totalRequests + " issues (1 failed).");
+                    logger.progress("Processed " + completed + " out of " + totalRequests + " issues (" + failed + " failed).");
                 } else {
                     LOG.error("Caught AviatorSimpleException but the request wrapper was null.", e);
                 }
@@ -811,6 +809,24 @@ class AviatorStreamProcessor implements AutoCloseable {
                 processingQueue.size(), processedRequests.get(), totalRequests, outstandingRequests.get());
     }
 
+    private SourceCodeEnricher.EnrichmentResult enrichSourceCode(RequestWrapper wrapper) {
+        synchronized (wrapper) {
+            if (wrapper.sourceCodeEnriched) {
+                return null;
+            }
+
+            SourceCodeEnricher.EnrichmentResult enrichmentResult =
+                    sourceCodeEnricher.enrichWithSourceCodeDetailed(wrapper.userPrompt.getStackTrace());
+            if (!enrichmentResult.hasFailures()) {
+                List<com.fortify.cli.aviator.audit.model.File> sourceCodeFiles =
+                        new ArrayList<>(enrichmentResult.files().values());
+                wrapper.userPrompt.getFiles().addAll(sourceCodeFiles);
+                wrapper.sourceCodeEnriched = true;
+            }
+            return enrichmentResult;
+        }
+    }
+
     private void incrementOutstanding(RequestWrapper wrapper) {
         if (!wrapper.outstandingTracked) {
             outstandingRequests.incrementAndGet();
@@ -832,10 +848,11 @@ class AviatorStreamProcessor implements AutoCloseable {
                                         int totalRequests, CompletableFuture<Map<String, AuditResponse>> resultFuture,
                                         CountDownLatch streamLatch) {
         String instanceId = wrapper.userPrompt.getIssueData().getInstanceID();
+        String failureMessage = formatSourceFailureMessage(enrichmentResult);
         AuditResponse skippedResponse = new AuditResponse();
         skippedResponse.setIssueId(instanceId);
         skippedResponse.setStatus("SKIPPED");
-        skippedResponse.setStatusMessage(formatSourceFailureMessage(enrichmentResult));
+        skippedResponse.setStatusMessage(failureMessage);
         responses.put(instanceId, skippedResponse);
 
         currentStreamState.processedIssueIds.add(instanceId);
@@ -844,8 +861,9 @@ class AviatorStreamProcessor implements AutoCloseable {
         requestSemaphore.release();
 
         int completed = processedRequests.incrementAndGet();
-        logger.warn("Skipping issue %s because required source files could not be loaded", instanceId);
-        logger.progress("Processed " + completed + " out of " + totalRequests + " issues (1 skipped).");
+        int skipped = skippedRequests.incrementAndGet();
+        LOG.warn("Skipping issue {}: {}", instanceId, failureMessage);
+        logger.progress("Processed " + completed + " out of " + totalRequests + " issues (" + skipped + " skipped).");
 
         if (completed >= totalRequests) {
             logger.info("All requests accounted for, completing stream.");
