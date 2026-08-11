@@ -25,6 +25,7 @@ import com.fortify.cli.aviator._common.remediations_cache.RemediationsCacheManif
 import com.fortify.cli.aviator._common.remediations_cache.RemediationsCacheWriter;
 import com.fortify.cli.aviator.config.AviatorLoggerImpl;
 import com.fortify.cli.common.cli.mixin.CommonOptionMixins;
+import com.fortify.cli.common.cli.util.WindowsFileConverter;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
@@ -50,7 +51,8 @@ public class FoDAviatorDownloadRemediationsCacheCommand extends AbstractFoDJsonN
     @Mixin private FoDReleaseByQualifiedNameOrIdResolverMixin.RequiredOption releaseResolver;
     @Mixin private CommonOptionMixins.RequireConfirmation requireConfirmation;
 
-    @Option(names = {"-f", "--file"}, required = true, paramLabel = "<file>")
+    @Option(names = {"-f", "--file"}, required = true, paramLabel = "<file>",
+            converter = WindowsFileConverter.class)
     private File outputFile;
 
     @Override

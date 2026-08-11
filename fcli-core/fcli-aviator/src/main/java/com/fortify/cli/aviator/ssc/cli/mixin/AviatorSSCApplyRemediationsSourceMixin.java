@@ -15,6 +15,7 @@ package com.fortify.cli.aviator.ssc.cli.mixin;
 import java.nio.file.Path;
 
 import com.fortify.cli.aviator.ssc.cli.mixin.AviatorSSCRemediationsSelectorArgGroups.OnlineSelectionArgGroup;
+import com.fortify.cli.common.cli.util.WindowsPathConverter;
 import com.fortify.cli.common.exception.FcliSimpleException;
 
 import lombok.Getter;
@@ -38,7 +39,8 @@ public class AviatorSSCApplyRemediationsSourceMixin {
 
         /** Shared/arg-group option: keep descriptionKey (default picocli key uses FQCN). */
         @Option(names = {"--from-cache"}, required = true, paramLabel = "<zip>",
-                descriptionKey = "fcli.aviator.ssc.apply-remediations.from-cache")
+                descriptionKey = "fcli.aviator.ssc.apply-remediations.from-cache",
+                converter = WindowsPathConverter.class)
         private Path fromCache;
     }
 

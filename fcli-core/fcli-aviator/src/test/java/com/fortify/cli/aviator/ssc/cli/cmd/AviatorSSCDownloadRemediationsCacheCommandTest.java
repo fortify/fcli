@@ -15,6 +15,8 @@ package com.fortify.cli.aviator.ssc.cli.cmd;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledOnOs;
+import org.junit.jupiter.api.condition.OS;
 
 import com.fortify.cli.common.exception.FcliSimpleException;
 
@@ -38,6 +40,13 @@ class AviatorSSCDownloadRemediationsCacheCommandTest {
         AviatorSSCDownloadRemediationsCacheCommand command = parse("--artifact-id", "1", "--av", "2", "-f", "cache.zip");
 
         assertThrows(FcliSimpleException.class, () -> command.getJsonNode(null));
+    }
+
+    @Test
+    @EnabledOnOs(OS.WINDOWS)
+    void fileRejectsCorruptionMarker() {
+        assertThrows(CommandLine.ParameterException.class,
+                () -> parse("--artifact-id", "1", "-f", "C:\\temp\\?\\cache.zip"));
     }
 
     private static AviatorSSCDownloadRemediationsCacheCommand parse(String... args) {

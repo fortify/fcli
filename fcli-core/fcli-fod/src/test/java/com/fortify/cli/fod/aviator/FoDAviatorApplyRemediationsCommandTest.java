@@ -20,6 +20,8 @@ import java.lang.reflect.Field;
 import java.nio.file.Path;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledOnOs;
+import org.junit.jupiter.api.condition.OS;
 
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.fod.aviator.cli.mixin.FoDAviatorApplyRemediationsSourceMixin;
@@ -62,6 +64,22 @@ class FoDAviatorApplyRemediationsCommandTest {
         field.setAccessible(true);
         field.set(command, "");
         assertThrows(FcliSimpleException.class, command::getJsonNode);
+    }
+
+    @Test
+    @EnabledOnOs(OS.WINDOWS)
+    void sourceDirRejectsCorruptionMarker() {
+        FoDAviatorApplyRemediationsCommand command = parse(
+                "--release", "1", "--source-dir", "C:\\temp\\?\\source");
+
+        assertThrows(FcliSimpleException.class, command::getJsonNode);
+    }
+
+    @Test
+    @EnabledOnOs(OS.WINDOWS)
+    void fromCacheRejectsCorruptionMarker() {
+        assertThrows(CommandLine.ParameterException.class,
+                () -> parse("--from-cache", "C:\\temp\\?\\cache.zip"));
     }
 
     private static FoDAviatorApplyRemediationsCommand parse(String... args) {

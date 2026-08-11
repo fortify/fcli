@@ -30,6 +30,7 @@ import com.fortify.cli.aviator.ssc.cli.mixin.AviatorSSCRemediationsCacheDownload
 import com.fortify.cli.aviator.ssc.cli.mixin.SSCRemediationsSelectionMode;
 import com.fortify.cli.aviator.ssc.helper.SinceOptionHelper;
 import com.fortify.cli.common.cli.mixin.CommonOptionMixins;
+import com.fortify.cli.common.cli.util.WindowsFileConverter;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
@@ -53,7 +54,8 @@ public class AviatorSSCDownloadRemediationsCacheCommand extends AbstractSSCJsonN
     @Mixin private AviatorSSCRemediationsCacheDownloadSelectorMixin artifactSelector;
     @Mixin private CommonOptionMixins.RequireConfirmation requireConfirmation;
 
-    @Option(names = {"-f", "--file"}, required = true, paramLabel = "<file>")
+    @Option(names = {"-f", "--file"}, required = true, paramLabel = "<file>",
+            converter = WindowsFileConverter.class)
     private File outputFile;
 
     @Override

@@ -15,6 +15,8 @@ package com.fortify.cli.fod.aviator;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledOnOs;
+import org.junit.jupiter.api.condition.OS;
 
 import com.fortify.cli.fod.aviator.cmd.FoDAviatorDownloadRemediationsCacheCommand;
 
@@ -31,6 +33,13 @@ class FoDAviatorDownloadRemediationsCacheCommandTest {
     void fileIsRequired() {
         assertThrows(CommandLine.ParameterException.class,
                 () -> parse("--release", "1"));
+    }
+
+    @Test
+    @EnabledOnOs(OS.WINDOWS)
+    void fileRejectsCorruptionMarker() {
+        assertThrows(CommandLine.ParameterException.class,
+                () -> parse("--release", "1", "-f", "C:\\temp\\?\\cache.zip"));
     }
 
     private static void parse(String... args) {

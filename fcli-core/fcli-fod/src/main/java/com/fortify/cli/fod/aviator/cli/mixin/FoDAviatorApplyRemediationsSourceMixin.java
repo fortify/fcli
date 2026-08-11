@@ -14,6 +14,7 @@ package com.fortify.cli.fod.aviator.cli.mixin;
 
 import java.nio.file.Path;
 
+import com.fortify.cli.common.cli.util.WindowsPathConverter;
 import com.fortify.cli.fod._common.cli.mixin.FoDDelimiterMixin;
 import com.fortify.cli.fod._common.cli.mixin.IFoDDelimiterMixinAware;
 import com.fortify.cli.fod.release.cli.mixin.FoDReleaseByQualifiedNameOrIdResolverMixin;
@@ -59,7 +60,8 @@ public final class FoDAviatorApplyRemediationsSourceMixin implements IFoDDelimit
 
         /** Shared description key: command-local option on an ArgGroup (default picocli key would use FQCN). */
         @Option(names = {"--from-cache"}, required = true, paramLabel = "<zip>",
-                descriptionKey = "fcli.fod.aviator.apply-remediations.from-cache")
+                descriptionKey = "fcli.fod.aviator.apply-remediations.from-cache",
+                converter = WindowsPathConverter.class)
         private Path fromCache;
     }
 }

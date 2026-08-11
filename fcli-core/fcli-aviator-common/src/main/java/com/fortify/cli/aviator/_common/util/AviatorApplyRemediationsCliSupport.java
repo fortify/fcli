@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Set;
 
 import com.fortify.cli.common.exception.FcliSimpleException;
+import com.fortify.cli.common.util.WindowsPathValidator;
 
 /**
  * Shared option validation for SSC/FoD apply-remediations commands (CLI surface only).
@@ -26,6 +27,7 @@ public final class AviatorApplyRemediationsCliSupport {
     public static void requireSourceDir(String sourceCodeDirectory) {
         FcliSimpleException.throwIf(sourceCodeDirectory == null || sourceCodeDirectory.isBlank(),
                 "--source-dir must specify a valid directory path");
+        WindowsPathValidator.validate("--source-dir", sourceCodeDirectory);
     }
 
     /**

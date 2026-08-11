@@ -20,6 +20,8 @@ import java.lang.reflect.Field;
 import java.nio.file.Path;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledOnOs;
+import org.junit.jupiter.api.condition.OS;
 
 import com.fortify.cli.aviator.ssc.cli.mixin.AviatorSSCApplyRemediationsSourceMixin;
 import com.fortify.cli.common.exception.FcliSimpleException;
@@ -48,6 +50,22 @@ class AviatorSSCApplyRemediationsCommandTest {
     void issueIdsRequireFromCache() {
         AviatorSSCApplyRemediationsCommand command = parse("--artifact-id", "1", "--issue-ids", "ISSUE-1");
         assertThrows(FcliSimpleException.class, command::getJsonNode);
+    }
+
+    @Test
+    @EnabledOnOs(OS.WINDOWS)
+    void sourceDirRejectsCorruptionMarker() {
+        AviatorSSCApplyRemediationsCommand command = parse(
+                "--artifact-id", "1", "--source-dir", "C:\\temp\\?\\source");
+
+        assertThrows(FcliSimpleException.class, command::getJsonNode);
+    }
+
+    @Test
+    @EnabledOnOs(OS.WINDOWS)
+    void fromCacheRejectsCorruptionMarker() {
+        assertThrows(CommandLine.ParameterException.class,
+                () -> parse("--from-cache", "C:\\temp\\?\\cache.zip"));
     }
 
     private static AviatorSSCApplyRemediationsCommand parse(String... args) {
