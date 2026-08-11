@@ -39,18 +39,12 @@ public enum SSCIssueEmbedderSupplier implements ISSCEntityEmbedderSupplier {
     }
     
     private static abstract class AbstractSSCIssueEmbedder implements ISSCEntityEmbedder {
-        protected abstract String getEmbedFieldName();
-
         protected abstract HttpRequest<?> getBaseRequest(UnirestInstance unirest);
 
         protected abstract void process(ObjectNode record, JsonNode response);
 
         @Override
         public final void addEmbedRequests(SSCBulkRequestBuilder builder, UnirestInstance unirest, JsonNode record) {
-            // Skip if data is already present in the record (e.g. returned by SSC via qm parameter)
-            if (record.has(getEmbedFieldName()) && !record.get(getEmbedFieldName()).isNull()) {
-                return;
-            }
             var id = record.get("id").asText();
             builder.request(
                 getBaseRequest(unirest).routeParam("id", id),
@@ -60,11 +54,6 @@ public enum SSCIssueEmbedderSupplier implements ISSCEntityEmbedderSupplier {
     }
 
     private static final class SSCIssueDetailsEmbedder extends AbstractSSCIssueEmbedder {
-        @Override
-        protected String getEmbedFieldName() {
-            return "details";
-        }
-
         @Override
         protected HttpRequest<?> getBaseRequest(UnirestInstance unirest) {
             return unirest.get("/api/v1/issueDetails/{id}");
@@ -78,11 +67,6 @@ public enum SSCIssueEmbedderSupplier implements ISSCEntityEmbedderSupplier {
 
     private static final class SSCIssueAuditHistoryEmbedder extends AbstractSSCIssueEmbedder {
         @Override
-        protected String getEmbedFieldName() {
-            return "auditHistory";
-        }
-
-        @Override
         protected HttpRequest<?> getBaseRequest(UnirestInstance unirest) {
             return unirest.get("/api/v1/issues/{id}/auditHistory").queryString("limit", "-1");
         }
@@ -94,11 +78,6 @@ public enum SSCIssueEmbedderSupplier implements ISSCEntityEmbedderSupplier {
     }
 
     private static final class SSCIssueCommentsEmbedder extends AbstractSSCIssueEmbedder {
-        @Override
-        protected String getEmbedFieldName() {
-            return "comments";
-        }
-
         @Override
         protected HttpRequest<?> getBaseRequest(UnirestInstance unirest) {
             return unirest.get("/api/v1/issues/{id}/comments").queryString("limit", "-1");

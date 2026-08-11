@@ -105,27 +105,23 @@ public class FoDIssueHelper {
     /** Overload adding aggregation fields to an ObjectNode using provided data. */
     public static final ObjectNode transformRecord(ObjectNode record, IssueAggregationData data) {
         transformRecord(record); // apply generic transformations first (rename etc.)
-        record.set("vulnIds", toJsonNode(data.getVulnIds()));
+        ArrayNode vulnIdsArray = JsonHelper.getObjectMapper().createArrayNode();
+        data.getVulnIds().forEach(vulnIdsArray::add);
+        ArrayNode releaseNamesArray = JsonHelper.getObjectMapper().createArrayNode();
+        data.getReleaseNames().forEach(releaseNamesArray::add);
+        ArrayNode releaseIdsArray = JsonHelper.getObjectMapper().createArrayNode();
+        data.getReleaseIds().forEach(releaseIdsArray::add);
+        ArrayNode idsArray = JsonHelper.getObjectMapper().createArrayNode();
+        data.getIds().forEach(idsArray::add);
+        record.set("vulnIds", vulnIdsArray);
         record.put("vulnIdsString", data.getVulnIdsString());
-        record.set("foundInReleases", toJsonNode(data.getReleaseNames()));
+        record.set("foundInReleases", releaseNamesArray);
         record.put("foundInReleasesString", data.getReleaseNamesString());
-        record.set("foundInReleaseIds", toJsonNode(data.getReleaseIds()));
+        record.set("foundInReleaseIds", releaseIdsArray);
         record.put("foundInReleaseIdsString", data.getReleaseIdsString());
-        record.set("ids", toJsonNode(data.getIds()));
+        record.set("ids", idsArray);
         record.put("idsString", data.getIdsString());
         return record;
-    }
-
-    private static JsonNode toJsonNode(Set<String> values) {
-        if ( values == null || values.isEmpty() ) {
-            return JsonHelper.getObjectMapper().getNodeFactory().textNode("N/A");
-        } else if ( values.size() == 1 ) {
-            return JsonHelper.getObjectMapper().getNodeFactory().textNode(values.iterator().next());
-        } else {
-            var array = JsonHelper.getObjectMapper().createArrayNode();
-            values.forEach(array::add);
-            return array;
-        }
     }
 
     public static final FoDBulkIssueUpdateResponse updateIssues(UnirestInstance unirest, String releaseId, FoDBulkIssueUpdateRequest issueUpdateRequest) {

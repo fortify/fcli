@@ -12,14 +12,10 @@
  */
 package com.fortify.cli.ssc.issue.cli.cmd;
 
-import java.util.Arrays;
-import java.util.stream.Collectors;
-
 import com.fortify.cli.common.cli.util.EnvSuffix;
 import com.fortify.cli.common.json.producer.IObjectNodeProducer;
 import com.fortify.cli.common.json.producer.ObjectNodeProducerApplyFrom;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
-import com.fortify.cli.common.rest.unirest.IHttpRequestUpdater;
 import com.fortify.cli.ssc._common.output.cli.cmd.AbstractSSCOutputCommand;
 import com.fortify.cli.ssc._common.rest.ssc.SSCUrls;
 import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionResolverMixin;
@@ -33,7 +29,7 @@ import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Parameters;
 
 @Command(name = OutputHelperMixins.Get.CMD_NAME)
-public class SSCIssueGetCommand extends AbstractSSCOutputCommand implements IHttpRequestUpdater {
+public class SSCIssueGetCommand extends AbstractSSCOutputCommand {
     @Getter @Mixin private OutputHelperMixins.Get outputHelper;
     @Mixin private SSCAppVersionResolverMixin.RequiredOption parentResolver;
     @EnvSuffix("ISSUE_ID") @Parameters(index = "0", arity = "1", descriptionKey = "fcli.ssc.issue.get.id")
@@ -49,20 +45,7 @@ public class SSCIssueGetCommand extends AbstractSSCOutputCommand implements IHtt
     }
 
     private HttpRequest<?> getBaseRequest(UnirestInstance unirest, String appVersionId) {
-        return unirest.get(SSCUrls.PROJECT_VERSION_ISSUE(appVersionId, id))
-                .queryString("showHidden", "true")
-                .queryString("showRemoved", "true")
-                .queryString("showSuppressed", "true");
-    }
-
-    @Override
-    public HttpRequest<?> updateRequest(HttpRequest<?> request) {
-        var embedSuppliers = bulkEmbedMixin.getEmbedSuppliers();
-        if (embedSuppliers == null || embedSuppliers.length == 0) {
-            return request.queryString("qm", "issues");
-        }
-        var embedNames = Arrays.stream(embedSuppliers).map(Enum::name).collect(Collectors.joining(","));
-        return request.queryString("qm", "issues," + embedNames);
+        return unirest.get(SSCUrls.PROJECT_VERSION_ISSUE(appVersionId, id));
     }
 
     @Override
