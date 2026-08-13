@@ -33,28 +33,32 @@ import picocli.CommandLine.Option;
 
 public class FoDSessionLoginOptions {
     @Mixin @Getter private FoDUrlConfigOptions urlConfigOptions = new FoDUrlConfigOptions();
-    
+
     @ArgGroup(exclusive = false, multiplicity = "1", order = 2)
     @Getter private FoDAuthOptions authOptions = new FoDAuthOptions();
-    
+
     public static class FoDAuthOptions {
         @ArgGroup(exclusive = true, multiplicity = "1", order = 3)
         @Getter private FoDCredentialOptions credentialOptions = new FoDCredentialOptions();
         @Option(names="--scopes", defaultValue="api-tenant", split=",")
         @Getter private String[] scopes;
     }
-    
+
     public static class FoDCredentialOptions {
-        @ArgGroup(exclusive = false, multiplicity = "1", order = 1) 
+        @ArgGroup(exclusive = false, multiplicity = "1", order = 1)
         @Getter private FoDUserCredentialOptions userCredentialOptions = new FoDUserCredentialOptions();
-        @ArgGroup(exclusive = false, multiplicity = "1", order = 2) 
+        @ArgGroup(exclusive = false, multiplicity = "1", order = 2)
         @Getter private FoDClientCredentialOptions clientCredentialOptions = new FoDClientCredentialOptions();
     }
-    
+
     public static class FoDUserCredentialOptions extends UserCredentialOptions {
         @Option(names = {"-t", "--tenant"}, required = true)
         @MaskValue(sensitivity = LogSensitivityLevel.low, description = "FOD TENANT")
         @Getter private String tenant;
+        @Option(names = {"--code", "-c" }, paramLabel = "<code>", arity = "0..1", interactive = true, echo = false, description = "Security code (TOTP from authenticator or MFA from email/SMS)")
+        @Getter private char[] securityCode;
+        @Option(names = {"--totp" }, description = "Indicates the provided code is TOTP from authenticator app (sets do_totp=true)")
+        @Getter private boolean isTotp;
     }
 
     public static class FoDClientCredentialOptions implements IFoDClientCredentials {
@@ -72,7 +76,7 @@ public class FoDSessionLoginOptions {
                 .map(FoDCredentialOptions::getUserCredentialOptions)
                 .orElse(null);
     }
-    
+
     public FoDClientCredentialOptions getClientCredentialOptions() {
         return Optional.ofNullable(authOptions)
                 .map(FoDAuthOptions::getCredentialOptions)
@@ -93,21 +97,36 @@ public class FoDSessionLoginOptions {
         var u = getUserCredentialOptions();
         return BasicFoDUserCredentials.builder().tenant(u.getTenant()).user(u.getUser()).password(u.getPassword()).build();
     }
-    
+
     public final boolean hasClientCredentials() {
         FoDClientCredentialOptions clientCredentialOptions = getClientCredentialOptions();
         return clientCredentialOptions!=null
                 && StringUtils.isNotBlank(clientCredentialOptions.getClientId())
                 && StringUtils.isNotBlank(clientCredentialOptions.getClientSecret());
     }
-    
+
+    public boolean hasSecurityCode() {
+        var userCred = getUserCredentialOptions();
+        return userCred != null && userCred.securityCode != null && userCred.securityCode.length > 0;
+    }
+
+    public char[] getSecurityCode() {
+        var userCred = getUserCredentialOptions();
+        return userCred != null ? userCred.securityCode : null;
+    }
+
+    public boolean isTotp() {
+        var userCred = getUserCredentialOptions();
+        return userCred != null && userCred.isTotp;
+    }
+
     @Command
     public static final class FoDUrlConfigOptions extends UrlConfigOptions {
         @Override @SneakyThrows
         public String getUrl() {
             return FoDProductHelper.INSTANCE.getApiUrl(super.getUrl());
         }
-        
+
         @Override
         protected int getDefaultSocketTimeoutInMillis() {
             return 600000;
@@ -121,23 +140,31 @@ public class FoDSessionLoginOptions {
         private final String tenant;
         private final String user;
         private final char[] password;
+        private final char[] securityCode;
+        private final boolean isTotp;
         private BasicFoDUserCredentials(Builder b) {
             this.tenant = b.tenant;
             this.user = b.user;
             this.password = b.password;
+            this.securityCode = b.securityCode;
+            this.isTotp = b.isTotp;
         }
         public static Builder builder() { return new Builder(); }
         @Override public String getTenant() { return tenant; }
         @Override public String getUser() { return user; }
         @Override public char[] getPassword() { return password; }
+        @Override public String getSecurityCode() { return securityCode != null ? String.valueOf(securityCode) : null;}
+        @Override public boolean isTotp() { return isTotp; }
         public static final class Builder {
-            private String tenant; private String user; private char[] password;
+            private String tenant; private String user; private char[] password; private char[] securityCode; private boolean isTotp;
             public Builder tenant(String tenant){ this.tenant=tenant; return this; }
             public Builder user(String user){ this.user=user; return this; }
             public Builder password(char[] password){ this.password=password; return this; }
             public BasicFoDUserCredentials build(){
                 return new BasicFoDUserCredentials(this);
             }
+            public Builder securityCode(char[] securityCode) { this.securityCode = securityCode; return this; }
+            public Builder isTotp(boolean isTotp) { this.isTotp = isTotp; return this; }
         }
     }
 }

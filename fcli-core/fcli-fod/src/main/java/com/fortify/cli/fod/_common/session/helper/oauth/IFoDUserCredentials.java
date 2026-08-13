@@ -16,4 +16,6 @@ public interface IFoDUserCredentials {
     String getUser();
     char[] getPassword();
     String getTenant();
+    default String getSecurityCode() { return null; }
+    default boolean isTotp() { return false; }
 }
