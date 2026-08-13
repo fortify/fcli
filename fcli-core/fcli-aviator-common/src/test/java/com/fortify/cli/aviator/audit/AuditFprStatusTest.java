@@ -57,4 +57,28 @@ class AuditFprStatusTest {
         assertEquals(Map.of("No audit response received", 1),
                 AuditFPR.getSkippedAuditReasons(Map.of("success", success), 2));
     }
+
+    @Test
+    void countsOnlyResponsesOriginatingFromAviatorAsSubmitted() {
+        AuditResponse localSkip = AuditResponse.builder().status("SKIPPED").build();
+        AuditResponse localFailure = AuditResponse.builder()
+                .status("FAILED")
+                .statusMessage("Request validation failed")
+                .build();
+        AuditResponse serverSkip = AuditResponse.builder()
+                        .status("SKIPPED")
+                        .submittedToAviator(true)
+                        .build();
+        AuditResponse serverFailure = AuditResponse.builder()
+                .status("FAILED")
+                .statusMessage("Aviator processing failed")
+                .submittedToAviator(true)
+                .build();
+
+        assertEquals(2, AuditFPR.getSubmittedAuditCount(Map.of(
+                        "local", localSkip,
+                "localFailure", localFailure,
+                "server", serverSkip,
+                "serverFailure", serverFailure)));
+    }
 }

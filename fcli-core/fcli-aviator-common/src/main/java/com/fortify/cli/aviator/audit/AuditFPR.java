@@ -161,13 +161,16 @@ public class AuditFPR {
             Map<String, String> issueCategoryLookup, FPRInfo fprInfo, StreamingFVDLProcessor streamingFVDLProcessor) {
 
         int totalIssuesToAudit = auditOutcome.getTotalIssuesToAudit();
+        int issuesSubmitted = getSubmittedAuditCount(auditResponses);
         if (auditResponses.isEmpty()) {
             if (totalIssuesToAudit == 0) {
                 LOG.info("No issues were audited, skipping update and upload");
-                return new FPRAuditResult(null, "SKIPPED", "No issues to audit", 0, totalIssuesToAudit);
+            return new FPRAuditResult(null, "SKIPPED", "No issues to audit", 0, totalIssuesToAudit,
+                issuesSubmitted, 0, Map.of(), 0, Map.of());
             } else {
                 LOG.error("No audit responses received for {} issues", totalIssuesToAudit);
-                return new FPRAuditResult(null, "FAILED", "No audit responses received from server", 0, totalIssuesToAudit);
+            return new FPRAuditResult(null, "FAILED", "No audit responses received from server", 0, totalIssuesToAudit,
+                issuesSubmitted, 0, Map.of(), 0, Map.of());
             }
         }
 
@@ -215,8 +218,14 @@ public class AuditFPR {
 
         LOG.info("FPR audit process completed with status: {}", status);
         return new FPRAuditResult(updatedFile, status, message, (int) issuesSuccessfullyAudited, totalIssuesToAudit,
-                issuesSkipped, skippedByReason, remediationGenerationMetric.skippedRemediations(),
+            issuesSubmitted, issuesSkipped, skippedByReason, remediationGenerationMetric.skippedRemediations(),
                 remediationGenerationMetric.skippedByReason());
+    }
+
+    static int getSubmittedAuditCount(Map<String, AuditResponse> auditResponses) {
+        return (int) auditResponses.values().stream()
+                .filter(AuditResponse::isSubmittedToAviator)
+                .count();
     }
 
     static String determineAuditStatus(long issuesSuccessfullyAudited, int issuesSkipped,

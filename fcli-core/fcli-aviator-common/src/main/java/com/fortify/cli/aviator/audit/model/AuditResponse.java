@@ -12,6 +12,7 @@
  */
 package com.fortify.cli.aviator.audit.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.formkiq.graalvm.annotations.Reflectable;
 
 import lombok.AllArgsConstructor;
@@ -33,11 +34,29 @@ public class AuditResponse {
     private String status;
     private String statusMessage;
     private String issueId;
+    @JsonIgnore
+    private boolean submittedToAviator;
 
     private String tier;
     private String aviatorPredictionTag;
     private Boolean isAviatorProcessed;
     private String userPrompt;
     private String systemPrompt;
+
+    public AuditResponse(AuditResult auditResult, int inputToken, int outputToken, String status,
+                         String statusMessage, String issueId, String tier, String aviatorPredictionTag,
+                         Boolean isAviatorProcessed, String userPrompt, String systemPrompt) {
+        this.auditResult = auditResult;
+        this.inputToken = inputToken;
+        this.outputToken = outputToken;
+        this.status = status;
+        this.statusMessage = statusMessage;
+        this.issueId = issueId;
+        this.tier = tier;
+        this.aviatorPredictionTag = aviatorPredictionTag;
+        this.isAviatorProcessed = isAviatorProcessed;
+        this.userPrompt = userPrompt;
+        this.systemPrompt = systemPrompt;
+    }
 
 }

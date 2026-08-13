@@ -196,6 +196,7 @@ class GrpcUtil {
         auditResponse.setStatus(response.getStatus());
         auditResponse.setStatusMessage(response.getStatusMessage());
         auditResponse.setIssueId(response.getIssueId());
+        auditResponse.setSubmittedToAviator(true);
         auditResponse.setTier(response.getTier());
         auditResponse.setAviatorPredictionTag(response.getAviatorPredictionTag());
         auditResponse.setIsAviatorProcessed(response.getIsAviatorProcessed());

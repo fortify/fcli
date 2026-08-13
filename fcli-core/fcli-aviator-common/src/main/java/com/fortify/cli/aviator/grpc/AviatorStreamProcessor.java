@@ -912,6 +912,7 @@ class AviatorStreamProcessor implements AutoCloseable {
             failedResponse.setIssueId(wrapperToRetry.userPrompt.getIssueData().getInstanceID());
             failedResponse.setStatus("RETRY_LIMIT_EXCEEDED");
             failedResponse.setStatusMessage("Request failed after " + Constants.MAX_RETRIES + " retries due to server overload.");
+            failedResponse.setSubmittedToAviator(true);
             responses.put(wrapperToRetry.userPrompt.getIssueData().getInstanceID(), failedResponse);
             int completed = processedRequests.incrementAndGet();
 

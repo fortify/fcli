@@ -135,7 +135,7 @@ public final class AviatorSSCAuditHelper {
                 break;
         }
         audit.put("message", message);
-        audit.put("submitted", auditResult.getTotalIssuesToAudit());
+        audit.put("submitted", auditResult.getIssuesSubmitted());
         audit.put("succeeded", auditResult.getIssuesSuccessfullyAudited());
         audit.put("skipped", auditResult.getIssuesSkipped());
         audit.put("skippedReasons", formatSkippedReasons(auditResult.getSkippedByReason()));
