@@ -32,6 +32,25 @@ import kong.unirest.UnirestInstance;
 // TODO Consider moving all classes in this package to a more appropriate package,
 //      for example as a sub-package of the 'rest' package.
 public class FoDOAuthHelper {
+    private static final String MFA_GUIDANCE = 
+        "If MFA is required, provide the security code:\n" +
+        "  --code <code>  (or -c <code>) to provide the security code\n" +
+        "  --totp          to indicate the code is from a TOTP authenticator app";
+    
+    private static final String ERROR_WITH_CODE = 
+        "Authentication failed. Possible causes:\n" +
+        "  - MFA/TOTP code incorrect or expired\n" +
+        "  - Incorrect username or password\n" +
+        "  - Code format mismatch\n\n" +
+        "Please verify your credentials and try again with a new code if using TOTP:\n" +
+        MFA_GUIDANCE;
+    
+    private static final String ERROR_WITHOUT_CODE =
+        "Authentication failed. Possible causes:\n" +
+        "  - Incorrect username or password\n" +
+        "  - FoD tenant requires MFA/TOTP authentication\n\n" +
+        MFA_GUIDANCE;
+
     public static final FoDTokenCreateResponse createToken(IUrlConfig urlConfig, IFoDUserCredentials uc, String... scopes) {
         Map<String,Object> formData = generateTokenRequest(uc, scopes);
     try ( var unirest = UnirestHelper.createUnirestInstance() ) {
@@ -59,22 +78,8 @@ public class FoDOAuthHelper {
             return createToken(urlConfig, credBuilder.build(), loginOptions.getAuthOptions().getScopes());
         } catch (UnexpectedHttpResponseException e) {
             if (e.getStatus() == 400) {
-                if (loginOptions.hasSecurityCode()) {
-                    // Security code was provided but rejected - likely expired or invalid
-                    throw new FcliSimpleException(
-                            "Authentication failed with security code. The code may have expired (TOTP codes expire after 30 seconds) "
-                                    +
-                                    "or be invalid. Please try again with a new code:\n" +
-                                    "  --code <new-code>  (or -c <new-code>) to provide the new security code\n" +
-                                    "  --totp              if using a TOTP authenticator app");
-                } else {
-                    // No security code provided - MFA is required
-                    throw new FcliSimpleException(
-                            "FoD tenant requires TOTP or MFA authentication. Please provide the security code using:\n"
-                                    +
-                                    "  --code <code>  (or -c <code>) to provide the security code\n" +
-                                    "  --totp          to indicate the code is from a TOTP authenticator app");
-                }
+                String errorMessage = loginOptions.hasSecurityCode() ? ERROR_WITH_CODE : ERROR_WITHOUT_CODE;
+                throw new FcliSimpleException(errorMessage);
             }
             throw new FcliSimpleException(e.getMessage(), e);
         }

@@ -55,9 +55,9 @@ public class FoDSessionLoginOptions {
         @Option(names = {"-t", "--tenant"}, required = true)
         @MaskValue(sensitivity = LogSensitivityLevel.low, description = "FOD TENANT")
         @Getter private String tenant;
-        @Option(names = {"--code", "-c" }, paramLabel = "<code>", arity = "0..1", interactive = true, echo = false, description = "Security code (TOTP from authenticator or MFA from email/SMS)")
+        @Option(names = {"--code", "-c" }, paramLabel = "<code>", arity = "0..1", interactive = true, echo = false, descriptionKey = "fcli.fod.session.login.options.code")
         @Getter private char[] securityCode;
-        @Option(names = {"--totp" }, description = "Indicates the provided code is TOTP from authenticator app (sets do_totp=true)")
+        @Option(names = {"--totp" }, descriptionKey = "fcli.fod.session.login.options.totp")
         @Getter private boolean isTotp;
     }
 
