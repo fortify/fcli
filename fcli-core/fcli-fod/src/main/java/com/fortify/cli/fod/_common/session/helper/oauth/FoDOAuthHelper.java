@@ -39,10 +39,9 @@ public class FoDOAuthHelper {
     
     private static final String ERROR_WITH_CODE = 
         "Authentication failed. Possible causes:\n" +
-        "  - MFA/TOTP code incorrect or expired\n" +
         "  - Incorrect username or password\n" +
-        "  - Code format mismatch\n\n" +
-        "Please verify your credentials and try again with a new code if using TOTP:\n" +
+        "  - MFA/TOTP code incorrect, expired, or wrong type (TOTP vs MFA)\n" +
+        "Please verify your credentials and MFA/TOTP code if applicable:\n" +
         MFA_GUIDANCE;
     
     private static final String ERROR_WITHOUT_CODE =
