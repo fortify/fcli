@@ -18,6 +18,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.LinkedHashSet;
@@ -130,6 +132,37 @@ class RemediationProcessorTest {
             assertEquals(1, metric.skippedByReason().get("Source file outside source directory"));
             String updatedContent = Files.readString(sourceFile, StandardCharsets.UTF_8).replace("\r\n", "\n");
             assertTrue(updatedContent.contains("        newOne();"));
+        }
+    }
+
+    @Test
+    void testLoadsFvdlMetadataFromZipBackedFprPath() throws Exception {
+        Path sourceDir = Files.createDirectory(tempDir.resolve("src-zip-backed"));
+        Path sourceFile = sourceDir.resolve("Example.java");
+        String originalContent = String.join("\n",
+                "class Example {",
+                "    void run() {",
+                "        oldOne();",
+                "    }",
+                "}",
+                "");
+        Files.writeString(sourceFile, originalContent, StandardCharsets.UTF_8);
+
+        Path fprPath = createFpr(singleRemediationXml(TestHashUtil.sha256Base64Unix(originalContent)));
+        Path cachePath = tempDir.resolve("remediations-cache.zip");
+        try (ZipOutputStream zipOutputStream = new ZipOutputStream(Files.newOutputStream(cachePath))) {
+            zipOutputStream.putNextEntry(new ZipEntry("fprs/001.fpr"));
+            Files.copy(fprPath, zipOutputStream);
+            zipOutputStream.closeEntry();
+        }
+
+        try (FileSystem cacheFileSystem = FileSystems.newFileSystem(cachePath, (ClassLoader) null);
+                FprHandle fprHandle = new FprHandle(cacheFileSystem.getPath("/fprs/001.fpr"))) {
+            var metric = new RemediationProcessor(fprHandle, sourceDir.toString(), null).processRemediationXML();
+
+            assertEquals(1, metric.appliedRemediations());
+            assertEquals(Set.of("Example.java"), metric.modifiedFiles());
+            assertTrue(Files.readString(sourceFile, StandardCharsets.UTF_8).contains("        newOne();"));
         }
     }
 
