@@ -43,17 +43,25 @@ public enum SSCIssueEmbedderSupplier implements ISSCEntityEmbedderSupplier {
 
         protected abstract void process(ObjectNode record, JsonNode response);
 
+        // Whether the embedder's endpoint supports the 'limit' parameter to retrieve all records
+        protected boolean supportsLimit() { return true; }
+
         @Override
         public final void addEmbedRequests(SSCBulkRequestBuilder builder, UnirestInstance unirest, JsonNode record) {
             var id = record.get("id").asText();
+            var request = getBaseRequest(unirest).routeParam("id", id);
+            if ( supportsLimit() ) { request.queryString("limit", "-1"); }
             builder.request(
-                getBaseRequest(unirest).routeParam("id", id),
+                request,
                 response -> process((ObjectNode) record, SSCInputTransformer.getDataOrSelf(response))
             );
         }
     }
 
     private static final class SSCIssueDetailsEmbedder extends AbstractSSCIssueEmbedder {
+        @Override
+        protected boolean supportsLimit() { return false; }
+
         @Override
         protected HttpRequest<?> getBaseRequest(UnirestInstance unirest) {
             return unirest.get("/api/v1/issueDetails/{id}");
@@ -68,7 +76,7 @@ public enum SSCIssueEmbedderSupplier implements ISSCEntityEmbedderSupplier {
     private static final class SSCIssueAuditHistoryEmbedder extends AbstractSSCIssueEmbedder {
         @Override
         protected HttpRequest<?> getBaseRequest(UnirestInstance unirest) {
-            return unirest.get("/api/v1/issues/{id}/auditHistory").queryString("limit", "-1");
+            return unirest.get("/api/v1/issues/{id}/auditHistory");
         }
 
         @Override
@@ -80,7 +88,7 @@ public enum SSCIssueEmbedderSupplier implements ISSCEntityEmbedderSupplier {
     private static final class SSCIssueCommentsEmbedder extends AbstractSSCIssueEmbedder {
         @Override
         protected HttpRequest<?> getBaseRequest(UnirestInstance unirest) {
-            return unirest.get("/api/v1/issues/{id}/comments").queryString("limit", "-1");
+            return unirest.get("/api/v1/issues/{id}/comments");
         }
 
         @Override

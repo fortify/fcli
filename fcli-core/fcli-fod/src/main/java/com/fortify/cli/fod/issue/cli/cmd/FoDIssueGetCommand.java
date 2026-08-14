@@ -48,10 +48,7 @@ public class FoDIssueGetCommand extends AbstractFoDOutputCommand {
     protected IObjectNodeProducer getObjectNodeProducer(UnirestInstance unirest) {
         FoDReleaseDescriptor releaseDescriptor = releaseResolver.getReleaseDescriptor(unirest);
         String releaseId = releaseDescriptor.getReleaseId().toString();
-        JsonNode issue = findIssue(unirest, releaseId);
-        if ( issue==null ) {
-            throw new FcliSimpleException(String.format("No vulnerability found for vulnId '%s' in release '%s'", vulnId, releaseDescriptor.getReleaseName()));
-        }
+        JsonNode issue = findIssue(unirest, releaseDescriptor);
         if ( issue instanceof ObjectNode issueObject ) {
             issueObject.put("releaseId", releaseId);
             issueObject.put("releaseName", releaseDescriptor.getReleaseName());
@@ -62,7 +59,8 @@ public class FoDIssueGetCommand extends AbstractFoDOutputCommand {
                 .build();
     }
 
-    private JsonNode findIssue(UnirestInstance unirest, String releaseId) {
+    private JsonNode findIssue(UnirestInstance unirest, FoDReleaseDescriptor releaseDescriptor) {
+        String releaseId = releaseDescriptor.getReleaseId().toString();
         HttpRequest<?> request = unirest.get(FoDUrls.VULNERABILITIES)
                 .routeParam("relId", releaseId)
                 .queryString("filters", "vulnId:" + vulnId)
@@ -71,11 +69,13 @@ public class FoDIssueGetCommand extends AbstractFoDOutputCommand {
                 .queryString("limit", "2");
         JsonNode body = request.asObject(JsonNode.class).getBody();
         JsonNode items = FoDInputTransformer.getItems(body);
-        if ( items==null || !items.isArray() ) { return null; }
+        if ( items==null || !items.isArray() || items.isEmpty() ) {
+            throw new FcliSimpleException(String.format("No vulnerability found for vulnId '%s' in release '%s'", vulnId, releaseDescriptor.getReleaseName()));
+        }
         if ( items.size()>1 ) {
             throw new FcliSimpleException(String.format("Multiple vulnerabilities found for vulnId '%s'; please check your input", vulnId));
         }
-        return items.isEmpty() ? null : items.get(0);
+        return items.get(0);
     }
 
     @Override
