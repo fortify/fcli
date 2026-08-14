@@ -37,7 +37,7 @@ public class SSCIssueCustomTagAuditValue {
     private String textValue;
     
     @JsonProperty("newCustomTagIndex")
-    private Integer newCustomTagIndex;
+    private Long newCustomTagIndex;
     
     @JsonProperty("dateValue")
     private String dateValue;
@@ -52,7 +52,7 @@ public class SSCIssueCustomTagAuditValue {
         return result;
     }
     
-    public static SSCIssueCustomTagAuditValue forList(String guid, Integer lookupIndex) {
+    public static SSCIssueCustomTagAuditValue forList(String guid, Long lookupIndex) {
         SSCIssueCustomTagAuditValue result = new SSCIssueCustomTagAuditValue();
         result.setCustomTagGuid(guid);
         result.setNewCustomTagIndex(lookupIndex);

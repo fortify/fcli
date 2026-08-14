@@ -19,13 +19,15 @@ import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
+import java.util.Spliterator;
+import java.util.Spliterators;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
-import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.MappingIterator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -47,7 +49,7 @@ import lombok.Getter;
  * command. Supports both report directory and report zip input formats.
  */
 public final class NcdReportReader implements AutoCloseable {
-    private static final CsvMapper CSV_MAPPER = new CsvMapper();
+    private static final CsvMapper CSV_MAPPER = createCsvMapper();
     private static final ObjectMapper YAML_MAPPER = createYamlMapper();
 
     @Getter private final Path reportPath;
@@ -112,23 +114,29 @@ public final class NcdReportReader implements AutoCloseable {
         }
     }
 
-    public List<Map<String, String>> readContributors() {
-        try ( var csvReader = bufferedReader("contributors.csv") ) {
-            var schema = CsvSchema.emptySchema().withHeader();
-            MappingIterator<Map<String, String>> iterator = CSV_MAPPER
-                    .readerFor(new TypeReference<Map<String, String>>() {})
-                    .with(schema)
-                    .readValues(csvReader);
-            var result = new ArrayList<Map<String, String>>();
-            while ( iterator.hasNext() ) {
-                var row = iterator.next();
-                NcdReportContributorHelper.normalizeContributorRow(row);
-                result.add(row);
-            }
-            return result;
-        } catch ( Exception e ) {
-            throw new FcliSimpleException("Error reading contributors.csv from %s:\n\tMessage: %s", reportPath, e.getMessage());
-        }
+    public Stream<ObjectNode> readContributorsAsObjectNodeStream() {
+        return readCsvAsObjectNodeStream("contributors.csv", NcdReportContributorHelper::normalizeContributorRow);
+    }
+
+    public Stream<ObjectNode> readRepositoriesAsObjectNodeStream() {
+        var entryName = isCurrentFormatReport() ? "repositories.csv" : "details/repositories.csv";
+        return readCsvAsObjectNodeStream(entryName, null);
+    }
+
+    public Stream<ObjectNode> readContributorsByRepositoryAsObjectNodeStream() {
+        return readCsvAsObjectNodeStream("details/contributors-by-repository.csv", null);
+    }
+
+    public Stream<ObjectNode> readCommitsByRepositoryAsObjectNodeStream() {
+        return readCsvAsObjectNodeStream("details/commits-by-repository.csv", null);
+    }
+
+    public boolean isCurrentFormatReport() {
+        return Files.exists(entryPath("repositories.csv"));
+    }
+
+    public boolean hasLegacyRepositoryDetails() {
+        return Files.exists(entryPath("details/repositories.csv"));
     }
 
     public List<String> listFileEntries() {
@@ -166,7 +174,33 @@ public final class NcdReportReader implements AutoCloseable {
         var mapper = new ObjectMapper(new YAMLFactory());
         mapper.registerModule(new Jdk8Module());
         mapper.registerModule(new JavaTimeModule());
+        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         return mapper;
+    }
+
+    private static CsvMapper createCsvMapper() {
+        var mapper = new CsvMapper();
+        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        return mapper;
+    }
+
+    private Stream<ObjectNode> readCsvAsObjectNodeStream(String entryName, Consumer<ObjectNode> normalizer) {
+        var csvReader = bufferedReader(entryName);
+        try {
+            var schema = CsvSchema.emptySchema().withHeader();
+            MappingIterator<ObjectNode> iterator = CSV_MAPPER
+                    .readerFor(ObjectNode.class)
+                    .with(schema)
+                    .readValues(csvReader);
+            var stream = StreamSupport.stream(Spliterators.spliteratorUnknownSize(iterator, Spliterator.ORDERED), false);
+            if ( normalizer != null ) {
+                stream = stream.peek(normalizer);
+            }
+            return stream.onClose(() -> closeQuietly(iterator, csvReader));
+        } catch ( Exception e ) {
+            closeQuietly(csvReader);
+            throw new FcliSimpleException("Error reading %s from %s:\n\tMessage: %s", entryName, reportPath, e.getMessage());
+        }
     }
 
     private Stream<Path> fileEntryPathStream() throws IOException {
@@ -180,5 +214,18 @@ public final class NcdReportReader implements AutoCloseable {
             return reportPath.relativize(filePath).toString().replace('\\', '/');
         }
         return filePath.toString().replace('\\', '/').replaceFirst("^/+", "");
+    }
+
+    private static void closeQuietly(AutoCloseable... resources) {
+        for ( var resource : resources ) {
+            if ( resource == null ) {
+                continue;
+            }
+            try {
+                resource.close();
+            } catch ( Exception e ) {
+                // Ignore close errors during stream cleanup.
+            }
+        }
     }
 }

@@ -129,19 +129,19 @@ public class SSCCustomTagDefinitionHelper {
         return body;
     }
 
-    public int addValueToListTag(String tagGuid, String newValue) {
+    public long addValueToListTag(String tagGuid, String newValue) {
         SSCCustomTagDescriptor desc = getDescriptorByCustomTagSpec(tagGuid, true);
         String tagNumericId = desc.getId();
         ObjectNode body = fetchTagBody(tagNumericId, desc.getName());
         // Return early if the value already exists
         JsonNode existingList = body.get("valueList");
-        int maxLookupIndex = 0;
+        long maxLookupIndex = 0;
         if (existingList != null && existingList.isArray()) {
             for (JsonNode v : existingList) {
                 if (newValue.equalsIgnoreCase(v.path("lookupValue").asText())) {
-                    return v.path("lookupIndex").asInt();
+                    return v.path("lookupIndex").asLong();
                 }
-                int idx = v.path("lookupIndex").asInt(0);
+                long idx = v.path("lookupIndex").asLong(0);
                 if (idx > maxLookupIndex) {
                     maxLookupIndex = idx;
                 }
@@ -151,7 +151,7 @@ public class SSCCustomTagDefinitionHelper {
         // SSC's PUT reconciliation matches valueList entries by lookupIndex; if the new
         // entry has no lookupIndex, SSC may interpret existing in-use values as deleted,
         // causing HTTP 400 "cannot be deleted". A unique new index avoids that.
-        int newIndex = maxLookupIndex + 1;
+        long newIndex = maxLookupIndex + 1;
         ObjectNode newEntry = JsonNodeFactory.instance.objectNode();
         newEntry.put("lookupValue", newValue);
         newEntry.put("lookupIndex", newIndex);
@@ -175,14 +175,14 @@ public class SSCCustomTagDefinitionHelper {
         return (ObjectNode) dataNode.deepCopy();
     }
 
-    private int confirmValueLookupIndex(String tagNumericId, String value) {
+    private long confirmValueLookupIndex(String tagNumericId, String value) {
         JsonNode updated = unirest.get(SSCUrls.CUSTOM_TAG(tagNumericId))
                 .asObject(JsonNode.class).getBody();
         JsonNode updatedList = updated == null ? null : updated.path("data").path("valueList");
         if (updatedList != null && updatedList.isArray()) {
             for (JsonNode v : updatedList) {
                 if (value.equalsIgnoreCase(v.path("lookupValue").asText())) {
-                    return v.path("lookupIndex").asInt();
+                    return v.path("lookupIndex").asLong();
                 }
             }
         }

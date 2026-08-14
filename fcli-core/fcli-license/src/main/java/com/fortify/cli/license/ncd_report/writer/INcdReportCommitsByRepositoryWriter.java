@@ -17,5 +17,6 @@ import com.fortify.cli.license.ncd_report.descriptor.INcdReportRepositoryDescrip
 import com.fortify.cli.license.ncd_report.descriptor.NcdReportProcessedAuthorDescriptor;
 
 public interface INcdReportCommitsByRepositoryWriter {
-    void writeRepositoryCommit(INcdReportRepositoryDescriptor repositoryDescriptor, INcdReportCommitDescriptor commitDescriptor, NcdReportProcessedAuthorDescriptor contributorDescriptor);
+    void writeRepositoryCommit(INcdReportRepositoryDescriptor repositoryDescriptor, INcdReportCommitDescriptor commitDescriptor,
+            NcdReportProcessedAuthorDescriptor contributorDescriptor, boolean dormant);
 }

@@ -31,7 +31,7 @@ public class SSCIssueFilterSetDescriptor extends JsonNodeHolder {
     
     @Data @NoArgsConstructor @Reflectable
     public static class Folder {
-        private Integer id;
+        private Long id;
         private String guid;
         private String name;
         private String color;

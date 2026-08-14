@@ -83,8 +83,8 @@ public class SSCAppVersionCopyStateCommand extends AbstractSSCJsonNodeOutputComm
 
     private static final JsonNode copyState(UnirestInstance unirest, SSCAppVersionDescriptor fromAppVersionDescriptor, SSCAppVersionDescriptor toAppVersionDescriptor) {
         ObjectNode copyStateOptions =  JsonHelper.getObjectMapper().createObjectNode();
-        copyStateOptions.put("previousProjectVersionId", fromAppVersionDescriptor.getIntVersionId());
-        copyStateOptions.put("projectVersionId", toAppVersionDescriptor.getIntVersionId());
+        copyStateOptions.put("previousProjectVersionId", fromAppVersionDescriptor.getLongVersionId());
+        copyStateOptions.put("projectVersionId", toAppVersionDescriptor.getLongVersionId());
 
         ObjectNode body = JsonHelper.getObjectMapper().createObjectNode();
         body    .put("type", "copy_current_state")

@@ -39,6 +39,7 @@ import com.fortify.cli.common.cli.cmd.AbstractRunnableCommand;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.exception.FcliTechnicalException;
 import com.fortify.cli.common.json.JsonHelper;
+import com.fortify.cli.license.ncd_report.descriptor.NcdReportSummaryDescriptor;
 import com.fortify.cli.license.ncd_report.reader.NcdReportReader;
 import com.fortify.cli.license.ncd_report.validator.NcdReportValidator;
 import com.fortify.cli.license.ncd_report.writer.NcdReportContributorsCsvSchema;
@@ -188,7 +189,11 @@ public final class NcdReportUpdateContributorStatusCommand extends AbstractRunna
     // -------------------------------------------------------------------------
 
     private List<Map<String, String>> readContributors(NcdReportReader reader) {
-        return reader.readContributors();
+        try ( var contributors = reader.readContributorsAsObjectNodeStream() ) {
+            return contributors
+                    .map(row -> JSON_MAPPER.convertValue(row, new TypeReference<Map<String, String>>() {}))
+                    .collect(Collectors.toCollection(ArrayList::new));
+        }
     }
 
     private UpdateApplicationResult applyUpdates(List<Map<String, String>> updates, List<Map<String, String>> contributors) {
@@ -467,26 +472,35 @@ public final class NcdReportUpdateContributorStatusCommand extends AbstractRunna
 
     private ObjectNode updateSummary(NcdReportReader reader, List<Map<String, String>> contributors) {
         var summaryPath = reader.entryPath("summary.txt");
-        var summary = reader.readSummary().deepCopy();
+        var summaryNode = reader.readSummary().deepCopy();
+        var summary = NcdReportSummaryDescriptor.fromObjectNode(summaryNode);
 
         int total = contributors.size();
         int ignored = (int) contributors.stream().filter(c -> "ignored".equals(normalizeStatus(c))).count();
         int duplicate = (int) contributors.stream().filter(c -> "duplicate".equals(normalizeStatus(c))).count();
         int contributing = (int) contributors.stream().filter(c -> "contributing".equals(normalizeStatus(c))).count();
+        int dormant = (int) contributors.stream()
+            .filter(c -> "contributing".equals(normalizeStatus(c)))
+            .filter(c -> Boolean.parseBoolean(StringUtils.defaultString(c.get(NcdReportContributorsCsvSchema.DORMANT), "false")))
+            .count();
         int nonIgnored = total - ignored;
 
-        summary.set("authorCount", JsonHelper.getObjectMapper().createObjectNode()
-                .put("total", total)
-                .put("contributing", contributing)
-                .put("ignored", ignored)
-                .put("nonIgnored", nonIgnored)
-                .put("duplicate", duplicate));
+        var authorCount = new NcdReportSummaryDescriptor.AuthorCount();
+        authorCount.setTotal(total);
+        authorCount.setContributing(contributing);
+        authorCount.setIgnored(ignored);
+        authorCount.setNonIgnored(nonIgnored);
+        authorCount.setDuplicate(duplicate);
+        authorCount.setDormant(dormant);
+        summary.setAuthorCount(authorCount);
+
+        summary.applyTo(summaryNode);
         try {
-            Files.write(summaryPath, YAML_MAPPER.writeValueAsBytes(summary));
+            Files.write(summaryPath, YAML_MAPPER.writeValueAsBytes(summaryNode));
         } catch ( Exception e ) {
             throw new FcliTechnicalException(String.format("Error updating summary.txt in %s", reader.getReportPath()), e);
         }
-        return summary;
+        return summaryNode;
     }
 
     private String asYaml(ObjectNode summary) {

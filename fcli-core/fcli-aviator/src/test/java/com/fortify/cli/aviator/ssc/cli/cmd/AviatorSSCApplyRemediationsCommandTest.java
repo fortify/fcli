@@ -14,53 +14,40 @@ package com.fortify.cli.aviator.ssc.cli.cmd;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.lang.reflect.Field;
-import java.util.List;
-import java.util.Set;
+import java.nio.file.Path;
 
 import org.junit.jupiter.api.Test;
 
-import com.fortify.cli.aviator._common.util.AviatorIssueIdFilterUtils;
-import com.fortify.cli.aviator.fpr.processor.RemediationProcessor.RemediationMetric;
+import com.fortify.cli.aviator.ssc.cli.mixin.AviatorSSCApplyRemediationsSourceMixin;
 import com.fortify.cli.common.exception.FcliSimpleException;
 
 import picocli.CommandLine;
 
+/**
+ * CLI wiring and product rules for apply-remediations (not metric/util logic).
+ */
 class AviatorSSCApplyRemediationsCommandTest {
+
     @Test
-    void testNormalizeIssueIdsTrimsAndDeduplicates() throws Exception {
-        AviatorSSCApplyRemediationsCommand command = parse("--artifact-id", "1", "--issue-ids", " ISSUE-1 , , ISSUE-2,ISSUE-1 ");
-        assertEquals(Set.of("ISSUE-1", "ISSUE-2"), AviatorIssueIdFilterUtils.normalizeIssueIds(getIssueIds(command)));
+    void fromCacheParsesPath() throws Exception {
+        AviatorSSCApplyRemediationsCommand command = parse("--from-cache", "remediations.zip");
+        assertEquals(Path.of("remediations.zip"), getSourceMixin(command).getFromCache());
+        assertTrue(getSourceMixin(command).isFromCacheSelected());
     }
 
     @Test
-    void testNormalizeIssueIdsRejectsOnlyBlankValues() throws Exception {
-        AviatorSSCApplyRemediationsCommand command = parse("--artifact-id", "1", "--issue-ids", " ,  , ");
-        assertThrows(FcliSimpleException.class, () -> AviatorIssueIdFilterUtils.normalizeIssueIds(getIssueIds(command)));
+    void fromCacheCannotBeCombinedWithArtifactId() {
+        assertThrows(CommandLine.ParameterException.class,
+                () -> parse("--artifact-id", "1", "--from-cache", "cache.zip"));
     }
 
     @Test
-    void testAggregateMetricsForFilteredAllDeduplicatesAcrossArtifacts() {
-        RemediationMetric metricOne = RemediationMetric.filtered(Set.of("ISSUE-1", "ISSUE-2"), Set.of("ISSUE-1"), Set.of("A.java"));
-        RemediationMetric metricTwo = RemediationMetric.filtered(Set.of("ISSUE-1", "ISSUE-2"), Set.of("ISSUE-2"), Set.of("B.java"));
-
-        RemediationMetric aggregated = AviatorSSCApplyRemediationsCommand.aggregateMetrics(Set.of("ISSUE-1", "ISSUE-2"), List.of(metricOne, metricTwo));
-
-        assertEquals(2, aggregated.totalRemediations());
-        assertEquals(2, aggregated.appliedRemediations());
-        assertEquals(0, aggregated.skippedRemediations());
-        assertEquals(Set.of("ISSUE-1", "ISSUE-2"), aggregated.appliedIssueIds());
-        assertEquals(Set.of("A.java", "B.java"), aggregated.modifiedFiles());
-    }
-
-    @Test
-    void testGetRemainingIssueIdsRemovesAlreadyAppliedIds() {
-        RemediationMetric metric = RemediationMetric.filtered(Set.of("ISSUE-1", "ISSUE-2"), Set.of("ISSUE-1"), Set.of("A.java"));
-
-        Set<String> remainingIssueIds = AviatorSSCApplyRemediationsCommand.getRemainingIssueIds(Set.of("ISSUE-1", "ISSUE-2"), metric);
-
-        assertEquals(Set.of("ISSUE-2"), remainingIssueIds);
+    void issueIdsRequireFromCache() {
+        AviatorSSCApplyRemediationsCommand command = parse("--artifact-id", "1", "--issue-ids", "ISSUE-1");
+        assertThrows(FcliSimpleException.class, command::getJsonNode);
     }
 
     private static AviatorSSCApplyRemediationsCommand parse(String... args) {
@@ -69,10 +56,10 @@ class AviatorSSCApplyRemediationsCommandTest {
         return command;
     }
 
-    @SuppressWarnings("unchecked")
-    private static List<String> getIssueIds(AviatorSSCApplyRemediationsCommand command) throws Exception {
-        Field field = AviatorSSCApplyRemediationsCommand.class.getDeclaredField("issueIds");
+    private static AviatorSSCApplyRemediationsSourceMixin getSourceMixin(AviatorSSCApplyRemediationsCommand command)
+            throws Exception {
+        Field field = AviatorSSCApplyRemediationsCommand.class.getDeclaredField("sourceSelector");
         field.setAccessible(true);
-        return (List<String>) field.get(command);
+        return (AviatorSSCApplyRemediationsSourceMixin) field.get(command);
     }
 }

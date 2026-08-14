@@ -75,6 +75,107 @@ class NcdReportSpec extends FcliBaseSpec {
         contributorsFile.text = updated.join("\n") + "\n"
         updateChecksum(reportDir, "contributors.csv")
     }
+
+    private static void removeDormantColumnFromContributorsCsv(String reportDir) {
+        def contributorsFile = new File("${reportDir}/contributors.csv")
+        def lines = contributorsFile.readLines()
+        def headers = lines[0].split(',', -1)
+        def dormantIndex = headers.findIndexOf { it == 'dormant' }
+        assert dormantIndex >= 0
+
+        def updated = []
+        updated << headers.findAll { it != 'dormant' }.join(',')
+        lines.drop(1).each { line ->
+            def cols = line.split(',', -1)
+            def filtered = []
+            cols.eachWithIndex { col, i ->
+                if ( i != dormantIndex ) {
+                    filtered << col
+                }
+            }
+            updated << filtered.join(',')
+        }
+        contributorsFile.text = updated.join("\n") + "\n"
+        updateChecksum(reportDir, "contributors.csv")
+    }
+
+    private static String getFirstAuthorId(String reportDir) {
+        def contributorsFile = new File("${reportDir}/contributors.csv")
+        def lines = contributorsFile.readLines()
+        def headers = lines[0].split(',', -1)
+        def authorIdIndex = headers.findIndexOf { it == 'authorId' }
+        def statusIndex = headers.findIndexOf { it == 'contributionStatus' }
+        def firstData = lines.drop(1).find { line ->
+            line?.trim() && line.split(',', -1)[statusIndex] == 'contributing'
+        }
+        return firstData.split(',', -1)[authorIdIndex]
+    }
+
+    private static void setDormantForAuthorId(String reportDir, String authorId, boolean dormant) {
+        def contributorsFile = new File("${reportDir}/contributors.csv")
+        def lines = contributorsFile.readLines()
+        def headers = lines[0].split(',', -1)
+        def authorIdIndex = headers.findIndexOf { it == 'authorId' }
+        def dormantIndex = headers.findIndexOf { it == 'dormant' }
+        assert authorIdIndex >= 0
+        assert dormantIndex >= 0
+
+        def updated = [lines[0]]
+        lines.drop(1).each { line ->
+            def cols = line.split(',', -1)
+            if ( cols[authorIdIndex] == authorId ) {
+                cols[dormantIndex] = String.valueOf(dormant)
+            }
+            updated << cols.join(',')
+        }
+        contributorsFile.text = updated.join("\n") + "\n"
+        updateChecksum(reportDir, "contributors.csv")
+    }
+
+    private static int countDormantContributorsInReport(String reportDir) {
+        def contributorsFile = new File("${reportDir}/contributors.csv")
+        def lines = contributorsFile.readLines()
+        def headers = lines[0].split(',', -1)
+        def dormantIndex = headers.findIndexOf { it == 'dormant' }
+        def statusIndex = headers.findIndexOf { it == 'contributionStatus' }
+        assert dormantIndex >= 0
+        assert statusIndex >= 0
+        return lines.drop(1).count { line ->
+            def cols = line.split(',', -1)
+            cols[statusIndex] == 'contributing' && cols[dormantIndex] == 'true'
+        }
+    }
+
+    private static List<String> readCsvHeader(String path) {
+        return new File(path).readLines().first().split(',', -1) as List<String>
+    }
+
+    private static List<Map<String, String>> readCsvRowsAsMaps(String path) {
+        def lines = new File(path).readLines()
+        def header = lines.first().split(',', -1)
+        return lines.drop(1).collect { line ->
+            def cols = line.split(',', -1)
+            def row = [:]
+            header.eachWithIndex { h, i -> row[h] = i < cols.size() ? cols[i] : '' }
+            row
+        }
+    }
+
+    private static Map<String, Integer> computeCommitCountsByRepository(String reportDir) {
+        def rows = readCsvRowsAsMaps("${reportDir}/details/commits-by-repository.csv")
+        def result = [:].withDefault { 0 }
+        rows.each { row -> result[row.repositoryUrl] = result[row.repositoryUrl] + 1 }
+        return result
+    }
+
+    private static Map<String, Integer> computeContributorCountsByRepository(String reportDir) {
+        def rows = readCsvRowsAsMaps("${reportDir}/details/contributors-by-repository.csv")
+        def contributorIdsByRepository = [:].withDefault { [] as Set<String> }
+        rows.each { row ->
+            contributorIdsByRepository[row.repositoryUrl] << row.authorId
+        }
+        return contributorIdsByRepository.collectEntries { k, v -> [(k): v.size()] }
+    }
     
     def "generate-config"() {
         def args = "license ncd-report create-config -y -c ${sampleConfigOutputFile} -o yaml"
@@ -142,6 +243,18 @@ class NcdReportSpec extends FcliBaseSpec {
         def args = "license ncd-report create -y -c ${mockConfigFile} -d ${mockReportDir}"
         when:
             def result = Fcli.run(args)
+            def repositoriesLines = new File("${mockReportDir}/details/repositories.csv").readLines()
+            def repositoryHeader = repositoriesLines.first().split(',', -1)
+            def repositoryDormantIndex = repositoryHeader.findIndexOf { it == 'dormant' }
+            def dormantRepositoryCount = repositoriesLines.drop(1).count { row ->
+                def cols = row.split(',', -1)
+                repositoryDormantIndex >= 0 && cols.size() > repositoryDormantIndex && cols[repositoryDormantIndex] == 'true'
+            }
+            def activeRepositoryCount = repositoriesLines.drop(1).count { row ->
+                def cols = row.split(',', -1)
+                repositoryDormantIndex >= 0 && cols.size() > repositoryDormantIndex && cols[repositoryDormantIndex] == 'false'
+            }
+            def dormantContributorCount = countDormantContributorsInReport(mockReportDir)
         then:
             new File("${mockReportDir}/summary.txt").exists()
             new File("${mockReportDir}/contributors.csv").exists()
@@ -149,12 +262,121 @@ class NcdReportSpec extends FcliBaseSpec {
             def contributorHeader = new File("${mockReportDir}/contributors.csv").readLines().first()
             !contributorHeader.contains("authorNumber")
             !contributorHeader.contains("contributingAuthorNumber")
+            contributorHeader.contains("dormant")
+            new File("${mockReportDir}/details/repositories.csv").readLines().first().contains("dormant")
+            new File("${mockReportDir}/details/commits-by-branch.csv").readLines().first().contains("dormant")
+            new File("${mockReportDir}/details/commits-by-repository.csv").readLines().first().contains("dormant")
+            new File("${mockReportDir}/details/contributors-by-repository.csv").readLines().first().contains("dormant")
+            new File("${mockReportDir}/summary.txt").text.contains("dormant:")
+            // Defaults from runtime/report/ncd-report-mock.yml:
+            // activeRepositoryCount=3, dormantOverlappingRepositoryCount=2, dormantNonOverlappingRepositoryCount=2
+            repositoriesLines.size() == 1 + 7
+            activeRepositoryCount == 3
+            dormantRepositoryCount == 4
+            dormantContributorCount == 2
             verifyAll(result.stdout) {
                 it.any { it == "reportPath: ${mockReportDir}" }
                 it.any { it == '  reportType: Number of Contributing Developers (NCD) Report' }
                 it.any { it.contains("authorCount:") }
                 it.any { it.contains("commitCount:") }
             }
+    }
+
+    def "mock-generate-dir-includes-top-level-repositories-csv"() {
+        def reportDir = tempPath("ncd-report-top-level-repositories")
+
+        when:
+            def createResult = Fcli.run("license ncd-report create -y -c ${mockConfigFile} -d ${reportDir}")
+            def topLevelFile = new File("${reportDir}/repositories.csv")
+            def detailFile = new File("${reportDir}/details/repositories.csv")
+            def topHeader = readCsvHeader(topLevelFile.absolutePath)
+            def topRows = readCsvRowsAsMaps(topLevelFile.absolutePath)
+            def detailRows = readCsvRowsAsMaps(detailFile.absolutePath)
+        then:
+            createResult.exitCode == 0
+            topLevelFile.exists()
+            topHeader == [
+                    'repositoryUrl', 'repositoryName', 'visibility', 'fork', 'status',
+                    'reason', 'dormant', 'commitCountRaw', 'contributorCountRaw', 'sourceReport'
+            ]
+            topRows.size() == detailRows.size()
+            topRows.every { it.sourceReport == '' }
+            topRows.every { it.commitCountRaw ==~ /\d+/ }
+            topRows.every { it.contributorCountRaw ==~ /\d+/ }
+    }
+
+    def "mock-default-dormant-repositories-generate-dormant-contributors"() {
+        def reportDir = tempPath("ncd-report-default-dormant")
+        when:
+            def result = Fcli.run("license ncd-report create -y -c ${mockConfigFile} -d ${reportDir}")
+            def dormantCount = countDormantContributorsInReport(reportDir)
+        then:
+            result.exitCode == 0
+            dormantCount == 2
+    }
+
+    def "mock-overlap-dormant-authors-active-wins"() {
+        def reportDir = tempPath("ncd-report-dormant-overlap")
+        def configYaml = tempPath("ncd-report-dormant-overlap.yml")
+        when:
+            new File(configYaml).text = """
+|contributor:
+|  ignoreExpression: >
+|    lcName matches '.*\\[bot\\]'
+|  duplicateExpression: >
+|    a1.cleanName==a2.cleanName ||
+|    a1.cleanEmailName==a2.cleanEmailName ||
+|    a1.cleanName==a2.cleanEmailName
+|
+|sources:
+|  mock:
+|    - activeRepositoryCount: 1
+|      dormantOverlappingRepositoryCount: 1
+|      dormantNonOverlappingRepositoryCount: 0
+|      authorsPerRepository: 2
+|      commitsPerAuthor: 3
+""".stripMargin()
+            def result = Fcli.run("license ncd-report create -y -c ${configYaml} -d ${reportDir}")
+            def dormantCount = countDormantContributorsInReport(reportDir)
+        then:
+            result.exitCode == 0
+            dormantCount == 0
+    }
+
+    def "mock-mixed-dormant-repositories-single-config"() {
+        def reportDir = tempPath("ncd-report-dormant-mixed")
+        def configYaml = tempPath("ncd-report-dormant-mixed.yml")
+        when:
+            new File(configYaml).text = """
+|contributor:
+|  ignoreExpression: >
+|    lcName matches '.*\\[bot\\]'
+|  duplicateExpression: >
+|    a1.cleanName==a2.cleanName ||
+|    a1.cleanEmailName==a2.cleanEmailName ||
+|    a1.cleanName==a2.cleanEmailName
+|
+|sources:
+|  mock:
+|    - activeRepositoryCount: 1
+|      dormantOverlappingRepositoryCount: 1
+|      dormantNonOverlappingRepositoryCount: 1
+|      authorsPerRepository: 2
+|      commitsPerAuthor: 3
+""".stripMargin()
+            def result = Fcli.run("license ncd-report create -y -c ${configYaml} -d ${reportDir}")
+            def dormantCount = countDormantContributorsInReport(reportDir)
+            def repositoriesLines = new File("${reportDir}/details/repositories.csv").readLines()
+            def repositoriesHeader = repositoriesLines.first().split(',', -1)
+            def dormantIndex = repositoriesHeader.findIndexOf { it == 'dormant' }
+            def trueDormantRepos = repositoriesLines.drop(1).count { line ->
+                def cols = line.split(',', -1)
+                dormantIndex >= 0 && cols.size() > dormantIndex && cols[dormantIndex] == 'true'
+            }
+        then:
+            result.exitCode == 0
+            dormantCount >= 1
+            trueDormantRepos == 2
     }
     
     def "mock-generate-with-end-date"() {
@@ -192,6 +414,7 @@ class NcdReportSpec extends FcliBaseSpec {
             result.stdout.any { it.contains("authorId") }
             result.stdout.any { it.contains("authorName") }
             result.stdout.any { it.contains("contributionStatus") }
+            result.stdout.any { it.contains("dormant") }
             result.stdout.any { it.contains("duplicateOf") }
     }
     
@@ -206,6 +429,7 @@ class NcdReportSpec extends FcliBaseSpec {
             result.stdout[0].contains("authorId")
             result.stdout[0].contains("authorName")
             result.stdout[0].contains("contributionStatus")
+            result.stdout[0].contains("dormant")
             result.stdout[0].contains("duplicateOf")
             !result.stdout[0].contains("authorNumber")
             !result.stdout[0].contains("contributingAuthorNumber")
@@ -239,6 +463,37 @@ class NcdReportSpec extends FcliBaseSpec {
             mergeResult.exitCode == 0
             !mergedHeader.contains("authorNumber")
             !mergedHeader.contains("contributingAuthorNumber")
+    }
+
+    def "mock-legacy-missing-dormant-column-lsc-merge"() {
+        def report1 = tempPath("ncd-report-legacy-no-dormant-source-1")
+        def report2 = tempPath("ncd-report-legacy-no-dormant-source-2")
+        def mergedReport = tempPath("ncd-report-legacy-no-dormant-merged")
+
+        when:
+            Fcli.run("license ncd-report create -y -c ${mockConfigFile} -d ${report1}")
+            Fcli.run("license ncd-report create -y -c ${mockConfigFile} -d ${report2}")
+
+            removeDormantColumnFromContributorsCsv(report1)
+            removeDormantColumnFromContributorsCsv(report2)
+
+            def lscResult = Fcli.run("license ncd-report list-contributors -r ${report1} -o csv")
+            def mergeResult = Fcli.run("license ncd-report merge -r ${report1},${report2} -d ${mergedReport} -y")
+
+            def mergedLines = new File("${mergedReport}/contributors.csv").readLines()
+            def headers = mergedLines.first().split(',', -1)
+            def dormantIndex = headers.findIndexOf { it == 'dormant' }
+            def hasUnknownDormant = mergedLines.drop(1).any { row ->
+                def cols = row.split(',', -1)
+                dormantIndex >= 0 && cols.size() > dormantIndex && cols[dormantIndex] == 'unknown'
+            }
+        then:
+            lscResult.exitCode == 0
+            lscResult.stdout[0].contains('dormant')
+            lscResult.stdout.drop(1).any { it.contains(',unknown,') }
+            mergeResult.exitCode == 0
+            headers.contains('dormant')
+            hasUnknownDormant
     }
     
     def "mock-merge"() {
@@ -294,6 +549,36 @@ class NcdReportSpec extends FcliBaseSpec {
         then:
             new File(tmpListOutput).exists()
     }
+
+    def "mock-merge-dormant-active-wins"() {
+        def report1 = tempPath("ncd-report-dormant-source-1")
+        def report2 = tempPath("ncd-report-dormant-source-2")
+        def mergedReport = tempPath("ncd-report-dormant-merged")
+
+        when:
+            Fcli.run("license ncd-report create -y -c ${mockConfigFile} -d ${report1}")
+            Fcli.run("license ncd-report create -y -c ${mockConfigFile} -d ${report2}")
+
+            def targetAuthorId = getFirstAuthorId(report1)
+            setDormantForAuthorId(report1, targetAuthorId, true)
+            setDormantForAuthorId(report2, targetAuthorId, false)
+
+            def mergeResult = Fcli.run("license ncd-report merge -r ${report1},${report2} -d ${mergedReport} -y")
+            def mergedLines = new File("${mergedReport}/contributors.csv").readLines()
+            def headers = mergedLines.first().split(',', -1)
+            def authorIdIndex = headers.findIndexOf { it == 'authorId' }
+            def dormantIndex = headers.findIndexOf { it == 'dormant' }
+            def row = mergedLines.drop(1).find { line ->
+                def cols = line.split(',', -1)
+                cols[authorIdIndex] == targetAuthorId
+            }
+            def cols = row.split(',', -1)
+        then:
+            mergeResult.exitCode == 0
+            headers.contains('dormant')
+            cols[dormantIndex] == 'false'
+            new File("${mergedReport}/summary.txt").text.contains("dormant:")
+    }
     
     def "mock-list-contributors-realistic-names"() {
         def reportDir = tempPath("ncd-report-realistic-names")
@@ -305,6 +590,113 @@ class NcdReportSpec extends FcliBaseSpec {
         then:
             // Should contain realistic author names like "John Smith", "Sarah Johnson", etc.
             result.stdout.any { it.contains("Smith") || it.contains("Johnson") || it.contains("Chen") || it.contains("Williams") }
+    }
+
+    def "mock-list-repositories-uses-top-level-repositories-csv"() {
+        def reportDir = tempPath("ncd-report-list-repositories-top-level")
+
+        when:
+            Fcli.run("license ncd-report create -y -c ${mockConfigFile} -d ${reportDir}")
+            def lsrResult = Fcli.run("license ncd-report list-repositories -r ${reportDir} -o csv")
+            def reportRows = readCsvRowsAsMaps("${reportDir}/repositories.csv")
+            def outputHeader = lsrResult.stdout[0].split(',', -1) as List<String>
+            def outputRows = lsrResult.stdout.drop(1)
+                    .collect { line ->
+                        def cols = line.split(',', -1)
+                        def row = [:]
+                        outputHeader.eachWithIndex { h, i -> row[h] = i < cols.size() ? cols[i] : '' }
+                        row
+                    }
+        then:
+            lsrResult.exitCode == 0
+            outputHeader == [
+                    'repositoryUrl', 'repositoryName', 'visibility', 'fork', 'status',
+                    'reason', 'dormant', 'commitCountRaw', 'contributorCountRaw', 'sourceReport'
+            ]
+            outputRows.size() == reportRows.size()
+            outputRows.collect { it.repositoryUrl }.toSet() == reportRows.collect { it.repositoryUrl }.toSet()
+            outputRows.every { it.commitCountRaw ==~ /\d+/ }
+            outputRows.every { it.contributorCountRaw ==~ /\d+/ }
+    }
+
+    def "mock-list-repositories-fallback-calculates-raw-counts-from-details"() {
+        def reportDir = tempPath("ncd-report-list-repositories-fallback")
+
+        when:
+            Fcli.run("license ncd-report create -y -c ${mockConfigFile} -d ${reportDir}")
+            new File("${reportDir}/repositories.csv").delete()
+
+            def expectedCommitCounts = computeCommitCountsByRepository(reportDir)
+            def expectedContributorCounts = computeContributorCountsByRepository(reportDir)
+            def lsrResult = Fcli.run("license ncd-report list-repositories -r ${reportDir} -o csv")
+
+            def header = lsrResult.stdout[0].split(',', -1)
+            def headerIndex = [:]
+            header.eachWithIndex { h, i -> headerIndex[h] = i }
+            def rows = lsrResult.stdout.drop(1).collect { it.split(',', -1) }
+        then:
+            lsrResult.exitCode == 0
+            rows.size() > 0
+            rows.each { cols ->
+                def repositoryUrl = cols[headerIndex.repositoryUrl]
+                cols[headerIndex.commitCountRaw] == String.valueOf(expectedCommitCounts.getOrDefault(repositoryUrl, 0))
+                cols[headerIndex.contributorCountRaw] == String.valueOf(expectedContributorCounts.getOrDefault(repositoryUrl, 0))
+                cols[headerIndex.sourceReport] == ''
+            }
+    }
+
+    def "mock-list-repositories-fallback-shows-unknown-for-missing-detail-files"() {
+        def reportDir = tempPath("ncd-report-list-repositories-fallback-unknown")
+
+        when:
+            Fcli.run("license ncd-report create -y -c ${mockConfigFile} -d ${reportDir}")
+            new File("${reportDir}/repositories.csv").delete()
+            new File("${reportDir}/details/commits-by-repository.csv").delete()
+            new File("${reportDir}/details/contributors-by-repository.csv").delete()
+            def lsrResult = Fcli.run("license ncd-report list-repositories -r ${reportDir} -o csv")
+
+            def header = lsrResult.stdout[0].split(',', -1)
+            def commitIdx = header.findIndexOf { it == 'commitCountRaw' }
+            def contributorIdx = header.findIndexOf { it == 'contributorCountRaw' }
+            def rows = lsrResult.stdout.drop(1).collect { it.split(',', -1) }
+        then:
+            lsrResult.exitCode == 0
+            rows.size() > 0
+            rows.every { it[commitIdx] == 'unknown' }
+            rows.every { it[contributorIdx] == 'unknown' }
+    }
+
+    def "mock-list-contributors-embed-repositories"() {
+        def reportDir = tempPath("ncd-report-list-contributors-embed-repositories")
+
+        when:
+            Fcli.run("license ncd-report create -y -c ${mockConfigFile} -d ${reportDir}")
+            def lscResult = Fcli.run("license ncd-report list-contributors -r ${reportDir} -o json --embed repositories")
+            def output = lscResult.stdout.join('\n')
+        then:
+            lscResult.exitCode == 0
+            output.contains('"authorId"')
+            output.contains('"repositories"')
+            output.contains('"repositoryUrl"')
+            output.contains('"repositoryName"')
+            output.contains('"commitCountRaw"')
+            output.contains('"contributorCountRaw"')
+    }
+
+    def "mock-list-repositories-embed-authors-and-contributors"() {
+        def reportDir = tempPath("ncd-report-list-repositories-embed-authors-contributors")
+
+        when:
+            Fcli.run("license ncd-report create -y -c ${mockConfigFile} -d ${reportDir}")
+            def lsrResult = Fcli.run("license ncd-report list-repositories -r ${reportDir} -o json --embed authors,contributors")
+            def output = lsrResult.stdout.join('\n')
+        then:
+            lsrResult.exitCode == 0
+            output.contains('"repositoryUrl"')
+            output.contains('"authors"')
+            output.contains('"contributors"')
+            output.contains('"authorId"')
+            output.contains('"contributionStatus"')
     }
     
     def "mock-detect-duplicates"() {
@@ -375,7 +767,9 @@ class NcdReportSpec extends FcliBaseSpec {
 |
 |sources:
 |  mock:
-|    - repositoryCount: 1
+|    - activeRepositoryCount: 1
+|      dormantOverlappingRepositoryCount: 0
+|      dormantNonOverlappingRepositoryCount: 0
 |      authorsPerRepository: 2
 |      commitsPerAuthor: 3
 |      dataFile: "${mockDataFile}"
@@ -407,7 +801,9 @@ class NcdReportSpec extends FcliBaseSpec {
 |
 |sources:
 |  mock:
-|    - repositoryCount: 1
+|    - activeRepositoryCount: 1
+|      dormantOverlappingRepositoryCount: 0
+|      dormantNonOverlappingRepositoryCount: 0
 |      authorsPerRepository: 2
 |      commitsPerAuthor: 3
 |      dataFile: "${mockDataFile}"
@@ -419,5 +815,70 @@ class NcdReportSpec extends FcliBaseSpec {
             new File("${reportDir}/summary.txt").exists()
             new File("${reportDir}/contributors.csv").exists()
             result.stdout.any { it.contains("reportPath") }
+    }
+
+    def "mock-validate-sources-json-includes-scm-details"() {
+        def configYaml = tempPath("ncd-report-validate-sources-json.yml")
+        when:
+            new File(configYaml).text = """
+|sources:
+|  mock:
+|    - activeRepositoryCount: 2
+|      dormantOverlappingRepositoryCount: 0
+|      dormantNonOverlappingRepositoryCount: 0
+|      authorsPerRepository: 1
+|      commitsPerAuthor: 1
+""".stripMargin()
+            def result = Fcli.run("license ncd-report validate-sources -c ${configYaml} --show all --limit-per-source 1 -o json")
+        then:
+            result.exitCode == 0
+            result.stdout.any { it.contains("scmDetails") }
+            result.stdout.any { it.contains('"source"') }
+            result.stdout.any { it.contains('"scm"') }
+            result.stdout.any { it.contains('"status"') }
+    }
+
+    def "mock-validate-sources-show-excluded"() {
+        def configYaml = tempPath("ncd-report-validate-sources-excluded.yml")
+        when:
+            new File(configYaml).text = """
+|sources:
+|  mock:
+|    - activeRepositoryCount: 3
+|      dormantOverlappingRepositoryCount: 0
+|      dormantNonOverlappingRepositoryCount: 0
+|      authorsPerRepository: 1
+|      commitsPerAuthor: 1
+|      repositoryIncludeExpression: "false"
+""".stripMargin()
+            def result = Fcli.run("license ncd-report validate-sources -c ${configYaml} --show excluded -o yaml")
+            def excludedCount = result.stdout.count { it.trim() == 'status: excluded' }
+        then:
+            result.exitCode == 0
+            excludedCount == 3
+    }
+
+    def "mock-validate-sources-limit-per-source"() {
+        def configYaml = tempPath("ncd-report-validate-sources-limit.yml")
+        when:
+            new File(configYaml).text = """
+|sources:
+|  mock:
+|    - activeRepositoryCount: 3
+|      dormantOverlappingRepositoryCount: 0
+|      dormantNonOverlappingRepositoryCount: 0
+|      authorsPerRepository: 1
+|      commitsPerAuthor: 1
+|    - activeRepositoryCount: 4
+|      dormantOverlappingRepositoryCount: 0
+|      dormantNonOverlappingRepositoryCount: 0
+|      authorsPerRepository: 1
+|      commitsPerAuthor: 1
+""".stripMargin()
+            def result = Fcli.run("license ncd-report validate-sources -c ${configYaml} --show all --limit-per-source 1 -o yaml")
+            def sourceCount = result.stdout.count { it.trim().startsWith('- source: mock:') }
+        then:
+            result.exitCode == 0
+            sourceCount == 2 // One row per configured mock source
     }
 }

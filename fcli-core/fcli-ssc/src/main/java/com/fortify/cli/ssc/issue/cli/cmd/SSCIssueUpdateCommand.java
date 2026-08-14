@@ -253,9 +253,9 @@ public class SSCIssueUpdateCommand extends AbstractSSCJsonNodeOutputCommand impl
                 throw new FcliSimpleException("Invalid response from SSC issues API - missing 'data' field");
             }
             
-            Map<String, Integer> idToRevisionMap = new HashMap<>();
+            Map<String, Long> idToRevisionMap = new HashMap<>();
             for (JsonNode issueNode : dataArray) {
-                idToRevisionMap.put(issueNode.get("id").asText(), issueNode.get("revision").asInt());
+                idToRevisionMap.put(issueNode.get("id").asText(), issueNode.get("revision").asLong());
             }
             
             for (String issueId : issueIds) {

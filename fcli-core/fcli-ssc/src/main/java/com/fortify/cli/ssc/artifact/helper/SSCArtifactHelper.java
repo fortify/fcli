@@ -156,6 +156,19 @@ public final class SSCArtifactHelper {
     /**
      * Check if artifact is Aviator-processed based on filename prefix.
      */
+    public static boolean isAviatorArtifact(SSCArtifactDescriptor artifact) {
+        return artifact != null && isAviatorArtifact(artifact.asJsonNode());
+    }
+
+    public static SSCArtifactDescriptor requireAviatorArtifact(SSCArtifactDescriptor artifact) {
+        if (!isAviatorArtifact(artifact)) {
+            String artifactId = artifact == null ? "<unknown>" : artifact.getId();
+            throw new FcliSimpleException("Artifact " + artifactId
+                    + " is not a Fortify Remediation Aviator-processed artifact; expected originalFileName to start with aviator_");
+        }
+        return artifact;
+    }
+
     private static boolean isAviatorArtifact(JsonNode artifact) {
         String originalFileName = artifact.path("originalFileName").asText("");
         return originalFileName.startsWith("aviator_");
@@ -306,7 +319,7 @@ public final class SSCArtifactHelper {
     }
 
     public static final JsonNode approve(UnirestInstance unirest, String artifactId, String message){
-        int[] artifactIds = {Integer.parseInt(artifactId)};
+        long[] artifactIds = {Long.parseLong(artifactId)};
 
         JsonNode jsonNode = new ObjectMapper().createObjectNode()
                 .putPOJO("artifactIds", artifactIds)

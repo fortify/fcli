@@ -36,7 +36,7 @@ cli.options:
     default: "${#env('BRANCH_NAME')?:'aviator/remediations/'+#formatDateTime('yyyyMMdd-HHmmss-SSS')}"
   baseBranch:
     names: --base-branch
-    description: "Target branch for the pull request. Defaults to the currently checked-out branch, falling back to the repository default branch or 'main'."
+    description: "Target branch for the pull request. Defaults to the active CI source branch (if available), then the currently checked-out branch, then the repository default branch or 'main'."
     required: false
     default: "${#env('BASE_BRANCH')?:''}"
   title:
@@ -51,10 +51,10 @@ cli.options:
     default: "${#env('PR_BODY')?:'This pull request contains changes applied by fcli aviator.'}"
 
 steps:
-  # Capture the currently checked-out branch to use as the pull request base, before
-  # push-remediations checks out the new remediation branch.
+      # Resolve the pull request base branch before push-remediations checks out the
+      # new remediation branch. Prefer the CI source branch when available.
   - var.set:
-      baseBranch: "${#ifBlank(cli.baseBranch, #ifBlank(#git.localRepo(cli.sourceDir)?.branch?.short, #ifBlank(#git.defaultBranch(cli.sourceDir), 'main')))}"
+        baseBranch: "${#ifBlank(cli.baseBranch, #ifBlank(global.ci?.sourceBranch, #ifBlank(#git.localRepo(cli.sourceDir)?.branch?.short, #ifBlank(#git.defaultBranch(cli.sourceDir), 'main'))))}"
 
   # Apply remediations and push them to the new branch
   - run.fcli:

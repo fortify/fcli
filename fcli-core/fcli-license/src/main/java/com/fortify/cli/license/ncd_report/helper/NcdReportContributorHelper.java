@@ -25,6 +25,10 @@ import com.fortify.cli.common.exception.FcliBugException;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.license.ncd_report.writer.NcdReportContributorsCsvSchema;
 
+/**
+ * Stateless utility methods for contributor identity and row normalization.
+ * This class intentionally contains only static methods.
+ */
 public final class NcdReportContributorHelper {
     public static ObjectNode createExpressionInput(String name, String email) {
         var normalizedName = StringUtils.defaultIfBlank(name, "");
@@ -76,6 +80,27 @@ public final class NcdReportContributorHelper {
                         : value);
         row.compute(NcdReportContributorsCsvSchema.AUTHOR_ID,
                 (key, value) -> StringUtils.isBlank(value) ? computeAuthorId(expressionInput) : value);
+        row.compute(NcdReportContributorsCsvSchema.DORMANT,
+            (key, value) -> StringUtils.isBlank(value) ? "unknown" : value);
+    }
+
+    public static void normalizeContributorRow(ObjectNode row) {
+        var expressionInput = createExpressionInput(
+                row.path(NcdReportContributorsCsvSchema.AUTHOR_NAME).asText(""),
+                row.path(NcdReportContributorsCsvSchema.AUTHOR_EMAIL).asText(""));
+        if ( StringUtils.isBlank(row.path(NcdReportContributorsCsvSchema.CLEAN_NAME).asText("")) ) {
+            row.put(NcdReportContributorsCsvSchema.CLEAN_NAME, expressionInput.path(NcdReportContributorsCsvSchema.CLEAN_NAME).asText(""));
+        }
+        if ( StringUtils.isBlank(row.path(NcdReportContributorsCsvSchema.CLEAN_EMAIL_NAME).asText("")) ) {
+            row.put(NcdReportContributorsCsvSchema.CLEAN_EMAIL_NAME,
+                    expressionInput.path(NcdReportContributorsCsvSchema.CLEAN_EMAIL_NAME).asText(""));
+        }
+        if ( StringUtils.isBlank(row.path(NcdReportContributorsCsvSchema.AUTHOR_ID).asText("")) ) {
+            row.put(NcdReportContributorsCsvSchema.AUTHOR_ID, computeAuthorId(expressionInput));
+        }
+        if ( StringUtils.isBlank(row.path(NcdReportContributorsCsvSchema.DORMANT).asText("")) ) {
+            row.put(NcdReportContributorsCsvSchema.DORMANT, "unknown");
+        }
     }
 
     private NcdReportContributorHelper() {}

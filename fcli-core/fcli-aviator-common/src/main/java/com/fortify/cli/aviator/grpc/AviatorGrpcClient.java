@@ -91,7 +91,7 @@ public class AviatorGrpcClient implements AutoCloseable {
     final AtomicBoolean isShutdown = new AtomicBoolean(false);
 
     public AviatorGrpcClient(ManagedChannel channel, long defaultTimeoutSeconds, IAviatorLogger logger, long pingIntervalSeconds) {
-        LOG.info("Initializing AviatorGrpcClient with ManagedChannel");
+        LOG.debug("Initializing AviatorGrpcClient with ManagedChannel");
         this.logger = logger;
         this.channel = channel;
         this.asyncStub = AuditorServiceGrpc.newStub(channel).withCompression("gzip").withMaxInboundMessageSize(Constants.MAX_MESSAGE_SIZE).withMaxOutboundMessageSize(Constants.MAX_MESSAGE_SIZE).withWaitForReady();
@@ -116,7 +116,7 @@ public class AviatorGrpcClient implements AutoCloseable {
 
     public AviatorGrpcClient(String host, int port, long defaultTimeoutSeconds, IAviatorLogger logger, long pingIntervalSeconds) {
         this(ManagedChannelBuilder.forAddress(host, port).useTransportSecurity().maxInboundMessageSize(Constants.MAX_MESSAGE_SIZE).keepAliveTime(30, TimeUnit.SECONDS).keepAliveTimeout(10, TimeUnit.SECONDS).keepAliveWithoutCalls(true).enableRetry().compressorRegistry(CompressorRegistry.getDefaultInstance()).decompressorRegistry(DecompressorRegistry.getDefaultInstance()).build(), defaultTimeoutSeconds, logger, pingIntervalSeconds);
-        LOG.info("Initialized AviatorGrpcClient - Host: {}, Port: {}", host, port);
+        LOG.debug("Initialized AviatorGrpcClient - Host: {}, Port: {}", host, port);
     }
 
     public AviatorGrpcClient(ManagedChannel channel, long defaultTimeoutSeconds, IAviatorLogger logger) {
@@ -172,7 +172,7 @@ public class AviatorGrpcClient implements AutoCloseable {
             }
         }
 
-        LOG.info("Client closed");
+        LOG.debug("Client closed");
     }
 
     public Application createApplication(String name, String tenantName, String signature, String message) {
@@ -216,6 +216,11 @@ public class AviatorGrpcClient implements AutoCloseable {
             ApplicationServiceGrpc.ApplicationServiceBlockingStub::getDefaultQuota,
             request, Constants.OP_GET_DEFAULT_QUOTA);
         return response.getDefaultQuota();
+    }
+
+    public void probeGetDefaultQuota(long timeoutSeconds) {
+        blockingStub.withDeadlineAfter(timeoutSeconds, TimeUnit.SECONDS)
+            .getDefaultQuota(GetDefaultQuotaRequest.getDefaultInstance());
     }
 
     public void validateAdminSession(String tenantName, String signature, String message) {

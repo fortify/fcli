@@ -28,7 +28,7 @@ public class SSCAppHelper {
         }
         
         try {
-            int appId = Integer.parseInt(appNameOrId);
+            long appId = Long.parseLong(appNameOrId);
             request = request.queryString("q", String.format("id:%d", appId));
         } catch (NumberFormatException nfe) {
             request = request.queryString("q", String.format("name:\"%s\"", appNameOrId));
