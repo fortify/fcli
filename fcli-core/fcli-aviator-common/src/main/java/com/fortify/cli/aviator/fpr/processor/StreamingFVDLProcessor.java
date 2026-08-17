@@ -416,7 +416,7 @@ public class StreamingFVDLProcessor {
         logger.debug("Parsed FVDL build metadata entry '{}'", entryName);
     }
 
-    private void parseBuildMetadata(InputStream inputStream) throws XMLStreamException {
+    void parseBuildMetadata(InputStream inputStream) throws XMLStreamException {
         XMLStreamReader reader = xmlInputFactory.createXMLStreamReader(inputStream);
 
         try {

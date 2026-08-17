@@ -34,7 +34,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.zip.ZipFile;
 
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -543,10 +542,10 @@ public class RemediationProcessor {
             return new FvdlMetadataResult(null, SkipReason.FVDL_METADATA_UNAVAILABLE);
         }
 
-        try (ZipFile zipFile = new ZipFile(fprHandle.getFprPath().toFile())) {
+        try (InputStream inputStream = Files.newInputStream(fprHandle.getPath("/audit.fvdl"))) {
             LOG.debug("Loading FVDL build metadata from '{}' to resolve source encodings", fprHandle.getFprPath());
             StreamingFVDLProcessor processor = new StreamingFVDLProcessor(fprHandle);
-            processor.parseBuildMetadata(zipFile, "audit.fvdl");
+            processor.parseBuildMetadata(inputStream);
             LOG.debug("Loaded FVDL build metadata from '{}'", fprHandle.getFprPath());
             return new FvdlMetadataResult(processor.getFvdlMetadata(), null);
         } catch (Exception e) {
