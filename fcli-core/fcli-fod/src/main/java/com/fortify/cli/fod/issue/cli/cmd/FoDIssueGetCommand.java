@@ -15,6 +15,7 @@ package com.fortify.cli.fod.issue.cli.cmd;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.exception.FcliSimpleException;
+import com.fortify.cli.common.exception.FcliTechnicalException;
 import com.fortify.cli.common.json.producer.IObjectNodeProducer;
 import com.fortify.cli.common.json.producer.ObjectNodeProducerApplyFrom;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
@@ -47,19 +48,15 @@ public class FoDIssueGetCommand extends AbstractFoDOutputCommand {
     @Override
     protected IObjectNodeProducer getObjectNodeProducer(UnirestInstance unirest) {
         FoDReleaseDescriptor releaseDescriptor = releaseResolver.getReleaseDescriptor(unirest);
-        String releaseId = releaseDescriptor.getReleaseId().toString();
-        JsonNode issue = findIssue(unirest, releaseDescriptor);
-        if ( issue instanceof ObjectNode issueObject ) {
-            issueObject.put("releaseId", releaseId);
-            issueObject.put("releaseName", releaseDescriptor.getReleaseName());
-            FoDIssueHelper.transformRecord(issueObject, IssueAggregationData.forSingleRelease(issueObject));
-        }
+        ObjectNode issue = findIssue(unirest, releaseDescriptor);
+        issue.put("releaseName", releaseDescriptor.getReleaseName());
+        FoDIssueHelper.transformRecord(issue, IssueAggregationData.forSingleRelease(issue));
         return simpleObjectNodeProducerBuilder(ObjectNodeProducerApplyFrom.SPEC)
                 .source(issue)
                 .build();
     }
 
-    private JsonNode findIssue(UnirestInstance unirest, FoDReleaseDescriptor releaseDescriptor) {
+    private ObjectNode findIssue(UnirestInstance unirest, FoDReleaseDescriptor releaseDescriptor) {
         String releaseId = releaseDescriptor.getReleaseId().toString();
         HttpRequest<?> request = unirest.get(FoDUrls.VULNERABILITIES)
                 .routeParam("relId", releaseId)
@@ -75,7 +72,11 @@ public class FoDIssueGetCommand extends AbstractFoDOutputCommand {
         if ( items.size()>1 ) {
             throw new FcliSimpleException(String.format("Multiple vulnerabilities found for vulnId '%s'; please check your input", vulnId));
         }
-        return items.get(0);
+        JsonNode issue = items.get(0);
+        if ( !(issue instanceof ObjectNode issueObject) ) {
+            throw new FcliTechnicalException(String.format("Unexpected response for vulnId '%s'; expected a JSON object", vulnId));
+        }
+        return issueObject;
     }
 
     @Override
