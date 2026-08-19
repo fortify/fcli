@@ -10,7 +10,9 @@
  * herein. The information contained herein is subject to change
  * without notice.
  */
-package com.fortify.cli.fod._common.session.helper.oauth;
+package com.fortify.cli.fod._common.session.helper.oauth.impl;
+
+import com.fortify.cli.fod._common.session.helper.oauth.IFoDUserAuthCode;
 
 import lombok.AccessLevel;
 import lombok.Builder;

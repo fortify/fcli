@@ -26,6 +26,8 @@ import com.fortify.cli.common.rest.unirest.config.UnirestJsonHeaderConfigurer;
 import com.fortify.cli.common.rest.unirest.config.UnirestUnexpectedHttpResponseConfigurer;
 import com.fortify.cli.common.rest.unirest.config.UnirestUrlConfigConfigurer;
 import com.fortify.cli.fod._common.session.cli.mixin.FoDSessionLoginOptions;
+import com.fortify.cli.fod._common.session.helper.oauth.impl.BasicFoDUserAuthCode;
+import com.fortify.cli.fod._common.session.helper.oauth.impl.BasicFoDUserCredentials;
 
 import kong.unirest.UnirestInstance;
 
