@@ -21,7 +21,7 @@ import java.util.Objects;
  * token/CSV parsing and default candidate order. CLI converters should delegate here.
  */
 public final class SourceDecoders {
-    public static final String DEFAULT_SOURCE_ENCODINGS = "FPR,UTF-8,CP850";
+    public static final String DEFAULT_SOURCE_ENCODINGS = "FPR,UTF-8,ISO-8859-1";
 
     private SourceDecoders() {}
 

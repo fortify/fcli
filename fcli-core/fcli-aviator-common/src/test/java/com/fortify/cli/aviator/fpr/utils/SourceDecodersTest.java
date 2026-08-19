@@ -40,7 +40,7 @@ class SourceDecodersTest {
 
     @Test
     void defaults_matchDocumentedCandidateOrder() {
-        assertEquals("FPR,UTF-8,CP850", SourceDecoders.DEFAULT_SOURCE_ENCODINGS);
+        assertEquals("FPR,UTF-8,ISO-8859-1", SourceDecoders.DEFAULT_SOURCE_ENCODINGS);
         assertEquals(SourceDecoders.DEFAULT_SOURCE_ENCODINGS, SourceDecoders.defaults().describe());
     }
 
@@ -51,6 +51,17 @@ class SourceDecodersTest {
         assertEquals("hello", result.content());
         assertEquals(StandardCharsets.UTF_8, result.charset());
         assertEquals("UTF-8", result.source());
+    }
+
+    @Test
+    void decode_fallsThroughUtf8ToIso88591ByDefault() {
+        byte[] iso88591 = {(byte) 0xE9};
+
+        DecodeResult result = SourceDecoders.defaults().decode(iso88591, "Main.java", null);
+
+        assertEquals("\u00e9", result.content());
+        assertEquals(StandardCharsets.ISO_8859_1, result.charset());
+        assertEquals("ISO-8859-1", result.source());
     }
 
     @Test
