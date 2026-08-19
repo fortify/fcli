@@ -23,6 +23,7 @@ import com.fortify.cli.common.session.cli.mixin.UserCredentialOptions;
 import com.fortify.cli.fod._common.rest.helper.FoDProductHelper;
 import com.fortify.cli.fod._common.session.helper.oauth.IFoDClientCredentials;
 import com.fortify.cli.fod._common.session.helper.oauth.IFoDUserCredentials;
+import com.fortify.cli.fod._common.session.helper.oauth.impl.BasicFoDUserCredentials;
 
 import lombok.Getter;
 import lombok.SneakyThrows;
@@ -96,7 +97,11 @@ public class FoDSessionLoginOptions {
 
     public final IFoDUserCredentials getUserCredentials() {
         var u = getUserCredentialOptions();
-        return IFoDUserCredentials.create(u.getTenant(), u.getUser(), u.getPassword());
+        return BasicFoDUserCredentials.builder()
+                .tenant(u.getTenant())
+                .user(u.getUser())
+                .password(u.getPassword())
+                .build();
     }
 
     public final boolean hasClientCredentials() {

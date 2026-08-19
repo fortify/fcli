@@ -15,43 +15,20 @@ package com.fortify.cli.fod._common.session.helper.oauth;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import com.fortify.cli.common.exception.FcliSimpleException;
-import com.fortify.cli.common.exception.FcliTechnicalException;
 import com.fortify.cli.common.http.proxy.helper.ProxyHelper;
 import com.fortify.cli.common.rest.unirest.HttpHeader;
-import com.fortify.cli.common.rest.unirest.UnexpectedHttpResponseException;
 import com.fortify.cli.common.rest.unirest.UnirestHelper;
 import com.fortify.cli.common.rest.unirest.config.IUrlConfig;
 import com.fortify.cli.common.rest.unirest.config.UnirestJsonHeaderConfigurer;
 import com.fortify.cli.common.rest.unirest.config.UnirestUnexpectedHttpResponseConfigurer;
 import com.fortify.cli.common.rest.unirest.config.UnirestUrlConfigConfigurer;
-import com.fortify.cli.fod._common.session.cli.mixin.FoDSessionLoginOptions;
-import com.fortify.cli.fod._common.session.helper.oauth.impl.BasicFoDUserAuthCode;
-import com.fortify.cli.fod._common.session.helper.oauth.impl.BasicFoDUserCredentials;
 
 import kong.unirest.UnirestInstance;
 
 // TODO Consider moving all classes in this package to a more appropriate package,
 //      for example as a sub-package of the 'rest' package.
 public class FoDOAuthHelper {
-    private static final String MFA_GUIDANCE = 
-        "If MFA is required, provide the security code:\n" +
-        "  --code <code>  (or -c <code>) to provide the security code\n" +
-        "  --totp          to indicate the code is from a TOTP authenticator app";
     
-    private static final String ERROR_WITH_CODE = 
-        "Authentication failed. Possible causes:\n" +
-        "  - Incorrect username or password\n" +
-        "  - MFA/TOTP code incorrect, expired, or wrong type (TOTP vs MFA)\n" +
-        "Please verify your credentials and MFA/TOTP code if applicable:\n" +
-        MFA_GUIDANCE;
-    
-    private static final String ERROR_WITHOUT_CODE =
-        "Authentication failed. Possible causes:\n" +
-        "  - Incorrect username or password\n" +
-        "  - FoD tenant requires MFA/TOTP authentication\n\n" +
-        MFA_GUIDANCE;
-
     public static final FoDTokenCreateResponse createToken(IUrlConfig urlConfig, IFoDUserCredentials uc, String... scopes) {
         Map<String,Object> formData = generateTokenRequest(uc, IFoDUserAuthCode.NONE, scopes);
     try ( var unirest = UnirestHelper.createUnirestInstance() ) {
@@ -73,27 +50,6 @@ public class FoDOAuthHelper {
         }
     }
 
-    public static final FoDTokenCreateResponse createUserToken(IUrlConfig urlConfig, FoDSessionLoginOptions loginOptions) {
-        var credBuilder = BasicFoDUserCredentials.builder()
-                .tenant(loginOptions.getUserCredentialOptions().getTenant())
-                .user(loginOptions.getUserCredentialOptions().getUser())
-                .password(loginOptions.getUserCredentialOptions().getPassword());
-                
-        var authCodeBuilder = BasicFoDUserAuthCode.builder()
-                .securityCode(loginOptions.getUserCredentialOptions().getSecurityCode())
-                .isTotp(loginOptions.getUserCredentialOptions().isTotp());
-
-        try {
-            return createToken(urlConfig, credBuilder.build(), authCodeBuilder.build(), loginOptions.getAuthOptions().getScopes());
-        } catch (UnexpectedHttpResponseException e) {
-            if (e.getStatus() == 400) {
-                String errorMessage = loginOptions.hasSecurityCode() ? ERROR_WITH_CODE : ERROR_WITHOUT_CODE;
-                throw new FcliSimpleException(errorMessage);
-            }
-            throw new FcliTechnicalException(e.getMessage(), e);
-        }
-    }
-    
     private static final FoDTokenCreateResponse createToken(UnirestInstance unirest, IUrlConfig urlConfig, Map<String, Object> formData) {
         configureUnirest(unirest, urlConfig);
         return unirest.post("/oauth/token")
