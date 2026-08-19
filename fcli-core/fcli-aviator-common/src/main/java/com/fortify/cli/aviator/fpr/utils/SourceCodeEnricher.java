@@ -24,6 +24,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fortify.cli.aviator.audit.model.AuditResponse.AuditSkipReason;
 import com.fortify.cli.aviator.audit.model.File;
 import com.fortify.cli.aviator.audit.model.StackTraceElement;
 import com.fortify.cli.aviator.fpr.model.FVDLMetadata;
@@ -140,10 +141,16 @@ public class SourceCodeEnricher {
             CachedSourceFile sourceFile = new CachedSourceFile(
                     fileUtils.appendLineNumbers(content, filename, 0), content.split("\\R", -1).length);
             return new CachedSourceResult(sourceFile, null);
-        } catch (IOException | ISourceDecoder.SourceDecodeException e) {
-            logger.warn("Could not read source file content for path {}: {}", filename, e.getMessage());
-            return new CachedSourceResult(null, new SourceFileFailure(filename, e.getMessage()));
+        } catch (ISourceDecoder.SourceDecodeException e) {
+            return failedSourceFile(filename, e, AuditSkipReason.SOURCE_FILE_DECODE_FAILED);
+        } catch (IOException e) {
+            return failedSourceFile(filename, e, AuditSkipReason.SOURCE_FILE_READ_FAILED);
         }
+    }
+
+    private CachedSourceResult failedSourceFile(String filename, Exception exception, AuditSkipReason reason) {
+        logger.warn("Could not read source file content for path {}: {}", filename, exception.getMessage());
+        return new CachedSourceResult(null, new SourceFileFailure(filename, exception.getMessage(), reason));
     }
 
     private record CachedSourceFile(String content, int endLine) {
@@ -166,5 +173,9 @@ public class SourceCodeEnricher {
         }
     }
 
-    public record SourceFileFailure(String filename, String message) {}
+    public record SourceFileFailure(String filename, String message, AuditSkipReason reason) {
+        public SourceFileFailure {
+            Objects.requireNonNull(reason, "reason");
+        }
+    }
 }

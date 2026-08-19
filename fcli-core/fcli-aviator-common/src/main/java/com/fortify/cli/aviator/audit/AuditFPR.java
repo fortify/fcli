@@ -28,6 +28,7 @@ import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
 import com.fortify.cli.aviator.audit.model.AuditFprOptions;
 import com.fortify.cli.aviator.audit.model.AuditOutcome;
 import com.fortify.cli.aviator.audit.model.AuditResponse;
+import com.fortify.cli.aviator.audit.model.AuditResponse.AuditSkipReason;
 import com.fortify.cli.aviator.audit.model.FPRAuditResult;
 import com.fortify.cli.aviator.audit.model.FilterSelection;
 import com.fortify.cli.aviator.audit.model.ParsedFprData;
@@ -256,32 +257,10 @@ public class AuditFPR {
     }
 
     private static String getSkippedAuditReason(AuditResponse response) {
-        String statusMessage = response == null ? null : response.getStatusMessage();
-        String message = statusMessage == null || statusMessage.isBlank()
-                ? response == null ? null : response.getStatus()
-                : statusMessage;
-        if (message == null || message.isBlank()) {
-            return "Unknown audit failure";
+        if (response == null) {
+            return AuditSkipReason.UNKNOWN.displayMessage(null, null);
         }
-        if (message.startsWith("Client-side pre-processing error: ")) {
-            message = message.substring("Client-side pre-processing error: ".length());
-        }
-        if (message.startsWith("Could not decode source file")) {
-            return "Source file decode failed";
-        }
-        if (message.contains("was not found in the FPR")) {
-            return "Source file not found in FPR";
-        }
-        if (message.contains("could not be read from the FPR")) {
-            return "Source file read failed";
-        }
-        if ("FAILED".equalsIgnoreCase(message)) {
-            return "Audit failed";
-        }
-        if ("SKIPPED".equalsIgnoreCase(message)) {
-            return "Skipped by Aviator";
-        }
-        return message;
+        return response.getAuditSkipReason().displayMessage(response.getStatus(), response.getStatusMessage());
     }
 
     private static void recordSkipped(Map<String, Integer> skippedByReason, String reason) {

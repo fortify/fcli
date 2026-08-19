@@ -34,6 +34,7 @@ import java.util.zip.ZipOutputStream;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import com.fortify.cli.aviator.audit.model.AuditResponse.AuditSkipReason;
 import com.fortify.cli.aviator.audit.model.StackTraceElement;
 import com.fortify.cli.aviator.fpr.model.FVDLMetadata;
 import com.fortify.cli.aviator.util.FprHandle;
@@ -63,7 +64,22 @@ class SourceCodeEnricherTest {
             assertTrue(result.hasFailures());
             assertEquals(List.of("bad-one.java", "bad-two.java"),
                     result.failures().stream().map(SourceCodeEnricher.SourceFileFailure::filename).toList());
+            assertEquals(List.of(AuditSkipReason.SOURCE_FILE_DECODE_FAILED, AuditSkipReason.SOURCE_FILE_DECODE_FAILED),
+                    result.failures().stream().map(SourceCodeEnricher.SourceFileFailure::reason).toList());
             assertEquals(List.of("good.java"), result.files().keySet().stream().toList());
+        }
+    }
+
+    @Test
+    void classifiesReadFailuresSeparatelyFromDecodeFailures() throws Exception {
+        Path fprPath = createFprWithMissingSource("missing.java");
+
+        try (FprHandle fprHandle = new FprHandle(fprPath)) {
+            SourceCodeEnricher.EnrichmentResult result = new SourceCodeEnricher(
+                    fprHandle, SourceDecoders.fromToken("UTF-8"), null)
+                    .enrichWithSourceCodeDetailed(List.of(List.of(element("missing.java"))));
+
+            assertEquals(AuditSkipReason.SOURCE_FILE_READ_FAILED, result.failures().get(0).reason());
         }
     }
 
@@ -221,6 +237,14 @@ class SourceCodeEnricherTest {
             for (Map.Entry<String, byte[]> sourceFile : sourceFiles.entrySet()) {
                 writeEntry(zip, "src-archive/" + index++, sourceFile.getValue());
             }
+        }
+        return fprPath;
+    }
+
+    private Path createFprWithMissingSource(String filename) throws IOException {
+        Path fprPath = tempDir.resolve("source-enricher-missing-source.fpr");
+        try (ZipOutputStream zip = new ZipOutputStream(Files.newOutputStream(fprPath))) {
+            writeEntry(zip, "src-archive/index.xml", createIndex(List.of(filename)).getBytes(StandardCharsets.UTF_8));
         }
         return fprPath;
     }

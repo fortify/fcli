@@ -48,6 +48,7 @@ import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
 import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
 import com.fortify.cli.aviator.audit.QuotaBasedFilter;
 import com.fortify.cli.aviator.audit.model.AuditResponse;
+import com.fortify.cli.aviator.audit.model.AuditResponse.AuditSkipReason;
 import com.fortify.cli.aviator.audit.model.UserPrompt;
 import com.fortify.cli.aviator.config.IAviatorLogger;
 import com.fortify.cli.aviator.fpr.model.FVDLMetadata;
@@ -848,10 +849,12 @@ class AviatorStreamProcessor implements AutoCloseable {
                                         int totalRequests, CompletableFuture<Map<String, AuditResponse>> resultFuture,
                                         CountDownLatch streamLatch) {
         String instanceId = wrapper.userPrompt.getIssueData().getInstanceID();
-        String failureMessage = formatSourceFailureMessage(enrichmentResult);
+        AuditSkipReason skipReason = enrichmentResult.failures().get(0).reason();
+        String failureMessage = formatSourceFailureMessage(enrichmentResult, skipReason);
         AuditResponse skippedResponse = new AuditResponse();
         skippedResponse.setIssueId(instanceId);
         skippedResponse.setStatus("SKIPPED");
+        skippedResponse.setAuditSkipReason(skipReason);
         skippedResponse.setStatusMessage(failureMessage);
         responses.put(instanceId, skippedResponse);
 
@@ -877,20 +880,24 @@ class AviatorStreamProcessor implements AutoCloseable {
         }
     }
 
-    private String formatSourceFailureMessage(SourceCodeEnricher.EnrichmentResult enrichmentResult) {
+    private String formatSourceFailureMessage(SourceCodeEnricher.EnrichmentResult enrichmentResult,
+                                              AuditSkipReason skipReason) {
         List<String> filenames = enrichmentResult.failures().stream()
                 .map(SourceCodeEnricher.SourceFileFailure::filename)
                 .distinct()
                 .collect(Collectors.toList());
-        String prefix = filenames.size() == 1
-            ? "Could not decode source file: "
-            : "Could not decode source files: ";
         String details = enrichmentResult.failures().stream()
                 .map(SourceCodeEnricher.SourceFileFailure::message)
                 .filter(message -> message != null && !message.isBlank())
                 .distinct()
                 .collect(Collectors.joining("; "));
-        return prefix + String.join(", ", filenames) + (details.isBlank() ? "" : " (" + details + ")");
+        String detailSuffix = details.isBlank() ? "" : " (" + details + ")";
+        return switch (skipReason) {
+            case SOURCE_FILE_DECODE_FAILED -> skipReason.format(
+                    filenames.size() == 1 ? "" : "s", String.join(", ", filenames), detailSuffix);
+            case SOURCE_FILE_READ_FAILED -> skipReason.format(String.join(", ", filenames), detailSuffix);
+            default -> details.isBlank() ? skipReason.displayMessage("SKIPPED", null) : details;
+        };
     }
 
     private void handleServerBusy(String requestId, int totalRequests, AtomicInteger processedRequests, Map<String, AuditResponse> responses, CompletableFuture<Map<String, AuditResponse>> resultFuture, CountDownLatch streamLatch) {

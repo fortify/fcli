@@ -19,6 +19,7 @@ import java.util.Map;
 import org.junit.jupiter.api.Test;
 
 import com.fortify.cli.aviator.audit.model.AuditResponse;
+import com.fortify.cli.aviator.audit.model.AuditResponse.AuditSkipReason;
 
 class AuditFprStatusTest {
 
@@ -35,7 +36,8 @@ class AuditFprStatusTest {
     void countsOnlyExplicitSkippedResponsesAsSkipped() {
         AuditResponse skipped = AuditResponse.builder()
                 .status("SKIPPED")
-                .statusMessage("Could not decode source file: payments.c")
+                .auditSkipReason(AuditSkipReason.SOURCE_FILE_DECODE_FAILED)
+                .statusMessage("The source decoder wording can change")
                 .build();
         AuditResponse failed = AuditResponse.builder()
                 .status("FAILED")
@@ -48,6 +50,14 @@ class AuditFprStatusTest {
                         "skipped", skipped,
                         "failed", failed,
                         "success", success), 3));
+    }
+
+    @Test
+    void classifiesLegacyServerMessagesAtTheResponseBoundary() {
+        assertEquals(AuditSkipReason.SOURCE_FILE_READ_FAILED,
+                AuditSkipReason.from("SKIPPED", "example could not be read from the FPR"));
+        assertEquals(AuditSkipReason.SOURCE_FILE_NOT_FOUND,
+                AuditSkipReason.from("SKIPPED", "example was not found in the FPR"));
     }
 
     @Test
