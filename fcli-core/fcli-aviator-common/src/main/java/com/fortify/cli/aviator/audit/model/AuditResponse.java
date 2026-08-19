@@ -15,48 +15,36 @@ package com.fortify.cli.aviator.audit.model;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.formkiq.graalvm.annotations.Reflectable;
 
+import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.RequiredArgsConstructor;
 
 @Data
-@AllArgsConstructor
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
 @NoArgsConstructor
 @Builder
 @Reflectable
 public class AuditResponse {
+    @Getter
+    @RequiredArgsConstructor
     public enum AuditSkipReason {
         SOURCE_FILE_DECODE_FAILED(
                 "Could not decode source file%s: %s%s",
-            "Source file decode failed"),
-        SOURCE_FILE_NOT_FOUND(
-                "%s was not found in the FPR",
-            "Source file not found in FPR"),
+                "Source file decode failed"),
         SOURCE_FILE_READ_FAILED(
                 "%s could not be read from the FPR%s",
-            "Source file read failed"),
-        AUDIT_FAILED("FAILED", "Audit failed"),
-        SKIPPED_BY_AVIATOR("SKIPPED", "Skipped by Aviator"),
-        UNKNOWN(null, "Unknown audit failure"),
-        OTHER(null, null);
+                "Source file read failed"),
+        SKIPPED_BY_AVIATOR("SKIPPED", "Skipped by Aviator");
 
         private final String messageFormat;
         private final String displayMessage;
 
-        AuditSkipReason(String messageFormat, String displayMessage) {
-            this.messageFormat = messageFormat;
-            this.displayMessage = displayMessage;
-        }
-
         public String format(Object... args) {
             return String.format(messageFormat, args);
-        }
-
-        public String displayMessage(String status, String statusMessage) {
-            return displayMessage == null
-                    ? statusMessage == null || statusMessage.isBlank() ? status : statusMessage
-                    : displayMessage;
         }
     }
 
@@ -77,26 +65,4 @@ public class AuditResponse {
     private Boolean isAviatorProcessed;
     private String userPrompt;
     private String systemPrompt;
-
-    @JsonIgnore
-    public AuditSkipReason getAuditSkipReason() {
-        return auditSkipReason == null ? AuditSkipReason.UNKNOWN : auditSkipReason;
-    }
-
-    public AuditResponse(AuditResult auditResult, int inputToken, int outputToken, String status,
-                         String statusMessage, String issueId, String tier, String aviatorPredictionTag,
-                         Boolean isAviatorProcessed, String userPrompt, String systemPrompt) {
-        this.auditResult = auditResult;
-        this.inputToken = inputToken;
-        this.outputToken = outputToken;
-        this.status = status;
-        this.statusMessage = statusMessage;
-        this.issueId = issueId;
-        this.tier = tier;
-        this.aviatorPredictionTag = aviatorPredictionTag;
-        this.isAviatorProcessed = isAviatorProcessed;
-        this.userPrompt = userPrompt;
-        this.systemPrompt = systemPrompt;
-    }
-
 }

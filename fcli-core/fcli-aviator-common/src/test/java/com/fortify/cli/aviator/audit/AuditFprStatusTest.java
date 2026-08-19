@@ -53,16 +53,6 @@ class AuditFprStatusTest {
     }
 
     @Test
-    void doesNotInferSkipReasonFromStatusMessage() {
-        AuditResponse response = AuditResponse.builder()
-                .status("SKIPPED")
-                .statusMessage("example could not be read from the FPR")
-                .build();
-
-        assertEquals(AuditSkipReason.UNKNOWN, response.getAuditSkipReason());
-    }
-
-    @Test
     void preservesMissingResponseAccountingForFilteredIssues() {
         AuditResponse success = AuditResponse.builder().status("SUCCESS").build();
 

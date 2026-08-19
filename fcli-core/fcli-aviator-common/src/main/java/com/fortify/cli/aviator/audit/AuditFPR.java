@@ -28,7 +28,6 @@ import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
 import com.fortify.cli.aviator.audit.model.AuditFprOptions;
 import com.fortify.cli.aviator.audit.model.AuditOutcome;
 import com.fortify.cli.aviator.audit.model.AuditResponse;
-import com.fortify.cli.aviator.audit.model.AuditResponse.AuditSkipReason;
 import com.fortify.cli.aviator.audit.model.FPRAuditResult;
 import com.fortify.cli.aviator.audit.model.FilterSelection;
 import com.fortify.cli.aviator.audit.model.ParsedFprData;
@@ -257,10 +256,7 @@ public class AuditFPR {
     }
 
     private static String getSkippedAuditReason(AuditResponse response) {
-        if (response == null) {
-            return AuditSkipReason.UNKNOWN.displayMessage(null, null);
-        }
-        return response.getAuditSkipReason().displayMessage(response.getStatus(), response.getStatusMessage());
+        return response.getAuditSkipReason().getDisplayMessage();
     }
 
     private static void recordSkipped(Map<String, Integer> skippedByReason, String reason) {

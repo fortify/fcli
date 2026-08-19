@@ -896,7 +896,7 @@ class AviatorStreamProcessor implements AutoCloseable {
             case SOURCE_FILE_DECODE_FAILED -> skipReason.format(
                     filenames.size() == 1 ? "" : "s", String.join(", ", filenames), detailSuffix);
             case SOURCE_FILE_READ_FAILED -> skipReason.format(String.join(", ", filenames), detailSuffix);
-            default -> details.isBlank() ? skipReason.displayMessage("SKIPPED", null) : details;
+            case SKIPPED_BY_AVIATOR -> details.isBlank() ? skipReason.getDisplayMessage() : details;
         };
     }
 
