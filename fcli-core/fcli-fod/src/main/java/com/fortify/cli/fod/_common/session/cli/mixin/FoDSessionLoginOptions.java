@@ -56,7 +56,8 @@ public class FoDSessionLoginOptions {
         @MaskValue(sensitivity = LogSensitivityLevel.low, description = "FOD TENANT")
         @Getter private String tenant;
         @Option(names = {"--code", "-c" }, paramLabel = "<code>", arity = "0..1", interactive = true, echo = false)
-        @Getter private char[] securityCode;
+        @MaskValue(sensitivity = LogSensitivityLevel.low, description = "FOD TOTP/MFA CODE")
+        @Getter private String securityCode;
         @Option(names = {"--totp" })
         @Getter private boolean isTotp;
     }
@@ -93,9 +94,9 @@ public class FoDSessionLoginOptions {
                 && userCredentialOptions.getPassword().length > 0;
     }
 
-    public final BasicFoDUserCredentials getUserCredentials() {
+    public final IFoDUserCredentials getUserCredentials() {
         var u = getUserCredentialOptions();
-        return BasicFoDUserCredentials.builder().tenant(u.getTenant()).user(u.getUser()).password(u.getPassword()).build();
+        return IFoDUserCredentials.create(u.getTenant(), u.getUser(), u.getPassword());
     }
 
     public final boolean hasClientCredentials() {
@@ -107,17 +108,17 @@ public class FoDSessionLoginOptions {
 
     public boolean hasSecurityCode() {
         var userCred = getUserCredentialOptions();
-        return userCred != null && userCred.securityCode != null && userCred.securityCode.length > 0;
+        return userCred != null && StringUtils.isNotBlank(userCred.getSecurityCode());
     }
 
-    public char[] getSecurityCode() {
+    public String getSecurityCode() {
         var userCred = getUserCredentialOptions();
-        return userCred != null ? userCred.securityCode : null;
+        return userCred != null ? userCred.getSecurityCode() : null;
     }
 
     public boolean isTotp() {
         var userCred = getUserCredentialOptions();
-        return userCred != null && userCred.isTotp;
+        return userCred != null && userCred.isTotp();
     }
 
     @Command
@@ -130,41 +131,6 @@ public class FoDSessionLoginOptions {
         @Override
         protected int getDefaultSocketTimeoutInMillis() {
             return 600000;
-        }
-    }
-
-    /**
-     * Basic immutable FoD user credentials with builder pattern.
-     */
-    public static final class BasicFoDUserCredentials implements IFoDUserCredentials {
-        private final String tenant;
-        private final String user;
-        private final char[] password;
-        private final char[] securityCode;
-        private final boolean isTotp;
-        private BasicFoDUserCredentials(Builder b) {
-            this.tenant = b.tenant;
-            this.user = b.user;
-            this.password = b.password;
-            this.securityCode = b.securityCode;
-            this.isTotp = b.isTotp;
-        }
-        public static Builder builder() { return new Builder(); }
-        @Override public String getTenant() { return tenant; }
-        @Override public String getUser() { return user; }
-        @Override public char[] getPassword() { return password; }
-        @Override public String getSecurityCode() { return securityCode != null ? String.valueOf(securityCode) : null;}
-        @Override public boolean isTotp() { return isTotp; }
-        public static final class Builder {
-            private String tenant; private String user; private char[] password; private char[] securityCode; private boolean isTotp;
-            public Builder tenant(String tenant){ this.tenant=tenant; return this; }
-            public Builder user(String user){ this.user=user; return this; }
-            public Builder password(char[] password){ this.password=password; return this; }
-            public BasicFoDUserCredentials build(){
-                return new BasicFoDUserCredentials(this);
-            }
-            public Builder securityCode(char[] securityCode) { this.securityCode = securityCode; return this; }
-            public Builder isTotp(boolean isTotp) { this.isTotp = isTotp; return this; }
         }
     }
 }

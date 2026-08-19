@@ -16,6 +16,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import com.fortify.cli.common.exception.FcliSimpleException;
+import com.fortify.cli.common.exception.FcliTechnicalException;
 import com.fortify.cli.common.http.proxy.helper.ProxyHelper;
 import com.fortify.cli.common.rest.unirest.HttpHeader;
 import com.fortify.cli.common.rest.unirest.UnexpectedHttpResponseException;
@@ -25,7 +26,6 @@ import com.fortify.cli.common.rest.unirest.config.UnirestJsonHeaderConfigurer;
 import com.fortify.cli.common.rest.unirest.config.UnirestUnexpectedHttpResponseConfigurer;
 import com.fortify.cli.common.rest.unirest.config.UnirestUrlConfigConfigurer;
 import com.fortify.cli.fod._common.session.cli.mixin.FoDSessionLoginOptions;
-import com.fortify.cli.fod._common.session.cli.mixin.FoDSessionLoginOptions.BasicFoDUserCredentials;
 
 import kong.unirest.UnirestInstance;
 
@@ -51,7 +51,14 @@ public class FoDOAuthHelper {
         MFA_GUIDANCE;
 
     public static final FoDTokenCreateResponse createToken(IUrlConfig urlConfig, IFoDUserCredentials uc, String... scopes) {
-        Map<String,Object> formData = generateTokenRequest(uc, scopes);
+        Map<String,Object> formData = generateTokenRequest(uc, IFoDUserAuthCode.NONE, scopes);
+    try ( var unirest = UnirestHelper.createUnirestInstance() ) {
+            return createToken(unirest, urlConfig, formData);
+        }
+    }
+
+    public static final FoDTokenCreateResponse createToken(IUrlConfig urlConfig, IFoDUserCredentials uc, IFoDUserAuthCode authCode, String... scopes) {
+        Map<String,Object> formData = generateTokenRequest(uc, authCode, scopes);
     try ( var unirest = UnirestHelper.createUnirestInstance() ) {
             return createToken(unirest, urlConfig, formData);
         }
@@ -69,18 +76,19 @@ public class FoDOAuthHelper {
                 .tenant(loginOptions.getUserCredentialOptions().getTenant())
                 .user(loginOptions.getUserCredentialOptions().getUser())
                 .password(loginOptions.getUserCredentialOptions().getPassword());
-        if (loginOptions.hasSecurityCode()) {
-            credBuilder.securityCode(loginOptions.getSecurityCode())
-                    .isTotp(loginOptions.isTotp());
-        }
+                
+        var authCodeBuilder = BasicFoDUserAuthCode.builder()
+                .securityCode(loginOptions.getUserCredentialOptions().getSecurityCode())
+                .isTotp(loginOptions.getUserCredentialOptions().isTotp());
+
         try {
-            return createToken(urlConfig, credBuilder.build(), loginOptions.getAuthOptions().getScopes());
+            return createToken(urlConfig, credBuilder.build(), authCodeBuilder.build(), loginOptions.getAuthOptions().getScopes());
         } catch (UnexpectedHttpResponseException e) {
             if (e.getStatus() == 400) {
                 String errorMessage = loginOptions.hasSecurityCode() ? ERROR_WITH_CODE : ERROR_WITHOUT_CODE;
                 throw new FcliSimpleException(errorMessage);
             }
-            throw new FcliSimpleException(e.getMessage(), e);
+            throw new FcliTechnicalException(e.getMessage(), e);
         }
     }
     
@@ -102,15 +110,15 @@ public class FoDOAuthHelper {
         UnirestJsonHeaderConfigurer.configure(unirest);
     }
     
-    private static final Map<String, Object> generateTokenRequest(IFoDUserCredentials uc, String... scopes) {
+    private static final Map<String, Object> generateTokenRequest(IFoDUserCredentials uc, IFoDUserAuthCode authCode, String... scopes) {
         Map<String,Object> result = new LinkedHashMap<>();
         result.put("scope", String.join(",", scopes));
         result.put("grant_type", "password");
         result.put("username", String.format("%s\\%s", uc.getTenant(), uc.getUser()));
         result.put("password", String.valueOf(uc.getPassword()));
-        if (uc.getSecurityCode() != null) {
-            result.put("security_code", uc.getSecurityCode());
-            result.put("do_totp", uc.isTotp());
+        if (authCode.getSecurityCode() != null) {
+            result.put("security_code", authCode.getSecurityCode());
+            result.put("do_totp", authCode.isTotp());
         }
         return result;
     }

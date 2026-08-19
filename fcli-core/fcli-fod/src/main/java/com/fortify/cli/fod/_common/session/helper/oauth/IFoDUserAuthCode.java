@@ -12,16 +12,8 @@
  */
 package com.fortify.cli.fod._common.session.helper.oauth;
 
-public interface IFoDUserCredentials {
-    String getUser();
-    char[] getPassword();
-    String getTenant();
-    
-    static IFoDUserCredentials create(String tenant, String user, char[] password) {
-        return BasicFoDUserCredentials.builder()
-                .tenant(tenant)
-                .user(user)
-                .password(password)
-                .build();
-    }
+public interface IFoDUserAuthCode {
+    IFoDUserAuthCode NONE = new IFoDUserAuthCode() {};
+    default String getSecurityCode() { return null; }
+    default boolean isTotp() { return false; }
 }

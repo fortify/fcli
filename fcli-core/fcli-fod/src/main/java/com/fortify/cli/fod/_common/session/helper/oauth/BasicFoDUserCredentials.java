@@ -12,16 +12,18 @@
  */
 package com.fortify.cli.fod._common.session.helper.oauth;
 
-public interface IFoDUserCredentials {
-    String getUser();
-    char[] getPassword();
-    String getTenant();
-    
-    static IFoDUserCredentials create(String tenant, String user, char[] password) {
-        return BasicFoDUserCredentials.builder()
-                .tenant(tenant)
-                .user(user)
-                .password(password)
-                .build();
-    }
+import lombok.AccessLevel;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+
+/**
+ * Basic immutable FoD user credentials with builder pattern.
+ */
+@Builder
+@RequiredArgsConstructor(access = AccessLevel.PRIVATE)
+public final class BasicFoDUserCredentials implements IFoDUserCredentials {
+    @Getter private final String tenant;
+    @Getter private final String user;
+    @Getter private final char[] password;
 }
