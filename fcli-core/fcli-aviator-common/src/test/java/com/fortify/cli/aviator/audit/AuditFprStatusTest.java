@@ -53,11 +53,13 @@ class AuditFprStatusTest {
     }
 
     @Test
-    void classifiesLegacyServerMessagesAtTheResponseBoundary() {
-        assertEquals(AuditSkipReason.SOURCE_FILE_READ_FAILED,
-                AuditSkipReason.from("SKIPPED", "example could not be read from the FPR"));
-        assertEquals(AuditSkipReason.SOURCE_FILE_NOT_FOUND,
-                AuditSkipReason.from("SKIPPED", "example was not found in the FPR"));
+    void doesNotInferSkipReasonFromStatusMessage() {
+        AuditResponse response = AuditResponse.builder()
+                .status("SKIPPED")
+                .statusMessage("example could not be read from the FPR")
+                .build();
+
+        assertEquals(AuditSkipReason.UNKNOWN, response.getAuditSkipReason());
     }
 
     @Test

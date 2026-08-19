@@ -12,8 +12,6 @@
  */
 package com.fortify.cli.aviator.audit.model;
 
-import java.util.regex.Pattern;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.formkiq.graalvm.annotations.Reflectable;
 
@@ -31,62 +29,34 @@ public class AuditResponse {
     public enum AuditSkipReason {
         SOURCE_FILE_DECODE_FAILED(
                 "Could not decode source file%s: %s%s",
-                "Source file decode failed",
-                Pattern.compile("^Could not decode source file.*")),
+            "Source file decode failed"),
         SOURCE_FILE_NOT_FOUND(
                 "%s was not found in the FPR",
-                "Source file not found in FPR",
-                Pattern.compile(".* was not found in the FPR.*")),
+            "Source file not found in FPR"),
         SOURCE_FILE_READ_FAILED(
                 "%s could not be read from the FPR%s",
-                "Source file read failed",
-                Pattern.compile(".* could not be read from the FPR.*")),
-        AUDIT_FAILED("FAILED", "Audit failed", Pattern.compile("^FAILED$", Pattern.CASE_INSENSITIVE)),
-        SKIPPED_BY_AVIATOR("SKIPPED", "Skipped by Aviator", Pattern.compile("^SKIPPED$", Pattern.CASE_INSENSITIVE)),
-        UNKNOWN(null, "Unknown audit failure", null),
-        OTHER(null, null, null);
-
-        private static final String CLIENT_SIDE_ERROR_PREFIX = "Client-side pre-processing error: ";
+            "Source file read failed"),
+        AUDIT_FAILED("FAILED", "Audit failed"),
+        SKIPPED_BY_AVIATOR("SKIPPED", "Skipped by Aviator"),
+        UNKNOWN(null, "Unknown audit failure"),
+        OTHER(null, null);
 
         private final String messageFormat;
         private final String displayMessage;
-        private final Pattern messagePattern;
 
-        AuditSkipReason(String messageFormat, String displayMessage, Pattern messagePattern) {
+        AuditSkipReason(String messageFormat, String displayMessage) {
             this.messageFormat = messageFormat;
             this.displayMessage = displayMessage;
-            this.messagePattern = messagePattern;
         }
 
         public String format(Object... args) {
             return String.format(messageFormat, args);
         }
 
-        public static AuditSkipReason from(String status, String statusMessage) {
-            String message = effectiveMessage(status, statusMessage);
-            if (message.isBlank()) {
-                return UNKNOWN;
-            }
-            for (AuditSkipReason reason : values()) {
-                if (reason.messagePattern != null && reason.messagePattern.matcher(message).matches()) {
-                    return reason;
-                }
-            }
-            return OTHER;
-        }
-
         public String displayMessage(String status, String statusMessage) {
-            return displayMessage == null ? effectiveMessage(status, statusMessage) : displayMessage;
-        }
-
-        private static String effectiveMessage(String status, String statusMessage) {
-            String message = statusMessage == null || statusMessage.isBlank() ? status : statusMessage;
-            if (message == null || message.isBlank()) {
-                return "";
-            }
-            return message.startsWith(CLIENT_SIDE_ERROR_PREFIX)
-                    ? message.substring(CLIENT_SIDE_ERROR_PREFIX.length())
-                    : message;
+            return displayMessage == null
+                    ? statusMessage == null || statusMessage.isBlank() ? status : statusMessage
+                    : displayMessage;
         }
     }
 
@@ -110,7 +80,7 @@ public class AuditResponse {
 
     @JsonIgnore
     public AuditSkipReason getAuditSkipReason() {
-        return auditSkipReason == null ? AuditSkipReason.from(status, statusMessage) : auditSkipReason;
+        return auditSkipReason == null ? AuditSkipReason.UNKNOWN : auditSkipReason;
     }
 
     public AuditResponse(AuditResult auditResult, int inputToken, int outputToken, String status,

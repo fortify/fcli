@@ -197,7 +197,7 @@ class GrpcUtil {
         auditResponse.setStatus(response.getStatus());
         auditResponse.setStatusMessage(response.getStatusMessage());
         if ("SKIPPED".equalsIgnoreCase(response.getStatus())) {
-            auditResponse.setAuditSkipReason(AuditSkipReason.from(response.getStatus(), response.getStatusMessage()));
+            auditResponse.setAuditSkipReason(AuditSkipReason.SKIPPED_BY_AVIATOR);
         }
         auditResponse.setIssueId(response.getIssueId());
         auditResponse.setSubmittedToAviator(true);
