@@ -22,7 +22,9 @@ import com.fortify.cli.common.rest.cli.mixin.UrlConfigOptions;
 import com.fortify.cli.common.session.cli.mixin.UserCredentialOptions;
 import com.fortify.cli.fod._common.rest.helper.FoDProductHelper;
 import com.fortify.cli.fod._common.session.helper.oauth.IFoDClientCredentials;
+import com.fortify.cli.fod._common.session.helper.oauth.IFoDUserAuthCode;
 import com.fortify.cli.fod._common.session.helper.oauth.IFoDUserCredentials;
+import com.fortify.cli.fod._common.session.helper.oauth.impl.BasicFoDUserAuthCode;
 import com.fortify.cli.fod._common.session.helper.oauth.impl.BasicFoDUserCredentials;
 
 import lombok.Getter;
@@ -124,6 +126,15 @@ public class FoDSessionLoginOptions {
     public boolean isTotp() {
         var userCred = getUserCredentialOptions();
         return userCred != null && userCred.isTotp();
+    }
+
+    public IFoDUserAuthCode getAuthCode() {
+        var u = getUserCredentialOptions();
+        if (u == null || StringUtils.isBlank(u.getSecurityCode())) { return null; }
+        return BasicFoDUserAuthCode.builder()
+                .securityCode(u.getSecurityCode())
+                .isTotp(u.isTotp())
+                .build();
     }
 
     @Command

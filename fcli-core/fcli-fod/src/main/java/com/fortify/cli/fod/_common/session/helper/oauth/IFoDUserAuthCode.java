@@ -13,7 +13,6 @@
 package com.fortify.cli.fod._common.session.helper.oauth;
 
 public interface IFoDUserAuthCode {
-    IFoDUserAuthCode NONE = new IFoDUserAuthCode() {};
     default String getSecurityCode() { return null; }
     default boolean isTotp() { return false; }
 }

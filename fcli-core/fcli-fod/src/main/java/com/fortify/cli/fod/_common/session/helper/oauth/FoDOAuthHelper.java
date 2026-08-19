@@ -30,7 +30,7 @@ import kong.unirest.UnirestInstance;
 public class FoDOAuthHelper {
     
     public static final FoDTokenCreateResponse createToken(IUrlConfig urlConfig, IFoDUserCredentials uc, String... scopes) {
-        Map<String,Object> formData = generateTokenRequest(uc, IFoDUserAuthCode.NONE, scopes);
+        Map<String,Object> formData = generateTokenRequest(uc, null, scopes);
     try ( var unirest = UnirestHelper.createUnirestInstance() ) {
             return createToken(unirest, urlConfig, formData);
         }
@@ -38,7 +38,7 @@ public class FoDOAuthHelper {
 
     public static final FoDTokenCreateResponse createToken(IUrlConfig urlConfig, IFoDUserCredentials uc, IFoDUserAuthCode authCode, String... scopes) {
         Map<String,Object> formData = generateTokenRequest(uc, authCode, scopes);
-    try ( var unirest = UnirestHelper.createUnirestInstance() ) {
+        try ( var unirest = UnirestHelper.createUnirestInstance() ) {
             return createToken(unirest, urlConfig, formData);
         }
     }
@@ -74,7 +74,7 @@ public class FoDOAuthHelper {
         result.put("grant_type", "password");
         result.put("username", String.format("%s\\%s", uc.getTenant(), uc.getUser()));
         result.put("password", String.valueOf(uc.getPassword()));
-        if (authCode.getSecurityCode() != null) {
+        if (null != authCode && null != authCode.getSecurityCode()) {
             result.put("security_code", authCode.getSecurityCode());
             result.put("do_totp", authCode.isTotp());
         }
