@@ -17,7 +17,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260729.085144-dev_v3.x" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260820.162432-dev_v3.x" %}
 
 
 <div id="header">
@@ -51,7 +51,8 @@ fcli_version:
                        [<strong>--log-mask</strong>=<em>&lt;level&gt;</em>] [<strong>--debug</strong>]] [[<strong>-o</strong>=<em>&lt;type+args&gt;</em>]
                        [<strong>--style*<em>=&lt;style&gt;,&#8230;&#8203;</em>]&#8230;&#8203; <em class="</strong>--store*=_&lt;var&gt;[:&lt;prop&gt;">]
                        [<strong>--to-file</strong>=</em>&lt;outputFile&gt;_]] ([<strong>--scopes</strong>=<em>&lt;scopes&gt;</em>[,
-                       <em>&lt;scopes&gt;</em>&#8230;&#8203;]]&#8230;&#8203; <strong>-u</strong>=<em>&lt;user&gt;</em> <strong>-p</strong>[=<em>&lt;password&gt;</em>]                        <strong>-t</strong>=<em>&lt;tenant&gt;</em>) | (<strong>--client-id</strong>=<em>&lt;clientId&gt;</em> <strong>--client-secret</strong>                        [=<em>&lt;clientSecret&gt;</em>]) [[<strong>--fod-session</strong>=<em>&lt;sessionName&gt;</em>]]</p>
+                       <em>&lt;scopes&gt;</em>&#8230;&#8203;]]&#8230;&#8203; <strong>-u</strong>=<em>&lt;user&gt;</em> <strong>-p</strong>[=<em>&lt;password&gt;</em>] <strong>-t</strong>=<em>&lt;tenant&gt;</em>                        [<strong>-c</strong>[=<em>&lt;code&gt;</em>]] [<strong>--totp</strong>]) | (<strong>--client-id</strong>=<em>&lt;clientId&gt;</em>                        <strong>--client-secret</strong>[=<em>&lt;clientSecret&gt;</em>])
+                       [[<strong>--fod-session</strong>=<em>&lt;sessionName&gt;</em>]]</p>
 </div>
 </div>
 </div>
@@ -89,6 +90,14 @@ fcli_version:
 <dt class="hdlist1"><strong>-t</strong>, <strong>--tenant</strong>=<em>&lt;tenant&gt;</em></dt>
 <dd>
 <p>FoD tenant; required when authenticating with user credentials, ignored for client credentials.</p>
+</dd>
+<dt class="hdlist1"><strong>-c</strong>, <strong>--code</strong>[=<em>&lt;code&gt;</em>]</dt>
+<dd>
+<p>Security code (TOTP from authenticator or MFA code from email/SMS).</p>
+</dd>
+<dt class="hdlist1"><strong>--totp</strong></dt>
+<dd>
+<p>Indicates the provided code is TOTP from authenticator app (sets do_totp=true).</p>
 </dd>
 <dt class="hdlist1"><strong>--client-id</strong>=<em>&lt;clientId&gt;</em></dt>
 <dd>
@@ -198,7 +207,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2026-07-29 08:54:41 UTC
+Last updated 2026-08-20 16:27:59 UTC
 </div>
 </div>
 </body>
