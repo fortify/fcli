@@ -13,7 +13,6 @@
 package com.fortify.cli.fod._common.session.cli.cmd;
 
 import com.fortify.cli.common.exception.FcliSimpleException;
-import com.fortify.cli.common.exception.FcliTechnicalException;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.rest.unirest.UnexpectedHttpResponseException;
 import com.fortify.cli.common.rest.unirest.config.IUrlConfig;
@@ -99,6 +98,6 @@ public class FoDSessionLoginCommand extends AbstractSessionLoginCommand<FoDSessi
         if (e.getStatus() == 400) {
             throw new FcliSimpleException(msg);
         }
-        throw new FcliTechnicalException(e.getMessage(), e);
+        throw e;
     }
 }
