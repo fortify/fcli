@@ -14,6 +14,7 @@ package com.fortify.cli.fod._common.session.cli.cmd;
 
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
+import com.fortify.cli.common.rest.unirest.UnexpectedHttpResponseException;
 import com.fortify.cli.common.rest.unirest.config.IUrlConfig;
 import com.fortify.cli.common.session.cli.cmd.AbstractSessionLoginCommand;
 import com.fortify.cli.common.session.cli.mixin.ISessionNameSupplier;
@@ -34,12 +35,31 @@ public class FoDSessionLoginCommand extends AbstractSessionLoginCommand<FoDSessi
     @Getter private FoDSessionHelper sessionHelper = FoDSessionHelper.instance();
     @Mixin private FoDSessionLoginOptions loginOptions;
     @Mixin private FoDUnirestInstanceSupplierMixin unirestInstanceSupplierMixin;
-    
+
+    private static final String MFA_GUIDANCE = "If MFA is required, provide the security code:\n"
+            + "  --code <code>  (or -c <code>) to provide the security code\n"
+            + "  --totp          to indicate the code is from a TOTP authenticator app";
+
+    private static final String ERROR_WITH_CODE = "Authentication failed. Possible causes:\n"
+            + "  - Incorrect username or password\n"
+            + "  - MFA/TOTP code incorrect, expired, or wrong type (TOTP vs MFA)\n"
+            + "Please verify your credentials and MFA/TOTP code if applicable:\n"
+            + MFA_GUIDANCE;
+
+    private static final String ERROR_WITHOUT_CODE = "Authentication failed. Possible causes:\n"
+            + "  - Incorrect username or password\n"
+            + "  - FoD tenant requires MFA/TOTP authentication\n\n"
+            + MFA_GUIDANCE;
+
+    private static final String ERROR_CLIENT_CREDENTIALS = "Authentication failed. Possible causes:\n"
+            + "  - Incorrect client ID or client secret\n"
+            + "  - Client credentials have expired";
+
     @Override
     public ISessionNameSupplier getSessionNameSupplier() {
         return unirestInstanceSupplierMixin;
     }
-    
+
     @Override
     protected void logoutBeforeNewLogin(String sessionName, FoDSessionDescriptor sessionDescriptor) {
         unirestInstanceSupplierMixin.close(sessionName);
@@ -48,17 +68,36 @@ public class FoDSessionLoginCommand extends AbstractSessionLoginCommand<FoDSessi
 
     @Override
     protected FoDSessionDescriptor login(String sessionName) {
-        FoDSessionDescriptor sessionDescriptor;
+        FoDSessionDescriptor sessionDescriptor = null;
         IUrlConfig urlConfig = loginOptions.getUrlConfigOptions();
-        if ( loginOptions.hasClientCredentials() ) {
-            FoDTokenCreateResponse createTokenResponse = FoDOAuthHelper.createToken(urlConfig, loginOptions.getClientCredentialOptions(), loginOptions.getAuthOptions().getScopes());
-            sessionDescriptor = new FoDSessionDescriptor(urlConfig, createTokenResponse);
-        } else if ( loginOptions.hasUserCredentials() ) {
-            FoDTokenCreateResponse createTokenResponse = FoDOAuthHelper.createToken(urlConfig, loginOptions.getUserCredentials(), loginOptions.getAuthOptions().getScopes());
-            sessionDescriptor = new FoDSessionDescriptor(urlConfig, createTokenResponse);
+        if (loginOptions.hasClientCredentials()) {
+            try {
+                FoDTokenCreateResponse createTokenResponse = FoDOAuthHelper.createToken(urlConfig,
+                        loginOptions.getClientCredentialOptions(), loginOptions.getAuthOptions().getScopes());
+                sessionDescriptor = new FoDSessionDescriptor(urlConfig, createTokenResponse);
+            } catch (UnexpectedHttpResponseException e) {
+                handleUnexpectedHttpResponseException(e, ERROR_CLIENT_CREDENTIALS);
+            }
+        } else if (loginOptions.hasUserCredentials()) {
+            try {
+                FoDTokenCreateResponse createTokenResponse = FoDOAuthHelper.createToken(urlConfig,
+                        loginOptions.getUserCredentials(), loginOptions.getAuthCode(),
+                        loginOptions.getAuthOptions().getScopes());
+                sessionDescriptor = new FoDSessionDescriptor(urlConfig, createTokenResponse);
+            } catch (UnexpectedHttpResponseException e) {
+                String errorMessage = loginOptions.hasSecurityCode() ? ERROR_WITH_CODE : ERROR_WITHOUT_CODE;
+                handleUnexpectedHttpResponseException(e, errorMessage);
+            }
         } else {
             throw new FcliSimpleException("Either FoD client or user credentials must be provided");
         }
         return sessionDescriptor;
+    }
+
+    private void handleUnexpectedHttpResponseException(UnexpectedHttpResponseException e, String msg) {
+        if (e.getStatus() == 400) {
+            throw new FcliSimpleException(msg);
+        }
+        throw e;
     }
 }

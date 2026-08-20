@@ -1,0 +1,30 @@
+/*
+ * Copyright 2021-2026 Open Text.
+ *
+ * The only warranties for products and services of Open Text
+ * and its affiliates and licensors ("Open Text") are as may
+ * be set forth in the express warranty statements accompanying
+ * such products and services. Nothing herein should be construed
+ * as constituting an additional warranty. Open Text shall not be
+ * liable for technical or editorial errors or omissions contained
+ * herein. The information contained herein is subject to change
+ * without notice.
+ */
+package com.fortify.cli.fod._common.session.helper.oauth.impl;
+
+import com.fortify.cli.fod._common.session.helper.oauth.IFoDUserAuthCode;
+
+import lombok.AccessLevel;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+
+/**
+ * Basic immutable FoD user auth code with builder pattern.
+ */
+@Builder
+@RequiredArgsConstructor(access = AccessLevel.PRIVATE)
+public final class BasicFoDUserAuthCode implements IFoDUserAuthCode {
+    @Getter private final String securityCode;
+    @Getter private final boolean isTotp;
+}
