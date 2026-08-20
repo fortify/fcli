@@ -40,7 +40,16 @@ public final class AviatorRemediationMetricsHelper {
     public static RemediationMetric aggregateMetrics(Set<String> requestedIssueIds, Collection<RemediationMetric> metrics) {
         Set<String> modifiedFiles = new LinkedHashSet<>();
         Map<String, Integer> skippedByReason = new LinkedHashMap<>();
+        List<com.fortify.cli.aviator.fpr.processor.preview.PreviewDetail> allPreviewDetails = new ArrayList<>();
         Collection<RemediationMetric> safeMetrics = metrics == null ? List.of() : metrics;
+        
+        // Aggregate preview details from all metrics
+        for (RemediationMetric metric : safeMetrics) {
+            if (metric.previewDetails() != null) {
+                allPreviewDetails.addAll(metric.previewDetails());
+            }
+        }
+        
         if (requestedIssueIds == null) {
             int totalRemediations = 0;
             int appliedRemediations = 0;
@@ -49,14 +58,16 @@ public final class AviatorRemediationMetricsHelper {
                 appliedRemediations += metric.appliedRemediations();
                 accumulateFilesAndSkips(metric, modifiedFiles, skippedByReason);
             }
-            return RemediationMetric.unfiltered(totalRemediations, appliedRemediations, modifiedFiles, skippedByReason);
+            return RemediationMetric.unfiltered(totalRemediations, appliedRemediations, modifiedFiles, skippedByReason, 
+                    allPreviewDetails.isEmpty() ? null : allPreviewDetails);
         }
         Set<String> appliedIssueIds = new LinkedHashSet<>();
         for (RemediationMetric metric : safeMetrics) {
             appliedIssueIds.addAll(metric.appliedIssueIds());
             accumulateFilesAndSkips(metric, modifiedFiles, skippedByReason);
         }
-        return RemediationMetric.filtered(requestedIssueIds, appliedIssueIds, modifiedFiles, skippedByReason);
+        return RemediationMetric.filtered(requestedIssueIds, appliedIssueIds, modifiedFiles, skippedByReason,
+                allPreviewDetails.isEmpty() ? null : allPreviewDetails);
     }
 
     private static void accumulateFilesAndSkips(
@@ -120,8 +131,25 @@ public final class AviatorRemediationMetricsHelper {
 
     /** Metric fields plus {@code __action__} (shared by SSC/FoD result builders). */
     public static void putMetricAndAction(ObjectNode result, RemediationMetric metric) {
+        putMetricAndAction(result, metric, false);
+    }
+
+    /** Metric fields plus {@code __action__} and optional preview details (shared by SSC/FoD result builders). */
+    public static void putMetricAndAction(ObjectNode result, RemediationMetric metric, boolean previewMode) {
         putRemediationMetricFields(result, metric);
         result.put(IActionCommandResultSupplier.actionFieldName, actionLabel(metric));
+        
+        if (previewMode && metric != null && metric.previewDetails() != null) {
+            result.set("previewDetails", toPreviewDetailsArray(metric.previewDetails()));
+        }
+    }
+    
+    private static ArrayNode toPreviewDetailsArray(List<?> previewDetails) {
+        ArrayNode array = JsonHelper.getObjectMapper().createArrayNode();
+        if (previewDetails != null) {
+            previewDetails.forEach(detail -> array.add(JsonHelper.getObjectMapper().valueToTree(detail)));
+        }
+        return array;
     }
 
     /**

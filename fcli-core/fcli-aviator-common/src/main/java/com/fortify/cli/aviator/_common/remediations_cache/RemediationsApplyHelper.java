@@ -52,13 +52,27 @@ public final class RemediationsApplyHelper {
             IAviatorLogger logger,
             Set<String> issueIdFilter,
             Logger skipLog) {
+        return apply(source, sourceCodeDirectory, logger, issueIdFilter, skipLog, false);
+    }
+
+    /**
+     * Applies or previews remediations for each source entry until done or the issue-id filter is exhausted.
+     * Caller owns {@code source} lifecycle (try-with-resources).
+     */
+    public static ApplyResult apply(
+            IRemediationsFprSource source,
+            String sourceCodeDirectory,
+            IAviatorLogger logger,
+            Set<String> issueIdFilter,
+            Logger skipLog,
+            boolean previewMode) {
         Accumulator acc = new Accumulator(issueIdFilter);
         source.forEachEntry((fprPath, label, id, index, total) -> {
             if (acc.remaining != null && acc.remaining.isEmpty()) {
                 return false;
             }
             RemediationMetric metric = applyOne(
-                    fprPath, label, index, total, sourceCodeDirectory, logger, acc.remaining, skipLog);
+                    fprPath, label, index, total, sourceCodeDirectory, logger, acc.remaining, skipLog, previewMode);
             if (metric == null) {
                 acc.skipped++;
             } else {
@@ -85,11 +99,12 @@ public final class RemediationsApplyHelper {
             String sourceCodeDirectory,
             IAviatorLogger logger,
             Set<String> issueFilter,
-            Logger skipLog) {
+            Logger skipLog,
+            boolean previewMode) {
         logger.progress("Processing FPR " + index + "/" + total + " (" + entryLabel + ")");
-        logger.progress("Status: Processing FPR with Aviator for Applying Auto Remediations");
+        logger.progress("Status: Processing FPR with Aviator for " + (previewMode ? "Previewing" : "Applying") + " Auto Remediations");
         try (FprHandle fprHandle = new FprHandle(fprPath)) {
-            return ApplyAutoRemediationOnSource.applyRemediations(fprHandle, sourceCodeDirectory, logger, issueFilter);
+            return ApplyAutoRemediationOnSource.applyRemediations(fprHandle, sourceCodeDirectory, logger, issueFilter, previewMode);
         } catch (AviatorSimpleException e) {
             skipLog.warn("Skipping entry {} as {}", entryLabel, e.getMessage());
             return null;

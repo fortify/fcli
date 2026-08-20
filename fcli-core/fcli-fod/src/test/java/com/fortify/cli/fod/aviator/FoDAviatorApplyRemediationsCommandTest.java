@@ -18,6 +18,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.lang.reflect.Field;
 import java.nio.file.Path;
+import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
@@ -62,6 +63,36 @@ class FoDAviatorApplyRemediationsCommandTest {
         field.setAccessible(true);
         field.set(command, "");
         assertThrows(FcliSimpleException.class, command::getJsonNode);
+    }
+
+    @Test
+    void previewFlagParsedCorrectly() throws Exception {
+        FoDAviatorApplyRemediationsCommand command = parse("--from-cache", "remediations.zip", "--preview");
+        Field previewField = FoDAviatorApplyRemediationsCommand.class.getDeclaredField("previewMode");
+        previewField.setAccessible(true);
+        assertTrue((Boolean) previewField.get(command));
+    }
+
+    @Test
+    void previewWorksWithIssueIds() throws Exception {
+        FoDAviatorApplyRemediationsCommand command = parse("--from-cache", "cache.zip", "--preview", "--issue-ids", "ISSUE-1,ISSUE-2");
+        Field previewField = FoDAviatorApplyRemediationsCommand.class.getDeclaredField("previewMode");
+        previewField.setAccessible(true);
+        assertTrue((Boolean) previewField.get(command));
+        
+        Field issueIdsField = FoDAviatorApplyRemediationsCommand.class.getDeclaredField("issueIds");
+        issueIdsField.setAccessible(true);
+        @SuppressWarnings("unchecked")
+        List<String> issueIds = (List<String>) issueIdsField.get(command);
+        assertEquals(2, issueIds.size());
+    }
+
+    @Test
+    void previewWorksWithOnlineSelection() throws Exception {
+        FoDAviatorApplyRemediationsCommand command = parse("--release", "123", "--preview");
+        Field previewField = FoDAviatorApplyRemediationsCommand.class.getDeclaredField("previewMode");
+        previewField.setAccessible(true);
+        assertTrue((Boolean) previewField.get(command));
     }
 
     private static FoDAviatorApplyRemediationsCommand parse(String... args) {

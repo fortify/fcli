@@ -49,6 +49,10 @@ import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
 import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
 import com.fortify.cli.aviator._common.util.AviatorRemediationMetricsHelper;
 import com.fortify.cli.aviator.fpr.model.FVDLMetadata;
+import com.fortify.cli.aviator.fpr.processor.preview.ChangeDetail;
+import com.fortify.cli.aviator.fpr.processor.preview.FileChange;
+import com.fortify.cli.aviator.fpr.processor.preview.FilePreview;
+import com.fortify.cli.aviator.fpr.processor.preview.PreviewDetail;
 import com.fortify.cli.aviator.util.FprHandle;
 import com.fortify.cli.aviator.util.FuzzyContextSearcher;
 
@@ -59,10 +63,25 @@ public class RemediationProcessor {
     private final FprHandle fprHandle;
     private final String sourceCodeDirectory;
     private final Set<String> issueIdFilter;
+    /**
+     * Preview mode performs full validation and processing without modifying files.
+     * This is idempotent and side-effect-free: running preview multiple times produces
+     * identical results and does not affect the file system. The only state accumulation
+     * is in-memory for metrics and preview details, which is thread-local to each invocation.
+     */
+    private final boolean previewMode;
 
     /**
      * Apply-remediations summary. Mode is explicit: unfiltered counts XML remediations;
      * filtered counts requested issue IDs. Factories are the only public construction path.
+     * 
+     * <p><b>Preview Details:</b> The {@code previewDetails} field is null when not in preview mode,
+     * and non-null (possibly empty list) when in preview mode. Callers should check both
+     * {@code previewMode} flag (from context) and null status before accessing preview data.
+     * This design avoids Optional in record fields (per style guidelines) while maintaining
+     * clear semantics: null = not applicable, empty list = no preview data available.</p>
+     * 
+     * @param previewDetails Detailed change information per issue (null if not in preview mode)
      */
     public record RemediationMetric(
             Mode mode,
@@ -72,7 +91,8 @@ public class RemediationProcessor {
             Set<String> modifiedFiles,
             Map<String, Integer> skippedByReason,
             Set<String> requestedIssueIds,
-            Set<String> appliedIssueIds) {
+            Set<String> appliedIssueIds,
+            List<PreviewDetail> previewDetails) {
 
         public enum Mode {
             UNFILTERED,
@@ -95,30 +115,41 @@ public class RemediationProcessor {
                 requestedIssueIds = immutableCopy(requestedIssueIds);
                 appliedIssueIds = immutableCopy(appliedIssueIds);
             }
+            previewDetails = previewDetails == null ? null : Collections.unmodifiableList(List.copyOf(previewDetails));
         }
 
         public static RemediationMetric unfiltered(int totalRemediations, int appliedRemediations, Set<String> modifiedFiles) {
-            return unfiltered(totalRemediations, appliedRemediations, modifiedFiles, Map.of());
+            return unfiltered(totalRemediations, appliedRemediations, modifiedFiles, Map.of(), null);
         }
 
         public static RemediationMetric unfiltered(int totalRemediations, int appliedRemediations, Set<String> modifiedFiles,
                 Map<String, Integer> skippedByReason) {
+            return unfiltered(totalRemediations, appliedRemediations, modifiedFiles, skippedByReason, null);
+        }
+
+        public static RemediationMetric unfiltered(int totalRemediations, int appliedRemediations, Set<String> modifiedFiles,
+                Map<String, Integer> skippedByReason, List<PreviewDetail> previewDetails) {
             return new RemediationMetric(Mode.UNFILTERED, totalRemediations, appliedRemediations,
-                    totalRemediations - appliedRemediations, modifiedFiles, skippedByReason, Set.of(), Set.of());
+                    totalRemediations - appliedRemediations, modifiedFiles, skippedByReason, Set.of(), Set.of(), previewDetails);
         }
 
         public static RemediationMetric filtered(Set<String> requestedIssueIds, Set<String> appliedIssueIds, Set<String> modifiedFiles) {
-            return filtered(requestedIssueIds, appliedIssueIds, modifiedFiles, Map.of());
+            return filtered(requestedIssueIds, appliedIssueIds, modifiedFiles, Map.of(), null);
         }
 
         public static RemediationMetric filtered(Set<String> requestedIssueIds, Set<String> appliedIssueIds, Set<String> modifiedFiles,
                 Map<String, Integer> skippedByReason) {
+            return filtered(requestedIssueIds, appliedIssueIds, modifiedFiles, skippedByReason, null);
+        }
+
+        public static RemediationMetric filtered(Set<String> requestedIssueIds, Set<String> appliedIssueIds, Set<String> modifiedFiles,
+                Map<String, Integer> skippedByReason, List<PreviewDetail> previewDetails) {
             Set<String> requested = requestedIssueIds == null ? Set.of() : requestedIssueIds;
             Set<String> applied = appliedIssueIds == null ? Set.of() : appliedIssueIds;
             int totalRemediations = requested.size();
             int appliedRemediations = applied.size();
             return new RemediationMetric(Mode.FILTERED, totalRemediations, appliedRemediations,
-                    totalRemediations - appliedRemediations, modifiedFiles, skippedByReason, requested, applied);
+                    totalRemediations - appliedRemediations, modifiedFiles, skippedByReason, requested, applied, previewDetails);
         }
 
         public boolean isFiltered() {
@@ -132,7 +163,14 @@ public class RemediationProcessor {
 
     private record FvdlMetadataResult(FVDLMetadata metadata, SkipReason skipReason) {}
 
-    private record PendingFileWrite(String filename, Path filePath, String content, byte[] updatedBytes) {}
+    private record PendingFileWrite(
+            String filename, 
+            Path filePath, 
+            String originalContent, 
+            String content, 
+            byte[] updatedBytes,
+            String encoding,
+            List<ChangeDetail> changeDetails) {}
 
     private record RollbackFileWrite(String filename, Path filePath, byte[] originalBytes) {}
 
@@ -201,13 +239,18 @@ public class RemediationProcessor {
     }
 
     public RemediationProcessor(FprHandle fprHandle, String sourceCodeDirectory) {
-        this(fprHandle, sourceCodeDirectory, null);
+        this(fprHandle, sourceCodeDirectory, null, false);
     }
 
     public RemediationProcessor(FprHandle fprHandle, String sourceCodeDirectory, Set<String> issueIdFilter) {
+        this(fprHandle, sourceCodeDirectory, issueIdFilter, false);
+    }
+
+    public RemediationProcessor(FprHandle fprHandle, String sourceCodeDirectory, Set<String> issueIdFilter, boolean previewMode) {
         this.fprHandle = fprHandle;
         this.sourceCodeDirectory = sourceCodeDirectory;
         this.issueIdFilter = issueIdFilter == null ? null : Collections.unmodifiableSet(new LinkedHashSet<>(issueIdFilter));
+        this.previewMode = previewMode;
     }
 
     public RemediationMetric processRemediationXML() {
@@ -215,7 +258,7 @@ public class RemediationProcessor {
         Path sourceBasePath = getSourceBasePath();
         LOG.debug("Applying remediations from {} to source directory {}", remediationPath, sourceBasePath);
         FvdlMetadataResult fvdlMetadataResult = loadFvdlMetadata();
-        ProcessingState state = new ProcessingState(issueIdFilter);
+        ProcessingState state = new ProcessingState(issueIdFilter, previewMode);
 
         try (InputStream remediationStream = Files.newInputStream(remediationPath)) {
             Document remediationDoc = parseRemediationDocument(remediationStream);
@@ -291,11 +334,17 @@ public class RemediationProcessor {
         private final Set<String> seenRequestedIssueIds = new LinkedHashSet<>();
         private final Set<String> modifiedFiles = new LinkedHashSet<>();
         private final Map<String, Integer> skippedByReason = new LinkedHashMap<>();
+        private final boolean previewMode;
+        private final Map<String, Map<String, FileMetadata>> changesByIssue = new LinkedHashMap<>();
+        private final Map<String, String> skipReasonsByIssue = new LinkedHashMap<>();
         private int xmlEntryCount;
         private int appliedRemediations;
 
-        private ProcessingState(Set<String> issueIdFilter) {
+        private record FileMetadata(String path, String encoding, List<ChangeDetail> changes) {}
+
+        private ProcessingState(Set<String> issueIdFilter, boolean previewMode) {
             this.requestedIssueIds = issueIdFilter == null ? null : new LinkedHashSet<>(issueIdFilter);
+            this.previewMode = previewMode;
         }
 
         private void setXmlEntryCount(int xmlEntryCount) {
@@ -323,9 +372,82 @@ public class RemediationProcessor {
             skippedByReason.merge(reason.displayName, 1, Integer::sum);
         }
 
+        private void recordSkipForIssue(String instanceId, SkipReason reason) {
+            recordSkip(reason);
+            if (previewMode) {
+                skipReasonsByIssue.put(instanceId, reason.displayName);
+            }
+        }
+
+        private void addChangeDetails(String instanceId, String filename, String encoding, List<ChangeDetail> changes) {
+            if (previewMode) {
+                changesByIssue
+                    .computeIfAbsent(instanceId, k -> new LinkedHashMap<>())
+                    .compute(filename, (k, existing) -> {
+                        if (existing == null) {
+                            return new FileMetadata(filename, encoding, new ArrayList<>(changes));
+                        } else {
+                            existing.changes.addAll(changes);
+                            return existing;
+                        }
+                    });
+            }
+        }
+
+        private List<PreviewDetail> buildPreviewDetails() {
+            if (!previewMode) {
+                return null;
+            }
+            List<PreviewDetail> details = new ArrayList<>();
+            
+            // Add successfully processed remediations
+            for (var issueEntry : changesByIssue.entrySet()) {
+                String issueId = issueEntry.getKey();
+                Map<String, FilePreview> fileMap = new LinkedHashMap<>();
+                
+                for (var fileEntry : issueEntry.getValue().entrySet()) {
+                    String filename = fileEntry.getKey();
+                    FileMetadata metadata = fileEntry.getValue();
+                    
+                    // Direct collection without intermediate list allocation
+                    List<FileChange> fileChanges = metadata.changes.stream()
+                        .map(ChangeDetail::toFileChange)
+                        .collect(java.util.stream.Collectors.toUnmodifiableList());
+                    
+                    FilePreview filePreview = new FilePreview(filename, metadata.path, metadata.encoding, fileChanges);
+                    fileMap.put(filename, filePreview);
+                }
+                details.add(PreviewDetail.available(issueId, fileMap));
+            }
+            
+            // Add skipped remediations
+            for (var entry : skipReasonsByIssue.entrySet()) {
+                String issueId = entry.getKey();
+                String skipReason = entry.getValue();
+                // Only add if not already in successful list
+                if (!changesByIssue.containsKey(issueId)) {
+                    details.add(PreviewDetail.skipped(issueId, skipReason));
+                }
+            }
+            
+            return details;
+        }
+
         private RemediationMetric toMetric() {
+            // Validate requested issue IDs before building metric
+            validateRequestedIssueIds();
+            
+            List<PreviewDetail> previewDetails = buildPreviewDetails();
+            
             if (requestedIssueIds == null) {
-                return RemediationMetric.unfiltered(xmlEntryCount, appliedRemediations, modifiedFiles, skippedByReason);
+                return RemediationMetric.unfiltered(xmlEntryCount, appliedRemediations, modifiedFiles, skippedByReason, previewDetails);
+            }
+            return RemediationMetric.filtered(requestedIssueIds, appliedIssueIds, modifiedFiles, skippedByReason, previewDetails);
+        }
+        
+        private void validateRequestedIssueIds() {
+            if (requestedIssueIds == null) {
+                return;
             }
             for (String requestedId : requestedIssueIds) {
                 if (appliedIssueIds.contains(requestedId)) {
@@ -334,12 +456,14 @@ public class RemediationProcessor {
                 if (!seenRequestedIssueIds.contains(requestedId)) {
                     recordSkip(SkipReason.REQUESTED_ISSUE_NOT_FOUND);
                     LOG.debug("Requested issue ID '{}' was not found in remediations.xml", requestedId);
+                    if (previewMode) {
+                        skipReasonsByIssue.put(requestedId, SkipReason.REQUESTED_ISSUE_NOT_FOUND.displayName);
+                    }
                 } else {
                     LOG.debug("Requested issue ID '{}' was present in remediations.xml but could not be applied",
                             requestedId);
                 }
             }
-            return RemediationMetric.filtered(requestedIssueIds, appliedIssueIds, modifiedFiles, skippedByReason);
         }
     }
 
@@ -349,25 +473,38 @@ public class RemediationProcessor {
         try {
             Map<Path, PendingFileWrite> pendingWrites = prepareFileChanges(remediation, sourceBasePath, fvdlMetadataResult);
             if (pendingWrites.isEmpty()) {
-                state.recordSkip(SkipReason.NO_CHANGES);
+                state.recordSkipForIssue(instanceId, SkipReason.NO_CHANGES);
                 return false;
             }
-            try {
-                commitRemediationWrites(instanceId, pendingWrites, state.modifiedFiles);
+            
+            if (previewMode) {
+                // Preview mode: collect change details without writing files
+                for (PendingFileWrite pendingWrite : pendingWrites.values()) {
+                    // Use filename (relative path from FVDL) instead of absolute filePath for security
+                    state.addChangeDetails(instanceId, pendingWrite.filename(), 
+                            pendingWrite.encoding(), pendingWrite.changeDetails());
+                    state.modifiedFiles.add(pendingWrite.filename());
+                }
                 return true;
-            } catch (RemediationCommitException e) {
-                rollbackRemediationWrites(instanceId, e.getRollbacks());
-                throw new SkipRemediationException(SkipReason.SOURCE_WRITE_FAILED, e.getMessage(), e);
+            } else {
+                // Apply mode: write files
+                try {
+                    commitRemediationWrites(instanceId, pendingWrites, state.modifiedFiles);
+                    return true;
+                } catch (RemediationCommitException e) {
+                    rollbackRemediationWrites(instanceId, e.getRollbacks());
+                    throw new SkipRemediationException(SkipReason.SOURCE_WRITE_FAILED, e.getMessage(), e);
+                }
             }
         } catch (SkipRemediationException e) {
-            state.recordSkip(e.reason);
+            state.recordSkipForIssue(instanceId, e.reason);
             LOG.info("Skipping remediation {}: {}", instanceId, e.getMessage());
             LOG.debug("Skip reason for remediation {}: {}", instanceId, e.reason.displayName, e);
             return false;
         } catch (RollbackRemediationException e) {
             throw e;
         } catch (Exception e) {
-            state.recordSkip(SkipReason.UNEXPECTED_ERROR);
+            state.recordSkipForIssue(instanceId, SkipReason.UNEXPECTED_ERROR);
             LOG.info("Skipping remediation {} due to an unexpected processing error", instanceId);
             LOG.debug("Unexpected error while processing remediation {}", instanceId, e);
             return false;
@@ -413,18 +550,27 @@ public class RemediationProcessor {
         LOG.debug("Remediation {} has {} change(s) for '{}' using FVDL encoding {}", instanceId, changesNodes.getLength(), filename,
                 sourceEncoding.name());
 
-        String updatedContent = getPendingOrSourceContent(filePath, filename, sourceEncoding, pendingWrites);
+        String originalContent = getPendingOrSourceContent(filePath, filename, sourceEncoding, pendingWrites);
+        String updatedContent = originalContent;
+        List<ChangeDetail> changeDetails = new ArrayList<>();
+        
         for (int k = 0; k < changesNodes.getLength(); k++) {
-            updatedContent = applyChange(instanceId, filename, fileHash, sourceEncoding, updatedContent,
+            ChangeResult changeResult = applyChange(instanceId, filename, fileHash, sourceEncoding, updatedContent,
                     (Element) changesNodes.item(k), k + 1);
+            updatedContent = changeResult.updatedContent();
+            changeDetails.add(changeResult.changeDetail());
         }
+        
         byte[] updatedBytes = encodeStrict(updatedContent, sourceEncoding, filename);
-        pendingWrites.put(filePath, new PendingFileWrite(filename, filePath, updatedContent, updatedBytes));
+        pendingWrites.put(filePath, new PendingFileWrite(filename, filePath, originalContent, updatedContent, updatedBytes, 
+                sourceEncoding.name(), changeDetails));
         LOG.debug("Staged remediation {} for '{}' using FVDL encoding {}; changes={}, encodedBytes={}", instanceId, filename,
                 sourceEncoding.name(), changesNodes.getLength(), updatedBytes.length);
     }
+    
+    private record ChangeResult(String updatedContent, ChangeDetail changeDetail) {}
 
-    private String applyChange(String instanceId, String filename, String fileHash, Charset sourceEncoding, String originalContent,
+    private ChangeResult applyChange(String instanceId, String filename, String fileHash, Charset sourceEncoding, String originalContent,
             Element change, int changeIndex) {
         String lineSeparator = detectLineSeparator(originalContent);
         String content = normalizeLineEndings(originalContent);
@@ -437,12 +583,27 @@ public class RemediationProcessor {
         int lineTo = parseRequiredInt(change, "LineTo");
         LOG.debug("Remediation {} change {} for '{}' targets lines {}-{}", instanceId, changeIndex, filename, lineFrom, lineTo);
 
+        // Extract context metadata
+        Element contextElement = (Element) change.getElementsByTagNameNS(NAMESPACE_URI, "Context").item(0);
+        int contextBefore = 0;
+        int contextAfter = 0;
+        String contextText = "";
+        
+        if (contextElement != null) {
+            contextBefore = parseIntAttribute(contextElement, "before", 0);
+            contextAfter = parseIntAttribute(contextElement, "after", 0);
+            contextText = contextElement.getTextContent();
+        }
+
+        String originalCodeText = getRequiredElementText(change, "OriginalCode");
+        String newCodeText = getRequiredElementText(change, "NewCode");
+        boolean fuzzyMatched = false;
+
         String calculatedHash = calculateHashBase64(content, "SHA-256");
         boolean fileHashMatches = calculatedHash.equals(fileHash);
         LOG.debug("Remediation {} hash check for '{}': {}", instanceId, filename, fileHashMatches ? "matched" : "mismatched");
         if (!fileHashMatches) {
             LOG.debug("File hash mismatch for remediation {} in {}; searching changed source content", instanceId, filename);
-            String contextText = getRequiredElementText(change, "Context");
             List<String> contextLine = Arrays.asList(contextText.split("\\r?\\n"));
             int contextLineFrom = fuzzySearchContext(instanceId, filename, originalLines, contextLine);
             if (contextLineFrom == -1) {
@@ -453,7 +614,6 @@ public class RemediationProcessor {
             }
             LOG.debug("Context for remediation {} in {} matched at line {}", instanceId, filename, contextLineFrom + 1);
 
-            String originalCodeText = getRequiredElementText(change, "OriginalCode");
             List<String> originalCodeLine = Arrays.asList(originalCodeText.split("\\r?\\n"));
             int[] lineFromTo = fuzzySearchOriginalCode(instanceId, filename, originalLines, originalCodeLine, contextLineFrom);
             if (lineFromTo[0] == -1 || lineFromTo[1] == -1) {
@@ -464,24 +624,48 @@ public class RemediationProcessor {
             }
             lineFrom = lineFromTo[0] + 1;
             lineTo = lineFromTo[1] + 1;
+            fuzzyMatched = true;
             LOG.debug("Original code for remediation {} in {} matched at lines {}-{}", instanceId, filename, lineFrom, lineTo);
         }
 
         validateLineRange(lineFrom, lineTo, originalLines.size(), filename);
-        List<String> newCodeLines = Arrays.asList(getRequiredElementText(change, "NewCode").split("\\r?\\n"));
+        List<String> newCodeLines = Arrays.asList(newCodeText.split("\\r?\\n"));
         List<String> updatedLines = new ArrayList<>();
         updatedLines.addAll(originalLines.subList(0, lineFrom - 1));
         updatedLines.addAll(newCodeLines);
         updatedLines.addAll(originalLines.subList(lineTo, originalLines.size()));
         LOG.debug("Staged remediation {} change {} for '{}' using FVDL encoding {}; updatedLines={}", instanceId, changeIndex,
                 filename, sourceEncoding.name(), updatedLines.size());
-        return String.join(lineSeparator, updatedLines);
+        
+        String updatedContent = String.join(lineSeparator, updatedLines);
+        ChangeDetail changeDetail = new ChangeDetail(
+                changeIndex, lineFrom, lineTo, originalCodeText, newCodeText,
+                contextBefore, contextAfter, contextText, fuzzyMatched);
+        
+        return new ChangeResult(updatedContent, changeDetail);
+    }
+    
+    private int parseIntAttribute(Element element, String attrName, int defaultValue) {
+        String value = element.getAttribute(attrName);
+        if (value == null || value.isEmpty()) {
+            return defaultValue;
+        }
+        try {
+            return Integer.parseInt(value);
+        } catch (NumberFormatException e) {
+            LOG.warn("Invalid {} attribute value '{}', using default {}", attrName, value, defaultValue);
+            return defaultValue;
+        }
     }
 
     private String getPendingOrSourceContent(Path filePath, String filename, Charset sourceEncoding,
             Map<Path, PendingFileWrite> pendingWrites) {
         PendingFileWrite pendingWrite = pendingWrites.get(filePath);
-        return pendingWrite == null ? readSourceFile(filePath, filename, sourceEncoding) : pendingWrite.content();
+        if (pendingWrite == null) {
+            return readSourceFile(filePath, filename, sourceEncoding);
+        }
+        // If there's a pending write, use its updated content (not original) for next change
+        return pendingWrite.content();
     }
 
     private void commitRemediationWrites(String instanceId, Map<Path, PendingFileWrite> pendingWrites, Set<String> modifiedFiles)

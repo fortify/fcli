@@ -60,6 +60,8 @@ public class FoDAviatorApplyRemediationsCommand extends AbstractOutputCommand
     private String sourceCodeDirectory = System.getProperty("user.dir");
     @Option(names = {"--issue-ids"}, split = ",")
     private List<String> issueIds;
+    @Option(names = {"--preview"}, descriptionKey = "fcli.fod.aviator.apply-remediations.preview")
+    private boolean previewMode = false;
 
     @Override
     public JsonNode getJsonNode() {
@@ -82,8 +84,8 @@ public class FoDAviatorApplyRemediationsCommand extends AbstractOutputCommand
         try (FoDOnlineRemediationsFprSource source =
                 new FoDOnlineRemediationsFprSource(unirest, logger, release)) {
             ApplyResult applyResult = RemediationsApplyHelper.apply(
-                    source, sourceCodeDirectory, logger, issueIdFilter, LOG);
-            return AviatorFoDApplyRemediationsHelper.buildOnlineResultNode(release, applyResult);
+                    source, sourceCodeDirectory, logger, issueIdFilter, LOG, previewMode);
+            return AviatorFoDApplyRemediationsHelper.buildOnlineResultNode(release, applyResult, previewMode);
         }
     }
 
@@ -92,9 +94,9 @@ public class FoDAviatorApplyRemediationsCommand extends AbstractOutputCommand
                 sourceSelector.getFromCache(),
                 RemediationsCacheConstants.PRODUCT_FOD)) {
             ApplyResult applyResult = RemediationsApplyHelper.apply(
-                    source, sourceCodeDirectory, logger, issueIdFilter, LOG);
+                    source, sourceCodeDirectory, logger, issueIdFilter, LOG, previewMode);
             return AviatorFoDApplyRemediationsHelper.buildCacheResultNode(
-                    sourceSelector.getFromCache(), applyResult, issueIdFilter);
+                    sourceSelector.getFromCache(), applyResult, issueIdFilter, previewMode);
         }
     }
 

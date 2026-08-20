@@ -30,21 +30,27 @@ public class ApplyAutoRemediationOnSource {
 
     public static RemediationMetric applyRemediations(FprHandle fprHandle, String sourceCodeDirectory, IAviatorLogger logger)
             throws AviatorSimpleException, AviatorTechnicalException {
-        return applyRemediations(fprHandle, sourceCodeDirectory, logger, null);
+        return applyRemediations(fprHandle, sourceCodeDirectory, logger, null, false);
     }
 
     public static RemediationMetric applyRemediations(FprHandle fprHandle, String sourceCodeDirectory, IAviatorLogger logger,
             Set<String> issueIdFilter)
             throws AviatorSimpleException, AviatorTechnicalException {
+        return applyRemediations(fprHandle, sourceCodeDirectory, logger, issueIdFilter, false);
+    }
 
-        LOG.info("Starting apply auto-remediation process for file: {}", fprHandle.getFprPath());
+    public static RemediationMetric applyRemediations(FprHandle fprHandle, String sourceCodeDirectory, IAviatorLogger logger,
+            Set<String> issueIdFilter, boolean previewMode)
+            throws AviatorSimpleException, AviatorTechnicalException {
+
+        LOG.info("Starting {} process for file: {}", previewMode ? "preview" : "apply auto-remediation", fprHandle.getFprPath());
 
         if (!fprHandle.hasRemediations()) {
             throw new AviatorSimpleException("FPR file does not contain remediations.xml file.");
         }
         LOG.info("FPR validation successful");
 
-        RemediationProcessor remediationProcessor = new RemediationProcessor(fprHandle, sourceCodeDirectory, issueIdFilter);
+        RemediationProcessor remediationProcessor = new RemediationProcessor(fprHandle, sourceCodeDirectory, issueIdFilter, previewMode);
         return remediationProcessor.processRemediationXML();
 
     }

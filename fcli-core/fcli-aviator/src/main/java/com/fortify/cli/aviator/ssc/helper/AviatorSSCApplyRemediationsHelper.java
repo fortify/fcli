@@ -36,13 +36,23 @@ public final class AviatorSSCApplyRemediationsHelper {
             String appVersionId,
             ApplyResult applyResult,
             Set<String> issueIdFilter) {
+        return buildOnlineResultNode(artifacts, appVersionId, applyResult, issueIdFilter, false);
+    }
+
+    public static ObjectNode buildOnlineResultNode(
+            List<SSCArtifactDescriptor> artifacts,
+            String appVersionId,
+            ApplyResult applyResult,
+            Set<String> issueIdFilter,
+            boolean previewMode) {
         RemediationMetric aggregated = AviatorRemediationMetricsHelper.aggregateMetrics(
                 issueIdFilter, applyResult.metrics());
         return buildCommonNode(
                 resolveAppVersionId(artifacts, appVersionId),
                 resolveSingleArtifactId(artifacts, applyResult),
                 applyResult,
-                aggregated);
+                aggregated,
+                previewMode);
     }
 
     public static ObjectNode buildCacheResultNode(
@@ -50,10 +60,19 @@ public final class AviatorSSCApplyRemediationsHelper {
             ApplyResult applyResult,
             Set<String> issueIdFilter,
             Map<String, String> selection) {
+        return buildCacheResultNode(cacheZip, applyResult, issueIdFilter, selection, false);
+    }
+
+    public static ObjectNode buildCacheResultNode(
+            Path cacheZip,
+            ApplyResult applyResult,
+            Set<String> issueIdFilter,
+            Map<String, String> selection,
+            boolean previewMode) {
         RemediationMetric aggregated = AviatorRemediationMetricsHelper.aggregateMetrics(
                 issueIdFilter, applyResult.metrics());
         String appVersionId = selection != null ? selection.get("appVersionId") : null;
-        ObjectNode result = buildCommonNode(appVersionId, null, applyResult, aggregated);
+        ObjectNode result = buildCommonNode(appVersionId, null, applyResult, aggregated, previewMode);
         AviatorRemediationMetricsHelper.putCacheExtras(
                 result, cacheZip, applyResult.processedEntries(), "artifactIds", applyResult.processedIds());
         return result;
@@ -63,13 +82,15 @@ public final class AviatorSSCApplyRemediationsHelper {
             String appVersionId,
             String artifactId,
             ApplyResult applyResult,
-            RemediationMetric aggregated) {
+            RemediationMetric aggregated,
+            boolean previewMode) {
         ObjectNode result = JsonHelper.getObjectMapper().createObjectNode();
         result.put("appVersionId", AviatorRemediationMetricsHelper.na(appVersionId));
         result.put("artifactId", AviatorRemediationMetricsHelper.na(artifactId));
         result.put("artifactsProcessed", applyResult.metrics().size());
         result.put("artifactsSkipped", applyResult.skipped());
-        AviatorRemediationMetricsHelper.putMetricAndAction(result, aggregated);
+        result.put("previewMode", previewMode);
+        AviatorRemediationMetricsHelper.putMetricAndAction(result, aggregated, previewMode);
         return result;
     }
 

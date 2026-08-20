@@ -60,6 +60,8 @@ public class AviatorSSCApplyRemediationsCommand extends AbstractOutputCommand
     private String sourceCodeDirectory = System.getProperty("user.dir");
     @Option(names = {"--issue-ids"}, split = ",")
     private List<String> issueIds;
+    @Option(names = {"--preview"}, descriptionKey = "fcli.aviator.ssc.apply-remediations.preview")
+    private boolean previewMode = false;
 
     @Override
     public JsonNode getJsonNode() {
@@ -82,12 +84,13 @@ public class AviatorSSCApplyRemediationsCommand extends AbstractOutputCommand
                 sourceSelector.getFromCache(),
                 RemediationsCacheConstants.PRODUCT_SSC)) {
             ApplyResult applyResult = RemediationsApplyHelper.apply(
-                    source, sourceCodeDirectory, logger, issueIdFilter, LOG);
+                    source, sourceCodeDirectory, logger, issueIdFilter, LOG, previewMode);
             return AviatorSSCApplyRemediationsHelper.buildCacheResultNode(
                     sourceSelector.getFromCache(),
                     applyResult,
                     issueIdFilter,
-                    source.reader().getManifest().getSelection());
+                    source.reader().getManifest().getSelection(),
+                    previewMode);
         }
     }
 
@@ -100,9 +103,9 @@ public class AviatorSSCApplyRemediationsCommand extends AbstractOutputCommand
         try (SSCOnlineRemediationsFprSource source = new SSCOnlineRemediationsFprSource(
                 unirest, logger, progressWriter, resolved.artifacts())) {
             ApplyResult applyResult = RemediationsApplyHelper.apply(
-                    source, sourceCodeDirectory, logger, issueIdFilter, LOG);
+                    source, sourceCodeDirectory, logger, issueIdFilter, LOG, previewMode);
             return AviatorSSCApplyRemediationsHelper.buildOnlineResultNode(
-                    resolved.artifacts(), resolved.appVersionId(), applyResult, issueIdFilter);
+                    resolved.artifacts(), resolved.appVersionId(), applyResult, issueIdFilter, previewMode);
         }
     }
 
