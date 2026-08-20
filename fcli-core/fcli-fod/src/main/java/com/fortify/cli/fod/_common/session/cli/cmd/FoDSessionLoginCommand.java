@@ -69,7 +69,7 @@ public class FoDSessionLoginCommand extends AbstractSessionLoginCommand<FoDSessi
 
     @Override
     protected FoDSessionDescriptor login(String sessionName) {
-        FoDSessionDescriptor sessionDescriptor;
+        FoDSessionDescriptor sessionDescriptor = null;
         IUrlConfig urlConfig = loginOptions.getUrlConfigOptions();
         if (loginOptions.hasClientCredentials()) {
             try {
@@ -77,10 +77,7 @@ public class FoDSessionLoginCommand extends AbstractSessionLoginCommand<FoDSessi
                         loginOptions.getClientCredentialOptions(), loginOptions.getAuthOptions().getScopes());
                 sessionDescriptor = new FoDSessionDescriptor(urlConfig, createTokenResponse);
             } catch (UnexpectedHttpResponseException e) {
-                if (e.getStatus() == 400) { 
-                    throw new FcliSimpleException(ERROR_CLIENT_CREDENTIALS);
-                }
-                throw new FcliTechnicalException(e.getMessage(), e);
+                handleUnexpectedHttpResponseException(e, ERROR_CLIENT_CREDENTIALS);
             }
         } else if (loginOptions.hasUserCredentials()) {
             try {
@@ -89,15 +86,19 @@ public class FoDSessionLoginCommand extends AbstractSessionLoginCommand<FoDSessi
                         loginOptions.getAuthOptions().getScopes());
                 sessionDescriptor = new FoDSessionDescriptor(urlConfig, createTokenResponse);
             } catch (UnexpectedHttpResponseException e) {
-                if (e.getStatus() == 400) {
-                    String errorMessage = loginOptions.hasSecurityCode() ? ERROR_WITH_CODE : ERROR_WITHOUT_CODE;
-                    throw new FcliSimpleException(errorMessage);
-                }
-                throw new FcliTechnicalException(e.getMessage(), e);
+                String errorMessage = loginOptions.hasSecurityCode() ? ERROR_WITH_CODE : ERROR_WITHOUT_CODE;
+                handleUnexpectedHttpResponseException(e, errorMessage);
             }
         } else {
             throw new FcliSimpleException("Either FoD client or user credentials must be provided");
         }
         return sessionDescriptor;
+    }
+
+    private void handleUnexpectedHttpResponseException(UnexpectedHttpResponseException e, String msg) {
+        if (e.getStatus() == 400) {
+            throw new FcliSimpleException(msg);
+        }
+        throw new FcliTechnicalException(e.getMessage(), e);
     }
 }

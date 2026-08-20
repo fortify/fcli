@@ -31,7 +31,7 @@ public class FoDOAuthHelper {
     
     public static final FoDTokenCreateResponse createToken(IUrlConfig urlConfig, IFoDUserCredentials uc, String... scopes) {
         Map<String,Object> formData = generateTokenRequest(uc, null, scopes);
-    try ( var unirest = UnirestHelper.createUnirestInstance() ) {
+        try ( var unirest = UnirestHelper.createUnirestInstance() ) {
             return createToken(unirest, urlConfig, formData);
         }
     }
@@ -45,7 +45,7 @@ public class FoDOAuthHelper {
 
     public static final FoDTokenCreateResponse createToken(IUrlConfig urlConfig, IFoDClientCredentials cc, String... scopes) {
         Map<String,Object> formData = generateTokenRequest(cc, scopes);
-    try ( var unirest = UnirestHelper.createUnirestInstance() ) {
+        try ( var unirest = UnirestHelper.createUnirestInstance() ) {
             return createToken(unirest, urlConfig, formData);
         }
     }
