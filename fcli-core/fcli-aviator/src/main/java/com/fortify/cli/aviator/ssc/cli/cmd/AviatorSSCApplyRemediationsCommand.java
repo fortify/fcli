@@ -116,8 +116,8 @@ public class AviatorSSCApplyRemediationsCommand extends AbstractOutputCommand
 
     @Override
     public String getActionCommandResult() {
-        // Fallback only if result JSON has no __action__; helpers set Remediation-Applied / No-Remediation-Applied.
-        return "Remediation-Applied";
+        // Fallback only if result JSON has no __action__; helpers set the appropriate action based on previewMode.
+        return previewMode ? "Remediation-Previewed" : "Remediation-Applied";
     }
 
     @Override

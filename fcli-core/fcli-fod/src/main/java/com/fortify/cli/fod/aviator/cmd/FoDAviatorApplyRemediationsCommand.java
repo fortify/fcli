@@ -107,7 +107,7 @@ public class FoDAviatorApplyRemediationsCommand extends AbstractOutputCommand
 
     @Override
     public String getActionCommandResult() {
-        return "Remediation-Applied";
+        return previewMode ? "Remediation-Previewed" : "Remediation-Applied";
     }
 
     @Override

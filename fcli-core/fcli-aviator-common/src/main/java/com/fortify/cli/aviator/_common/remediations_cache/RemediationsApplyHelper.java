@@ -86,9 +86,9 @@ public final class RemediationsApplyHelper {
         return acc.toResult();
     }
 
-    /** @see AviatorRemediationMetricsHelper#actionLabel(RemediationMetric) */
-    public static String actionLabel(RemediationMetric metric) {
-        return AviatorRemediationMetricsHelper.actionLabel(metric);
+    /** @see AviatorRemediationMetricsHelper#actionLabel(RemediationMetric, boolean) */
+    public static String actionLabel(RemediationMetric metric, boolean previewMode) {
+        return AviatorRemediationMetricsHelper.actionLabel(metric, previewMode);
     }
 
     private static RemediationMetric applyOne(

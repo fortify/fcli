@@ -102,8 +102,12 @@ public final class AviatorRemediationMetricsHelper {
         return String.join(", ", parts);
     }
 
-    public static String actionLabel(RemediationMetric metric) {
-        return metric != null && metric.appliedRemediations() > 0 ? "Remediation-Applied" : "No-Remediation-Applied";
+    public static String actionLabel(RemediationMetric metric, boolean previewMode) {
+        if (metric != null && metric.appliedRemediations() > 0) {
+            return previewMode ? "Remediation-Previewed" : "Remediation-Applied";
+        } else {
+            return previewMode ? "No-Remediation-Previewed" : "No-Remediation-Applied";
+        }
     }
 
     public static String na(String value) {
@@ -137,7 +141,7 @@ public final class AviatorRemediationMetricsHelper {
     /** Metric fields plus {@code __action__} and optional preview details (shared by SSC/FoD result builders). */
     public static void putMetricAndAction(ObjectNode result, RemediationMetric metric, boolean previewMode) {
         putRemediationMetricFields(result, metric);
-        result.put(IActionCommandResultSupplier.actionFieldName, actionLabel(metric));
+        result.put(IActionCommandResultSupplier.actionFieldName, actionLabel(metric, previewMode));
         
         if (previewMode && metric != null && metric.previewDetails() != null) {
             result.set("previewDetails", toPreviewDetailsArray(metric.previewDetails()));
