@@ -24,8 +24,6 @@ import com.fortify.cli.fod._common.output.cli.cmd.AbstractFoDOutputCommand;
 import com.fortify.cli.fod._common.rest.FoDUrls;
 import com.fortify.cli.fod._common.rest.helper.FoDInputTransformer;
 import com.fortify.cli.fod.issue.cli.mixin.FoDIssueEmbedMixin;
-import com.fortify.cli.fod.issue.helper.FoDIssueHelper;
-import com.fortify.cli.fod.issue.helper.FoDIssueHelper.IssueAggregationData;
 import com.fortify.cli.fod.release.cli.mixin.FoDReleaseByQualifiedNameOrIdResolverMixin;
 import com.fortify.cli.fod.release.helper.FoDReleaseDescriptor;
 
@@ -50,7 +48,6 @@ public class FoDIssueGetCommand extends AbstractFoDOutputCommand {
         FoDReleaseDescriptor releaseDescriptor = releaseResolver.getReleaseDescriptor(unirest);
         ObjectNode issue = findIssue(unirest, releaseDescriptor);
         issue.put("releaseName", releaseDescriptor.getReleaseName());
-        FoDIssueHelper.transformRecord(issue, IssueAggregationData.forSingleRelease(issue));
         return simpleObjectNodeProducerBuilder(ObjectNodeProducerApplyFrom.SPEC)
                 .source(issue)
                 .build();

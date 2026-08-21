@@ -49,8 +49,8 @@ public enum SSCIssueEmbedderSupplier implements ISSCEntityEmbedderSupplier {
         @Override
         public final void addEmbedRequests(SSCBulkRequestBuilder builder, UnirestInstance unirest, JsonNode record) {
             var id = record.get("id").asText();
-            var request = getBaseRequest(unirest).routeParam("id", id);
-            if ( supportsLimit() ) { request.queryString("limit", "-1"); }
+            HttpRequest<?> request = getBaseRequest(unirest).routeParam("id", id);
+            if ( supportsLimit() ) { request = request.queryString("limit", "-1"); }
             builder.request(
                 request,
                 response -> process((ObjectNode) record, SSCInputTransformer.getDataOrSelf(response))
