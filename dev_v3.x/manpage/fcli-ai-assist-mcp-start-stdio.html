@@ -17,7 +17,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260821.103059-dev_v3.x" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260821.110635-dev_v3.x" %}
 
 
 <div id="header">
@@ -47,6 +47,7 @@ fcli_version:
                                [<strong>-m</strong>=<em>&lt;module&gt;</em>]
                                [<strong>--progress-interval</strong>=<em>&lt;progressIntervalPeriod&gt;</em>]
                                [<strong>--progress-threads</strong>=<em>&lt;progressThreads&gt;</em>]
+                               [<strong>--server-name</strong>=<em>&lt;serverName&gt;</em>]
                                [<strong>--work-threads</strong>=<em>&lt;workThreads&gt;</em>]
                                [<strong>--import</strong>=<em>&lt;importFiles&gt;</em>[,<em>&lt;importFiles&gt;</em>&#8230;&#8203;]]&#8230;&#8203;
                                [[<strong>-h</strong>] [<strong>--env-prefix</strong>=<em>&lt;prefix&gt;</em>]
@@ -113,6 +114,10 @@ with streaming output). Increase if actions make heavy use of async streaming.</
 <dd>
 <p>Number of threads used for updating and tracking job progress for long-running jobs.</p>
 </dd>
+<dt class="hdlist1"><strong>--server-name</strong>=<em>&lt;serverName&gt;</em></dt>
+<dd>
+<p>Custom name for this MCP server instance. If not specified, defaults to 'fcli-&lt;module-name&gt;' when --module is provided, or 'fcli-imported-functions' when only --import is provided.</p>
+</dd>
 <dt class="hdlist1"><strong>--work-threads</strong>=<em>&lt;workThreads&gt;</em></dt>
 <dd>
 <p>Number of worker threads used to execute MCP tool jobs concurrently. Increase for higher parallelism if AI invokes multiple tools simultaneously.</p>
@@ -159,7 +164,7 @@ with streaming output). Increase if actions make heavy use of async streaming.</
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2026-08-21 10:33:56 UTC
+Last updated 2026-08-21 11:09:21 UTC
 </div>
 </div>
 </body>
