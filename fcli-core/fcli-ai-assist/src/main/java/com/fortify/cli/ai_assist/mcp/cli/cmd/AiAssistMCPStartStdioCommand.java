@@ -112,11 +112,12 @@ public class AiAssistMCPStartStdioCommand extends AbstractRunnableCommand implem
         if (module == null && (importFiles == null || importFiles.isEmpty())) {
             throw new FcliSimpleException("At least one of --module or --import must be specified");
         }
-        if (serverName != null && module == null) {
-            throw new FcliSimpleException("--server-name requires --module to be specified");
-        }
-        if (serverName == null && module != null) {
-            serverName = "fcli-" + module.toString();
+        if (serverName == null) {
+            if (module != null) {
+                serverName = "fcli-" + module.toString();
+            } else {
+                serverName = "fcli-imported-functions";
+            }
         }
         var rawOut = StdioHelper.getRawOut();
         var rawErr = StdioHelper.getRawErr();
