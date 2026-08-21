@@ -32,6 +32,8 @@ import com.fortify.cli.aviator.fpr.Vulnerability;
 import com.fortify.cli.aviator.fpr.filter.AnalyzerType;
 import com.fortify.cli.aviator.fpr.model.*;
 import com.fortify.cli.aviator.fpr.utils.FileUtils;
+import com.fortify.cli.aviator.fpr.utils.ISourceDecoder;
+import com.fortify.cli.aviator.fpr.utils.SourceDecoders;
 import com.fortify.cli.aviator.fpr.utils.XmlUtils;
 import com.fortify.cli.aviator.util.FprHandle;
 import com.fortify.cli.aviator.util.StringUtil;
@@ -70,17 +72,26 @@ public class StreamingFVDLProcessor {
     private long peakMemoryPass2 = 0;
     private long peakMemoryPostProcessing = 0;
 
-    public StreamingFVDLProcessor(FprHandle fprHandle){
+    public StreamingFVDLProcessor(FprHandle fprHandle) {
+        this(fprHandle, SourceDecoders.defaults());
+    }
+
+    /**
+     * @param sourceDecoder used for stack-trace line/fragment source reads; shares {@link #fvdlMetadata}
+     *                      so FPR encoding candidates resolve after build metadata is parsed.
+     */
+    public StreamingFVDLProcessor(FprHandle fprHandle, ISourceDecoder sourceDecoder) {
         this.vulnFinalizer = new VulnFinalizer();
-        this.fileUtils = new FileUtils();
         this.fprHandle = fprHandle;
         this.sourceFileMap = fprHandle.getSourceFileMap();
         this.xmlInputFactory = XMLInputFactory.newInstance();
         // Security: Disable external entity processing
         xmlInputFactory.setProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, false);
         xmlInputFactory.setProperty(XMLInputFactory.SUPPORT_DTD, false);
-        //this.parsingMetadata = new ParsingMetadata();
         this.fvdlMetadata = new FVDLMetadata();
+        // Same metadata instance FileUtils will see once encodings are registered during parse.
+        this.fileUtils = new FileUtils(
+                Objects.requireNonNull(sourceDecoder, "sourceDecoder"), this.fvdlMetadata);
         this.rawVulnerabilities = new ArrayList<>();
         this.vulnerabilities = new ArrayList<>();
         this.descriptionProcessor = new DescriptionProcessor();
@@ -92,8 +103,6 @@ public class StreamingFVDLProcessor {
         this.traceParser.setNodeParser(nodeParser); // Circular dependency for Reason parsing
         this.descriptionParser = new DescriptionParser();
         this.metadataParser = new MetadataParser();
-        /*this.extractedPath = extractedPath;
-        this.indexXMLProcessor = new IndexXMLProcessor(extractedPath, sourceFileMap);*/
     }
 
 
@@ -277,7 +286,7 @@ public class StreamingFVDLProcessor {
      * - UnifiedTracePool (trace definitions)
     * - ContextPool (context definitions)
     * - Description (vulnerability descriptions)
-     * - Build (skipped)
+    * - Build (source file typing and basic build metadata)
      *
      * Skipped sections:
      * - Vulnerabilities (will be parsed in Pass 2)
@@ -307,8 +316,8 @@ public class StreamingFVDLProcessor {
                             parseRuntimeConfiguration(reader);
                             break;
                         case "Build":
-                            logger.debug("Pass 1: Skipping Build");
-                            // Build is already skipped in parseEngineData
+                            logger.debug("Pass 1: Parsing Build");
+                            parseBuild(reader);
                             break;
                         case "UnifiedNodePool":
                             logger.debug("Pass 1: Parsing UnifiedNodePool");
@@ -403,6 +412,36 @@ public class StreamingFVDLProcessor {
         }
     }
 
+    public void parseBuildMetadata(ZipFile zipFile, String entryName) throws Exception {
+        logger.debug("Parsing FVDL build metadata entry '{}'", entryName);
+        ZipEntry fvdlEntry = zipFile.getEntry(entryName);
+        if (fvdlEntry == null) {
+            throw new IOException("audit.fvdl not found in FPR file");
+        }
+
+        try (InputStream inputStream = zipFile.getInputStream(fvdlEntry)) {
+            parseBuildMetadata(inputStream);
+        }
+        logger.debug("Parsed FVDL build metadata entry '{}'", entryName);
+    }
+
+    private void parseBuildMetadata(InputStream inputStream) throws XMLStreamException {
+        XMLStreamReader reader = xmlInputFactory.createXMLStreamReader(inputStream);
+
+        try {
+            while (reader.hasNext()) {
+                int event = reader.next();
+                if (event == XMLStreamConstants.START_ELEMENT && "Build".equals(reader.getLocalName())) {
+                    parseBuild(reader);
+                    return;
+                }
+            }
+            logger.debug("No Build section found while parsing FVDL build metadata");
+        } finally {
+            reader.close();
+        }
+    }
+
     private void parseRuntimeConfiguration(XMLStreamReader reader) throws XMLStreamException {
         updateAnalysisType("SECURITYSCOPE");
         skipSection(reader, "RuntimeConfiguration");
@@ -412,6 +451,65 @@ public class StreamingFVDLProcessor {
         if (analysisType != null && !analysisType.isBlank()) {
             fvdlMetadata.setAnalysisType(analysisType.trim());
         }
+    }
+
+    private void parseBuild(XMLStreamReader reader) throws XMLStreamException {
+        while (reader.hasNext()) {
+            int event = reader.next();
+
+            if (event == XMLStreamConstants.START_ELEMENT) {
+                String localName = reader.getLocalName();
+                switch (localName) {
+                    case "BuildID":
+                        fvdlMetadata.setBuildId(readElementText(reader));
+                        continue;
+                    case "Project":
+                        fvdlMetadata.setProjectName(readElementText(reader));
+                        continue;
+                    case "Version":
+                        fvdlMetadata.setProjectVersion(readElementText(reader));
+                        continue;
+                    case "SourceFiles":
+                        parseSourceFiles(reader);
+                        continue;
+                    default:
+                        break;
+                }
+            } else if (event == XMLStreamConstants.END_ELEMENT && "Build".equals(reader.getLocalName())) {
+                return;
+            }
+        }
+    }
+
+    private void parseSourceFiles(XMLStreamReader reader) throws XMLStreamException {
+        while (reader.hasNext()) {
+            int event = reader.next();
+
+            if (event == XMLStreamConstants.START_ELEMENT && "File".equals(reader.getLocalName())) {
+                parseSourceFile(reader);
+            } else if (event == XMLStreamConstants.END_ELEMENT && "SourceFiles".equals(reader.getLocalName())) {
+                return;
+            }
+        }
+    }
+
+    private void parseSourceFile(XMLStreamReader reader) throws XMLStreamException {
+        String fileType = reader.getAttributeValue(null, "type");
+        String fileEncoding = reader.getAttributeValue(null, "encoding");
+        String fileName = null;
+
+        while (reader.hasNext()) {
+            int event = reader.next();
+
+            if (event == XMLStreamConstants.START_ELEMENT && "Name".equals(reader.getLocalName())) {
+                fileName = readElementText(reader);
+            } else if (event == XMLStreamConstants.END_ELEMENT && "File".equals(reader.getLocalName())) {
+                break;
+            }
+        }
+
+        fvdlMetadata.registerSourceFileType(fileName, fileType);
+        fvdlMetadata.registerSourceFileEncoding(fileName, fileEncoding);
     }
 
     /**

@@ -12,16 +12,19 @@
  */
 package com.fortify.cli.aviator.util;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
+import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
+import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -46,6 +49,9 @@ import lombok.Getter;
  */
 public final class FprHandle implements AutoCloseable {
     private static final Logger LOG = LoggerFactory.getLogger(FprHandle.class);
+    private static final Pattern PROPERTIES_DOCTYPE_PATTERN = Pattern.compile(
+        "<!DOCTYPE\\s+properties\\s+SYSTEM\\s+(['\"])http://java\\.sun\\.com/dtd/properties\\.dtd\\1\\s*>"
+    );
 
     private final FileSystem zipfs;
     /**
@@ -94,7 +100,7 @@ public final class FprHandle implements AutoCloseable {
     public void validate() {
         if (!Files.exists(getPath("/audit.fvdl"))) {
             if (Files.exists(getPath("/webinspect.xml"))) {
-                throw new AviatorSimpleException("Invalid FPR: The provided file is a DAST (WebInspect) scan result. Fortify Aviator requires an FPR from a SAST scan.");
+                throw new AviatorSimpleException("Invalid FPR: The provided file is a DAST (WebInspect) scan result. Fortify Remediation Aviator requires an FPR from a SAST scan.");
             }
             throw new AviatorSimpleException("Invalid FPR: The file does not contain 'audit.fvdl' and does not appear to be a valid SAST scan result.");
         }
@@ -166,28 +172,87 @@ public final class FprHandle implements AutoCloseable {
             return map;
         }
 
-        try (InputStream indexStream = Files.newInputStream(indexPath)) {
-            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-            factory.setFeature(javax.xml.XMLConstants.FEATURE_SECURE_PROCESSING, true);
-            factory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
-            factory.setFeature("http://xml.org/sax/features/validation", false);
-            factory.setFeature("http://xml.org/sax/features/external-general-entities", false);
-            factory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
-            factory.setXIncludeAware(false);
-            factory.setExpandEntityReferences(false);
-            DocumentBuilder builder = factory.newDocumentBuilder();
-            Document indexDoc = builder.parse(indexStream);
+        try {
+            byte[] indexBytes = Files.readAllBytes(indexPath);
+            String xmlForValidation = new String(indexBytes, java.nio.charset.StandardCharsets.ISO_8859_1);
 
-            NodeList entryNodes = indexDoc.getElementsByTagName("entry");
-            for (int i = 0; i < entryNodes.getLength(); i++) {
-                Element entry = (Element) entryNodes.item(i);
-                String key = entry.getAttribute("key");
-                String value = entry.getTextContent();
-                map.put(key, value);
+            validateDoctype(xmlForValidation, indexPath);
+
+            if (containsDoctype(xmlForValidation)) {
+                loadPropertiesFormat(indexBytes, map);
+            } else {
+                loadEntryXmlFormat(indexBytes, map);
             }
         } catch (IOException | ParserConfigurationException | SAXException e) {
             throw new AviatorTechnicalException("Failed to parse src-archive/index.xml in FPR", e);
         }
         return map;
+    }
+
+    private void loadEntryXmlFormat(byte[] indexBytes, Map<String, String> map)
+            throws ParserConfigurationException, IOException, SAXException {
+            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+            factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
+            factory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
+            factory.setFeature("http://xml.org/sax/features/validation", false);
+            factory.setFeature("http://xml.org/sax/features/external-general-entities", false);
+            factory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+            factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+            factory.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
+            factory.setAttribute(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "");
+            factory.setXIncludeAware(false);
+            factory.setExpandEntityReferences(false);
+            DocumentBuilder builder = factory.newDocumentBuilder();
+            Document indexDoc = builder.parse(new ByteArrayInputStream(indexBytes));
+
+        NodeList entryNodes = indexDoc.getElementsByTagName("entry");
+        for (int i = 0; i < entryNodes.getLength(); i++) {
+            Element entry = (Element) entryNodes.item(i);
+            String key = entry.getAttribute("key");
+            String value = entry.getTextContent();
+            map.put(key, value);
+        }
+    }
+
+    private void loadPropertiesFormat(byte[] indexBytes, Map<String, String> map) throws IOException {
+        Properties properties = new Properties();
+        properties.loadFromXML(new ByteArrayInputStream(indexBytes));
+
+        for (String key : properties.stringPropertyNames()) {
+            map.put(key, properties.getProperty(key));
+        }
+    }
+
+    private void validateDoctype(String xmlContent, Path indexPath) throws IOException {
+        if (xmlContent.contains("<!ENTITY")) {
+            throw new IOException("index.xml contains ENTITY declarations, which are not supported: " + indexPath);
+        }
+
+        int doctypeStart = xmlContent.indexOf("<!DOCTYPE");
+        if (doctypeStart < 0) {
+            return;
+        }
+
+        int doctypeEnd = xmlContent.indexOf('>', doctypeStart);
+        if (doctypeEnd < 0) {
+            throw new IOException("index.xml contains an unterminated DOCTYPE declaration: " + indexPath);
+        }
+
+        String declaration = xmlContent.substring(doctypeStart, doctypeEnd + 1).trim();
+        if (declaration.contains("[")) {
+            throw new IOException("index.xml contains an internal DTD subset, which is not supported: " + indexPath);
+        }
+
+        if (!isSupportedPropertiesDoctype(declaration)) {
+            throw new IOException("index.xml contains an unsupported DOCTYPE declaration: " + indexPath);
+        }
+    }
+
+    private boolean isSupportedPropertiesDoctype(String declaration) {
+        return PROPERTIES_DOCTYPE_PATTERN.matcher(declaration).matches();
+    }
+
+    private boolean containsDoctype(String xmlContent) {
+        return xmlContent.contains("<!DOCTYPE");
     }
 }

@@ -16,12 +16,17 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.OffsetDateTime;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.aviator._common.cli.mixin.SourceEncodingsMixin;
 import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
 import com.fortify.cli.aviator.applyRemediation.ApplyAutoRemediationOnSource;
 import com.fortify.cli.aviator.config.AviatorLoggerImpl;
@@ -50,14 +55,16 @@ import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
 @Command(name = "apply-remediations")
-public class AviatorSSCApplyRemediationsCommand extends AbstractSSCJsonNodeOutputCommand  implements IRecordTransformer, IActionCommandResultSupplier {
-    @Getter @Mixin private OutputHelperMixins.TableNoQuery outputHelper;
+public class AviatorSSCApplyRemediationsCommand extends AbstractSSCJsonNodeOutputCommand
+    implements IRecordTransformer, IActionCommandResultSupplier {
+    @Getter @Mixin private OutputHelperMixins.DetailsNoQuery outputHelper;
     @Mixin private ProgressWriterFactoryMixin progressWriterFactoryMixin;
     @Mixin private AviatorSSCApplyRemediationsArtifactSelectorMixin artifactSelector;
 
     private static final Logger LOG = LoggerFactory.getLogger(AviatorSSCApplyRemediationsCommand.class);
     @Option(names = {"--source-dir"}, descriptionKey = "fcli.aviator.ssc.apply-remediations.source-dir")
     private String sourceCodeDirectory = System.getProperty("user.dir");
+    @Mixin private SourceEncodingsMixin sourceEncodingsMixin;
 
     @Override
     @SneakyThrows
@@ -113,6 +120,8 @@ public class AviatorSSCApplyRemediationsCommand extends AbstractSSCJsonNodeOutpu
 
             int totalRemediations = 0, appliedRemediations = 0, skippedRemediations = 0;
             int artifactsProcessed = 0, artifactsSkipped = 0;
+            Set<String> allModifiedFiles = new LinkedHashSet<>();
+            Map<String, Integer> skippedByReason = new LinkedHashMap<>();
 
             for (SSCArtifactDescriptor ad : artifacts) {
                 int artifactIndex = artifactsProcessed + artifactsSkipped + 1;
@@ -121,10 +130,13 @@ public class AviatorSSCApplyRemediationsCommand extends AbstractSSCJsonNodeOutpu
                 try {
                     fprPath = downloadArtifactFpr(ad);
                     try (FprHandle fprHandle = new FprHandle(fprPath)) {
-                        var metric = ApplyAutoRemediationOnSource.applyRemediations(fprHandle, sourceCodeDirectory, logger);
+                        var metric = ApplyAutoRemediationOnSource.applyRemediations(fprHandle, sourceCodeDirectory,
+                            sourceEncodingsMixin.getSourceDecoder(), logger);
                         totalRemediations   += metric.totalRemediations();
                         appliedRemediations += metric.appliedRemediations();
                         skippedRemediations += metric.skippedRemediations();
+                        allModifiedFiles.addAll(metric.modifiedFiles());
+                        mergeSkippedByReason(skippedByReason, metric.skippedByReason());
                         artifactsProcessed++;
                     }
                 } catch (AviatorSimpleException e) {
@@ -144,7 +156,13 @@ public class AviatorSSCApplyRemediationsCommand extends AbstractSSCJsonNodeOutpu
             String action = appliedRemediations > 0 ? "Remediation-Applied" : "No-Remediation-Applied";
             return AviatorSSCApplyRemediationsHelper.buildAggregatedResultNode(
                     appVersionId, artifactsProcessed, artifactsSkipped,
-                    totalRemediations, appliedRemediations, skippedRemediations, action);
+                    totalRemediations, appliedRemediations, skippedRemediations, allModifiedFiles, skippedByReason, action);
+        }
+
+        private void mergeSkippedByReason(Map<String, Integer> target, Map<String, Integer> source) {
+            if (source != null) {
+                source.forEach((reason, count) -> target.merge(reason, count, Integer::sum));
+            }
         }
 
         @SneakyThrows
@@ -166,9 +184,15 @@ public class AviatorSSCApplyRemediationsCommand extends AbstractSSCJsonNodeOutpu
             try {
                 logger.progress("Status: Processing FPR with Aviator for Applying Auto Remediations");
                 try (FprHandle fprHandle = new FprHandle(fprPath)) {
-                    var remediationMetric = ApplyAutoRemediationOnSource.applyRemediations(fprHandle, sourceCodeDirectory, logger);
-                    String status = remediationMetric.appliedRemediations() > 0 ? "Remediation-Applied" : "No-Remediation-Applied";
-                    return AviatorSSCApplyRemediationsHelper.buildResultNode(ad, remediationMetric.totalRemediations(), remediationMetric.appliedRemediations(), remediationMetric.skippedRemediations(), status);
+                        var remediationMetric = ApplyAutoRemediationOnSource.applyRemediations(fprHandle, sourceCodeDirectory,
+                            sourceEncodingsMixin.getSourceDecoder(), logger);
+                    String status = remediationMetric.appliedRemediations() > 0
+                        ? "Remediation-Applied"
+                        : "No-Remediation-Applied";
+                    return AviatorSSCApplyRemediationsHelper.buildResultNode(ad, remediationMetric.totalRemediations(),
+                            remediationMetric.appliedRemediations(), remediationMetric.skippedRemediations(),
+                            remediationMetric.modifiedFiles(),
+                            remediationMetric.skippedByReason(), status);
                 }
             } finally {
                 try {

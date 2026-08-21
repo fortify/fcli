@@ -1,5 +1,96 @@
 # Changelog
 
+## [3.23.3](https://github.com/fortify/fcli/compare/v3.23.2...v3.23.3) (2026-07-15)
+
+
+### Bug Fixes
+
+* FoD/SSC `github-remediations-pr` action: Use proper PR target branch on `pull_request` triggers ([15284b3](https://github.com/fortify/fcli/commit/15284b3f9bca9d61cf05bf6ec882985bb4d7b007))
+
+## [3.23.2](https://github.com/fortify/fcli/compare/v3.23.1...v3.23.2) (2026-07-13)
+
+
+### Bug Fixes
+
+* SSC/Aviator: Fix additional potential 'out of range' errors (change data types from int to long) ([36a741c](https://github.com/fortify/fcli/commit/36a741c88f30c93bde57f82120ea43fffb2bd688))
+
+## [3.23.1](https://github.com/fortify/fcli/compare/v3.23.0...v3.23.1) (2026-07-13)
+
+
+### Bug Fixes
+
+* `fcli aviator`: Apply proxy settings on gRPC calls to Aviator backend ([8ab1131](https://github.com/fortify/fcli/commit/8ab11313311f38b8239802b5cc44dc240ec1b0b9))
+* `fcli license ncd-report`: Ignore unknown properties when reading reports for better forward-compatibility ([13079f8](https://github.com/fortify/fcli/commit/13079f83c0f2ac45b914fb7a9f9e2ae45a185efd))
+* SSC/Aviator: Fix potential 'out of range' errors (change data types from int to long) ([68007f3](https://github.com/fortify/fcli/commit/68007f3513ac8fdd9a300dc91dfcfdbfb03809c7))
+
+## [3.23.0](https://github.com/fortify/fcli/compare/v3.22.0...v3.23.0) (2026-07-10)
+
+
+### Features
+
+* `fcli aviator app add-entitlement`: New command for adding an entitlement to an existing Fortify Aviator application ([5a492df](https://github.com/fortify/fcli/commit/5a492df15d0a799952b94d0f3cccbe6295291f33))
+* `fcli aviator ssc apply-remediations`: Include modified files in command output ([5a492df](https://github.com/fortify/fcli/commit/5a492df15d0a799952b94d0f3cccbe6295291f33))
+* `fcli aviator ssc correlate-sast-dast`: New command for correlating SAST and DAST findings in SSC, persisting correlation state, and uploading updated FPR artifacts ([5a492df](https://github.com/fortify/fcli/commit/5a492df15d0a799952b94d0f3cccbe6295291f33))
+* `fcli aviator ssc prepare`: Support SSC 26.2+ system-managed Aviator tags and synchronize the `last_correlation` attribute ([5a492df](https://github.com/fortify/fcli/commit/5a492df15d0a799952b94d0f3cccbe6295291f33))
+* `fcli fod aviator apply-remediations`: Include modified files in command output ([5a492df](https://github.com/fortify/fcli/commit/5a492df15d0a799952b94d0f3cccbe6295291f33))
+* `fcli license ncd-report *`: Add dormant tracking across contributors and repositories, include dormant counts in `summary.txt`, and generate top-level `repositories.csv` with dormant and raw count fields ([777ae11](https://github.com/fortify/fcli/commit/777ae1193110106e40a3e74fcb15a1bceccc4bdd))
+* `fcli license ncd-report get-summary`: New command for displaying report summary from existing NCD report ([777ae11](https://github.com/fortify/fcli/commit/777ae1193110106e40a3e74fcb15a1bceccc4bdd))
+* `fcli license ncd-report list-contributors`: Add `--embed` option to embed contributor repositories ([777ae11](https://github.com/fortify/fcli/commit/777ae1193110106e40a3e74fcb15a1bceccc4bdd))
+* `fcli license ncd-report list-contributors`: Include `dormant` status in default table output ([777ae11](https://github.com/fortify/fcli/commit/777ae1193110106e40a3e74fcb15a1bceccc4bdd))
+* `fcli license ncd-report list-repositories`: New command (alias `lsr`) to list repositories with status, dormant flag, raw commit/contributor counts, source report metadata for federated reports, with optional `--embed` option to embed contributors or all authors for each repository ([777ae11](https://github.com/fortify/fcli/commit/777ae1193110106e40a3e74fcb15a1bceccc4bdd))
+* `fcli license ncd-report validate-sources`: New command to validate & introspect sources defined in NCD report configuration file ([777ae11](https://github.com/fortify/fcli/commit/777ae1193110106e40a3e74fcb15a1bceccc4bdd))
+* SSC `bulkcorrelate` action: New preview action for running Aviator SAST-DAST correlation across SSC application versions in bulk ([5a492df](https://github.com/fortify/fcli/commit/5a492df15d0a799952b94d0f3cccbe6295291f33))
+
+
+### Bug Fixes
+
+* `fcli aviator ssc audit`: Fix preflight issue counting when using `--no-filterset` ([5a492df](https://github.com/fortify/fcli/commit/5a492df15d0a799952b94d0f3cccbe6295291f33))
+* `fcli aviator ssc audit`: Reject incompatible `--skip-if-exceeding-quota` and `--folder-priority-order` options ([5a492df](https://github.com/fortify/fcli/commit/5a492df15d0a799952b94d0f3cccbe6295291f33))
+* `fcli aviator ssc audit`: Validate SSC Aviator tags before upload to prevent silent audit result loss ([5a492df](https://github.com/fortify/fcli/commit/5a492df15d0a799952b94d0f3cccbe6295291f33))
+* `fcli aviator`: Prefer FPR source file types over configured extension fallback ([5a492df](https://github.com/fortify/fcli/commit/5a492df15d0a799952b94d0f3cccbe6295291f33))
+* `fcli aviator`: Record issue suppression state changes in audit history ([5a492df](https://github.com/fortify/fcli/commit/5a492df15d0a799952b94d0f3cccbe6295291f33))
+* `fcli aviator`: Validate admin sessions for Aviator gRPC operations ([5a492df](https://github.com/fortify/fcli/commit/5a492df15d0a799952b94d0f3cccbe6295291f33))
+* `fcli fod aviator apply-remediations`: Show only relevant fields in command output ([5a492df](https://github.com/fortify/fcli/commit/5a492df15d0a799952b94d0f3cccbe6295291f33))
+
+## [3.22.0](https://github.com/fortify/fcli/compare/v3.21.0...v3.22.0) (2026-07-01)
+
+
+### Features
+
+* fcli action framework: Add base64 & HTTP-related SpEL functions ([2ac1546](https://github.com/fortify/fcli/commit/2ac1546c7689850558b509ea370d24e98cff34d6))
+* fcli actions framework: Add various SpEL functions related to `git` and CI systems ([25adc0e](https://github.com/fortify/fcli/commit/25adc0e39a2ef548cb3b8fe4bc91c510279aa8eb))
+* FoD `ci` action: Add `DO_AVIATOR_REMEDIATIONS` to support pushing Aviator remediations to the remote repository and (if running on GitHub) raising a PR
+* FoD `ci` action: Enhance `DO_PR_COMMENT` to support Azure DevOps and GitLab ([7caeb12](https://github.com/fortify/fcli/commit/7caeb12ade9dbb5bc676899f2a64a972100f6350))
+* FoD: Add `ado-pr-comment` built-in action to generate Fortify comments on Azure DevOps pull requests ([7caeb12](https://github.com/fortify/fcli/commit/7caeb12ade9dbb5bc676899f2a64a972100f6350))
+* FoD: Add `github-remediations-pr` built-in action for raising a GitHub Pull Request with Aviator remediations ([25adc0e](https://github.com/fortify/fcli/commit/25adc0e39a2ef548cb3b8fe4bc91c510279aa8eb))
+* FoD: Add `gitlab-mr-comment` built-in action to generate Fortify comments on GitLab merge requests ([7caeb12](https://github.com/fortify/fcli/commit/7caeb12ade9dbb5bc676899f2a64a972100f6350))
+* FoD: Add `push-remediations` built-in action for applying Aviator remediations and pushing these changes onto new remote branch ([25adc0e](https://github.com/fortify/fcli/commit/25adc0e39a2ef548cb3b8fe4bc91c510279aa8eb))
+* SSC `ci` action: Add `DO_AVIATOR_REMEDIATIONS` to support pushing Aviator remediations to the remote repository and (if running on GitHub) raising a PR
+* SSC: Add `github-remediations-pr` built-in action for raising a GitHub Pull Request with Aviator remediations ([25adc0e](https://github.com/fortify/fcli/commit/25adc0e39a2ef548cb3b8fe4bc91c510279aa8eb))
+* SSC: Add `push-remediations` built-in action for applying Aviator remediations and pushing these changes onto new remote branch ([25adc0e](https://github.com/fortify/fcli/commit/25adc0e39a2ef548cb3b8fe4bc91c510279aa8eb))
+
+## [3.21.0](https://github.com/fortify/fcli/compare/v3.20.0...v3.21.0) (2026-06-26)
+
+
+### Features
+
+* 'fcli fod app list-users': New command to list users assigned to an application (resolves [#1008](https://github.com/fortify/fcli/issues/1008)) ([018721d](https://github.com/fortify/fcli/commit/018721d6829228602544e79d45bd7574b97a045f))
+* `fcli fod sast-scan start`: Add `--in-progress-action` and `--entitlement-preference` options ([4312743](https://github.com/fortify/fcli/commit/431274380ba817580c9db2d36b3c9d46c4e57e3a))
+* `fcli license ncd-report create`: Add `--end-date` option to allow for generating historical reports ([4a0864b](https://github.com/fortify/fcli/commit/4a0864b4181b4574a522fef76e1d37ffad21a712))
+* `fcli license ncd-report list-contributors`: New command for listing contributors in NCD report ([4a0864b](https://github.com/fortify/fcli/commit/4a0864b4181b4574a522fef76e1d37ffad21a712))
+* `fcli license ncd-report merge`: New command for merging NCD reports ([4a0864b](https://github.com/fortify/fcli/commit/4a0864b4181b4574a522fef76e1d37ffad21a712))
+* `fcli license ncd-report update-contributor-status`: New command for updating contributor status based on manual or AI review ([4a0864b](https://github.com/fortify/fcli/commit/4a0864b4181b4574a522fef76e1d37ffad21a712))
+* `fcli ssc issue update`: Add `--extend` option to allow for adding new values to extensible custom tags ([a201fd2](https://github.com/fortify/fcli/commit/a201fd2215f89ecd603c74a0266b4d990964d161))
+
+
+### Bug Fixes
+
+* `fcli * action run`: Only mask credentials in remote action URLs; do not mask plain action names ([8a9ffeb](https://github.com/fortify/fcli/commit/8a9ffeb3610ea0d0a2c18c3394938a0945c6104e))
+* `fcli fod issue update`: Make `--user` option optional ([6951f77](https://github.com/fortify/fcli/commit/6951f7705362edbee14a944ca3df287915bd17ca))
+* `fcli ssc`: Add support for ScanCentral DAST attributes in attribute-related operations ([f8cc477](https://github.com/fortify/fcli/commit/f8cc4777ace9a5a2b60ec401fbeeee2f03a6ebe6))
+* FoD `release-summary` action: Fix exception on releases with no open vulnerabilities ([b7c1b84](https://github.com/fortify/fcli/commit/b7c1b8401fdcb14902ec6160c638be04ced67272))
+* RPC/MCP servers: Refresh trust manager on changed configuration ([#1039](https://github.com/fortify/fcli/issues/1039)) ([7a8fe5b](https://github.com/fortify/fcli/commit/7a8fe5b78081702dd50467fe714f707c96646809))
+
 ## [3.20.0](https://github.com/fortify/fcli/compare/v3.19.0...v3.20.0) (2026-06-05)
 
 

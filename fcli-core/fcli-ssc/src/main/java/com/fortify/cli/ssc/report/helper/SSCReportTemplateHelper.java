@@ -23,7 +23,7 @@ import com.fortify.cli.ssc._common.rest.ssc.SSCUrls;
 import kong.unirest.UnirestInstance;
 
 public final class SSCReportTemplateHelper {
-    private final Map<Integer, SSCReportTemplateDescriptor> descriptorsById = new HashMap<>();
+    private final Map<Long, SSCReportTemplateDescriptor> descriptorsById = new HashMap<>();
     private final Map<String, SSCReportTemplateDescriptor> descriptorsByName = new HashMap<>();
     
     /**
@@ -51,7 +51,7 @@ public final class SSCReportTemplateHelper {
     
     public SSCReportTemplateDescriptor getDescriptorByNameOrId(String reportTemplateNameOrId, boolean failIfNotFound) {
         SSCReportTemplateDescriptor descriptor = null;
-        try { descriptor = descriptorsById.get(Integer.parseInt(reportTemplateNameOrId)); }
+        try { descriptor = descriptorsById.get(Long.parseLong(reportTemplateNameOrId)); }
         catch ( NumberFormatException ignore ) {}
         descriptor = descriptor!=null ? descriptor : descriptorsByName.get(reportTemplateNameOrId);
         if ( failIfNotFound && descriptor==null ) {

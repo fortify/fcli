@@ -20,7 +20,13 @@ import picocli.CommandLine.Command;
         name = "ncd-report",
         subcommands = {
             NcdReportCreateCommand.class,
-            NcdReportCreateConfigCommand.class
+            NcdReportCreateConfigCommand.class,
+            NcdReportValidateSourcesCommand.class,
+            NcdReportGetSummaryCommand.class,
+            NcdReportMergeCommand.class,
+            NcdReportListContributorsCommand.class,
+            NcdReportListRepositoriesCommand.class,
+            NcdReportUpdateContributorStatusCommand.class
         }
 )
 public class NcdReportCommands extends AbstractContainerCommand {}

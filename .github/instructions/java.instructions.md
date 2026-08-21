@@ -30,16 +30,19 @@ Always use `headerReplace(name, value)` — never `accept()`, `contentType()`, o
 
 - New/updated code should throw only fcli-domain exceptions (`Fcli*Exception`), module-domain exceptions (for example `Aviator*Exception` in Aviator modules), or picocli exceptions (`ParameterException` and related) when integrating with command parsing.
 - Avoid throwing standard Java runtime exceptions (`IllegalArgumentException`, `IllegalStateException`, `RuntimeException`, and similar) for user-facing or command-flow errors.
+- **Checked exceptions** (e.g., `IOException`, `JsonProcessingException`): Wrap in `FcliTechnicalException` to preserve the cause chain.
+- **Runtime exceptions** (e.g., `UnexpectedHttpResponseException`): Re-throw as-is unless special handling is needed (e.g., a specific error code requires a user-friendly message). Avoid unnecessary wrapping to keep stack traces short and relevant.
 
 | Scenario | Exception |
 |----------|-----------|
 | Invalid/missing user input | `FcliSimpleException` |
 | External resource not found | `FcliSimpleException` with remediation |
 | User abort | `FcliAbortedByUserException` |
-| I/O, network, JSON parse | `FcliTechnicalException` (wrap cause) |
+| Checked exception (I/O, JSON parse) | `FcliTechnicalException` (wrap cause) |
+| Runtime exception (no special handling needed) | Re-throw as-is |
 | Invariant violation, unreachable | `FcliBugException` |
 
-Messages: actionable, sentence case, no trailing periods. Preserve root cause in wrapping.
+Messages: actionable, sentence case, no trailing periods. Wrap root cause only for checked exceptions.
 
 ## Design Patterns
 

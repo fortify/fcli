@@ -50,6 +50,6 @@ public class SSCAppVersionDescriptor extends JsonNodeHolder {
     }
 
     @JsonIgnore
-    public int getIntVersionId() {return Integer.parseInt(versionId);}
+    public long getLongVersionId() {return Long.parseLong(versionId);}
 
 }

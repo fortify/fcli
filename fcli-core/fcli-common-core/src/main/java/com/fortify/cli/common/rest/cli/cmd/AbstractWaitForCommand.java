@@ -12,6 +12,8 @@
  */
 package com.fortify.cli.common.rest.cli.cmd;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 import com.fortify.cli.common.cli.cmd.AbstractRunnableCommand;
 import com.fortify.cli.common.json.producer.ObjectNodeProducerApplyFrom;
 import com.fortify.cli.common.json.producer.SimpleObjectNodeProducer;
@@ -37,8 +39,7 @@ public abstract class AbstractWaitForCommand extends AbstractRunnableCommand imp
     
     @Override
     public Integer call() {
-        wait(getUnirestInstance());
-        return 0;
+        return wait(getUnirestInstance());
     }
     
     @Override
@@ -48,7 +49,8 @@ public abstract class AbstractWaitForCommand extends AbstractRunnableCommand imp
     
     protected abstract IUnirestInstanceSupplier getUnirestInstanceSupplier();
     
-    private void wait(UnirestInstance unirest) {
+    private int wait(UnirestInstance unirest) {
+        var exitCode = new AtomicInteger(0);
         configure(unirest,
                 WaitHelper.builder()
                     .controlProperties(controlProperties)
@@ -59,9 +61,10 @@ public abstract class AbstractWaitForCommand extends AbstractRunnableCommand imp
                             .commandHelper(getCommandHelper())
                             .applyAllFrom(ObjectNodeProducerApplyFrom.SPEC)
                             .build();
-                        outputHelper.write(producer);
+                        exitCode.set(outputHelper.write(producer));
                     })
             ).build().wait(unirest);
+        return exitCode.get();
     }
     
     protected abstract WaitHelperBuilder configure(UnirestInstance unirest, WaitHelperBuilder builder);

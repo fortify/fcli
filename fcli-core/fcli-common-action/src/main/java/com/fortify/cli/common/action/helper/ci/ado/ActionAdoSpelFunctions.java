@@ -16,20 +16,14 @@ import static com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunction.
 
 import org.apache.commons.lang3.StringUtils;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.formkiq.graalvm.annotations.Reflectable;
-import com.fortify.cli.common.action.helper.ci.IActionSpelFunctions;
 import com.fortify.cli.common.action.runner.ActionRunnerContextLocal;
-import com.fortify.cli.common.ci.ado.AdoEnvironment;
 import com.fortify.cli.common.ci.ado.AdoRestHelper;
 import com.fortify.cli.common.ci.ado.AdoUnirestInstanceSupplier;
 import com.fortify.cli.common.exception.FcliSimpleException;
-import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.spel.fn.descriptor.annotation.RenderSubFunctionsMode;
 import com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunction;
 import com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunctionPrefix;
-
-import lombok.RequiredArgsConstructor;
 
 /**
  * Action-friendly Azure DevOps helper providing convenient methods for CI/CD workflows.
@@ -41,11 +35,9 @@ import lombok.RequiredArgsConstructor;
  * @author rsenden
  */
 @Reflectable
-@RequiredArgsConstructor
 @SpelFunctionPrefix("ado.")
-public class ActionAdoSpelFunctions implements IActionSpelFunctions {
+public class ActionAdoSpelFunctions extends ActionAdoCiInfoSpelFunctions {
     private final ActionRunnerContextLocal ctx;
-    private final AdoEnvironment env;
     private AdoRestHelper restHelper;
     
     /**
@@ -53,31 +45,8 @@ public class ActionAdoSpelFunctions implements IActionSpelFunctions {
      * Does not throw if not in CI - use getEnv() != null to check.
      */
     public ActionAdoSpelFunctions(ActionRunnerContextLocal ctx) {
+        super();
         this.ctx = ctx;
-        this.env = AdoEnvironment.detect();
-    }
-    
-    /**
-     * Get environment data as ObjectNode for use in actions.
-     * Returns null if not running in Azure DevOps.
-     * Can be accessed in action YAML as: ${#ci.ado().env}
-     */
-    @SpelFunction(cat=ci, desc="Returns Azure DevOps environment data as ObjectNode (auto-detected for the current pipeline run)",
-            returns="Environment data or `null` if not running in Azure DevOps",
-            returnType=AdoEnvironment.class)
-    @Override
-    public ObjectNode getEnv() {
-        return env != null ? JsonHelper.getObjectMapper().valueToTree(env) : null;
-    }
-    
-    /**
-     * Returns "ado" as the CI system type.
-     */
-    @SpelFunction(cat=ci, desc="Returns CI system type identifier",
-            returns="\"ado\"")
-    @Override
-    public String getType() {
-        return AdoEnvironment.TYPE;
     }
     
     /**

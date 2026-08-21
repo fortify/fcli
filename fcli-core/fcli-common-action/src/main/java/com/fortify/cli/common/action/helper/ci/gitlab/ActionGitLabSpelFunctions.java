@@ -16,20 +16,14 @@ import static com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunction.
 
 import org.apache.commons.lang3.StringUtils;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.formkiq.graalvm.annotations.Reflectable;
-import com.fortify.cli.common.action.helper.ci.IActionSpelFunctions;
 import com.fortify.cli.common.action.runner.ActionRunnerContextLocal;
-import com.fortify.cli.common.ci.gitlab.GitLabEnvironment;
 import com.fortify.cli.common.ci.gitlab.GitLabRestHelper;
 import com.fortify.cli.common.ci.gitlab.GitLabUnirestInstanceSupplier;
 import com.fortify.cli.common.exception.FcliSimpleException;
-import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.spel.fn.descriptor.annotation.RenderSubFunctionsMode;
 import com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunction;
 import com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunctionPrefix;
-
-import lombok.RequiredArgsConstructor;
 
 /**
  * Action-friendly GitLab helper providing convenient methods for CI/CD workflows.
@@ -41,11 +35,9 @@ import lombok.RequiredArgsConstructor;
  * @author rsenden
  */
 @Reflectable
-@RequiredArgsConstructor
 @SpelFunctionPrefix("gitlab.")
-public class ActionGitLabSpelFunctions implements IActionSpelFunctions {
+public class ActionGitLabSpelFunctions extends ActionGitLabCiInfoSpelFunctions {
     private final ActionRunnerContextLocal ctx;
-    private final GitLabEnvironment env;
     private GitLabRestHelper restHelper;
     
     /**
@@ -53,31 +45,8 @@ public class ActionGitLabSpelFunctions implements IActionSpelFunctions {
      * Does not throw if not in CI - use getEnv() != null to check.
      */
     public ActionGitLabSpelFunctions(ActionRunnerContextLocal ctx) {
+        super();
         this.ctx = ctx;
-        this.env = GitLabEnvironment.detect();
-    }
-    
-    /**
-     * Get environment data as ObjectNode for use in actions.
-     * Returns null if not running in GitLab CI.
-     * Can be accessed in action YAML as: ${#ci.gitlab().env}
-     */
-    @SpelFunction(cat=ci, desc="Returns GitLab CI environment data as ObjectNode (auto-detected for the current pipeline run)",
-            returns="Environment data or `null` if not running in GitLab CI",
-            returnType=GitLabEnvironment.class)
-    @Override
-    public ObjectNode getEnv() {
-        return env != null ? JsonHelper.getObjectMapper().valueToTree(env) : null;
-    }
-    
-    /**
-     * Returns "gitlab" as the CI system type.
-     */
-    @SpelFunction(cat=ci, desc="Returns CI system type identifier",
-            returns="\"gitlab\"")
-    @Override
-    public String getType() {
-        return GitLabEnvironment.TYPE;
     }
     
     /**

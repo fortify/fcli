@@ -293,6 +293,30 @@ public class GitHubRepo {
             .getBody();
     }
     
+    /**
+     * Create a pull request.
+     * 
+     * @param title Pull request title
+     * @param head The name of the branch where your changes are implemented
+     * @param base The name of the branch you want the changes pulled into
+     * @param body Pull request description (Markdown supported)
+     * @return Created pull request object
+     */
+    public ObjectNode createPullRequest(String title, String head, String base, String body) {
+        var requestBody = JsonHelper.getObjectMapper().createObjectNode()
+            .put("title", title)
+            .put("head", head)
+            .put("base", base)
+            .put("body", body);
+        
+        return unirest
+            .post("/repos/{owner}/{repo}/pulls")
+            .routeParam("owner", owner)
+            .routeParam("repo", repo)
+            .body(requestBody)
+            .asObject(ObjectNode.class)
+            .getBody();
+    }
     // === Branch and Commit Operations ===
     
     /**

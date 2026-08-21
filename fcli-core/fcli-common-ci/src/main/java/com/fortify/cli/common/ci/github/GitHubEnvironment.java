@@ -50,8 +50,13 @@ public record GitHubEnvironment(
     CiCommit ciCommit,
     CiPullRequest pullRequest,
     // GitHub-specific properties
+    String apiUrl,
+    String token,
+    String repositoryOwner,
+    String repository,
     String jobSummaryFile,
     String prTerminology,
+    String prKeyword,
     String ciName,
     String ciId
     
@@ -63,6 +68,7 @@ public record GitHubEnvironment(
     public static final String NAME = "GitHub";
     public static final String ID = "github";
     public static final String PR_TERMINOLOGY = "Pull Request";
+    public static final String PR_KEYWORD = "pr";
     
     // Environment variable names
     public static final String ENV_REPOSITORY = "GITHUB_REPOSITORY";
@@ -133,12 +139,17 @@ public record GitHubEnvironment(
             : CiPullRequest.inactive();
         
         return GitHubEnvironment.builder()
+            .apiUrl(EnvHelper.env(ENV_API_URL))
+            .token(EnvHelper.env(ENV_TOKEN))
+            .repositoryOwner(repoParts.length > 1 ? repoParts[0] : null)
+            .repository(repo)
             .jobSummaryFile(EnvHelper.env(ENV_STEP_SUMMARY))
             .ciRepository(ciRepository)
             .ciBranch(ciBranch)
             .ciCommit(ciCommit)
             .pullRequest(pullRequest)
             .prTerminology(PR_TERMINOLOGY)
+            .prKeyword(PR_KEYWORD)
             .ciName(NAME)
             .ciId(ID)
             .build();

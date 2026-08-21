@@ -50,9 +50,8 @@ public abstract class AbstractOutputCommand extends AbstractRunnableCommand
     @Getter private boolean stdoutSuppressedForRecordCollection;
 
     @Override
-    public Integer call() {
-        getOutputHelper().write(getObjectNodeProducer());
-        return 0;
+    public final Integer call() {
+        return getOutputHelper().write(getObjectNodeProducer());
     }
 
     /**

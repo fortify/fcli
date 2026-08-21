@@ -134,6 +134,29 @@ public class GitLabProject {
             .getBody();
     }
     
+    /**
+     * Create a merge request.
+     * 
+     * @param title Merge request title
+     * @param sourceBranch The source branch
+     * @param targetBranch The target branch
+     * @param description Merge request description (Markdown supported)
+     * @return Created merge request object
+     */
+    public ObjectNode createMergeRequest(String title, String sourceBranch, String targetBranch, String description) {
+        var requestBody = JsonHelper.getObjectMapper().createObjectNode()
+            .put("title", title)
+            .put("source_branch", sourceBranch)
+            .put("target_branch", targetBranch)
+            .put("description", description);
+        
+        return unirest
+            .post("/projects/{id}/merge_requests")
+            .routeParam("id", projectId)
+            .body(requestBody)
+            .asObject(ObjectNode.class)
+            .getBody();
+    }
     // === Branch and Commit Operations ===
     
     /**

@@ -46,14 +46,14 @@ public class SSCAppVersionHelper {
     
     public static final SSCAppVersionDescriptor getOptionalAppVersion(UnirestInstance unirest, String appVersionNameOrId, String delimiter, String... fields) {
         try {
-            int versionId = Integer.parseInt(appVersionNameOrId);
+            long versionId = Long.parseLong(appVersionNameOrId);
             return getOptionalAppVersionFromId(unirest, versionId, fields);
         } catch (NumberFormatException nfe) {
             return getOptionalAppVersionFromAppAndVersionName(unirest, SSCAppAndVersionNameDescriptor.fromCombinedAppAndVersionName(appVersionNameOrId, delimiter), fields);
         }
     }
     
-    public static final SSCAppVersionDescriptor getOptionalAppVersionFromId(UnirestInstance unirest, int versionId, String... fields) {
+    public static final SSCAppVersionDescriptor getOptionalAppVersionFromId(UnirestInstance unirest, long versionId, String... fields) {
         GetRequest request = getBaseRequest(unirest, fields).queryString("q", String.format("id:%d", versionId));
         return getOptionalDescriptor(request);
     }

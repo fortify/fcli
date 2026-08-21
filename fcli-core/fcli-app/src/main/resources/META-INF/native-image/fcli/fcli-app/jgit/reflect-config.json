@@ -7,9 +7,7 @@
     "methods": [
       {
         "name": "<init>",
-        "parameterTypes": [
-
-        ]
+        "parameterTypes": []
       }
     ]
   },
@@ -28,9 +26,7 @@
     "methods": [
       {
         "name": "values",
-        "parameterTypes": [
-
-        ]
+        "parameterTypes": []
       }
     ]
   },
@@ -42,9 +38,7 @@
     "methods": [
       {
         "name": "values",
-        "parameterTypes": [
-
-        ]
+        "parameterTypes": []
       }
     ]
   },
@@ -56,9 +50,7 @@
     "methods": [
       {
         "name": "values",
-        "parameterTypes": [
-
-        ]
+        "parameterTypes": []
       }
     ]
   },
@@ -70,9 +62,7 @@
     "methods": [
       {
         "name": "values",
-        "parameterTypes": [
-
-        ]
+        "parameterTypes": []
       }
     ]
   },
@@ -84,9 +74,7 @@
     "methods": [
       {
         "name": "values",
-        "parameterTypes": [
-
-        ]
+        "parameterTypes": []
       }
     ]
   },
@@ -98,9 +86,7 @@
     "methods": [
       {
         "name": "values",
-        "parameterTypes": [
-
-        ]
+        "parameterTypes": []
       }
     ]
   },
@@ -112,9 +98,7 @@
     "methods": [
       {
         "name": "values",
-        "parameterTypes": [
-
-        ]
+        "parameterTypes": []
       }
     ]
   },
@@ -126,9 +110,7 @@
     "methods": [
       {
         "name": "values",
-        "parameterTypes": [
-
-        ]
+        "parameterTypes": []
       }
     ]
   },
@@ -140,9 +122,7 @@
     "methods": [
       {
         "name": "values",
-        "parameterTypes": [
-
-        ]
+        "parameterTypes": []
       }
     ]
   },
@@ -154,248 +134,492 @@
     "methods": [
       {
         "name": "values",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "com.github.chirontt.gitserver.LfsBatchServlet",
+    "allDeclaredFields": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true,
+    "methods": [
+      {
+        "name": "<init>",
         "parameterTypes": [
-
+          "org.eclipse.jgit.lfs.server.fs.FileLfsRepository",
+          "java.nio.file.Path"
         ]
       }
     ]
   },
   {
-    "name":"com.github.chirontt.gitserver.LfsBatchServlet",
-    "allDeclaredFields":true,
-    "allDeclaredMethods":true,
-    "allPublicMethods":true,
-    "methods":[{"name":"<init>","parameterTypes":["org.eclipse.jgit.lfs.server.fs.FileLfsRepository","java.nio.file.Path"] }]
-  },
-  {
-    "name":"com.github.chirontt.lfs.server.LfsProtocolServletV2$LfsRequestV2",
-    "allDeclaredFields":true,
-    "allDeclaredMethods":true,
-    "methods":[{"name":"<init>","parameterTypes":[] }]
-  },
-  {
-    "name":"com.github.chirontt.lfs.server.LfsRef",
-    "allDeclaredFields":true,
-    "allDeclaredMethods":true,
-    "methods":[{"name":"<init>","parameterTypes":[] }]
-  },
-  {
-    "name":"com.github.chirontt.lfs.server.locks.LfsFileLockingRequest$CreateLock",
-    "allDeclaredFields":true,
-    "allDeclaredMethods":true,
-    "methods":[{"name":"<init>","parameterTypes":[] }]
-  },
-  {
-    "name":"com.github.chirontt.lfs.server.locks.LfsFileLockingRequest$DeleteLock",
-    "allDeclaredFields":true,
-    "allDeclaredMethods":true,
-    "methods":[{"name":"<init>","parameterTypes":[] }]
-  },
-  {
-    "name":"com.github.chirontt.lfs.server.locks.LfsFileLockingRequest$ListLocksToVerify",
-    "allDeclaredFields":true,
-    "allDeclaredMethods":true,
-    "methods":[{"name":"<init>","parameterTypes":[] }]
-  },
-  {
-    "name":"com.github.chirontt.lfs.server.locks.LfsFileLockingResponse$CreatedOrDeletedLock",
-    "allDeclaredFields":true,
-    "allDeclaredMethods":true,
-    "methods":[
-      {"name":"<init>","parameterTypes":[] },
-      {"name":"<init>","parameterTypes":["com.github.chirontt.lfs.server.locks.LfsFileLockingResponse$Lock"] }
+    "name": "com.github.chirontt.lfs.server.LfsProtocolServletV2$LfsRequestV2",
+    "allDeclaredFields": true,
+    "allDeclaredMethods": true,
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
     ]
   },
   {
-    "name":"com.github.chirontt.lfs.server.locks.LfsFileLockingResponse$Error",
-    "allDeclaredFields":true,
-    "allDeclaredMethods":true,
-    "methods":[{"name":"<init>","parameterTypes":["java.lang.String"] }]
-  },
-  {
-    "name":"com.github.chirontt.lfs.server.locks.LfsFileLockingResponse$Lock",
-    "allDeclaredFields":true,
-    "allDeclaredMethods":true
-  },
-  {
-    "name":"com.github.chirontt.lfs.server.locks.LfsFileLockingResponse$LockExistsError",
-    "allDeclaredFields":true,
-    "allDeclaredMethods":true,
-    "methods":[{"name":"<init>","parameterTypes":["java.lang.String","com.github.chirontt.lfs.server.locks.LfsFileLockingResponse$Lock"] }]
-  },
-  {
-    "name":"com.github.chirontt.lfs.server.locks.LfsFileLockingResponse$Locks",
-    "allDeclaredFields":true,
-    "allDeclaredMethods":true,
-    "methods":[
-      {"name":"<init>","parameterTypes":[] },
-      {"name":"<init>","parameterTypes":["java.util.List","java.lang.String"] }
+    "name": "com.github.chirontt.lfs.server.LfsRef",
+    "allDeclaredFields": true,
+    "allDeclaredMethods": true,
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
     ]
   },
   {
-    "name":"com.github.chirontt.lfs.server.locks.LfsFileLockingResponse$LocksToVerify",
-    "allDeclaredFields":true,
-    "allDeclaredMethods":true
-  },
-  {
-    "name":"com.github.chirontt.lfs.server.locks.LfsFileLockingResponse$Owner",
-    "allDeclaredFields":true,
-    "allDeclaredMethods":true,
-    "methods":[
-      {"name":"<init>","parameterTypes":[] },
-      {"name":"<init>","parameterTypes":["java.lang.String"] }
+    "name": "com.github.chirontt.lfs.server.locks.LfsFileLockingRequest$CreateLock",
+    "allDeclaredFields": true,
+    "allDeclaredMethods": true,
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
     ]
   },
   {
-    "name":"com.github.chirontt.lfs.server.locks.lm.PersistentLock",
-    "allDeclaredFields":true,
-    "allDeclaredMethods":true
+    "name": "com.github.chirontt.lfs.server.locks.LfsFileLockingRequest$DeleteLock",
+    "allDeclaredFields": true,
+    "allDeclaredMethods": true,
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
   },
   {
-    "name":"com.github.chirontt.lfs.server.locks.internal.LfsFileLockingText",
-    "allDeclaredFields":true,
-    "allDeclaredMethods":true,
-    "methods":[{"name":"<init>","parameterTypes":[] }]
+    "name": "com.github.chirontt.lfs.server.locks.LfsFileLockingRequest$ListLocksToVerify",
+    "allDeclaredFields": true,
+    "allDeclaredMethods": true,
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
   },
   {
-    "name":"org.eclipse.jgit.diff.DiffAlgorithm$SupportedAlgorithm",
-    "methods":[{"name":"values","parameterTypes":[] }]
+    "name": "com.github.chirontt.lfs.server.locks.LfsFileLockingResponse$CreatedOrDeletedLock",
+    "allDeclaredFields": true,
+    "allDeclaredMethods": true,
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      },
+      {
+        "name": "<init>",
+        "parameterTypes": [
+          "com.github.chirontt.lfs.server.locks.LfsFileLockingResponse$Lock"
+        ]
+      }
+    ]
   },
   {
-    "name":"org.eclipse.jgit.dircache.DirCache$DirCacheVersion",
-    "methods":[{"name":"values","parameterTypes":[] }]
+    "name": "com.github.chirontt.lfs.server.locks.LfsFileLockingResponse$Error",
+    "allDeclaredFields": true,
+    "allDeclaredMethods": true,
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": [
+          "java.lang.String"
+        ]
+      }
+    ]
   },
   {
-    "name":"org.eclipse.jgit.gitrepo.internal.RepoText",
-    "allDeclaredFields":true,
-    "allDeclaredMethods":true,
-    "methods":[{"name":"<init>","parameterTypes":[] }]
+    "name": "com.github.chirontt.lfs.server.locks.LfsFileLockingResponse$Lock",
+    "allDeclaredFields": true,
+    "allDeclaredMethods": true
   },
   {
-    "name":"org.eclipse.jgit.http.server.GitServlet",
-    "allDeclaredFields":true,
-    "allDeclaredMethods":true,
-    "allPublicMethods":true,
-    "methods":[{"name":"<init>","parameterTypes":[] }]
+    "name": "com.github.chirontt.lfs.server.locks.LfsFileLockingResponse$LockExistsError",
+    "allDeclaredFields": true,
+    "allDeclaredMethods": true,
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": [
+          "java.lang.String",
+          "com.github.chirontt.lfs.server.locks.LfsFileLockingResponse$Lock"
+        ]
+      }
+    ]
   },
   {
-    "name":"org.eclipse.jgit.http.server.HttpServerText",
-    "allDeclaredFields":true,
-    "allDeclaredMethods":true,
-    "methods":[{"name":"<init>","parameterTypes":[] }]
+    "name": "com.github.chirontt.lfs.server.locks.LfsFileLockingResponse$Locks",
+    "allDeclaredFields": true,
+    "allDeclaredMethods": true,
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      },
+      {
+        "name": "<init>",
+        "parameterTypes": [
+          "java.util.List",
+          "java.lang.String"
+        ]
+      }
+    ]
   },
   {
-    "name":"org.eclipse.jgit.internal.JGitText",
-    "allDeclaredFields":true,
-    "allDeclaredMethods":true,
-    "methods":[{"name":"<init>","parameterTypes":[] }]
+    "name": "com.github.chirontt.lfs.server.locks.LfsFileLockingResponse$LocksToVerify",
+    "allDeclaredFields": true,
+    "allDeclaredMethods": true
   },
   {
-    "name":"org.eclipse.jgit.internal.storage.dfs.DfsText",
-    "allDeclaredFields":true,
-    "allDeclaredMethods":true,
-    "methods":[{"name":"<init>","parameterTypes":[] }]
+    "name": "com.github.chirontt.lfs.server.locks.LfsFileLockingResponse$Owner",
+    "allDeclaredFields": true,
+    "allDeclaredMethods": true,
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      },
+      {
+        "name": "<init>",
+        "parameterTypes": [
+          "java.lang.String"
+        ]
+      }
+    ]
   },
   {
-    "name":"org.eclipse.jgit.lfs.internal.LfsText",
-    "allDeclaredFields":true,
-    "allDeclaredMethods":true,
-    "methods":[{"name":"<init>","parameterTypes":[] }]
+    "name": "com.github.chirontt.lfs.server.locks.lm.PersistentLock",
+    "allDeclaredFields": true,
+    "allDeclaredMethods": true
   },
   {
-    "name":"org.eclipse.jgit.lfs.server.LfsObject",
-    "allDeclaredFields":true,
-    "allDeclaredMethods":true,
-    "allPublicMethods":true,
-    "methods":[{"name":"<init>","parameterTypes":[] }]
+    "name": "com.github.chirontt.lfs.server.locks.internal.LfsFileLockingText",
+    "allDeclaredFields": true,
+    "allDeclaredMethods": true,
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
   },
   {
-    "name":"org.eclipse.jgit.lfs.server.LfsProtocolServlet$LfsRequest",
-    "allDeclaredFields":true,
-    "allDeclaredMethods":true,
-    "allPublicMethods":true,
-    "methods":[{"name":"<init>","parameterTypes":[] }]
+    "name": "org.eclipse.jgit.diff.DiffAlgorithm$SupportedAlgorithm",
+    "methods": [
+      {
+        "name": "values",
+        "parameterTypes": []
+      }
+    ]
   },
   {
-    "name":"org.eclipse.jgit.lfs.server.Response$Action",
-    "allDeclaredFields":true
+    "name": "org.eclipse.jgit.dircache.DirCache$DirCacheVersion",
+    "methods": [
+      {
+        "name": "values",
+        "parameterTypes": []
+      }
+    ]
   },
   {
-    "name":"org.eclipse.jgit.lfs.server.Response$Body",
-    "allDeclaredFields":true
+    "name": "org.eclipse.jgit.gitrepo.internal.RepoText",
+    "allDeclaredFields": true,
+    "allDeclaredMethods": true,
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
   },
   {
-    "name":"org.eclipse.jgit.lfs.server.Response$Error",
-    "allDeclaredFields":true
+    "name": "org.eclipse.jgit.http.server.GitServlet",
+    "allDeclaredFields": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true,
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
   },
   {
-    "name":"org.eclipse.jgit.lfs.server.Response$ObjectInfo",
-    "allDeclaredFields":true
+    "name": "org.eclipse.jgit.http.server.HttpServerText",
+    "allDeclaredFields": true,
+    "allDeclaredMethods": true,
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
   },
   {
-    "name":"org.eclipse.jgit.lfs.server.fs.FileLfsServlet",
-    "allDeclaredFields":true,
-    "allDeclaredMethods":true,
-    "allPublicMethods":true,
-    "methods":[{"name":"<init>","parameterTypes":["org.eclipse.jgit.lfs.server.fs.FileLfsRepository","long"] }]
+    "name": "org.eclipse.jgit.internal.JGitText",
+    "allDeclaredFields": true,
+    "allDeclaredMethods": true,
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
   },
   {
-    "name":"org.eclipse.jgit.lfs.server.internal.LfsServerText",
-    "allDeclaredFields":true,
-    "allDeclaredMethods":true,
-    "methods":[{"name":"<init>","parameterTypes":[] }]
+    "name": "org.eclipse.jgit.internal.storage.dfs.DfsText",
+    "allDeclaredFields": true,
+    "allDeclaredMethods": true,
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
   },
   {
-    "name":"org.eclipse.jgit.lib.CoreConfig$AutoCRLF",
-    "methods":[{"name":"values","parameterTypes":[] }]
+    "name": "org.eclipse.jgit.lfs.internal.LfsText",
+    "allDeclaredFields": true,
+    "allDeclaredMethods": true,
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
   },
   {
-    "name":"org.eclipse.jgit.lib.CoreConfig$CheckStat",
-    "methods":[{"name":"values","parameterTypes":[] }]
+    "name": "org.eclipse.jgit.lfs.server.LfsObject",
+    "allDeclaredFields": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true,
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
   },
   {
-    "name":"org.eclipse.jgit.lib.CoreConfig$EOL",
-    "methods":[{"name":"values","parameterTypes":[] }]
+    "name": "org.eclipse.jgit.lfs.server.LfsProtocolServlet$LfsRequest",
+    "allDeclaredFields": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true,
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
   },
   {
-    "name":"org.eclipse.jgit.lib.CoreConfig$HideDotFiles",
-    "methods":[{"name":"values","parameterTypes":[] }]
+    "name": "org.eclipse.jgit.lfs.server.Response$Action",
+    "allDeclaredFields": true
   },
   {
-    "name":"org.eclipse.jgit.lib.CoreConfig$LogRefUpdates",
-    "allDeclaredFields":true,
-    "allDeclaredMethods":true,
-    "allPublicMethods":true,
-    "methods":[{"name":"values","parameterTypes":[] }]
+    "name": "org.eclipse.jgit.lfs.server.Response$Body",
+    "allDeclaredFields": true
   },
   {
-    "name":"org.eclipse.jgit.lib.CoreConfig$SymLinks",
-    "methods":[{"name":"values","parameterTypes":[] }]
+    "name": "org.eclipse.jgit.lfs.server.Response$Error",
+    "allDeclaredFields": true
   },
   {
-    "name":"org.eclipse.jgit.lib.CoreConfig$TrustLooseRefStat",
-    "methods":[{"name":"values","parameterTypes":[] }]
+    "name": "org.eclipse.jgit.lfs.server.Response$ObjectInfo",
+    "allDeclaredFields": true
   },
   {
-    "name":"org.eclipse.jgit.lib.CoreConfig$TrustPackedRefsStat",
-    "methods":[{"name":"values","parameterTypes":[] }]
+    "name": "org.eclipse.jgit.lfs.server.fs.FileLfsServlet",
+    "allDeclaredFields": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true,
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": [
+          "org.eclipse.jgit.lfs.server.fs.FileLfsRepository",
+          "long"
+        ]
+      }
+    ]
   },
   {
-    "name":"org.eclipse.jgit.lib.CoreConfig$TrustStat",
-    "methods":[{"name":"values","parameterTypes":[] }]
+    "name": "org.eclipse.jgit.lfs.server.internal.LfsServerText",
+    "allDeclaredFields": true,
+    "allDeclaredMethods": true,
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
   },
   {
-    "name":"org.eclipse.jgit.lib.GpgConfig$GpgFormat",
-    "methods":[{"name":"values","parameterTypes":[] }]
+    "name": "org.eclipse.jgit.lib.CoreConfig$AutoCRLF",
+    "methods": [
+      {
+        "name": "values",
+        "parameterTypes": []
+      }
+    ]
   },
   {
-    "name":"org.eclipse.jgit.transport.HttpConfig$HttpRedirectMode",
-    "methods":[{"name":"values","parameterTypes":[] }]
+    "name": "org.eclipse.jgit.lib.CoreConfig$CheckStat",
+    "methods": [
+      {
+        "name": "values",
+        "parameterTypes": []
+      }
+    ]
   },
   {
-    "name":"org.eclipse.jgit.transport.http.apache.internal.HttpApacheText",
-    "allDeclaredFields":true,
-    "allDeclaredMethods":true,
-    "methods":[{"name":"<init>","parameterTypes":[] }]
+    "name": "org.eclipse.jgit.lib.CoreConfig$EOL",
+    "methods": [
+      {
+        "name": "values",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.eclipse.jgit.lib.CoreConfig$HideDotFiles",
+    "methods": [
+      {
+        "name": "values",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.eclipse.jgit.lib.CoreConfig$LogRefUpdates",
+    "allDeclaredFields": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true,
+    "methods": [
+      {
+        "name": "values",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.eclipse.jgit.lib.CoreConfig$SymLinks",
+    "methods": [
+      {
+        "name": "values",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.eclipse.jgit.lib.CoreConfig$TrustLooseRefStat",
+    "methods": [
+      {
+        "name": "values",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.eclipse.jgit.lib.CoreConfig$TrustPackedRefsStat",
+    "methods": [
+      {
+        "name": "values",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.eclipse.jgit.lib.CoreConfig$TrustStat",
+    "methods": [
+      {
+        "name": "values",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.eclipse.jgit.lib.GpgConfig$GpgFormat",
+    "methods": [
+      {
+        "name": "values",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.eclipse.jgit.transport.HttpConfig$HttpRedirectMode",
+    "methods": [
+      {
+        "name": "values",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.eclipse.jgit.transport.http.apache.internal.HttpApacheText",
+    "allDeclaredFields": true,
+    "allDeclaredMethods": true,
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.eclipse.jgit.lib.GcConfig$PackRefsMode",
+    "methods": [
+      {
+        "name": "values",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.eclipse.jgit.lib.GcConfig$AggressiveWindow",
+    "methods": [
+      {
+        "name": "values",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.eclipse.jgit.lib.GcConfig$Autodetach",
+    "methods": [
+      {
+        "name": "values",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.eclipse.jgit.lib.GcConfig$Prune",
+    "methods": [
+      {
+        "name": "values",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.eclipse.jgit.lib.GcConfig$LogExpire",
+    "methods": [
+      {
+        "name": "values",
+        "parameterTypes": []
+      }
+    ]
   }
 ]

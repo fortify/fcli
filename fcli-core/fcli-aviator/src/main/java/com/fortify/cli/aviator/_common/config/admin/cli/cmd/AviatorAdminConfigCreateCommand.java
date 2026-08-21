@@ -12,6 +12,9 @@
  */
 package com.fortify.cli.aviator._common.config.admin.cli.cmd;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.fortify.cli.aviator._common.config.admin.cli.mixin.AviatorAdminConfigCreateOptions;
 import com.fortify.cli.aviator._common.config.admin.cli.mixin.AviatorAdminConfigNameArgGroup;
 import com.fortify.cli.aviator._common.config.admin.helper.AviatorAdminConfigDescriptor;
@@ -27,6 +30,8 @@ import picocli.CommandLine.Mixin;
 
 @Command(name = OutputHelperMixins.Create.CMD_NAME, sortOptions = false)
 public class AviatorAdminConfigCreateCommand extends AbstractSessionLoginCommand<AviatorAdminConfigDescriptor> {
+    private static final Logger LOG = LoggerFactory.getLogger(AviatorAdminConfigCreateCommand.class);
+
     @Mixin @Getter private OutputHelperMixins.Create outputHelper;
     @Getter private AviatorAdminConfigHelper configHelper = AviatorAdminConfigHelper.instance();
     @Mixin private AviatorAdminConfigCreateOptions configCreateOptions = new AviatorAdminConfigCreateOptions();
@@ -45,7 +50,14 @@ public class AviatorAdminConfigCreateCommand extends AbstractSessionLoginCommand
     @Override
     protected AviatorAdminConfigDescriptor login(String configName) {
         String privateKeyContents = configCreateOptions.getPrivateKeyResolver().getPrivateKeyContents();
-        return new AviatorAdminConfigDescriptor(configCreateOptions.getAviatorUrl(), configCreateOptions.getTenant(), privateKeyContents);
+        AviatorAdminConfigDescriptor configDescriptor = new AviatorAdminConfigDescriptor(
+                configCreateOptions.getAviatorUrl(),
+                configCreateOptions.getTenant(),
+                privateKeyContents);
+        LOG.info("Validating Aviator admin configuration with the Aviator server...");
+        configHelper.validateConfig(configDescriptor);
+        LOG.info("Aviator admin configuration validated successfully.");
+        return configDescriptor;
     }
 
     @Override

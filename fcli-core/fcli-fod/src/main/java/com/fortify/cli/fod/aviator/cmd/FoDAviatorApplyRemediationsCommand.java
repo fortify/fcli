@@ -20,6 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.aviator._common.cli.mixin.SourceEncodingsMixin;
 import com.fortify.cli.aviator.applyRemediation.ApplyAutoRemediationOnSource;
 import com.fortify.cli.aviator.config.AviatorLoggerImpl;
 import com.fortify.cli.aviator.util.FprHandle;
@@ -48,13 +49,15 @@ import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
 @Command(name = "apply-remediations")
-public class FoDAviatorApplyRemediationsCommand extends AbstractFoDJsonNodeOutputCommand implements IRecordTransformer, IActionCommandResultSupplier {
-    @Getter @Mixin private OutputHelperMixins.TableNoQuery outputHelper;
+public class FoDAviatorApplyRemediationsCommand extends AbstractFoDJsonNodeOutputCommand
+    implements IRecordTransformer, IActionCommandResultSupplier {
+    @Getter @Mixin private OutputHelperMixins.DetailsNoQuery outputHelper;
     @Mixin private ProgressWriterFactoryMixin progressWriterFactoryMixin;
     @Mixin private FoDDelimiterMixin delimiterMixin; // Is automatically injected in resolver mixins
     @Mixin private FoDReleaseByQualifiedNameOrIdResolverMixin.RequiredOption releaseResolver;
     private static final Logger LOG = LoggerFactory.getLogger(FoDAviatorApplyRemediationsCommand.class);
     @Option(names = {"--source-dir"}) private String sourceCodeDirectory = System.getProperty("user.dir");
+    @Mixin private SourceEncodingsMixin sourceEncodingsMixin;
 
     @Override @SneakyThrows
     public JsonNode getJsonNode(UnirestInstance unirest) {
@@ -81,11 +84,14 @@ public class FoDAviatorApplyRemediationsCommand extends AbstractFoDJsonNodeOutpu
 
             logger.progress("Status: Processing FPR with Aviator for Applying Auto Remediations");
             try (FprHandle fprHandle = new FprHandle(downloadedFprPath)) {
-                var remediationMetric = ApplyAutoRemediationOnSource.applyRemediations(fprHandle, sourceCodeDirectory, logger);
+                var remediationMetric = ApplyAutoRemediationOnSource.applyRemediations(fprHandle, sourceCodeDirectory,
+                    sourceEncodingsMixin.getSourceDecoder(), logger);
                 LOG.info("Applied remediation {}", remediationMetric.appliedRemediations());
                 LOG.info("Total remediation {}", remediationMetric.totalRemediations());
                 String status = remediationMetric.appliedRemediations() > 0 ? "Remediation-Applied" : "No-Remediation-Applied";
-                return AviatorFoDApplyRemediationsHelper.buildResultNode(rd, remediationMetric.totalRemediations(), remediationMetric.appliedRemediations(), remediationMetric.skippedRemediations(), status);
+                return AviatorFoDApplyRemediationsHelper.buildResultNode(rd, remediationMetric.totalRemediations(),
+                    remediationMetric.appliedRemediations(), remediationMetric.skippedRemediations(), remediationMetric.modifiedFiles(),
+                    remediationMetric.skippedByReason(), status);
             }
         } finally {
             if (downloadedFprPath != null) {
@@ -122,7 +128,8 @@ public class FoDAviatorApplyRemediationsCommand extends AbstractFoDJsonNodeOutpu
         return FoDScanType.Static;
     }
 
-    protected GetRequest getDownloadRequest(UnirestInstance unirest, FoDReleaseDescriptor releaseDescriptor, FoDScanDescriptor scanDescriptor) {
+        protected GetRequest getDownloadRequest(UnirestInstance unirest, FoDReleaseDescriptor releaseDescriptor,
+            FoDScanDescriptor scanDescriptor) {
         return unirest.get("/api/v3/releases/{releaseId}/fpr")
                 .routeParam("releaseId", releaseDescriptor.getReleaseId())
                 // Use headerReplace to replace rather than add the Accept header (avoid duplicates with defaults)

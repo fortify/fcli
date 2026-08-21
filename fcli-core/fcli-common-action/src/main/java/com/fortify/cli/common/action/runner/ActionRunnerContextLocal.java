@@ -22,13 +22,9 @@ import org.springframework.expression.spel.support.SimpleEvaluationContext;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fortify.cli.common.action.helper.ci.ActionCiSpelFunctions;
-import com.fortify.cli.common.action.helper.ci.IActionSpelFunctions;
-import com.fortify.cli.common.action.helper.ci.ado.ActionAdoSpelFunctions;
-import com.fortify.cli.common.action.helper.ci.bitbucket.ActionBitbucketSpelFunctions;
-import com.fortify.cli.common.action.helper.ci.github.ActionGitHubSpelFunctions;
-import com.fortify.cli.common.action.helper.ci.gitlab.ActionGitLabSpelFunctions;
+import com.fortify.cli.common.action.helper.ci.ActionCiSpelFunctionsRegistry;
 import com.fortify.cli.common.action.helper.fs.ActionFileSystemSpelFunctions;
+import com.fortify.cli.common.action.helper.git.ActionGitSpelFunctions;
 import com.fortify.cli.common.action.model.ActionStepCheckEntry;
 import com.fortify.cli.common.action.model.ActionStepCheckEntry.CheckStatus;
 import com.fortify.cli.common.action.model.FcliActionValidationException;
@@ -223,7 +219,7 @@ public class ActionRunnerContextLocal implements AutoCloseable {
             getSpelEvaluator().configure(spelCtx -> {
                 configureSpelContext(spelCtx, global.getConfig().getActionContextSpelEvaluatorConfigurers(), ctx);
                 spelCtx.setVariable("action", new ActionRunnerContextSpelFunctions(ctx));
-                registerCiVariables(spelCtx, ctx);
+                ActionCiSpelFunctionsRegistry.registerRuntimeVariables(spelCtx, ctx);
             });
         }
         
@@ -234,23 +230,13 @@ public class ActionRunnerContextLocal implements AutoCloseable {
             if (actionRunnerContext != null) {
                 configureSpelContext(spelContext, config.getActionContextSpelEvaluatorConfigurers(), actionRunnerContext);
                 spelContext.setVariable("action", new ActionRunnerContextSpelFunctions(actionRunnerContext));
-                registerCiVariables(spelContext, actionRunnerContext);
+                ActionCiSpelFunctionsRegistry.registerRuntimeVariables(spelContext, actionRunnerContext);
+            } else {
+                ActionCiSpelFunctionsRegistry.registerInfoVariables(spelContext);
             }
             spelContext.setVariable("fs", ActionFileSystemSpelFunctions.INSTANCE);
+            spelContext.setVariable("git", ActionGitSpelFunctions.INSTANCE);
             spelContext.setVariable("fcli", FcliCommandsSpelFunctions.INSTANCE);
-        }
-
-        private void registerCiVariables(SimpleEvaluationContext spelContext, ActionRunnerContextLocal ctx) {
-            var ciSpecificSpelFunctions = new IActionSpelFunctions[] {
-                new ActionGitHubSpelFunctions(ctx),
-                new ActionGitLabSpelFunctions(ctx),
-                new ActionAdoSpelFunctions(ctx),
-                new ActionBitbucketSpelFunctions(ctx)
-            };
-            spelContext.setVariable("_ci", new ActionCiSpelFunctions(ciSpecificSpelFunctions));
-            for ( var ciSpelFunctions : ciSpecificSpelFunctions ) {
-                spelContext.setVariable(ciSpelFunctions.getType(), ciSpelFunctions);
-            }
         }
     }
     

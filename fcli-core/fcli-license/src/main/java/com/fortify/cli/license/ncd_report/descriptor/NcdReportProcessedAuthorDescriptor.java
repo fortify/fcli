@@ -13,22 +13,40 @@
 package com.fortify.cli.license.ncd_report.descriptor;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fortify.cli.license.ncd_report.helper.NcdReportContributorHelper;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.RequiredArgsConstructor;
 
-@RequiredArgsConstructor @Data
+@RequiredArgsConstructor @Data @EqualsAndHashCode(exclude = "dormant")
 public class NcdReportProcessedAuthorDescriptor {
     private final INcdReportAuthorDescriptor authorDescriptor;
     private final NcdReportProcessedAuthorState state;
     private final int authorNumber;
     private final ObjectNode expressionInput;
+    private boolean dormant;
     
     public ObjectNode updateReportRecord(ObjectNode objectNode) {
-        return objectNode.put("authorName", authorDescriptor.getName())
+        return objectNode.put("authorId", computeAuthorId())
+                .put("authorName", authorDescriptor.getName())
                 .put("authorEmail", authorDescriptor.getEmail())
-                .put("authorState", state.name())
-                .put("authorNumber", authorNumber);
+                .put("authorState", state.name());
+    }
+
+    /**
+     * Computes a stable 16-hex-char identifier for this author derived from the
+        * normalized lowercase name and email fields in the expression input.
+        * The value is reproducible across separate runs as long
+     * as the author's name/email are the same, making it suitable as a stable
+     * cross-report reference key (e.g. for AI-assisted deduplication annotations).
+     */
+    public String getAuthorId() {
+        return computeAuthorId();
+    }
+
+    private String computeAuthorId() {
+        return NcdReportContributorHelper.computeAuthorId(expressionInput);
     }
     
     public static enum NcdReportProcessedAuthorState {

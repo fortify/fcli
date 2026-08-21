@@ -25,6 +25,7 @@ import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
 import com.fortify.cli.common.log.LogMaskHelper;
 import com.fortify.cli.common.log.LogMaskSource;
 import com.fortify.cli.common.log.LogSensitivityLevel;
@@ -41,8 +42,8 @@ public class AviatorGrpcUtils {
             ).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
     public static JsonNode grpcToJsonNode(Message message) {
-        registerLogMaskFields(message);
         try {
+            registerLogMaskFields(message);
             Set<Descriptors.FieldDescriptor> allFields =
                     new HashSet<>(message.getDescriptorForType().getFields());
 
@@ -54,7 +55,7 @@ public class AviatorGrpcUtils {
             return objectMapper.readTree(jsonString);
         } catch (Exception e) {
             LOG.error("Error converting gRPC message to JSON: {}", e.getMessage(), e);
-            throw new IllegalStateException("Failed to convert gRPC message to JSON", e);
+            throw new AviatorTechnicalException("Failed to convert gRPC message to JSON", e);
         }
     }
 

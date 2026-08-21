@@ -18,16 +18,22 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
+import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-class NativeYamlReflectConfigTest {
+class NativeReflectConfigTest {
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+    private static final String SPEL_REFLECT_CONFIG = "META-INF/native-image/fcli/fcli-app/spel/reflect-config.json";
+    private static final String YAML_REFLECT_CONFIG = "META-INF/native-image/fcli/fcli-app/yaml/reflect-config.json";
+    private static final String GRPC_REFLECT_CONFIG = "META-INF/native-image/fcli/fcli-app/grpc/reflect-config.json";
+    private static final String OFFSET_DATE_TIME_CLASS = "java.time.OffsetDateTime";
     private static final String TAG_MAPPING_CONFIG_CLASS = "com.fortify.cli.aviator.config.TagMappingConfig";
     private static final List<String> TAG_MAPPING_NESTED_CLASSES = List.of(
             "com.fortify.cli.aviator.config.TagMappingConfig$SuppressionExclusion",
@@ -36,21 +42,34 @@ class NativeYamlReflectConfigTest {
             "com.fortify.cli.aviator.config.TagMappingConfig$Result");
 
     @ParameterizedTest
-    @ValueSource(strings = {
-            "META-INF/native-image/fcli/fcli-app/yaml/reflect-config.json",
-            "META-INF/native-image/fcli/fcli-app/grpc/reflect-config.json"
-    })
-    void testTagMappingConfigNativeReflectConfigIncludesSuppressionExclusions(String resourcePath) throws Exception {
+    @MethodSource("getReflectConfigContracts")
+    void testNativeReflectConfigContracts(String resourcePath, String className,
+            boolean expectAllDeclaredFields, boolean expectAllPublicMethods,
+            List<String> expectedMethods, List<String> expectedEntries) throws Exception {
         JsonNode reflectConfig = loadReflectConfig(resourcePath);
-        JsonNode tagMappingConfigEntry = getReflectConfigEntry(reflectConfig, TAG_MAPPING_CONFIG_CLASS);
+        JsonNode reflectConfigEntry = getReflectConfigEntry(reflectConfig, className);
 
-        assertTrue(tagMappingConfigEntry.path("allDeclaredFields").asBoolean(),
-                () -> "Expected allDeclaredFields for " + TAG_MAPPING_CONFIG_CLASS + " in " + resourcePath);
-        assertTrue(hasMethod(tagMappingConfigEntry, "setSuppression_exclusions"),
-                () -> "Expected setSuppression_exclusions metadata for " + TAG_MAPPING_CONFIG_CLASS + " in " + resourcePath);
+        if ( expectAllDeclaredFields ) {
+            assertTrue(reflectConfigEntry.path("allDeclaredFields").asBoolean(),
+                    () -> "Expected allDeclaredFields for " + className + " in " + resourcePath);
+        }
+        if ( expectAllPublicMethods ) {
+            assertTrue(reflectConfigEntry.path("allPublicMethods").asBoolean(),
+                    () -> "Expected allPublicMethods for " + className + " in " + resourcePath);
+        }
+        expectedMethods.forEach(methodName -> assertTrue(hasMethod(reflectConfigEntry, methodName),
+                () -> "Expected " + methodName + " metadata for " + className + " in " + resourcePath));
+        expectedEntries.forEach(expectedEntry -> assertTrue(hasReflectConfigEntry(reflectConfig, expectedEntry),
+                () -> "Expected reflect-config entry for " + expectedEntry + " in " + resourcePath));
+    }
 
-        TAG_MAPPING_NESTED_CLASSES.forEach(className -> assertTrue(hasReflectConfigEntry(reflectConfig, className),
-                () -> "Expected reflect-config entry for " + className + " in " + resourcePath));
+    private static Stream<Arguments> getReflectConfigContracts() {
+        return Stream.of(
+                Arguments.of(SPEL_REFLECT_CONFIG, OFFSET_DATE_TIME_CLASS, false, true, List.of(), List.of()),
+                Arguments.of(YAML_REFLECT_CONFIG, TAG_MAPPING_CONFIG_CLASS, true, false,
+                        List.of("setSuppression_exclusions"), TAG_MAPPING_NESTED_CLASSES),
+                Arguments.of(GRPC_REFLECT_CONFIG, TAG_MAPPING_CONFIG_CLASS, true, false,
+                        List.of("setSuppression_exclusions"), TAG_MAPPING_NESTED_CLASSES));
     }
 
     private JsonNode loadReflectConfig(String resourcePath) throws IOException {

@@ -14,14 +14,19 @@ package com.fortify.cli.common.spel.fn;
 
 import static com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunction.SpelFunctionCategory.date;
 import static com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunction.SpelFunctionCategory.fcli;
+import static com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunction.SpelFunctionCategory.http;
 import static com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunction.SpelFunctionCategory.txt;
 import static com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunction.SpelFunctionCategory.util;
 
+import java.net.URLDecoder;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeParseException;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
@@ -57,11 +62,11 @@ public class SpelFunctionsStandard {
 
     @SpelFunction(cat=txt, returns="`true` if given string is null or blank, `false` otherwise")
     public static final boolean isBlank(
-            @SpelFunctionParam(name="input", desc="the string to check") String s) 
+            @SpelFunctionParam(name="input", desc="the string to check") String s)
     {
         return StringUtils.isBlank(s);
     }
-    
+
     @SpelFunction(cat=txt, returns="The first string if it's not blank, otherwise the second string")
     public static final String ifBlank(
             @SpelFunctionParam(name="input", desc="the string to return if not blank") String s1,
@@ -69,17 +74,17 @@ public class SpelFunctionsStandard {
     {
         return StringUtils.defaultIfBlank(s1, s2);
     }
-    
+
     @SpelFunction(cat=txt, returns="`false` if given string is null or blank, `true` otherwise")
     public static final boolean isNotBlank(
-            @SpelFunctionParam(name="input", desc="the string to check") String s) 
+            @SpelFunctionParam(name="input", desc="the string to check") String s)
     {
         return StringUtils.isNotBlank(s);
     }
 
     @SpelFunction(cat=txt, returns="The substring before the first occurrence of the separator, or `null` if input string is `null`")
     public static final String substringBefore(
-            @SpelFunctionParam(name="input", desc="the string to get a substring from") String s, 
+            @SpelFunctionParam(name="input", desc="the string to get a substring from") String s,
             @SpelFunctionParam(name="separator", desc="the separator to search for") String separator)
     {
         return StringUtils.substringBefore(s, separator);
@@ -87,8 +92,8 @@ public class SpelFunctionsStandard {
 
     @SpelFunction(cat=txt, returns="The substring after the first occurrence of the separator, or `null` if input string is `null`")
     public static final String substringAfter(
-            @SpelFunctionParam(name="input", desc="the string to get a substring from") String s, 
-            @SpelFunctionParam(name="separator", desc="the separator to search for") String separator) 
+            @SpelFunctionParam(name="input", desc="the string to get a substring from") String s,
+            @SpelFunctionParam(name="separator", desc="the separator to search for") String separator)
     {
         return StringUtils.substringAfter(s, separator);
     }
@@ -111,7 +116,7 @@ public class SpelFunctionsStandard {
         var text = (input instanceof JsonNode j) ? j.asText() : input.toString();
         return StringHelper.indent(text, prefix);
     }
-    
+
     @SpelFunction(cat=txt, returns="String consisting of the joined elements, separated by the given delimiter")
     public static final String join(
             @SpelFunctionParam(name="delimiter", desc="the delimiter to be used between each element") String delimiter,
@@ -124,21 +129,21 @@ public class SpelFunctionsStandard {
         } else if (source instanceof ArrayNode) {
             stream = JsonHelper.stream((ArrayNode) source);
         }
-        return stream == null 
-                ? "" 
+        return stream == null
+                ? ""
                 : stream.filter(Objects::nonNull).map(SpelFunctionsStandard::toString)
                         .collect(Collectors.joining(delimiter));
     }
-    
+
     @SpelFunction(cat=txt, returns="String consisting of the joined elements separated by the given delimiter _if all elements are non-null_; otherwise `null`")
     public static final String joinOrNull(
             @SpelFunctionParam(name="delimiter", desc="the delimiter to be used between each element") String delimiter,
-            @SpelFunctionParam(name="input", desc="the elements to join") String... parts) 
+            @SpelFunctionParam(name="input", desc="the elements to join") String... parts)
     {
         if (parts == null || Arrays.asList(parts).stream().anyMatch(Objects::isNull)) {return null;}
         return String.join(delimiter, parts);
     }
-    
+
     @SpelFunction(cat=txt, desc = "Returns a literal regex pattern string for the given input string, escaping any characters that have a special meaning in regular expressions.",
             returns="The regex-quoted string")
     public static final String regexQuote(
@@ -146,7 +151,7 @@ public class SpelFunctionsStandard {
     {
         return Pattern.quote(s);
     }
-    
+
     @SpelFunction(cat=txt, desc = """
             Replaces all occurrences in the input string based on regex patterns and replacement
             values provided in the mapping object.
@@ -170,9 +175,9 @@ public class SpelFunctionsStandard {
         }
         return s;
     }
-    
+
     @SpelFunction(cat=txt, desc = "Generates a numbered list from the given list of elements.",
-            returns="Numbered list of input elements, each on a new line") 
+            returns="Numbered list of input elements, each on a new line")
     public static final String numberedList(
             @SpelFunctionParam(name="input", desc="the list of elements to be numbered and joined") List<Object> elts)
     {
@@ -188,9 +193,79 @@ public class SpelFunctionsStandard {
         return DebugHelper.isDebugEnabled();
     }
 
-    @SpelFunction(cat=util, returns="A randomly generated UUID string in standard 36-character format") 
+    @SpelFunction(cat=util, returns="A randomly generated UUID string in standard 36-character format")
     public static final String uuid() {
         return UUID.randomUUID().toString();
+    }
+
+    @SpelFunction(cat=http, desc = "Builds an HTTP Basic Authorization header value from username and password.",
+            returns="Authorization header value in the format `Basic <base64(username:password)>`")
+    public static final String basicAuth(
+            @SpelFunctionParam(name="username", desc="the username to include in the basic auth credential pair") String username,
+            @SpelFunctionParam(name="password", desc="the password to include in the basic auth credential pair") String password)
+    {
+        var pair = StringUtils.defaultString(username) + ":" + StringUtils.defaultString(password);
+        var encoded = Base64.getEncoder().encodeToString(pair.getBytes(StandardCharsets.UTF_8));
+        return "Basic " + encoded;
+    }
+
+    @SpelFunction(cat=http, desc = "Builds an HTTP Bearer Authorization header value from the given token.",
+        returns="Authorization header value in the format `Bearer <token>`")
+    public static final String bearerAuth(
+            @SpelFunctionParam(name="token", desc="the bearer token") String token)
+    {
+        return "Bearer " + StringUtils.defaultString(token);
+    }
+
+    @SpelFunction(cat=http, returns="URI-component encoded string using UTF-8, or `null` if input is `null`")
+    public static final String urlEncode(
+            @SpelFunctionParam(name="input", desc="the string to URI-component encode") String s)
+    {
+        if (s == null) {
+            return null;
+        }
+        return URLEncoder.encode(s, StandardCharsets.UTF_8)
+                .replace("+", "%20")
+                .replace("%7E", "~");
+    }
+
+    @SpelFunction(cat=http, returns="UTF-8 decoded string from URI-component encoded input, or `null` if input is `null`")
+    public static final String urlDecode(
+            @SpelFunctionParam(name="input", desc="the URI-component encoded string to decode") String s)
+    {
+        if (s == null) {
+            return null;
+        }
+        try {
+            return URLDecoder.decode(s.replace("+", "%2B"), StandardCharsets.UTF_8);
+        } catch (IllegalArgumentException e) {
+            throw new FcliSimpleException("Invalid URI-encoded input passed to #urlDecode");
+        }
+    }
+
+    @SpelFunction(cat=util, returns="Base64-encoded representation of the input string using UTF-8, or `null` if input is `null`")
+    public static final String base64Encode(
+            @SpelFunctionParam(name="input", desc="the string to encode as Base64") String s)
+    {
+        if (s == null) {
+            return null;
+        }
+        return Base64.getEncoder().encodeToString(s.getBytes(StandardCharsets.UTF_8));
+    }
+
+    @SpelFunction(cat=util, returns="UTF-8 decoded string from the given Base64 input, or `null` if input is `null`")
+    public static final String base64Decode(
+            @SpelFunctionParam(name="input", desc="the Base64-encoded string to decode") String s)
+    {
+        if (s == null) {
+            return null;
+        }
+        try {
+            var decodedBytes = Base64.getDecoder().decode(s);
+            return new String(decodedBytes, StandardCharsets.UTF_8);
+        } catch (IllegalArgumentException e) {
+            throw new FcliSimpleException("Invalid Base64 input passed to #base64Decode: " + s);
+        }
     }
 
     @SpelFunction(cat=txt, desc = """
@@ -309,7 +384,7 @@ public class SpelFunctionsStandard {
             throw new FcliTechnicalException("Error converting object to JSON string", e);
         }
     }
-    
+
     private static final String toString(Object o) {
         if ( o==null ) {
             return "";

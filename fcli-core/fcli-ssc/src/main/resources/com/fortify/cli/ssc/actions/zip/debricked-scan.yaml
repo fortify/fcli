@@ -79,7 +79,7 @@ steps:
   - if: ${#isBlank(cli.repository)||#isBlank(cli.branch)}
     do:
       - var.set:
-          localRepository: ${#localRepo(cli.sourceDir)}
+          localRepository: ${#git.localRepo(cli.sourceDir)}
   - var.set:
       repo: ${#ifBlank(cli.repository, localRepository?.repository?.name?.full)}
       branch: ${#ifBlank(cli.branch, localRepository?.branch?.short)}

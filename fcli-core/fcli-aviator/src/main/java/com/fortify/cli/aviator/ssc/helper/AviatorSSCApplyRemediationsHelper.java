@@ -12,6 +12,12 @@
  */
 package com.fortify.cli.aviator.ssc.helper;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
@@ -34,7 +40,13 @@ public final class AviatorSSCApplyRemediationsHelper {
      * @param action Final action.
      * @return An ObjectNode representing the result.
      */
-    public static ObjectNode buildResultNode(SSCArtifactDescriptor ad, int totalRemediation, int appliedRemediation, int skippedRemediation, String action) {
+    public static ObjectNode buildResultNode(SSCArtifactDescriptor ad, int totalRemediation, int appliedRemediation, int skippedRemediation,
+            Set<String> modifiedFiles, String action) {
+        return buildResultNode(ad, totalRemediation, appliedRemediation, skippedRemediation, modifiedFiles, Map.of(), action);
+    }
+
+    public static ObjectNode buildResultNode(SSCArtifactDescriptor ad, int totalRemediation, int appliedRemediation, int skippedRemediation,
+            Set<String> modifiedFiles, Map<String, Integer> skippedByReason, String action) {
         ObjectNode result = JsonHelper.getObjectMapper().createObjectNode();
         result.put("appVersionId", ad.asObjectNode().path("projectVersionId").asText("N/A"));
         result.put("artifactId", ad.getId());
@@ -43,6 +55,9 @@ public final class AviatorSSCApplyRemediationsHelper {
         result.put("totalRemediation", totalRemediation);
         result.put("appliedRemediation", appliedRemediation);
         result.put("skippedRemediation", skippedRemediation);
+        result.put("skippedReasons", formatSkippedReasons(skippedByReason));
+        result.set("skippedByReason", toObjectNode(skippedByReason));
+        result.set("modifiedFiles", toArrayNode(modifiedFiles));
         result.put(IActionCommandResultSupplier.actionFieldName, action);
         return result;
     }
@@ -60,7 +75,14 @@ public final class AviatorSSCApplyRemediationsHelper {
      * @return An ObjectNode representing the aggregated result.
      */
     public static ObjectNode buildAggregatedResultNode(String appVersionId, int artifactsProcessed, int artifactsSkipped,
-            int totalRemediation, int appliedRemediation, int skippedRemediation, String action) {
+            int totalRemediation, int appliedRemediation, int skippedRemediation, Set<String> modifiedFiles, String action) {
+        return buildAggregatedResultNode(appVersionId, artifactsProcessed, artifactsSkipped, totalRemediation, appliedRemediation,
+                skippedRemediation, modifiedFiles, Map.of(), action);
+    }
+
+    public static ObjectNode buildAggregatedResultNode(String appVersionId, int artifactsProcessed, int artifactsSkipped,
+            int totalRemediation, int appliedRemediation, int skippedRemediation, Set<String> modifiedFiles,
+            Map<String, Integer> skippedByReason, String action) {
         ObjectNode result = JsonHelper.getObjectMapper().createObjectNode();
         result.put("appVersionId", appVersionId);
         result.put("artifactId", "N/A");
@@ -69,8 +91,35 @@ public final class AviatorSSCApplyRemediationsHelper {
         result.put("totalRemediation", totalRemediation);
         result.put("appliedRemediation", appliedRemediation);
         result.put("skippedRemediation", skippedRemediation);
+        result.put("skippedReasons", formatSkippedReasons(skippedByReason));
+        result.set("skippedByReason", toObjectNode(skippedByReason));
+        result.set("modifiedFiles", toArrayNode(modifiedFiles));
         result.put(IActionCommandResultSupplier.actionFieldName, action);
         return result;
     }
 
+    private static ArrayNode toArrayNode(Set<String> files) {
+        ArrayNode array = JsonHelper.getObjectMapper().createArrayNode();
+        if (files != null) {
+            files.forEach(array::add);
+        }
+        return array;
+    }
+
+    private static ObjectNode toObjectNode(Map<String, Integer> skippedByReason) {
+        ObjectNode object = JsonHelper.getObjectMapper().createObjectNode();
+        if (skippedByReason != null) {
+            skippedByReason.forEach(object::put);
+        }
+        return object;
+    }
+
+    private static String formatSkippedReasons(Map<String, Integer> skippedByReason) {
+        if (skippedByReason == null || skippedByReason.isEmpty()) {
+            return "";
+        }
+        List<String> parts = new ArrayList<>();
+        skippedByReason.forEach((reason, count) -> parts.add(reason + "=" + count));
+        return String.join(", ", parts);
+    }
 }

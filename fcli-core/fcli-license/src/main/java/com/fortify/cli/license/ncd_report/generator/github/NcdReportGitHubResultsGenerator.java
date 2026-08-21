@@ -82,14 +82,16 @@ public class NcdReportGitHubResultsGenerator extends AbstractNcdReportResultsGen
      */
     private void generateResults(NcdReportGitHubOrganizationConfig orgConfig) {
         String orgName = orgConfig.getName();
+        String sourceKey = "github:"+orgName;
         try {
             reportContext().progressWriter().writeI18nProgress("fcli.license.ncd-report.loading.github-repositories", orgName);
             restHelper.org(orgName).queryRepositories().process(repo -> {
-                reportContext().repositoryProcessor().processRepository(
+                var result = reportContext().repositoryProcessor().processRepository(
+                    sourceKey,
                     new NcdReportCombinedRepoSelectorConfig(sourceConfig(), orgConfig),
                     getRepoDescriptor(repo),
                     this::generateCommitData);
-                return Break.FALSE;
+                return result.sourceLimitReached() ? Break.TRUE : Break.FALSE;
             });
         } catch ( Exception e ) {
             reportContext().logger().error(String.format("Error processing organization: %s (%s)", orgName, sourceConfig().getApiUrl()), e);
@@ -117,10 +119,12 @@ public class NcdReportGitHubResultsGenerator extends AbstractNcdReportResultsGen
      * method.
      */
     private void generateMostRecentCommitData(INcdReportRepositoryBranchCommitCollector branchCommitCollector, NcdReportGitHubRepositoryDescriptor repoDescriptor, List<NcdReportGitHubBranchDescriptor> branchDescriptors) {
+        String until = reportContext().reportConfig().getCommitEndDateTime()
+                .format(DateTimeFormatter.ISO_INSTANT);
         NcdReportGitHubCommitDescriptor mostRecentCommitDescriptor = null;
         NcdReportGitHubBranchDescriptor mostRecentBranchDescriptor = null;
         for ( var branchDescriptor : branchDescriptors ) {
-            var currentCommitResponse = getLatestCommit(repoDescriptor, branchDescriptor);
+            var currentCommitResponse = getLatestCommit(repoDescriptor, branchDescriptor, until);
             if ( currentCommitResponse.size()>0 ) {
                 var currentCommitDescriptor = JsonHelper.treeToValue(currentCommitResponse.get(0), NcdReportGitHubCommitDescriptor.class);
                 if ( mostRecentCommitDescriptor==null || currentCommitDescriptor.getDate().isAfter(mostRecentCommitDescriptor.getDate()) ) {
@@ -130,7 +134,7 @@ public class NcdReportGitHubResultsGenerator extends AbstractNcdReportResultsGen
             }
         }
         if ( mostRecentCommitDescriptor!=null ) {
-            addCommit(branchCommitCollector, repoDescriptor, mostRecentBranchDescriptor, mostRecentCommitDescriptor.asJsonNode());
+            addCommit(branchCommitCollector, repoDescriptor, mostRecentBranchDescriptor, mostRecentCommitDescriptor.asJsonNode(), true);
         }
     }
 
@@ -140,16 +144,18 @@ public class NcdReportGitHubResultsGenerator extends AbstractNcdReportResultsGen
      * @return true if any commits were found, false otherwise  
      */
     private boolean generateCommitDataForBranches(INcdReportRepositoryBranchCommitCollector branchCommitCollector, NcdReportGitHubRepositoryDescriptor repoDescriptor, List<NcdReportGitHubBranchDescriptor> branchDescriptors) {
-        String since = reportContext().reportConfig().getCommitOffsetDateTime()
+        String since = reportContext().reportConfig().getCommitStartDateTime()
+                .format(DateTimeFormatter.ISO_INSTANT);
+        String until = reportContext().reportConfig().getCommitEndDateTime()
                 .format(DateTimeFormatter.ISO_INSTANT);
         boolean commitsFound = false;
         for ( var branchDescriptor : branchDescriptors ) {
             reportContext().progressWriter().writeI18nProgress("fcli.license.ncd-report.loading.branch-commits", repoDescriptor.getFullName(), branchDescriptor.getName());
             List<Boolean> foundFlag = new ArrayList<>();
             restHelper.repo(repoDescriptor.getOwnerName(), repoDescriptor.getName())
-                .queryCommits().sha(branchDescriptor.getSha()).since(since).process(commit -> {
+                .queryCommits().sha(branchDescriptor.getSha()).since(since).until(until).process(commit -> {
                     foundFlag.add(true);
-                    addCommit(branchCommitCollector, repoDescriptor, branchDescriptor, commit);
+                    addCommit(branchCommitCollector, repoDescriptor, branchDescriptor, commit, false);
                     return Break.FALSE;
                 });
             if (!foundFlag.isEmpty()) {
@@ -162,10 +168,12 @@ public class NcdReportGitHubResultsGenerator extends AbstractNcdReportResultsGen
     /**
      * Add commit data to the given {@link INcdReportRepositoryBranchCommitCollector}.
      */
-    private void addCommit(INcdReportRepositoryBranchCommitCollector branchCommitCollector, NcdReportGitHubRepositoryDescriptor repoDescriptor, NcdReportGitHubBranchDescriptor branchDescriptor, JsonNode commit) {
+    private void addCommit(INcdReportRepositoryBranchCommitCollector branchCommitCollector, NcdReportGitHubRepositoryDescriptor repoDescriptor,
+            NcdReportGitHubBranchDescriptor branchDescriptor, JsonNode commit, boolean dormant)
+    {
         var commitDescriptor = JsonHelper.treeToValue(commit, NcdReportGitHubCommitDescriptor.class);
         var authorDescriptor = JsonHelper.treeToValue(commit, NcdReportGitHubAuthorDescriptor.class);
-        branchCommitCollector.reportBranchCommit(new NcdReportBranchCommitDescriptor(repoDescriptor, branchDescriptor, commitDescriptor, authorDescriptor));
+        branchCommitCollector.reportBranchCommit(new NcdReportBranchCommitDescriptor(repoDescriptor, branchDescriptor, commitDescriptor, authorDescriptor, dormant));
     }
     
     /**
@@ -185,9 +193,18 @@ public class NcdReportGitHubResultsGenerator extends AbstractNcdReportResultsGen
     /**
      * Get a single commit (most recent) for a branch.
      */
-    private ArrayNode getLatestCommit(NcdReportGitHubRepositoryDescriptor repoDescriptor, NcdReportGitHubBranchDescriptor branchDescriptor) {
-        return restHelper.repo(repoDescriptor.getOwnerName(), repoDescriptor.getName())
-            .getLatestCommit(branchDescriptor.getSha());
+    private ArrayNode getLatestCommit(NcdReportGitHubRepositoryDescriptor repoDescriptor, NcdReportGitHubBranchDescriptor branchDescriptor, String until) {
+        var result = JsonHelper.getObjectMapper().createArrayNode();
+        restHelper.repo(repoDescriptor.getOwnerName(), repoDescriptor.getName())
+            .queryCommits()
+                .sha(branchDescriptor.getSha())
+                .until(until)
+                .queryParam("per_page", 1)
+                .process(commit -> {
+                    result.add(commit);
+                    return Break.TRUE;
+                });
+        return result;
     }
     
     /**

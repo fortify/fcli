@@ -14,6 +14,7 @@ package com.fortify.cli.aviator.fpr.processor;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -84,6 +85,24 @@ class AuditProcessorSuppressionExclusionsTest {
     }
 
     @Test
+    void testUpdateAndSaveUsesFortifyRemediationAviatorUserName() throws Exception {
+        createTestFpr(createAuditXml(false));
+        AuditProcessor auditProcessor = new AuditProcessor(fprHandle);
+        auditProcessor.processAuditXML();
+
+        auditProcessor.updateAndSaveAuditAndRemediationsXml(
+                Map.of("instance-1", createFalsePositiveResponse()),
+                createTagMappingConfig("Privacy Violation"),
+                Map.of("instance-1", "Cross-Site Scripting"),
+                new FPRInfo(fprHandle));
+
+        List<String> usernames = readUsernames();
+        assertEquals("Fortify Remediation Aviator", Constants.USER_NAME);
+        assertTrue(usernames.size() >= 2);
+        assertTrue(usernames.stream().allMatch(Constants.USER_NAME::equals));
+    }
+
+    @Test
     void testUpdateAndSaveThrowsClearErrorWhenCategoryLookupMissing() throws Exception {
         createTestFpr(createAuditXml(false));
         AuditProcessor auditProcessor = new AuditProcessor(fprHandle);
@@ -128,6 +147,22 @@ class AuditProcessorSuppressionExclusionsTest {
             document = factory.newDocumentBuilder().parse(inputStream);
         }
         return (Element) document.getElementsByTagNameNS("xmlns://www.fortify.com/schema/audit", "Issue").item(0);
+    }
+
+    private List<String> readUsernames() throws Exception {
+        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+        factory.setNamespaceAware(true);
+        Document document;
+        try (var inputStream = Files.newInputStream(fprHandle.getPath("/audit.xml"))) {
+            document = factory.newDocumentBuilder().parse(inputStream);
+        }
+
+        var usernames = new ArrayList<String>();
+        var nodes = document.getElementsByTagNameNS("xmlns://www.fortify.com/schema/audit", "Username");
+        for (int i = 0; i < nodes.getLength(); i++) {
+            usernames.add(nodes.item(i).getTextContent());
+        }
+        return usernames;
     }
 
     private AuditResponse createFalsePositiveResponse() {

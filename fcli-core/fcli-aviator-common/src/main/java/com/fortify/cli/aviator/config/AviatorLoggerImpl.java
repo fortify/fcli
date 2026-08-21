@@ -39,7 +39,9 @@ public class AviatorLoggerImpl implements IAviatorLogger {
 
     @Override
     public void warn(String format, Object... args) {
-        logger.warn(format, args);
+        String message = String.format(format, args);
+        progressWriter.writeWarning(message); // Console (stderr)
+        logger.warn(message);
     }
 
     @Override

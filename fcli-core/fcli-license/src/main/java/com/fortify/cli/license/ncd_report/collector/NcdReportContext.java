@@ -12,6 +12,8 @@
  */
 package com.fortify.cli.license.ncd_report.collector;
 
+import java.util.function.Consumer;
+
 import com.fortify.cli.common.progress.helper.IProgressWriterI18n;
 import com.fortify.cli.common.report.collector.IReportContext;
 import com.fortify.cli.common.report.logger.IReportLogger;
@@ -20,6 +22,7 @@ import com.fortify.cli.common.report.writer.IReportWriter;
 import com.fortify.cli.common.rest.unirest.UnirestContext;
 import com.fortify.cli.license.ncd_report.cli.cmd.NcdReportCreateCommand;
 import com.fortify.cli.license.ncd_report.config.NcdReportConfig;
+import com.fortify.cli.license.ncd_report.descriptor.NcdReportSummaryDescriptor;
 import com.fortify.cli.license.ncd_report.writer.NcdReportResultsWriters;
 
 import lombok.Getter;
@@ -41,17 +44,35 @@ public final class NcdReportContext implements IReportContext {
     @Getter private final NcdReportConfig reportConfig;
     @Getter private final IProgressWriterI18n progressWriter;
     @Getter private final UnirestContext unirestContext;
+    private final NcdReportSummaryDescriptor summary;
     private final IReportWriter reportWriter;
     private final NcdReportResultsWriters writers;
     private final NcdReportRepositoryProcessor repositoryProcessor;
     
     public NcdReportContext(NcdReportConfig reportConfig, IReportWriter reportWriter, IProgressWriterI18n progressWriter, UnirestContext unirestContext) {
+        this(reportConfig, reportWriter, progressWriter, unirestContext, NcdReportRepositoryProcessorMode.FULL_REPORT,
+                NcdReportRepositorySelectionFilter.all, null, null);
+    }
+
+    public NcdReportContext(NcdReportConfig reportConfig, IReportWriter reportWriter, IProgressWriterI18n progressWriter,
+            UnirestContext unirestContext, NcdReportRepositoryProcessorMode repositoryProcessorMode,
+            NcdReportRepositorySelectionFilter selectionFilter, Integer limitPerSource,
+            Consumer<NcdReportRepositoryProcessingResult> resultConsumer)
+    {
         this.reportConfig = reportConfig;
         this.progressWriter = progressWriter;
         this.unirestContext = unirestContext;
         this.reportWriter = reportWriter;
+        this.summary = NcdReportSummaryDescriptor.fromObjectNode(reportWriter.summary());
+        setDateRangeOnSummary();
         this.writers = new NcdReportResultsWriters(reportWriter, progressWriter);
-        this.repositoryProcessor = new NcdReportRepositoryProcessor(reportConfig, writers, reportWriter.summary());
+        this.repositoryProcessor = new NcdReportRepositoryProcessor(reportConfig, writers, summary,
+            repositoryProcessorMode, selectionFilter, limitPerSource, resultConsumer);
+    }
+
+    private void setDateRangeOnSummary() {
+        summary.setReportStartDate(reportConfig.getCommitStartDateTime().toLocalDate().toString());
+        summary.setReportEndDate(reportConfig.getCommitEndDateTime().toLocalDate().toString());
     }
     
     /**
@@ -70,6 +91,9 @@ public final class NcdReportContext implements IReportContext {
     @Override @SneakyThrows
     public void close() {
         repositoryProcessor.writeResults();
-        logger().updateSummary(reportWriter.summary());
+        writers.authorsWriter().close();
+        var summaryNode = reportWriter.summary();
+        summary.applyTo(summaryNode);
+        logger().updateSummary(summaryNode);
     }
 }

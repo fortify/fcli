@@ -1,0 +1,21 @@
+{
+  "resources": {
+    "includes": [
+      {
+        "pattern": "extensions_config.yaml"
+      },
+      {
+        "pattern": "languages_comment_config.yaml"
+      },
+      {
+        "pattern": "default_tag_mapping.yaml"
+      },
+      {
+        "pattern": "remediations.xsd"
+      },
+      {
+        "pattern": "webinspect.xsd"
+      }
+    ]
+  }
+}
