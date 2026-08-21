@@ -1,0 +1,24 @@
+# Set the SSC tag used to store DAST audit results. Optional.
+# If not set, defaults to the SSC Analysis tag.
+tag_id: "87f2364f-dcd4-49e6-861d-f8d3f351686b"
+# Map DAST audit decisions to SSC tag values and suppression behavior.
+# tier_1 contains high-confidence decisions; tier_2 contains lower-confidence decisions.
+mapping:
+  tier_1:
+    fp:
+      value: "Not an Issue"
+      suppress: true
+    tp:
+      value: "Exploitable"
+      suppress: false
+    unsure:
+      suppress: false
+  tier_2:
+    fp:
+      value: "Not an Issue"
+      suppress: false
+    tp:
+      value: "Suspicious"
+      suppress: false
+    unsure:
+      suppress: false

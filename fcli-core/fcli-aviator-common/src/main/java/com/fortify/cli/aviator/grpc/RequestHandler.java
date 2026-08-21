@@ -134,15 +134,25 @@ public class RequestHandler<T> {
      * Complete the stream and send any remaining requests.
      */
     public CompletableFuture<Void> complete() {
-        if (!isCompleted.compareAndSet(false, true)) {
+        if (isCompleted.get()) {
             return CompletableFuture.completedFuture(null);
         }
 
         return CompletableFuture.runAsync(() -> {
             sendLock.lock();
             try {
-                // Flush any remaining requests
-                flush();
+                if (!isCompleted.compareAndSet(false, true)) {
+                    return;
+                }
+
+                T request;
+                while ((request = requestQueue.poll()) != null) {
+                    if (requestObserver != null) {
+                        requestObserver.onNext(request);
+                        totalSent++;
+                        pendingRequests.decrementAndGet();
+                    }
+                }
 
                 // Complete the stream
                 if (requestObserver != null) {

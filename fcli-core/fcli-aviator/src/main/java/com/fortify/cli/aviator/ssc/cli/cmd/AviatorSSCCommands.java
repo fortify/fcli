@@ -20,6 +20,7 @@ import picocli.CommandLine;
         name = "ssc",
         subcommands = {
                 AviatorSSCAuditCommand.class,
+                AviatorSSCDastAuditCommand.class,
                 AviatorSSCPrepareCommand.class,
                 AviatorSSCApplyRemediationsCommand.class,
                 AviatorSSCDownloadRemediationsCacheCommand.class,

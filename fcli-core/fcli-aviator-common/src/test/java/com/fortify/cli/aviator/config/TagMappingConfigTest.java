@@ -21,6 +21,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -134,6 +135,27 @@ class TagMappingConfigTest {
         assertTrue(config.isSuppressionExcluded(new TagMappingConfig.SuppressionExclusionContext("SQL Injection")));
         assertTrue(config.isSuppressionExcluded(new TagMappingConfig.SuppressionExclusionContext("privacy violation")));
     }
+
+      @Test
+      void testResolvesResultsAndMappedValues() {
+        TagMappingConfig config = createValidConfig();
+
+        assertTrue(config.getResult(true, TagMappingConfig.ResultType.FP).getSuppress());
+        assertFalse(config.getResult(false, TagMappingConfig.ResultType.FP).getSuppress());
+        assertEquals(Set.of("Not an Issue", "Exploitable"), config.getMappedValues());
+      }
+
+      @Test
+      void testDastValidationRejectsSuppressionExclusions() {
+        TagMappingConfig config = createValidConfig();
+        config.setSuppression_exclusions(new ArrayList<>(List.of(createSuppressionExclusion("Privacy Violation"))));
+
+        AviatorSimpleException exception = assertThrows(AviatorSimpleException.class, config::validateForDast);
+
+        assertEquals(
+          "Invalid DAST tag mapping configuration: suppression_exclusions are not supported",
+          exception.getMessage());
+      }
 
     private TagMappingConfig createValidConfig() {
         TagMappingConfig config = new TagMappingConfig();

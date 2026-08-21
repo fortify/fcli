@@ -16,7 +16,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -312,7 +311,7 @@ public class AviatorSSCAuditCommand extends AbstractSSCJsonNodeOutputCommand imp
         LOG.info("Starting SSC tag validation before FPR upload for app version id={}.", av.getVersionId());
         TagMappingConfig tagMappingConfig = loadTagMappingForValidation();
         LOG.debug("Tag mapping config loaded: tag_id='{}', mapping={}", tagMappingConfig.getTag_id(), tagMappingConfig.getMapping());
-        Set<String> analysisTagValues = extractAnalysisTagValues(tagMappingConfig);
+        Set<String> analysisTagValues = tagMappingConfig.getMappedValues();
         LOG.info("Analysis tag values to validate: {}", analysisTagValues);
         List<String> warnings = AviatorSSCTagValidator.validatePreUpload(
             unirest, av.getVersionId(), tagMappingConfig.getTag_id(), analysisTagValues, logger);
@@ -324,22 +323,6 @@ public class AviatorSSCAuditCommand extends AbstractSSCJsonNodeOutputCommand imp
             return ResourceUtil.loadYamlFile(new java.io.File(tagMapping), TagMappingConfig.class);
         }
         return AviatorConfigManager.getInstance().getDefaultTagMappingConfig();
-    }
-
-    private Set<String> extractAnalysisTagValues(TagMappingConfig config) {
-        Set<String> values = new LinkedHashSet<>();
-        if (config.getMapping() != null) {
-            addTierValues(values, config.getMapping().getTier_1());
-            addTierValues(values, config.getMapping().getTier_2());
-        }
-        return values;
-    }
-
-    private void addTierValues(Set<String> values, TagMappingConfig.Tier tier) {
-        if (tier == null) return;
-        if (tier.getFp() != null && tier.getFp().getValue() != null) values.add(tier.getFp().getValue());
-        if (tier.getTp() != null && tier.getTp().getValue() != null) values.add(tier.getTp().getValue());
-        if (tier.getUnsure() != null && tier.getUnsure().getValue() != null) values.add(tier.getUnsure().getValue());
     }
 
     private Path downloadFpr(UnirestInstance unirest, SSCAppVersionDescriptor av, AviatorLoggerImpl logger) throws IOException {

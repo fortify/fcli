@@ -37,6 +37,7 @@ import com.fortify.aviator.application.GetDefaultQuotaRequest;
 import com.fortify.aviator.application.GetDefaultQuotaResponse;
 import com.fortify.aviator.application.UpdateApplicationRequest;
 import com.fortify.aviator.application.ValidateAdminSessionRequest;
+import com.fortify.aviator.dastaudit.DastAuditServiceGrpc;
 import com.fortify.aviator.dastentitlement.DastEntitlement;
 import com.fortify.aviator.dastentitlement.DastEntitlementServiceGrpc;
 import com.fortify.aviator.dastentitlement.ListDastEntitlementsByTenantRequest;
@@ -84,6 +85,7 @@ public class AviatorGrpcClient implements AutoCloseable {
     private final EntitlementServiceGrpc.EntitlementServiceBlockingStub entitlementServiceBlockingStub;
     private final DastEntitlementServiceGrpc.DastEntitlementServiceBlockingStub dastEntitlementServiceBlockingStub;
     private final CorrelationServiceGrpc.CorrelationServiceStub correlationAsyncStub;
+    private final DastAuditServiceGrpc.DastAuditServiceStub dastAuditAsyncStub;
     private final long defaultTimeoutSeconds;
     private final java.util.concurrent.ExecutorService processingExecutor;
     private final long pingIntervalSeconds;
@@ -100,6 +102,11 @@ public class AviatorGrpcClient implements AutoCloseable {
         this.entitlementServiceBlockingStub = EntitlementServiceGrpc.newBlockingStub(channel).withCompression("gzip").withMaxInboundMessageSize(Constants.MAX_MESSAGE_SIZE).withMaxOutboundMessageSize(Constants.MAX_MESSAGE_SIZE).withWaitForReady();
         this.dastEntitlementServiceBlockingStub = DastEntitlementServiceGrpc.newBlockingStub(channel).withCompression("gzip").withMaxInboundMessageSize(Constants.MAX_MESSAGE_SIZE).withMaxOutboundMessageSize(Constants.MAX_MESSAGE_SIZE).withWaitForReady();
         this.correlationAsyncStub = CorrelationServiceGrpc.newStub(channel).withCompression("gzip").withMaxInboundMessageSize(Constants.MAX_MESSAGE_SIZE).withMaxOutboundMessageSize(Constants.MAX_MESSAGE_SIZE).withWaitForReady();
+        this.dastAuditAsyncStub = DastAuditServiceGrpc.newStub(channel)
+            .withCompression("gzip")
+            .withMaxInboundMessageSize(Constants.MAX_MESSAGE_SIZE)
+            .withMaxOutboundMessageSize(Constants.MAX_MESSAGE_SIZE)
+            .withWaitForReady();
         this.defaultTimeoutSeconds = defaultTimeoutSeconds;
         this.processingExecutor = Executors.newFixedThreadPool(4, r -> {
             Thread t = new Thread(r, "aviator-client-processing-" + r.hashCode());
@@ -295,6 +302,10 @@ public class AviatorGrpcClient implements AutoCloseable {
 
     public CorrelationServiceGrpc.CorrelationServiceStub getCorrelationAsyncStub() {
         return correlationAsyncStub;
+    }
+
+    public DastAuditServiceGrpc.DastAuditServiceStub getDastAuditAsyncStub() {
+        return dastAuditAsyncStub;
     }
 
     public java.util.concurrent.ScheduledExecutorService getPingScheduler() {

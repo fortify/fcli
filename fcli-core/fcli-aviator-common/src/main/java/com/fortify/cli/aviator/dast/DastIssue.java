@@ -13,8 +13,8 @@
 package com.fortify.cli.aviator.dast;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -37,6 +37,7 @@ public class DastIssue {
     private String cweDescription;  // Full CWE description text
     private String sessionUrl;      // URL of the session containing this issue
     private List<String> reproStepUrls = new ArrayList<>();
+    private List<DastReproStep> reproSteps = new ArrayList<>();
 
     // ReportSections for audit context
     private String summary;         // Summary from ReportSection
@@ -46,7 +47,7 @@ public class DastIssue {
     private String referenceInfo;   // Reference Info from ReportSection
 
     // Additional classifications
-    private Map<String, String> classifications = new HashMap<>();  // kind -> value
+    private Map<String, String> classifications = new LinkedHashMap<>();  // kind -> value
 
     // Audit status
     private boolean suppressed = false;

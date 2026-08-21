@@ -39,15 +39,7 @@ public final class AviatorSSCCorrelateDownloadHelper {
      */
     public static Path downloadArtifactFpr(UnirestInstance unirest, SSCArtifactDescriptor ad,
                                             AviatorLoggerImpl logger, IProgressWriter progressWriter) throws IOException {
-        Path fprPath = Files.createTempFile("aviator_" + ad.getId() + "_", ".fpr");
-        logger.progress("Status: Downloading FPR from SSC (artifact id=" + ad.getId() + ")");
-        SSCFileTransferHelper.download(
-            unirest,
-            SSCUrls.DOWNLOAD_ARTIFACT(ad.getId(), true),
-            fprPath.toFile(),
-            SSCFileTransferHelper.ISSCAddDownloadTokenFunction.ROUTEPARAM_DOWNLOADTOKEN,
-            progressWriter);
-        return fprPath;
+        return AviatorSSCFprTransferHelper.downloadArtifactFpr(unirest, ad, logger, progressWriter);
     }
 
     /**
@@ -73,18 +65,11 @@ public final class AviatorSSCCorrelateDownloadHelper {
     }
 
     /**
-     * Uploads an enriched DAST FPR to SSC using the HTML upload endpoint.
+     * Uploads an enriched DAST FPR to SSC and returns the new artifact ID.
      */
-    public static void uploadEnrichedDastFpr(UnirestInstance unirest, SSCAppVersionDescriptor av,
+    public static String uploadEnrichedDastFpr(UnirestInstance unirest, SSCAppVersionDescriptor av,
                                               Path enrichedDastFpr, IProgressWriter progressWriter) {
-        SSCFileTransferHelper.htmlUpload(
-            unirest,
-            SSCUrls.UPLOAD_RESULT_FILE(av.getVersionId()),
-            enrichedDastFpr.toFile(),
-            SSCFileTransferHelper.ISSCAddUploadTokenFunction.ROUTEPARAM_UPLOADTOKEN,
-            String.class,
-            progressWriter
-        );
+        return AviatorSSCFprTransferHelper.uploadDastFpr(unirest, av, enrichedDastFpr, progressWriter);
     }
 
     /**
