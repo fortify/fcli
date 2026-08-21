@@ -17,7 +17,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260820.162432-dev_v3.x" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260821.094557-dev_v3.x" %}
 
 
 <div id="header">
@@ -46,7 +46,9 @@ fcli_version:
 <div class="paragraph">
 <p><strong>fcli fod aviator apply-remediations</strong> [<strong>--delim</strong>=<em>&lt;delimiter&gt;</em>] [<strong>--progress</strong>=<em>&lt;type&gt;</em>]
                                     <strong>--rel</strong>=<em>id|app[:ms]:rel</em>
-                                    [<strong>--source-dir</strong>=<em>&lt;sourceCodeDirectory&gt;</em>] [[<strong>-h</strong>]
+                                    [<strong>--source-dir</strong>=<em>&lt;sourceCodeDirectory&gt;</em>]
+                                    [<strong>--source-encodings</strong>=<em>encoding</em>[,
+                                    <em>encoding</em>&#8230;&#8203;]]&#8230;&#8203; [[<strong>-h</strong>]
                                     [<strong>--env-prefix</strong>=<em>&lt;prefix&gt;</em>]
                                     [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
                                     [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]
@@ -84,6 +86,10 @@ fcli_version:
 <dt class="hdlist1"><strong>--source-dir</strong>=<em>&lt;sourceCodeDirectory&gt;</em></dt>
 <dd>
 <p>Directory containing source code to apply remediations to. Default value: /home/runner/work/fcli/fcli/fcli-other/fcli-doc.</p>
+</dd>
+<dt class="hdlist1"><strong>--source-encodings</strong>=<em>encoding</em>[,<em>encoding</em>&#8230;&#8203;]</dt>
+<dd>
+<p>Comma-separated source encoding candidates to try in order when decoding source files. Use FPR to try the source encoding recorded in audit.fvdl. When writing remediated files, the accepted encoding is used. Default value: FPR,UTF-8,ISO-8859-1.</p>
 </dd>
 </dl>
 </div>
@@ -165,7 +171,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2026-08-20 16:28:00 UTC
+Last updated 2026-08-21 09:49:09 UTC
 </div>
 </div>
 </body>
