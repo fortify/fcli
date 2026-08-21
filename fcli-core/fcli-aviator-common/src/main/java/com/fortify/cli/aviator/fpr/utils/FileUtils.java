@@ -14,13 +14,13 @@ package com.fortify.cli.aviator.fpr.utils;
 
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -28,15 +28,31 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fortify.cli.aviator.audit.model.Fragment;
+import com.fortify.cli.aviator.fpr.model.FVDLMetadata;
 import com.fortify.cli.aviator.util.FileTypeLanguageMapperUtil;
 import com.fortify.cli.aviator.util.FileUtil;
 import com.fortify.cli.aviator.util.FprHandle;
 import com.fortify.cli.aviator.util.LanguageCommentMapperUtil;
 import com.fortify.cli.aviator.util.StringUtil;
 
+/**
+ * Source file helpers. Decode failures are soft (empty result + log): snippets/lines are best-effort.
+ * Callers that must fail or skip with metrics (e.g. remediation apply) should decode themselves.
+ */
 public class FileUtils {
     private static final Logger logger = LoggerFactory.getLogger(FileUtils.class);
     private final Map<Path, List<String>> fileContentCache = new ConcurrentHashMap<>();
+    private final ISourceDecoder sourceDecoder;
+    private final FVDLMetadata fvdlMetadata;
+
+    public FileUtils() {
+        this(SourceDecoders.defaults(), null);
+    }
+
+    public FileUtils(ISourceDecoder sourceDecoder, FVDLMetadata fvdlMetadata) {
+        this.sourceDecoder = Objects.requireNonNull(sourceDecoder, "sourceDecoder");
+        this.fvdlMetadata = fvdlMetadata;
+    }
 
     /**
      * Reads all lines from a file, caching the result to avoid repeated reads.
@@ -46,13 +62,17 @@ public class FileUtils {
      * @return List of lines, or empty list if file not found or error occurs
      */
     public List<String> readFileWithFallback(Path filePath) {
+        return readFileWithFallback(filePath, filePath.getFileName().toString());
+    }
+
+    private List<String> readFileWithFallback(Path filePath, String filename) {
         return fileContentCache.computeIfAbsent(filePath, path -> {
             try {
                 byte[] fileBytes = Files.readAllBytes(path);
-                String content = new String(fileBytes, StandardCharsets.UTF_8);
+                String content = sourceDecoder.decode(fileBytes, filename, fvdlMetadata).content();
                 return Arrays.asList(content.split("\\r?\\n"));
-            } catch (IOException e) {
-                logger.error("Failed to read file: {}", path, e);
+            } catch (IOException | ISourceDecoder.SourceDecodeException e) {
+                logger.warn("Could not read or decode source file {}: {}", path, e.getMessage());
                 return Collections.emptyList();
             }
         });
@@ -80,7 +100,7 @@ public class FileUtils {
         Path fullSourcePath = resolveFullPath(fprHandle, relativePath);
         if (fullSourcePath == null) return "";
 
-        List<String> lines = readFileWithFallback(fullSourcePath);
+        List<String> lines = readFileWithFallback(fullSourcePath, relativePath);
         if (lineNumber > 0 && lines.size() >= lineNumber) {
             return appendLineNumbers(lines.get(lineNumber - 1), relativePath, lineNumber - 1);
         }
@@ -97,7 +117,7 @@ public class FileUtils {
             return new Fragment("", 0, 0);
         }
 
-        List<String> lines = readFileWithFallback(fullSourcePath);
+        List<String> lines = readFileWithFallback(fullSourcePath, relativePath);
         if (lines.isEmpty() || lineNumber <= 0) {
             return new Fragment("", 0, 0);
         }
@@ -127,20 +147,24 @@ public class FileUtils {
         return fprHandle.getPath(internalPath);
     }
 
-
-    // Assumes you have already updated the signature to accept extractedPath
     public Optional<String> getSourceFileContent(FprHandle fprHandle, String relativePath) {
+        try {
+            return Optional.of(readSourceFileContentStrict(fprHandle, relativePath));
+        } catch (IOException | ISourceDecoder.SourceDecodeException e) {
+            logger.warn("Could not read source file content for path {}: {}", relativePath, e.getMessage());
+            return Optional.empty();
+        }
+    }
+
+    /** Reads and decodes source content while preserving read or decode failures for the caller. */
+    String readSourceFileContentStrict(FprHandle fprHandle, String relativePath) throws IOException {
         Path actualSourcePath = resolveFullPath(fprHandle, relativePath);
         if (actualSourcePath == null) {
-            return Optional.empty();
+            throw new IOException("Source file key not found in sourceFileMap: " + relativePath);
         }
 
-        try {
-            return Optional.of(String.join(System.lineSeparator(), readFileWithFallback(actualSourcePath)));
-        } catch (Exception e) {
-            logger.warn("Could not read source file content for path: {}", relativePath, e);
-            return Optional.empty();
-        }
+        byte[] fileBytes = Files.readAllBytes(actualSourcePath);
+        return sourceDecoder.decode(fileBytes, relativePath, fvdlMetadata).content();
     }
 
     public String appendLineNumbers(String content, String fileName, int startLineNo) {

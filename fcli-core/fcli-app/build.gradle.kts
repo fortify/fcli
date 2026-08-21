@@ -8,7 +8,7 @@ plugins {
 // Inter-project dependencies
 val refs = listOf(
     "fcliCommonRef","fcliCommonThirdpartyRef","fcliCommonCiRef","fcliCommonActionRef","fcliCommonToolRef",
-    "fcliActionRef","fcliAiAssistRef","fcliAviatorRef","fcliConfigRef",
+    "fcliActionRef","fcliAiAssistRef","fcliAviatorCommonRef","fcliAviatorRef","fcliConfigRef",
     "fcliFoDRef","fcliSSCRef","fcliSCSastRef","fcliSCDastRef",
     "fcliToolRef","fcliLicenseRef","fcliUtilRef"
 )

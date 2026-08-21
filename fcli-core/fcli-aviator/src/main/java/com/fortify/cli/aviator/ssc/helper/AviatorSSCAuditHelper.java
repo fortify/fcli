@@ -135,10 +135,32 @@ public final class AviatorSSCAuditHelper {
                 break;
         }
         audit.put("message", message);
-        audit.put("submitted", auditResult.getTotalIssuesToAudit());
+        audit.put("submitted", auditResult.getIssuesSubmitted());
         audit.put("succeeded", auditResult.getIssuesSuccessfullyAudited());
-        audit.put("skipped", Math.max(0, auditResult.getTotalIssuesToAudit() - auditResult.getIssuesSuccessfullyAudited()));
+        audit.put("skipped", auditResult.getIssuesSkipped());
+        audit.put("skippedReasons", formatSkippedReasons(auditResult.getSkippedByReason()));
+        audit.set("skippedByReason", toObjectNode(auditResult.getSkippedByReason()));
+        audit.put("remediationGenerationSkipped", auditResult.getRemediationGenerationSkipped());
+        audit.put("remediationGenerationSkippedReasons", formatSkippedReasons(auditResult.getRemediationGenerationSkippedByReason()));
+        audit.set("remediationGenerationSkippedByReason", toObjectNode(auditResult.getRemediationGenerationSkippedByReason()));
         ((ObjectNode) result.get("operation")).set("audit", audit);
+    }
+
+    private static ObjectNode toObjectNode(Map<String, Integer> skippedByReason) {
+        ObjectNode object = JsonHelper.getObjectMapper().createObjectNode();
+        if (skippedByReason != null) {
+            skippedByReason.forEach(object::put);
+        }
+        return object;
+    }
+
+    private static String formatSkippedReasons(Map<String, Integer> skippedByReason) {
+        if (skippedByReason == null || skippedByReason.isEmpty()) {
+            return "";
+        }
+        List<String> parts = new ArrayList<>();
+        skippedByReason.forEach((reason, count) -> parts.add(reason + "=" + count));
+        return String.join(", ", parts);
     }
 
     /**
@@ -175,7 +197,8 @@ public final class AviatorSSCAuditHelper {
     public static String getProgressMessage(FPRAuditResult auditResult) {
         switch (auditResult.getStatus()) {
             case "SKIPPED":
-                return "No issues to audit, skipping upload";
+                return (auditResult.getMessage() != null ? auditResult.getMessage() : "No issues to audit")
+                        + ", skipping upload";
             case "FAILED":
                 String message = auditResult.getMessage() != null ? auditResult.getMessage() : "Unknown error";
                 return "Audit failed: " + message;

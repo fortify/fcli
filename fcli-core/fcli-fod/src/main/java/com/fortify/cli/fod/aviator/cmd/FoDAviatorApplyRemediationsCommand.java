@@ -20,6 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.aviator._common.cli.mixin.SourceEncodingsMixin;
 import com.fortify.cli.aviator.applyRemediation.ApplyAutoRemediationOnSource;
 import com.fortify.cli.aviator.config.AviatorLoggerImpl;
 import com.fortify.cli.aviator.util.FprHandle;
@@ -56,6 +57,7 @@ public class FoDAviatorApplyRemediationsCommand extends AbstractFoDJsonNodeOutpu
     @Mixin private FoDReleaseByQualifiedNameOrIdResolverMixin.RequiredOption releaseResolver;
     private static final Logger LOG = LoggerFactory.getLogger(FoDAviatorApplyRemediationsCommand.class);
     @Option(names = {"--source-dir"}) private String sourceCodeDirectory = System.getProperty("user.dir");
+    @Mixin private SourceEncodingsMixin sourceEncodingsMixin;
 
     @Override @SneakyThrows
     public JsonNode getJsonNode(UnirestInstance unirest) {
@@ -82,7 +84,8 @@ public class FoDAviatorApplyRemediationsCommand extends AbstractFoDJsonNodeOutpu
 
             logger.progress("Status: Processing FPR with Aviator for Applying Auto Remediations");
             try (FprHandle fprHandle = new FprHandle(downloadedFprPath)) {
-                var remediationMetric = ApplyAutoRemediationOnSource.applyRemediations(fprHandle, sourceCodeDirectory, logger);
+                var remediationMetric = ApplyAutoRemediationOnSource.applyRemediations(fprHandle, sourceCodeDirectory,
+                    sourceEncodingsMixin.getSourceDecoder(), logger);
                 LOG.info("Applied remediation {}", remediationMetric.appliedRemediations());
                 LOG.info("Total remediation {}", remediationMetric.totalRemediations());
                 String status = remediationMetric.appliedRemediations() > 0 ? "Remediation-Applied" : "No-Remediation-Applied";
