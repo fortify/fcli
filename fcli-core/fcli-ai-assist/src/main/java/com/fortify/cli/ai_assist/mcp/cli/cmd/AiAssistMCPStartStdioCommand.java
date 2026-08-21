@@ -116,7 +116,7 @@ public class AiAssistMCPStartStdioCommand extends AbstractRunnableCommand implem
             if (module != null) {
                 serverName = "fcli-" + module.toString();
             } else {
-                serverName = "fcli-imported-functions";
+                serverName = "fcli";
             }
         }
         var rawOut = StdioHelper.getRawOut();

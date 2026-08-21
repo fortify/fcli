@@ -65,15 +65,8 @@ public class AiAssistMCPStartHttpCommand extends AbstractRunnableCommand impleme
     @Option(names = {"--config", "-c"}, required = true)
     private Path configPath;
 
-    @Option(names = {"--server-name"})
-    private String serverName;
-
     @Override
     public Integer call() throws Exception {
-        // Set dynamic default for serverName
-        if (serverName == null) {
-            serverName = "fcli-imported-functions";
-        }
         suppressProgressOutput();
         var config = MCPServerHttpConfigLoader.load(configPath);
         var asyncJobManager = new AsyncJobManager(AsyncJobManager.Config.builder()
@@ -84,7 +77,7 @@ public class AiAssistMCPStartHttpCommand extends AbstractRunnableCommand impleme
         var scopeCleanupScheduler = scheduleScopeCleanup(config, sessionDescriptorResolver);
         var specs = collectMcpSpecs(config, jobManager, sessionDescriptorResolver, authHeaderParser);
         var transport = createTransport(config);
-        buildAndStartServer(config, transport, specs, serverName);
+        buildAndStartServer(config, transport, specs);
         awaitShutdown(transport, asyncJobManager, scopeCleanupScheduler, sessionDescriptorResolver);
         return 0;
     }
@@ -159,10 +152,10 @@ public class AiAssistMCPStartHttpCommand extends AbstractRunnableCommand impleme
     }
 
     private void buildAndStartServer(MCPServerHttpConfig config,
-            JdkHttpServerMcpStatelessTransport transport, McpSpecs specs, String serverName) {
+            JdkHttpServerMcpStatelessTransport transport, McpSpecs specs) {
         var tlsConfigured = config.getServer().getTls() != null;
         var serverBuilder = McpServer.sync(transport)
-                .serverInfo(serverName, FcliBuildProperties.INSTANCE.getFcliVersion())
+                .serverInfo("fcli", FcliBuildProperties.INSTANCE.getFcliVersion())
                 .requestTimeout(Duration.ofSeconds(120))
                 .instructions("HTTP MCP server exposing imported fcli action functions")
                 .capabilities(getServerCapabilities(!specs.resourceTemplates().isEmpty()))
