@@ -42,14 +42,16 @@ public final class AviatorRemediationMetricsHelper {
         Map<String, Integer> skippedByReason = new LinkedHashMap<>();
         List<com.fortify.cli.aviator.fpr.processor.preview.PreviewDetail> allPreviewDetails = new ArrayList<>();
         Collection<RemediationMetric> safeMetrics = metrics == null ? List.of() : metrics;
-        
+        boolean previewMode = false;
+
         // Aggregate preview details from all metrics
         for (RemediationMetric metric : safeMetrics) {
-            if (metric.previewDetails() != null) {
-                allPreviewDetails.addAll(metric.previewDetails());
+            if (metric instanceof RemediationMetric.Preview preview) {
+                previewMode = true;
+                allPreviewDetails.addAll(preview.previewDetails());
             }
         }
-        
+
         if (requestedIssueIds == null) {
             int totalRemediations = 0;
             int appliedRemediations = 0;
@@ -58,16 +60,18 @@ public final class AviatorRemediationMetricsHelper {
                 appliedRemediations += metric.appliedRemediations();
                 accumulateFilesAndSkips(metric, modifiedFiles, skippedByReason);
             }
-            return RemediationMetric.unfiltered(totalRemediations, appliedRemediations, modifiedFiles, skippedByReason, 
-                    allPreviewDetails.isEmpty() ? null : allPreviewDetails);
+            return previewMode
+                    ? RemediationMetric.previewUnfiltered(totalRemediations, appliedRemediations, modifiedFiles, skippedByReason, allPreviewDetails)
+                    : RemediationMetric.unfiltered(totalRemediations, appliedRemediations, modifiedFiles, skippedByReason);
         }
         Set<String> appliedIssueIds = new LinkedHashSet<>();
         for (RemediationMetric metric : safeMetrics) {
             appliedIssueIds.addAll(metric.appliedIssueIds());
             accumulateFilesAndSkips(metric, modifiedFiles, skippedByReason);
         }
-        return RemediationMetric.filtered(requestedIssueIds, appliedIssueIds, modifiedFiles, skippedByReason,
-                allPreviewDetails.isEmpty() ? null : allPreviewDetails);
+        return previewMode
+                ? RemediationMetric.previewFiltered(requestedIssueIds, appliedIssueIds, modifiedFiles, skippedByReason, allPreviewDetails)
+                : RemediationMetric.filtered(requestedIssueIds, appliedIssueIds, modifiedFiles, skippedByReason);
     }
 
     private static void accumulateFilesAndSkips(
@@ -102,7 +106,8 @@ public final class AviatorRemediationMetricsHelper {
         return String.join(", ", parts);
     }
 
-    public static String actionLabel(RemediationMetric metric, boolean previewMode) {
+    public static String actionLabel(RemediationMetric metric) {
+        boolean previewMode = metric instanceof RemediationMetric.Preview;
         if (metric != null && metric.appliedRemediations() > 0) {
             return previewMode ? "Remediation-Previewed" : "Remediation-Applied";
         } else {
@@ -133,18 +138,13 @@ public final class AviatorRemediationMetricsHelper {
         result.set("modifiedFiles", toArrayNode(modifiedFiles));
     }
 
-    /** Metric fields plus {@code __action__} (shared by SSC/FoD result builders). */
+    /** Metric fields plus {@code __action__} and, for preview results, preview details (shared by SSC/FoD result builders). */
     public static void putMetricAndAction(ObjectNode result, RemediationMetric metric) {
-        putMetricAndAction(result, metric, false);
-    }
-
-    /** Metric fields plus {@code __action__} and optional preview details (shared by SSC/FoD result builders). */
-    public static void putMetricAndAction(ObjectNode result, RemediationMetric metric, boolean previewMode) {
         putRemediationMetricFields(result, metric);
-        result.put(IActionCommandResultSupplier.actionFieldName, actionLabel(metric, previewMode));
-        
-        if (previewMode && metric != null && metric.previewDetails() != null) {
-            result.set("previewDetails", toPreviewDetailsArray(metric.previewDetails()));
+        result.put(IActionCommandResultSupplier.actionFieldName, actionLabel(metric));
+
+        if (metric instanceof RemediationMetric.Preview preview) {
+            result.set("previewDetails", toPreviewDetailsArray(preview.previewDetails()));
         }
     }
     

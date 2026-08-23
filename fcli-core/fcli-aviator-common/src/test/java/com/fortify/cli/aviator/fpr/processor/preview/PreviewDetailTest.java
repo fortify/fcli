@@ -29,7 +29,7 @@ class PreviewDetailTest {
     @Test
     void availablePreviewDetailCreatedCorrectly() {
         Map<String, FilePreview> files = Map.of("Example.java", 
-            new FilePreview("Example.java", "/path/to/Example.java", "UTF-8", java.util.List.of()));
+            new FilePreview("/path/to/Example.java", "UTF-8", java.util.List.of()));
         PreviewDetail detail = PreviewDetail.available("ISSUE-123", files);
         
         assertNotNull(detail);
@@ -86,10 +86,10 @@ class PreviewDetailTest {
     @Test
     void filesMapIsUnmodifiable() {
         Map<String, FilePreview> files = new java.util.LinkedHashMap<>();
-        files.put("Test.java", new FilePreview("Test.java", "/path", "UTF-8", java.util.List.of()));
+        files.put("Test.java", new FilePreview("/path", "UTF-8", java.util.List.of()));
         PreviewDetail detail = new PreviewDetail("ISSUE-1", "available", files, null);
         
         assertThrows(UnsupportedOperationException.class, 
-            () -> detail.files().put("Another.java", new FilePreview("Another.java", "/path2", "UTF-8", java.util.List.of())));
+            () -> detail.files().put("Another.java", new FilePreview("/path2", "UTF-8", java.util.List.of())));
     }
 }

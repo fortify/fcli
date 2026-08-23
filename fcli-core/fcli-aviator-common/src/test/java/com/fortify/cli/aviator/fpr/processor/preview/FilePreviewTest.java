@@ -27,30 +27,29 @@ class FilePreviewTest {
 
     @Test
     void validFilePreviewCreatedCorrectly() {
-        FilePreview preview = new FilePreview("Example.java", "/path/to/Example.java", "UTF-8", List.of());
+        FilePreview preview = new FilePreview("/path/to/Example.java", "UTF-8", List.of());
         
         assertNotNull(preview);
-        assertEquals("Example.java", preview.filename());
         assertEquals("/path/to/Example.java", preview.path());
         assertEquals("UTF-8", preview.encoding());
         assertEquals(0, preview.totalChanges());
     }
 
     @Test
-    void nullFilenameThrowsException() {
+    void nullPathThrowsException() {
         assertThrows(IllegalArgumentException.class, 
-            () -> new FilePreview(null, "/path", "UTF-8", List.of()));
+            () -> new FilePreview(null, "UTF-8", List.of()));
     }
 
     @Test
-    void blankFilenameThrowsException() {
+    void blankPathThrowsException() {
         assertThrows(IllegalArgumentException.class, 
-            () -> new FilePreview("  ", "/path", "UTF-8", List.of()));
+            () -> new FilePreview("  ", "UTF-8", List.of()));
     }
 
     @Test
     void nullChangesListIsConvertedToEmptyList() {
-        FilePreview preview = new FilePreview("Test.java", "/path", "UTF-8", null);
+        FilePreview preview = new FilePreview("/path", "UTF-8", null);
         assertNotNull(preview.changes());
         assertEquals(0, preview.changes().size());
     }
@@ -59,7 +58,7 @@ class FilePreviewTest {
     void changesListIsUnmodifiable() {
         ContextMetadata context = new ContextMetadata(1, 1, "context");
         FileChange change = new FileChange(1, 10, 12, "old", "new", context, false);
-        FilePreview preview = new FilePreview("Test.java", "/path", "UTF-8", List.of(change));
+        FilePreview preview = new FilePreview("/path", "UTF-8", List.of(change));
         
         assertThrows(UnsupportedOperationException.class, 
             () -> preview.changes().add(new FileChange(2, 20, 22, "old2", "new2", context, false)));
@@ -73,7 +72,7 @@ class FilePreviewTest {
             new FileChange(2, 20, 22, "old2", "new2", context, false),
             new FileChange(3, 30, 32, "old3", "new3", context, false)
         );
-        FilePreview preview = new FilePreview("Test.java", "/path", "UTF-8", changes);
+        FilePreview preview = new FilePreview("/path", "UTF-8", changes);
         
         assertEquals(3, preview.totalChanges());
     }

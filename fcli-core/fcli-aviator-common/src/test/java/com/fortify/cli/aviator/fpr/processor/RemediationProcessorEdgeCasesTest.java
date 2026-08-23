@@ -29,13 +29,13 @@ class RemediationProcessorEdgeCasesTest {
 
     @Test
     void emptyRemediationsReturnsEmptyPreviewDetails() {
-        RemediationMetric metric = RemediationMetric.unfiltered(0, 0, Set.of(), java.util.Map.of(), java.util.List.of());
+        RemediationMetric metric = RemediationMetric.previewUnfiltered(0, 0, Set.of(), java.util.Map.of(), java.util.List.of());
         
         assertNotNull(metric);
         assertEquals(0, metric.totalRemediations());
         assertEquals(0, metric.appliedRemediations());
-        assertNotNull(metric.previewDetails());
-        assertEquals(0, metric.previewDetails().size());
+        assertTrue(metric instanceof RemediationMetric.Preview);
+        assertEquals(0, ((RemediationMetric.Preview) metric).previewDetails().size());
     }
 
     @Test
@@ -96,10 +96,10 @@ class RemediationProcessorEdgeCasesTest {
     }
 
     @Test
-    void previewDetailsCanBeNull() {
-        RemediationMetric metric = RemediationMetric.unfiltered(5, 3, Set.of(), java.util.Map.of(), null);
+    void unfilteredMetricIsAppliedVariantWithNoPreviewData() {
+        RemediationMetric metric = RemediationMetric.unfiltered(5, 3, Set.of(), java.util.Map.of());
         
-        // Null preview details is acceptable (non-preview mode)
-        assertEquals(null, metric.previewDetails());
+        // Apply-mode metrics carry no preview data at all - not merely a null field
+        assertTrue(metric instanceof RemediationMetric.Applied);
     }
 }

@@ -74,90 +74,135 @@ public class RemediationProcessor {
     /**
      * Apply-remediations summary. Mode is explicit: unfiltered counts XML remediations;
      * filtered counts requested issue IDs. Factories are the only public construction path.
-     * 
-     * <p><b>Preview Details:</b> The {@code previewDetails} field is null when not in preview mode,
-     * and non-null (possibly empty list) when in preview mode. Callers should check both
-     * {@code previewMode} flag (from context) and null status before accessing preview data.
-     * This design avoids Optional in record fields (per style guidelines) while maintaining
-     * clear semantics: null = not applicable, empty list = no preview data available.</p>
-     * 
-     * @param previewDetails Detailed change information per issue (null if not in preview mode)
+     *
+     * <p>Sealed so preview vs. apply is a compile-time-checked type distinction rather than
+     * a nullable {@code previewDetails} field paired with an out-of-band {@code previewMode}
+     * flag: {@link Preview#previewDetails()} is always non-null (possibly empty); {@link Applied}
+     * carries no preview data at all.</p>
      */
-    public record RemediationMetric(
-            Mode mode,
-            int totalRemediations,
-            int appliedRemediations,
-            int skippedRemediations,
-            Set<String> modifiedFiles,
-            Map<String, Integer> skippedByReason,
-            Set<String> requestedIssueIds,
-            Set<String> appliedIssueIds,
-            List<PreviewDetail> previewDetails) {
+    public sealed interface RemediationMetric {
+        Mode mode();
+        int totalRemediations();
+        int appliedRemediations();
+        int skippedRemediations();
+        Set<String> modifiedFiles();
+        Map<String, Integer> skippedByReason();
+        Set<String> requestedIssueIds();
+        Set<String> appliedIssueIds();
 
-        public enum Mode {
+        enum Mode {
             UNFILTERED,
             FILTERED
         }
 
-        public RemediationMetric {
-            if (mode == null) {
-                throw new IllegalArgumentException("RemediationMetric mode is required");
-            }
-            modifiedFiles = immutableCopy(modifiedFiles);
-            // Preserve insertion order (LinkedHashMap) for stable skippedReasons table text.
-            skippedByReason = skippedByReason == null || skippedByReason.isEmpty()
-                    ? Map.of()
-                    : Collections.unmodifiableMap(new LinkedHashMap<>(skippedByReason));
-            if (mode == Mode.UNFILTERED) {
-                requestedIssueIds = Set.of();
-                appliedIssueIds = Set.of();
-            } else {
-                requestedIssueIds = immutableCopy(requestedIssueIds);
-                appliedIssueIds = immutableCopy(appliedIssueIds);
-            }
-            previewDetails = previewDetails == null ? null : Collections.unmodifiableList(List.copyOf(previewDetails));
+        default boolean isFiltered() {
+            return mode() == Mode.FILTERED;
         }
 
-        public static RemediationMetric unfiltered(int totalRemediations, int appliedRemediations, Set<String> modifiedFiles) {
-            return unfiltered(totalRemediations, appliedRemediations, modifiedFiles, Map.of(), null);
+        record Applied(
+                Mode mode,
+                int totalRemediations,
+                int appliedRemediations,
+                int skippedRemediations,
+                Set<String> modifiedFiles,
+                Map<String, Integer> skippedByReason,
+                Set<String> requestedIssueIds,
+                Set<String> appliedIssueIds) implements RemediationMetric {
+
+            public Applied {
+                mode = requireMode(mode);
+                modifiedFiles = immutableCopy(modifiedFiles);
+                skippedByReason = immutableSkippedByReason(skippedByReason);
+                Set<String>[] issueIds = immutableIssueIds(mode, requestedIssueIds, appliedIssueIds);
+                requestedIssueIds = issueIds[0];
+                appliedIssueIds = issueIds[1];
+            }
         }
 
-        public static RemediationMetric unfiltered(int totalRemediations, int appliedRemediations, Set<String> modifiedFiles,
+        /** @param previewDetails Detailed change information per issue; always non-null (empty if no data). */
+        record Preview(
+                Mode mode,
+                int totalRemediations,
+                int appliedRemediations,
+                int skippedRemediations,
+                Set<String> modifiedFiles,
+                Map<String, Integer> skippedByReason,
+                Set<String> requestedIssueIds,
+                Set<String> appliedIssueIds,
+                List<PreviewDetail> previewDetails) implements RemediationMetric {
+
+            public Preview {
+                mode = requireMode(mode);
+                modifiedFiles = immutableCopy(modifiedFiles);
+                skippedByReason = immutableSkippedByReason(skippedByReason);
+                Set<String>[] issueIds = immutableIssueIds(mode, requestedIssueIds, appliedIssueIds);
+                requestedIssueIds = issueIds[0];
+                appliedIssueIds = issueIds[1];
+                previewDetails = previewDetails == null
+                        ? List.of()
+                        : Collections.unmodifiableList(List.copyOf(previewDetails));
+            }
+        }
+
+        static RemediationMetric unfiltered(int totalRemediations, int appliedRemediations, Set<String> modifiedFiles) {
+            return unfiltered(totalRemediations, appliedRemediations, modifiedFiles, Map.of());
+        }
+
+        static RemediationMetric unfiltered(int totalRemediations, int appliedRemediations, Set<String> modifiedFiles,
                 Map<String, Integer> skippedByReason) {
-            return unfiltered(totalRemediations, appliedRemediations, modifiedFiles, skippedByReason, null);
+            return new Applied(Mode.UNFILTERED, totalRemediations, appliedRemediations,
+                    totalRemediations - appliedRemediations, modifiedFiles, skippedByReason, Set.of(), Set.of());
         }
 
-        public static RemediationMetric unfiltered(int totalRemediations, int appliedRemediations, Set<String> modifiedFiles,
+        static RemediationMetric previewUnfiltered(int totalRemediations, int appliedRemediations, Set<String> modifiedFiles,
                 Map<String, Integer> skippedByReason, List<PreviewDetail> previewDetails) {
-            return new RemediationMetric(Mode.UNFILTERED, totalRemediations, appliedRemediations,
+            return new Preview(Mode.UNFILTERED, totalRemediations, appliedRemediations,
                     totalRemediations - appliedRemediations, modifiedFiles, skippedByReason, Set.of(), Set.of(), previewDetails);
         }
 
-        public static RemediationMetric filtered(Set<String> requestedIssueIds, Set<String> appliedIssueIds, Set<String> modifiedFiles) {
-            return filtered(requestedIssueIds, appliedIssueIds, modifiedFiles, Map.of(), null);
+        static RemediationMetric filtered(Set<String> requestedIssueIds, Set<String> appliedIssueIds, Set<String> modifiedFiles) {
+            return filtered(requestedIssueIds, appliedIssueIds, modifiedFiles, Map.of());
         }
 
-        public static RemediationMetric filtered(Set<String> requestedIssueIds, Set<String> appliedIssueIds, Set<String> modifiedFiles,
+        static RemediationMetric filtered(Set<String> requestedIssueIds, Set<String> appliedIssueIds, Set<String> modifiedFiles,
                 Map<String, Integer> skippedByReason) {
-            return filtered(requestedIssueIds, appliedIssueIds, modifiedFiles, skippedByReason, null);
+            Set<String> requested = requestedIssueIds == null ? Set.of() : requestedIssueIds;
+            Set<String> applied = appliedIssueIds == null ? Set.of() : appliedIssueIds;
+            return new Applied(Mode.FILTERED, requested.size(), applied.size(),
+                    requested.size() - applied.size(), modifiedFiles, skippedByReason, requested, applied);
         }
 
-        public static RemediationMetric filtered(Set<String> requestedIssueIds, Set<String> appliedIssueIds, Set<String> modifiedFiles,
+        static RemediationMetric previewFiltered(Set<String> requestedIssueIds, Set<String> appliedIssueIds, Set<String> modifiedFiles,
                 Map<String, Integer> skippedByReason, List<PreviewDetail> previewDetails) {
             Set<String> requested = requestedIssueIds == null ? Set.of() : requestedIssueIds;
             Set<String> applied = appliedIssueIds == null ? Set.of() : appliedIssueIds;
-            int totalRemediations = requested.size();
-            int appliedRemediations = applied.size();
-            return new RemediationMetric(Mode.FILTERED, totalRemediations, appliedRemediations,
-                    totalRemediations - appliedRemediations, modifiedFiles, skippedByReason, requested, applied, previewDetails);
+            return new Preview(Mode.FILTERED, requested.size(), applied.size(),
+                    requested.size() - applied.size(), modifiedFiles, skippedByReason, requested, applied, previewDetails);
         }
 
-        public boolean isFiltered() {
-            return mode == Mode.FILTERED;
+        private static Mode requireMode(Mode mode) {
+            if (mode == null) {
+                throw new IllegalArgumentException("RemediationMetric mode is required");
+            }
+            return mode;
         }
 
         private static Set<String> immutableCopy(Set<String> values) {
             return values == null ? Set.of() : Collections.unmodifiableSet(new LinkedHashSet<>(values));
+        }
+
+        private static Map<String, Integer> immutableSkippedByReason(Map<String, Integer> skippedByReason) {
+            // Preserve insertion order (LinkedHashMap) for stable skippedReasons table text.
+            return skippedByReason == null || skippedByReason.isEmpty()
+                    ? Map.of()
+                    : Collections.unmodifiableMap(new LinkedHashMap<>(skippedByReason));
+        }
+
+        @SuppressWarnings("unchecked")
+        private static Set<String>[] immutableIssueIds(Mode mode, Set<String> requestedIssueIds, Set<String> appliedIssueIds) {
+            return mode == Mode.UNFILTERED
+                    ? new Set[] {Set.of(), Set.of()}
+                    : new Set[] {immutableCopy(requestedIssueIds), immutableCopy(appliedIssueIds)};
         }
     }
 
@@ -395,9 +440,6 @@ public class RemediationProcessor {
         }
 
         private List<PreviewDetail> buildPreviewDetails() {
-            if (!previewMode) {
-                return null;
-            }
             List<PreviewDetail> details = new ArrayList<>();
             
             // Add successfully processed remediations
@@ -414,7 +456,7 @@ public class RemediationProcessor {
                         .map(ChangeDetail::toFileChange)
                         .collect(java.util.stream.Collectors.toUnmodifiableList());
                     
-                    FilePreview filePreview = new FilePreview(filename, metadata.path, metadata.encoding, fileChanges);
+                    FilePreview filePreview = new FilePreview(metadata.path, metadata.encoding, fileChanges);
                     fileMap.put(filename, filePreview);
                 }
                 details.add(PreviewDetail.available(issueId, fileMap));
@@ -436,13 +478,16 @@ public class RemediationProcessor {
         private RemediationMetric toMetric() {
             // Validate requested issue IDs before building metric
             validateRequestedIssueIds();
-            
-            List<PreviewDetail> previewDetails = buildPreviewDetails();
-            
-            if (requestedIssueIds == null) {
-                return RemediationMetric.unfiltered(xmlEntryCount, appliedRemediations, modifiedFiles, skippedByReason, previewDetails);
+
+            if (!previewMode) {
+                return requestedIssueIds == null
+                        ? RemediationMetric.unfiltered(xmlEntryCount, appliedRemediations, modifiedFiles, skippedByReason)
+                        : RemediationMetric.filtered(requestedIssueIds, appliedIssueIds, modifiedFiles, skippedByReason);
             }
-            return RemediationMetric.filtered(requestedIssueIds, appliedIssueIds, modifiedFiles, skippedByReason, previewDetails);
+            List<PreviewDetail> previewDetails = buildPreviewDetails();
+            return requestedIssueIds == null
+                    ? RemediationMetric.previewUnfiltered(xmlEntryCount, appliedRemediations, modifiedFiles, skippedByReason, previewDetails)
+                    : RemediationMetric.previewFiltered(requestedIssueIds, appliedIssueIds, modifiedFiles, skippedByReason, previewDetails);
         }
         
         private void validateRequestedIssueIds() {

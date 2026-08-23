@@ -80,4 +80,28 @@ class AviatorRemediationMetricsHelperTest {
                 Set.of("ISSUE-2"),
                 AviatorRemediationMetricsHelper.getRemainingIssueIds(Set.of("ISSUE-1", "ISSUE-2"), metric));
     }
+
+    @Test
+    void aggregatingAnyPreviewMetricYieldsPreviewResultWithMergedDetails() {
+        RemediationMetric applied = RemediationMetric.unfiltered(1, 1, Set.of("A.java"));
+        RemediationMetric preview = RemediationMetric.previewUnfiltered(1, 0, Set.of(), Map.of(),
+                List.of(com.fortify.cli.aviator.fpr.processor.preview.PreviewDetail.skipped("ISSUE-2", "Source file missing")));
+
+        RemediationMetric aggregated = AviatorRemediationMetricsHelper.aggregateMetrics(
+                null, List.of(applied, preview));
+
+        assertTrue(aggregated instanceof RemediationMetric.Preview);
+        assertEquals(1, ((RemediationMetric.Preview) aggregated).previewDetails().size());
+    }
+
+    @Test
+    void aggregatingOnlyAppliedMetricsYieldsAppliedResult() {
+        RemediationMetric metricOne = RemediationMetric.unfiltered(1, 1, Set.of("A.java"));
+        RemediationMetric metricTwo = RemediationMetric.unfiltered(1, 0, Set.of());
+
+        RemediationMetric aggregated = AviatorRemediationMetricsHelper.aggregateMetrics(
+                null, List.of(metricOne, metricTwo));
+
+        assertTrue(aggregated instanceof RemediationMetric.Applied);
+    }
 }

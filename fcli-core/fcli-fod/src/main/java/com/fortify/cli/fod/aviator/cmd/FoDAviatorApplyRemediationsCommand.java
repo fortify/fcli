@@ -85,7 +85,7 @@ public class FoDAviatorApplyRemediationsCommand extends AbstractOutputCommand
                 new FoDOnlineRemediationsFprSource(unirest, logger, release)) {
             ApplyResult applyResult = RemediationsApplyHelper.apply(
                     source, sourceCodeDirectory, logger, issueIdFilter, LOG, previewMode);
-            return AviatorFoDApplyRemediationsHelper.buildOnlineResultNode(release, applyResult, previewMode);
+            return AviatorFoDApplyRemediationsHelper.buildOnlineResultNode(release, applyResult);
         }
     }
 
@@ -96,7 +96,7 @@ public class FoDAviatorApplyRemediationsCommand extends AbstractOutputCommand
             ApplyResult applyResult = RemediationsApplyHelper.apply(
                     source, sourceCodeDirectory, logger, issueIdFilter, LOG, previewMode);
             return AviatorFoDApplyRemediationsHelper.buildCacheResultNode(
-                    sourceSelector.getFromCache(), applyResult, issueIdFilter, previewMode);
+                    sourceSelector.getFromCache(), applyResult, issueIdFilter);
         }
     }
 

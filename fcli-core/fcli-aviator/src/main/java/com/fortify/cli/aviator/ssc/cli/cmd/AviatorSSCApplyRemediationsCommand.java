@@ -60,7 +60,7 @@ public class AviatorSSCApplyRemediationsCommand extends AbstractOutputCommand
     private String sourceCodeDirectory = System.getProperty("user.dir");
     @Option(names = {"--issue-ids"}, split = ",")
     private List<String> issueIds;
-    @Option(names = {"--preview"}, descriptionKey = "fcli.aviator.ssc.apply-remediations.preview")
+    @Option(names = {"--preview"})
     private boolean previewMode = false;
 
     @Override
@@ -89,8 +89,7 @@ public class AviatorSSCApplyRemediationsCommand extends AbstractOutputCommand
                     sourceSelector.getFromCache(),
                     applyResult,
                     issueIdFilter,
-                    source.reader().getManifest().getSelection(),
-                    previewMode);
+                    source.reader().getManifest().getSelection());
         }
     }
 
@@ -105,7 +104,7 @@ public class AviatorSSCApplyRemediationsCommand extends AbstractOutputCommand
             ApplyResult applyResult = RemediationsApplyHelper.apply(
                     source, sourceCodeDirectory, logger, issueIdFilter, LOG, previewMode);
             return AviatorSSCApplyRemediationsHelper.buildOnlineResultNode(
-                    resolved.artifacts(), resolved.appVersionId(), applyResult, issueIdFilter, previewMode);
+                    resolved.artifacts(), resolved.appVersionId(), applyResult, issueIdFilter);
         }
     }
 

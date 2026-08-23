@@ -29,7 +29,7 @@ import com.formkiq.graalvm.annotations.Reflectable;
  * @param skipReason Human-readable reason why remediation was skipped (null if status is "available")
  */
 @Reflectable
-@JsonPropertyOrder({"issueId", "status", "files", "skipReason"})
+@JsonPropertyOrder({"issueId", "status", "files", "available", "skipped", "skipReason"})
 public record PreviewDetail(
         String issueId,
         String status,

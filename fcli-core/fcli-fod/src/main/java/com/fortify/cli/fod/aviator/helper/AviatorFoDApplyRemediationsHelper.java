@@ -31,32 +31,22 @@ public final class AviatorFoDApplyRemediationsHelper {
     private AviatorFoDApplyRemediationsHelper() {}
 
     public static ObjectNode buildOnlineResultNode(FoDReleaseDescriptor releaseDescriptor, ApplyResult applyResult) {
-        return buildOnlineResultNode(releaseDescriptor, applyResult, false);
-    }
-
-    public static ObjectNode buildOnlineResultNode(FoDReleaseDescriptor releaseDescriptor, ApplyResult applyResult, boolean previewMode) {
         RemediationMetric aggregated = AviatorRemediationMetricsHelper.aggregateMetrics(
                 null, applyResult.metrics());
         return buildCommonNode(
                 releaseDescriptor.getReleaseId(),
                 releaseDescriptor.getApplicationName(),
                 releaseDescriptor.getReleaseName(),
-                aggregated,
-                previewMode);
+                aggregated);
     }
 
     public static ObjectNode buildCacheResultNode(
             Path cacheZip, ApplyResult applyResult, Set<String> issueIdFilter) {
-        return buildCacheResultNode(cacheZip, applyResult, issueIdFilter, false);
-    }
-
-    public static ObjectNode buildCacheResultNode(
-            Path cacheZip, ApplyResult applyResult, Set<String> issueIdFilter, boolean previewMode) {
         RemediationMetric aggregated = AviatorRemediationMetricsHelper.aggregateMetrics(
                 issueIdFilter, applyResult.metrics());
         List<String> releaseIds = applyResult.processedIds();
         String releaseId = releaseIds != null && !releaseIds.isEmpty() ? releaseIds.get(0) : null;
-        ObjectNode result = buildCommonNode(releaseId, null, null, aggregated, previewMode);
+        ObjectNode result = buildCommonNode(releaseId, null, null, aggregated);
         AviatorRemediationMetricsHelper.putCacheExtras(
                 result, cacheZip, applyResult.processedEntries(), "releaseIds", releaseIds);
         return result;
@@ -66,14 +56,13 @@ public final class AviatorFoDApplyRemediationsHelper {
             String releaseId,
             String applicationName,
             String releaseName,
-            RemediationMetric aggregated,
-            boolean previewMode) {
+            RemediationMetric aggregated) {
         ObjectNode result = JsonHelper.getObjectMapper().createObjectNode();
         result.put("releaseId", AviatorRemediationMetricsHelper.na(releaseId));
         result.put("applicationName", AviatorRemediationMetricsHelper.na(applicationName));
         result.put("releaseName", AviatorRemediationMetricsHelper.na(releaseName));
-        result.put("previewMode", previewMode);
-        AviatorRemediationMetricsHelper.putMetricAndAction(result, aggregated, previewMode);
+        result.put("previewMode", aggregated instanceof RemediationMetric.Preview);
+        AviatorRemediationMetricsHelper.putMetricAndAction(result, aggregated);
         return result;
     }
 }
