@@ -21,7 +21,8 @@ import picocli.CommandLine.Command;
         subcommands = {
                 FoDSessionListCommand.class,
                 FoDSessionLoginCommand.class,
-                FoDSessionLogoutCommand.class 
+                FoDSessionLogoutCommand.class,
+                FoDSessionRequestMfaCodeCommand.class 
         }
 )
 public class FoDSessionCommands extends AbstractContainerCommand {

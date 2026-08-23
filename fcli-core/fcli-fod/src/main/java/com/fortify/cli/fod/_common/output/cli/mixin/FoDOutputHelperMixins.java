@@ -110,4 +110,9 @@ public class FoDOutputHelperMixins {
     public static class UploadFile extends OutputHelperMixins.TableNoQuery {
         public static final String CMD_NAME = "upload-file";
     }
+
+    @Command(aliases = "mfa")
+    public static class RequestMfaCode extends OutputHelperMixins.TableNoQuery {
+        public static final String CMD_NAME = "request-mfa-code";
+    }
 }
