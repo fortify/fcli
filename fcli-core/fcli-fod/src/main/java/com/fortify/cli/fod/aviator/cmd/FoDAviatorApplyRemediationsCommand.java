@@ -60,7 +60,7 @@ public class FoDAviatorApplyRemediationsCommand extends AbstractOutputCommand
     private String sourceCodeDirectory = System.getProperty("user.dir");
     @Option(names = {"--issue-ids"}, split = ",")
     private List<String> issueIds;
-    @Option(names = {"--preview"}, descriptionKey = "fcli.fod.aviator.apply-remediations.preview")
+    @Option(names = {"--preview"})
     private boolean previewMode = false;
 
     @Override
