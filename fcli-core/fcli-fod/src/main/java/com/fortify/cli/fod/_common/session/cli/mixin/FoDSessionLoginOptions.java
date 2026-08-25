@@ -20,6 +20,8 @@ import com.fortify.cli.common.log.LogSensitivityLevel;
 import com.fortify.cli.common.log.MaskValue;
 import com.fortify.cli.common.rest.cli.mixin.UrlConfigOptions;
 import com.fortify.cli.common.session.cli.mixin.UserCredentialOptions;
+import com.fortify.cli.common.util.DisableTest;
+import com.fortify.cli.common.util.DisableTest.TestType;
 import com.fortify.cli.fod._common.rest.helper.FoDProductHelper;
 import com.fortify.cli.fod._common.session.helper.oauth.IFoDClientCredentials;
 import com.fortify.cli.fod._common.session.helper.oauth.IFoDUserAuthCode;
@@ -61,8 +63,9 @@ public class FoDSessionLoginOptions {
         @Option(names = {"--code", "-c" }, paramLabel = "<code>", arity = "0..1", interactive = true, echo = false)
         @MaskValue(sensitivity = LogSensitivityLevel.low, description = "FOD TOTP/MFA CODE")
         @Getter private String securityCode;
-        @Option(names = {"--totp" })
-        @Getter private boolean isTotp;
+        @Option(names = {"--totp"}, arity = "0..1", fallbackValue = "true", paramLabel = "<code>")
+        @DisableTest(TestType.OPT_ARITY_PRESENT) // arity needed for optional-value flag pattern
+        @Getter private String totp;
     }
 
     public static class FoDClientCredentialOptions implements IFoDClientCredentials {
@@ -115,7 +118,10 @@ public class FoDSessionLoginOptions {
 
     public boolean hasSecurityCode() {
         var userCred = getUserCredentialOptions();
-        return userCred != null && StringUtils.isNotBlank(userCred.getSecurityCode());
+        if (userCred == null) { return false; }
+        var totp = userCred.getTotp();
+        return (StringUtils.isNotBlank(totp) && !"true".equals(totp))
+            || StringUtils.isNotBlank(userCred.getSecurityCode());
     }
 
     public String getSecurityCode() {
@@ -125,15 +131,21 @@ public class FoDSessionLoginOptions {
 
     public boolean isTotp() {
         var userCred = getUserCredentialOptions();
-        return userCred != null && userCred.isTotp();
+        return userCred != null && userCred.getTotp() != null;
+    }
+
+    private String resolveSecurityCode(FoDUserCredentialOptions u) {
+        var totp = u.getTotp();
+        return (totp != null && !"true".equals(totp)) ? totp : u.getSecurityCode();
     }
 
     public IFoDUserAuthCode getAuthCode() {
         var u = getUserCredentialOptions();
-        if (u == null || StringUtils.isBlank(u.getSecurityCode())) { return null; }
+        var code = u != null ? resolveSecurityCode(u) : null;
+        if (StringUtils.isBlank(code)) { return null; }
         return BasicFoDUserAuthCode.builder()
-                .securityCode(u.getSecurityCode())
-                .isTotp(u.isTotp())
+                .securityCode(code)
+                .isTotp(u.getTotp() != null)
                 .build();
     }
 
