@@ -19,6 +19,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import org.junit.jupiter.api.Test;
 
+import com.fortify.cli.aviator._common.exception.AviatorBugException;
+
 /**
  * Tests for FileChange record validation.
  */
@@ -27,8 +29,15 @@ class FileChangeTest {
     @Test
     void validFileChangeCreatedCorrectly() {
         ContextMetadata context = new ContextMetadata(2, 2, "context line");
-        FileChange change = new FileChange(1, 10, 12, "old code", "new code", context, false);
-        
+        FileChange change = FileChange.builder()
+                .changeIndex(1)
+                .lineFrom(10)
+                .lineTo(12)
+                .originalCode("old code")
+                .newCode("new code")
+                .context(context)
+                .build();
+
         assertNotNull(change);
         assertEquals(1, change.changeIndex());
         assertEquals(10, change.lineFrom());
@@ -42,35 +51,35 @@ class FileChangeTest {
     @Test
     void changeIndexZeroThrowsException() {
         ContextMetadata context = new ContextMetadata(1, 1, "context");
-        assertThrows(IllegalArgumentException.class, 
+        assertThrows(AviatorBugException.class,
             () -> new FileChange(0, 10, 12, "old", "new", context, false));
     }
 
     @Test
     void changeIndexNegativeThrowsException() {
         ContextMetadata context = new ContextMetadata(1, 1, "context");
-        assertThrows(IllegalArgumentException.class, 
+        assertThrows(AviatorBugException.class,
             () -> new FileChange(-1, 10, 12, "old", "new", context, false));
     }
 
     @Test
     void lineFromZeroThrowsException() {
         ContextMetadata context = new ContextMetadata(1, 1, "context");
-        assertThrows(IllegalArgumentException.class, 
+        assertThrows(AviatorBugException.class,
             () -> new FileChange(1, 0, 12, "old", "new", context, false));
     }
 
     @Test
     void lineFromNegativeThrowsException() {
         ContextMetadata context = new ContextMetadata(1, 1, "context");
-        assertThrows(IllegalArgumentException.class, 
+        assertThrows(AviatorBugException.class,
             () -> new FileChange(1, -1, 12, "old", "new", context, false));
     }
 
     @Test
     void lineToLessThanLineFromThrowsException() {
         ContextMetadata context = new ContextMetadata(1, 1, "context");
-        assertThrows(IllegalArgumentException.class, 
+        assertThrows(AviatorBugException.class,
             () -> new FileChange(1, 12, 10, "old", "new", context, false));
     }
 
@@ -86,7 +95,7 @@ class FileChangeTest {
 
     @Test
     void nullContextThrowsException() {
-        assertThrows(IllegalArgumentException.class, 
+        assertThrows(AviatorBugException.class,
             () -> new FileChange(1, 10, 12, "old", "new", null, false));
     }
 }

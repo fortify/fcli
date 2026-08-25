@@ -43,6 +43,14 @@ public record ChangeDetail(
 
     public FileChange toFileChange() {
         ContextMetadata context = new ContextMetadata(contextLinesBefore, contextLinesAfter, contextContent);
-        return new FileChange(changeIndex, lineFrom, lineTo, originalCode, newCode, context, fuzzyMatched);
+        return FileChange.builder()
+                .changeIndex(changeIndex)
+                .lineFrom(lineFrom)
+                .lineTo(lineTo)
+                .originalCode(originalCode)
+                .newCode(newCode)
+                .context(context)
+                .fuzzyMatched(fuzzyMatched)
+                .build();
     }
 }

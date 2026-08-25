@@ -18,10 +18,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.lang.reflect.Field;
 import java.nio.file.Path;
-import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
+import com.fortify.cli.aviator._common.cli.mixin.ApplyRemediationsOptionsMixin;
+import com.fortify.cli.aviator._common.output.cli.cmd.AbstractAviatorApplyRemediationsCommand;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.fod.aviator.cli.mixin.FoDAviatorApplyRemediationsSourceMixin;
 import com.fortify.cli.fod.aviator.cmd.FoDAviatorApplyRemediationsCommand;
@@ -59,45 +60,44 @@ class FoDAviatorApplyRemediationsCommandTest {
     @Test
     void blankSourceDirIsRejected() throws Exception {
         FoDAviatorApplyRemediationsCommand command = parse("--from-cache", "cache.zip");
-        Field field = FoDAviatorApplyRemediationsCommand.class.getDeclaredField("sourceCodeDirectory");
-        field.setAccessible(true);
-        field.set(command, "");
+        Field applyOptionsField = AbstractAviatorApplyRemediationsCommand.class.getDeclaredField("applyOptions");
+        applyOptionsField.setAccessible(true);
+        ApplyRemediationsOptionsMixin applyOptions = (ApplyRemediationsOptionsMixin) applyOptionsField.get(command);
+        Field sourceDirField = ApplyRemediationsOptionsMixin.class.getDeclaredField("sourceCodeDirectory");
+        sourceDirField.setAccessible(true);
+        sourceDirField.set(applyOptions, "");
         assertThrows(FcliSimpleException.class, command::getJsonNode);
     }
 
     @Test
     void previewFlagParsedCorrectly() throws Exception {
         FoDAviatorApplyRemediationsCommand command = parse("--from-cache", "remediations.zip", "--preview");
-        Field previewField = FoDAviatorApplyRemediationsCommand.class.getDeclaredField("previewMode");
-        previewField.setAccessible(true);
-        assertTrue((Boolean) previewField.get(command));
+        assertTrue(getApplyOptions(command).isPreviewMode());
     }
 
     @Test
     void previewWorksWithIssueIds() throws Exception {
         FoDAviatorApplyRemediationsCommand command = parse("--from-cache", "cache.zip", "--preview", "--issue-ids", "ISSUE-1,ISSUE-2");
-        Field previewField = FoDAviatorApplyRemediationsCommand.class.getDeclaredField("previewMode");
-        previewField.setAccessible(true);
-        assertTrue((Boolean) previewField.get(command));
-        
-        Field issueIdsField = FoDAviatorApplyRemediationsCommand.class.getDeclaredField("issueIds");
-        issueIdsField.setAccessible(true);
-        @SuppressWarnings("unchecked")
-        List<String> issueIds = (List<String>) issueIdsField.get(command);
-        assertEquals(2, issueIds.size());
+        assertTrue(getApplyOptions(command).isPreviewMode());
+        assertEquals(2, getApplyOptions(command).getIssueIds().size());
     }
 
     @Test
     void previewWorksWithOnlineSelection() throws Exception {
         FoDAviatorApplyRemediationsCommand command = parse("--release", "123", "--preview");
-        Field previewField = FoDAviatorApplyRemediationsCommand.class.getDeclaredField("previewMode");
-        previewField.setAccessible(true);
-        assertTrue((Boolean) previewField.get(command));
+        assertTrue(getApplyOptions(command).isPreviewMode());
     }
 
     private static FoDAviatorApplyRemediationsCommand parse(String... args) {
         FoDAviatorApplyRemediationsCommand command = new FoDAviatorApplyRemediationsCommand();
         new CommandLine(command).parseArgs(args);
         return command;
+    }
+
+    private static ApplyRemediationsOptionsMixin getApplyOptions(FoDAviatorApplyRemediationsCommand command)
+            throws Exception {
+        Field field = AbstractAviatorApplyRemediationsCommand.class.getDeclaredField("applyOptions");
+        field.setAccessible(true);
+        return (ApplyRemediationsOptionsMixin) field.get(command);
     }
 }

@@ -14,6 +14,9 @@ package com.fortify.cli.aviator.fpr.processor.preview;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.formkiq.graalvm.annotations.Reflectable;
+import com.fortify.cli.aviator._common.exception.AviatorBugException;
+
+import lombok.Builder;
 
 /**
  * A single code change within a file remediation, with context metadata.
@@ -28,6 +31,7 @@ import com.formkiq.graalvm.annotations.Reflectable;
  * @param fuzzyMatched True if file hash didn't match and fuzzy context search was used
  */
 @Reflectable
+@Builder
 @JsonPropertyOrder({"changeIndex", "lineFrom", "lineTo", "originalCode", "newCode", "context", "fuzzyMatched"})
 public record FileChange(
         int changeIndex,
@@ -40,13 +44,13 @@ public record FileChange(
 
     public FileChange {
         if (changeIndex < 1) {
-            throw new IllegalArgumentException("FileChange changeIndex must be positive");
+            throw new AviatorBugException("FileChange changeIndex must be positive");
         }
         if (lineFrom < 1 || lineTo < lineFrom) {
-            throw new IllegalArgumentException("FileChange invalid line range: " + lineFrom + "-" + lineTo);
+            throw new AviatorBugException("FileChange invalid line range: " + lineFrom + "-" + lineTo);
         }
         if (context == null) {
-            throw new IllegalArgumentException("FileChange context is required");
+            throw new AviatorBugException("FileChange context is required");
         }
     }
 }

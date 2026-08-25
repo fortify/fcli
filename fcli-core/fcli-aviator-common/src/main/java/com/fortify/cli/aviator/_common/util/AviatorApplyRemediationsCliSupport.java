@@ -13,7 +13,6 @@
 package com.fortify.cli.aviator._common.util;
 
 import java.util.List;
-import java.util.Set;
 
 import com.fortify.cli.common.exception.FcliSimpleException;
 
@@ -28,16 +27,11 @@ public final class AviatorApplyRemediationsCliSupport {
                 "--source-dir must specify a valid directory path");
     }
 
-    /**
-     * Normalizes {@code --issue-ids} and enforces cache-only mode.
-     *
-     * @return normalized filter, or {@code null} when the option is omitted
-     */
-    public static Set<String> normalizeIssueIdsForCacheOnly(List<String> issueIds, boolean fromCacheSelected) {
+    /** Enforces that --issue-ids is only used with --from-cache. */
+    public static void requireIssueIdsCacheOnly(List<String> issueIds, boolean fromCacheSelected) {
         FcliSimpleException.throwIf(
                 issueIds != null && !issueIds.isEmpty() && !fromCacheSelected,
                 "--issue-ids can only be used with --from-cache; "
                         + "create a cache with download-remediations-cache and rerun with --from-cache");
-        return AviatorIssueIdFilterUtils.normalizeIssueIds(issueIds);
     }
 }

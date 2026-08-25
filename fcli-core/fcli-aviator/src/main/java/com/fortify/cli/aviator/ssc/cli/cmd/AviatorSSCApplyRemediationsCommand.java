@@ -13,87 +13,56 @@
 package com.fortify.cli.aviator.ssc.cli.cmd;
 
 import java.time.OffsetDateTime;
-import java.util.List;
 import java.util.Set;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.aviator._common.output.cli.cmd.AbstractAviatorApplyRemediationsCommand;
 import com.fortify.cli.aviator._common.remediations_cache.CacheRemediationsFprSource;
 import com.fortify.cli.aviator._common.remediations_cache.RemediationsApplyHelper;
 import com.fortify.cli.aviator._common.remediations_cache.RemediationsApplyHelper.ApplyResult;
 import com.fortify.cli.aviator._common.remediations_cache.RemediationsCacheConstants;
-import com.fortify.cli.aviator._common.util.AviatorApplyRemediationsCliSupport;
 import com.fortify.cli.aviator.config.AviatorLoggerImpl;
 import com.fortify.cli.aviator.ssc.cli.mixin.AviatorSSCApplyRemediationsSourceMixin;
 import com.fortify.cli.aviator.ssc.cli.mixin.AviatorSSCRemediationsSelectorArgGroups.OnlineSelectionArgGroup.ResolvedOnlineArtifacts;
 import com.fortify.cli.aviator.ssc.helper.AviatorSSCApplyRemediationsHelper;
 import com.fortify.cli.aviator.ssc.helper.SSCOnlineRemediationsFprSource;
 import com.fortify.cli.aviator.ssc.helper.SinceOptionHelper;
-import com.fortify.cli.common.output.cli.cmd.AbstractOutputCommand;
-import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
-import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
-import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
-import com.fortify.cli.common.output.transform.IRecordTransformer;
-import com.fortify.cli.common.progress.cli.mixin.ProgressWriterFactoryMixin;
 import com.fortify.cli.common.progress.helper.IProgressWriter;
 import com.fortify.cli.ssc._common.rest.ssc.cli.mixin.SSCUnirestInstanceSupplierMixin;
 
 import kong.unirest.UnirestInstance;
-import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
-import picocli.CommandLine.Option;
 
 @Command(name = "apply-remediations")
-public class AviatorSSCApplyRemediationsCommand extends AbstractOutputCommand
-        implements IJsonNodeSupplier, IRecordTransformer, IActionCommandResultSupplier {
-    private static final Logger LOG = LoggerFactory.getLogger(AviatorSSCApplyRemediationsCommand.class);
-
-    @Getter @Mixin private OutputHelperMixins.DetailsNoQuery outputHelper;
-    @Mixin private ProgressWriterFactoryMixin progressWriterFactoryMixin;
+public class AviatorSSCApplyRemediationsCommand extends AbstractAviatorApplyRemediationsCommand {
     @Mixin private AviatorSSCApplyRemediationsSourceMixin sourceSelector;
     @Mixin private SSCUnirestInstanceSupplierMixin unirestInstanceSupplier;
 
-    @Option(names = {"--source-dir"})
-    private String sourceCodeDirectory = System.getProperty("user.dir");
-    @Option(names = {"--issue-ids"}, split = ",")
-    private List<String> issueIds;
-    @Option(names = {"--preview"})
-    private boolean previewMode = false;
-
     @Override
-    public JsonNode getJsonNode() {
+    protected void validateSourceSelector() {
         sourceSelector.validate();
-        AviatorApplyRemediationsCliSupport.requireSourceDir(sourceCodeDirectory);
-        Set<String> issueIdFilter = AviatorApplyRemediationsCliSupport.normalizeIssueIdsForCacheOnly(
-                issueIds, sourceSelector.isFromCacheSelected());
-
-        try (IProgressWriter progressWriter = progressWriterFactoryMixin.create()) {
-            AviatorLoggerImpl logger = new AviatorLoggerImpl(progressWriter);
-            if (sourceSelector.isFromCacheSelected()) {
-                return processFromCache(logger, issueIdFilter);
-            }
-            return processOnline(logger, progressWriter, issueIdFilter);
-        }
     }
 
-    private JsonNode processFromCache(AviatorLoggerImpl logger, Set<String> issueIdFilter) {
+    @Override
+    protected boolean isFromCacheSelected() {
+        return sourceSelector.isFromCacheSelected();
+    }
+
+    @Override
+    protected JsonNode processFromCache(AviatorLoggerImpl logger, Set<String> issueIdFilter) {
         try (CacheRemediationsFprSource source = CacheRemediationsFprSource.open(
-                sourceSelector.getFromCache(),
-                RemediationsCacheConstants.PRODUCT_SSC)) {
+                sourceSelector.getFromCache(), RemediationsCacheConstants.PRODUCT_SSC)) {
             ApplyResult applyResult = RemediationsApplyHelper.apply(
-                    source, sourceCodeDirectory, logger, issueIdFilter, LOG, previewMode);
+                    source, applyOptions, issueIdFilter, logger);
             return AviatorSSCApplyRemediationsHelper.buildCacheResultNode(
-                    sourceSelector.getFromCache(),
-                    applyResult,
-                    issueIdFilter,
+                    sourceSelector.getFromCache(), applyResult, issueIdFilter,
                     source.reader().getManifest().getSelection());
         }
     }
 
-    private JsonNode processOnline(
+    @Override
+    protected JsonNode processOnline(
             AviatorLoggerImpl logger, IProgressWriter progressWriter, Set<String> issueIdFilter) {
         UnirestInstance unirest = unirestInstanceSupplier.getUnirestInstance();
         OffsetDateTime sinceDate = SinceOptionHelper.parse(sourceSelector.getOnline().getSince());
@@ -102,25 +71,9 @@ public class AviatorSSCApplyRemediationsCommand extends AbstractOutputCommand
         try (SSCOnlineRemediationsFprSource source = new SSCOnlineRemediationsFprSource(
                 unirest, logger, progressWriter, resolved.artifacts())) {
             ApplyResult applyResult = RemediationsApplyHelper.apply(
-                    source, sourceCodeDirectory, logger, issueIdFilter, LOG, previewMode);
+                    source, applyOptions, issueIdFilter, logger);
             return AviatorSSCApplyRemediationsHelper.buildOnlineResultNode(
                     resolved.artifacts(), resolved.appVersionId(), applyResult, issueIdFilter);
         }
-    }
-
-    @Override
-    public boolean isSingular() {
-        return true;
-    }
-
-    @Override
-    public String getActionCommandResult() {
-        // Fallback only if result JSON has no __action__; helpers set the appropriate action based on previewMode.
-        return previewMode ? "Remediation-Previewed" : "Remediation-Applied";
-    }
-
-    @Override
-    public JsonNode transformRecord(JsonNode record) {
-        return record;
     }
 }

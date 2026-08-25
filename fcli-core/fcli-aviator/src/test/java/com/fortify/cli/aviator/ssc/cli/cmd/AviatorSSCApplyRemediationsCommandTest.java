@@ -18,10 +18,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.lang.reflect.Field;
 import java.nio.file.Path;
-import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
+import com.fortify.cli.aviator._common.cli.mixin.ApplyRemediationsOptionsMixin;
+import com.fortify.cli.aviator._common.output.cli.cmd.AbstractAviatorApplyRemediationsCommand;
 import com.fortify.cli.aviator.ssc.cli.mixin.AviatorSSCApplyRemediationsSourceMixin;
 import com.fortify.cli.common.exception.FcliSimpleException;
 
@@ -54,31 +55,20 @@ class AviatorSSCApplyRemediationsCommandTest {
     @Test
     void previewFlagParsedCorrectly() throws Exception {
         AviatorSSCApplyRemediationsCommand command = parse("--from-cache", "remediations.zip", "--preview");
-        Field previewField = AviatorSSCApplyRemediationsCommand.class.getDeclaredField("previewMode");
-        previewField.setAccessible(true);
-        assertTrue((Boolean) previewField.get(command));
+        assertTrue(getApplyOptions(command).isPreviewMode());
     }
 
     @Test
     void previewWorksWithIssueIds() throws Exception {
         AviatorSSCApplyRemediationsCommand command = parse("--from-cache", "cache.zip", "--preview", "--issue-ids", "ISSUE-1,ISSUE-2");
-        Field previewField = AviatorSSCApplyRemediationsCommand.class.getDeclaredField("previewMode");
-        previewField.setAccessible(true);
-        assertTrue((Boolean) previewField.get(command));
-        
-        Field issueIdsField = AviatorSSCApplyRemediationsCommand.class.getDeclaredField("issueIds");
-        issueIdsField.setAccessible(true);
-        @SuppressWarnings("unchecked")
-        List<String> issueIds = (List<String>) issueIdsField.get(command);
-        assertEquals(2, issueIds.size());
+        assertTrue(getApplyOptions(command).isPreviewMode());
+        assertEquals(2, getApplyOptions(command).getIssueIds().size());
     }
 
     @Test
     void previewWorksWithOnlineSelection() throws Exception {
         AviatorSSCApplyRemediationsCommand command = parse("--artifact-id", "123", "--preview");
-        Field previewField = AviatorSSCApplyRemediationsCommand.class.getDeclaredField("previewMode");
-        previewField.setAccessible(true);
-        assertTrue((Boolean) previewField.get(command));
+        assertTrue(getApplyOptions(command).isPreviewMode());
     }
 
     private static AviatorSSCApplyRemediationsCommand parse(String... args) {
@@ -92,5 +82,12 @@ class AviatorSSCApplyRemediationsCommandTest {
         Field field = AviatorSSCApplyRemediationsCommand.class.getDeclaredField("sourceSelector");
         field.setAccessible(true);
         return (AviatorSSCApplyRemediationsSourceMixin) field.get(command);
+    }
+
+    private static ApplyRemediationsOptionsMixin getApplyOptions(AviatorSSCApplyRemediationsCommand command)
+            throws Exception {
+        Field field = AbstractAviatorApplyRemediationsCommand.class.getDeclaredField("applyOptions");
+        field.setAccessible(true);
+        return (ApplyRemediationsOptionsMixin) field.get(command);
     }
 }
