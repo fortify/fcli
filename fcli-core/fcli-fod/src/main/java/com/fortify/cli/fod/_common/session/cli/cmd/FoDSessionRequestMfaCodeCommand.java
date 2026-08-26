@@ -14,12 +14,9 @@ package com.fortify.cli.fod._common.session.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fortify.cli.common.log.LogSensitivityLevel;
-import com.fortify.cli.common.log.MaskValue;
 import com.fortify.cli.common.output.cli.cmd.AbstractOutputCommand;
 import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
-import com.fortify.cli.common.session.cli.mixin.UserCredentialOptions;
 import com.fortify.cli.fod._common.output.cli.mixin.FoDOutputHelperMixins;
 import com.fortify.cli.fod._common.rest.helper.FoDProductHelper;
 import com.fortify.cli.fod._common.session.cli.mixin.FoDSessionLoginOptions;
@@ -39,10 +36,7 @@ import picocli.CommandLine.Option;
 public class FoDSessionRequestMfaCodeCommand extends AbstractOutputCommand implements IJsonNodeSupplier, IActionCommandResultSupplier {
     @Getter @Mixin private FoDOutputHelperMixins.RequestMfaCode outputHelper;
     @Mixin private FoDSessionLoginOptions.FoDUrlConfigOptions urlConfigOptions;
-    @Mixin private UserCredentialOptions userCredentials;
-    @Option(names = {"-t", "--tenant"}, required = true)
-    @MaskValue(sensitivity = LogSensitivityLevel.low, description = "FOD TENANT")
-    private String tenant;
+    @Mixin private FoDSessionLoginOptions.FoDUserCredentialOptions userCredentials;
     @Option(names = {"--delivery-mode", "-m"}, required = true)
     private FoDMfaDeliveryType deliveryMode;
 
@@ -50,9 +44,7 @@ public class FoDSessionRequestMfaCodeCommand extends AbstractOutputCommand imple
     public JsonNode getJsonNode() {
         FoDMfaHelper.requestMfaCode(
             urlConfigOptions,
-            tenant,
-            userCredentials.getUser(),
-            userCredentials.getPassword(),
+            userCredentials,
             deliveryMode
         );
         

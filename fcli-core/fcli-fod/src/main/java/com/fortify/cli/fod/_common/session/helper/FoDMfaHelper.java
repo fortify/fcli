@@ -23,6 +23,7 @@ import com.fortify.cli.common.rest.unirest.config.IUrlConfig;
 import com.fortify.cli.common.rest.unirest.config.UnirestJsonHeaderConfigurer;
 import com.fortify.cli.common.rest.unirest.config.UnirestUnexpectedHttpResponseConfigurer;
 import com.fortify.cli.common.rest.unirest.config.UnirestUrlConfigConfigurer;
+import com.fortify.cli.fod._common.session.helper.oauth.IFoDUserCredentials;
 
 import kong.unirest.UnirestInstance;
 
@@ -32,14 +33,14 @@ import kong.unirest.UnirestInstance;
  */
 public class FoDMfaHelper {
     
-    public static final void requestMfaCode(IUrlConfig urlConfig, String tenant, String user, char[] password, FoDMfaDeliveryType deliveryType) {
+    public static final void requestMfaCode(IUrlConfig urlConfig, IFoDUserCredentials userCredentials, FoDMfaDeliveryType deliveryType) {
         try ( var unirest = UnirestHelper.createUnirestInstance() ) {
             configureUnirest(unirest, urlConfig);
             
             ObjectNode requestBody = JsonHelper.getObjectMapper().createObjectNode();
             requestBody.put("multiFactorAuthorizationType", deliveryType.getApiValue());
-            requestBody.put("username", String.format("%s\\%s", tenant, user));
-            requestBody.put("password", String.valueOf(password));
+            requestBody.put("username", String.format("%s\\%s", userCredentials.getTenant(), userCredentials.getUser()));
+            requestBody.put("password", String.valueOf(userCredentials.getPassword()));
             
             unirest.post("/api/v3/multi-factor-authorization-code")
                     .headerReplace(HttpHeader.ACCEPT, "application/json")
@@ -48,7 +49,7 @@ public class FoDMfaHelper {
                     .asEmpty();
             
             //security hardening
-            java.util.Arrays.fill(password, ' ');  // Clear original char array
+            java.util.Arrays.fill(userCredentials.getPassword(), ' ');  // Clear original char array
         } catch ( UnexpectedHttpResponseException e ) {
             if ( e.getStatus() == 400 ) {
                 throw new FcliSimpleException(

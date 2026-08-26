@@ -51,21 +51,31 @@ public class FoDSessionLoginOptions {
 
     public static class FoDCredentialOptions {
         @ArgGroup(exclusive = false, multiplicity = "1", order = 1)
-        @Getter private FoDUserCredentialOptions userCredentialOptions = new FoDUserCredentialOptions();
+        @Getter private FoDUserCredentialWithMfaOptions userCredentialWithMfaOptions = new FoDUserCredentialWithMfaOptions();
         @ArgGroup(exclusive = false, multiplicity = "1", order = 2)
         @Getter private FoDClientCredentialOptions clientCredentialOptions = new FoDClientCredentialOptions();
     }
 
-    public static class FoDUserCredentialOptions extends UserCredentialOptions {
-        @Option(names = {"-t", "--tenant"}, required = true)
-        @MaskValue(sensitivity = LogSensitivityLevel.low, description = "FOD TENANT")
-        @Getter private String tenant;
+    public static class FoDUserCredentialWithMfaOptions {
+        @ArgGroup(exclusive = false, multiplicity = "1", order = 1)
+        @Getter private FoDUserCredentialOptions userCredentialOptions = new FoDUserCredentialOptions();
+        @ArgGroup(exclusive = false, multiplicity = "0..1", order = 2)
+        @Getter private FoDMfaOptions mfaOptions = new FoDMfaOptions();
+    }
+
+    public static class FoDMfaOptions {
         @Option(names = {"--code", "-c" }, paramLabel = "<code>", arity = "0..1", interactive = true, echo = false)
         @MaskValue(sensitivity = LogSensitivityLevel.low, description = "FOD TOTP/MFA CODE")
         @Getter private String securityCode;
         @Option(names = {"--totp"}, arity = "0..1", fallbackValue = "true", paramLabel = "<code>")
         @DisableTest(TestType.OPT_ARITY_PRESENT) // arity needed for optional-value flag pattern
         @Getter private String totp;
+    }
+
+    public static class FoDUserCredentialOptions extends UserCredentialOptions implements IFoDUserCredentials {
+        @Option(names = {"-t", "--tenant"}, required = true)
+        @MaskValue(sensitivity = LogSensitivityLevel.low, description = "FOD TENANT")
+        @Getter private String tenant;
     }
 
     public static class FoDClientCredentialOptions implements IFoDClientCredentials {
@@ -80,7 +90,16 @@ public class FoDSessionLoginOptions {
     public FoDUserCredentialOptions getUserCredentialOptions() {
         return Optional.ofNullable(authOptions)
                 .map(FoDAuthOptions::getCredentialOptions)
-                .map(FoDCredentialOptions::getUserCredentialOptions)
+                .map(FoDCredentialOptions::getUserCredentialWithMfaOptions)
+                .map(FoDUserCredentialWithMfaOptions::getUserCredentialOptions)
+                .orElse(null);
+    }
+
+    private FoDMfaOptions getMfaOptions() {
+        return Optional.ofNullable(authOptions)
+                .map(FoDAuthOptions::getCredentialOptions)
+                .map(FoDCredentialOptions::getUserCredentialWithMfaOptions)
+                .map(FoDUserCredentialWithMfaOptions::getMfaOptions)
                 .orElse(null);
     }
 
@@ -117,35 +136,35 @@ public class FoDSessionLoginOptions {
     }
 
     public boolean hasSecurityCode() {
-        var userCred = getUserCredentialOptions();
-        if (userCred == null) { return false; }
-        var totp = userCred.getTotp();
+        var mfaOptions = getMfaOptions();
+        if (mfaOptions == null) { return false; }
+        var totp = mfaOptions.getTotp();
         return (StringUtils.isNotBlank(totp) && !"true".equals(totp))
-            || StringUtils.isNotBlank(userCred.getSecurityCode());
+            || StringUtils.isNotBlank(mfaOptions.getSecurityCode());
     }
 
     public String getSecurityCode() {
-        var userCred = getUserCredentialOptions();
-        return userCred != null ? userCred.getSecurityCode() : null;
+        var mfaOptions = getMfaOptions();
+        return mfaOptions != null ? mfaOptions.getSecurityCode() : null;
     }
 
     public boolean isTotp() {
-        var userCred = getUserCredentialOptions();
-        return userCred != null && userCred.getTotp() != null;
+        var mfaOptions = getMfaOptions();
+        return mfaOptions != null && mfaOptions.getTotp() != null;
     }
 
-    private String resolveSecurityCode(FoDUserCredentialOptions u) {
-        var totp = u.getTotp();
-        return (totp != null && !"true".equals(totp)) ? totp : u.getSecurityCode();
+    private String resolveSecurityCode(FoDMfaOptions mfaOptions) {
+        var totp = mfaOptions.getTotp();
+        return (totp != null && !"true".equals(totp)) ? totp : mfaOptions.getSecurityCode();
     }
 
     public IFoDUserAuthCode getAuthCode() {
-        var u = getUserCredentialOptions();
-        var code = u != null ? resolveSecurityCode(u) : null;
+        var mfaOptions = getMfaOptions();
+        var code = mfaOptions != null ? resolveSecurityCode(mfaOptions) : null;
         if (StringUtils.isBlank(code)) { return null; }
         return BasicFoDUserAuthCode.builder()
                 .securityCode(code)
-                .isTotp(u.getTotp() != null)
+            .isTotp(mfaOptions != null && mfaOptions.getTotp() != null)
                 .build();
     }
 
