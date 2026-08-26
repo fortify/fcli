@@ -47,9 +47,6 @@ public class FoDMfaHelper {
                     .headerReplace(HttpHeader.CONTENT_TYPE, "application/json")
                     .body(requestBody)
                     .asEmpty();
-            
-            //security hardening
-            java.util.Arrays.fill(userCredentials.getPassword(), ' ');  // Clear original char array
         } catch ( UnexpectedHttpResponseException e ) {
             if ( e.getStatus() == 400 ) {
                 throw new FcliSimpleException(
