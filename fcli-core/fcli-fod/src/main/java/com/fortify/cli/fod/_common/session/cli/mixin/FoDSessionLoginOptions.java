@@ -16,6 +16,7 @@ import java.util.Optional;
 
 import org.apache.commons.lang3.StringUtils;
 
+import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.log.LogSensitivityLevel;
 import com.fortify.cli.common.log.MaskValue;
 import com.fortify.cli.common.rest.cli.mixin.UrlConfigOptions;
@@ -64,12 +65,56 @@ public class FoDSessionLoginOptions {
     }
 
     public static class FoDMfaOptions {
-        @Option(names = {"--code", "-c" }, paramLabel = "<code>", arity = "0..1", interactive = true, echo = false)
+        // Marker value picocli assigns when the option is given as a bare flag (no inline value).
+        private static final String FLAG = "true";
+
+        // Not interactive: prompting is handled in computeMfaCode() below, since whether/what to
+        // prompt for depends on both --code and --totp together (see computeMfaCode() javadoc).
+        @Option(names = {"--code", "-c" }, paramLabel = "<code>", arity = "0..1", fallbackValue = FLAG)
+        @DisableTest(TestType.OPT_ARITY_PRESENT) // arity needed for optional-value flag pattern
         @MaskValue(sensitivity = LogSensitivityLevel.low, description = "FOD TOTP/MFA CODE")
         @Getter private String securityCode;
-        @Option(names = {"--totp"}, arity = "0..1", fallbackValue = "true", paramLabel = "<code>")
+        @Option(names = {"--totp"}, arity = "0..1", fallbackValue = FLAG, paramLabel = "<totp>")
         @DisableTest(TestType.OPT_ARITY_PRESENT) // arity needed for optional-value flag pattern
         @Getter private String totp;
+
+        /** Whether --totp was specified in any form (bare flag or with a value). */
+        public boolean isTotp() {
+            return totp != null;
+        }
+
+        /**
+         * Resolves the effective MFA code, supporting both the legacy {@code --code <code> --totp}
+         * and the new {@code --totp <code>} usage. An explicit value on either option is used as-is;
+         * otherwise, if given as a bare flag, prompts interactively for the code, preferring --totp's
+         * prompt over --code's if both are given bare (--totp implies the code is TOTP, not email/SMS).
+         * Result is cached, so the prompt (if any) only happens once.
+         */
+        @Getter(lazy = true) private final String mfaCode = computeMfaCode();
+
+        private String computeMfaCode() {
+            var explicitTotp = valueOrNull(totp);
+            var explicitCode = valueOrNull(securityCode);
+            if (explicitTotp != null) { return explicitTotp; }
+            if (explicitCode != null) { return explicitCode; }
+            if (FLAG.equals(totp)) { return promptFor("TOTP code: "); }
+            if (FLAG.equals(securityCode)) {
+                return promptFor("MFA security code (from email/SMS; use 'fcli fod session request-mfa-code' to request one): ");
+            }
+            return null;
+        }
+
+        private static String valueOrNull(String value) {
+            return value == null || FLAG.equals(value) ? null : value;
+        }
+
+        private String promptFor(String prompt) {
+            var console = System.console();
+            if (console == null) {
+                throw new FcliSimpleException("No console available to prompt for MFA code; specify --totp <code> or --code <code> instead");
+            }
+            return console.readLine(prompt);
+        }
     }
 
     public static class FoDUserCredentialOptions extends UserCredentialOptions implements IFoDUserCredentials {
@@ -137,34 +182,15 @@ public class FoDSessionLoginOptions {
 
     public boolean hasSecurityCode() {
         var mfaOptions = getMfaOptions();
-        if (mfaOptions == null) { return false; }
-        var totp = mfaOptions.getTotp();
-        return (StringUtils.isNotBlank(totp) && !"true".equals(totp))
-            || StringUtils.isNotBlank(mfaOptions.getSecurityCode());
-    }
-
-    public String getSecurityCode() {
-        var mfaOptions = getMfaOptions();
-        return mfaOptions != null ? mfaOptions.getSecurityCode() : null;
-    }
-
-    public boolean isTotp() {
-        var mfaOptions = getMfaOptions();
-        return mfaOptions != null && mfaOptions.getTotp() != null;
-    }
-
-    private String resolveSecurityCode(FoDMfaOptions mfaOptions) {
-        var totp = mfaOptions.getTotp();
-        return (totp != null && !"true".equals(totp)) ? totp : mfaOptions.getSecurityCode();
+        return mfaOptions != null && StringUtils.isNotBlank(mfaOptions.getMfaCode());
     }
 
     public IFoDUserAuthCode getAuthCode() {
         var mfaOptions = getMfaOptions();
-        var code = mfaOptions != null ? resolveSecurityCode(mfaOptions) : null;
-        if (StringUtils.isBlank(code)) { return null; }
+        if (mfaOptions == null || StringUtils.isBlank(mfaOptions.getMfaCode())) { return null; }
         return BasicFoDUserAuthCode.builder()
-                .securityCode(code)
-            .isTotp(mfaOptions != null && mfaOptions.getTotp() != null)
+                .securityCode(mfaOptions.getMfaCode())
+                .isTotp(mfaOptions.isTotp())
                 .build();
     }
 
