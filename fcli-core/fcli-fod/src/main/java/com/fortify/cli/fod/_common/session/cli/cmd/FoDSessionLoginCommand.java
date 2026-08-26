@@ -37,10 +37,9 @@ public class FoDSessionLoginCommand extends AbstractSessionLoginCommand<FoDSessi
     @Mixin private FoDUnirestInstanceSupplierMixin unirestInstanceSupplierMixin;
 
     private static final String MFA_GUIDANCE = "If MFA/TOTP is required, provide the security code:\n"
-            + "  --code <code>              (or -c <code>) for an MFA code\n"
+            + "  --code <code>              (or -c <code>) for an email/SMS MFA code\n"
             + "  --totp <code>              for a TOTP authenticator code\n"
-            + "  --code <code> --totp       (legacy) TOTP code via --code flag\n"
-            + "Run 'fcli fod session request-mfa-code' to request an MFA code";
+            + "Run 'fcli fod session request-mfa-code' to request an email/SMS MFA code";
 
     private static final String ERROR_WITH_CODE = "Authentication failed. Possible causes:\n"
             + "  - Incorrect username or password\n"
