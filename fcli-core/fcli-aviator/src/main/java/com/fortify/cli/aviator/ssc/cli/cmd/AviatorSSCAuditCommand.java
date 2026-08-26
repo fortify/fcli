@@ -112,7 +112,7 @@ public class AviatorSSCAuditCommand extends AbstractSSCJsonNodeOutputCommand imp
                 return result;
             }
 
-            JsonNode quotaResult = checkQuota(unirest, av, sessionDescriptor, auditableIssueCount, logger, forceReaudit);
+            JsonNode quotaResult = checkQuota(unirest, av, sessionDescriptor, auditableIssueCount, logger);
             if (quotaResult != null) {
                 return quotaResult;
             }
@@ -173,7 +173,7 @@ public class AviatorSSCAuditCommand extends AbstractSSCJsonNodeOutputCommand imp
      */
     private JsonNode checkQuota(UnirestInstance unirest, SSCAppVersionDescriptor av,
             AviatorUserSessionDescriptor sessionDescriptor,
-            long auditableIssueCount, AviatorLoggerImpl logger, boolean forceReaudit) {
+            long auditableIssueCount, AviatorLoggerImpl logger) {
         if (!isSkipIfExceedingQuota() && !testExceedingQuota) {
             return null;
         }
@@ -200,7 +200,7 @@ public class AviatorSSCAuditCommand extends AbstractSSCJsonNodeOutputCommand imp
             return null;
         }
 
-        return evaluateQuota(unirest, av, effectiveAppName, auditableIssueCount, availableQuota, logger, forceReaudit);
+        return evaluateQuota(unirest, av, effectiveAppName, auditableIssueCount, availableQuota, logger);
     }
 
     /**
@@ -234,7 +234,7 @@ public class AviatorSSCAuditCommand extends AbstractSSCJsonNodeOutputCommand imp
      */
     private JsonNode evaluateQuota(UnirestInstance unirest, SSCAppVersionDescriptor av,
             String effectiveAppName, long auditableIssueCount, long availableQuota,
-            AviatorLoggerImpl logger, boolean forceReaudit) {
+            AviatorLoggerImpl logger) {
         if (availableQuota == AviatorSSCAuditHelper.QUOTA_UNKNOWN) {
             if (testExceedingQuota) {
                 ObjectNode result = AviatorSSCAuditHelper.buildResultNode(av, null, "QUOTA_UNKNOWN");

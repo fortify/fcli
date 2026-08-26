@@ -268,7 +268,7 @@ class IssueAuditorTest {
         IssueAuditor auditor = new IssueAuditor(
             inputList, null, new HashMap<>(), fprInfo,
             "TestApp", "1.0", selection, dummyLogger, null,
-            new SourceLanguageResolver(new FVDLMetadata())
+            new SourceLanguageResolver(new FVDLMetadata()), SourceDecoders.defaults(), null, false
         );
 
         Method filterMethod = IssueAuditor.class.getDeclaredMethod("filterVulnerabilities", List.class, FilterSet.class);

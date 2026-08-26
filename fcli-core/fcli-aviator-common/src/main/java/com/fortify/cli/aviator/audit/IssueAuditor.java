@@ -52,7 +52,6 @@ import com.fortify.cli.aviator.fpr.model.FPRInfo;
 import com.fortify.cli.aviator.fpr.model.FVDLMetadata;
 import com.fortify.cli.aviator.fpr.processor.AuditProcessor;
 import com.fortify.cli.aviator.fpr.utils.ISourceDecoder;
-import com.fortify.cli.aviator.fpr.utils.SourceDecoders;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClient;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClientHelper;
 import com.fortify.cli.aviator.util.Constants;
@@ -90,23 +89,6 @@ public class IssueAuditor {
 
     private final IAviatorLogger logger;
     private final List<String> customPriorityOrder;
-
-    public IssueAuditor(List<Vulnerability> vulnerabilities, AuditProcessor auditProcessor, Map<String, AuditIssue> auditIssueMap,
-                        FPRInfo fprInfo, String SSCApplicationName, String SSCApplicationVersion,
-                        FilterSelection filterSelection, IAviatorLogger logger, List<String> customPriorityOrder,
-                        SourceLanguageResolver sourceLanguageResolver) {
-        this(vulnerabilities, auditProcessor, auditIssueMap, fprInfo, SSCApplicationName, SSCApplicationVersion,
-            filterSelection, logger, customPriorityOrder, sourceLanguageResolver, SourceDecoders.defaults(), null, false);
-    }
-
-    public IssueAuditor(List<Vulnerability> vulnerabilities, AuditProcessor auditProcessor, Map<String, AuditIssue> auditIssueMap,
-                        FPRInfo fprInfo, String SSCApplicationName, String SSCApplicationVersion,
-                        FilterSelection filterSelection, IAviatorLogger logger, List<String> customPriorityOrder,
-                        SourceLanguageResolver sourceLanguageResolver, ISourceDecoder sourceDecoder,
-                        FVDLMetadata fvdlMetadata) {
-        this(vulnerabilities, auditProcessor, auditIssueMap, fprInfo, SSCApplicationName, SSCApplicationVersion,
-            filterSelection, logger, customPriorityOrder, sourceLanguageResolver, sourceDecoder, fvdlMetadata, false);
-    }
 
     public IssueAuditor(List<Vulnerability> vulnerabilities, AuditProcessor auditProcessor, Map<String, AuditIssue> auditIssueMap,
             FPRInfo fprInfo, String SSCApplicationName, String SSCApplicationVersion,
