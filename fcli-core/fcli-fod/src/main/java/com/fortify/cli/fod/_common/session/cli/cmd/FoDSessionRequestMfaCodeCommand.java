@@ -13,7 +13,9 @@
 package com.fortify.cli.fod._common.session.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.cli.cmd.AbstractOutputCommand;
 import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
@@ -37,22 +39,27 @@ public class FoDSessionRequestMfaCodeCommand extends AbstractOutputCommand imple
     @Getter @Mixin private FoDOutputHelperMixins.RequestMfaCode outputHelper;
     @Mixin private FoDSessionLoginOptions.FoDUrlConfigOptions urlConfigOptions;
     @Mixin private FoDSessionLoginOptions.FoDUserCredentialOptions userCredentials;
-    @Option(names = {"--delivery-mode", "-m"}, required = true)
-    private FoDMfaDeliveryType deliveryMode;
+    @Option(names = {"--delivery-modes", "-m"}, split = ",")
+    private FoDMfaDeliveryType[] deliveryModes = FoDMfaDeliveryType.values();
 
     @Override
     public JsonNode getJsonNode() {
-        FoDMfaHelper.requestMfaCode(
-            urlConfigOptions,
-            userCredentials,
-            deliveryMode
-        );
+        for (FoDMfaDeliveryType deliveryMode : deliveryModes) {
+            FoDMfaHelper.requestMfaCode(
+                urlConfigOptions,
+                userCredentials,
+                deliveryMode
+            );
+        }
         
         String fodUrl = FoDProductHelper.INSTANCE.getBrowserUrl(urlConfigOptions.getUrl());
         
-        ObjectNode result = com.fortify.cli.common.json.JsonHelper.getObjectMapper().createObjectNode();
+        ObjectNode result = JsonHelper.getObjectMapper().createObjectNode();
         result.put("fodUrl", fodUrl);
-        result.put("deliveryMode", deliveryMode.name());
+        ArrayNode requestedDeliveryModes = result.putArray("deliveryModes");
+        for (FoDMfaDeliveryType deliveryMode : deliveryModes) {
+            requestedDeliveryModes.add(deliveryMode.name());
+        }
         return result;
     }
 
