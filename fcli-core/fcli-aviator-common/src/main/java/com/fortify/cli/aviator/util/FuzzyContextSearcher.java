@@ -28,58 +28,70 @@ public class FuzzyContextSearcher {
      */
 
     public static int fuzzySearchContext(List<String> sourceLines, List<String> contextLines, int maxMismatches) throws IOException {
+        List<Integer> matches = fuzzySearchContextMatches(sourceLines, contextLines, maxMismatches);
+        return matches.isEmpty() ? -1 : matches.get(0);
+    }
+
+    public static List<Integer> fuzzySearchContextMatches(List<String> sourceLines, List<String> contextLines,
+            int maxMismatches) throws IOException {
         List<String> normalizedSource = normalizeLines(sourceLines);
         List<String> normalizedContext = normalizeLines(contextLines);
+        List<Integer> matches = new ArrayList<>();
+        boolean contextStartsWithBlank = !normalizedContext.isEmpty() && normalizedContext.get(0).isEmpty();
 
         for (int i = 0; i < normalizedSource.size(); i++) {
-            int mismatchCount = 0;
-            int sourceIndex = i;
-            int contextIndex = 0;
-            boolean similar = false;
-
-            while (contextIndex < normalizedContext.size() && sourceIndex < normalizedSource.size()) {
-                String contextLine = normalizedContext.get(contextIndex).trim();
-
-                if (contextLine.isEmpty()) {
-                    contextIndex++; // Skip empty context lines
-                    continue;
-                }
-
-                // Skip empty source lines too
-                String sourceLine = normalizedSource.get(sourceIndex).trim();
-                while (sourceLine.isEmpty()) {
-                    sourceIndex++;
-                    if (sourceIndex >= normalizedSource.size()) {
-                        break;
-                    }
-                    sourceLine = normalizedSource.get(sourceIndex).trim();
-                    if(!similar)
-                        i = sourceIndex;
-                }
-
-                if (sourceIndex >= normalizedSource.size()) {
-                    break; // No more source lines to match
-                }
-
-                similar = linesSimilar(sourceLine, contextLine);
-
-                if (!similar) {
-                    mismatchCount++;
-                    if (mismatchCount > maxMismatches) {
-                        break;
-                    }
-                }
-
-                sourceIndex++;
-                contextIndex++;
+            boolean sourceStartsWithBlank = normalizedSource.get(i).isEmpty();
+            if (contextStartsWithBlank
+                    ? !sourceStartsWithBlank || (i > 0 && normalizedSource.get(i - 1).isEmpty())
+                    : sourceStartsWithBlank) {
+                continue;
             }
-
-            if (contextIndex == normalizedContext.size() && mismatchCount <= maxMismatches) {
-                return i; // Found approximate match starting at i (ignoring blanks)
+            Integer matchStart = findContextMatchStart(normalizedSource, normalizedContext, maxMismatches, i);
+            if (matchStart != null && !matches.contains(matchStart)) {
+                matches.add(matchStart);
             }
         }
 
-        return -1; // Not found
+        return List.copyOf(matches);
+    }
+
+    private static Integer findContextMatchStart(List<String> normalizedSource, List<String> normalizedContext,
+            int maxMismatches, int startIndex) {
+        int mismatchCount = 0;
+        int sourceIndex = startIndex;
+        int contextIndex = 0;
+
+        while (contextIndex < normalizedContext.size() && sourceIndex < normalizedSource.size()) {
+            String contextLine = normalizedContext.get(contextIndex).trim();
+            if (contextLine.isEmpty()) {
+                contextIndex++;
+                continue;
+            }
+
+            String sourceLine = normalizedSource.get(sourceIndex).trim();
+            while (sourceLine.isEmpty()) {
+                sourceIndex++;
+                if (sourceIndex >= normalizedSource.size()) {
+                    break;
+                }
+                sourceLine = normalizedSource.get(sourceIndex).trim();
+            }
+            if (sourceIndex >= normalizedSource.size()) {
+                break;
+            }
+
+            if (!linesSimilar(sourceLine, contextLine)) {
+                mismatchCount++;
+                if (mismatchCount > maxMismatches) {
+                    break;
+                }
+            }
+
+            sourceIndex++;
+            contextIndex++;
+        }
+
+        return contextIndex == normalizedContext.size() && mismatchCount <= maxMismatches ? startIndex : null;
     }
 
     public static int[] fuzzySearchOriginalCode(List<String> sourceLines, List<String> originalCodeLine, int maxMismatches, int startIndex) {

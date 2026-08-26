@@ -216,10 +216,18 @@ public final class AviatorSSCAuditHelper {
      * Queries SSC to get the number of auditable issues for a given application version.
      */
     public static long getAuditableIssueCount(UnirestInstance unirest, SSCAppVersionDescriptor av, AviatorLoggerImpl logger, boolean noFilterSet, String filterSetTitleOrId, List<String> folderNames) {
+        return getAuditableIssueCount(unirest, av, logger, noFilterSet, filterSetTitleOrId, folderNames, false);
+    }
+
+    /**
+     * Queries SSC to get the number of issues eligible for the requested audit mode.
+     */
+    public static long getAuditableIssueCount(UnirestInstance unirest, SSCAppVersionDescriptor av, AviatorLoggerImpl logger,
+            boolean noFilterSet, String filterSetTitleOrId, List<String> folderNames, boolean forceReaudit) {
         logger.progress("Status: Checking for auditable issues...");
 
-        LOG.debug("Starting auditable issue count for SSC version {} (application='{}', version='{}') with pageLimit={}, noFilterSet={}",
-                av.getVersionId(), av.getApplicationName(), av.getVersionName(), PAGE_LIMIT, noFilterSet);
+        LOG.debug("Starting auditable issue count for SSC version {} (application='{}', version='{}') with pageLimit={}, noFilterSet={}, forceReaudit={}",
+            av.getVersionId(), av.getApplicationName(), av.getVersionName(), PAGE_LIMIT, noFilterSet, forceReaudit);
 
         String effectiveFilterSetTitleOrId = filterSetTitleOrId != null && !filterSetTitleOrId.isBlank()
                 ? filterSetTitleOrId
@@ -290,7 +298,7 @@ public final class AviatorSSCAuditHelper {
                 ArrayNode issues = (ArrayNode) response.get("data");
                 if (issues != null && !issues.isEmpty()) {
                     long auditableOnPage = JsonHelper.stream(issues)
-                            .filter(issue -> !isProcessedByAviator(issue))
+                            .filter(issue -> forceReaudit || !isProcessedByAviator(issue))
                             .count();
                     totalAuditableCount += auditableOnPage;
                     LOG.debug("Processed SSC issues page for version {}: pageStart={}, pageSize={}, auditableOnPage={}, cumulativeAuditableCount={}, totalFromServer={}",
@@ -434,9 +442,18 @@ public final class AviatorSSCAuditHelper {
     public static List<Map<String, Object>> getTopUnauditedCategories(
             UnirestInstance unirest, SSCAppVersionDescriptor av,
             AviatorLoggerImpl logger, int topN) {
+        return getTopUnauditedCategories(unirest, av, logger, topN, false);
+    }
+
+    /**
+     * Retrieves the top categories using the same Aviator-status scope as the audit preflight.
+     */
+    public static List<Map<String, Object>> getTopUnauditedCategories(
+            UnirestInstance unirest, SSCAppVersionDescriptor av,
+            AviatorLoggerImpl logger, int topN, boolean forceReaudit) {
 
         try {
-            return getTopUnauditedCategoriesInternal(unirest, av, logger, topN);
+            return getTopUnauditedCategoriesInternal(unirest, av, logger, topN, forceReaudit);
         } catch (Exception e) {
             LOG.warn("Failed to retrieve top unaudited categories for {}:{}: {}",
                 av.getApplicationName(), av.getVersionName(), e.getMessage());
@@ -447,7 +464,7 @@ public final class AviatorSSCAuditHelper {
 
     private static List<Map<String, Object>> getTopUnauditedCategoriesInternal(
             UnirestInstance unirest, SSCAppVersionDescriptor av,
-            AviatorLoggerImpl logger, int topN) {
+            AviatorLoggerImpl logger, int topN, boolean forceReaudit) {
 
         String versionId = av.getVersionId();
 
@@ -458,12 +475,14 @@ public final class AviatorSSCAuditHelper {
 
         // Resolve "Aviator status:Not Set" filter dynamically
         String aviatorStatusFilter = null;
-        try {
-            SSCIssueFilterHelper filterHelper = new SSCIssueFilterHelper(unirest, versionId);
-            aviatorStatusFilter = filterHelper.getFilter("Aviator status:Not Set");
-        } catch (FcliSimpleException e) {
-            // Tag doesn't exist on this version — all issues are unprocessed
-            LOG.debug("Aviator status tag not found for version {}. All issues considered unprocessed.", versionId);
+        if (!forceReaudit) {
+            try {
+                SSCIssueFilterHelper filterHelper = new SSCIssueFilterHelper(unirest, versionId);
+                aviatorStatusFilter = filterHelper.getFilter("Aviator status:Not Set");
+            } catch (FcliSimpleException e) {
+                // Tag doesn't exist on this version — all issues are unprocessed
+                LOG.debug("Aviator status tag not found for version {}. All issues considered unprocessed.", versionId);
+            }
         }
 
         // Call issueGroups API

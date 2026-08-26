@@ -30,6 +30,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.zip.ZipFile;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -85,6 +86,7 @@ public class RemediationProcessor {
         REMEDIATION_DATA_INVALID("Remediation data invalid"),
         REMEDIATION_LINE_RANGE_INVALID("Remediation line range invalid"),
         SOURCE_CONTEXT_NOT_FOUND("Source context not found"),
+        SOURCE_CONTEXT_AMBIGUOUS("Source context matched multiple locations"),
         ORIGINAL_CODE_NOT_FOUND("Original code not found"),
         REMEDIATION_ENCODE_FAILED("Remediation encode failed"),
         SOURCE_WRITE_FAILED("Source file write failed"),
@@ -307,7 +309,8 @@ public class RemediationProcessor {
         LOG.debug("Remediation {} hash check for '{}': {}", instanceId, filename, fileHashMatches ? "matched" : "mismatched");
         if (!fileHashMatches) {
             LOG.debug("File hash mismatch for remediation {} in {}; searching changed source content", instanceId, filename);
-            String contextText = getRequiredElementText(change, "Context");
+            Element contextElement = getRequiredElement(change, "Context");
+            String contextText = contextElement.getTextContent();
             List<String> contextLine = Arrays.asList(contextText.split("\\r?\\n"));
             int contextLineFrom = fuzzySearchContext(instanceId, filename, originalLines, contextLine);
             if (contextLineFrom == -1) {
@@ -320,7 +323,10 @@ public class RemediationProcessor {
 
             String originalCodeText = getRequiredElementText(change, "OriginalCode");
             List<String> originalCodeLine = Arrays.asList(originalCodeText.split("\\r?\\n"));
-            int[] lineFromTo = fuzzySearchOriginalCode(instanceId, filename, originalLines, originalCodeLine, contextLineFrom);
+            int contextBefore = parseRequiredContextAttribute(contextElement, "before");
+            int contextAfter = parseRequiredContextAttribute(contextElement, "after");
+            int[] lineFromTo = fuzzySearchOriginalCode(instanceId, filename, originalLines, originalCodeLine,
+                    contextLineFrom, contextLine.size(), contextBefore, contextAfter);
             if (lineFromTo[0] == -1 || lineFromTo[1] == -1) {
                 LOG.debug("Original code search failed for remediation {} in {}; context line={}, original code lines={}, source lines={}",
                         instanceId, filename, contextLineFrom + 1, originalCodeLine.size(), originalLines.size());
@@ -387,7 +393,15 @@ public class RemediationProcessor {
 
     private int fuzzySearchContext(String instanceId, String filename, List<String> originalLines, List<String> contextLine) {
         try {
-            return FuzzyContextSearcher.fuzzySearchContext(originalLines, contextLine, 0);
+            List<Integer> matches = FuzzyContextSearcher.fuzzySearchContextMatches(originalLines, contextLine, 0);
+            if (matches.size() > 1) {
+                String candidateLines = matches.stream()
+                        .map(line -> String.valueOf(line + 1))
+                        .collect(Collectors.joining(", "));
+                throw new SkipRemediationException(SkipReason.SOURCE_CONTEXT_AMBIGUOUS,
+                        "Source context matched multiple locations in file '" + filename + "'; candidate lines: " + candidateLines);
+            }
+            return matches.isEmpty() ? -1 : matches.get(0);
         } catch (IOException e) {
             throw new SkipRemediationException(SkipReason.SOURCE_CONTEXT_NOT_FOUND,
                     "Error searching source context for remediation '" + instanceId + "' in file '" + filename + "'", e);
@@ -395,8 +409,19 @@ public class RemediationProcessor {
     }
 
     private int[] fuzzySearchOriginalCode(String instanceId, String filename, List<String> originalLines, List<String> originalCodeLine,
-            int contextLineFrom) {
-        return FuzzyContextSearcher.fuzzySearchOriginalCode(originalLines, originalCodeLine, 0, contextLineFrom);
+            int contextLineFrom, int contextLineCount, int contextBefore, int contextAfter) {
+        int contextStart = contextLineFrom + contextBefore;
+        int contextEnd = contextLineFrom + contextLineCount - contextAfter;
+        if (contextStart < 0 || contextStart >= contextEnd || contextEnd > originalLines.size()) {
+            return new int[] {-1, -1};
+        }
+
+        int[] lineFromTo = FuzzyContextSearcher.fuzzySearchOriginalCode(
+                originalLines.subList(contextStart, contextEnd), originalCodeLine, 0, 0);
+        if (lineFromTo[0] == -1 || lineFromTo[1] == -1) {
+            return lineFromTo;
+        }
+        return new int[] {lineFromTo[0] + contextStart, lineFromTo[1] + contextStart};
     }
 
     private boolean isFilePresent(Path path) {
@@ -447,12 +472,34 @@ public class RemediationProcessor {
     }
 
     private String getRequiredElementText(Element parent, String elementName) {
+        return getRequiredElement(parent, elementName).getTextContent();
+    }
+
+    private Element getRequiredElement(Element parent, String elementName) {
         NodeList nodes = parent.getElementsByTagNameNS(NAMESPACE_URI, elementName);
         if (nodes.getLength() == 0 || nodes.item(0) == null) {
             throw new SkipRemediationException(SkipReason.REMEDIATION_DATA_INVALID,
                     "Missing required remediation element '" + elementName + "'");
         }
-        return nodes.item(0).getTextContent();
+        return (Element) nodes.item(0);
+    }
+
+    private int parseRequiredContextAttribute(Element context, String attributeName) {
+        String value = context.getAttribute(attributeName);
+        if (value == null || value.isBlank()) {
+            throw new SkipRemediationException(SkipReason.REMEDIATION_DATA_INVALID,
+                    "Missing required remediation context attribute '" + attributeName + "'");
+        }
+        try {
+            int parsedValue = Integer.parseInt(value);
+            if (parsedValue < 0) {
+                throw new NumberFormatException("negative value");
+            }
+            return parsedValue;
+        } catch (NumberFormatException e) {
+            throw new SkipRemediationException(SkipReason.REMEDIATION_DATA_INVALID,
+                    "Invalid remediation context attribute '" + attributeName + "': " + value, e);
+        }
     }
 
     private int parseRequiredInt(Element parent, String elementName) {

@@ -25,6 +25,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -34,17 +36,29 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import com.fortify.cli.aviator.audit.model.FilterSelection;
+import com.fortify.cli.aviator.audit.model.UserPrompt;
 import com.fortify.cli.aviator.config.IAviatorLogger;
 import com.fortify.cli.aviator.fpr.Vulnerability;
 import com.fortify.cli.aviator.fpr.filter.Filter;
 import com.fortify.cli.aviator.fpr.filter.FilterSet;
 import com.fortify.cli.aviator.fpr.filter.FilterTemplate;
+import com.fortify.cli.aviator.fpr.model.AuditIssue;
 import com.fortify.cli.aviator.fpr.model.FPRInfo;
 import com.fortify.cli.aviator.fpr.model.FVDLMetadata;
+import com.fortify.cli.aviator.fpr.utils.SourceDecoders;
+import com.fortify.cli.aviator.util.Constants;
 import com.fortify.cli.aviator.util.FprHandle;
 
 
 class IssueAuditorTest {
+
+    private static final String TEST_ISSUE_ID = "PROCESSED_ISSUE";
+    private static final IAviatorLogger NO_OP_LOGGER = new IAviatorLogger() {
+        @Override public void progress(String format, Object... args) {}
+        @Override public void info(String format, Object... args) {}
+        @Override public void warn(String format, Object... args) {}
+        @Override public void error(String format, Object... args) {}
+    };
 
     private Path tempFprFile;
     private FprHandle fprHandle;
@@ -112,6 +126,98 @@ class IssueAuditorTest {
 
         assertEquals("", fprInfo.getBuildId());
     }
+
+        @Test
+        void skipsPreviouslyProcessedAviatorIssueWithoutForceReaudit() throws Exception {
+        IssueAuditor auditor = createIssueAuditor(false, false,
+            Map.of(Constants.AVIATOR_STATUS_TAG_ID, Constants.PROCESSED_BY_AVIATOR));
+
+        assertTrue(prepareIssueIds(auditor).isEmpty());
+        }
+
+        @Test
+        void forceReauditIncludesProcessedAviatorIssueAndIgnoresAviatorOutcomeTag() throws Exception {
+        IssueAuditor auditor = createIssueAuditor(true, false, Map.of(
+            Constants.AVIATOR_STATUS_TAG_ID, Constants.PROCESSED_BY_AVIATOR,
+            Constants.AVIATOR_EXPECTED_OUTCOME_TAG_ID, Constants.EXPLOITABLE));
+
+        assertEquals(List.of(TEST_ISSUE_ID), prepareIssueIds(auditor));
+        }
+
+        @Test
+        void forceReauditStillSkipsSuppressedIssue() throws Exception {
+        IssueAuditor auditor = createIssueAuditor(true, true,
+            Map.of(Constants.AVIATOR_STATUS_TAG_ID, Constants.PROCESSED_BY_AVIATOR));
+
+        assertTrue(prepareIssueIds(auditor).isEmpty());
+        }
+
+        @Test
+        void forceReauditStillSkipsHumanTriagedIssue() throws Exception {
+        IssueAuditor auditor = createIssueAuditor(true, false, Map.of(
+            Constants.AVIATOR_STATUS_TAG_ID, Constants.PROCESSED_BY_AVIATOR,
+            Constants.FOD_TAG_ID, Constants.EXPLOITABLE));
+
+        assertTrue(prepareIssueIds(auditor).isEmpty());
+        }
+
+        @Test
+        void forceReauditIncludesIssueWithPendingReviewState() throws Exception {
+            IssueAuditor auditor = createIssueAuditor(true, false, Map.of(
+                    Constants.AVIATOR_STATUS_TAG_ID, Constants.PROCESSED_BY_AVIATOR,
+                    Constants.FOD_TAG_ID, "Pending Review",
+                    Constants.AUDITOR_STATUS_TAG_ID, Constants.PENDING_REVIEW));
+
+            assertEquals(List.of(TEST_ISSUE_ID), prepareIssueIds(auditor));
+        }
+
+        @Test
+        void treatsAllPendingAnalysisValuesAsUnaudited() throws Exception {
+            for (String pendingValue : List.of("Pending Review", "Not Set", "Pending Review/Not Set", " pending review ")) {
+                IssueAuditor auditor = createIssueAuditor(false, false, Map.of(Constants.ANALYSIS_TAG_ID, pendingValue));
+
+                assertEquals(List.of(TEST_ISSUE_ID), prepareIssueIds(auditor), pendingValue);
+            }
+        }
+
+        @Test
+        void forceReauditStillSkipsIssueWithManualAuditorStatus() throws Exception {
+        IssueAuditor auditor = createIssueAuditor(true, false, Map.of(
+            Constants.AVIATOR_STATUS_TAG_ID, Constants.PROCESSED_BY_AVIATOR,
+            Constants.AUDITOR_STATUS_TAG_ID, Constants.EXPLOITABLE));
+
+        assertTrue(prepareIssueIds(auditor).isEmpty());
+        }
+
+        private IssueAuditor createIssueAuditor(boolean forceReaudit, boolean suppressed, Map<String, String> tags) {
+        FPRInfo fprInfo = new FPRInfo(fprHandle);
+        FilterTemplate filterTemplate = new FilterTemplate();
+        filterTemplate.setTagDefinitions(new ArrayList<>());
+        fprInfo.setFilterTemplate(filterTemplate);
+
+        Vulnerability vulnerability = new Vulnerability();
+        vulnerability.setInstanceID(TEST_ISSUE_ID);
+        AuditIssue auditIssue = AuditIssue.builder()
+            .instanceId(TEST_ISSUE_ID)
+            .suppressed(suppressed)
+            .tags(new HashMap<>(tags))
+            .build();
+
+        return new IssueAuditor(
+            List.of(vulnerability), null, Map.of(TEST_ISSUE_ID, auditIssue), fprInfo,
+            "TestApp", "1.0", new FilterSelection(null, null), NO_OP_LOGGER, null,
+            new SourceLanguageResolver(new FVDLMetadata()), SourceDecoders.defaults(), null, forceReaudit);
+        }
+
+        @SuppressWarnings("unchecked")
+        private List<String> prepareIssueIds(IssueAuditor auditor) throws Exception {
+        Method prepareMethod = IssueAuditor.class.getDeclaredMethod("prepareAndFilterPrompts");
+        prepareMethod.setAccessible(true);
+        ConcurrentLinkedDeque<UserPrompt> prompts = (ConcurrentLinkedDeque<UserPrompt>) prepareMethod.invoke(auditor);
+        return prompts.stream()
+            .map(prompt -> prompt.getIssueData().getInstanceID())
+            .collect(Collectors.toList());
+        }
 
     @Test
     void testFilterVulnerabilities_LegacySyntaxWithSpaces() throws Exception {

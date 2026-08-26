@@ -86,6 +86,7 @@ public class IssueAuditor {
     private final SourceLanguageResolver sourceLanguageResolver;
     private final ISourceDecoder sourceDecoder;
     private final FVDLMetadata fvdlMetadata;
+    private final boolean forceReaudit;
 
     private final IAviatorLogger logger;
     private final List<String> customPriorityOrder;
@@ -95,7 +96,7 @@ public class IssueAuditor {
                         FilterSelection filterSelection, IAviatorLogger logger, List<String> customPriorityOrder,
                         SourceLanguageResolver sourceLanguageResolver) {
         this(vulnerabilities, auditProcessor, auditIssueMap, fprInfo, SSCApplicationName, SSCApplicationVersion,
-                filterSelection, logger, customPriorityOrder, sourceLanguageResolver, SourceDecoders.defaults(), null);
+            filterSelection, logger, customPriorityOrder, sourceLanguageResolver, SourceDecoders.defaults(), null, false);
     }
 
     public IssueAuditor(List<Vulnerability> vulnerabilities, AuditProcessor auditProcessor, Map<String, AuditIssue> auditIssueMap,
@@ -103,6 +104,15 @@ public class IssueAuditor {
                         FilterSelection filterSelection, IAviatorLogger logger, List<String> customPriorityOrder,
                         SourceLanguageResolver sourceLanguageResolver, ISourceDecoder sourceDecoder,
                         FVDLMetadata fvdlMetadata) {
+        this(vulnerabilities, auditProcessor, auditIssueMap, fprInfo, SSCApplicationName, SSCApplicationVersion,
+            filterSelection, logger, customPriorityOrder, sourceLanguageResolver, sourceDecoder, fvdlMetadata, false);
+    }
+
+    public IssueAuditor(List<Vulnerability> vulnerabilities, AuditProcessor auditProcessor, Map<String, AuditIssue> auditIssueMap,
+            FPRInfo fprInfo, String SSCApplicationName, String SSCApplicationVersion,
+            FilterSelection filterSelection, IAviatorLogger logger, List<String> customPriorityOrder,
+            SourceLanguageResolver sourceLanguageResolver, ISourceDecoder sourceDecoder,
+            FVDLMetadata fvdlMetadata, boolean forceReaudit) {
         this.logger = logger;
         this.customPriorityOrder = customPriorityOrder;
         this.MAX_PER_CATEGORY = Constants.MAX_PER_CATEGORY;
@@ -120,6 +130,7 @@ public class IssueAuditor {
         this.sourceLanguageResolver = sourceLanguageResolver;
         this.sourceDecoder = Objects.requireNonNull(sourceDecoder, "sourceDecoder");
         this.fvdlMetadata = fvdlMetadata;
+        this.forceReaudit = forceReaudit;
         this.analysisTag = fprInfo.getFilterTemplate().getTagDefinitions().stream().filter(t -> "Analysis".equalsIgnoreCase(t.getName())).findFirst().orElse(null);
         this.resultsTag = resolveResultTag("", "", analysisTag);
     }
@@ -243,31 +254,69 @@ public class IssueAuditor {
 
 
     private boolean shouldInclude(UserPrompt userPrompt) {
+        if (forceReaudit && isProcessedByAviator(userPrompt)) {
+            if (isProtectedFromForceReaudit(userPrompt)) {
+                LOG.debug("Skipping force re-audit for suppressed or manually audited issue ID: {}",
+                        userPrompt.getIssueData().getInstanceID());
+                return false;
+            }
+            LOG.debug("Including previously processed Aviator issue for force re-audit: {}",
+                    userPrompt.getIssueData().getInstanceID());
+            return true;
+        }
 
         if (isAudited(userPrompt)) {
             LOG.debug("Skipping already audited issue ID: {}", userPrompt.getIssueData().getInstanceID());
             return false;
         }
 
-        if (humanAuditTag != null) {
-            String issueId = userPrompt.getIssueData().getInstanceID();
-            String status = Optional.ofNullable(auditIssueMap.get(issueId)).map(AuditIssue::getTags).map(tags -> tags.get("604f0fbe-b5fe-47cd-a9cb-587ad8ebe93a")).orElse(null);
-            if (!StringUtil.isEmpty(status) && !Constants.PENDING_REVIEW.equalsIgnoreCase(status)) {
-                LOG.debug("Skipping because already manually audited: {}", issueId);
-                return false;
-            }
+        if (humanAuditTag != null && isManuallyAudited(userPrompt)) {
+            LOG.debug("Skipping because already manually audited: {}", userPrompt.getIssueData().getInstanceID());
+            return false;
         }
 
-        if (aviatorStatusTag != null) {
-            String issueId = userPrompt.getIssueData().getInstanceID();
-            String status = Optional.ofNullable(auditIssueMap.get(issueId)).map(AuditIssue::getTags).map(tags -> tags.get("FB7B0462-2C2E-46D9-811A-DCC1F3C83051")).orElse(null);
-            if (!StringUtil.isEmpty(status) && Constants.PROCESSED_BY_AVIATOR.equalsIgnoreCase(status)) {
-                LOG.debug("Skipping already PROCESSED_BY_AVIATOR: {}", issueId);
-                return false;
-            }
+        if (aviatorStatusTag != null && isProcessedByAviator(userPrompt)) {
+            LOG.debug("Skipping already processed by Aviator: {}", userPrompt.getIssueData().getInstanceID());
+            return false;
         }
 
         return true;
+    }
+
+    private boolean isManuallyAudited(UserPrompt userPrompt) {
+        String issueId = userPrompt.getIssueData().getInstanceID();
+        String status = Optional.ofNullable(auditIssueMap.get(issueId)).map(AuditIssue::getTags)
+                .map(tags -> tags.get(Constants.FOD_TAG_ID)).orElse(null);
+        return !StringUtil.isPendingReviewValue(status);
+    }
+
+    private boolean isProcessedByAviator(UserPrompt userPrompt) {
+        String issueId = userPrompt.getIssueData().getInstanceID();
+        String status = Optional.ofNullable(auditIssueMap.get(issueId)).map(AuditIssue::getTags)
+                .map(tags -> tags.get(Constants.AVIATOR_STATUS_TAG_ID)).orElse(null);
+        return !StringUtil.isEmpty(status) && Constants.PROCESSED_BY_AVIATOR.equalsIgnoreCase(status);
+    }
+
+    private boolean isProtectedFromForceReaudit(UserPrompt userPrompt) {
+        AuditIssue auditIssue = auditIssueMap.get(userPrompt.getIssueData().getInstanceID());
+        if (auditIssue == null) {
+            return false;
+        }
+        if (auditIssue.isSuppressed()) {
+            return true;
+        }
+
+        Map<String, String> tags = auditIssue.getTags();
+        if (tags == null) {
+            return false;
+        }
+
+        String auditorStatus = tags.get(Constants.AUDITOR_STATUS_TAG_ID);
+        if (!StringUtil.isPendingReviewValue(auditorStatus)) {
+            return true;
+        }
+
+        return isManuallyAudited(userPrompt);
     }
 
     private boolean isAudited(UserPrompt userPrompt) {
@@ -282,7 +331,7 @@ public class IssueAuditor {
         String auditorStatusTag = Constants.AUDITOR_STATUS_TAG_ID;
 
         String auditorStatusValue = tags.get(auditorStatusTag);
-        if (auditorStatusValue != null && !auditorStatusValue.equalsIgnoreCase("Pending Review")) {
+        if (!StringUtil.isPendingReviewValue(auditorStatusValue)) {
             return true;
         }
 
@@ -299,12 +348,12 @@ public class IssueAuditor {
 
             if (analysisTag != null && tags.containsKey(analysisTag.getId())) {
                 String tagValue = tags.get(analysisTag.getId());
-                if (tagValue != null && !tagValue.equalsIgnoreCase("Not Set") && !tagValue.equalsIgnoreCase(Constants.PENDING_REVIEW) && !tagValue.trim().isEmpty()) {
+                if (!StringUtil.isPendingReviewValue(tagValue)) {
                     return true;
                 }
             }
 
-            if (tags.containsKey(analysisTagS) && !tags.get(analysisTagS).equalsIgnoreCase("Not Set") && !StringUtil.isEmpty(tags.get(analysisTagS))) {
+            if (tags.containsKey(analysisTagS) && !StringUtil.isPendingReviewValue(tags.get(analysisTagS))) {
                 return true;
             }
         }

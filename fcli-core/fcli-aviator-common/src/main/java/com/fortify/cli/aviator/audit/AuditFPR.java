@@ -74,7 +74,7 @@ public class AuditFPR {
         Map<String, AuditResponse> auditResponses = new ConcurrentHashMap<>();
         AuditOutcome auditOutcome = performAviatorAudit(
                 parsedData, options.getLogger(), options.getToken(), options.getAppVersion(), options.getUrl(), options.getSscAppName(), options.getSscAppVersion(),
-            auditResponses, filterSelection, options.getFprHandle(), options.getFolderPriorityOrder(), sourceDecoder
+            auditResponses, filterSelection, options.getFprHandle(), options.getFolderPriorityOrder(), sourceDecoder, options.isForceReaudit()
         );
 
         // --- STAGE 4: FINALIZATION ---
@@ -131,7 +131,7 @@ public class AuditFPR {
             ParsedFprData parsedData, IAviatorLogger logger,
             String token, String appVersion, String url, String sscAppName, String sscAppVersion,
             Map<String, AuditResponse> auditResponsesToFill, FilterSelection filterSelection, FprHandle fprHandle,
-            List<String> folderPriorityOrder, ISourceDecoder sourceDecoder) {
+            List<String> folderPriorityOrder, ISourceDecoder sourceDecoder, boolean forceReaudit) {
         SourceLanguageResolver sourceLanguageResolver =
             new SourceLanguageResolver(parsedData.streamingFVDLProcessor.getFvdlMetadata());
         parsedData.streamingFVDLProcessor.getFvdlMetadata().clearSourceFileTypeIndexes();
@@ -148,7 +148,8 @@ public class AuditFPR {
                 folderPriorityOrder,
                 sourceLanguageResolver,
                 sourceDecoder,
-                parsedData.streamingFVDLProcessor.getFvdlMetadata()
+                parsedData.streamingFVDLProcessor.getFvdlMetadata(),
+                forceReaudit
         );
         return issueAuditor.performAudit(
                 auditResponsesToFill, token, appVersion, parsedData.fprInfo.getBuildId(), url, fprHandle

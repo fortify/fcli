@@ -53,6 +53,12 @@ class AviatorSSCAuditCommandTest {
     }
 
     @Test
+    void testAllowsForceReauditOption() {
+        var cmd = parse("--force-reaudit");
+        assertTrue(cmd.isForceReaudit());
+    }
+
+    @Test
     void reportsDecodeSkippedIssuesAsNotSubmitted() {
         ObjectNode result = JsonHelper.getObjectMapper().createObjectNode();
         result.set("operation", JsonHelper.getObjectMapper().createObjectNode());
