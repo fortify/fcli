@@ -13,6 +13,7 @@
 package com.fortify.cli.aviator.ssc.helper;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
@@ -24,6 +25,7 @@ import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.aviator.config.AviatorLoggerImpl;
@@ -44,7 +46,7 @@ class AviatorSSCAuditHelperTest {
         try (var server = new TestSscServer(processedIssue(), unprocessedIssue());
                 var unirest = newUnirest(server)) {
             assertEquals(1, AviatorSSCAuditHelper.getAuditableIssueCount(
-                    unirest, appVersion(), logger(), true, null, null));
+                    unirest, appVersion(), logger(), true, null, null, false));
             assertTrue(server.getLastIssueQuery().contains("q=audited:false"));
         }
     }
@@ -55,7 +57,7 @@ class AviatorSSCAuditHelperTest {
                 var unirest = newUnirest(server)) {
             assertEquals(2, AviatorSSCAuditHelper.getAuditableIssueCount(
                     unirest, appVersion(), logger(), true, null, null, true));
-            assertTrue(server.getLastIssueQuery().contains("q=audited:false"));
+            assertFalse(server.getLastIssueQuery().contains("q=audited:false"));
         }
     }
 
@@ -65,12 +67,22 @@ class AviatorSSCAuditHelperTest {
                 var unirest = newUnirest(server)) {
             assertEquals(1, AviatorSSCAuditHelper.getAuditableIssueCount(
                     unirest, appVersion(), logger(), true, null, null, true));
-            assertTrue(server.getLastIssueQuery().contains("q=audited:false"));
+            assertFalse(server.getLastIssueQuery().contains("q=audited:false"));
         }
     }
 
     @Test
-    void forceReauditCategoryBreakdownDoesNotApplyAviatorStatusFilter() throws Exception {
+    void forceReauditPreflightExcludesHumanAuditedIssuesThatAviatorNeverProcessed() throws Exception {
+        try (var server = new TestSscServer(processedIssue(), unprocessedIssue(), humanAuditedIssue());
+                var unirest = newUnirest(server)) {
+            assertEquals(2, AviatorSSCAuditHelper.getAuditableIssueCount(
+                    unirest, appVersion(), logger(), true, null, null, true));
+            assertFalse(server.getLastIssueQuery().contains("q=audited:false"));
+        }
+    }
+
+    @Test
+    void forceReauditCategoryBreakdownIncludesFullyAuditedCategories() throws Exception {
         try (var server = new TestSscServer(processedIssue());
                 var unirest = newUnirest(server)) {
             List<Map<String, Object>> categories = AviatorSSCAuditHelper.getTopUnauditedCategories(
@@ -78,6 +90,7 @@ class AviatorSSCAuditHelperTest {
 
             assertEquals(1, categories.size());
             assertEquals("Category A", categories.get(0).get("categoryName"));
+            assertEquals(1L, categories.get(0).get("unauditedCount"));
             assertEquals(1, server.getSelectorSetRequestCount());
         }
     }
@@ -103,6 +116,7 @@ class AviatorSSCAuditHelperTest {
 
     private static ObjectNode processedIssue() {
         ObjectNode issue = JsonHelper.getObjectMapper().createObjectNode();
+        issue.put("audited", true);
         ArrayNode auditValues = issue.putObject("_embed").putArray("auditValues");
         auditValues.addObject()
                 .put("customTagGuid", AviatorSSCTagDefs.AVIATOR_STATUS_TAG.getGuid())
@@ -112,6 +126,14 @@ class AviatorSSCAuditHelperTest {
 
     private static ObjectNode unprocessedIssue() {
         ObjectNode issue = JsonHelper.getObjectMapper().createObjectNode();
+        issue.put("audited", false);
+        issue.putObject("_embed").putArray("auditValues");
+        return issue;
+    }
+
+    private static ObjectNode humanAuditedIssue() {
+        ObjectNode issue = JsonHelper.getObjectMapper().createObjectNode();
+        issue.put("audited", true);
         issue.putObject("_embed").putArray("auditValues");
         return issue;
     }
@@ -139,9 +161,17 @@ class AviatorSSCAuditHelperTest {
 
         private void handleIssues(HttpExchange exchange) throws IOException {
             lastIssueQuery = URLDecoder.decode(exchange.getRequestURI().getRawQuery(), StandardCharsets.UTF_8);
+            ArrayNode matchingIssues = JsonHelper.getObjectMapper().createArrayNode();
+            boolean unauditedOnly = lastIssueQuery.contains("q=audited:false");
+            for (JsonNode issue : issues) {
+                if (unauditedOnly && issue.path("audited").asBoolean(false)) {
+                    continue;
+                }
+                matchingIssues.add(issue);
+            }
             byte[] response = JsonHelper.getObjectMapper().createObjectNode()
-                    .put("count", issues.size())
-                    .set("data", issues)
+                    .put("count", matchingIssues.size())
+                    .set("data", matchingIssues)
                     .toString()
                     .getBytes(StandardCharsets.UTF_8);
             exchange.getResponseHeaders().set("Content-Type", "application/json");
@@ -165,7 +195,7 @@ class AviatorSSCAuditHelperTest {
             ObjectNode group = JsonHelper.getObjectMapper().createObjectNode()
                     .put("id", "Category A")
                     .put("visibleCount", 1)
-                    .put("auditedCount", 0);
+                    .put("auditedCount", 1);
             ArrayNode data = JsonHelper.getObjectMapper().createArrayNode().add(group);
             writeJson(exchange, JsonHelper.getObjectMapper().createObjectNode().set("data", data));
         }

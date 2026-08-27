@@ -145,6 +145,15 @@ class IssueAuditorTest {
         }
 
         @Test
+        void forceReauditIncludesProcessedAviatorIssueWithAnalysisTag() throws Exception {
+        IssueAuditor auditor = createIssueAuditor(true, false, Map.of(
+            Constants.AVIATOR_STATUS_TAG_ID, Constants.PROCESSED_BY_AVIATOR,
+            Constants.ANALYSIS_TAG_ID, Constants.EXPLOITABLE));
+
+        assertEquals(List.of(TEST_ISSUE_ID), prepareIssueIds(auditor));
+        }
+
+        @Test
         void forceReauditStillSkipsSuppressedIssue() throws Exception {
         IssueAuditor auditor = createIssueAuditor(true, true,
             Map.of(Constants.AVIATOR_STATUS_TAG_ID, Constants.PROCESSED_BY_AVIATOR));
