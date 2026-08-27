@@ -34,6 +34,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -45,6 +46,7 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
+import com.fortify.cli.aviator._common.exception.AviatorBugException;
 import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
 import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
 import com.fortify.cli.aviator._common.util.AviatorRemediationMetricsHelper;
@@ -182,7 +184,7 @@ public class RemediationProcessor {
 
         private static Mode requireMode(Mode mode) {
             if (mode == null) {
-                throw new IllegalArgumentException("RemediationMetric mode is required");
+                throw new AviatorBugException("RemediationMetric mode is required");
             }
             return mode;
         }
@@ -454,7 +456,7 @@ public class RemediationProcessor {
                     // Direct collection without intermediate list allocation
                     List<FileChange> fileChanges = metadata.changes.stream()
                         .map(ChangeDetail::toFileChange)
-                        .collect(java.util.stream.Collectors.toUnmodifiableList());
+                        .collect(Collectors.toUnmodifiableList());
                     
                     FilePreview filePreview = new FilePreview(metadata.path, metadata.encoding, fileChanges);
                     fileMap.put(filename, filePreview);
@@ -683,9 +685,17 @@ public class RemediationProcessor {
                 filename, sourceEncoding.name(), updatedLines.size());
         
         String updatedContent = String.join(lineSeparator, updatedLines);
-        ChangeDetail changeDetail = new ChangeDetail(
-                changeIndex, lineFrom, lineTo, originalCodeText, newCodeText,
-                contextBefore, contextAfter, contextText, fuzzyMatched);
+        ChangeDetail changeDetail = ChangeDetail.builder()
+                .changeIndex(changeIndex)
+                .lineFrom(lineFrom)
+                .lineTo(lineTo)
+                .originalCode(originalCodeText)
+                .newCode(newCodeText)
+                .contextLinesBefore(contextBefore)
+                .contextLinesAfter(contextAfter)
+                .contextContent(contextText)
+                .fuzzyMatched(fuzzyMatched)
+                .build();
         
         return new ChangeResult(updatedContent, changeDetail);
     }

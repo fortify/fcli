@@ -20,6 +20,8 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
+import com.fortify.cli.aviator._common.exception.AviatorBugException;
+
 /**
  * Tests for FilePreview record validation.
  */
@@ -37,13 +39,13 @@ class FilePreviewTest {
 
     @Test
     void nullPathThrowsException() {
-        assertThrows(IllegalArgumentException.class, 
+        assertThrows(AviatorBugException.class, 
             () -> new FilePreview(null, "UTF-8", List.of()));
     }
 
     @Test
     void blankPathThrowsException() {
-        assertThrows(IllegalArgumentException.class, 
+        assertThrows(AviatorBugException.class, 
             () -> new FilePreview("  ", "UTF-8", List.of()));
     }
 

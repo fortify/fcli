@@ -14,32 +14,29 @@ package com.fortify.cli.aviator.fpr.processor.preview;
 
 import com.formkiq.graalvm.annotations.Reflectable;
 
+import lombok.AccessLevel;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+
 /**
  * Internal change detail captured during preview processing.
- * Includes line numbers, code snippets, and context metadata.
  * This is an internal representation that gets converted to FileChange for output.
- * 
- * @param changeIndex 1-based index of this change
- * @param lineFrom Starting line number (1-based)
- * @param lineTo Ending line number (1-based)
- * @param originalCode Code being replaced
- * @param newCode Replacement code
- * @param contextLinesBefore Number of context lines before the change
- * @param contextLinesAfter Number of context lines after the change
- * @param contextContent Full context text from remediations.xml
- * @param fuzzyMatched Whether fuzzy matching was used
  */
 @Reflectable
-public record ChangeDetail(
-        int changeIndex,
-        int lineFrom,
-        int lineTo,
-        String originalCode,
-        String newCode,
-        int contextLinesBefore,
-        int contextLinesAfter,
-        String contextContent,
-        boolean fuzzyMatched) {
+@Builder
+@Getter
+@RequiredArgsConstructor(access = AccessLevel.PRIVATE)
+public class ChangeDetail {
+    private final int changeIndex;
+    private final int lineFrom;
+    private final int lineTo;
+    private final String originalCode;
+    private final String newCode;
+    private final int contextLinesBefore;
+    private final int contextLinesAfter;
+    private final String contextContent;
+    private final boolean fuzzyMatched;
 
     public FileChange toFileChange() {
         ContextMetadata context = new ContextMetadata(contextLinesBefore, contextLinesAfter, contextContent);

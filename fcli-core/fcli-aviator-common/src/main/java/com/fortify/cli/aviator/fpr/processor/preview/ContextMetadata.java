@@ -15,6 +15,8 @@ package com.fortify.cli.aviator.fpr.processor.preview;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.formkiq.graalvm.annotations.Reflectable;
 
+import com.fortify.cli.aviator._common.exception.AviatorBugException;
+
 /**
  * Context metadata from the remediations XML, including before/after line counts
  * and the full context text. Used for fuzzy matching when file hashes don't match.
@@ -32,10 +34,10 @@ public record ContextMetadata(
 
     public ContextMetadata {
         if (linesBefore < 0) {
-            throw new IllegalArgumentException("ContextMetadata linesBefore must be non-negative");
+            throw new AviatorBugException("ContextMetadata linesBefore must be non-negative");
         }
         if (linesAfter < 0) {
-            throw new IllegalArgumentException("ContextMetadata linesAfter must be non-negative");
+            throw new AviatorBugException("ContextMetadata linesAfter must be non-negative");
         }
         content = content == null ? "" : content;
     }

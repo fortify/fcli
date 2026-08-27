@@ -18,7 +18,7 @@ import java.util.Set;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.aviator._common.output.cli.cmd.AbstractAviatorApplyRemediationsCommand;
 import com.fortify.cli.aviator._common.remediations_cache.CacheRemediationsFprSource;
-import com.fortify.cli.aviator._common.remediations_cache.RemediationsApplyHelper;
+import com.fortify.cli.aviator._common.remediations_cache.IRemediationsFprSource;
 import com.fortify.cli.aviator._common.remediations_cache.RemediationsApplyHelper.ApplyResult;
 import com.fortify.cli.aviator._common.remediations_cache.RemediationsCacheConstants;
 import com.fortify.cli.aviator.config.AviatorLoggerImpl;
@@ -38,6 +38,7 @@ import picocli.CommandLine.Mixin;
 public class AviatorSSCApplyRemediationsCommand extends AbstractAviatorApplyRemediationsCommand {
     @Mixin private AviatorSSCApplyRemediationsSourceMixin sourceSelector;
     @Mixin private SSCUnirestInstanceSupplierMixin unirestInstanceSupplier;
+    private ResolvedOnlineArtifacts resolvedOnline;
 
     @Override
     protected void validateSourceSelector() {
@@ -45,35 +46,30 @@ public class AviatorSSCApplyRemediationsCommand extends AbstractAviatorApplyReme
     }
 
     @Override
-    protected boolean isFromCacheSelected() {
+    protected boolean isCacheMode() {
         return sourceSelector.isFromCacheSelected();
     }
 
     @Override
-    protected JsonNode processFromCache(AviatorLoggerImpl logger, Set<String> issueIdFilter) {
-        try (CacheRemediationsFprSource source = CacheRemediationsFprSource.open(
-                sourceSelector.getFromCache(), RemediationsCacheConstants.PRODUCT_SSC)) {
-            ApplyResult applyResult = RemediationsApplyHelper.apply(
-                    source, applyOptions, issueIdFilter, logger);
-            return AviatorSSCApplyRemediationsHelper.buildCacheResultNode(
-                    sourceSelector.getFromCache(), applyResult, issueIdFilter,
-                    source.reader().getManifest().getSelection());
+    protected IRemediationsFprSource openFprSource(AviatorLoggerImpl logger, IProgressWriter progressWriter) {
+        if (isCacheMode()) {
+            return CacheRemediationsFprSource.open(sourceSelector.getFromCache(), RemediationsCacheConstants.PRODUCT_SSC);
         }
-    }
-
-    @Override
-    protected JsonNode processOnline(
-            AviatorLoggerImpl logger, IProgressWriter progressWriter, Set<String> issueIdFilter) {
         UnirestInstance unirest = unirestInstanceSupplier.getUnirestInstance();
         OffsetDateTime sinceDate = SinceOptionHelper.parse(sourceSelector.getOnline().getSince());
         // One resolve: artifacts + appVersionId (no second getAppVersionId REST call).
-        ResolvedOnlineArtifacts resolved = sourceSelector.getOnline().resolveArtifacts(unirest, sinceDate);
-        try (SSCOnlineRemediationsFprSource source = new SSCOnlineRemediationsFprSource(
-                unirest, logger, progressWriter, resolved.artifacts())) {
-            ApplyResult applyResult = RemediationsApplyHelper.apply(
-                    source, applyOptions, issueIdFilter, logger);
-            return AviatorSSCApplyRemediationsHelper.buildOnlineResultNode(
-                    resolved.artifacts(), resolved.appVersionId(), applyResult, issueIdFilter);
+        resolvedOnline = sourceSelector.getOnline().resolveArtifacts(unirest, sinceDate);
+        return new SSCOnlineRemediationsFprSource(unirest, logger, progressWriter, resolvedOnline.artifacts());
+    }
+
+    @Override
+    protected JsonNode buildResultNode(IRemediationsFprSource source, ApplyResult result, Set<String> issueIdFilter) {
+        if (isCacheMode()) {
+            return AviatorSSCApplyRemediationsHelper.buildCacheResultNode(
+                    sourceSelector.getFromCache(), result, issueIdFilter,
+                    ((CacheRemediationsFprSource) source).reader().getManifest().getSelection());
         }
+        return AviatorSSCApplyRemediationsHelper.buildOnlineResultNode(
+                resolvedOnline.artifacts(), resolvedOnline.appVersionId(), result, issueIdFilter);
     }
 }

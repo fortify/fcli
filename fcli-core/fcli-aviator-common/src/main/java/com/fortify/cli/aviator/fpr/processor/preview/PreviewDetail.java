@@ -19,6 +19,8 @@ import java.util.Map;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.formkiq.graalvm.annotations.Reflectable;
 
+import com.fortify.cli.aviator._common.exception.AviatorBugException;
+
 /**
  * Preview details for a single remediation (issue ID), containing all file changes.
  * This record is serialized to JSON for IDE plugin consumption.
@@ -38,10 +40,10 @@ public record PreviewDetail(
 
     public PreviewDetail {
         if (issueId == null || issueId.isBlank()) {
-            throw new IllegalArgumentException("PreviewDetail issueId is required");
+            throw new AviatorBugException("PreviewDetail issueId is required");
         }
         if (status == null || status.isBlank()) {
-            throw new IllegalArgumentException("PreviewDetail status is required");
+            throw new AviatorBugException("PreviewDetail status is required");
         }
         files = files == null ? Map.of() : Collections.unmodifiableMap(new LinkedHashMap<>(files));
     }

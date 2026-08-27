@@ -21,6 +21,8 @@ import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 
+import com.fortify.cli.aviator._common.exception.AviatorBugException;
+
 /**
  * Tests for PreviewDetail record validation and factory methods.
  */
@@ -54,25 +56,25 @@ class PreviewDetailTest {
 
     @Test
     void nullIssueIdThrowsException() {
-        assertThrows(IllegalArgumentException.class, 
+        assertThrows(AviatorBugException.class, 
             () -> new PreviewDetail(null, "available", Map.of(), null));
     }
 
     @Test
     void blankIssueIdThrowsException() {
-        assertThrows(IllegalArgumentException.class, 
+        assertThrows(AviatorBugException.class, 
             () -> new PreviewDetail("", "available", Map.of(), null));
     }
 
     @Test
     void nullStatusThrowsException() {
-        assertThrows(IllegalArgumentException.class, 
+        assertThrows(AviatorBugException.class, 
             () -> new PreviewDetail("ISSUE-1", null, Map.of(), null));
     }
 
     @Test
     void blankStatusThrowsException() {
-        assertThrows(IllegalArgumentException.class, 
+        assertThrows(AviatorBugException.class, 
             () -> new PreviewDetail("ISSUE-1", "   ", Map.of(), null));
     }
 

@@ -18,6 +18,8 @@ import java.util.List;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.formkiq.graalvm.annotations.Reflectable;
 
+import com.fortify.cli.aviator._common.exception.AviatorBugException;
+
 /**
  * Preview information for a single file in a remediation.
  * Contains metadata about the file and all code changes that would be applied.
@@ -35,7 +37,7 @@ public record FilePreview(
 
     public FilePreview {
         if (path == null || path.isBlank()) {
-            throw new IllegalArgumentException("FilePreview path is required");
+            throw new AviatorBugException("FilePreview path is required");
         }
         changes = changes == null ? List.of() : Collections.unmodifiableList(List.copyOf(changes));
     }

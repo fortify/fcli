@@ -24,6 +24,7 @@ import java.util.Set;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.aviator.fpr.processor.RemediationProcessor.RemediationMetric;
+import com.fortify.cli.aviator.fpr.processor.preview.PreviewDetail;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 
@@ -38,39 +39,48 @@ public final class AviatorRemediationMetricsHelper {
      * aggregation (XML totals); non-null selects filtered aggregation (requested IDs).
      */
     public static RemediationMetric aggregateMetrics(Set<String> requestedIssueIds, Collection<RemediationMetric> metrics) {
+        Collection<RemediationMetric> safeMetrics = metrics == null ? List.of() : metrics;
+        return requestedIssueIds == null
+                ? aggregateUnfiltered(safeMetrics)
+                : aggregateFiltered(requestedIssueIds, safeMetrics);
+    }
+
+    private static RemediationMetric aggregateUnfiltered(Collection<RemediationMetric> metrics) {
+        int totalRemediations = 0, appliedRemediations = 0;
         Set<String> modifiedFiles = new LinkedHashSet<>();
         Map<String, Integer> skippedByReason = new LinkedHashMap<>();
-        List<com.fortify.cli.aviator.fpr.processor.preview.PreviewDetail> allPreviewDetails = new ArrayList<>();
-        Collection<RemediationMetric> safeMetrics = metrics == null ? List.of() : metrics;
+        List<PreviewDetail> previewDetails = new ArrayList<>();
         boolean previewMode = false;
-
-        // Aggregate preview details from all metrics
-        for (RemediationMetric metric : safeMetrics) {
+        for (RemediationMetric metric : metrics) {
+            totalRemediations += metric.totalRemediations();
+            appliedRemediations += metric.appliedRemediations();
+            accumulateFilesAndSkips(metric, modifiedFiles, skippedByReason);
             if (metric instanceof RemediationMetric.Preview preview) {
                 previewMode = true;
-                allPreviewDetails.addAll(preview.previewDetails());
+                previewDetails.addAll(preview.previewDetails());
             }
-        }
-
-        if (requestedIssueIds == null) {
-            int totalRemediations = 0;
-            int appliedRemediations = 0;
-            for (RemediationMetric metric : safeMetrics) {
-                totalRemediations += metric.totalRemediations();
-                appliedRemediations += metric.appliedRemediations();
-                accumulateFilesAndSkips(metric, modifiedFiles, skippedByReason);
-            }
-            return previewMode
-                    ? RemediationMetric.previewUnfiltered(totalRemediations, appliedRemediations, modifiedFiles, skippedByReason, allPreviewDetails)
-                    : RemediationMetric.unfiltered(totalRemediations, appliedRemediations, modifiedFiles, skippedByReason);
-        }
-        Set<String> appliedIssueIds = new LinkedHashSet<>();
-        for (RemediationMetric metric : safeMetrics) {
-            appliedIssueIds.addAll(metric.appliedIssueIds());
-            accumulateFilesAndSkips(metric, modifiedFiles, skippedByReason);
         }
         return previewMode
-                ? RemediationMetric.previewFiltered(requestedIssueIds, appliedIssueIds, modifiedFiles, skippedByReason, allPreviewDetails)
+                ? RemediationMetric.previewUnfiltered(totalRemediations, appliedRemediations, modifiedFiles, skippedByReason, previewDetails)
+                : RemediationMetric.unfiltered(totalRemediations, appliedRemediations, modifiedFiles, skippedByReason);
+    }
+
+    private static RemediationMetric aggregateFiltered(Set<String> requestedIssueIds, Collection<RemediationMetric> metrics) {
+        Set<String> appliedIssueIds = new LinkedHashSet<>();
+        Set<String> modifiedFiles = new LinkedHashSet<>();
+        Map<String, Integer> skippedByReason = new LinkedHashMap<>();
+        List<PreviewDetail> previewDetails = new ArrayList<>();
+        boolean previewMode = false;
+        for (RemediationMetric metric : metrics) {
+            appliedIssueIds.addAll(metric.appliedIssueIds());
+            accumulateFilesAndSkips(metric, modifiedFiles, skippedByReason);
+            if (metric instanceof RemediationMetric.Preview preview) {
+                previewMode = true;
+                previewDetails.addAll(preview.previewDetails());
+            }
+        }
+        return previewMode
+                ? RemediationMetric.previewFiltered(requestedIssueIds, appliedIssueIds, modifiedFiles, skippedByReason, previewDetails)
                 : RemediationMetric.filtered(requestedIssueIds, appliedIssueIds, modifiedFiles, skippedByReason);
     }
 

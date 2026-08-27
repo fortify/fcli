@@ -12,17 +12,20 @@
  */
 package com.fortify.cli.aviator._common.output.cli.cmd;
 
+import java.util.List;
 import java.util.Set;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.aviator._common.cli.mixin.ApplyRemediationsOptionsMixin;
-import com.fortify.cli.aviator._common.util.AviatorApplyRemediationsCliSupport;
+import com.fortify.cli.aviator._common.remediations_cache.IRemediationsFprSource;
+import com.fortify.cli.aviator._common.remediations_cache.RemediationsApplyHelper;
+import com.fortify.cli.aviator._common.remediations_cache.RemediationsApplyHelper.ApplyResult;
 import com.fortify.cli.aviator._common.util.AviatorIssueIdFilterUtils;
 import com.fortify.cli.aviator.config.AviatorLoggerImpl;
+import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.output.cli.cmd.AbstractOutputCommand;
 import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
-import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.output.transform.IRecordTransformer;
 import com.fortify.cli.common.progress.cli.mixin.ProgressWriterFactoryMixin;
 import com.fortify.cli.common.progress.helper.IProgressWriter;
@@ -31,7 +34,7 @@ import lombok.Getter;
 import picocli.CommandLine.Mixin;
 
 public abstract class AbstractAviatorApplyRemediationsCommand extends AbstractOutputCommand
-        implements IJsonNodeSupplier, IRecordTransformer, IActionCommandResultSupplier {
+        implements IJsonNodeSupplier, IRecordTransformer {
 
     @Getter @Mixin private OutputHelperMixins.DetailsNoQuery outputHelper;
     @Mixin private ProgressWriterFactoryMixin progressWriterFactoryMixin;
@@ -40,35 +43,43 @@ public abstract class AbstractAviatorApplyRemediationsCommand extends AbstractOu
     @Override
     public final JsonNode getJsonNode() {
         validateSourceSelector();
-        AviatorApplyRemediationsCliSupport.requireSourceDir(applyOptions.getSourceCodeDirectory());
-        AviatorApplyRemediationsCliSupport.requireIssueIdsCacheOnly(
-                applyOptions.getIssueIds(), isFromCacheSelected());
+        requireSourceDir();
+        requireIssueIdsCacheOnly();
         Set<String> issueIdFilter = AviatorIssueIdFilterUtils.normalizeIssueIds(applyOptions.getIssueIds());
         try (IProgressWriter progressWriter = progressWriterFactoryMixin.create()) {
             AviatorLoggerImpl logger = new AviatorLoggerImpl(progressWriter);
-            return isFromCacheSelected()
-                    ? processFromCache(logger, issueIdFilter)
-                    : processOnline(logger, progressWriter, issueIdFilter);
+            try (IRemediationsFprSource source = openFprSource(logger, progressWriter)) {
+                ApplyResult result = RemediationsApplyHelper.apply(source, applyOptions, issueIdFilter, logger);
+                return buildResultNode(source, result, issueIdFilter);
+            }
         }
     }
 
     /** Override to validate source selector state before options are checked; no-op by default. */
     protected void validateSourceSelector() {}
 
-    protected abstract boolean isFromCacheSelected();
+    protected abstract boolean isCacheMode();
 
-    protected abstract JsonNode processFromCache(AviatorLoggerImpl logger, Set<String> issueIdFilter);
+    protected abstract IRemediationsFprSource openFprSource(AviatorLoggerImpl logger, IProgressWriter progressWriter);
 
-    protected abstract JsonNode processOnline(AviatorLoggerImpl logger, IProgressWriter progressWriter, Set<String> issueIdFilter);
+    protected abstract JsonNode buildResultNode(IRemediationsFprSource source, ApplyResult result, Set<String> issueIdFilter);
 
     @Override
     public final boolean isSingular() { return true; }
 
     @Override
-    public final String getActionCommandResult() {
-        return applyOptions.isPreviewMode() ? "Remediation-Previewed" : "Remediation-Applied";
+    public JsonNode transformRecord(JsonNode record) { return record; }
+
+    private void requireSourceDir() {
+        FcliSimpleException.throwIf(applyOptions.getSourceCodeDirectory() == null || applyOptions.getSourceCodeDirectory().isBlank(),
+                "--source-dir must specify a valid directory path");
     }
 
-    @Override
-    public JsonNode transformRecord(JsonNode record) { return record; }
+    private void requireIssueIdsCacheOnly() {
+        List<String> issueIds = applyOptions.getIssueIds();
+        FcliSimpleException.throwIf(
+                issueIds != null && !issueIds.isEmpty() && !isCacheMode(),
+                "--issue-ids can only be used with --from-cache; "
+                        + "create a cache with download-remediations-cache and rerun with --from-cache");
+    }
 }

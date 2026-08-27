@@ -18,6 +18,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import org.junit.jupiter.api.Test;
 
+import com.fortify.cli.aviator._common.exception.AviatorBugException;
+
 /**
  * Tests for ContextMetadata record validation.
  */
@@ -44,13 +46,13 @@ class ContextMetadataTest {
 
     @Test
     void negativeLineBeforeThrowsException() {
-        assertThrows(IllegalArgumentException.class, 
+        assertThrows(AviatorBugException.class, 
             () -> new ContextMetadata(-1, 2, "content"));
     }
 
     @Test
     void negativeLinesAfterThrowsException() {
-        assertThrows(IllegalArgumentException.class, 
+        assertThrows(AviatorBugException.class, 
             () -> new ContextMetadata(2, -1, "content"));
     }
 

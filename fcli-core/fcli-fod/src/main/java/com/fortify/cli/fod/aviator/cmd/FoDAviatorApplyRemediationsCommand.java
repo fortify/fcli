@@ -17,7 +17,7 @@ import java.util.Set;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.aviator._common.output.cli.cmd.AbstractAviatorApplyRemediationsCommand;
 import com.fortify.cli.aviator._common.remediations_cache.CacheRemediationsFprSource;
-import com.fortify.cli.aviator._common.remediations_cache.RemediationsApplyHelper;
+import com.fortify.cli.aviator._common.remediations_cache.IRemediationsFprSource;
 import com.fortify.cli.aviator._common.remediations_cache.RemediationsApplyHelper.ApplyResult;
 import com.fortify.cli.aviator._common.remediations_cache.RemediationsCacheConstants;
 import com.fortify.cli.aviator.config.AviatorLoggerImpl;
@@ -38,33 +38,29 @@ public class FoDAviatorApplyRemediationsCommand extends AbstractAviatorApplyReme
     @Mixin private FoDDelimiterMixin delimiterMixin; // Injected into sourceSelector
     @Mixin private FoDUnirestInstanceSupplierMixin unirestInstanceSupplier;
     @Mixin private FoDAviatorApplyRemediationsSourceMixin sourceSelector;
+    private FoDReleaseDescriptor resolvedRelease;
 
     @Override
-    protected boolean isFromCacheSelected() {
+    protected boolean isCacheMode() {
         return sourceSelector.isFromCacheSelected();
     }
 
     @Override
-    protected JsonNode processFromCache(AviatorLoggerImpl logger, Set<String> issueIdFilter) {
-        try (CacheRemediationsFprSource source = CacheRemediationsFprSource.open(
-                sourceSelector.getFromCache(), RemediationsCacheConstants.PRODUCT_FOD)) {
-            ApplyResult applyResult = RemediationsApplyHelper.apply(
-                    source, applyOptions, issueIdFilter, logger);
-            return AviatorFoDApplyRemediationsHelper.buildCacheResultNode(
-                    sourceSelector.getFromCache(), applyResult, issueIdFilter);
+    protected IRemediationsFprSource openFprSource(AviatorLoggerImpl logger, IProgressWriter progressWriter) {
+        if (isCacheMode()) {
+            return CacheRemediationsFprSource.open(sourceSelector.getFromCache(), RemediationsCacheConstants.PRODUCT_FOD);
         }
+        UnirestInstance unirest = unirestInstanceSupplier.getUnirestInstance();
+        resolvedRelease = sourceSelector.getReleaseDescriptor(unirest);
+        return new FoDOnlineRemediationsFprSource(unirest, logger, resolvedRelease);
     }
 
     @Override
-    protected JsonNode processOnline(
-            AviatorLoggerImpl logger, IProgressWriter progressWriter, Set<String> issueIdFilter) {
-        UnirestInstance unirest = unirestInstanceSupplier.getUnirestInstance();
-        FoDReleaseDescriptor release = sourceSelector.getReleaseDescriptor(unirest);
-        try (FoDOnlineRemediationsFprSource source =
-                new FoDOnlineRemediationsFprSource(unirest, logger, release)) {
-            ApplyResult applyResult = RemediationsApplyHelper.apply(
-                    source, applyOptions, issueIdFilter, logger);
-            return AviatorFoDApplyRemediationsHelper.buildOnlineResultNode(release, applyResult);
+    protected JsonNode buildResultNode(IRemediationsFprSource source, ApplyResult result, Set<String> issueIdFilter) {
+        if (isCacheMode()) {
+            return AviatorFoDApplyRemediationsHelper.buildCacheResultNode(
+                    sourceSelector.getFromCache(), result, issueIdFilter);
         }
+        return AviatorFoDApplyRemediationsHelper.buildOnlineResultNode(resolvedRelease, result);
     }
 }
