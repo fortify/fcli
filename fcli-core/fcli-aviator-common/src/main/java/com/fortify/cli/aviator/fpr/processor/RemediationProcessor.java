@@ -569,9 +569,6 @@ public class RemediationProcessor {
     }
 
     private String skipReasonLabel(SkipRemediationException exception) {
-        if (exception.reason == SkipReason.SOURCE_CONTEXT_AMBIGUOUS) {
-            return exception.getMessage();
-        }
         return exception.reason.displayName;
     }
 
