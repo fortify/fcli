@@ -213,9 +213,9 @@ public final class AviatorSSCAuditHelper {
     }
 
     /**
-     * Queries SSC to get the number of issues eligible for the requested audit mode.
-     * Force re-audit counts previously processed Aviator issues even when SSC already
-     * marks them audited; human-audited issues Aviator never processed stay excluded.
+     * Coarse SSC download gate. Force re-audit counts Aviator-processed issues even when
+     * SSC marks them audited; suppressed issues and human-audited issues Aviator never
+     * processed stay excluded. Last TagHistory writer is applied later from the FPR.
      */
     public static long getAuditableIssueCount(UnirestInstance unirest, SSCAppVersionDescriptor av, AviatorLoggerImpl logger,
             boolean noFilterSet, String filterSetTitleOrId, List<String> folderNames, boolean forceReaudit) {
@@ -349,10 +349,13 @@ public final class AviatorSSCAuditHelper {
 
     /**
      * Force re-audit includes previously processed Aviator issues even when SSC
-     * already marks them audited. Human-audited issues that Aviator never processed
-     * stay out. Normal audit still excludes processed issues.
+     * already marks them audited. Suppressed issues and human-audited issues that
+     * Aviator never processed stay out. Normal audit still excludes processed issues.
      */
     private static boolean isEligibleForRequestedAudit(JsonNode issue, boolean forceReaudit) {
+        if (issue.path("suppressed").asBoolean(false)) {
+            return false;
+        }
         if (isProcessedByAviator(issue)) {
             return forceReaudit;
         }

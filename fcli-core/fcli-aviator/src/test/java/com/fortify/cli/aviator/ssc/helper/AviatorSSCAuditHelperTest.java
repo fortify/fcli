@@ -82,6 +82,15 @@ class AviatorSSCAuditHelperTest {
     }
 
     @Test
+    void forceReauditPreflightExcludesSuppressedAviatorIssues() throws Exception {
+        try (var server = new TestSscServer(processedIssue(), suppressedProcessedIssue());
+                var unirest = newUnirest(server)) {
+            assertEquals(1, AviatorSSCAuditHelper.getAuditableIssueCount(
+                    unirest, appVersion(), logger(), true, null, null, true));
+        }
+    }
+
+    @Test
     void forceReauditCategoryBreakdownIncludesFullyAuditedCategories() throws Exception {
         try (var server = new TestSscServer(processedIssue());
                 var unirest = newUnirest(server)) {
@@ -135,6 +144,12 @@ class AviatorSSCAuditHelperTest {
         ObjectNode issue = JsonHelper.getObjectMapper().createObjectNode();
         issue.put("audited", true);
         issue.putObject("_embed").putArray("auditValues");
+        return issue;
+    }
+
+    private static ObjectNode suppressedProcessedIssue() {
+        ObjectNode issue = processedIssue();
+        issue.put("suppressed", true);
         return issue;
     }
 
