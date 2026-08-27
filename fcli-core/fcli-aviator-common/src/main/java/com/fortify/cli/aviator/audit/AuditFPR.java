@@ -31,7 +31,6 @@ import com.fortify.cli.aviator.audit.model.AuditResponse;
 import com.fortify.cli.aviator.audit.model.FPRAuditResult;
 import com.fortify.cli.aviator.audit.model.FilterSelection;
 import com.fortify.cli.aviator.audit.model.ParsedFprData;
-import com.fortify.cli.aviator.config.IAviatorLogger;
 import com.fortify.cli.aviator.config.TagMappingConfig;
 import com.fortify.cli.aviator.fpr.FPRProcessor;
 import com.fortify.cli.aviator.fpr.Vulnerability;
@@ -72,10 +71,7 @@ public class AuditFPR {
 
         // --- STAGE 3: AUDITING ---
         Map<String, AuditResponse> auditResponses = new ConcurrentHashMap<>();
-        AuditOutcome auditOutcome = performAviatorAudit(
-                parsedData, options.getLogger(), options.getToken(), options.getAppVersion(), options.getUrl(), options.getSscAppName(), options.getSscAppVersion(),
-            auditResponses, filterSelection, options.getFprHandle(), options.getFolderPriorityOrder(), sourceDecoder, options.isForceReaudit()
-        );
+        AuditOutcome auditOutcome = performAviatorAudit(parsedData, auditResponses, filterSelection, options);
 
         // --- STAGE 4: FINALIZATION ---
         return finalizeFprAudit(
@@ -127,11 +123,8 @@ public class AuditFPR {
         return issueCategoryLookup;
     }
 
-    private static AuditOutcome performAviatorAudit(
-            ParsedFprData parsedData, IAviatorLogger logger,
-            String token, String appVersion, String url, String sscAppName, String sscAppVersion,
-            Map<String, AuditResponse> auditResponsesToFill, FilterSelection filterSelection, FprHandle fprHandle,
-            List<String> folderPriorityOrder, ISourceDecoder sourceDecoder, boolean forceReaudit) {
+    private static AuditOutcome performAviatorAudit(ParsedFprData parsedData, Map<String, AuditResponse> auditResponsesToFill,
+            FilterSelection filterSelection, AuditFprOptions options) {
         SourceLanguageResolver sourceLanguageResolver =
             new SourceLanguageResolver(parsedData.streamingFVDLProcessor.getFvdlMetadata());
         parsedData.streamingFVDLProcessor.getFvdlMetadata().clearSourceFileTypeIndexes();
@@ -141,18 +134,14 @@ public class AuditFPR {
                 parsedData.auditProcessor,
                 parsedData.auditIssueMap,
                 parsedData.fprInfo,
-                sscAppName,
-                sscAppVersion,
                 filterSelection,
-                logger,
-                folderPriorityOrder,
                 sourceLanguageResolver,
-                sourceDecoder,
                 parsedData.streamingFVDLProcessor.getFvdlMetadata(),
-                forceReaudit
+                options
         );
         return issueAuditor.performAudit(
-                auditResponsesToFill, token, appVersion, parsedData.fprInfo.getBuildId(), url, fprHandle
+                auditResponsesToFill, options.getToken(), options.getAppVersion(),
+                parsedData.fprInfo.getBuildId(), options.getUrl(), options.getFprHandle()
         );
     }
 

@@ -46,7 +46,9 @@ class RemediationProcessorTest {
         assertEquals(1, metric.totalRemediations());
         assertEquals(0, metric.appliedRemediations());
         assertEquals(1, metric.skippedRemediations());
-        assertEquals(Map.of("Source context matched multiple locations", 1), metric.skippedByReason());
+        assertEquals(Map.of(
+                "Source context matched multiple locations in file 'Example.java'; candidate lines: 1, 4", 1),
+                metric.skippedByReason());
         assertEquals(originalSource, Files.readString(sourceFile));
     }
 

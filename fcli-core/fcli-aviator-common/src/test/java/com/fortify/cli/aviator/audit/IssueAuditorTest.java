@@ -35,6 +35,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import com.fortify.cli.aviator.audit.model.AuditFprOptions;
 import com.fortify.cli.aviator.audit.model.FilterSelection;
 import com.fortify.cli.aviator.audit.model.UserPrompt;
 import com.fortify.cli.aviator.config.IAviatorLogger;
@@ -45,7 +46,6 @@ import com.fortify.cli.aviator.fpr.filter.FilterTemplate;
 import com.fortify.cli.aviator.fpr.model.AuditIssue;
 import com.fortify.cli.aviator.fpr.model.FPRInfo;
 import com.fortify.cli.aviator.fpr.model.FVDLMetadata;
-import com.fortify.cli.aviator.fpr.utils.SourceDecoders;
 import com.fortify.cli.aviator.util.Constants;
 import com.fortify.cli.aviator.util.FprHandle;
 
@@ -214,8 +214,18 @@ class IssueAuditorTest {
 
         return new IssueAuditor(
             List.of(vulnerability), null, Map.of(TEST_ISSUE_ID, auditIssue), fprInfo,
-            "TestApp", "1.0", new FilterSelection(null, null), NO_OP_LOGGER, null,
-            new SourceLanguageResolver(new FVDLMetadata()), SourceDecoders.defaults(), null, forceReaudit);
+            new FilterSelection(null, null), new SourceLanguageResolver(new FVDLMetadata()), null,
+            auditOptions(forceReaudit, NO_OP_LOGGER));
+        }
+
+        private AuditFprOptions auditOptions(boolean forceReaudit, IAviatorLogger logger) {
+        return AuditFprOptions.builder()
+            .fprHandle(fprHandle)
+            .logger(logger)
+            .sscAppName("TestApp")
+            .sscAppVersion("1.0")
+            .forceReaudit(forceReaudit)
+            .build();
         }
 
         @SuppressWarnings("unchecked")
@@ -276,8 +286,8 @@ class IssueAuditorTest {
 
         IssueAuditor auditor = new IssueAuditor(
             inputList, null, new HashMap<>(), fprInfo,
-            "TestApp", "1.0", selection, dummyLogger, null,
-            new SourceLanguageResolver(new FVDLMetadata()), SourceDecoders.defaults(), null, false
+            selection, new SourceLanguageResolver(new FVDLMetadata()), null,
+            auditOptions(false, dummyLogger)
         );
 
         Method filterMethod = IssueAuditor.class.getDeclaredMethod("filterVulnerabilities", List.class, FilterSet.class);

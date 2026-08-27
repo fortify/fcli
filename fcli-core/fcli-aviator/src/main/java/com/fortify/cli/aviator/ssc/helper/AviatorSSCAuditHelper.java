@@ -470,20 +470,10 @@ public final class AviatorSSCAuditHelper {
     }
 
     /**
-     * Returns the top N SAST categories ordered by truly-unaudited issue count (descending).
-     * Uses the SSC issueGroups API with:
-     *   - groupingtype = dynamically resolved "Category" GUID
-     *   - filter = dynamically resolved "Aviator status:Not Set" technical filter
-     * Each entry contains "categoryName" and "unauditedCount".
-     */
-    public static List<Map<String, Object>> getTopUnauditedCategories(
-            UnirestInstance unirest, SSCAppVersionDescriptor av,
-            AviatorLoggerImpl logger, int topN) {
-        return getTopUnauditedCategories(unirest, av, logger, topN, false);
-    }
-
-    /**
-     * Retrieves the top categories using the same Aviator-status scope as the audit preflight.
+     * Returns the top N SAST categories for the requested audit mode.
+     * Normal audit ranks by unaudited issues with Aviator status not set.
+     * Force re-audit ranks by visible issues, including Aviator-processed ones.
+     * Each entry contains "categoryName" and "unauditedCount" (eligible count for that mode).
      */
     public static List<Map<String, Object>> getTopUnauditedCategories(
             UnirestInstance unirest, SSCAppVersionDescriptor av,

@@ -36,6 +36,7 @@ import org.slf4j.LoggerFactory;
 import com.fortify.cli.aviator._common.exception.AviatorQuotaFilterException;
 import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
 import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
+import com.fortify.cli.aviator.audit.model.AuditFprOptions;
 import com.fortify.cli.aviator.audit.model.AuditOutcome;
 import com.fortify.cli.aviator.audit.model.AuditResponse;
 import com.fortify.cli.aviator.audit.model.FilterSelection;
@@ -91,12 +92,11 @@ public class IssueAuditor {
     private final List<String> customPriorityOrder;
 
     public IssueAuditor(List<Vulnerability> vulnerabilities, AuditProcessor auditProcessor, Map<String, AuditIssue> auditIssueMap,
-            FPRInfo fprInfo, String SSCApplicationName, String SSCApplicationVersion,
-            FilterSelection filterSelection, IAviatorLogger logger, List<String> customPriorityOrder,
-            SourceLanguageResolver sourceLanguageResolver, ISourceDecoder sourceDecoder,
-            FVDLMetadata fvdlMetadata, boolean forceReaudit) {
-        this.logger = logger;
-        this.customPriorityOrder = customPriorityOrder;
+            FPRInfo fprInfo, FilterSelection filterSelection, SourceLanguageResolver sourceLanguageResolver,
+            FVDLMetadata fvdlMetadata, AuditFprOptions options) {
+        Objects.requireNonNull(options, "options");
+        this.logger = options.getLogger();
+        this.customPriorityOrder = options.getFolderPriorityOrder();
         this.MAX_PER_CATEGORY = Constants.MAX_PER_CATEGORY;
         this.MAX_TOTAL = Constants.MAX_TOTAL;
         this.MAX_PER_CATEGORY_EXCEEDED = Constants.MAX_PER_CATEGORY_EXCEEDED;
@@ -107,12 +107,12 @@ public class IssueAuditor {
         this.auditIssueMap = auditIssueMap;
         this.fprInfo = fprInfo;
         this.filterSelection = filterSelection;
-        this.SSCApplicationName = SSCApplicationName;
-        this.SSCApplicationVersion = SSCApplicationVersion;
+        this.SSCApplicationName = options.getSscAppName();
+        this.SSCApplicationVersion = options.getSscAppVersion();
         this.sourceLanguageResolver = sourceLanguageResolver;
-        this.sourceDecoder = Objects.requireNonNull(sourceDecoder, "sourceDecoder");
+        this.sourceDecoder = Objects.requireNonNull(options.getSourceDecoder(), "sourceDecoder");
         this.fvdlMetadata = fvdlMetadata;
-        this.forceReaudit = forceReaudit;
+        this.forceReaudit = options.isForceReaudit();
         this.analysisTag = fprInfo.getFilterTemplate().getTagDefinitions().stream().filter(t -> "Analysis".equalsIgnoreCase(t.getName())).findFirst().orElse(null);
         this.resultsTag = resolveResultTag("", "", analysisTag);
     }

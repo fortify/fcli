@@ -213,7 +213,7 @@ public class RemediationProcessor {
         try {
             Map<Path, PendingFileWrite> pendingWrites = prepareFileChanges(remediation, sourceBasePath, fvdlMetadata);
             if (pendingWrites.isEmpty()) {
-                recordSkipped(skippedByReason, SkipReason.NO_CHANGES);
+                recordSkipped(skippedByReason, SkipReason.NO_CHANGES.displayName);
                 return false;
             }
             try {
@@ -224,15 +224,15 @@ public class RemediationProcessor {
                 throw new SkipRemediationException(SkipReason.SOURCE_WRITE_FAILED, e.getMessage(), e);
             }
         } catch (SkipRemediationException e) {
-            recordSkipped(skippedByReason, e.reason);
-            LOG.info("Skipping remediation {}: {}", instanceId, e.getMessage());
+            recordSkipped(skippedByReason, skipReasonLabel(e));
+            LOG.warn("Skipping remediation {}: {}", instanceId, e.getMessage());
             LOG.debug("Skip reason for remediation {}: {}", instanceId, e.reason.displayName, e);
             return false;
         } catch (RollbackRemediationException e) {
             throw e;
         } catch (Exception e) {
-            recordSkipped(skippedByReason, SkipReason.UNEXPECTED_ERROR);
-            LOG.info("Skipping remediation {} due to an unexpected processing error", instanceId);
+            recordSkipped(skippedByReason, SkipReason.UNEXPECTED_ERROR.displayName);
+            LOG.warn("Skipping remediation {} due to an unexpected processing error", instanceId);
             LOG.debug("Unexpected error while processing remediation {}", instanceId, e);
             return false;
         }
@@ -564,8 +564,15 @@ public class RemediationProcessor {
         }
     }
 
-    private void recordSkipped(Map<String, Integer> skippedByReason, SkipReason reason) {
-        skippedByReason.merge(reason.displayName, 1, Integer::sum);
+    private void recordSkipped(Map<String, Integer> skippedByReason, String reason) {
+        skippedByReason.merge(reason, 1, Integer::sum);
+    }
+
+    private String skipReasonLabel(SkipRemediationException exception) {
+        if (exception.reason == SkipReason.SOURCE_CONTEXT_AMBIGUOUS) {
+            return exception.getMessage();
+        }
+        return exception.reason.displayName;
     }
 
     private String formatSkippedReasons(Map<String, Integer> skippedByReason) {
