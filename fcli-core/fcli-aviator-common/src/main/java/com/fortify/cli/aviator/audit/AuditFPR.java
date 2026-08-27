@@ -139,10 +139,7 @@ public class AuditFPR {
                 parsedData.streamingFVDLProcessor.getFvdlMetadata(),
                 options
         );
-        return issueAuditor.performAudit(
-                auditResponsesToFill, options.getToken(), options.getAppVersion(),
-                parsedData.fprInfo.getBuildId(), options.getUrl(), options.getFprHandle()
-        );
+        return issueAuditor.performAudit(auditResponsesToFill);
     }
 
     private static FPRAuditResult finalizeFprAudit(

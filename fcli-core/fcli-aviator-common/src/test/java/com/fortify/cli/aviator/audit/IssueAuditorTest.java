@@ -193,12 +193,87 @@ class IssueAuditorTest {
         void forceReauditStillSkipsIssueWithManualAuditorStatus() throws Exception {
         IssueAuditor auditor = createIssueAuditor(true, false, Map.of(
             Constants.AVIATOR_STATUS_TAG_ID, Constants.PROCESSED_BY_AVIATOR,
-            Constants.AUDITOR_STATUS_TAG_ID, Constants.EXPLOITABLE));
+            Constants.AUDITOR_STATUS_TAG_ID, Constants.EXPLOITABLE),
+            Map.of(Constants.AUDITOR_STATUS_TAG_ID, "analyst.user"));
 
         assertTrue(prepareIssueIds(auditor).isEmpty());
         }
 
+        @Test
+        void forceReauditIncludesAviatorWrittenAuditorStatus() throws Exception {
+        IssueAuditor auditor = createIssueAuditor(true, false, Map.of(
+            Constants.AVIATOR_STATUS_TAG_ID, Constants.PROCESSED_BY_AVIATOR,
+            Constants.AUDITOR_STATUS_TAG_ID, Constants.EXPLOITABLE),
+            Map.of(Constants.AUDITOR_STATUS_TAG_ID, Constants.USER_NAME));
+
+        assertEquals(List.of(TEST_ISSUE_ID), prepareIssueIds(auditor));
+        }
+
+        @Test
+        void forceReauditSkipsHumanAnalysisOverrideAfterAviator() throws Exception {
+        IssueAuditor auditor = createIssueAuditor(true, false, Map.of(
+            Constants.AVIATOR_STATUS_TAG_ID, Constants.PROCESSED_BY_AVIATOR,
+            Constants.ANALYSIS_TAG_ID, Constants.EXPLOITABLE),
+            Map.of(Constants.ANALYSIS_TAG_ID, "analyst.user"));
+
+        assertTrue(prepareIssueIds(auditor).isEmpty());
+        }
+
+        @Test
+        void forceReauditIncludesLegacyFortifyAviatorUsername() throws Exception {
+        IssueAuditor auditor = createIssueAuditor(true, false, Map.of(
+            Constants.AVIATOR_STATUS_TAG_ID, Constants.PROCESSED_BY_AVIATOR,
+            Constants.ANALYSIS_TAG_ID, Constants.EXPLOITABLE),
+            Map.of(Constants.ANALYSIS_TAG_ID, Constants.USER_NAME_LEGACY_FORTIFY_AVIATOR));
+
+        assertEquals(List.of(TEST_ISSUE_ID), prepareIssueIds(auditor));
+        }
+
+        @Test
+        void forceReauditIncludesMappedTagWrittenByAviatorWithoutStatusTag() throws Exception {
+        Path mappingFile = writeMappedTagFile();
+        try {
+            IssueAuditor auditor = createIssueAuditor(true, false,
+                    Map.of("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee", Constants.EXPLOITABLE),
+                    Map.of("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee", Constants.USER_NAME),
+                    mappingFile.toString());
+            assertEquals(List.of(TEST_ISSUE_ID), prepareIssueIds(auditor));
+        } finally {
+            Files.deleteIfExists(mappingFile);
+        }
+        }
+
+        @Test
+        void forceReauditSkipsHumanWriterOnMappedTag() throws Exception {
+        Path mappingFile = writeMappedTagFile();
+        try {
+            IssueAuditor auditor = createIssueAuditor(true, false,
+                    Map.of("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee", Constants.EXPLOITABLE),
+                    Map.of("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee", "analyst.user"),
+                    mappingFile.toString());
+            assertTrue(prepareIssueIds(auditor).isEmpty());
+        } finally {
+            Files.deleteIfExists(mappingFile);
+        }
+        }
+
+        private Path writeMappedTagFile() throws IOException {
+        Path mappingFile = Files.createTempFile("tag-mapping", ".yaml");
+        Files.writeString(mappingFile, "tag_id: \"aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee\"\n");
+        return mappingFile;
+        }
+
         private IssueAuditor createIssueAuditor(boolean forceReaudit, boolean suppressed, Map<String, String> tags) {
+        return createIssueAuditor(forceReaudit, suppressed, tags, Map.of(), null);
+        }
+
+        private IssueAuditor createIssueAuditor(boolean forceReaudit, boolean suppressed, Map<String, String> tags,
+                Map<String, String> lastTagUsernames) {
+        return createIssueAuditor(forceReaudit, suppressed, tags, lastTagUsernames, null);
+        }
+
+        private IssueAuditor createIssueAuditor(boolean forceReaudit, boolean suppressed, Map<String, String> tags,
+                Map<String, String> lastTagUsernames, String tagMappingPath) {
         FPRInfo fprInfo = new FPRInfo(fprHandle);
         FilterTemplate filterTemplate = new FilterTemplate();
         filterTemplate.setTagDefinitions(new ArrayList<>());
@@ -210,20 +285,26 @@ class IssueAuditorTest {
             .instanceId(TEST_ISSUE_ID)
             .suppressed(suppressed)
             .tags(new HashMap<>(tags))
+            .lastTagUsernames(new HashMap<>(lastTagUsernames))
             .build();
 
         return new IssueAuditor(
             List.of(vulnerability), null, Map.of(TEST_ISSUE_ID, auditIssue), fprInfo,
             new FilterSelection(null, null), new SourceLanguageResolver(new FVDLMetadata()), null,
-            auditOptions(forceReaudit, NO_OP_LOGGER));
+            auditOptions(forceReaudit, NO_OP_LOGGER, tagMappingPath));
         }
 
         private AuditFprOptions auditOptions(boolean forceReaudit, IAviatorLogger logger) {
+        return auditOptions(forceReaudit, logger, null);
+        }
+
+        private AuditFprOptions auditOptions(boolean forceReaudit, IAviatorLogger logger, String tagMappingPath) {
         return AuditFprOptions.builder()
             .fprHandle(fprHandle)
             .logger(logger)
             .sscAppName("TestApp")
             .sscAppVersion("1.0")
+            .tagMappingPath(tagMappingPath)
             .forceReaudit(forceReaudit)
             .build();
         }
