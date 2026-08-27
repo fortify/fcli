@@ -14,9 +14,12 @@ package com.fortify.cli.aviator.grpc;
 
 import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
 
+import lombok.Builder;
+
 /**
  * Configuration for one DAST audit gRPC stream.
  */
+@Builder
 public record DastAuditStreamConfig(
     String token,
     String applicationName,

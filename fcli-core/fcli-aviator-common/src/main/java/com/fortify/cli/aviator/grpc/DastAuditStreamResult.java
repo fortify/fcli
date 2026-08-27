@@ -14,9 +14,12 @@ package com.fortify.cli.aviator.grpc;
 
 import java.util.List;
 
+import lombok.Builder;
+
 /**
  * Results and quota metadata returned by one DAST audit stream.
  */
+@Builder
 public record DastAuditStreamResult(
     List<DastAuditResult> results,
     int reservedQuota,
@@ -24,4 +27,8 @@ public record DastAuditStreamResult(
     boolean unlimitedQuota,
     String quotaLastUpdated,
     String nextQuotaUpdateMessage
-) {}
+) {
+    public DastAuditStreamResult {
+        results = results == null ? List.of() : List.copyOf(results);
+    }
+}

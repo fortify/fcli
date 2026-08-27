@@ -330,7 +330,7 @@ steps:
                     - if: ${cli['tag-mapping'] != null && cli['tag-mapping'] != ''}
                       run.fcli:
                         run_audit:
-                          cmd: "aviator ssc audit --av \"${project.id}\" --app \"${project.aviator_app_name}\" --log-level=INFO --tag-mapping=\"${cli['tag-mapping']}\" --refresh=${cli.refresh} --refresh-timeout=\"${cli['refresh-timeout']}\"${quota_flags}${cli['folder-priority-order'] != null && cli['folder-priority-order'] != '' ? ' --folder-priority-order=\"' + cli['folder-priority-order'] + '\"' : ''}"
+                          cmd: "aviator ssc audit-sast --av \"${project.id}\" --app \"${project.aviator_app_name}\" --log-level=INFO --tag-mapping=\"${cli['tag-mapping']}\" --refresh=${cli.refresh} --refresh-timeout=\"${cli['refresh-timeout']}\"${quota_flags}${cli['folder-priority-order'] != null && cli['folder-priority-order'] != '' ? ' --folder-priority-order=\"' + cli['folder-priority-order'] + '\"' : ''}"
                           status.check: false
                           records.collect: true
                           stdout: show
@@ -338,7 +338,7 @@ steps:
                     - if: ${cli['tag-mapping'] == null || cli['tag-mapping'] == ''}
                       run.fcli:
                         run_audit:
-                          cmd: "aviator ssc audit --av \"${project.id}\" --app \"${project.aviator_app_name}\" --log-level=INFO --refresh=${cli.refresh} --refresh-timeout=\"${cli['refresh-timeout']}\"${quota_flags}${cli['folder-priority-order'] != null && cli['folder-priority-order'] != '' ? ' --folder-priority-order=\"' + cli['folder-priority-order'] + '\"' : ''}"
+                          cmd: "aviator ssc audit-sast --av \"${project.id}\" --app \"${project.aviator_app_name}\" --log-level=INFO --refresh=${cli.refresh} --refresh-timeout=\"${cli['refresh-timeout']}\"${quota_flags}${cli['folder-priority-order'] != null && cli['folder-priority-order'] != '' ? ' --folder-priority-order=\"' + cli['folder-priority-order'] + '\"' : ''}"
                           status.check: false
                           records.collect: true
                           stdout: show
@@ -366,7 +366,7 @@ steps:
                     - if: ${cli['tag-mapping'] != null && cli['tag-mapping'] != ''}
                       run.fcli:
                         quota_precheck:
-                          cmd: "aviator ssc audit --av \"${project.id}\" --app \"${project.aviator_app_name}\" --log-level=INFO --tag-mapping=\"${cli['tag-mapping']}\" --refresh=${cli.refresh} --refresh-timeout=\"${cli['refresh-timeout']}\" --test-exceeding-quota --default-quota-fallback${cli['folder-priority-order'] != null && cli['folder-priority-order'] != '' ? ' --folder-priority-order=\"' + cli['folder-priority-order'] + '\"' : ''}"
+                          cmd: "aviator ssc audit-sast --av \"${project.id}\" --app \"${project.aviator_app_name}\" --log-level=INFO --tag-mapping=\"${cli['tag-mapping']}\" --refresh=${cli.refresh} --refresh-timeout=\"${cli['refresh-timeout']}\" --test-exceeding-quota --default-quota-fallback${cli['folder-priority-order'] != null && cli['folder-priority-order'] != '' ? ' --folder-priority-order=\"' + cli['folder-priority-order'] + '\"' : ''}"
                           status.check: false
                           records.collect: true
                           stdout: show
@@ -374,7 +374,7 @@ steps:
                     - if: ${cli['tag-mapping'] == null || cli['tag-mapping'] == ''}
                       run.fcli:
                         quota_precheck:
-                          cmd: "aviator ssc audit --av \"${project.id}\" --app \"${project.aviator_app_name}\" --log-level=INFO --refresh=${cli.refresh} --refresh-timeout=\"${cli['refresh-timeout']}\" --test-exceeding-quota --default-quota-fallback${cli['folder-priority-order'] != null && cli['folder-priority-order'] != '' ? ' --folder-priority-order=\"' + cli['folder-priority-order'] + '\"' : ''}"
+                          cmd: "aviator ssc audit-sast --av \"${project.id}\" --app \"${project.aviator_app_name}\" --log-level=INFO --refresh=${cli.refresh} --refresh-timeout=\"${cli['refresh-timeout']}\" --test-exceeding-quota --default-quota-fallback${cli['folder-priority-order'] != null && cli['folder-priority-order'] != '' ? ' --folder-priority-order=\"' + cli['folder-priority-order'] + '\"' : ''}"
                           status.check: false
                           records.collect: true
                           stdout: show
@@ -459,7 +459,7 @@ steps:
                         - if: ${cli['tag-mapping'] != null && cli['tag-mapping'] != ''}
                           run.fcli:
                             run_audit:
-                              cmd: "aviator ssc audit --av \"${project.id}\" --app \"${project.aviator_app_name}\" --log-level=INFO --tag-mapping=\"${cli['tag-mapping']}\" --refresh=${cli.refresh} --refresh-timeout=\"${cli['refresh-timeout']}\"${quota_flags}${cli['folder-priority-order'] != null && cli['folder-priority-order'] != '' ? ' --folder-priority-order=\"' + cli['folder-priority-order'] + '\"' : ''}"
+                              cmd: "aviator ssc audit-sast --av \"${project.id}\" --app \"${project.aviator_app_name}\" --log-level=INFO --tag-mapping=\"${cli['tag-mapping']}\" --refresh=${cli.refresh} --refresh-timeout=\"${cli['refresh-timeout']}\"${quota_flags}${cli['folder-priority-order'] != null && cli['folder-priority-order'] != '' ? ' --folder-priority-order=\"' + cli['folder-priority-order'] + '\"' : ''}"
                               status.check: false
                               records.collect: true
                               stdout: show
@@ -467,7 +467,7 @@ steps:
                         - if: ${cli['tag-mapping'] == null || cli['tag-mapping'] == ''}
                           run.fcli:
                             run_audit:
-                              cmd: "aviator ssc audit --av \"${project.id}\" --app \"${project.aviator_app_name}\" --log-level=INFO --refresh=${cli.refresh} --refresh-timeout=\"${cli['refresh-timeout']}\"${quota_flags}${cli['folder-priority-order'] != null && cli['folder-priority-order'] != '' ? ' --folder-priority-order=\"' + cli['folder-priority-order'] + '\"' : ''}"
+                              cmd: "aviator ssc audit-sast --av \"${project.id}\" --app \"${project.aviator_app_name}\" --log-level=INFO --refresh=${cli.refresh} --refresh-timeout=\"${cli['refresh-timeout']}\"${quota_flags}${cli['folder-priority-order'] != null && cli['folder-priority-order'] != '' ? ' --folder-priority-order=\"' + cli['folder-priority-order'] + '\"' : ''}"
                               status.check: false
                               records.collect: true
                               stdout: show

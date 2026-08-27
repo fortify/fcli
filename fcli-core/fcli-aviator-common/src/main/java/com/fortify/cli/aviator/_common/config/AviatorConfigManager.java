@@ -28,7 +28,6 @@ public class AviatorConfigManager {
     private static final String EXTENSIONS_CONFIG_RESOURCE = "extensions_config.yaml";
     private static final String LANGUAGES_COMMENT_CONFIG_RESOURCE = "languages_comment_config.yaml";
     private static final String DEFAULT_TAG_MAPPING_RESOURCE = "default_tag_mapping.yaml";
-    private static final String DEFAULT_DAST_TAG_MAPPING_RESOURCE = "default_dast_tag_mapping.yaml";
 
     private static volatile AviatorConfigManager instance;
     private static final Object lock = new Object();
@@ -36,14 +35,12 @@ public class AviatorConfigManager {
     private final ExtensionsConfig extensionsConfig;
     private final LanguagesCommentConfig languagesCommentConfig;
     private final TagMappingConfig defaultTagMappingConfig;
-    private final TagMappingConfig defaultDastTagMappingConfig;
 
     private AviatorConfigManager() {
         LOG.debug("Initializing AviatorConfigManager...");
         this.extensionsConfig = ResourceUtil.loadYamlResource(EXTENSIONS_CONFIG_RESOURCE, ExtensionsConfig.class);
         this.languagesCommentConfig = ResourceUtil.loadYamlResource(LANGUAGES_COMMENT_CONFIG_RESOURCE, LanguagesCommentConfig.class);
         this.defaultTagMappingConfig = ResourceUtil.loadYamlResource(DEFAULT_TAG_MAPPING_RESOURCE, TagMappingConfig.class);
-        this.defaultDastTagMappingConfig = ResourceUtil.loadYamlResource(DEFAULT_DAST_TAG_MAPPING_RESOURCE, TagMappingConfig.class);
 
         if (this.extensionsConfig != null) {
             FileTypeLanguageMapperUtil.initializeConfig(this.extensionsConfig);
@@ -96,10 +93,6 @@ public class AviatorConfigManager {
     }
 
     public TagMappingConfig getDefaultDastTagMappingConfig() {
-        if (defaultDastTagMappingConfig == null) {
-            LOG.error("DefaultDastTagMappingConfig was not loaded. This indicates a bug.");
-            throw new AviatorBugException("Critical: DefaultDastTagMappingConfig not loaded.");
-        }
-        return defaultDastTagMappingConfig;
+        return getDefaultTagMappingConfig();
     }
 }

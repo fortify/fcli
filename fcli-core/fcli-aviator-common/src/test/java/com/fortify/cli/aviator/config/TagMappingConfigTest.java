@@ -136,6 +136,79 @@ class TagMappingConfigTest {
         assertTrue(config.isSuppressionExcluded(new TagMappingConfig.SuppressionExclusionContext("privacy violation")));
     }
 
+    @Test
+    void testCombinedYamlResolvesProductOverridesAndSharedDefaults() throws Exception {
+        Path yamlFile = tempDir.resolve("combined-tag-mapping.yaml");
+        Files.writeString(yamlFile, """
+                tag_id: "shared-tag"
+                mapping:
+                  tier_1:
+                    fp: { value: "Shared FP", suppress: true }
+                    tp: { value: "Shared TP", suppress: false }
+                    unsure: { suppress: false }
+                  tier_2:
+                    fp: { value: "Shared FP", suppress: false }
+                    tp: { value: "Shared TP", suppress: false }
+                    unsure: { suppress: false }
+                sast:
+                  suppression_exclusions:
+                    - categories: ["Privacy Violation"]
+                dast:
+                  tag_id: "dast-tag"
+                  mapping:
+                    tier_1:
+                      fp: { value: "DAST FP", suppress: true }
+                      tp: { value: "DAST TP", suppress: false }
+                      unsure: { suppress: false }
+                    tier_2:
+                      fp: { value: "DAST FP", suppress: false }
+                      tp: { value: "DAST TP", suppress: false }
+                      unsure: { suppress: false }
+                """);
+
+        TagMappingConfig config = ResourceUtil.loadYamlFile(yamlFile.toFile(), TagMappingConfig.class);
+        TagMappingConfig sastConfig = config.resolveForSast();
+        TagMappingConfig dastConfig = config.resolveForDast();
+
+        assertEquals("shared-tag", sastConfig.getTag_id());
+        assertEquals(Set.of("Shared FP", "Shared TP"), sastConfig.getMappedValues());
+        assertTrue(sastConfig.isSuppressionExcluded(
+                new TagMappingConfig.SuppressionExclusionContext("Privacy Violation")));
+        assertEquals("dast-tag", dastConfig.getTag_id());
+        assertEquals(Set.of("DAST FP", "DAST TP"), dastConfig.getMappedValues());
+        assertFalse(dastConfig.hasSuppressionExclusions());
+    }
+
+    @Test
+    void testLegacyFlatConfigResolvesForBothProducts() {
+        TagMappingConfig config = createValidConfig();
+
+        assertEquals(config.getMapping(), config.resolveForSast().getMapping());
+        assertEquals(config.getMapping(), config.resolveForDast().getMapping());
+    }
+
+    @Test
+    void testNullSuppressionExclusionsResolveAsEmpty() throws Exception {
+        Path yamlFile = tempDir.resolve("null-exclusions-tag-mapping.yaml");
+        Files.writeString(yamlFile, """
+                suppression_exclusions: null
+                mapping:
+                  tier_1:
+                    fp: { suppress: true }
+                    tp: { suppress: false }
+                    unsure: { suppress: false }
+                  tier_2:
+                    fp: { suppress: false }
+                    tp: { suppress: false }
+                    unsure: { suppress: false }
+                """);
+
+        TagMappingConfig config = ResourceUtil.loadYamlFile(yamlFile.toFile(), TagMappingConfig.class);
+
+        assertFalse(config.resolveForSast().hasSuppressionExclusions());
+        assertFalse(config.resolveForDast().hasSuppressionExclusions());
+    }
+
       @Test
       void testResolvesResultsAndMappedValues() {
         TagMappingConfig config = createValidConfig();

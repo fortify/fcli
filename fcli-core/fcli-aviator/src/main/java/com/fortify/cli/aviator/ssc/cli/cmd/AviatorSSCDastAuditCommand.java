@@ -28,6 +28,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.aviator._common.config.AviatorConfigManager;
 import com.fortify.cli.aviator._common.session.user.cli.mixin.AviatorUserSessionDescriptorSupplier;
+import com.fortify.cli.aviator._common.session.user.helper.AviatorUserSessionDescriptor;
 import com.fortify.cli.aviator.audit.DastAuditFPR;
 import com.fortify.cli.aviator.audit.DastAuditFprResult;
 import com.fortify.cli.aviator.config.AviatorLoggerImpl;
@@ -84,7 +85,7 @@ public class AviatorSSCDastAuditCommand extends AbstractSSCJsonNodeOutputCommand
 
             DastAuditFprResult result = auditFpr(
                 downloadedFpr, appVersion, session, logger, tagMappingConfig);
-            actionResult = result.status();
+            actionResult = result.status().name();
             String artifactId = null;
             if (result.updatedFile() != null && result.succeeded() > 0) {
                 validateSSCTagsBeforeUpload(unirest, appVersion, logger, tagMappingConfig);
@@ -113,13 +114,16 @@ public class AviatorSSCDastAuditCommand extends AbstractSSCJsonNodeOutputCommand
     private DastAuditFprResult auditFpr(
             Path fprPath,
             SSCAppVersionDescriptor appVersion,
-            com.fortify.cli.aviator._common.session.user.helper.AviatorUserSessionDescriptor session,
+            AviatorUserSessionDescriptor session,
             IAviatorLogger logger,
             TagMappingConfig tagMappingConfig) throws Exception {
         String effectiveAppName = appName != null ? appName : appVersion.getApplicationName();
-        var config = new DastAuditStreamConfig(
-            session.getAviatorToken(), effectiveAppName,
-            appVersion.getApplicationName(), appVersion.getVersionName(), null);
+        var config = DastAuditStreamConfig.builder()
+            .token(session.getAviatorToken())
+            .applicationName(effectiveAppName)
+            .sscApplicationName(appVersion.getApplicationName())
+            .sscApplicationVersion(appVersion.getVersionName())
+            .build();
         try (var grpcClient = AviatorGrpcClientHelper.createClient(session.getAviatorUrl(), logger, 30);
              var streamProcessor = new DastAuditStreamProcessor(
                  logger, grpcClient.getDastAuditAsyncStub(), grpcClient.getPingScheduler(),
@@ -138,7 +142,7 @@ public class AviatorSSCDastAuditCommand extends AbstractSSCJsonNodeOutputCommand
             SSCAppVersionDescriptor appVersion,
             DastAuditFprResult audit,
             String artifactId) {
-        ObjectNode result = AviatorSSCAuditHelper.buildResultNode(appVersion, artifactId, audit.status());
+        ObjectNode result = AviatorSSCAuditHelper.buildResultNode(appVersion, artifactId, audit.status().name());
         AviatorSSCAuditHelper.setDastAuditStats(result, audit);
         return result;
     }
@@ -147,8 +151,7 @@ public class AviatorSSCDastAuditCommand extends AbstractSSCJsonNodeOutputCommand
         TagMappingConfig tagMappingConfig = tagMapping == null || tagMapping.isBlank()
             ? AviatorConfigManager.getInstance().getDefaultDastTagMappingConfig()
             : ResourceUtil.loadYamlFile(new File(tagMapping), TagMappingConfig.class);
-        tagMappingConfig.validateForDast();
-        return tagMappingConfig;
+        return tagMappingConfig.resolveForDast();
     }
 
     private void validateSSCTagsBeforeUpload(UnirestInstance unirest,

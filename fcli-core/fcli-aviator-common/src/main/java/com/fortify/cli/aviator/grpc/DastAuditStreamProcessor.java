@@ -13,6 +13,7 @@
 package com.fortify.cli.aviator.grpc;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -78,7 +79,7 @@ public class DastAuditStreamProcessor implements AutoCloseable {
     private int totalReportedIssues;
     private int lastRetryCompletedCount;
     private CompletableFuture<DastAuditStreamResult> resultFuture;
-    private final List<DastAuditResult> results = java.util.Collections.synchronizedList(new ArrayList<>());
+    private final List<DastAuditResult> results = Collections.synchronizedList(new ArrayList<>());
     private final Map<String, String> requestIssueIds = new ConcurrentHashMap<>();
     private final Map<String, String> requestIdsByIssue = new ConcurrentHashMap<>();
     private final Set<String> completedRequestIds = ConcurrentHashMap.newKeySet();
@@ -244,8 +245,15 @@ public class DastAuditStreamProcessor implements AutoCloseable {
             LOG.debug("Received DAST audit error response: issueId={}, requestId={}, status={}, statusMessage={}",
                 issueId, response.getRequestId(), response.getStatus(), response.getStatusMessage());
             DastAuditResult result = "SKIPPED".equalsIgnoreCase(response.getStatus())
-                ? new DastAuditResult.Skipped(issueId, response.getStatusMessage())
-                : new DastAuditResult.Failure(issueId, response.getStatus(), response.getStatusMessage());
+                ? DastAuditResult.Skipped.builder()
+                    .issueId(issueId)
+                    .statusMessage(response.getStatusMessage())
+                    .build()
+                : DastAuditResult.Failure.builder()
+                    .issueId(issueId)
+                    .status(response.getStatus())
+                    .statusMessage(response.getStatusMessage())
+                    .build();
             results.add(result);
             logger.progress("Audited %d of %d DAST findings", results.size(), workItems.size());
             completeRequestsIfDone();
@@ -445,9 +453,14 @@ public class DastAuditStreamProcessor implements AutoCloseable {
 
     private void completeSuccessfully() {
         if (!resultFuture.isDone()) {
-            resultFuture.complete(new DastAuditStreamResult(
-                List.copyOf(results), reservedQuota, exceededCount, unlimitedQuota,
-                quotaLastUpdated, nextQuotaUpdateMessage));
+            resultFuture.complete(DastAuditStreamResult.builder()
+                .results(List.copyOf(results))
+                .reservedQuota(reservedQuota)
+                .exceededCount(exceededCount)
+                .unlimitedQuota(unlimitedQuota)
+                .quotaLastUpdated(quotaLastUpdated)
+                .nextQuotaUpdateMessage(nextQuotaUpdateMessage)
+                .build());
         }
     }
 

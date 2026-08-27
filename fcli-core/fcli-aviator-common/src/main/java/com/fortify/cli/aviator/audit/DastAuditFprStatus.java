@@ -12,30 +12,10 @@
  */
 package com.fortify.cli.aviator.audit;
 
-import java.io.File;
-
-import lombok.Builder;
-
-/**
- * Summary of processing one DAST FPR.
- */
-@Builder
-public record DastAuditFprResult(
-    File updatedFile,
-    DastAuditFprStatus status,
-    String message,
-    int totalReported,
-    int eligible,
-    int submitted,
-    int succeeded,
-    int truePositives,
-    int falsePositivesSuppressed,
-    int likelyFalsePositives,
-    int skipped,
-    int failed,
-    int reservedQuota,
-    int exceededCount,
-    boolean unlimitedQuota,
-    String quotaLastUpdated,
-    String nextQuotaUpdateMessage
-) {}
+/** Outcome of processing a DAST FPR. */
+public enum DastAuditFprStatus {
+    AUDITED,
+    PARTIALLY_AUDITED,
+    SKIPPED,
+    FAILED
+}

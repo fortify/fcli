@@ -22,8 +22,14 @@ import com.fortify.cli.aviator.util.Constants;
 class DastAuditDecisionMapperTest {
     @Test
     void unknownConfidenceFalsePositiveRemainsUnsuppressed() {
-        var result = new DastAuditResult.Success(
-            "DAST-1", false, "UNKNOWN", "reason", "", "comment", "bad", "GOLD");
+        var result = DastAuditResult.Success.builder()
+            .issueId("DAST-1")
+            .confidence("UNKNOWN")
+            .reasoning("reason")
+            .finalComment("comment")
+            .tagValue("bad")
+            .tier("GOLD")
+            .build();
 
         var response = DastAuditDecisionMapper.toAuditResponse(result);
 
@@ -33,8 +39,12 @@ class DastAuditDecisionMapperTest {
 
     @Test
     void highConfidenceFalsePositiveIsSuppressible() {
-        var result = new DastAuditResult.Success(
-            "DAST-1", false, "HIGH", "reason", "", "comment", "", "");
+        var result = DastAuditResult.Success.builder()
+            .issueId("DAST-1")
+            .confidence("HIGH")
+            .reasoning("reason")
+            .finalComment("comment")
+            .build();
 
         var response = DastAuditDecisionMapper.toAuditResponse(result);
 

@@ -12,6 +12,8 @@
  */
 package com.fortify.cli.aviator.audit;
 
+import java.util.Locale;
+
 import com.fortify.cli.aviator.audit.model.AuditResponse;
 import com.fortify.cli.aviator.audit.model.AuditResult;
 import com.fortify.cli.aviator.grpc.DastAuditResult;
@@ -65,8 +67,9 @@ public final class DastAuditDecisionMapper {
 
     private static String normalizedConfidence(String confidence) {
         if (confidence == null) return "LOW";
-        return switch (confidence.toUpperCase(java.util.Locale.ROOT)) {
-            case "HIGH", "MEDIUM", "LOW" -> confidence.toUpperCase(java.util.Locale.ROOT);
+        String normalized = confidence.toUpperCase(Locale.ROOT);
+        return switch (normalized) {
+            case "HIGH", "MEDIUM", "LOW" -> normalized;
             default -> "LOW";
         };
     }

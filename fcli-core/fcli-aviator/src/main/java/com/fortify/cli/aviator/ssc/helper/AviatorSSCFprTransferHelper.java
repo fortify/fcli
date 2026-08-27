@@ -18,6 +18,7 @@ import java.nio.file.Path;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.aviator.config.IAviatorLogger;
+import com.fortify.cli.common.exception.FcliTechnicalException;
 import com.fortify.cli.common.progress.helper.IProgressWriter;
 import com.fortify.cli.ssc._common.rest.ssc.SSCUrls;
 import com.fortify.cli.ssc._common.rest.ssc.transfer.SSCFileTransferHelper;
@@ -68,6 +69,15 @@ public final class AviatorSSCFprTransferHelper {
             dastFpr.toFile(),
             JsonNode.class,
             progressWriter);
-        return uploadResponse.path("data").path("id").asText("UPLOAD_FAILED");
+        return getUploadedArtifactId(uploadResponse);
+    }
+
+    static String getUploadedArtifactId(JsonNode uploadResponse) {
+        String artifactId = uploadResponse == null
+            ? null : uploadResponse.path("data").path("id").asText(null);
+        if (artifactId == null || artifactId.isBlank()) {
+            throw new FcliTechnicalException("SSC DAST FPR upload response did not contain an artifact ID");
+        }
+        return artifactId;
     }
 }

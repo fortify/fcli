@@ -766,9 +766,9 @@ public class AuditProcessor {
     /**
      * Applies DAST audit decisions to audit.xml without creating SAST remediation artifacts.
      */
-        public File updateAndSaveDastAuditXml(Map<String, AuditResponse> auditResponses,
+    public File updateAndSaveDastAuditXml(Map<String, AuditResponse> auditResponses,
             TagMappingConfig tagMappingConfig) {
-            Set<String> writtenInstanceIds = new HashSet<>();
+        Set<String> writtenInstanceIds = new HashSet<>();
         for (Map.Entry<String, AuditResponse> entry : auditResponses.entrySet()) {
             AuditResponse response = entry.getValue();
             if (response == null || !"SUCCESS".equalsIgnoreCase(response.getStatus())

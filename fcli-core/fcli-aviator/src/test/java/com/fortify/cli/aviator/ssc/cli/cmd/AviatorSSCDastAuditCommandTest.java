@@ -22,6 +22,7 @@ import java.util.Collections;
 import org.junit.jupiter.api.Test;
 
 import com.fortify.cli.aviator.audit.DastAuditFprResult;
+import com.fortify.cli.aviator.audit.DastAuditFprStatus;
 import com.fortify.cli.aviator.ssc.helper.AviatorSSCAuditHelper;
 import com.fortify.cli.ssc.appversion.helper.SSCAppVersionDescriptor;
 
@@ -49,11 +50,21 @@ class AviatorSSCDastAuditCommandTest {
         appVersion.setVersionId("42");
         appVersion.setApplicationName("WebGoat");
         appVersion.setVersionName("1.0");
-        var auditResult = new DastAuditFprResult(
-            null, "PARTIALLY_AUDITED", null, 8, 6, 6, 4,
-            2, 1, 1, 2, 0, 6, 2, false, null, null);
+        var auditResult = DastAuditFprResult.builder()
+            .status(DastAuditFprStatus.PARTIALLY_AUDITED)
+            .totalReported(8)
+            .eligible(6)
+            .submitted(6)
+            .succeeded(4)
+            .truePositives(2)
+            .falsePositivesSuppressed(1)
+            .likelyFalsePositives(1)
+            .skipped(2)
+            .reservedQuota(6)
+            .exceededCount(2)
+            .build();
 
-        var result = AviatorSSCAuditHelper.buildResultNode(appVersion, "2786", auditResult.status());
+        var result = AviatorSSCAuditHelper.buildResultNode(appVersion, "2786", auditResult.status().name());
         AviatorSSCAuditHelper.setDastAuditStats(result, auditResult);
 
         assertEquals("42", result.path("id").asText());

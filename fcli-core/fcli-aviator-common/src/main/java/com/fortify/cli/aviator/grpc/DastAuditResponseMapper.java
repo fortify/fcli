@@ -23,28 +23,45 @@ final class DastAuditResponseMapper {
     static DastAuditResult map(DastAuditResponse response, String expectedIssueId) {
         String responseIssueId = response.getDastIssueId();
         if (!responseIssueId.isBlank() && !expectedIssueId.equals(responseIssueId)) {
-            return new DastAuditResult.Failure(
-                expectedIssueId, "FAILED",
-                "DAST audit response issue ID mismatch: expected '" + expectedIssueId
-                    + "' but received '" + responseIssueId + "'");
+            return DastAuditResult.Failure.builder()
+                .issueId(expectedIssueId)
+                .status("FAILED")
+                .statusMessage("DAST audit response issue ID mismatch: expected '" + expectedIssueId
+                    + "' but received '" + responseIssueId + "'")
+                .build();
         }
 
         if ("SKIPPED".equalsIgnoreCase(response.getStatus())) {
-            return new DastAuditResult.Skipped(expectedIssueId, response.getStatusMessage());
+            return DastAuditResult.Skipped.builder()
+                .issueId(expectedIssueId)
+                .statusMessage(response.getStatusMessage())
+                .build();
         }
         if (!"SUCCESS".equalsIgnoreCase(response.getStatus())) {
-            return new DastAuditResult.Failure(
-                expectedIssueId, response.getStatus(), response.getStatusMessage());
+            return DastAuditResult.Failure.builder()
+                .issueId(expectedIssueId)
+                .status(response.getStatus())
+                .statusMessage(response.getStatusMessage())
+                .build();
         }
         if (!response.hasDecision()) {
-            return new DastAuditResult.Failure(
-                expectedIssueId, "FAILED", "Successful DAST audit response did not contain a decision");
+            return DastAuditResult.Failure.builder()
+                .issueId(expectedIssueId)
+                .status("FAILED")
+                .statusMessage("Successful DAST audit response did not contain a decision")
+                .build();
         }
 
         var decision = response.getDecision();
-        return new DastAuditResult.Success(
-            expectedIssueId, decision.getTruePositive(), decision.getConfidence(),
-            decision.getReasoning(), decision.getRemediationAdvice(), decision.getFinalComment(),
-            decision.getTagValue(), decision.getTier());
+        return DastAuditResult.Success.builder()
+            .issueId(expectedIssueId)
+            .truePositive(decision.getTruePositive())
+            .confidence(decision.getConfidence())
+            .reasoning(decision.getReasoning())
+            .remediationAdvice(decision.getRemediationAdvice())
+            .finalComment(decision.getFinalComment())
+            .tagValue(decision.getTagValue())
+            .tier(decision.getTier())
+            .build();
     }
 }

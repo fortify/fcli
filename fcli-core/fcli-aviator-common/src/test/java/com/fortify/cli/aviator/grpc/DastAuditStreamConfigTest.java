@@ -22,12 +22,20 @@ class DastAuditStreamConfigTest {
     @Test
     void rejectsBlankToken() {
         assertThrows(AviatorSimpleException.class,
-            () -> new DastAuditStreamConfig(" ", "app", "ssc", "1", null));
+            () -> validConfigBuilder().token(" ").build());
     }
 
     @Test
     void rejectsBlankApplicationName() {
         assertThrows(AviatorSimpleException.class,
-            () -> new DastAuditStreamConfig("token", " ", "ssc", "1", null));
+            () -> validConfigBuilder().applicationName(" ").build());
+    }
+
+    private DastAuditStreamConfig.DastAuditStreamConfigBuilder validConfigBuilder() {
+        return DastAuditStreamConfig.builder()
+            .token("token")
+            .applicationName("app")
+            .sscApplicationName("ssc")
+            .sscApplicationVersion("1");
     }
 }

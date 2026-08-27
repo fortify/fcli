@@ -161,15 +161,13 @@ public final class AviatorSSCAuditHelper {
 
     private static String getDastAuditMessage(DastAuditFprResult auditResult) {
         return switch (auditResult.status()) {
-            case "AUDITED" -> "DAST audit completed successfully";
-            case "PARTIALLY_AUDITED" -> auditResult.message() != null
+            case AUDITED -> "DAST audit completed successfully";
+            case PARTIALLY_AUDITED -> auditResult.message() != null
                 ? auditResult.message() : "DAST audit partially completed";
-            case "SKIPPED" -> auditResult.message() != null
+            case SKIPPED -> auditResult.message() != null
                 ? auditResult.message() : "No DAST findings to audit";
-            case "FAILED" -> auditResult.message() != null
+            case FAILED -> auditResult.message() != null
                 ? auditResult.message() : "DAST audit failed";
-            default -> auditResult.message() != null
-                ? auditResult.message() : "Unknown DAST audit status";
         };
     }
 

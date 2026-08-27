@@ -42,17 +42,18 @@ class DastAuditFPRTest {
     @Test
     void auditsEligibleFindingAndWritesConservativeXml() throws Exception {
         Path fpr = createFpr();
-        var config = new DastAuditStreamConfig("token", "app", "ssc", "1", null);
+        var config = streamConfig();
 
         DastAuditFprResult result;
         try (FprHandle handle = new FprHandle(fpr)) {
             result = DastAuditFPR.audit(handle, config, defaultTagMapping(), (ignoredConfig, items, total) ->
-                CompletableFuture.completedFuture(new DastAuditStreamResult(List.of(
-                    new DastAuditResult.Success("DAST-1", false, "HIGH", "reason", "", "comment", "", "")
-                ), 1, 0, false, null, null)));
+                CompletableFuture.completedFuture(DastAuditStreamResult.builder()
+                    .results(List.of(successResult(false, "HIGH")))
+                    .reservedQuota(1)
+                    .build()));
         }
 
-        assertEquals("AUDITED", result.status());
+        assertEquals(DastAuditFprStatus.AUDITED, result.status());
         assertEquals(1, result.falsePositivesSuppressed());
         try (FileSystem zip = FileSystems.newFileSystem(fpr)) {
             String auditXml = Files.readString(zip.getPath("/audit.xml"));
@@ -79,16 +80,17 @@ class DastAuditFPRTest {
                 tp: { value: "Review TP", suppress: false }
                 unsure: { suppress: false }
             """);
-        var config = new DastAuditStreamConfig("token", "app", "ssc", "1", null);
+        var config = streamConfig();
 
         DastAuditFprResult result;
         try (FprHandle handle = new FprHandle(fpr)) {
             result = DastAuditFPR.audit(handle, config,
                 ResourceUtil.loadYamlFile(tagMapping.toFile(), TagMappingConfig.class),
                 (ignoredConfig, items, total) ->
-                CompletableFuture.completedFuture(new DastAuditStreamResult(List.of(
-                    new DastAuditResult.Success("DAST-1", false, "MEDIUM", "reason", "", "comment", "", "")
-                ), 1, 0, false, null, null)));
+                CompletableFuture.completedFuture(DastAuditStreamResult.builder()
+                    .results(List.of(successResult(false, "MEDIUM")))
+                    .reservedQuota(1)
+                    .build()));
         }
 
         assertEquals(1, result.falsePositivesSuppressed());
@@ -111,13 +113,14 @@ class DastAuditFPRTest {
                 </IssueList></Audit>
                 """);
         }
-        var config = new DastAuditStreamConfig("token", "app", "ssc", "1", null);
+        var config = streamConfig();
 
         try (FprHandle handle = new FprHandle(fpr)) {
             DastAuditFPR.audit(handle, config, defaultTagMapping(), (ignoredConfig, items, total) ->
-                CompletableFuture.completedFuture(new DastAuditStreamResult(List.of(
-                    new DastAuditResult.Success("DAST-1", true, "HIGH", "reason", "", "comment", "", "")
-                ), 1, 0, false, null, null)));
+                CompletableFuture.completedFuture(DastAuditStreamResult.builder()
+                    .results(List.of(successResult(true, "HIGH")))
+                    .reservedQuota(1)
+                    .build()));
         }
 
         try (FileSystem zip = FileSystems.newFileSystem(fpr)) {
@@ -130,21 +133,42 @@ class DastAuditFPRTest {
     @Test
     void missingTerminalResponseIsCountedAsFailure() throws Exception {
         Path fpr = createFpr();
-        var config = new DastAuditStreamConfig("token", "app", "ssc", "1", null);
+        var config = streamConfig();
 
         try (FprHandle handle = new FprHandle(fpr)) {
             DastAuditFprResult result = DastAuditFPR.audit(
                 handle, config, defaultTagMapping(), (ignoredConfig, items, total) ->
-                CompletableFuture.completedFuture(new DastAuditStreamResult(
-                    List.of(), 1, 0, false, null, null)));
+                CompletableFuture.completedFuture(DastAuditStreamResult.builder()
+                    .results(List.of())
+                    .reservedQuota(1)
+                    .build()));
 
-            assertEquals("FAILED", result.status());
+            assertEquals(DastAuditFprStatus.FAILED, result.status());
             assertEquals(1, result.failed());
         }
     }
 
+    private DastAuditResult.Success successResult(boolean truePositive, String confidence) {
+        return DastAuditResult.Success.builder()
+            .issueId("DAST-1")
+            .truePositive(truePositive)
+            .confidence(confidence)
+            .reasoning("reason")
+            .finalComment("comment")
+            .build();
+    }
+
     private TagMappingConfig defaultTagMapping() {
         return AviatorConfigManager.getInstance().getDefaultDastTagMappingConfig();
+    }
+
+    private DastAuditStreamConfig streamConfig() {
+        return DastAuditStreamConfig.builder()
+            .token("token")
+            .applicationName("app")
+            .sscApplicationName("ssc")
+            .sscApplicationVersion("1")
+            .build();
     }
 
     private Path createFpr() throws Exception {

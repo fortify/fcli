@@ -11,9 +11,6 @@
         "pattern": "default_tag_mapping.yaml"
       },
       {
-        "pattern": "default_dast_tag_mapping.yaml"
-      },
-      {
         "pattern": "remediations.xsd"
       },
       {

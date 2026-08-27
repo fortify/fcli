@@ -12,12 +12,15 @@
  */
 package com.fortify.cli.aviator.grpc;
 
+import lombok.Builder;
+
 /** Domain representation of one terminal DAST audit response. */
 public sealed interface DastAuditResult permits DastAuditResult.Success, DastAuditResult.Skipped, DastAuditResult.Failure {
     String issueId();
     String status();
     String statusMessage();
 
+    @Builder
     record Success(
         String issueId,
         boolean truePositive,
@@ -39,6 +42,7 @@ public sealed interface DastAuditResult permits DastAuditResult.Success, DastAud
         }
     }
 
+    @Builder
     record Skipped(String issueId, String statusMessage) implements DastAuditResult {
         @Override
         public String status() {
@@ -46,5 +50,6 @@ public sealed interface DastAuditResult permits DastAuditResult.Success, DastAud
         }
     }
 
+    @Builder
     record Failure(String issueId, String status, String statusMessage) implements DastAuditResult {}
 }
