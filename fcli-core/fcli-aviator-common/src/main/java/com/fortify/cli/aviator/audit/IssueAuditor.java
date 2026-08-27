@@ -343,7 +343,7 @@ public class IssueAuditor {
         if (!StringUtil.isEmpty(mappedTagId)) {
             tagIds.add(mappedTagId);
         }
-        return Set.copyOf(tagIds);
+        return tagIds;
     }
 
     private String mappedTagId() {
