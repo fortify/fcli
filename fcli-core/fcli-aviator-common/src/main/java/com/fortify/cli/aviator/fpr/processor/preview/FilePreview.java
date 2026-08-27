@@ -17,7 +17,6 @@ import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.formkiq.graalvm.annotations.Reflectable;
-
 import com.fortify.cli.aviator._common.exception.AviatorBugException;
 
 /**

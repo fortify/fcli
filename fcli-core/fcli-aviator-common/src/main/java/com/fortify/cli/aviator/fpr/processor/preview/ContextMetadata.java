@@ -14,7 +14,6 @@ package com.fortify.cli.aviator.fpr.processor.preview;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.formkiq.graalvm.annotations.Reflectable;
-
 import com.fortify.cli.aviator._common.exception.AviatorBugException;
 
 /**
