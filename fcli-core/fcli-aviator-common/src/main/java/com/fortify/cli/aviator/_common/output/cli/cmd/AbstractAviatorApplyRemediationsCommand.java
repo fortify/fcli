@@ -12,74 +12,55 @@
  */
 package com.fortify.cli.aviator._common.output.cli.cmd;
 
-import java.util.List;
 import java.util.Set;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.aviator._common.cli.mixin.ApplyRemediationsOptionsMixin;
+import com.fortify.cli.aviator._common.cli.mixin.AbstractApplyRemediationsOptionsMixin;
 import com.fortify.cli.aviator._common.remediations_cache.IRemediationsFprSource;
 import com.fortify.cli.aviator._common.remediations_cache.RemediationsApplyHelper;
 import com.fortify.cli.aviator._common.remediations_cache.RemediationsApplyHelper.ApplyResult;
 import com.fortify.cli.aviator._common.util.AviatorIssueIdFilterUtils;
 import com.fortify.cli.aviator.config.AviatorLoggerImpl;
-import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.output.cli.cmd.AbstractOutputCommand;
 import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
-import com.fortify.cli.common.output.transform.IRecordTransformer;
 import com.fortify.cli.common.progress.cli.mixin.ProgressWriterFactoryMixin;
 import com.fortify.cli.common.progress.helper.IProgressWriter;
 
 import lombok.Getter;
 import picocli.CommandLine.Mixin;
 
+/**
+ * Abstract base command for applying remediations. Orchestrates validation, FPR source acquisition,
+ * and remediation application. Product-specific subclasses provide options mixin and implement hooks.
+ */
 public abstract class AbstractAviatorApplyRemediationsCommand extends AbstractOutputCommand
-        implements IJsonNodeSupplier, IRecordTransformer {
+        implements IJsonNodeSupplier {
 
     @Getter @Mixin private OutputHelperMixins.DetailsNoQuery outputHelper;
     @Mixin private ProgressWriterFactoryMixin progressWriterFactoryMixin;
-    @Mixin protected ApplyRemediationsOptionsMixin applyOptions;
+
+    /** Subclasses declare their product-specific options mixin (SSC or FoD). */
+    protected abstract AbstractApplyRemediationsOptionsMixin getApplyOptions();
 
     @Override
     public final JsonNode getJsonNode() {
-        validateSourceSelector();
-        requireSourceDir();
-        requireIssueIdsCacheOnly();
+        AbstractApplyRemediationsOptionsMixin applyOptions = getApplyOptions();
+        applyOptions.validate();
         Set<String> issueIdFilter = AviatorIssueIdFilterUtils.normalizeIssueIds(applyOptions.getIssueIds());
         try (IProgressWriter progressWriter = progressWriterFactoryMixin.create()) {
             AviatorLoggerImpl logger = new AviatorLoggerImpl(progressWriter);
-            try (IRemediationsFprSource source = openFprSource(logger, progressWriter)) {
-                ApplyResult result = RemediationsApplyHelper.apply(source, applyOptions, issueIdFilter, logger);
-                return buildResultNode(source, result, issueIdFilter);
+            try (IRemediationsFprSource fprSource = openFprSource(logger, progressWriter)) {
+                ApplyResult result = RemediationsApplyHelper.apply(fprSource, applyOptions, issueIdFilter, logger);
+                return buildResultNode(fprSource, result, issueIdFilter);
             }
         }
     }
 
-    /** Override to validate source selector state before options are checked; no-op by default. */
-    protected void validateSourceSelector() {}
-
-    protected abstract boolean isCacheMode();
-
     protected abstract IRemediationsFprSource openFprSource(AviatorLoggerImpl logger, IProgressWriter progressWriter);
 
-    protected abstract JsonNode buildResultNode(IRemediationsFprSource source, ApplyResult result, Set<String> issueIdFilter);
+    protected abstract JsonNode buildResultNode(IRemediationsFprSource fprSource, ApplyResult result, Set<String> issueIdFilter);
 
     @Override
     public final boolean isSingular() { return true; }
-
-    @Override
-    public JsonNode transformRecord(JsonNode record) { return record; }
-
-    private void requireSourceDir() {
-        FcliSimpleException.throwIf(applyOptions.getSourceCodeDirectory() == null || applyOptions.getSourceCodeDirectory().isBlank(),
-                "--source-dir must specify a valid directory path");
-    }
-
-    private void requireIssueIdsCacheOnly() {
-        List<String> issueIds = applyOptions.getIssueIds();
-        FcliSimpleException.throwIf(
-                issueIds != null && !issueIds.isEmpty() && !isCacheMode(),
-                "--issue-ids can only be used with --from-cache; "
-                        + "create a cache with download-remediations-cache and rerun with --from-cache");
-    }
 }

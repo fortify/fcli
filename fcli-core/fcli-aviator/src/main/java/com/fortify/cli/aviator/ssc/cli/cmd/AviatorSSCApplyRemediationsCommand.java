@@ -16,14 +16,15 @@ import java.time.OffsetDateTime;
 import java.util.Set;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.aviator._common.cli.mixin.AbstractApplyRemediationsOptionsMixin;
 import com.fortify.cli.aviator._common.output.cli.cmd.AbstractAviatorApplyRemediationsCommand;
 import com.fortify.cli.aviator._common.remediations_cache.CacheRemediationsFprSource;
 import com.fortify.cli.aviator._common.remediations_cache.IRemediationsFprSource;
 import com.fortify.cli.aviator._common.remediations_cache.RemediationsApplyHelper.ApplyResult;
 import com.fortify.cli.aviator._common.remediations_cache.RemediationsCacheConstants;
 import com.fortify.cli.aviator.config.AviatorLoggerImpl;
-import com.fortify.cli.aviator.ssc.cli.mixin.AviatorSSCApplyRemediationsSourceMixin;
 import com.fortify.cli.aviator.ssc.cli.mixin.AviatorSSCRemediationsSelectorArgGroups.OnlineSelectionArgGroup.ResolvedOnlineArtifacts;
+import com.fortify.cli.aviator.ssc.cli.mixin.SscApplyRemediationsOptionsMixin;
 import com.fortify.cli.aviator.ssc.helper.AviatorSSCApplyRemediationsHelper;
 import com.fortify.cli.aviator.ssc.helper.SSCOnlineRemediationsFprSource;
 import com.fortify.cli.aviator.ssc.helper.SinceOptionHelper;
@@ -36,39 +37,35 @@ import picocli.CommandLine.Mixin;
 
 @Command(name = "apply-remediations")
 public class AviatorSSCApplyRemediationsCommand extends AbstractAviatorApplyRemediationsCommand {
-    @Mixin private AviatorSSCApplyRemediationsSourceMixin sourceSelector;
+    @Mixin private SscApplyRemediationsOptionsMixin applyOptions;
     @Mixin private SSCUnirestInstanceSupplierMixin unirestInstanceSupplier;
-    private ResolvedOnlineArtifacts resolvedOnline;
 
     @Override
-    protected void validateSourceSelector() {
-        sourceSelector.validate();
-    }
-
-    @Override
-    protected boolean isCacheMode() {
-        return sourceSelector.isFromCacheSelected();
+    protected AbstractApplyRemediationsOptionsMixin getApplyOptions() {
+        return applyOptions;
     }
 
     @Override
     protected IRemediationsFprSource openFprSource(AviatorLoggerImpl logger, IProgressWriter progressWriter) {
-        if (isCacheMode()) {
-            return CacheRemediationsFprSource.open(sourceSelector.getFromCache(), RemediationsCacheConstants.PRODUCT_SSC);
+        if (applyOptions.getSourceSelector().isFromCacheSelected()) {
+            return CacheRemediationsFprSource.open(
+                    applyOptions.getSourceSelector().getFromCache(),
+                    RemediationsCacheConstants.PRODUCT_SSC);
         }
         UnirestInstance unirest = unirestInstanceSupplier.getUnirestInstance();
-        OffsetDateTime sinceDate = SinceOptionHelper.parse(sourceSelector.getOnline().getSince());
-        // One resolve: artifacts + appVersionId (no second getAppVersionId REST call).
-        resolvedOnline = sourceSelector.getOnline().resolveArtifacts(unirest, sinceDate);
-        return new SSCOnlineRemediationsFprSource(unirest, logger, progressWriter, resolvedOnline.artifacts());
+        OffsetDateTime sinceDate = SinceOptionHelper.parse(applyOptions.getSourceSelector().getOnline().getSince());
+        ResolvedOnlineArtifacts resolvedOnline = applyOptions.getSourceSelector().getOnline().resolveArtifacts(unirest, sinceDate);
+        return new SSCOnlineRemediationsFprSource(unirest, logger, progressWriter, resolvedOnline);
     }
 
     @Override
-    protected JsonNode buildResultNode(IRemediationsFprSource source, ApplyResult result, Set<String> issueIdFilter) {
-        if (isCacheMode()) {
+    protected JsonNode buildResultNode(IRemediationsFprSource fprSource, ApplyResult result, Set<String> issueIdFilter) {
+        if (applyOptions.getSourceSelector().isFromCacheSelected()) {
             return AviatorSSCApplyRemediationsHelper.buildCacheResultNode(
-                    sourceSelector.getFromCache(), result, issueIdFilter,
-                    ((CacheRemediationsFprSource) source).reader().getManifest().getSelection());
+                    applyOptions.getSourceSelector().getFromCache(), result, issueIdFilter,
+                    ((CacheRemediationsFprSource) fprSource).reader().getManifest().getSelection());
         }
+        ResolvedOnlineArtifacts resolvedOnline = ((SSCOnlineRemediationsFprSource) fprSource).getResolvedOnline();
         return AviatorSSCApplyRemediationsHelper.buildOnlineResultNode(
                 resolvedOnline.artifacts(), resolvedOnline.appVersionId(), result, issueIdFilter);
     }

@@ -44,16 +44,16 @@ public final class RemediationsApplyHelper {
             List<RemediationMetric> metrics) {}
 
     /**
-     * Applies or previews remediations for each source entry until done or the issue-id filter is exhausted.
-     * Caller owns {@code source} lifecycle (try-with-resources).
+     * Applies or previews remediations for each FPR source entry until done or the issue-id filter is exhausted.
+     * Caller owns {@code fprSource} lifecycle (try-with-resources).
      */
     public static ApplyResult apply(
-            IRemediationsFprSource source,
+            IRemediationsFprSource fprSource,
             IApplyRemediationsOptions options,
             Set<String> issueIdFilter,
             IAviatorLogger logger) {
         Accumulator acc = new Accumulator(issueIdFilter);
-        source.forEachEntry((fprPath, label, id, index, total) -> {
+        fprSource.forEachEntry((fprPath, label, id, index, total) -> {
             if (acc.remaining != null && acc.remaining.isEmpty()) {
                 return false;
             }

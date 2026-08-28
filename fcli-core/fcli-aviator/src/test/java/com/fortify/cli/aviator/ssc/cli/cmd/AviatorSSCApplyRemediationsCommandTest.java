@@ -21,9 +21,8 @@ import java.nio.file.Path;
 
 import org.junit.jupiter.api.Test;
 
-import com.fortify.cli.aviator._common.cli.mixin.ApplyRemediationsOptionsMixin;
-import com.fortify.cli.aviator._common.output.cli.cmd.AbstractAviatorApplyRemediationsCommand;
 import com.fortify.cli.aviator.ssc.cli.mixin.AviatorSSCApplyRemediationsSourceMixin;
+import com.fortify.cli.aviator.ssc.cli.mixin.SscApplyRemediationsOptionsMixin;
 import com.fortify.cli.common.exception.FcliSimpleException;
 
 import picocli.CommandLine;
@@ -79,15 +78,16 @@ class AviatorSSCApplyRemediationsCommandTest {
 
     private static AviatorSSCApplyRemediationsSourceMixin getSourceMixin(AviatorSSCApplyRemediationsCommand command)
             throws Exception {
-        Field field = AviatorSSCApplyRemediationsCommand.class.getDeclaredField("sourceSelector");
-        field.setAccessible(true);
-        return (AviatorSSCApplyRemediationsSourceMixin) field.get(command);
+        Field applyOptionsField = AviatorSSCApplyRemediationsCommand.class.getDeclaredField("applyOptions");
+        applyOptionsField.setAccessible(true);
+        SscApplyRemediationsOptionsMixin applyOptions = (SscApplyRemediationsOptionsMixin) applyOptionsField.get(command);
+        return applyOptions.getSourceSelector();
     }
 
-    private static ApplyRemediationsOptionsMixin getApplyOptions(AviatorSSCApplyRemediationsCommand command)
+    private static SscApplyRemediationsOptionsMixin getApplyOptions(AviatorSSCApplyRemediationsCommand command)
             throws Exception {
-        Field field = AbstractAviatorApplyRemediationsCommand.class.getDeclaredField("applyOptions");
+        Field field = AviatorSSCApplyRemediationsCommand.class.getDeclaredField("applyOptions");
         field.setAccessible(true);
-        return (ApplyRemediationsOptionsMixin) field.get(command);
+        return (SscApplyRemediationsOptionsMixin) field.get(command);
     }
 }

@@ -20,4 +20,5 @@ public interface IApplyRemediationsOptions {
     String getSourceCodeDirectory();
     List<String> getIssueIds();
     boolean isPreviewMode();
+    void validate();
 }
