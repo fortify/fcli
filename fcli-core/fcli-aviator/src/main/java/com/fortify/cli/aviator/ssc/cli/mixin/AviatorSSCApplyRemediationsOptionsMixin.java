@@ -14,6 +14,7 @@ package com.fortify.cli.aviator.ssc.cli.mixin;
 
 import java.nio.file.Path;
 
+import com.fortify.cli.aviator._common.cli.mixin.AbstractApplyRemediationsOptionsMixin;
 import com.fortify.cli.aviator.ssc.cli.mixin.AviatorSSCRemediationsSelectorArgGroups.OnlineSelectionArgGroup;
 import com.fortify.cli.common.exception.FcliSimpleException;
 
@@ -22,11 +23,11 @@ import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Option;
 
 /**
- * Source selection for apply-remediations: either online SSC selection or a local remediations cache zip.
- * Online selection is the shared {@link OnlineSelectionArgGroup} (no pass-through accessors).
+ * SSC-specific apply-remediations options mixin. Combines source selection (online or cache)
+ * with shared options and provides SSC-specific validation logic.
  */
 @Getter
-public class AviatorSSCApplyRemediationsSourceMixin {
+public final class AviatorSSCApplyRemediationsOptionsMixin extends AbstractApplyRemediationsOptionsMixin {
 
     @ArgGroup(exclusive = true, multiplicity = "1")
     private SourceArgGroup source;
@@ -59,12 +60,18 @@ public class AviatorSSCApplyRemediationsSourceMixin {
         return isOnlineSelected() ? source.online : null;
     }
 
-    public void validate() {
+    @Override
+    protected void validateSourceSelection() {
         if (isFromCacheSelected()) {
             return;
         }
         FcliSimpleException.throwIf(!isOnlineSelected(),
                 "Exactly one of --from-cache or online selection (--artifact-id, --latest, --all) must be specified");
         source.online.validate();
+    }
+
+    @Override
+    protected boolean isCacheMode() {
+        return isFromCacheSelected();
     }
 }

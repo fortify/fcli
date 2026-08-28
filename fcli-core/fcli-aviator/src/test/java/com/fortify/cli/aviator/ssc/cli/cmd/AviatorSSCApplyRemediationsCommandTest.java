@@ -21,8 +21,7 @@ import java.nio.file.Path;
 
 import org.junit.jupiter.api.Test;
 
-import com.fortify.cli.aviator.ssc.cli.mixin.AviatorSSCApplyRemediationsSourceMixin;
-import com.fortify.cli.aviator.ssc.cli.mixin.SscApplyRemediationsOptionsMixin;
+import com.fortify.cli.aviator.ssc.cli.mixin.AviatorSSCApplyRemediationsOptionsMixin;
 import com.fortify.cli.common.exception.FcliSimpleException;
 
 import picocli.CommandLine;
@@ -35,8 +34,8 @@ class AviatorSSCApplyRemediationsCommandTest {
     @Test
     void fromCacheParsesPath() throws Exception {
         AviatorSSCApplyRemediationsCommand command = parse("--from-cache", "remediations.zip");
-        assertEquals(Path.of("remediations.zip"), getSourceMixin(command).getFromCache());
-        assertTrue(getSourceMixin(command).isFromCacheSelected());
+        assertEquals(Path.of("remediations.zip"), getApplyOptions(command).getFromCache());
+        assertTrue(getApplyOptions(command).isFromCacheSelected());
     }
 
     @Test
@@ -76,18 +75,10 @@ class AviatorSSCApplyRemediationsCommandTest {
         return command;
     }
 
-    private static AviatorSSCApplyRemediationsSourceMixin getSourceMixin(AviatorSSCApplyRemediationsCommand command)
-            throws Exception {
-        Field applyOptionsField = AviatorSSCApplyRemediationsCommand.class.getDeclaredField("applyOptions");
-        applyOptionsField.setAccessible(true);
-        SscApplyRemediationsOptionsMixin applyOptions = (SscApplyRemediationsOptionsMixin) applyOptionsField.get(command);
-        return applyOptions.getSourceSelector();
-    }
-
-    private static SscApplyRemediationsOptionsMixin getApplyOptions(AviatorSSCApplyRemediationsCommand command)
+    private static AviatorSSCApplyRemediationsOptionsMixin getApplyOptions(AviatorSSCApplyRemediationsCommand command)
             throws Exception {
         Field field = AviatorSSCApplyRemediationsCommand.class.getDeclaredField("applyOptions");
         field.setAccessible(true);
-        return (SscApplyRemediationsOptionsMixin) field.get(command);
+        return (AviatorSSCApplyRemediationsOptionsMixin) field.get(command);
     }
 }

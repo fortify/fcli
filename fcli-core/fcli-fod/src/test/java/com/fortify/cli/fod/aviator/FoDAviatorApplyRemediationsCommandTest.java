@@ -22,8 +22,7 @@ import java.nio.file.Path;
 import org.junit.jupiter.api.Test;
 
 import com.fortify.cli.common.exception.FcliSimpleException;
-import com.fortify.cli.fod.aviator.cli.mixin.FoDApplyRemediationsOptionsMixin;
-import com.fortify.cli.fod.aviator.cli.mixin.FoDAviatorApplyRemediationsSourceMixin;
+import com.fortify.cli.fod.aviator.cli.mixin.FoDAviatorApplyRemediationsOptionsMixin;
 import com.fortify.cli.fod.aviator.cmd.FoDAviatorApplyRemediationsCommand;
 
 import picocli.CommandLine;
@@ -36,12 +35,9 @@ class FoDAviatorApplyRemediationsCommandTest {
     @Test
     void fromCacheParsesPath() throws Exception {
         FoDAviatorApplyRemediationsCommand command = parse("--from-cache", "remediations.zip");
-        Field applyOptionsField = FoDAviatorApplyRemediationsCommand.class.getDeclaredField("applyOptions");
-        applyOptionsField.setAccessible(true);
-        FoDApplyRemediationsOptionsMixin applyOptions = (FoDApplyRemediationsOptionsMixin) applyOptionsField.get(command);
-        FoDAviatorApplyRemediationsSourceMixin sourceSelector = applyOptions.getSourceSelector();
-        assertEquals(Path.of("remediations.zip"), sourceSelector.getFromCache());
-        assertTrue(sourceSelector.isFromCacheSelected());
+        FoDAviatorApplyRemediationsOptionsMixin applyOptions = getApplyOptions(command);
+        assertEquals(Path.of("remediations.zip"), applyOptions.getFromCache());
+        assertTrue(applyOptions.isFromCacheSelected());
     }
 
     @Test
@@ -59,8 +55,8 @@ class FoDAviatorApplyRemediationsCommandTest {
     @Test
     void blankSourceDirIsRejected() throws Exception {
         FoDAviatorApplyRemediationsCommand command = parse("--from-cache", "cache.zip");
-        FoDApplyRemediationsOptionsMixin applyOptions = getApplyOptions(command);
-        Field sourceDirField = FoDApplyRemediationsOptionsMixin.class
+        FoDAviatorApplyRemediationsOptionsMixin applyOptions = getApplyOptions(command);
+        Field sourceDirField = FoDAviatorApplyRemediationsOptionsMixin.class
                 .getSuperclass().getDeclaredField("sourceCodeDirectory");
         sourceDirField.setAccessible(true);
         sourceDirField.set(applyOptions, "");
@@ -92,10 +88,10 @@ class FoDAviatorApplyRemediationsCommandTest {
         return command;
     }
 
-    private static FoDApplyRemediationsOptionsMixin getApplyOptions(FoDAviatorApplyRemediationsCommand command)
+    private static FoDAviatorApplyRemediationsOptionsMixin getApplyOptions(FoDAviatorApplyRemediationsCommand command)
             throws Exception {
         Field field = FoDAviatorApplyRemediationsCommand.class.getDeclaredField("applyOptions");
         field.setAccessible(true);
-        return (FoDApplyRemediationsOptionsMixin) field.get(command);
+        return (FoDAviatorApplyRemediationsOptionsMixin) field.get(command);
     }
 }

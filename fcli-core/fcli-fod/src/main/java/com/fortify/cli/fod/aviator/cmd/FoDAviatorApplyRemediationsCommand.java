@@ -15,7 +15,6 @@ package com.fortify.cli.fod.aviator.cmd;
 import java.util.Set;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.aviator._common.cli.mixin.AbstractApplyRemediationsOptionsMixin;
 import com.fortify.cli.aviator._common.output.cli.cmd.AbstractAviatorApplyRemediationsCommand;
 import com.fortify.cli.aviator._common.remediations_cache.CacheRemediationsFprSource;
 import com.fortify.cli.aviator._common.remediations_cache.IRemediationsFprSource;
@@ -25,44 +24,55 @@ import com.fortify.cli.aviator.config.AviatorLoggerImpl;
 import com.fortify.cli.common.progress.helper.IProgressWriter;
 import com.fortify.cli.fod._common.cli.mixin.FoDDelimiterMixin;
 import com.fortify.cli.fod._common.session.cli.mixin.FoDUnirestInstanceSupplierMixin;
-import com.fortify.cli.fod.aviator.cli.mixin.FoDApplyRemediationsOptionsMixin;
+import com.fortify.cli.fod.aviator.cli.mixin.FoDAviatorApplyRemediationsOptionsMixin;
 import com.fortify.cli.fod.aviator.helper.AviatorFoDApplyRemediationsHelper;
 import com.fortify.cli.fod.aviator.helper.FoDOnlineRemediationsFprSource;
 import com.fortify.cli.fod.release.helper.FoDReleaseDescriptor;
 
 import kong.unirest.UnirestInstance;
+import lombok.AccessLevel;
+import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
 @Command(name = "apply-remediations")
 public class FoDAviatorApplyRemediationsCommand extends AbstractAviatorApplyRemediationsCommand {
     @Mixin private FoDDelimiterMixin delimiterMixin; // Injected into applyOptions
-    @Mixin private FoDApplyRemediationsOptionsMixin applyOptions;
+    @Getter(AccessLevel.PROTECTED) @Mixin private FoDAviatorApplyRemediationsOptionsMixin applyOptions;
     @Mixin private FoDUnirestInstanceSupplierMixin unirestInstanceSupplier;
 
     @Override
-    protected AbstractApplyRemediationsOptionsMixin getApplyOptions() {
-        return applyOptions;
-    }
-
-    @Override
     protected IRemediationsFprSource openFprSource(AviatorLoggerImpl logger, IProgressWriter progressWriter) {
-        if (applyOptions.getSourceSelector().isFromCacheSelected()) {
-            return CacheRemediationsFprSource.open(
-                    applyOptions.getSourceSelector().getFromCache(),
-                    RemediationsCacheConstants.PRODUCT_FOD);
-        }
-        UnirestInstance unirest = unirestInstanceSupplier.getUnirestInstance();
-        FoDReleaseDescriptor releaseDescriptor = applyOptions.getSourceSelector().getReleaseDescriptor(unirest);
-        return new FoDOnlineRemediationsFprSource(unirest, logger, releaseDescriptor);
+        return applyOptions.isFromCacheSelected()
+                ? openCacheFprSource()
+                : openOnlineFprSource(logger);
     }
 
     @Override
     protected JsonNode buildResultNode(IRemediationsFprSource fprSource, ApplyResult result, Set<String> issueIdFilter) {
-        if (applyOptions.getSourceSelector().isFromCacheSelected()) {
-            return AviatorFoDApplyRemediationsHelper.buildCacheResultNode(
-                    applyOptions.getSourceSelector().getFromCache(), result, issueIdFilter);
-        }
+        return applyOptions.isFromCacheSelected()
+                ? buildCacheResultNode(result, issueIdFilter)
+                : buildOnlineResultNode(fprSource, result);
+    }
+
+    private IRemediationsFprSource openCacheFprSource() {
+        return CacheRemediationsFprSource.open(
+                applyOptions.getFromCache(),
+                RemediationsCacheConstants.PRODUCT_FOD);
+    }
+
+    private IRemediationsFprSource openOnlineFprSource(AviatorLoggerImpl logger) {
+        UnirestInstance unirest = unirestInstanceSupplier.getUnirestInstance();
+        FoDReleaseDescriptor releaseDescriptor = applyOptions.getReleaseDescriptor(unirest);
+        return new FoDOnlineRemediationsFprSource(unirest, logger, releaseDescriptor);
+    }
+
+    private JsonNode buildCacheResultNode(ApplyResult result, Set<String> issueIdFilter) {
+        return AviatorFoDApplyRemediationsHelper.buildCacheResultNode(
+                applyOptions.getFromCache(), result, issueIdFilter);
+    }
+
+    private JsonNode buildOnlineResultNode(IRemediationsFprSource fprSource, ApplyResult result) {
         FoDReleaseDescriptor releaseDescriptor = ((FoDOnlineRemediationsFprSource) fprSource).getReleaseDescriptor();
         return AviatorFoDApplyRemediationsHelper.buildOnlineResultNode(releaseDescriptor, result);
     }
