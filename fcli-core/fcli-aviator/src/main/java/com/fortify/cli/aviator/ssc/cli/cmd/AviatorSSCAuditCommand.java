@@ -22,4 +22,4 @@ import picocli.CommandLine.Command;
  */
 @Command(name = "audit")
 @DefaultVariablePropertyName("artifactId")
-public class AviatorSSCAuditCommand extends AviatorSSCSastAuditCommand {}
+public class AviatorSSCAuditCommand extends AbstractAviatorSSCSastAuditCommand {}

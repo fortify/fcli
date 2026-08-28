@@ -33,6 +33,13 @@ class AviatorSSCAuditCommandTest {
     }
 
     @Test
+    void canonicalAndDeprecatedCommandsShareUnannotatedBase() {
+        assertEquals(AbstractAviatorSSCSastAuditCommand.class, AviatorSSCSastAuditCommand.class.getSuperclass());
+        assertEquals(AbstractAviatorSSCSastAuditCommand.class, AviatorSSCAuditCommand.class.getSuperclass());
+        assertFalse(AbstractAviatorSSCSastAuditCommand.class.isAnnotationPresent(CommandLine.Command.class));
+    }
+
+    @Test
     void deprecatedCommandHelpPointsToCanonicalCommand() {
         var messages = ResourceBundle.getBundle("com.fortify.cli.aviator.i18n.AviatorMessages");
         String header = messages.getString("fcli.aviator.ssc.audit.usage.header");
@@ -82,7 +89,7 @@ class AviatorSSCAuditCommandTest {
         return cmd;
     }
 
-    private static void parse(AviatorSSCSastAuditCommand cmd, String... args) {
+    private static void parse(AbstractAviatorSSCSastAuditCommand cmd, String... args) {
         var fullArgs = new ArrayList<String>();
         Collections.addAll(fullArgs, "--av", "test:1.0");
         Collections.addAll(fullArgs, args);

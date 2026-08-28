@@ -62,9 +62,8 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
-@Command(name = "audit-sast")
-@DefaultVariablePropertyName("artifactId")
-public class AviatorSSCSastAuditCommand extends AbstractSSCJsonNodeOutputCommand implements IActionCommandResultSupplier {
+abstract class AbstractAviatorSSCSastAuditCommand extends AbstractSSCJsonNodeOutputCommand
+    implements IActionCommandResultSupplier {
     @Getter @Mixin private OutputHelperMixins.DetailsNoQuery outputHelper;
     @Mixin private ProgressWriterFactoryMixin progressWriterFactoryMixin;
     @Mixin private SSCAppVersionResolverMixin.RequiredOption appVersionResolver;
@@ -78,7 +77,7 @@ public class AviatorSSCSastAuditCommand extends AbstractSSCJsonNodeOutputCommand
     @ArgGroup(exclusive = true, multiplicity = "0..1") private QuotaHandlingArgGroup quotaHandlingArgGroup = new QuotaHandlingArgGroup();
     @Option(names = {"--test-exceeding-quota"}) private boolean testExceedingQuota;
     @Option(names = {"--default-quota-fallback"}) private boolean defaultQuotaFallback;
-    private static final Logger LOG = LoggerFactory.getLogger(AviatorSSCSastAuditCommand.class);
+    private static final Logger LOG = LoggerFactory.getLogger(AbstractAviatorSSCSastAuditCommand.class);
     private Long checkedQuotaBefore;
 
     private static final class QuotaHandlingArgGroup {
@@ -368,3 +367,7 @@ public class AviatorSSCSastAuditCommand extends AbstractSSCJsonNodeOutputCommand
         return true;
     }
 }
+
+@Command(name = "audit-sast")
+@DefaultVariablePropertyName("artifactId")
+public class AviatorSSCSastAuditCommand extends AbstractAviatorSSCSastAuditCommand {}

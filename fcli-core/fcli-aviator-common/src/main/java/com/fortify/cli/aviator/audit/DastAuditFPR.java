@@ -12,6 +12,7 @@
  */
 package com.fortify.cli.aviator.audit;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -84,6 +85,15 @@ public final class DastAuditFPR {
         }
     }
 
+    private record ResponseSummary(
+            Map<String, AuditResponse> successfulResponses,
+            int truePositives,
+            int falsePositivesSuppressed,
+            int likelyFalsePositives,
+            int serverSkipped,
+            int failed,
+            int missingResponses) {}
+
     @FunctionalInterface
     public interface StreamRunner {
         CompletableFuture<DastAuditStreamResult> run(
@@ -114,6 +124,17 @@ public final class DastAuditFPR {
         }
 
         DastAuditStreamResult streamResult = streamRunner.run(config, workItems, totalReported).join();
+        ResponseSummary summary = summarizeResponses(streamResult, workItems, tagMappingConfig);
+        var updatedFile = summary.successfulResponses().isEmpty()
+            ? null
+            : auditProcessor.updateAndSaveDastAuditXml(summary.successfulResponses(), tagMappingConfig);
+        return buildResult(streamResult, summary, updatedFile, totalReported, locallySkipped, workItems.size());
+    }
+
+    private static ResponseSummary summarizeResponses(
+            DastAuditStreamResult streamResult,
+            List<DastAuditWorkItem> workItems,
+            TagMappingConfig tagMappingConfig) {
         Map<String, AuditResponse> successfulResponses = new LinkedHashMap<>();
         int truePositives = 0;
         int falsePositivesSuppressed = 0;
@@ -147,6 +168,14 @@ public final class DastAuditFPR {
                     result.issueId(), result.status(), result.statusMessage());
             }
         }
+        int missingResponses = countMissingResponses(workItems, respondedIssueIds);
+        return new ResponseSummary(successfulResponses, truePositives, falsePositivesSuppressed,
+            likelyFalsePositives, serverSkipped, failed + missingResponses, missingResponses);
+    }
+
+    private static int countMissingResponses(
+            List<DastAuditWorkItem> workItems,
+            Set<String> respondedIssueIds) {
         int missingResponses = 0;
         for (DastAuditWorkItem workItem : workItems) {
             if (!respondedIssueIds.contains(workItem.issue().getId())) {
@@ -154,15 +183,20 @@ public final class DastAuditFPR {
                 LOG.warn("DAST issue {} received no terminal server response", workItem.issue().getId());
             }
         }
-        failed += missingResponses;
+        return missingResponses;
+    }
 
-        var updatedFile = successfulResponses.isEmpty()
-            ? null
-            : auditProcessor.updateAndSaveDastAuditXml(successfulResponses, tagMappingConfig);
-        int succeeded = successfulResponses.size();
+    private static DastAuditFprResult buildResult(
+            DastAuditStreamResult streamResult,
+            ResponseSummary summary,
+            File updatedFile,
+            int totalReported,
+            int locallySkipped,
+            int submitted) {
+        int succeeded = summary.successfulResponses().size();
         LOG.info("DAST audit responses: submitted={}, succeeded={}, serverSkipped={}, failed={}, missingResponses={}",
-            workItems.size(), succeeded, serverSkipped, failed, missingResponses);
-        DastAuditFprStatus status = succeeded == workItems.size() ? DastAuditFprStatus.AUDITED
+            submitted, succeeded, summary.serverSkipped(), summary.failed(), summary.missingResponses());
+        DastAuditFprStatus status = succeeded == submitted ? DastAuditFprStatus.AUDITED
             : succeeded > 0 ? DastAuditFprStatus.PARTIALLY_AUDITED : DastAuditFprStatus.FAILED;
         String message = succeeded == 0 ? "No DAST audit responses were successfully processed" : null;
         return DastAuditFprResult.builder()
@@ -170,14 +204,14 @@ public final class DastAuditFPR {
             .status(status)
             .message(message)
             .totalReported(totalReported)
-            .eligible(workItems.size())
-            .submitted(workItems.size())
+            .eligible(submitted)
+            .submitted(submitted)
             .succeeded(succeeded)
-            .truePositives(truePositives)
-            .falsePositivesSuppressed(falsePositivesSuppressed)
-            .likelyFalsePositives(likelyFalsePositives)
-            .skipped(locallySkipped + serverSkipped)
-            .failed(failed)
+            .truePositives(summary.truePositives())
+            .falsePositivesSuppressed(summary.falsePositivesSuppressed())
+            .likelyFalsePositives(summary.likelyFalsePositives())
+            .skipped(locallySkipped + summary.serverSkipped())
+            .failed(summary.failed())
             .reservedQuota(streamResult.reservedQuota())
             .exceededCount(streamResult.exceededCount())
             .unlimitedQuota(streamResult.unlimitedQuota())
