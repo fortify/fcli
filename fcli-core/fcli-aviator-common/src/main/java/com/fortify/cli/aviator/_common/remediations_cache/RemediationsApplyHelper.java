@@ -19,8 +19,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.slf4j.Logger;
-
 import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
 import com.fortify.cli.aviator._common.util.AviatorRemediationMetricsHelper;
 import com.fortify.cli.aviator.applyRemediation.ApplyAutoRemediationOnSource;
@@ -29,10 +27,13 @@ import com.fortify.cli.aviator.fpr.processor.RemediationProcessor.RemediationMet
 import com.fortify.cli.aviator.util.FprHandle;
 import com.fortify.cli.common.exception.FcliTechnicalException;
 
+import lombok.extern.slf4j.Slf4j;
+
 /**
  * Single apply-remediations loop for any {@link IRemediationsFprSource}
  * (cache zip entries or online downloads). Soft-skips on {@link AviatorSimpleException}.
  */
+@Slf4j
 public final class RemediationsApplyHelper {
     private RemediationsApplyHelper() {}
 
@@ -43,22 +44,23 @@ public final class RemediationsApplyHelper {
             List<RemediationMetric> metrics) {}
 
     /**
-     * Applies remediations for each source entry until done or the issue-id filter is exhausted.
-     * Caller owns {@code source} lifecycle (try-with-resources).
+     * Applies or previews remediations for each FPR source entry until done or the issue-id filter is exhausted.
+     * Caller owns {@code fprSource} lifecycle (try-with-resources).
      */
     public static ApplyResult apply(
-            IRemediationsFprSource source,
-            String sourceCodeDirectory,
-            IAviatorLogger logger,
+            IRemediationsFprSource fprSource,
+            IApplyRemediationsOptions options,
             Set<String> issueIdFilter,
-            Logger skipLog) {
+            IAviatorLogger logger) {
         Accumulator acc = new Accumulator(issueIdFilter);
-        source.forEachEntry((fprPath, label, id, index, total) -> {
+        fprSource.forEachEntry((fprPath, label, id, index, total) -> {
             if (acc.remaining != null && acc.remaining.isEmpty()) {
                 return false;
             }
             RemediationMetric metric = applyOne(
-                    fprPath, label, index, total, sourceCodeDirectory, logger, acc.remaining, skipLog);
+                    fprPath, label, index, total,
+                    options.getSourceCodeDirectory(), logger, acc.remaining,
+                    options.isPreviewMode());
             if (metric == null) {
                 acc.skipped++;
             } else {
@@ -85,13 +87,13 @@ public final class RemediationsApplyHelper {
             String sourceCodeDirectory,
             IAviatorLogger logger,
             Set<String> issueFilter,
-            Logger skipLog) {
+            boolean previewMode) {
         logger.progress("Processing FPR " + index + "/" + total + " (" + entryLabel + ")");
-        logger.progress("Status: Processing FPR with Aviator for Applying Auto Remediations");
+        logger.progress("Status: Processing FPR with Aviator for " + (previewMode ? "Previewing" : "Applying") + " Auto Remediations");
         try (FprHandle fprHandle = new FprHandle(fprPath)) {
-            return ApplyAutoRemediationOnSource.applyRemediations(fprHandle, sourceCodeDirectory, logger, issueFilter);
+            return ApplyAutoRemediationOnSource.applyRemediations(fprHandle, sourceCodeDirectory, logger, issueFilter, previewMode);
         } catch (AviatorSimpleException e) {
-            skipLog.warn("Skipping entry {} as {}", entryLabel, e.getMessage());
+            log.warn("Skipping entry {} as {}", entryLabel, e.getMessage());
             return null;
         } catch (IOException e) {
             throw new FcliTechnicalException("Failed to close FPR handle for entry " + entryLabel, e);

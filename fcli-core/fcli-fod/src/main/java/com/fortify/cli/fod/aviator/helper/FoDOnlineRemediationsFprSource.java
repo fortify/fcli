@@ -18,6 +18,7 @@ import com.fortify.cli.aviator.config.IAviatorLogger;
 import com.fortify.cli.fod.release.helper.FoDReleaseDescriptor;
 
 import kong.unirest.UnirestInstance;
+import lombok.Getter;
 
 /**
  * Online FoD remediations source: downloads the release FPR to a managed temp path
@@ -27,6 +28,7 @@ import kong.unirest.UnirestInstance;
  * Implements {@link AutoCloseable} so callers share one try-with-resources pattern with
  * cache sources.
  */
+@Getter
 public final class FoDOnlineRemediationsFprSource implements IRemediationsFprSource {
     private final UnirestInstance unirest;
     private final IAviatorLogger logger;

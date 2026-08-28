@@ -21,7 +21,7 @@ import java.nio.file.Path;
 
 import org.junit.jupiter.api.Test;
 
-import com.fortify.cli.aviator.ssc.cli.mixin.AviatorSSCApplyRemediationsSourceMixin;
+import com.fortify.cli.aviator.ssc.cli.mixin.AviatorSSCApplyRemediationsOptionsMixin;
 import com.fortify.cli.common.exception.FcliSimpleException;
 
 import picocli.CommandLine;
@@ -34,8 +34,8 @@ class AviatorSSCApplyRemediationsCommandTest {
     @Test
     void fromCacheParsesPath() throws Exception {
         AviatorSSCApplyRemediationsCommand command = parse("--from-cache", "remediations.zip");
-        assertEquals(Path.of("remediations.zip"), getSourceMixin(command).getFromCache());
-        assertTrue(getSourceMixin(command).isFromCacheSelected());
+        assertEquals(Path.of("remediations.zip"), getApplyOptions(command).getFromCache());
+        assertTrue(getApplyOptions(command).isFromCacheSelected());
     }
 
     @Test
@@ -50,16 +50,35 @@ class AviatorSSCApplyRemediationsCommandTest {
         assertThrows(FcliSimpleException.class, command::getJsonNode);
     }
 
+    @Test
+    void previewFlagParsedCorrectly() throws Exception {
+        AviatorSSCApplyRemediationsCommand command = parse("--from-cache", "remediations.zip", "--preview");
+        assertTrue(getApplyOptions(command).isPreviewMode());
+    }
+
+    @Test
+    void previewWorksWithIssueIds() throws Exception {
+        AviatorSSCApplyRemediationsCommand command = parse("--from-cache", "cache.zip", "--preview", "--issue-ids", "ISSUE-1,ISSUE-2");
+        assertTrue(getApplyOptions(command).isPreviewMode());
+        assertEquals(2, getApplyOptions(command).getIssueIds().size());
+    }
+
+    @Test
+    void previewWorksWithOnlineSelection() throws Exception {
+        AviatorSSCApplyRemediationsCommand command = parse("--artifact-id", "123", "--preview");
+        assertTrue(getApplyOptions(command).isPreviewMode());
+    }
+
     private static AviatorSSCApplyRemediationsCommand parse(String... args) {
         AviatorSSCApplyRemediationsCommand command = new AviatorSSCApplyRemediationsCommand();
         new CommandLine(command).parseArgs(args);
         return command;
     }
 
-    private static AviatorSSCApplyRemediationsSourceMixin getSourceMixin(AviatorSSCApplyRemediationsCommand command)
+    private static AviatorSSCApplyRemediationsOptionsMixin getApplyOptions(AviatorSSCApplyRemediationsCommand command)
             throws Exception {
-        Field field = AviatorSSCApplyRemediationsCommand.class.getDeclaredField("sourceSelector");
+        Field field = AviatorSSCApplyRemediationsCommand.class.getDeclaredField("applyOptions");
         field.setAccessible(true);
-        return (AviatorSSCApplyRemediationsSourceMixin) field.get(command);
+        return (AviatorSSCApplyRemediationsOptionsMixin) field.get(command);
     }
 }

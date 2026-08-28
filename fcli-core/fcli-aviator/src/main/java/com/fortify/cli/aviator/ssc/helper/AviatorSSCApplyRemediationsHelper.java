@@ -69,6 +69,7 @@ public final class AviatorSSCApplyRemediationsHelper {
         result.put("artifactId", AviatorRemediationMetricsHelper.na(artifactId));
         result.put("artifactsProcessed", applyResult.metrics().size());
         result.put("artifactsSkipped", applyResult.skipped());
+        result.put("previewMode", aggregated instanceof RemediationMetric.Preview);
         AviatorRemediationMetricsHelper.putMetricAndAction(result, aggregated);
         return result;
     }

@@ -12,104 +12,68 @@
  */
 package com.fortify.cli.fod.aviator.cmd;
 
-import java.util.List;
 import java.util.Set;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.aviator._common.output.cli.cmd.AbstractAviatorApplyRemediationsCommand;
 import com.fortify.cli.aviator._common.remediations_cache.CacheRemediationsFprSource;
-import com.fortify.cli.aviator._common.remediations_cache.RemediationsApplyHelper;
+import com.fortify.cli.aviator._common.remediations_cache.IRemediationsFprSource;
 import com.fortify.cli.aviator._common.remediations_cache.RemediationsApplyHelper.ApplyResult;
 import com.fortify.cli.aviator._common.remediations_cache.RemediationsCacheConstants;
-import com.fortify.cli.aviator._common.util.AviatorApplyRemediationsCliSupport;
 import com.fortify.cli.aviator.config.AviatorLoggerImpl;
-import com.fortify.cli.common.output.cli.cmd.AbstractOutputCommand;
-import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
-import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
-import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
-import com.fortify.cli.common.output.transform.IRecordTransformer;
-import com.fortify.cli.common.progress.cli.mixin.ProgressWriterFactoryMixin;
 import com.fortify.cli.common.progress.helper.IProgressWriter;
 import com.fortify.cli.fod._common.cli.mixin.FoDDelimiterMixin;
 import com.fortify.cli.fod._common.session.cli.mixin.FoDUnirestInstanceSupplierMixin;
-import com.fortify.cli.fod.aviator.cli.mixin.FoDAviatorApplyRemediationsSourceMixin;
+import com.fortify.cli.fod.aviator.cli.mixin.FoDAviatorApplyRemediationsOptionsMixin;
 import com.fortify.cli.fod.aviator.helper.AviatorFoDApplyRemediationsHelper;
 import com.fortify.cli.fod.aviator.helper.FoDOnlineRemediationsFprSource;
 import com.fortify.cli.fod.release.helper.FoDReleaseDescriptor;
 
 import kong.unirest.UnirestInstance;
+import lombok.AccessLevel;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
-import picocli.CommandLine.Option;
 
 @Command(name = "apply-remediations")
-public class FoDAviatorApplyRemediationsCommand extends AbstractOutputCommand
-        implements IJsonNodeSupplier, IRecordTransformer, IActionCommandResultSupplier {
-    private static final Logger LOG = LoggerFactory.getLogger(FoDAviatorApplyRemediationsCommand.class);
-
-    @Getter @Mixin private OutputHelperMixins.DetailsNoQuery outputHelper;
-    @Mixin private ProgressWriterFactoryMixin progressWriterFactoryMixin;
-    @Mixin private FoDDelimiterMixin delimiterMixin; // Injected into sourceSelector
+public class FoDAviatorApplyRemediationsCommand extends AbstractAviatorApplyRemediationsCommand {
+    @Mixin private FoDDelimiterMixin delimiterMixin; // Injected into applyOptions
+    @Getter(AccessLevel.PROTECTED) @Mixin private FoDAviatorApplyRemediationsOptionsMixin applyOptions;
     @Mixin private FoDUnirestInstanceSupplierMixin unirestInstanceSupplier;
-    @Mixin private FoDAviatorApplyRemediationsSourceMixin sourceSelector;
-
-    @Option(names = {"--source-dir"})
-    private String sourceCodeDirectory = System.getProperty("user.dir");
-    @Option(names = {"--issue-ids"}, split = ",")
-    private List<String> issueIds;
 
     @Override
-    public JsonNode getJsonNode() {
-        AviatorApplyRemediationsCliSupport.requireSourceDir(sourceCodeDirectory);
-        Set<String> issueIdFilter = AviatorApplyRemediationsCliSupport.normalizeIssueIdsForCacheOnly(
-                issueIds, sourceSelector.isFromCacheSelected());
-
-        try (IProgressWriter progressWriter = progressWriterFactoryMixin.create()) {
-            AviatorLoggerImpl logger = new AviatorLoggerImpl(progressWriter);
-            if (sourceSelector.isFromCacheSelected()) {
-                return processFromCache(logger, issueIdFilter);
-            }
-            return processOnline(logger, issueIdFilter);
-        }
+    protected IRemediationsFprSource openFprSource(AviatorLoggerImpl logger, IProgressWriter progressWriter) {
+        return applyOptions.isFromCacheSelected()
+                ? openCacheFprSource()
+                : openOnlineFprSource(logger);
     }
 
-    private JsonNode processOnline(AviatorLoggerImpl logger, Set<String> issueIdFilter) {
+    @Override
+    protected JsonNode buildResultNode(IRemediationsFprSource fprSource, ApplyResult result, Set<String> issueIdFilter) {
+        return applyOptions.isFromCacheSelected()
+                ? buildCacheResultNode(result, issueIdFilter)
+                : buildOnlineResultNode(fprSource, result);
+    }
+
+    private IRemediationsFprSource openCacheFprSource() {
+        return CacheRemediationsFprSource.open(
+                applyOptions.getFromCache(),
+                RemediationsCacheConstants.PRODUCT_FOD);
+    }
+
+    private IRemediationsFprSource openOnlineFprSource(AviatorLoggerImpl logger) {
         UnirestInstance unirest = unirestInstanceSupplier.getUnirestInstance();
-        FoDReleaseDescriptor release = sourceSelector.getReleaseDescriptor(unirest);
-        try (FoDOnlineRemediationsFprSource source =
-                new FoDOnlineRemediationsFprSource(unirest, logger, release)) {
-            ApplyResult applyResult = RemediationsApplyHelper.apply(
-                    source, sourceCodeDirectory, logger, issueIdFilter, LOG);
-            return AviatorFoDApplyRemediationsHelper.buildOnlineResultNode(release, applyResult);
-        }
+        FoDReleaseDescriptor releaseDescriptor = applyOptions.getReleaseDescriptor(unirest);
+        return new FoDOnlineRemediationsFprSource(unirest, logger, releaseDescriptor);
     }
 
-    private JsonNode processFromCache(AviatorLoggerImpl logger, Set<String> issueIdFilter) {
-        try (CacheRemediationsFprSource source = CacheRemediationsFprSource.open(
-                sourceSelector.getFromCache(),
-                RemediationsCacheConstants.PRODUCT_FOD)) {
-            ApplyResult applyResult = RemediationsApplyHelper.apply(
-                    source, sourceCodeDirectory, logger, issueIdFilter, LOG);
-            return AviatorFoDApplyRemediationsHelper.buildCacheResultNode(
-                    sourceSelector.getFromCache(), applyResult, issueIdFilter);
-        }
+    private JsonNode buildCacheResultNode(ApplyResult result, Set<String> issueIdFilter) {
+        return AviatorFoDApplyRemediationsHelper.buildCacheResultNode(
+                applyOptions.getFromCache(), result, issueIdFilter);
     }
 
-    @Override
-    public boolean isSingular() {
-        return true;
-    }
-
-    @Override
-    public String getActionCommandResult() {
-        return "Remediation-Applied";
-    }
-
-    @Override
-    public JsonNode transformRecord(JsonNode record) {
-        return record;
+    private JsonNode buildOnlineResultNode(IRemediationsFprSource fprSource, ApplyResult result) {
+        FoDReleaseDescriptor releaseDescriptor = ((FoDOnlineRemediationsFprSource) fprSource).getReleaseDescriptor();
+        return AviatorFoDApplyRemediationsHelper.buildOnlineResultNode(releaseDescriptor, result);
     }
 }

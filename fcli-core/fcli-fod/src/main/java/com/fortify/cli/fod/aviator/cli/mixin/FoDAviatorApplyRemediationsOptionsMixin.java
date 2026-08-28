@@ -14,6 +14,7 @@ package com.fortify.cli.fod.aviator.cli.mixin;
 
 import java.nio.file.Path;
 
+import com.fortify.cli.aviator._common.cli.mixin.AbstractApplyRemediationsOptionsMixin;
 import com.fortify.cli.fod._common.cli.mixin.FoDDelimiterMixin;
 import com.fortify.cli.fod._common.cli.mixin.IFoDDelimiterMixinAware;
 import com.fortify.cli.fod.release.cli.mixin.FoDReleaseByQualifiedNameOrIdResolverMixin;
@@ -25,10 +26,14 @@ import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Option;
 
 /**
- * Source selection for FoD apply-remediations: online release or local remediations cache zip.
- * Standalone mixin (aligned with SSC apply source mixin layout).
+ * FoD-specific apply-remediations options mixin. Combines source selection (online or cache)
+ * with shared options and provides FoD-specific validation logic. Implements delimiter injection
+ * for release selection.
  */
-public final class FoDAviatorApplyRemediationsSourceMixin implements IFoDDelimiterMixinAware {
+@Getter
+public final class FoDAviatorApplyRemediationsOptionsMixin extends AbstractApplyRemediationsOptionsMixin
+        implements IFoDDelimiterMixinAware {
+
     @ArgGroup(exclusive = true, multiplicity = "1")
     private SourceArgGroup source = new SourceArgGroup();
 
@@ -49,6 +54,16 @@ public final class FoDAviatorApplyRemediationsSourceMixin implements IFoDDelimit
 
     public FoDReleaseDescriptor getReleaseDescriptor(UnirestInstance unirest) {
         return source.online.getReleaseDescriptor(unirest);
+    }
+
+    @Override
+    protected void validateSourceSelection() {
+        // FoD ArgGroup has multiplicity="1" validation; no additional checks needed
+    }
+
+    @Override
+    protected boolean isCacheMode() {
+        return isFromCacheSelected();
     }
 
     @Getter

@@ -61,6 +61,7 @@ public final class AviatorFoDApplyRemediationsHelper {
         result.put("releaseId", AviatorRemediationMetricsHelper.na(releaseId));
         result.put("applicationName", AviatorRemediationMetricsHelper.na(applicationName));
         result.put("releaseName", AviatorRemediationMetricsHelper.na(releaseName));
+        result.put("previewMode", aggregated instanceof RemediationMetric.Preview);
         AviatorRemediationMetricsHelper.putMetricAndAction(result, aggregated);
         return result;
     }

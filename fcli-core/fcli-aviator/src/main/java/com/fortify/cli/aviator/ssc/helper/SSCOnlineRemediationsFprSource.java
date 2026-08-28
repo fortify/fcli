@@ -12,11 +12,11 @@
  */
 package com.fortify.cli.aviator.ssc.helper;
 
-import java.util.List;
 
 import com.fortify.cli.aviator._common.remediations_cache.IRemediationsFprSource;
 import com.fortify.cli.aviator._common.util.AviatorTempFprFile;
 import com.fortify.cli.aviator.config.IAviatorLogger;
+import com.fortify.cli.aviator.ssc.cli.mixin.AviatorSSCRemediationsSelectorArgGroups.OnlineSelectionArgGroup.ResolvedOnlineArtifacts;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.progress.helper.IProgressWriter;
 import com.fortify.cli.ssc._common.rest.ssc.SSCUrls;
@@ -24,6 +24,7 @@ import com.fortify.cli.ssc._common.rest.ssc.transfer.SSCFileTransferHelper;
 import com.fortify.cli.ssc.artifact.helper.SSCArtifactDescriptor;
 
 import kong.unirest.UnirestInstance;
+import lombok.Getter;
 
 /**
  * Online SSC remediations source: downloads each artifact FPR to a managed temp path
@@ -33,30 +34,31 @@ import kong.unirest.UnirestInstance;
  * The type implements {@link AutoCloseable} so callers can use one try-with-resources
  * pattern for all {@link IRemediationsFprSource} implementations.
  */
+@Getter
 public final class SSCOnlineRemediationsFprSource implements IRemediationsFprSource {
     private final UnirestInstance unirest;
     private final IAviatorLogger logger;
     private final IProgressWriter progressWriter;
-    private final List<SSCArtifactDescriptor> artifacts;
+    private final ResolvedOnlineArtifacts resolvedOnline;
 
     public SSCOnlineRemediationsFprSource(
             UnirestInstance unirest,
             IAviatorLogger logger,
             IProgressWriter progressWriter,
-            List<SSCArtifactDescriptor> artifacts) {
-        FcliSimpleException.throwIf(artifacts == null || artifacts.isEmpty(),
+            ResolvedOnlineArtifacts resolvedOnline) {
+        FcliSimpleException.throwIf(resolvedOnline == null || resolvedOnline.artifacts() == null || resolvedOnline.artifacts().isEmpty(),
                 "No SSC artifacts to apply remediations from");
         this.unirest = unirest;
         this.logger = logger;
         this.progressWriter = progressWriter;
-        this.artifacts = List.copyOf(artifacts);
+        this.resolvedOnline = resolvedOnline;
     }
 
     @Override
     public void forEachEntry(EntryAction action) {
-        int total = artifacts.size();
+        int total = resolvedOnline.artifacts().size();
         for (int i = 0; i < total; i++) {
-            SSCArtifactDescriptor artifact = artifacts.get(i);
+            SSCArtifactDescriptor artifact = resolvedOnline.artifacts().get(i);
             String id = artifact.getId();
             String label = "artifact id=" + id;
             try (AviatorTempFprFile tempFpr = AviatorTempFprFile.create(id)) {
