@@ -82,4 +82,14 @@ class FuzzyContextSearcherTest {
 
         assertEquals(List.of(1), matches);
     }
+
+    @Test
+    void shouldMatchContextAcrossBlankSourceLines() throws Exception {
+        List<Integer> matches = FuzzyContextSearcher.fuzzySearchContextMatches(
+                List.of("header", "target", "", "", "after", "target", "", "after"),
+                List.of("target", "after"),
+                0);
+
+        assertEquals(List.of(1, 5), matches);
+    }
 }

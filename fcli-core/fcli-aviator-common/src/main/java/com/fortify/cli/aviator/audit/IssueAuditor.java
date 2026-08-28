@@ -60,6 +60,8 @@ import com.fortify.cli.aviator.util.Constants;
 import com.fortify.cli.aviator.util.ResourceUtil;
 import com.fortify.cli.aviator.util.StringUtil;
 
+import lombok.Builder;
+
 
 public class IssueAuditor {
 
@@ -89,6 +91,7 @@ public class IssueAuditor {
     private final AuditFprOptions options;
     private final Set<String> resultTagIds;
 
+    @Builder
     public IssueAuditor(List<Vulnerability> vulnerabilities, AuditProcessor auditProcessor, Map<String, AuditIssue> auditIssueMap,
             FPRInfo fprInfo, FilterSelection filterSelection, SourceLanguageResolver sourceLanguageResolver,
             FVDLMetadata fvdlMetadata, AuditFprOptions options) {

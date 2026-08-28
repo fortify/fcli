@@ -144,10 +144,6 @@ public class AviatorSSCAuditCommand extends AbstractSSCJsonNodeOutputCommand imp
         return noFilterSet;
     }
 
-    boolean isForceReaudit() {
-        return forceReaudit;
-    }
-
     private void refreshMetricsIfNeeded(UnirestInstance unirest, SSCAppVersionDescriptor av, AviatorLoggerImpl logger) {
         if (refreshOptions.isRefresh() && av.isRefreshRequired()) {
             logger.progress("Status: Metrics for application version %s:%s are out of date, starting refresh...", av.getApplicationName(), av.getVersionName());

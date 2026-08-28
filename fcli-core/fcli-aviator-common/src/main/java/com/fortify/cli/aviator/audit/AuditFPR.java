@@ -129,16 +129,16 @@ public class AuditFPR {
             new SourceLanguageResolver(parsedData.streamingFVDLProcessor.getFvdlMetadata());
         parsedData.streamingFVDLProcessor.getFvdlMetadata().clearSourceFileTypeIndexes();
 
-        IssueAuditor issueAuditor = new IssueAuditor(
-                parsedData.vulnerabilities,
-                parsedData.auditProcessor,
-                parsedData.auditIssueMap,
-                parsedData.fprInfo,
-                filterSelection,
-                sourceLanguageResolver,
-                parsedData.streamingFVDLProcessor.getFvdlMetadata(),
-                options
-        );
+        IssueAuditor issueAuditor = IssueAuditor.builder()
+                .vulnerabilities(parsedData.vulnerabilities)
+                .auditProcessor(parsedData.auditProcessor)
+                .auditIssueMap(parsedData.auditIssueMap)
+                .fprInfo(parsedData.fprInfo)
+                .filterSelection(filterSelection)
+                .sourceLanguageResolver(sourceLanguageResolver)
+                .fvdlMetadata(parsedData.streamingFVDLProcessor.getFvdlMetadata())
+                .options(options)
+                .build();
         return issueAuditor.performAudit(auditResponsesToFill);
     }
 

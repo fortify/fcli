@@ -40,10 +40,7 @@ public class FuzzyContextSearcher {
         boolean contextStartsWithBlank = !normalizedContext.isEmpty() && normalizedContext.get(0).isEmpty();
 
         for (int i = 0; i < normalizedSource.size(); i++) {
-            boolean sourceStartsWithBlank = normalizedSource.get(i).isEmpty();
-            if (contextStartsWithBlank
-                    ? !sourceStartsWithBlank || (i > 0 && normalizedSource.get(i - 1).isEmpty())
-                    : sourceStartsWithBlank) {
+            if (isUnusableContextStart(normalizedSource, i, contextStartsWithBlank)) {
                 continue;
             }
             Integer matchStart = findContextMatchStart(normalizedSource, normalizedContext, maxMismatches, i);
@@ -55,6 +52,14 @@ public class FuzzyContextSearcher {
         return List.copyOf(matches);
     }
 
+    private static boolean isUnusableContextStart(List<String> normalizedSource, int index, boolean contextStartsWithBlank) {
+        boolean sourceStartsWithBlank = normalizedSource.get(index).isEmpty();
+        if (!contextStartsWithBlank) {
+            return sourceStartsWithBlank;
+        }
+        return !sourceStartsWithBlank || (index > 0 && normalizedSource.get(index - 1).isEmpty());
+    }
+
     private static Integer findContextMatchStart(List<String> normalizedSource, List<String> normalizedContext,
             int maxMismatches, int startIndex) {
         int mismatchCount = 0;
@@ -62,25 +67,18 @@ public class FuzzyContextSearcher {
         int contextIndex = 0;
 
         while (contextIndex < normalizedContext.size() && sourceIndex < normalizedSource.size()) {
-            String contextLine = normalizedContext.get(contextIndex).trim();
+            String contextLine = normalizedContext.get(contextIndex);
             if (contextLine.isEmpty()) {
                 contextIndex++;
                 continue;
             }
 
-            String sourceLine = normalizedSource.get(sourceIndex).trim();
-            while (sourceLine.isEmpty()) {
-                sourceIndex++;
-                if (sourceIndex >= normalizedSource.size()) {
-                    break;
-                }
-                sourceLine = normalizedSource.get(sourceIndex).trim();
-            }
+            sourceIndex = skipEmptySourceLines(normalizedSource, sourceIndex);
             if (sourceIndex >= normalizedSource.size()) {
                 break;
             }
 
-            if (!linesSimilar(sourceLine, contextLine)) {
+            if (!linesSimilar(normalizedSource.get(sourceIndex), contextLine)) {
                 mismatchCount++;
                 if (mismatchCount > maxMismatches) {
                     break;
@@ -155,7 +153,7 @@ public class FuzzyContextSearcher {
     private static List<String> normalizeLines(List<String> lines) {
         List<String> result = new ArrayList<>();
         for (String line : lines) {
-                result.add(line.trim().replaceAll("\\s+", " "));
+            result.add(line.trim().replaceAll("\\s+", " "));
         }
         return result;
     }

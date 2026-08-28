@@ -17,6 +17,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Map;
@@ -53,9 +54,11 @@ class AviatorSSCAuditCommandTest {
     }
 
     @Test
-    void testAllowsForceReauditOption() {
+    void testAllowsForceReauditOption() throws Exception {
         var cmd = parse("--force-reaudit");
-        assertTrue(cmd.isForceReaudit());
+        Field field = AviatorSSCAuditCommand.class.getDeclaredField("forceReaudit");
+        field.setAccessible(true);
+        assertTrue((boolean) field.get(cmd));
     }
 
     @Test
