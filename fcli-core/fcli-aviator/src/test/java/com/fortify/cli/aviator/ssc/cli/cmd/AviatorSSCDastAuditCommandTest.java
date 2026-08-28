@@ -45,6 +45,17 @@ class AviatorSSCDastAuditCommandTest {
     }
 
     @Test
+    void acceptsSscRefreshOptions() {
+        var commandLine = new CommandLine(new AviatorSSCDastAuditCommand());
+
+        var parseResult = commandLine.parseArgs(
+            "--av", "test:1.0", "--no-refresh", "--refresh-timeout", "2m");
+
+        assertFalse(parseResult.matchedOptionValue("--refresh", true));
+        assertEquals("2m", parseResult.matchedOptionValue("--refresh-timeout", null));
+    }
+
+    @Test
     void dastAuditStatsUseSastAuditOutputEnvelope() {
         var appVersion = new SSCAppVersionDescriptor();
         appVersion.setVersionId("42");

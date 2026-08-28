@@ -48,9 +48,13 @@ import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.progress.cli.mixin.ProgressWriterFactoryMixin;
 import com.fortify.cli.common.progress.helper.IProgressWriter;
 import com.fortify.cli.ssc._common.output.cli.cmd.AbstractSSCJsonNodeOutputCommand;
+import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionRefreshOptions;
 import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionResolverMixin;
 import com.fortify.cli.ssc.appversion.helper.SSCAppVersionDescriptor;
+import com.fortify.cli.ssc.appversion.helper.SSCAppVersionHelper;
 import com.fortify.cli.ssc.artifact.helper.SSCArtifactDescriptor;
+import com.fortify.cli.ssc.system_state.helper.SSCJobDescriptor;
+import com.fortify.cli.ssc.system_state.helper.SSCJobHelper;
 
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
@@ -66,6 +70,7 @@ public class AviatorSSCDastAuditCommand extends AbstractSSCJsonNodeOutputCommand
     @Mixin private ProgressWriterFactoryMixin progressWriterFactoryMixin;
     @Mixin private SSCAppVersionResolverMixin.RequiredOption appVersionResolver;
     @Mixin private AviatorUserSessionDescriptorSupplier sessionDescriptorSupplier;
+    @Mixin private SSCAppVersionRefreshOptions refreshOptions;
     @Option(names = {"--app"}) private String appName;
     @Option(names = {"--tag-mapping"}) private String tagMapping;
 
@@ -79,6 +84,9 @@ public class AviatorSSCDastAuditCommand extends AbstractSSCJsonNodeOutputCommand
             var appVersion = appVersionResolver.getAppVersionDescriptor(unirest);
             var session = sessionDescriptorSupplier.getSessionDescriptor();
             TagMappingConfig tagMappingConfig = loadTagMappingConfig();
+
+            refreshMetricsIfNeeded(unirest, appVersion, logger);
+
             SSCArtifactDescriptor artifact = getLatestDASTArtifact(unirest, appVersion.getVersionId());
             downloadedFpr = AviatorSSCFprTransferHelper.downloadArtifactFpr(
                 unirest, artifact, logger, progressWriter);
@@ -107,6 +115,21 @@ public class AviatorSSCDastAuditCommand extends AbstractSSCJsonNodeOutputCommand
                 } catch (Exception e) {
                     LOG.warn("Failed to delete temporary DAST FPR {}", downloadedFpr, e);
                 }
+            }
+        }
+    }
+
+    private void refreshMetricsIfNeeded(
+            UnirestInstance unirest,
+            SSCAppVersionDescriptor appVersion,
+            AviatorLoggerImpl logger) {
+        if (refreshOptions.isRefresh() && appVersion.isRefreshRequired()) {
+            logger.progress("Status: Metrics for application version %s:%s are out of date, starting refresh...",
+                appVersion.getApplicationName(), appVersion.getVersionName());
+            SSCJobDescriptor refreshJob = SSCAppVersionHelper.refreshMetrics(unirest, appVersion);
+            if (refreshJob != null) {
+                SSCJobHelper.waitForJob(unirest, refreshJob, refreshOptions.getRefreshTimeout());
+                logger.progress("Status: Metrics refreshed successfully.");
             }
         }
     }
