@@ -23,6 +23,17 @@ public class StringUtil {
         return test == null || test.length() == 0;
     }
 
+    public static boolean isPendingReviewValue(String value) {
+        if (value == null) {
+            return true;
+        }
+        String normalizedValue = value.trim();
+        return normalizedValue.isEmpty()
+                || "Pending Review".equalsIgnoreCase(normalizedValue)
+                || "Not Set".equalsIgnoreCase(normalizedValue)
+                || Constants.PENDING_REVIEW.equalsIgnoreCase(normalizedValue);
+    }
+
     /**
      * Strips HTML-like tags from a string to clean it up for display.
      *

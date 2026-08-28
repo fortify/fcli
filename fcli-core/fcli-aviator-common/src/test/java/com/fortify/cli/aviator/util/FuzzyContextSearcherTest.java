@@ -13,6 +13,7 @@
 package com.fortify.cli.aviator.util;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.List;
 
@@ -40,5 +41,55 @@ class FuzzyContextSearcherTest {
                 0);
 
         assertArrayEquals(new int[] {0, 3}, lineFromTo);
+    }
+
+    @Test
+    void shouldReturnAllMatchingContextStartLines() throws Exception {
+        List<Integer> matches = FuzzyContextSearcher.fuzzySearchContextMatches(
+                List.of("before", "target", "after", "target", "after"),
+                List.of("target", "after"),
+                0);
+
+        assertEquals(List.of(1, 3), matches);
+    }
+
+    @Test
+    void shouldReturnOneMatchingContextStartLine() throws Exception {
+        List<Integer> matches = FuzzyContextSearcher.fuzzySearchContextMatches(
+                List.of("before", "target", "after"),
+                List.of("target", "after"),
+                0);
+
+        assertEquals(List.of(1), matches);
+    }
+
+    @Test
+    void shouldReturnNoMatchingContextStartLines() throws Exception {
+        List<Integer> matches = FuzzyContextSearcher.fuzzySearchContextMatches(
+                List.of("before", "after"),
+                List.of("target", "after"),
+                0);
+
+        assertEquals(List.of(), matches);
+    }
+
+    @Test
+    void shouldKeepPhysicalStartWhenContextBeginsWithBlankLine() throws Exception {
+        List<Integer> matches = FuzzyContextSearcher.fuzzySearchContextMatches(
+                List.of("header", "", "target", "after"),
+                List.of("", "target", "after"),
+                0);
+
+        assertEquals(List.of(1), matches);
+    }
+
+    @Test
+    void shouldMatchContextAcrossBlankSourceLines() throws Exception {
+        List<Integer> matches = FuzzyContextSearcher.fuzzySearchContextMatches(
+                List.of("header", "target", "", "", "after", "target", "", "after"),
+                List.of("target", "after"),
+                0);
+
+        assertEquals(List.of(1, 5), matches);
     }
 }

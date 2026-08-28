@@ -146,7 +146,7 @@ public class FPRProcessor {
         }
 
         String auditorStatusValue = tags.get(Constants.AUDITOR_STATUS_TAG_ID);
-        if (!isPendingReviewValue(auditorStatusValue)) {
+        if (!StringUtil.isPendingReviewValue(auditorStatusValue)) {
             return true;
         }
 
@@ -159,16 +159,7 @@ public class FPRProcessor {
         }
 
         String analysisTagValue = tags.get(Constants.ANALYSIS_TAG_ID);
-        return analysisTagValue != null
-            && !analysisTagValue.equalsIgnoreCase("Not Set")
-            && !analysisTagValue.equalsIgnoreCase(Constants.PENDING_REVIEW)
-            && !StringUtil.isEmpty(analysisTagValue);
-    }
-
-    private boolean isPendingReviewValue(String value) {
-        return StringUtil.isEmpty(value)
-            || value.equalsIgnoreCase("Pending Review")
-            || value.equalsIgnoreCase(Constants.PENDING_REVIEW);
+        return !StringUtil.isPendingReviewValue(analysisTagValue);
     }
 
     private String resolveIssueStatus(AuditIssue auditIssue) {

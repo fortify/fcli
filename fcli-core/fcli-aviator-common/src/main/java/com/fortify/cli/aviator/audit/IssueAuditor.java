@@ -14,9 +14,11 @@ package com.fortify.cli.aviator.audit;
 
 import static com.fortify.cli.aviator.util.Constants.DEFAULT_PING_INTERVAL_SECONDS;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -36,11 +38,12 @@ import org.slf4j.LoggerFactory;
 import com.fortify.cli.aviator._common.exception.AviatorQuotaFilterException;
 import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
 import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
+import com.fortify.cli.aviator.audit.model.AuditFprOptions;
 import com.fortify.cli.aviator.audit.model.AuditOutcome;
 import com.fortify.cli.aviator.audit.model.AuditResponse;
 import com.fortify.cli.aviator.audit.model.FilterSelection;
 import com.fortify.cli.aviator.audit.model.UserPrompt;
-import com.fortify.cli.aviator.config.IAviatorLogger;
+import com.fortify.cli.aviator.config.TagMappingConfig;
 import com.fortify.cli.aviator.fpr.Vulnerability;
 import com.fortify.cli.aviator.fpr.filter.Filter;
 import com.fortify.cli.aviator.fpr.filter.FilterSet;
@@ -51,13 +54,13 @@ import com.fortify.cli.aviator.fpr.model.AuditIssue;
 import com.fortify.cli.aviator.fpr.model.FPRInfo;
 import com.fortify.cli.aviator.fpr.model.FVDLMetadata;
 import com.fortify.cli.aviator.fpr.processor.AuditProcessor;
-import com.fortify.cli.aviator.fpr.utils.ISourceDecoder;
-import com.fortify.cli.aviator.fpr.utils.SourceDecoders;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClient;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClientHelper;
 import com.fortify.cli.aviator.util.Constants;
-import com.fortify.cli.aviator.util.FprHandle;
+import com.fortify.cli.aviator.util.ResourceUtil;
 import com.fortify.cli.aviator.util.StringUtil;
+
+import lombok.Builder;
 
 
 public class IssueAuditor {
@@ -84,27 +87,17 @@ public class IssueAuditor {
     private TagDefinition humanAuditTag;
     private TagDefinition aviatorStatusTag;
     private final SourceLanguageResolver sourceLanguageResolver;
-    private final ISourceDecoder sourceDecoder;
     private final FVDLMetadata fvdlMetadata;
+    private final AuditFprOptions options;
+    private final Set<String> resultTagIds;
 
-    private final IAviatorLogger logger;
-    private final List<String> customPriorityOrder;
-
+    @Builder
     public IssueAuditor(List<Vulnerability> vulnerabilities, AuditProcessor auditProcessor, Map<String, AuditIssue> auditIssueMap,
-                        FPRInfo fprInfo, String SSCApplicationName, String SSCApplicationVersion,
-                        FilterSelection filterSelection, IAviatorLogger logger, List<String> customPriorityOrder,
-                        SourceLanguageResolver sourceLanguageResolver) {
-        this(vulnerabilities, auditProcessor, auditIssueMap, fprInfo, SSCApplicationName, SSCApplicationVersion,
-                filterSelection, logger, customPriorityOrder, sourceLanguageResolver, SourceDecoders.defaults(), null);
-    }
-
-    public IssueAuditor(List<Vulnerability> vulnerabilities, AuditProcessor auditProcessor, Map<String, AuditIssue> auditIssueMap,
-                        FPRInfo fprInfo, String SSCApplicationName, String SSCApplicationVersion,
-                        FilterSelection filterSelection, IAviatorLogger logger, List<String> customPriorityOrder,
-                        SourceLanguageResolver sourceLanguageResolver, ISourceDecoder sourceDecoder,
-                        FVDLMetadata fvdlMetadata) {
-        this.logger = logger;
-        this.customPriorityOrder = customPriorityOrder;
+            FPRInfo fprInfo, FilterSelection filterSelection, SourceLanguageResolver sourceLanguageResolver,
+            FVDLMetadata fvdlMetadata, AuditFprOptions options) {
+        Objects.requireNonNull(options, "options");
+        Objects.requireNonNull(options.getSourceDecoder(), "sourceDecoder");
+        this.options = options;
         this.MAX_PER_CATEGORY = Constants.MAX_PER_CATEGORY;
         this.MAX_TOTAL = Constants.MAX_TOTAL;
         this.MAX_PER_CATEGORY_EXCEEDED = Constants.MAX_PER_CATEGORY_EXCEEDED;
@@ -115,13 +108,13 @@ public class IssueAuditor {
         this.auditIssueMap = auditIssueMap;
         this.fprInfo = fprInfo;
         this.filterSelection = filterSelection;
-        this.SSCApplicationName = SSCApplicationName;
-        this.SSCApplicationVersion = SSCApplicationVersion;
+        this.SSCApplicationName = options.getSscAppName();
+        this.SSCApplicationVersion = options.getSscAppVersion();
         this.sourceLanguageResolver = sourceLanguageResolver;
-        this.sourceDecoder = Objects.requireNonNull(sourceDecoder, "sourceDecoder");
         this.fvdlMetadata = fvdlMetadata;
         this.analysisTag = fprInfo.getFilterTemplate().getTagDefinitions().stream().filter(t -> "Analysis".equalsIgnoreCase(t.getName())).findFirst().orElse(null);
         this.resultsTag = resolveResultTag("", "", analysisTag);
+        this.resultTagIds = resolveResultTagIds();
     }
 
     private TagDefinition resolveResultTag(String tagName, String tagGuid, TagDefinition analysisTag) {
@@ -165,30 +158,30 @@ public class IssueAuditor {
         return new TagDefinition(name, id, values, false);
     }
 
-    public AuditOutcome performAudit(Map<String, AuditResponse> auditResponses, String token,
-                                     String projectName, String projectBuildId, String url, FprHandle fprHandle) {
-        projectName = StringUtil.isEmpty(projectName) ? projectBuildId : projectName;
-        logger.progress("Starting audit for project: %s", projectName);
+    public AuditOutcome performAudit(Map<String, AuditResponse> auditResponses) {
+        String projectName = StringUtil.isEmpty(options.getAppVersion()) ? fprInfo.getBuildId() : options.getAppVersion();
+        options.getLogger().progress("Starting audit for project: %s", projectName);
 
         ConcurrentLinkedDeque<UserPrompt> promptsToAudit = prepareAndFilterPrompts();
         int totalIssuesToAudit = promptsToAudit.size();
-        logger.progress("Final count of issues to be audited: %d", totalIssuesToAudit);
+        options.getLogger().progress("Final count of issues to be audited: %d", totalIssuesToAudit);
 
         if (promptsToAudit.isEmpty()) {
-            logger.progress("Audit skipped - no issues to process after filtering.");
+            options.getLogger().progress("Audit skipped - no issues to process after filtering.");
         } else {
-            try (AviatorGrpcClient client = AviatorGrpcClientHelper.createClient(url, logger, DEFAULT_PING_INTERVAL_SECONDS)) {
+            try (AviatorGrpcClient client = AviatorGrpcClientHelper.createClient(options.getUrl(), options.getLogger(), DEFAULT_PING_INTERVAL_SECONDS)) {
                 CompletableFuture<Map<String, AuditResponse>> future =
                         client.processBatchRequests(promptsToAudit, projectName, fprInfo.getBuildId(), SSCApplicationName,
-                            SSCApplicationVersion, token, fprHandle, customPriorityOrder, sourceDecoder, fvdlMetadata);
+                            SSCApplicationVersion, options.getToken(), options.getFprHandle(),
+                            options.getFolderPriorityOrder(), options.getSourceDecoder(), fvdlMetadata);
                 Map<String, AuditResponse> responses = future.get(500, TimeUnit.MINUTES);
                 responses.forEach((requestId, response) -> auditResponses.put(response.getIssueId(), response));
-                logger.progress("Audit completed");
+                options.getLogger().progress("Audit completed");
             } catch (ExecutionException e) {
                 Throwable cause = e.getCause();
                 // Handle quota filtering exception (all issues filtered out)
                 if (cause instanceof AviatorQuotaFilterException) {
-                    logger.progress("All issues filtered out due to quota constraints: %s", cause.getMessage());
+                    options.getLogger().progress("All issues filtered out due to quota constraints: %s", cause.getMessage());
                     // Update totalIssuesToAudit to reflect actual auditable count (0)
                     totalIssuesToAudit = 0;
                 } else if (cause instanceof AviatorSimpleException) {
@@ -199,10 +192,10 @@ public class IssueAuditor {
                     throw new AviatorTechnicalException("Unexpected error during audit execution", cause);
                 }
             } catch (TimeoutException e) {
-                logger.error("Audit failed due to timeout after 500 minutes");
+                options.getLogger().error("Audit failed due to timeout after 500 minutes");
                 throw new AviatorTechnicalException("Audit timed out after 500 minutes", e);
             } catch (InterruptedException e) {
-                logger.error("Audit failed due to interruption");
+                options.getLogger().error("Audit failed due to interruption");
                 Thread.currentThread().interrupt();
                 throw new AviatorTechnicalException("Audit interrupted", e);
             }
@@ -243,31 +236,131 @@ public class IssueAuditor {
 
 
     private boolean shouldInclude(UserPrompt userPrompt) {
+        AuditIssue auditIssue = auditIssue(userPrompt);
+        if (options.isForceReaudit()) {
+            if (hasHumanTriage(auditIssue)) {
+                LOG.debug("Skipping force re-audit for suppressed or human-triaged issue ID: {}",
+                        userPrompt.getIssueData().getInstanceID());
+                return false;
+            }
+            if (isAviatorWork(auditIssue)) {
+                LOG.debug("Including previously processed Aviator issue for force re-audit: {}",
+                        userPrompt.getIssueData().getInstanceID());
+                return true;
+            }
+        }
 
         if (isAudited(userPrompt)) {
             LOG.debug("Skipping already audited issue ID: {}", userPrompt.getIssueData().getInstanceID());
             return false;
         }
 
-        if (humanAuditTag != null) {
-            String issueId = userPrompt.getIssueData().getInstanceID();
-            String status = Optional.ofNullable(auditIssueMap.get(issueId)).map(AuditIssue::getTags).map(tags -> tags.get("604f0fbe-b5fe-47cd-a9cb-587ad8ebe93a")).orElse(null);
-            if (!StringUtil.isEmpty(status) && !Constants.PENDING_REVIEW.equalsIgnoreCase(status)) {
-                LOG.debug("Skipping because already manually audited: {}", issueId);
-                return false;
-            }
+        if (humanAuditTag != null && isManuallyAudited(auditIssue)) {
+            LOG.debug("Skipping because already manually audited: {}", userPrompt.getIssueData().getInstanceID());
+            return false;
         }
 
-        if (aviatorStatusTag != null) {
-            String issueId = userPrompt.getIssueData().getInstanceID();
-            String status = Optional.ofNullable(auditIssueMap.get(issueId)).map(AuditIssue::getTags).map(tags -> tags.get("FB7B0462-2C2E-46D9-811A-DCC1F3C83051")).orElse(null);
-            if (!StringUtil.isEmpty(status) && Constants.PROCESSED_BY_AVIATOR.equalsIgnoreCase(status)) {
-                LOG.debug("Skipping already PROCESSED_BY_AVIATOR: {}", issueId);
-                return false;
-            }
+        if (aviatorStatusTag != null && isProcessedByAviator(auditIssue)) {
+            LOG.debug("Skipping already processed by Aviator: {}", userPrompt.getIssueData().getInstanceID());
+            return false;
         }
 
         return true;
+    }
+
+    private AuditIssue auditIssue(UserPrompt userPrompt) {
+        return auditIssueMap.get(userPrompt.getIssueData().getInstanceID());
+    }
+
+    private static boolean isManuallyAudited(AuditIssue auditIssue) {
+        if (auditIssue == null || auditIssue.getTags() == null) {
+            return false;
+        }
+        return !StringUtil.isPendingReviewValue(auditIssue.getTags().get(Constants.FOD_TAG_ID));
+    }
+
+    private boolean isProcessedByAviator(AuditIssue auditIssue) {
+        if (auditIssue == null || auditIssue.getTags() == null) {
+            return false;
+        }
+        String status = auditIssue.getTags().get(Constants.AVIATOR_STATUS_TAG_ID);
+        return !StringUtil.isEmpty(status) && Constants.PROCESSED_BY_AVIATOR.equalsIgnoreCase(status);
+    }
+
+    private boolean hasHumanTriage(AuditIssue auditIssue) {
+        if (auditIssue == null) {
+            return false;
+        }
+        if (auditIssue.isSuppressed()) {
+            return true;
+        }
+        boolean processedByAviator = isProcessedByAviator(auditIssue);
+        for (String tagId : resultTagIds) {
+            if (!isResultTagSet(auditIssue, tagId)) {
+                continue;
+            }
+            String username = lastWriterUsername(auditIssue, tagId);
+            if (Constants.isAviatorAuditUsername(username)) {
+                continue;
+            }
+            if (!StringUtil.isEmpty(username) || Constants.FOD_TAG_ID.equalsIgnoreCase(tagId) || !processedByAviator) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean isAviatorWork(AuditIssue auditIssue) {
+        if (isProcessedByAviator(auditIssue)) {
+            return true;
+        }
+        for (String tagId : resultTagIds) {
+            if (isResultTagSet(auditIssue, tagId) && Constants.isAviatorAuditUsername(lastWriterUsername(auditIssue, tagId))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean isResultTagSet(AuditIssue auditIssue, String tagId) {
+        Map<String, String> tags = auditIssue.getTags();
+        return tags != null && !StringUtil.isPendingReviewValue(tags.get(tagId));
+    }
+
+    private String lastWriterUsername(AuditIssue auditIssue, String tagId) {
+        Map<String, String> lastTagUsernames = auditIssue.getLastTagUsernames();
+        if (lastTagUsernames == null) {
+            return null;
+        }
+        String username = lastTagUsernames.get(tagId);
+        return StringUtil.isEmpty(username) ? null : username;
+    }
+
+    private Set<String> resolveResultTagIds() {
+        Set<String> tagIds = new LinkedHashSet<>(List.of(
+                Constants.ANALYSIS_TAG_ID, Constants.AUDITOR_STATUS_TAG_ID, Constants.FOD_TAG_ID));
+        if (analysisTag != null && !StringUtil.isEmpty(analysisTag.getId())) {
+            tagIds.add(analysisTag.getId());
+        }
+        String mappedTagId = mappedTagId();
+        if (!StringUtil.isEmpty(mappedTagId)) {
+            tagIds.add(mappedTagId);
+        }
+        return tagIds;
+    }
+
+    private String mappedTagId() {
+        String tagMappingPath = options.getTagMappingPath();
+        if (tagMappingPath == null || tagMappingPath.isBlank()) {
+            return null;
+        }
+        try {
+            TagMappingConfig config = ResourceUtil.loadYamlFile(new File(tagMappingPath), TagMappingConfig.class);
+            return config == null ? null : config.getTag_id();
+        } catch (Exception e) {
+            LOG.debug("Could not read tag mapping file {}", tagMappingPath, e);
+            return null;
+        }
     }
 
     private boolean isAudited(UserPrompt userPrompt) {
@@ -282,7 +375,7 @@ public class IssueAuditor {
         String auditorStatusTag = Constants.AUDITOR_STATUS_TAG_ID;
 
         String auditorStatusValue = tags.get(auditorStatusTag);
-        if (auditorStatusValue != null && !auditorStatusValue.equalsIgnoreCase("Pending Review")) {
+        if (!StringUtil.isPendingReviewValue(auditorStatusValue)) {
             return true;
         }
 
@@ -299,12 +392,12 @@ public class IssueAuditor {
 
             if (analysisTag != null && tags.containsKey(analysisTag.getId())) {
                 String tagValue = tags.get(analysisTag.getId());
-                if (tagValue != null && !tagValue.equalsIgnoreCase("Not Set") && !tagValue.equalsIgnoreCase(Constants.PENDING_REVIEW) && !tagValue.trim().isEmpty()) {
+                if (!StringUtil.isPendingReviewValue(tagValue)) {
                     return true;
                 }
             }
 
-            if (tags.containsKey(analysisTagS) && !tags.get(analysisTagS).equalsIgnoreCase("Not Set") && !StringUtil.isEmpty(tags.get(analysisTagS))) {
+            if (tags.containsKey(analysisTagS) && !StringUtil.isPendingReviewValue(tags.get(analysisTagS))) {
                 return true;
             }
         }
@@ -352,7 +445,7 @@ public class IssueAuditor {
                 .flatMap(List::stream)
                 .distinct()
                 .collect(Collectors.toList());
-            logger.info("FilterSet '{}' applied. {} of {} total vulnerabilities remain.", fs.getTitle(), result.size(), allVulnerabilities.size());
+            options.getLogger().info("FilterSet '{}' applied. {} of {} total vulnerabilities remain.", fs.getTitle(), result.size(), allVulnerabilities.size());
             return result;
         } else {
             Set<String> targetFolderIds = fs.getFolderDefinitions().stream()
@@ -371,7 +464,7 @@ public class IssueAuditor {
                 .distinct()
                 .collect(Collectors.toList());
 
-            logger.info("Filtered by folder(s) '{}'. {} vulnerabilities remain.", targetFolderNames, result.size());
+            options.getLogger().info("Filtered by folder(s) '{}'. {} vulnerabilities remain.", targetFolderNames, result.size());
             return result;
         }
     }

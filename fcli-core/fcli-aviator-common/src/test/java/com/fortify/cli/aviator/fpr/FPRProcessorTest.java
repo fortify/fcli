@@ -128,6 +128,20 @@ class FPRProcessorTest {
         assertFalse(vulnerability.isAudited());
     }
 
+    @Test
+    void testProcessTreatsAllPendingAnalysisValuesAsUnaudited() throws Exception {
+        createTestFpr(minimalAuditFvdl());
+
+        for (String pendingValue : List.of("Pending Review", "Not Set", "Pending Review/Not Set", " pending review ")) {
+            AuditIssue auditIssue = AuditIssue.builder()
+                .instanceId("instance-1")
+                .tags(Map.of(Constants.ANALYSIS_TAG_ID, pendingValue))
+                .build();
+
+            assertFalse(processSingleVulnerability(auditIssue).isAudited(), pendingValue);
+        }
+    }
+
     private String minimalAuditFvdl() {
         return """
                 <?xml version="1.0" encoding="UTF-8"?>

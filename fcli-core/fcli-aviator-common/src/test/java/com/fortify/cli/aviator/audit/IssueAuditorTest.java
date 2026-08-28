@@ -25,6 +25,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -33,18 +35,30 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import com.fortify.cli.aviator.audit.model.AuditFprOptions;
 import com.fortify.cli.aviator.audit.model.FilterSelection;
+import com.fortify.cli.aviator.audit.model.UserPrompt;
 import com.fortify.cli.aviator.config.IAviatorLogger;
 import com.fortify.cli.aviator.fpr.Vulnerability;
 import com.fortify.cli.aviator.fpr.filter.Filter;
 import com.fortify.cli.aviator.fpr.filter.FilterSet;
 import com.fortify.cli.aviator.fpr.filter.FilterTemplate;
+import com.fortify.cli.aviator.fpr.model.AuditIssue;
 import com.fortify.cli.aviator.fpr.model.FPRInfo;
 import com.fortify.cli.aviator.fpr.model.FVDLMetadata;
+import com.fortify.cli.aviator.util.Constants;
 import com.fortify.cli.aviator.util.FprHandle;
 
 
 class IssueAuditorTest {
+
+    private static final String TEST_ISSUE_ID = "PROCESSED_ISSUE";
+    private static final IAviatorLogger NO_OP_LOGGER = new IAviatorLogger() {
+        @Override public void progress(String format, Object... args) {}
+        @Override public void info(String format, Object... args) {}
+        @Override public void warn(String format, Object... args) {}
+        @Override public void error(String format, Object... args) {}
+    };
 
     private Path tempFprFile;
     private FprHandle fprHandle;
@@ -114,6 +128,202 @@ class IssueAuditorTest {
     }
 
     @Test
+    void skipsPreviouslyProcessedAviatorIssueWithoutForceReaudit() throws Exception {
+        IssueAuditor auditor = createIssueAuditor(false, false,
+                Map.of(Constants.AVIATOR_STATUS_TAG_ID, Constants.PROCESSED_BY_AVIATOR));
+
+        assertTrue(prepareIssueIds(auditor).isEmpty());
+    }
+
+    @Test
+    void forceReauditIncludesProcessedAviatorIssueAndIgnoresAviatorOutcomeTag() throws Exception {
+        IssueAuditor auditor = createIssueAuditor(true, false, Map.of(
+                Constants.AVIATOR_STATUS_TAG_ID, Constants.PROCESSED_BY_AVIATOR,
+                Constants.AVIATOR_EXPECTED_OUTCOME_TAG_ID, Constants.EXPLOITABLE));
+
+        assertEquals(List.of(TEST_ISSUE_ID), prepareIssueIds(auditor));
+    }
+
+    @Test
+    void forceReauditIncludesProcessedAviatorIssueWithAnalysisTag() throws Exception {
+        IssueAuditor auditor = createIssueAuditor(true, false, Map.of(
+                Constants.AVIATOR_STATUS_TAG_ID, Constants.PROCESSED_BY_AVIATOR,
+                Constants.ANALYSIS_TAG_ID, Constants.EXPLOITABLE));
+
+        assertEquals(List.of(TEST_ISSUE_ID), prepareIssueIds(auditor));
+    }
+
+    @Test
+    void forceReauditStillSkipsSuppressedIssue() throws Exception {
+        IssueAuditor auditor = createIssueAuditor(true, true,
+                Map.of(Constants.AVIATOR_STATUS_TAG_ID, Constants.PROCESSED_BY_AVIATOR));
+
+        assertTrue(prepareIssueIds(auditor).isEmpty());
+    }
+
+    @Test
+    void forceReauditStillSkipsHumanTriagedIssue() throws Exception {
+        IssueAuditor auditor = createIssueAuditor(true, false, Map.of(
+                Constants.AVIATOR_STATUS_TAG_ID, Constants.PROCESSED_BY_AVIATOR,
+                Constants.FOD_TAG_ID, Constants.EXPLOITABLE));
+
+        assertTrue(prepareIssueIds(auditor).isEmpty());
+    }
+
+    @Test
+    void forceReauditIncludesIssueWithPendingReviewState() throws Exception {
+        IssueAuditor auditor = createIssueAuditor(true, false, Map.of(
+                Constants.AVIATOR_STATUS_TAG_ID, Constants.PROCESSED_BY_AVIATOR,
+                Constants.FOD_TAG_ID, "Pending Review",
+                Constants.AUDITOR_STATUS_TAG_ID, Constants.PENDING_REVIEW));
+
+        assertEquals(List.of(TEST_ISSUE_ID), prepareIssueIds(auditor));
+    }
+
+    @Test
+    void treatsAllPendingAnalysisValuesAsUnaudited() throws Exception {
+        for (String pendingValue : List.of("Pending Review", "Not Set", "Pending Review/Not Set", " pending review ")) {
+            IssueAuditor auditor = createIssueAuditor(false, false, Map.of(Constants.ANALYSIS_TAG_ID, pendingValue));
+
+            assertEquals(List.of(TEST_ISSUE_ID), prepareIssueIds(auditor), pendingValue);
+        }
+    }
+
+    @Test
+    void forceReauditStillSkipsIssueWithManualAuditorStatus() throws Exception {
+        IssueAuditor auditor = createIssueAuditor(true, false, Map.of(
+                Constants.AVIATOR_STATUS_TAG_ID, Constants.PROCESSED_BY_AVIATOR,
+                Constants.AUDITOR_STATUS_TAG_ID, Constants.EXPLOITABLE),
+                Map.of(Constants.AUDITOR_STATUS_TAG_ID, "analyst.user"));
+
+        assertTrue(prepareIssueIds(auditor).isEmpty());
+    }
+
+    @Test
+    void forceReauditIncludesAviatorWrittenAuditorStatus() throws Exception {
+        IssueAuditor auditor = createIssueAuditor(true, false, Map.of(
+                Constants.AVIATOR_STATUS_TAG_ID, Constants.PROCESSED_BY_AVIATOR,
+                Constants.AUDITOR_STATUS_TAG_ID, Constants.EXPLOITABLE),
+                Map.of(Constants.AUDITOR_STATUS_TAG_ID, Constants.USER_NAME));
+
+        assertEquals(List.of(TEST_ISSUE_ID), prepareIssueIds(auditor));
+    }
+
+    @Test
+    void forceReauditSkipsHumanAnalysisOverrideAfterAviator() throws Exception {
+        IssueAuditor auditor = createIssueAuditor(true, false, Map.of(
+                Constants.AVIATOR_STATUS_TAG_ID, Constants.PROCESSED_BY_AVIATOR,
+                Constants.ANALYSIS_TAG_ID, Constants.EXPLOITABLE),
+                Map.of(Constants.ANALYSIS_TAG_ID, "analyst.user"));
+
+        assertTrue(prepareIssueIds(auditor).isEmpty());
+    }
+
+    @Test
+    void forceReauditIncludesLegacyFortifyAviatorUsername() throws Exception {
+        IssueAuditor auditor = createIssueAuditor(true, false, Map.of(
+                Constants.AVIATOR_STATUS_TAG_ID, Constants.PROCESSED_BY_AVIATOR,
+                Constants.ANALYSIS_TAG_ID, Constants.EXPLOITABLE),
+                Map.of(Constants.ANALYSIS_TAG_ID, Constants.USER_NAME_LEGACY_FORTIFY_AVIATOR));
+
+        assertEquals(List.of(TEST_ISSUE_ID), prepareIssueIds(auditor));
+    }
+
+    @Test
+    void forceReauditIncludesMappedTagWrittenByAviatorWithoutStatusTag() throws Exception {
+        Path mappingFile = writeMappedTagFile();
+        try {
+            IssueAuditor auditor = createIssueAuditor(true, false,
+                    Map.of("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee", Constants.EXPLOITABLE),
+                    Map.of("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee", Constants.USER_NAME),
+                    mappingFile.toString());
+            assertEquals(List.of(TEST_ISSUE_ID), prepareIssueIds(auditor));
+        } finally {
+            Files.deleteIfExists(mappingFile);
+        }
+    }
+
+    @Test
+    void forceReauditSkipsHumanWriterOnMappedTag() throws Exception {
+        Path mappingFile = writeMappedTagFile();
+        try {
+            IssueAuditor auditor = createIssueAuditor(true, false,
+                    Map.of("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee", Constants.EXPLOITABLE),
+                    Map.of("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee", "analyst.user"),
+                    mappingFile.toString());
+            assertTrue(prepareIssueIds(auditor).isEmpty());
+        } finally {
+            Files.deleteIfExists(mappingFile);
+        }
+    }
+
+    private Path writeMappedTagFile() throws IOException {
+        Path mappingFile = Files.createTempFile("tag-mapping", ".yaml");
+        Files.writeString(mappingFile, "tag_id: \"aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee\"\n");
+        return mappingFile;
+    }
+
+    private IssueAuditor createIssueAuditor(boolean forceReaudit, boolean suppressed, Map<String, String> tags) {
+        return createIssueAuditor(forceReaudit, suppressed, tags, Map.of(), null);
+    }
+
+    private IssueAuditor createIssueAuditor(boolean forceReaudit, boolean suppressed, Map<String, String> tags,
+            Map<String, String> lastTagUsernames) {
+        return createIssueAuditor(forceReaudit, suppressed, tags, lastTagUsernames, null);
+    }
+
+    private IssueAuditor createIssueAuditor(boolean forceReaudit, boolean suppressed, Map<String, String> tags,
+            Map<String, String> lastTagUsernames, String tagMappingPath) {
+        FPRInfo fprInfo = new FPRInfo(fprHandle);
+        FilterTemplate filterTemplate = new FilterTemplate();
+        filterTemplate.setTagDefinitions(new ArrayList<>());
+        fprInfo.setFilterTemplate(filterTemplate);
+
+        Vulnerability vulnerability = new Vulnerability();
+        vulnerability.setInstanceID(TEST_ISSUE_ID);
+        AuditIssue auditIssue = AuditIssue.builder()
+                .instanceId(TEST_ISSUE_ID)
+                .suppressed(suppressed)
+                .tags(new HashMap<>(tags))
+                .lastTagUsernames(new HashMap<>(lastTagUsernames))
+                .build();
+
+        return IssueAuditor.builder()
+                .vulnerabilities(List.of(vulnerability))
+                .auditIssueMap(Map.of(TEST_ISSUE_ID, auditIssue))
+                .fprInfo(fprInfo)
+                .filterSelection(new FilterSelection(null, null))
+                .sourceLanguageResolver(new SourceLanguageResolver(new FVDLMetadata()))
+                .options(auditOptions(forceReaudit, NO_OP_LOGGER, tagMappingPath))
+                .build();
+    }
+
+    private AuditFprOptions auditOptions(boolean forceReaudit, IAviatorLogger logger) {
+        return auditOptions(forceReaudit, logger, null);
+    }
+
+    private AuditFprOptions auditOptions(boolean forceReaudit, IAviatorLogger logger, String tagMappingPath) {
+        return AuditFprOptions.builder()
+                .fprHandle(fprHandle)
+                .logger(logger)
+                .sscAppName("TestApp")
+                .sscAppVersion("1.0")
+                .tagMappingPath(tagMappingPath)
+                .forceReaudit(forceReaudit)
+                .build();
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<String> prepareIssueIds(IssueAuditor auditor) throws Exception {
+        Method prepareMethod = IssueAuditor.class.getDeclaredMethod("prepareAndFilterPrompts");
+        prepareMethod.setAccessible(true);
+        ConcurrentLinkedDeque<UserPrompt> prompts = (ConcurrentLinkedDeque<UserPrompt>) prepareMethod.invoke(auditor);
+        return prompts.stream()
+                .map(prompt -> prompt.getIssueData().getInstanceID())
+                .collect(Collectors.toList());
+    }
+
+    @Test
     void testFilterVulnerabilities_LegacySyntaxWithSpaces() throws Exception {
 
         // Manual Logger Stub (No-op)
@@ -159,11 +369,14 @@ class IssueAuditorTest {
 
         List<Vulnerability> inputList = Arrays.asList(targetVuln, hiddenVuln);
 
-        IssueAuditor auditor = new IssueAuditor(
-            inputList, null, new HashMap<>(), fprInfo,
-            "TestApp", "1.0", selection, dummyLogger, null,
-            new SourceLanguageResolver(new FVDLMetadata())
-        );
+        IssueAuditor auditor = IssueAuditor.builder()
+                .vulnerabilities(inputList)
+                .auditIssueMap(new HashMap<>())
+                .fprInfo(fprInfo)
+                .filterSelection(selection)
+                .sourceLanguageResolver(new SourceLanguageResolver(new FVDLMetadata()))
+                .options(auditOptions(false, dummyLogger))
+                .build();
 
         Method filterMethod = IssueAuditor.class.getDeclaredMethod("filterVulnerabilities", List.class, FilterSet.class);
         filterMethod.setAccessible(true);
@@ -172,8 +385,8 @@ class IssueAuditorTest {
         List<Vulnerability> results = (List<Vulnerability>) filterMethod.invoke(auditor, inputList, filterSet);
 
         List<String> remainingIds = results.stream()
-            .map(Vulnerability::getInstanceID)
-            .collect(Collectors.toList());
+                .map(Vulnerability::getInstanceID)
+                .collect(Collectors.toList());
 
         assertEquals(1, remainingIds.size(), "Should verify that exactly one issue remains");
         assertTrue(remainingIds.contains("TARGET_ISSUE"),
