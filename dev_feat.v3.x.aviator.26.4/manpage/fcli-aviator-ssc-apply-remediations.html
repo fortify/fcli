@@ -17,7 +17,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260817.081043-dev_feat.v3.x.aviator.26.4" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260828.121722-dev_feat.v3.x.aviator.26.4" %}
 
 
 <div id="header">
@@ -44,7 +44,7 @@ fcli_version:
 <h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli aviator ssc apply-remediations</strong> [<strong>--progress</strong>=<em>&lt;type&gt;</em>]
+<p><strong>fcli aviator ssc apply-remediations</strong> [<strong>--preview</strong>] [<strong>--progress</strong>=<em>&lt;type&gt;</em>]
                                     [<strong>--source-dir</strong>=<em>&lt;sourceCodeDirectory&gt;</em>]
                                     [<strong>--issue-ids</strong>=<em>&lt;issueIds&gt;</em>[,<em>&lt;issueIds&gt;</em>&#8230;&#8203;]]&#8230;&#8203;
                                     [[<strong>-h</strong>] [<strong>--env-prefix</strong>=<em>&lt;prefix&gt;</em>]
@@ -154,6 +154,10 @@ fcli_version:
 <dd>
 <p>Select the most recent Fortify Remediation Aviator-processed artifact. Requires --av/--appversion. Mutually exclusive with --artifact-id and --all.</p>
 </dd>
+<dt class="hdlist1"><strong>--preview</strong></dt>
+<dd>
+<p>Dry-run mode: validates all remediations, reads source files for verification, and outputs detailed change information without modifying any files. Performs full processing including file reading, encoding validation, and change preparation. Output includes a previewDetails array with per-issue change information. Compatible with both --from-cache (offline) and online artifact selection. Works with --issue-ids to preview specific remediations.</p>
+</dd>
 <dt class="hdlist1"><strong>--progress</strong>=<em>&lt;type&gt;</em></dt>
 <dd>
 <p>Configure progress output. Allowed values: auto, none, simple, stderr, single-line, ansi. Default value: auto. Proper output of single-line and ansi depends on console capabilities.</p>
@@ -246,7 +250,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2026-08-17 08:13:42 UTC
+Last updated 2026-08-28 12:20:13 UTC
 </div>
 </div>
 </body>

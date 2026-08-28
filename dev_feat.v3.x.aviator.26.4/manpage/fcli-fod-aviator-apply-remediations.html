@@ -17,7 +17,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260817.081043-dev_feat.v3.x.aviator.26.4" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260828.121722-dev_feat.v3.x.aviator.26.4" %}
 
 
 <div id="header">
@@ -44,7 +44,8 @@ fcli_version:
 <h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli fod aviator apply-remediations</strong> [<strong>--delim</strong>=<em>&lt;delimiter&gt;</em>] [<strong>--progress</strong>=<em>&lt;type&gt;</em>]
+<p><strong>fcli fod aviator apply-remediations</strong> [<strong>--preview</strong>] [<strong>--delim</strong>=<em>&lt;delimiter&gt;</em>]
+                                    [<strong>--progress</strong>=<em>&lt;type&gt;</em>]
                                     [<strong>--source-dir</strong>=<em>&lt;sourceCodeDirectory&gt;</em>]
                                     [<strong>--issue-ids</strong>=<em>&lt;issueIds&gt;</em>[,<em>&lt;issueIds&gt;</em>&#8230;&#8203;]]&#8230;&#8203;
                                     [[<strong>-h</strong>] [<strong>--env-prefix</strong>=<em>&lt;prefix&gt;</em>]
@@ -54,8 +55,8 @@ fcli_version:
                                     [[<strong>-o</strong>=<em>&lt;type+args&gt;</em>] [<strong>--style*<em>=&lt;style&gt;,&#8230;&#8203;</em>]&#8230;&#8203;
                                     <em class="</strong>--store*=_&lt;var&gt;[:&lt;prop&gt;">]
                                     [<strong>--to-file</strong>=</em>&lt;outputFile&gt;_]]
-                                    [[<strong>--fod-session</strong>=<em>&lt;sessionName&gt;</em>]]
-                                    (<strong>--from-cache</strong>=<em>&lt;zip&gt;</em> | <strong>--rel</strong>=<em>id|app[:ms]:rel</em>)</p>
+                                    (<strong>--from-cache</strong>=<em>&lt;zip&gt;</em> | <strong>--rel</strong>=<em>id|app[:ms]:</em>
+                        _            rel_) [[<strong>--fod-session</strong>=<em>&lt;sessionName&gt;</em>]]</p>
 </div>
 </div>
 </div>
@@ -83,6 +84,10 @@ fcli_version:
 <dt class="hdlist1"><strong>--issue-ids</strong>=<em>&lt;issueIds&gt;</em>[,<em>&lt;issueIds&gt;</em>&#8230;&#8203;]</dt>
 <dd>
 <p>Comma-separated list of issue IDs to apply. Matches requested values against remediations.xml instanceId entries. Requires --from-cache so integrations can download once via download-remediations-cache and apply selected remediations without repeated FoD downloads.</p>
+</dd>
+<dt class="hdlist1"><strong>--preview</strong></dt>
+<dd>
+<p>Dry-run mode: validates all remediations, reads source files for verification, and outputs detailed change information without modifying any files. Performs full processing including file reading, encoding validation, and change preparation. Output includes a previewDetails array with per-issue change information. Compatible with both --from-cache (offline) and online release selection. Works with --issue-ids to preview specific remediations.</p>
 </dd>
 <dt class="hdlist1"><strong>--progress</strong>=<em>&lt;type&gt;</em></dt>
 <dd>
@@ -176,7 +181,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2026-08-17 08:13:42 UTC
+Last updated 2026-08-28 12:20:13 UTC
 </div>
 </div>
 </body>
