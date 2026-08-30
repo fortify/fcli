@@ -249,6 +249,7 @@ public class AuditProcessor {
             tags.put(tagId, tagValue);
         }
         auditIssueBuilder.tags(tags);
+        auditIssueBuilder.lastTagUsernames(lastTagUsernames(issueElement));
 
         List<AuditIssue.Comment> threadedComments = new ArrayList<>();
         NodeList commentNodes = issueElement.getElementsByTagNameNS(AUDIT_NAMESPACE_URI, "Comment");
@@ -266,6 +267,24 @@ public class AuditProcessor {
         return auditIssueBuilder.build();
     }
 
+
+    private Map<String, String> lastTagUsernames(Element issueElement) {
+        Map<String, String> lastTagUsernames = new HashMap<>();
+        NodeList tagHistories = issueElement.getElementsByTagNameNS(AUDIT_NAMESPACE_URI, "TagHistory");
+        for (int index = 0; index < tagHistories.getLength(); index++) {
+            Element tagHistory = (Element) tagHistories.item(index);
+            NodeList tags = tagHistory.getElementsByTagNameNS(AUDIT_NAMESPACE_URI, "Tag");
+            if (tags.getLength() == 0) {
+                continue;
+            }
+            String tagId = ((Element) tags.item(0)).getAttribute("id");
+            String username = Optional.ofNullable(getFirstElementContentNS(tagHistory, "Username")).orElse("");
+            if (tagId != null && !tagId.isBlank()) {
+                lastTagUsernames.put(tagId, username);
+            }
+        }
+        return lastTagUsernames;
+    }
 
     private String getTagValue(Element tagElement) {
         NodeList valueNodes = tagElement.getElementsByTagNameNS(AUDIT_NAMESPACE_URI, "Value");
