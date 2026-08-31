@@ -1,0 +1,171 @@
+---
+title: 'fcli-ai-assist-mcp-start-stdio(1)'
+fcli_version: 
+---
+
+<!DOCTYPE html>
+<html lang="">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=">
+<meta name="generator" content="Asciidoctor 2.0.18">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>fcli-ai-assist-mcp-start-stdio(1)</title>
+
+{% include asciidoc-head.html %}
+{% include fcli-enhancements.html %}
+
+</head>
+<body class="manpage toc2 toc-left">
+
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="3.25.0" %}
+
+
+<div id="header">
+<h1>fcli-ai-assist-mcp-start-stdio(1) Manual Page</h1>
+<div id="toc" class="toc2">
+<div id="toctitle">Table of Contents</div>
+<ul class="sectlevel1">
+<li><a href="#_synopsis">Synopsis</a></li>
+<li><a href="#_description">Description</a></li>
+<li><a href="#_options">Options</a></li>
+<li><a href="#_generic_fcli_options_also_see_documentation_link_below">Generic fcli options (also see documentation link below)</a></li>
+</ul>
+</div>
+<h2>Name</h2>
+<div class="sectionbody">
+<p>fcli-ai-assist-mcp-start-stdio - Start fcli stdio MCP server.</p>
+</div>
+</div>
+<div id="content">
+{% raw %}
+<div class="sect1">
+<h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p><strong>fcli ai-assist mcp start-stdio</strong> [<strong>--async-bg-threads</strong>=<em>&lt;bgThreads&gt;</em>]
+                               [<strong>--job-safe-return</strong>=<em>&lt;jobSafeReturnPeriod&gt;</em>]
+                               [<strong>-m</strong>=<em>&lt;module&gt;</em>]
+                               [<strong>--progress-interval</strong>=<em>&lt;progressIntervalPeriod&gt;</em>]
+                               [<strong>--progress-threads</strong>=<em>&lt;progressThreads&gt;</em>]
+                               [<strong>--server-name</strong>=<em>&lt;serverName&gt;</em>]
+                               [<strong>--work-threads</strong>=<em>&lt;workThreads&gt;</em>]
+                               [<strong>--import</strong>=<em>&lt;importFiles&gt;</em>[,<em>&lt;importFiles&gt;</em>&#8230;&#8203;]]&#8230;&#8203;
+                               [[<strong>-h</strong>] [<strong>--env-prefix</strong>=<em>&lt;prefix&gt;</em>]
+                               [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>] [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]
+                               [<strong>--log-mask</strong>=<em>&lt;level&gt;</em>] [<strong>--debug</strong>]]</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_description"><a class="anchor" href="#_description"></a>Description</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Start the fcli MCP server over stdio. This command exposes fcli module commands and/or imported action functions as MCP tools to AI clients.</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
+For better user experience and potentially lower token usage, consider Fortify skills from <a href="https://github.com/fortify/skills" class="bare">https://github.com/fortify/skills</a>, which can be installed through your AI assistant marketplace (if available) or by utilizing the `fcli ai-assist extensions' commands.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>THREAD MODEL:
+- Work threads (--work-threads): execute MCP tool calls. Each concurrent tool call occupies one thread for its
+full duration. Size to the maximum number of tool calls the AI may invoke in parallel.
+- Progress threads (--progress-threads): poll progress for long-running jobs at regular intervals. One thread
+is consumed per active long-running job during each poll. The default of 4 is sufficient for most use cases.
+- Async background threads (--async-bg-threads): run background async streaming jobs (e.g. run.fcli steps
+with streaming output). Increase if actions make heavy use of async streaming.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_options"><a class="anchor" href="#_options"></a>Options</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><strong>--async-bg-threads</strong>=<em>&lt;bgThreads&gt;</em></dt>
+<dd>
+<p>Number of background threads for running async streaming jobs. Default: 2.</p>
+</dd>
+<dt class="hdlist1"><strong>--import</strong>=<em>&lt;importFiles&gt;</em>[,<em>&lt;importFiles&gt;</em>&#8230;&#8203;]</dt>
+<dd>
+<p>Action YAML files to import. Exported functions are registered as MCP tools or resources based on function metadata.</p>
+</dd>
+<dt class="hdlist1"><strong>--job-safe-return</strong>=<em>&lt;jobSafeReturnPeriod&gt;</em></dt>
+<dd>
+<p>Maximum time to wait synchronously for a job result before returning an in_progress placeholder. Specify duration like 25s, 2m, 1h.</p>
+</dd>
+<dt class="hdlist1"><strong>-m</strong>, <strong>--module</strong>=<em>&lt;module&gt;</em></dt>
+<dd>
+<p>Fcli module to expose through this MCP server instance.</p>
+</dd>
+<dt class="hdlist1"><strong>--progress-interval</strong>=<em>&lt;progressIntervalPeriod&gt;</em></dt>
+<dd>
+<p>Interval between internal progress counter updates for long-running jobs. Specify duration (e.g. 500ms, 1s, 2s).</p>
+</dd>
+<dt class="hdlist1"><strong>--progress-threads</strong>=<em>&lt;progressThreads&gt;</em></dt>
+<dd>
+<p>Number of threads used for updating and tracking job progress for long-running jobs.</p>
+</dd>
+<dt class="hdlist1"><strong>--server-name</strong>=<em>&lt;serverName&gt;</em></dt>
+<dd>
+<p>Custom name for this MCP server instance. If not specified, defaults to 'fcli-&lt;module-name&gt;' when --module is provided, or 'fcli-imported-functions' when only --import is provided.</p>
+</dd>
+<dt class="hdlist1"><strong>--work-threads</strong>=<em>&lt;workThreads&gt;</em></dt>
+<dd>
+<p>Number of worker threads used to execute MCP tool jobs concurrently. Increase for higher parallelism if AI invokes multiple tools simultaneously.</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_generic_fcli_options_also_see_documentation_link_below"><a class="anchor" href="#_generic_fcli_options_also_see_documentation_link_below"></a>Generic fcli options (also see documentation link below)</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><strong>--debug</strong></dt>
+<dd>
+<p>Enable collection of debug logs.</p>
+</dd>
+<dt class="hdlist1"><strong>--env-prefix</strong>=<em>&lt;prefix&gt;</em></dt>
+<dd>
+<p>Prefix for resolving default option values. Default value: FCLI_DEFAULT.</p>
+</dd>
+<dt class="hdlist1"><strong>-h</strong>, <strong>--help</strong></dt>
+<dd>
+<p>Use 'fcli [command] -h' to display help for fcli (sub-)commands.</p>
+</dd>
+<dt class="hdlist1"><strong>--log-file</strong>=<em>&lt;logFile&gt;</em></dt>
+<dd>
+<p>Write log output to file. Default: ./fcli.log if logging is enabled.</p>
+</dd>
+<dt class="hdlist1"><strong>--log-level</strong>=<em>&lt;logLevel&gt;</em></dt>
+<dd>
+<p>Set logging level: TRACE, DEBUG, INFO, WARN, ERROR, NONE.</p>
+</dd>
+<dt class="hdlist1"><strong>--log-mask</strong>=<em>&lt;level&gt;</em></dt>
+<dd>
+<p>Log mask level: high, medium, low, none. Default: medium. Masking is done on a best-effort basis; no guarantee that all sensitive data will be masked.</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+{% endraw %}
+</div>
+<div id="footer">
+<div id="footer-text">
+Version <br>
+Last updated 2026-08-31 14:24:39 UTC
+</div>
+</div>
+</body>
+</html>
