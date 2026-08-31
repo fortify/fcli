@@ -10,16 +10,16 @@
  * herein. The information contained herein is subject to change
  * without notice.
  */
-package com.fortify.cli.aviator.ssc.cli.cmd;
+package com.fortify.cli.aviator.dast;
 
-import com.fortify.cli.common.variable.DefaultVariablePropertyName;
-
-import picocli.CommandLine.Command;
+import lombok.Data;
 
 /**
- * Deprecated SAST audit command retained for backward compatibility.
- * Use {@code fcli aviator ssc audit-sast} instead.
+ * Represents one ordered navigation or attack step reported by WebInspect.
  */
-@Command(name = "audit")
-@DefaultVariablePropertyName("artifactId")
-public class AviatorSSCAuditCommand extends AbstractAviatorSSCSastAuditCommand {}
+@Data
+public class DastReproStep {
+    private String source;
+    private String url;
+    private String postParams;
+}

@@ -242,8 +242,8 @@ public class AviatorSSCCorrelateSastDastCommand extends AbstractSSCJsonNodeOutpu
             new DastFprCorrelationEnricher().injectAndRepackage(fprs.dastPath, confirmed);
 
             logger.progress("Status: Uploading correlated DAST FPR to SSC...");
-            AviatorSSCCorrelateDownloadHelper.uploadEnrichedDastFpr(unirest, av, fprs.dastPath, progressWriter);
-            String artifactId = fprs.adDast.getId();
+            String artifactId = AviatorSSCCorrelateDownloadHelper.uploadEnrichedDastFpr(
+                unirest, av, fprs.dastPath, progressWriter);
             logger.progress("Status: Correlated DAST FPR uploaded successfully (artifact id=%s)", artifactId);
             return artifactId;
         }

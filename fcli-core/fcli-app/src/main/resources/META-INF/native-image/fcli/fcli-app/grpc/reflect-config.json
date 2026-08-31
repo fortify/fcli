@@ -600,7 +600,7 @@
     "name":"com.fortify.cli.aviator.config.TagMappingConfig",
     "allDeclaredFields":true,
     "queryAllPublicMethods":true,
-    "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"setMapping","parameterTypes":["com.fortify.cli.aviator.config.TagMappingConfig$Mapping"] }, {"name":"setSuppression_exclusions","parameterTypes":["java.util.List"] }, {"name":"setTag_id","parameterTypes":["java.lang.String"] }]
+    "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"setDast","parameterTypes":["com.fortify.cli.aviator.config.TagMappingConfig$ProductMapping"] }, {"name":"setMapping","parameterTypes":["com.fortify.cli.aviator.config.TagMappingConfig$Mapping"] }, {"name":"setSast","parameterTypes":["com.fortify.cli.aviator.config.TagMappingConfig$ProductMapping"] }, {"name":"setSuppression_exclusions","parameterTypes":["java.util.List"] }, {"name":"setTag_id","parameterTypes":["java.lang.String"] }]
   },
   {
     "name":"com.fortify.cli.aviator.config.TagMappingConfig$Mapping",
@@ -630,6 +630,13 @@
   },
   {
     "name":"com.fortify.cli.aviator.config.TagMappingConfig$MappingCustomizer"
+  },
+  {
+    "name":"com.fortify.cli.aviator.config.TagMappingConfig$ProductMapping",
+    "allDeclaredConstructors":true,
+    "allDeclaredFields":true,
+    "queryAllPublicMethods":true,
+    "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"setMapping","parameterTypes":["com.fortify.cli.aviator.config.TagMappingConfig$Mapping"] }, {"name":"setSuppression_exclusions","parameterTypes":["java.util.List"] }, {"name":"setTag_id","parameterTypes":["java.lang.String"] }]
   },
   {
     "name":"com.fortify.cli.aviator.config.TagMappingConfig$Result",

@@ -27,6 +27,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.aviator.application.Application;
 import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
+import com.fortify.cli.aviator.audit.DastAuditFprResult;
 import com.fortify.cli.aviator.audit.model.FPRAuditResult;
 import com.fortify.cli.aviator.config.AviatorLoggerImpl;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClient;
@@ -139,6 +140,35 @@ public final class AviatorSSCAuditHelper {
         audit.put("succeeded", auditResult.getIssuesSuccessfullyAudited());
         audit.put("skipped", Math.max(0, auditResult.getTotalIssuesToAudit() - auditResult.getIssuesSuccessfullyAudited()));
         ((ObjectNode) result.get("operation")).set("audit", audit);
+    }
+
+    /**
+     * Populates the standard audit output envelope with DAST-specific statistics.
+     *
+     * @param result The result node created by {@link #buildResultNode}.
+     * @param auditResult The DAST FPR audit result.
+     */
+    public static void setDastAuditStats(ObjectNode result, DastAuditFprResult auditResult) {
+        ObjectNode audit = JsonHelper.getObjectMapper().createObjectNode();
+        audit.put("message", getDastAuditMessage(auditResult));
+        audit.put("submitted", auditResult.submitted());
+        audit.put("succeeded", auditResult.succeeded());
+        audit.put("skipped", auditResult.skipped());
+        audit.put("failed", auditResult.failed());
+        ((ObjectNode) result.get("operation")).set("audit", audit);
+        result.remove("state");
+    }
+
+    private static String getDastAuditMessage(DastAuditFprResult auditResult) {
+        return switch (auditResult.status()) {
+            case AUDITED -> "DAST audit completed successfully";
+            case PARTIALLY_AUDITED -> auditResult.message() != null
+                ? auditResult.message() : "DAST audit partially completed";
+            case SKIPPED -> auditResult.message() != null
+                ? auditResult.message() : "No DAST findings to audit";
+            case FAILED -> auditResult.message() != null
+                ? auditResult.message() : "DAST audit failed";
+        };
     }
 
     /**

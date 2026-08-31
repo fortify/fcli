@@ -16,10 +16,6 @@ import com.fortify.cli.common.variable.DefaultVariablePropertyName;
 
 import picocli.CommandLine.Command;
 
-/**
- * Deprecated SAST audit command retained for backward compatibility.
- * Use {@code fcli aviator ssc audit-sast} instead.
- */
-@Command(name = "audit")
+@Command(name = "audit-sast")
 @DefaultVariablePropertyName("artifactId")
-public class AviatorSSCAuditCommand extends AbstractAviatorSSCSastAuditCommand {}
+public class AviatorSSCSastAuditCommand extends AbstractAviatorSSCSastAuditCommand {}

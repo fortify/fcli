@@ -763,6 +763,96 @@ public class AuditProcessor {
         return fprHandle.getFprPath().toFile();
     }
 
+    /**
+     * Applies DAST audit decisions to audit.xml without creating SAST remediation artifacts.
+     */
+    public File updateAndSaveDastAuditXml(Map<String, AuditResponse> auditResponses,
+            TagMappingConfig tagMappingConfig) {
+        Set<String> writtenInstanceIds = new HashSet<>();
+        for (Map.Entry<String, AuditResponse> entry : auditResponses.entrySet()) {
+            AuditResponse response = entry.getValue();
+            if (response == null || !"SUCCESS".equalsIgnoreCase(response.getStatus())
+                    || response.getAuditResult() == null) {
+                continue;
+            }
+            Element issueElement = findIssueElement(entry.getKey());
+            if (issueElement == null) {
+                issueElement = createDastIssueElement(entry.getKey());
+            } else {
+                int revision = Optional.ofNullable(issueElement.getAttribute("revision"))
+                    .filter(value -> !value.isBlank())
+                    .map(value -> {
+                        try { return Integer.parseInt(value); } catch (NumberFormatException e) { return 0; }
+                    })
+                    .orElse(0);
+                issueElement.setAttribute("revision", String.valueOf(revision + 1));
+            }
+            applyDastAuditResponse(issueElement, response, tagMappingConfig);
+            writtenInstanceIds.add(entry.getKey());
+        }
+
+        AuditXmlIssuePruner.retainOnly(auditDoc, writtenInstanceIds);
+
+        try (OutputStream os = Files.newOutputStream(fprHandle.getPath("/audit.xml"))) {
+            transformDomToStream(auditDoc, os);
+        } catch (Exception e) {
+            throw new AviatorTechnicalException("Failed to write DAST audit data back into the FPR file", e);
+        }
+        return fprHandle.getFprPath().toFile();
+    }
+
+    private Element createDastIssueElement(String instanceId) {
+        Element issueList = (Element) auditDoc.getElementsByTagNameNS(AUDIT_NAMESPACE_URI, "IssueList").item(0);
+        if (issueList == null) {
+            issueList = auditDoc.createElementNS(AUDIT_NAMESPACE_URI, "IssueList");
+            auditDoc.getDocumentElement().appendChild(issueList);
+        }
+        Element issueElement = auditDoc.createElementNS(AUDIT_NAMESPACE_URI, "Issue");
+        issueElement.setAttribute("instanceId", instanceId);
+        issueElement.setAttribute("revision", "0");
+        issueElement.setAttribute("suppressed", "false");
+        issueList.appendChild(issueElement);
+        return issueElement;
+    }
+
+    private void applyDastAuditResponse(Element issueElement, AuditResponse response,
+            TagMappingConfig tagMappingConfig) {
+        String prediction = response.getAviatorPredictionTag();
+        updateOrAddTag(issueElement, Constants.AVIATOR_PREDICTION_TAG_ID, prediction);
+        TagMappingConfig.Result resultConfig = getDastResultConfig(response, tagMappingConfig);
+        if (resultConfig.getValue() != null && !resultConfig.getValue().isBlank()) {
+            updateOrAddTag(issueElement, tagMappingConfig.getTag_id(), resultConfig.getValue());
+        }
+        Boolean suppressedHistoryValue = updateSuppressedState(
+            issueElement, Boolean.TRUE.equals(resultConfig.getSuppress()));
+        updateOrAddTag(issueElement, Constants.AVIATOR_STATUS_TAG_ID, Constants.PROCESSED_BY_AVIATOR);
+        if (response.getAuditResult().getComment() != null) {
+            updateOrAddComment(issueElement, response.getAuditResult().getComment());
+        }
+        Element clientAuditTrail = getClientAuditTrailElement(issueElement);
+        addTagHistory(clientAuditTrail, Constants.AVIATOR_PREDICTION_TAG_ID, prediction);
+        if (resultConfig.getValue() != null && !resultConfig.getValue().isBlank()) {
+            addTagHistory(clientAuditTrail, tagMappingConfig.getTag_id(), resultConfig.getValue());
+        }
+        addTagHistory(clientAuditTrail, Constants.AVIATOR_STATUS_TAG_ID, Constants.PROCESSED_BY_AVIATOR);
+        if (suppressedHistoryValue != null) {
+            addTagHistory(clientAuditTrail, Constants.SUPPRESSED_TAG_ID, suppressedHistoryValue.toString());
+        }
+    }
+
+    private TagMappingConfig.Result getDastResultConfig(AuditResponse response,
+            TagMappingConfig tagMappingConfig) {
+        boolean tierOne = "GOLD".equalsIgnoreCase(response.getTier());
+        String tagValue = response.getAuditResult().getTagValue();
+        if (Constants.NOT_AN_ISSUE.equalsIgnoreCase(tagValue)) {
+            return tagMappingConfig.getResult(tierOne, TagMappingConfig.ResultType.FP);
+        }
+        if (Constants.EXPLOITABLE.equalsIgnoreCase(tagValue)) {
+            return tagMappingConfig.getResult(tierOne, TagMappingConfig.ResultType.TP);
+        }
+        return tagMappingConfig.getResult(tierOne, TagMappingConfig.ResultType.UNSURE);
+    }
+
     private Document generateRemediationsXml(Map<String, AuditResponse> auditResponses,
                                             Map<String, String> remediationCommentTimestamps,
                                             FPRInfo fprInfo) throws AviatorTechnicalException {

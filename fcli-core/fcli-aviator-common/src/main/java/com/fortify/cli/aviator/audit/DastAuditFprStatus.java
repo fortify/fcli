@@ -10,16 +10,12 @@
  * herein. The information contained herein is subject to change
  * without notice.
  */
-package com.fortify.cli.aviator.ssc.cli.cmd;
+package com.fortify.cli.aviator.audit;
 
-import com.fortify.cli.common.variable.DefaultVariablePropertyName;
-
-import picocli.CommandLine.Command;
-
-/**
- * Deprecated SAST audit command retained for backward compatibility.
- * Use {@code fcli aviator ssc audit-sast} instead.
- */
-@Command(name = "audit")
-@DefaultVariablePropertyName("artifactId")
-public class AviatorSSCAuditCommand extends AbstractAviatorSSCSastAuditCommand {}
+/** Outcome of processing a DAST FPR. */
+public enum DastAuditFprStatus {
+    AUDITED,
+    PARTIALLY_AUDITED,
+    SKIPPED,
+    FAILED
+}

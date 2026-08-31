@@ -34,6 +34,8 @@ public class TagMappingConfig {
     private String tag_id = "87f2364f-dcd4-49e6-861d-f8d3f351686b";
     private List<SuppressionExclusion> suppression_exclusions = new ArrayList<>();
     private Mapping mapping;
+    private ProductMapping sast;
+    private ProductMapping dast;
 
     public void setSuppression_exclusions(List<SuppressionExclusion> suppression_exclusions) {
         this.suppression_exclusions = suppression_exclusions == null ? new ArrayList<>() : suppression_exclusions;
@@ -61,6 +63,46 @@ public class TagMappingConfig {
         }
     }
 
+    public void validateForDast() {
+        validate();
+        if (hasSuppressionExclusions()) {
+            throw new AviatorSimpleException(
+                "Invalid DAST tag mapping configuration: suppression_exclusions are not supported");
+        }
+    }
+
+    public TagMappingConfig resolveForSast() {
+        TagMappingConfig resolved = resolve(sast);
+        resolved.validate();
+        return resolved;
+    }
+
+    public TagMappingConfig resolveForDast() {
+        TagMappingConfig resolved = resolve(dast);
+        resolved.validateForDast();
+        return resolved;
+    }
+
+    private TagMappingConfig resolve(ProductMapping productMapping) {
+        TagMappingConfig resolved = new TagMappingConfig();
+        resolved.setTag_id(productMapping != null && productMapping.getTag_id() != null
+                ? productMapping.getTag_id()
+                : tag_id);
+        resolved.setMapping(productMapping != null && productMapping.getMapping() != null
+                ? productMapping.getMapping()
+                : mapping);
+        List<SuppressionExclusion> productExclusions = productMapping == null
+                ? null
+                : productMapping.getSuppression_exclusions();
+        List<SuppressionExclusion> effectiveExclusions = productExclusions != null
+            ? productExclusions
+            : suppression_exclusions;
+        resolved.setSuppression_exclusions(effectiveExclusions == null
+            ? Collections.emptyList()
+            : new ArrayList<>(effectiveExclusions));
+        return resolved;
+    }
+
     public boolean hasSuppressionExclusions() {
         return suppression_exclusions != null
                 && suppression_exclusions.stream()
@@ -82,6 +124,40 @@ public class TagMappingConfig {
         return suppression_exclusions.stream()
                 .filter(Objects::nonNull)
                 .anyMatch(exclusion -> exclusion.matches(context));
+    }
+
+    public Result getResult(boolean tierOne, ResultType resultType) {
+        Tier tier = tierOne ? mapping.getTier_1() : mapping.getTier_2();
+        return switch (resultType) {
+            case FP -> tier.getFp();
+            case TP -> tier.getTp();
+            case UNSURE -> tier.getUnsure();
+        };
+    }
+
+    public Set<String> getMappedValues() {
+        if (mapping == null) {
+            return Collections.emptySet();
+        }
+        LinkedHashSet<String> values = new LinkedHashSet<>();
+        addMappedValues(values, mapping.getTier_1());
+        addMappedValues(values, mapping.getTier_2());
+        return Collections.unmodifiableSet(values);
+    }
+
+    private void addMappedValues(Set<String> values, Tier tier) {
+        if (tier == null) {
+            return;
+        }
+        addMappedValue(values, tier.getFp());
+        addMappedValue(values, tier.getTp());
+        addMappedValue(values, tier.getUnsure());
+    }
+
+    private void addMappedValue(Set<String> values, Result result) {
+        if (result != null && result.getValue() != null && !result.getValue().isBlank()) {
+            values.add(result.getValue());
+        }
     }
 
     private void validateTier(List<String> errors, String path, Tier tier) {
@@ -257,6 +333,19 @@ public class TagMappingConfig {
     public static class Mapping {
         private Tier tier_1;
         private Tier tier_2;
+    }
+
+    @Data @Reflectable
+    public static class ProductMapping {
+        private String tag_id;
+        private List<SuppressionExclusion> suppression_exclusions;
+        private Mapping mapping;
+    }
+
+    public enum ResultType {
+        FP,
+        TP,
+        UNSURE
     }
 
     @Data @Reflectable

@@ -10,16 +10,25 @@
  * herein. The information contained herein is subject to change
  * without notice.
  */
-package com.fortify.cli.aviator.ssc.cli.cmd;
+package com.fortify.cli.aviator.grpc;
 
-import com.fortify.cli.common.variable.DefaultVariablePropertyName;
+import java.util.List;
 
-import picocli.CommandLine.Command;
+import lombok.Builder;
 
 /**
- * Deprecated SAST audit command retained for backward compatibility.
- * Use {@code fcli aviator ssc audit-sast} instead.
+ * Results and quota metadata returned by one DAST audit stream.
  */
-@Command(name = "audit")
-@DefaultVariablePropertyName("artifactId")
-public class AviatorSSCAuditCommand extends AbstractAviatorSSCSastAuditCommand {}
+@Builder
+public record DastAuditStreamResult(
+    List<DastAuditResult> results,
+    int reservedQuota,
+    int exceededCount,
+    boolean unlimitedQuota,
+    String quotaLastUpdated,
+    String nextQuotaUpdateMessage
+) {
+    public DastAuditStreamResult {
+        results = results == null ? List.of() : List.copyOf(results);
+    }
+}
