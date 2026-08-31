@@ -17,7 +17,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260828.121722-dev_feat.v3.x.aviator.26.4" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260831.082237-dev_feat.v3.x.aviator.26.4" %}
 
 
 <div id="header">
@@ -36,7 +36,7 @@ fcli_version:
 </div>
 <h2>Name</h2>
 <div class="sectionbody">
-<p>fcli-aviator-ssc-audit - Audit an SSC application version using Fortify Remediation Aviator.</p>
+<p>fcli-aviator-ssc-audit - (DEPRECATED) Audit SAST findings in an SSC application version using Fortify Remediation Aviator.</p>
 </div>
 </div>
 <div id="content">
@@ -69,7 +69,7 @@ fcli_version:
 <h2 id="_description"><a class="anchor" href="#_description"></a>Description</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Downloads the FPR from an SSC application version, audits it with Fortify Remediation Aviator, and uploads the result back to SSC. This command requires an active user session. Use 'fcli aviator session login' to create a session. This command doesn&#8217;t wait for SSC to finish processing the audited FPR file; please use the 'fcli ssc artifact wait-for' command to wait until the audited FPR file has been processed by SSC.</p>
+<p>This command is deprecated, please use 'fcli aviator ssc audit-sast' instead. Downloads the FPR from an SSC application version, audits it with Fortify Remediation Aviator, and uploads the result back to SSC. This command requires an active user session. Use 'fcli aviator session login' to create a session. This command doesn&#8217;t wait for SSC to finish processing the audited FPR file; please use the 'fcli ssc artifact wait-for' command to wait until the audited FPR file has been processed by SSC.</p>
 </div>
 </div>
 </div>
@@ -116,11 +116,11 @@ fcli_version:
 </dd>
 <dt class="hdlist1"><strong>--[no-]refresh</strong></dt>
 <dd>
-<p>By default, this command will refresh the  source application version&#8217;s metrics when copying from it. Note that for large applications this can lead to an error if the timeout expires.</p>
+<p>Refresh out-of-date application version metrics before downloading the FPR. Note that for large applications this can lead to an error if the timeout expires.</p>
 </dd>
 <dt class="hdlist1"><strong>--refresh-timeout</strong>=<em>&lt;timeoutPeriod&gt;</em></dt>
 <dd>
-<p>Time-out, for example 30s (30 seconds), 5m (5 minutes), 1h (1 hour). Default value: 60s</p>
+<p>Time-out for refreshing application version metrics, for example 30s (30 seconds), 5m (5 minutes), 1h (1 hour). Default value: 60s</p>
 </dd>
 <dt class="hdlist1"><strong>--skip-if-exceeding-quota</strong></dt>
 <dd>
@@ -227,7 +227,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2026-08-28 12:20:13 UTC
+Last updated 2026-08-31 08:25:44 UTC
 </div>
 </div>
 </body>
