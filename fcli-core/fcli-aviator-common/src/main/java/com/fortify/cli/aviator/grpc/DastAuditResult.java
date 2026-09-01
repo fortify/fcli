@@ -12,6 +12,8 @@
  */
 package com.fortify.cli.aviator.grpc;
 
+import com.fortify.cli.aviator.audit.model.AuditTier;
+
 import lombok.Builder;
 
 /** Domain representation of one terminal DAST audit response. */
@@ -29,8 +31,12 @@ public sealed interface DastAuditResult permits DastAuditResult.Success, DastAud
         String remediationAdvice,
         String finalComment,
         String tagValue,
-        String tier
+        AuditTier tier
     ) implements DastAuditResult {
+        public Success {
+            tier = tier == null ? AuditTier.SILVER : tier;
+        }
+
         @Override
         public String status() {
             return "SUCCESS";

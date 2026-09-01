@@ -24,7 +24,9 @@ import java.util.concurrent.CompletableFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
 import com.fortify.cli.aviator.audit.model.AuditResponse;
+import com.fortify.cli.aviator.audit.model.AuditTier;
 import com.fortify.cli.aviator.config.TagMappingConfig;
 import com.fortify.cli.aviator.dast.DastSession;
 import com.fortify.cli.aviator.dast.StreamingWebInspectParser;
@@ -53,12 +55,12 @@ public final class DastAuditFPR {
             int missingId,
             int duplicate,
             int suppressed,
-            int alreadyProcessed) {
+            int alreadyProcessed,
+            int humanAudited) {
         private static class EligibilityResultBuilder {
-            private List<DastAuditWorkItem> workItems;
+            private List<DastAuditWorkItem> workItems = new ArrayList<>();
 
             private EligibilityResultBuilder addWorkItem(DastAuditWorkItem workItem) {
-                if (workItems == null) workItems = new ArrayList<>();
                 workItems.add(workItem);
                 return this;
             }
@@ -80,6 +82,11 @@ public final class DastAuditFPR {
 
             private EligibilityResultBuilder incrementAlreadyProcessed() {
                 alreadyProcessed++;
+                return this;
+            }
+
+            private EligibilityResultBuilder incrementHumanAudited() {
+                humanAudited++;
                 return this;
             }
         }
@@ -114,16 +121,24 @@ public final class DastAuditFPR {
         int totalReported = sessions.stream().mapToInt(session -> session.getIssues().size()).sum();
         int locallySkipped = totalReported - workItems.size();
         LOG.info("DAST audit eligibility: reported={}, eligible={}, skipped={} "
-                + "(missingId={}, duplicate={}, suppressed={}, alreadyProcessed={})",
+                + "(missingId={}, duplicate={}, suppressed={}, alreadyProcessed={}, humanAudited={})",
             totalReported, workItems.size(), locallySkipped, eligibility.missingId(),
-            eligibility.duplicate(), eligibility.suppressed(), eligibility.alreadyProcessed());
+            eligibility.duplicate(), eligibility.suppressed(), eligibility.alreadyProcessed(),
+            eligibility.humanAudited());
 
         if (workItems.isEmpty()) {
             LOG.info("DAST audit skipped because no eligible findings remain");
             return emptyResult(totalReported, locallySkipped);
         }
 
-        DastAuditStreamResult streamResult = streamRunner.run(config, workItems, totalReported).join();
+        CompletableFuture<DastAuditStreamResult> streamFuture = streamRunner.run(config, workItems, totalReported);
+        if (streamFuture == null) {
+            throw new AviatorTechnicalException("DAST audit stream did not return a completion future");
+        }
+        DastAuditStreamResult streamResult = streamFuture.join();
+        if (streamResult == null) {
+            throw new AviatorTechnicalException("DAST audit stream completed without a result");
+        }
         ResponseSummary summary = summarizeResponses(streamResult, workItems, tagMappingConfig);
         var updatedFile = summary.successfulResponses().isEmpty()
             ? null
@@ -221,7 +236,7 @@ public final class DastAuditFPR {
     }
 
     private static boolean isSuppressedFalsePositive(AuditResponse response, TagMappingConfig tagMappingConfig) {
-        boolean tierOne = "GOLD".equalsIgnoreCase(response.getTier());
+        boolean tierOne = AuditTier.fromServerValue(response.getTier()) == AuditTier.GOLD;
         return Boolean.TRUE.equals(tagMappingConfig.getResult(
             tierOne, TagMappingConfig.ResultType.FP).getSuppress());
     }
@@ -255,6 +270,11 @@ public final class DastAuditFPR {
                     LOG.debug("Skipping DAST issue {} because it is already processed by Aviator", issueId);
                     continue;
                 }
+                if (auditIssue != null && isHumanAudited(auditIssue)) {
+                    result.incrementHumanAudited();
+                    LOG.debug("Skipping DAST issue {} because it is already audited by a human", issueId);
+                    continue;
+                }
                 result.addWorkItem(new DastAuditWorkItem(session, issue));
             }
         }
@@ -262,8 +282,30 @@ public final class DastAuditFPR {
     }
 
     private static boolean isProcessedByAviator(AuditIssue auditIssue) {
-        return Constants.PROCESSED_BY_AVIATOR.equalsIgnoreCase(
-            auditIssue.getTags().get(Constants.AVIATOR_STATUS_TAG_ID));
+        Map<String, String> tags = getTags(auditIssue);
+        return Constants.PROCESSED_BY_AVIATOR.equalsIgnoreCase(tags.get(Constants.AVIATOR_STATUS_TAG_ID))
+            || tags.containsKey(Constants.AVIATOR_EXPECTED_OUTCOME_TAG_ID);
+    }
+
+    private static boolean isHumanAudited(AuditIssue auditIssue) {
+        Map<String, String> tags = getTags(auditIssue);
+        return isAuditDecision(tags.get(Constants.AUDITOR_STATUS_TAG_ID))
+            || isAuditDecision(tags.get(Constants.FOD_TAG_ID))
+            || isAnalysisDecision(tags.get(Constants.ANALYSIS_TAG_ID));
+    }
+
+    private static Map<String, String> getTags(AuditIssue auditIssue) {
+        return auditIssue.getTags() == null ? Map.of() : auditIssue.getTags();
+    }
+
+    private static boolean isAuditDecision(String value) {
+        return value != null && !value.isBlank()
+            && !Constants.PENDING_REVIEW.equalsIgnoreCase(value)
+            && !"Pending Review".equalsIgnoreCase(value);
+    }
+
+    private static boolean isAnalysisDecision(String value) {
+        return isAuditDecision(value) && !"Not Set".equalsIgnoreCase(value);
     }
 
     private static DastAuditFprResult emptyResult(int totalReported, int skipped) {

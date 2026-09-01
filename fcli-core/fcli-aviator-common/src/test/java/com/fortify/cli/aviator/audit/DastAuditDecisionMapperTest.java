@@ -16,29 +16,30 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.Test;
 
+import com.fortify.cli.aviator.audit.model.AuditTier;
 import com.fortify.cli.aviator.grpc.DastAuditResult;
 import com.fortify.cli.aviator.util.Constants;
 
 class DastAuditDecisionMapperTest {
     @Test
-    void unknownConfidenceFalsePositiveRemainsUnsuppressed() {
+    void serverGoldTierControlsFalsePositiveMappingRegardlessOfConfidence() {
         var result = DastAuditResult.Success.builder()
             .issueId("DAST-1")
             .confidence("UNKNOWN")
             .reasoning("reason")
             .finalComment("comment")
             .tagValue("bad")
-            .tier("GOLD")
+            .tier(AuditTier.GOLD)
             .build();
 
         var response = DastAuditDecisionMapper.toAuditResponse(result);
 
-        assertEquals("SILVER", response.getTier());
-        assertEquals(Constants.AVIATOR_LIKELY_FP, response.getAviatorPredictionTag());
+        assertEquals("GOLD", response.getTier());
+        assertEquals(Constants.AVIATOR_NOT_AN_ISSUE, response.getAviatorPredictionTag());
     }
 
     @Test
-    void highConfidenceFalsePositiveIsSuppressible() {
+    void missingServerTierDefaultsToSilverRegardlessOfConfidence() {
         var result = DastAuditResult.Success.builder()
             .issueId("DAST-1")
             .confidence("HIGH")
@@ -48,7 +49,34 @@ class DastAuditDecisionMapperTest {
 
         var response = DastAuditDecisionMapper.toAuditResponse(result);
 
-        assertEquals("GOLD", response.getTier());
-        assertEquals(Constants.AVIATOR_NOT_AN_ISSUE, response.getAviatorPredictionTag());
+        assertEquals("SILVER", response.getTier());
+        assertEquals(Constants.AVIATOR_LIKELY_FP, response.getAviatorPredictionTag());
+    }
+
+    @Test
+    void missingDomainTierDefaultsToSilver() {
+        var result = DastAuditResult.Success.builder()
+            .issueId("DAST-1")
+            .build();
+
+        var response = DastAuditDecisionMapper.toAuditResponse(result);
+
+        assertEquals("SILVER", response.getTier());
+        assertEquals(Constants.AVIATOR_LIKELY_FP, response.getAviatorPredictionTag());
+    }
+
+    @Test
+    void serverSilverTierControlsTruePositivePrediction() {
+        var result = DastAuditResult.Success.builder()
+            .issueId("DAST-1")
+            .truePositive(true)
+            .confidence("HIGH")
+            .tier(AuditTier.SILVER)
+            .build();
+
+        var response = DastAuditDecisionMapper.toAuditResponse(result);
+
+        assertEquals("SILVER", response.getTier());
+        assertEquals(Constants.AVIATOR_LIKELY_TP, response.getAviatorPredictionTag());
     }
 }
