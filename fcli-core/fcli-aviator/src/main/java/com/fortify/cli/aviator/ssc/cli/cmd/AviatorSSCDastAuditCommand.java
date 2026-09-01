@@ -12,8 +12,6 @@
  */
 package com.fortify.cli.aviator.ssc.cli.cmd;
 
-import static com.fortify.cli.ssc.artifact.helper.SSCArtifactHelper.getLatestDASTArtifact;
-
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -52,7 +50,6 @@ import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionRefreshOptions;
 import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionResolverMixin;
 import com.fortify.cli.ssc.appversion.helper.SSCAppVersionDescriptor;
 import com.fortify.cli.ssc.appversion.helper.SSCAppVersionHelper;
-import com.fortify.cli.ssc.artifact.helper.SSCArtifactDescriptor;
 import com.fortify.cli.ssc.system_state.helper.SSCJobDescriptor;
 import com.fortify.cli.ssc.system_state.helper.SSCJobHelper;
 
@@ -87,9 +84,8 @@ public class AviatorSSCDastAuditCommand extends AbstractSSCJsonNodeOutputCommand
 
             refreshMetricsIfNeeded(unirest, appVersion, logger);
 
-            SSCArtifactDescriptor artifact = getLatestDASTArtifact(unirest, appVersion.getVersionId());
-            downloadedFpr = AviatorSSCFprTransferHelper.downloadArtifactFpr(
-                unirest, artifact, logger, progressWriter);
+            downloadedFpr = AviatorSSCFprTransferHelper.downloadCurrentStateFpr(
+                unirest, appVersion, logger, progressWriter);
 
             DastAuditFprResult result = auditFpr(
                 downloadedFpr, appVersion, session, logger, tagMappingConfig);

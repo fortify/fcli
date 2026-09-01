@@ -12,10 +12,9 @@
  */
 package com.fortify.cli.aviator.audit;
 
-import java.util.Locale;
-
 import com.fortify.cli.aviator.audit.model.AuditResponse;
 import com.fortify.cli.aviator.audit.model.AuditResult;
+import com.fortify.cli.aviator.audit.model.AuditTier;
 import com.fortify.cli.aviator.grpc.DastAuditResult;
 import com.fortify.cli.aviator.util.Constants;
 
@@ -28,28 +27,22 @@ public final class DastAuditDecisionMapper {
     public static AuditResponse toAuditResponse(DastAuditResult result) {
         if (!(result instanceof DastAuditResult.Success success)) {
             return AuditResponse.builder()
-            .issueId(result.issueId())
-            .status(result.status())
-            .statusMessage(result.statusMessage())
+                .issueId(result.issueId())
+                .status(result.status())
+                .statusMessage(result.statusMessage())
                 .build();
         }
 
-        String confidence = normalizedConfidence(success.confidence());
+        AuditTier tier = success.tier();
+        boolean tierOne = tier == AuditTier.GOLD;
         String tagValue;
         String prediction;
-        String tier;
         if (success.truePositive()) {
             tagValue = Constants.EXPLOITABLE;
-            prediction = Constants.AVIATOR_REMEDIATION_REQUIRED;
-            tier = "GOLD";
-        } else if ("HIGH".equals(confidence)) {
-            tagValue = Constants.NOT_AN_ISSUE;
-            prediction = Constants.AVIATOR_NOT_AN_ISSUE;
-            tier = "GOLD";
+            prediction = tierOne ? Constants.AVIATOR_REMEDIATION_REQUIRED : Constants.AVIATOR_LIKELY_TP;
         } else {
             tagValue = Constants.NOT_AN_ISSUE;
-            prediction = Constants.AVIATOR_LIKELY_FP;
-            tier = "SILVER";
+            prediction = tierOne ? Constants.AVIATOR_NOT_AN_ISSUE : Constants.AVIATOR_LIKELY_FP;
         }
 
         String comment = success.finalComment() != null && !success.finalComment().isBlank()
@@ -58,19 +51,11 @@ public final class DastAuditDecisionMapper {
         return AuditResponse.builder()
             .issueId(success.issueId())
             .status("SUCCESS")
-            .tier(tier)
+            .tier(tier.name())
             .aviatorPredictionTag(prediction)
             .isAviatorProcessed(true)
             .auditResult(AuditResult.builder().tagValue(tagValue).comment(comment).build())
             .build();
     }
 
-    private static String normalizedConfidence(String confidence) {
-        if (confidence == null) return "LOW";
-        String normalized = confidence.toUpperCase(Locale.ROOT);
-        return switch (normalized) {
-            case "HIGH", "MEDIUM", "LOW" -> normalized;
-            default -> "LOW";
-        };
-    }
 }

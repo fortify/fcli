@@ -28,22 +28,42 @@ import com.fortify.cli.ssc.artifact.helper.SSCArtifactDescriptor;
 import kong.unirest.UnirestInstance;
 
 /**
- * Shared SSC transfer operations for artifact-specific DAST FPR workflows.
+ * Shared SSC transfer operations for DAST FPR workflows.
  */
 public final class AviatorSSCFprTransferHelper {
     private AviatorSSCFprTransferHelper() {}
+
+    public static Path downloadCurrentStateFpr(
+            UnirestInstance unirest,
+            SSCAppVersionDescriptor appVersion,
+            IAviatorLogger logger,
+            IProgressWriter progressWriter) throws IOException {
+        logger.progress("Status: Downloading current FPR state from SSC for app version %s:%s (id=%s)",
+            appVersion.getApplicationName(), appVersion.getVersionName(), appVersion.getVersionId());
+        return downloadFpr(unirest, "aviator_" + appVersion.getVersionId() + "_",
+            SSCUrls.DOWNLOAD_CURRENT_FPR(appVersion.getVersionId(), true), progressWriter);
+    }
 
     public static Path downloadArtifactFpr(
             UnirestInstance unirest,
             SSCArtifactDescriptor artifact,
             IAviatorLogger logger,
             IProgressWriter progressWriter) throws IOException {
-        Path fprPath = Files.createTempFile("aviator_" + artifact.getId() + "_", ".fpr");
+        logger.progress("Status: Downloading FPR from SSC (artifact id=%s)", artifact.getId());
+        return downloadFpr(unirest, "aviator_" + artifact.getId() + "_",
+            SSCUrls.DOWNLOAD_ARTIFACT(artifact.getId(), true), progressWriter);
+    }
+
+    private static Path downloadFpr(
+            UnirestInstance unirest,
+            String filePrefix,
+            String downloadUrl,
+            IProgressWriter progressWriter) throws IOException {
+        Path fprPath = Files.createTempFile(filePrefix, ".fpr");
         try {
-            logger.progress("Status: Downloading FPR from SSC (artifact id=%s)", artifact.getId());
             SSCFileTransferHelper.download(
                 unirest,
-                SSCUrls.DOWNLOAD_ARTIFACT(artifact.getId(), true),
+                downloadUrl,
                 fprPath.toFile(),
                 SSCFileTransferHelper.ISSCAddDownloadTokenFunction.ROUTEPARAM_DOWNLOADTOKEN,
                 progressWriter);

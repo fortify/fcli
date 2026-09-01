@@ -13,6 +13,7 @@
 package com.fortify.cli.aviator.grpc;
 
 import com.fortify.aviator.dastaudit.DastAuditResponse;
+import com.fortify.cli.aviator.audit.model.AuditTier;
 
 /**
  * Maps a DAST audit response to the issue associated with its request ID.
@@ -61,7 +62,7 @@ final class DastAuditResponseMapper {
             .remediationAdvice(decision.getRemediationAdvice())
             .finalComment(decision.getFinalComment())
             .tagValue(decision.getTagValue())
-            .tier(decision.getTier())
+            .tier(AuditTier.fromServerValue(decision.getTier()))
             .build();
     }
 }

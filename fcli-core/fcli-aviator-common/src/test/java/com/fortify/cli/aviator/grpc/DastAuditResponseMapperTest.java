@@ -19,6 +19,7 @@ import org.junit.jupiter.api.Test;
 
 import com.fortify.aviator.dastaudit.DastAuditDecision;
 import com.fortify.aviator.dastaudit.DastAuditResponse;
+import com.fortify.cli.aviator.audit.model.AuditTier;
 
 class DastAuditResponseMapperTest {
     @Test
@@ -36,6 +37,13 @@ class DastAuditResponseMapperTest {
         assertEquals("DAST-1", result.issueId());
         assertEquals("SUCCESS", result.status());
         assertEquals(true, success.truePositive());
+        assertEquals(AuditTier.SILVER, success.tier());
+    }
+
+    @Test
+    void parsesKnownTierAndDefaultsUnknownTierToSilver() {
+        assertEquals(AuditTier.GOLD, mapTier("gold"));
+        assertEquals(AuditTier.SILVER, mapTier("BRONZE"));
     }
 
     @Test
@@ -67,5 +75,14 @@ class DastAuditResponseMapperTest {
         assertInstanceOf(DastAuditResult.Skipped.class, result);
         assertEquals("SKIPPED", result.status());
         assertEquals("Quota exceeded", result.statusMessage());
+    }
+
+    private AuditTier mapTier(String tier) {
+        var response = DastAuditResponse.newBuilder()
+            .setDastIssueId("DAST-1")
+            .setStatus("SUCCESS")
+            .setDecision(DastAuditDecision.newBuilder().setTier(tier))
+            .build();
+        return ((DastAuditResult.Success) DastAuditResponseMapper.map(response, "DAST-1")).tier();
     }
 }
