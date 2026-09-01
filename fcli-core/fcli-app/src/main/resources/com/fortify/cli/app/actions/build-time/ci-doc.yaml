@@ -353,7 +353,7 @@ formatters:
               \n* Debug logging for Scancentral Client is disabled; pass --debug on the fcli invocation to enable debug logging.
       - title: Scan Execution
         overview: >-
-          Configure SAST and Debricked scan execution and waiting behavior for ${productNames.ssc}.
+          Configure SAST, DAST, and Debricked scan execution and waiting behavior for ${productNames.ssc}.
         vars:
           - names: DO_SAST_SCAN\nSAST_SCAN_EXTRA_OPTS
             desc: >-
@@ -363,6 +363,21 @@ formatters:
               the fcliCmd:fcli sc-sast scan start: command, for example to request a scan completion email notification.
               Note that these environment variables only control the submission of the scan request; see the
               information below for details on waiting for the scan to complete. 
+          - names: DAST_SETTINGS\nDO_DAST_SCAN\nDAST_SCAN_NAME\nDAST_SCAN_EXTRA_OPTS
+            desc: >-
+              The fcli `ci` action can run a ScanCentral DAST scan using pre-existing scan settings that have
+              already been configured for the target application version; this action does not create or modify
+              scan settings. Set `DAST_SETTINGS` to the CI/CD token or numeric id of the SC-DAST scan settings to
+              use (see the `cicdToken` and `id` fields returned by fcliCmd:fcli sc-dast scan-settings list:).
+              Unlike the SAST scan, the DAST scan is disabled by default, even if `DAST_SETTINGS` is configured,
+              as `DAST_SETTINGS` may be a permanent CI/CD variable while DAST scans are often only meant to run
+              on demand. Set `DO_DAST_SCAN` to `true` to enable the DAST scan for a given pipeline run (in
+              addition to `DAST_SETTINGS` being set). By default, the scan name is auto-generated from the
+              application version and run id (with `:`/`/` characters replaced by `-`); set `DAST_SCAN_NAME` to
+              use a custom scan name instead. The `DAST_SCAN_EXTRA_OPTS` environment variable can be used
+              to provide additional options to the fcliCmd:fcli sc-dast scan start: command. Note that these
+              environment variables only control the submission of the scan request; see the information below
+              for details on waiting for the scan to complete.
           - names: DO_DEBRICKED_SCAN\nDEBRICKED_SCAN_EXTRA_OPTS\nDEBRICKED_ACCESS_TOKEN\nDEBRICKED_VERSION\nDEBRICKED_HOME
             desc: >-
               The fcli `ci` action supports running a Debricked Software Composition Analysis (SCA) scan, which
@@ -377,13 +392,17 @@ formatters:
               \n  * `latest` to use the latest available Debricked CLI version
               \n  * `auto` (default) to use a pre-installed version if available, otherwise installs latest
               \n* If neither `DEBRICKED_VERSION` nor `DEBRICKED_HOME` are set, defaults to `auto` behavior.
-          - names: DO_WAIT\nDO_SAST_WAIT\nSAST_WAIT_EXTRA_OPTS\nDEBRICKED_WAIT_EXTRA_OPTS
+          - names: DO_WAIT\nDO_SAST_WAIT\nSAST_WAIT_EXTRA_OPTS\nDAST_WAIT_EXTRA_OPTS\nDEBRICKED_WAIT_EXTRA_OPTS
             desc: >-
               By default, the fcli `ci` action will wait for all started scans to complete; set `DO_WAIT` to
               `false` to just kick off any configured scans without waiting for completion. Note that doing so
               will skip any post-scan tasks. The `SAST_WAIT_EXTRA_OPTS` environment variable can be used to pass
-              extra options to the fcliCmd:fcli sc-sast scan wait-for: command, and similarly, the `DEBRICKED_WAIT_EXTRA_OPTS`
-              environment variable can be used to pass extra options to the fcliCmd:fcli ssc artifact wait-for: command.
+              extra options to the fcliCmd:fcli sc-sast scan wait-for: command, and similarly, the `DAST_WAIT_EXTRA_OPTS`
+              environment variable can be used to pass extra options to the fcliCmd:fcli sc-dast scan wait-for: command,
+              and the `DEBRICKED_WAIT_EXTRA_OPTS` environment variable can be used to pass extra options to the
+              fcliCmd:fcli ssc artifact wait-for: command.\n\nDAST scans can take considerably longer than SAST scans,
+              potentially exceeding CI/CD job time limits (for example on GitHub Actions or GitLab CI); if the
+              default wait timeout doesn't suffice, pass a `--timeout` option through `DAST_WAIT_EXTRA_OPTS`.
       - title: Post-Scan Actions
         overview: >
           Configure post-scan tasks including Aviator auditing, application version summaries, policy checks,
