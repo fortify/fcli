@@ -843,7 +843,7 @@ public class AuditProcessor {
 
     private TagMappingConfig.Result getDastResultConfig(AuditResponse response,
             TagMappingConfig tagMappingConfig) {
-        boolean tierOne = AuditTier.GOLD.name().equals(response.getTier());
+        boolean tierOne = AuditTier.fromServerValue(response.getTier()) == AuditTier.GOLD;
         String tagValue = response.getAuditResult().getTagValue();
         if (Constants.NOT_AN_ISSUE.equalsIgnoreCase(tagValue)) {
             return tagMappingConfig.getResult(tierOne, TagMappingConfig.ResultType.FP);

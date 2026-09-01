@@ -236,7 +236,7 @@ public final class DastAuditFPR {
     }
 
     private static boolean isSuppressedFalsePositive(AuditResponse response, TagMappingConfig tagMappingConfig) {
-        boolean tierOne = AuditTier.GOLD.name().equals(response.getTier());
+        boolean tierOne = AuditTier.fromServerValue(response.getTier()) == AuditTier.GOLD;
         return Boolean.TRUE.equals(tagMappingConfig.getResult(
             tierOne, TagMappingConfig.ResultType.FP).getSuppress());
     }
