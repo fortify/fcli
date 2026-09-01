@@ -26,14 +26,16 @@ import com.fortify.cli.aviator._common.exception.AviatorBugException;
  * 
  * @param issueId The issue/remediation ID from the remediations.xml file
  * @param status Either "available" (successfully processed) or "skipped" (processing failed)
+ * @param description A detailed explanation of the issue and the suggested remediation
  * @param files Map of filename to FilePreview objects containing change details
  * @param skipReason Human-readable reason why remediation was skipped (null if status is "available")
  */
 @Reflectable
-@JsonPropertyOrder({"issueId", "status", "files", "available", "skipped", "skipReason"})
+@JsonPropertyOrder({"issueId", "status", "description", "files", "available", "skipped", "skipReason"})
 public record PreviewDetail(
         String issueId,
         String status,
+        String description,
         Map<String, FilePreview> files,
         String skipReason) {
 
@@ -47,12 +49,12 @@ public record PreviewDetail(
         files = files == null ? Map.of() : Collections.unmodifiableMap(new LinkedHashMap<>(files));
     }
 
-    public static PreviewDetail available(String issueId, Map<String, FilePreview> files) {
-        return new PreviewDetail(issueId, "available", files, null);
+    public static PreviewDetail available(String issueId, String description, Map<String, FilePreview> files) {
+        return new PreviewDetail(issueId, "available", description, files, null);
     }
 
-    public static PreviewDetail skipped(String issueId, String skipReason) {
-        return new PreviewDetail(issueId, "skipped", Map.of(), skipReason);
+    public static PreviewDetail skipped(String issueId, String description, String skipReason) {
+        return new PreviewDetail(issueId, "skipped", description, Map.of(), skipReason);
     }
 
     public boolean isAvailable() {

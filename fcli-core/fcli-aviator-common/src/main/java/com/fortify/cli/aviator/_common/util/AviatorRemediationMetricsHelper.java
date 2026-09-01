@@ -137,11 +137,12 @@ public final class AviatorRemediationMetricsHelper {
         int total = metric == null ? 0 : metric.totalRemediations();
         int applied = metric == null ? 0 : metric.appliedRemediations();
         int skipped = metric == null ? 0 : metric.skippedRemediations();
+        String appliedFieldName = metric instanceof RemediationMetric.Preview ? "availableRemediation" : "appliedRemediation";
         Map<String, Integer> skippedByReason = metric == null ? Map.of() : metric.skippedByReason();
         Set<String> modifiedFiles = metric == null ? Set.of() : metric.modifiedFiles();
 
         result.put("totalRemediation", total);
-        result.put("appliedRemediation", applied);
+        result.put(appliedFieldName, applied);
         result.put("skippedRemediation", skipped);
         result.put("skippedReasons", formatSkippedReasons(skippedByReason));
         result.set("skippedByReason", toObjectNode(skippedByReason));

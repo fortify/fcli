@@ -384,6 +384,7 @@ public class RemediationProcessor {
         private final boolean previewMode;
         private final Map<String, Map<String, FileMetadata>> changesByIssue = new LinkedHashMap<>();
         private final Map<String, String> skipReasonsByIssue = new LinkedHashMap<>();
+        private final Map<String, String> descriptionsByIssue = new LinkedHashMap<>();
         private int xmlEntryCount;
         private int appliedRemediations;
 
@@ -441,6 +442,12 @@ public class RemediationProcessor {
             }
         }
 
+        private void recordDescription(String instanceId, String description) {
+            if (previewMode && instanceId != null && !instanceId.isBlank() && description != null) {
+                descriptionsByIssue.put(instanceId, description);
+            }
+        }
+
         private List<PreviewDetail> buildPreviewDetails() {
             List<PreviewDetail> details = new ArrayList<>();
             
@@ -461,7 +468,8 @@ public class RemediationProcessor {
                     FilePreview filePreview = new FilePreview(metadata.path, metadata.encoding, fileChanges);
                     fileMap.put(filename, filePreview);
                 }
-                details.add(PreviewDetail.available(issueId, fileMap));
+                String description = descriptionsByIssue.get(issueId);
+                details.add(PreviewDetail.available(issueId, description, fileMap));
             }
             
             // Add skipped remediations
@@ -470,7 +478,8 @@ public class RemediationProcessor {
                 String skipReason = entry.getValue();
                 // Only add if not already in successful list
                 if (!changesByIssue.containsKey(issueId)) {
-                    details.add(PreviewDetail.skipped(issueId, skipReason));
+                    String description = descriptionsByIssue.get(issueId);
+                    details.add(PreviewDetail.skipped(issueId, description, skipReason));
                 }
             }
             
@@ -517,6 +526,13 @@ public class RemediationProcessor {
     private boolean processRemediation(
             Element remediation, Path sourceBasePath, FvdlMetadataResult fvdlMetadataResult, ProcessingState state) {
         String instanceId = remediation.getAttribute("instanceId");
+        
+        if (previewMode) {
+            NodeList nodes = remediation.getElementsByTagNameNS(NAMESPACE_URI, "AuditComment");
+            String description = nodes.getLength() > 0 ? ((Element) nodes.item(0)).getTextContent() : null;
+            state.recordDescription(instanceId, description);
+        }
+
         try {
             Map<Path, PendingFileWrite> pendingWrites = prepareFileChanges(remediation, sourceBasePath, fvdlMetadataResult);
             if (pendingWrites.isEmpty()) {

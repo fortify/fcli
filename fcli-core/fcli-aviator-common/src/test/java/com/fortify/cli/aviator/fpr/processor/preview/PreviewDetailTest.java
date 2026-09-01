@@ -32,11 +32,12 @@ class PreviewDetailTest {
     void availablePreviewDetailCreatedCorrectly() {
         Map<String, FilePreview> files = Map.of("Example.java", 
             new FilePreview("/path/to/Example.java", "UTF-8", java.util.List.of()));
-        PreviewDetail detail = PreviewDetail.available("ISSUE-123", files);
+        PreviewDetail detail = PreviewDetail.available("ISSUE-123", "Remediation rationale", files);
         
         assertNotNull(detail);
         assertEquals("ISSUE-123", detail.issueId());
         assertEquals("available", detail.status());
+        assertEquals("Remediation rationale", detail.description());
         assertEquals(1, detail.files().size());
         assertEquals(null, detail.skipReason());
         assertTrue(detail.isAvailable());
@@ -44,7 +45,7 @@ class PreviewDetailTest {
 
     @Test
     void skippedPreviewDetailCreatedCorrectly() {
-        PreviewDetail detail = PreviewDetail.skipped("ISSUE-456", "Source file missing");
+        PreviewDetail detail = PreviewDetail.skipped("ISSUE-456", null, "Source file missing");
         
         assertNotNull(detail);
         assertEquals("ISSUE-456", detail.issueId());
@@ -57,30 +58,30 @@ class PreviewDetailTest {
     @Test
     void nullIssueIdThrowsException() {
         assertThrows(AviatorBugException.class, 
-            () -> new PreviewDetail(null, "available", Map.of(), null));
+            () -> new PreviewDetail(null, "available", null, Map.of(), null));
     }
 
     @Test
     void blankIssueIdThrowsException() {
         assertThrows(AviatorBugException.class, 
-            () -> new PreviewDetail("", "available", Map.of(), null));
+            () -> new PreviewDetail("", "available", null, Map.of(), null));
     }
 
     @Test
     void nullStatusThrowsException() {
         assertThrows(AviatorBugException.class, 
-            () -> new PreviewDetail("ISSUE-1", null, Map.of(), null));
+            () -> new PreviewDetail("ISSUE-1", null, null, Map.of(), null));
     }
 
     @Test
     void blankStatusThrowsException() {
         assertThrows(AviatorBugException.class, 
-            () -> new PreviewDetail("ISSUE-1", "   ", Map.of(), null));
+            () -> new PreviewDetail("ISSUE-1", "   ", null, Map.of(), null));
     }
 
     @Test
     void nullFilesMapIsConvertedToEmptyMap() {
-        PreviewDetail detail = new PreviewDetail("ISSUE-1", "available", null, null);
+        PreviewDetail detail = new PreviewDetail("ISSUE-1", "available", null, null, null);
         assertNotNull(detail.files());
         assertEquals(0, detail.files().size());
     }
@@ -89,7 +90,7 @@ class PreviewDetailTest {
     void filesMapIsUnmodifiable() {
         Map<String, FilePreview> files = new java.util.LinkedHashMap<>();
         files.put("Test.java", new FilePreview("/path", "UTF-8", java.util.List.of()));
-        PreviewDetail detail = new PreviewDetail("ISSUE-1", "available", files, null);
+        PreviewDetail detail = new PreviewDetail("ISSUE-1", "available", null, files, null);
         
         assertThrows(UnsupportedOperationException.class, 
             () -> detail.files().put("Another.java", new FilePreview("/path2", "UTF-8", java.util.List.of())));
