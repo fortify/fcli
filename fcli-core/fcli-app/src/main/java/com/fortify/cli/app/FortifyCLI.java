@@ -28,7 +28,6 @@ public class FortifyCLI {
      * @param args Command line options passed to Fortify CLI
      */
     public static final void main(String[] args) {
-        System.out.println("FCLI started");
         System.exit(execute(args));
     }
 
