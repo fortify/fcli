@@ -85,7 +85,7 @@ class AviatorRemediationMetricsHelperTest {
     void aggregatingAnyPreviewMetricYieldsPreviewResultWithMergedDetails() {
         RemediationMetric applied = RemediationMetric.unfiltered(1, 1, Set.of("A.java"));
         RemediationMetric preview = RemediationMetric.previewUnfiltered(1, 0, Set.of(), Map.of(),
-                List.of(com.fortify.cli.aviator.fpr.processor.preview.PreviewDetail.skipped("ISSUE-2", "Source file missing")));
+                List.of(com.fortify.cli.aviator.fpr.processor.preview.PreviewDetail.skipped("ISSUE-2", null, "Source file missing")));
 
         RemediationMetric aggregated = AviatorRemediationMetricsHelper.aggregateMetrics(
                 null, List.of(applied, preview));
