@@ -78,6 +78,8 @@ public class RemediationProcessor {
 
     private record RollbackFileWrite(String filename, Path filePath, byte[] originalBytes) {}
 
+    private record RemediationKey(String fileName, Path filePath,int lineFrom,int lineTo,String comparisonCode){}
+
     private enum SkipReason {
         SOURCE_FILE_MISSING("Source file missing"),
         SOURCE_FILE_OUTSIDE_SOURCE_DIR("Source file outside source directory"),
@@ -156,6 +158,7 @@ public class RemediationProcessor {
         int appliedRemediations;
         Set<String> modifiedFiles = new LinkedHashSet<>();
         Map<String, Integer> skippedByReason = new LinkedHashMap<>();
+
 
         // Sanitize and normalize the base source directory path once.
         String trimmedSourceDir = sourceCodeDirectory.trim();
