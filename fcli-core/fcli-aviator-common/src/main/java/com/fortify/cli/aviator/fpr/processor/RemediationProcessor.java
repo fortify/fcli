@@ -30,6 +30,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.zip.ZipFile;
 
@@ -37,6 +39,7 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
+import com.fortify.cli.aviator.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
@@ -53,8 +56,6 @@ import com.fortify.cli.aviator.fpr.utils.ISourceDecoder.SourceDecodeException;
 import com.fortify.cli.aviator.fpr.utils.SourceDecoders;
 import com.fortify.cli.aviator.fpr.utils.SourceEncoder;
 import com.fortify.cli.aviator.fpr.utils.SourceEncoder.SourceEncodeException;
-import com.fortify.cli.aviator.util.FprHandle;
-import com.fortify.cli.aviator.util.FuzzyContextSearcher;
 
 public class RemediationProcessor {
     private static final Logger LOG = LoggerFactory.getLogger(RemediationProcessor.class);
@@ -156,9 +157,10 @@ public class RemediationProcessor {
         Document remediationDoc;
         int totalRemediations;
         int appliedRemediations;
+        int identicalRemediations = 0;
         Set<String> modifiedFiles = new LinkedHashSet<>();
         Map<String, Integer> skippedByReason = new LinkedHashMap<>();
-
+        Map<RemediationKey, String> remediationLookup = new LinkedHashMap<>();
 
         // Sanitize and normalize the base source directory path once.
         String trimmedSourceDir = sourceCodeDirectory.trim();
@@ -187,28 +189,108 @@ public class RemediationProcessor {
             LOG.debug("Loaded {} remediation entries from {}", totalRemediations, remediationPath);
             appliedRemediations = 0;
             for (int i = 0; i < remediationNodes.getLength(); i++) {
-                Element remediation = (Element) remediationNodes.item(i);
-                if (processRemediation(remediation, sourceBasePath, fvdlMetadata, modifiedFiles, skippedByReason)) {
+                Element remediation =
+                    (Element) remediationNodes.item(i);
+
+                String instanceId =
+                    remediation.getAttribute("instanceId");
+
+                List<RemediationKey> remediationKeys =
+                    createRemediationKeys(
+                        remediation,
+                        sourceBasePath);
+
+                String identicalInstanceId = null;
+
+                for (RemediationKey key : remediationKeys) {
+                    String existingInstanceId =
+                        remediationLookup.get(key);
+
+                    if (existingInstanceId != null) {
+                        identicalInstanceId = existingInstanceId;
+                        break;
+                    }
+                }
+
+                if (identicalInstanceId != null) {
+                    identicalRemediations++;
                     appliedRemediations++;
+
+                    LOG.info(
+                        "Identical found: {}",
+                        identicalInstanceId);
+
+                    LOG.info(
+                        "Identical Remediation Applied: {} is identical to {}",
+                        instanceId,
+                        identicalInstanceId);
+
+                    continue;
+                }
+
+                if (processRemediation(
+                    remediation,
+                    sourceBasePath,
+                    fvdlMetadata,
+                    modifiedFiles,
+                    skippedByReason)) {
+
+                    appliedRemediations++;
+
+                    for (RemediationKey key : remediationKeys) {
+                        remediationLookup.put(key, instanceId);
+                    }
                 }
             }
 
         } catch (ParserConfigurationException | SAXException | IOException e) {
-            LOG.error("Error parsing remediations.xml file: {}", remediationPath, e);
-            throw new AviatorTechnicalException("Error processing remediation.xml file.", e);
+            LOG.error(
+                "Error parsing remediations.xml file: {}",
+                remediationPath,
+                e);
+
+            throw new AviatorTechnicalException(
+                "Error processing remediation.xml file.",
+                e);
+
         } catch (AviatorTechnicalException e) {
             throw e;
+
         } catch (Exception e) {
-            LOG.error("Unexpected error processing remediation.xml: {}", remediationPath, e);
-            throw new AviatorTechnicalException("Unexpected error processing remediations.xml.", e);
+            LOG.error(
+                "Unexpected error processing remediations.xml: {}",
+                remediationPath,
+                e);
+
+            throw new AviatorTechnicalException(
+                "Unexpected error processing remediations.xml.",
+                e);
         }
-        int skippedRemediations = totalRemediations - appliedRemediations;
-        LOG.info("Auto-remediation summary: total={}, applied={}, skipped={}", totalRemediations, appliedRemediations, skippedRemediations);
+
+        int skippedRemediations =
+            totalRemediations - appliedRemediations;
+
+        LOG.info(
+            "Auto-remediation summary: total={}, applied={}, identical={}, skipped={}",
+            totalRemediations,
+            appliedRemediations,
+            identicalRemediations,
+            skippedRemediations);
+
         if (!skippedByReason.isEmpty()) {
-            LOG.info("Skipped remediations by reason: {}", formatSkippedReasons(skippedByReason));
+            LOG.info(
+                "Skipped remediations by reason: {}",
+                formatSkippedReasons(skippedByReason));
         }
-        return new RemediationMetric(totalRemediations, appliedRemediations, skippedRemediations, modifiedFiles, skippedByReason);
+
+        return new RemediationMetric(
+            totalRemediations,
+            appliedRemediations,
+            skippedRemediations,
+            modifiedFiles,
+            skippedByReason);
     }
+
 
     private boolean processRemediation(Element remediation, Path sourceBasePath, FVDLMetadata fvdlMetadata,
             Set<String> modifiedFiles, Map<String, Integer> skippedByReason) {
@@ -579,5 +661,180 @@ public class RemediationProcessor {
         List<String> parts = new ArrayList<>();
         skippedByReason.forEach((reason, count) -> parts.add(reason + "=" + count));
         return String.join(", ", parts);
+    }
+
+    private RemediationKey createRemediationKey(
+        Element fileChanges,
+        Element change,
+        Path sourceBasePath,
+        String comparisonCode) {
+
+        String fileName = getRequiredElementText(fileChanges, "Filename");
+        Path filePath = sourceBasePath.resolve(fileName).normalize();
+
+        int lineFrom = parseRequiredInt(change, "LineFrom");
+        int lineTo = parseRequiredInt(change, "LineTo");
+
+        return new RemediationKey(
+            fileName,
+            filePath,
+            lineFrom,
+            lineTo,
+            comparisonCode
+        );
+    }
+
+
+    private String trimBlankLines(String content) {
+        String[] lines = content.split("\\R", -1);
+
+        int start = 0;
+        int end = lines.length - 1;
+
+        while (start <= end && lines[start].isBlank()) {
+            start++;
+        }
+
+        while (end >= start && lines[end].isBlank()) {
+            end--;
+        }
+
+        if (start > end) {
+            return "";
+        }
+
+        return String.join(
+            System.lineSeparator(),
+            Arrays.copyOfRange(lines, start, end + 1));
+    }
+
+    private String normalizeProposedCode(String content, String fileName) {
+        if (content == null) {
+            return null;
+        }
+
+        String language = FileTypeLanguageMapperUtil.getProgrammingLanguage(
+            FileUtil.getFileExtension(fileName));
+
+        String commentSymbol =
+            LanguageCommentMapperUtil.getProgrammingLanguageComment(language);
+
+        if ("Unknown".equals(commentSymbol)) {
+            return trimBlankLines(content);
+        }
+
+        String closingToken = commentSymbol.equals("<!--") ? "-->"
+            : commentSymbol.equals("<%--") ? "--%>"
+            : null;
+
+        Pattern markerPattern = Pattern.compile(
+            "[ \\t]*" + Pattern.quote(commentSymbol) + " L\\d+"
+                + (closingToken != null
+                ? "[ \\t]*" + Pattern.quote(closingToken)
+                : "")
+                + "[ \\t]*$");
+
+        String[] lines = content.split("\\R", -1);
+        StringBuilder result = new StringBuilder();
+
+        for (int i = 0; i < lines.length; i++) {
+            Matcher matcher = markerPattern.matcher(lines[i]);
+
+            result.append(
+                matcher.find()
+                    ? lines[i].substring(0, matcher.start())
+                    : lines[i]);
+
+            if (i < lines.length - 1) {
+                result.append(System.lineSeparator());
+            }
+        }
+
+        return trimBlankLines(result.toString());
+    }
+
+    private String createComparisonCode(String normalizedCode, String fileName) {
+        if (normalizedCode == null) {
+            return null;
+        }
+
+        String language = FileTypeLanguageMapperUtil.getProgrammingLanguage(
+            FileUtil.getFileExtension(fileName));
+
+        String commentSymbol =
+            LanguageCommentMapperUtil.getProgrammingLanguageComment(language);
+
+        if ("Unknown".equals(commentSymbol)) {
+            return normalizedCode.replaceAll("\\s+", "");
+        }
+
+        String comparisonCode = normalizedCode;
+
+        // Remove block comments
+        String closingToken = commentSymbol.equals("<!--") ? "-->"
+            : commentSymbol.equals("<%--") ? "--%>"
+            : null;
+
+        if (closingToken != null) {
+            comparisonCode = comparisonCode.replaceAll(
+                "(?s)" + Pattern.quote(commentSymbol)
+                    + ".*?" + Pattern.quote(closingToken),
+                "");
+        } else if ("//".equals(commentSymbol)) {
+            comparisonCode = comparisonCode.replaceAll(
+                "(?m)" + Pattern.quote(commentSymbol) + ".*$",
+                "");
+            comparisonCode = comparisonCode.replaceAll(
+                "(?s)/\\*.*?\\*/",
+                "");
+        } else if ("#".equals(commentSymbol)) {
+            comparisonCode = comparisonCode.replaceAll(
+                "(?m)" + Pattern.quote(commentSymbol) + ".*$",
+                "");
+        }
+
+        // Normalize whitespace
+        return comparisonCode.replaceAll("\\s+", "");
+    }
+
+    private List<RemediationKey> createRemediationKeys(
+        Element remediation,
+        Path sourceBasePath) {
+
+        List<RemediationKey> keys = new ArrayList<>();
+
+        NodeList fileChangesNodes =
+            remediation.getElementsByTagNameNS(NAMESPACE_URI, "FileChanges");
+
+        for (int i = 0; i < fileChangesNodes.getLength(); i++) {
+            Element fileChanges = (Element) fileChangesNodes.item(i);
+
+            NodeList changeNodes =
+                fileChanges.getElementsByTagNameNS(NAMESPACE_URI, "Change");
+
+            for (int j = 0; j < changeNodes.getLength(); j++) {
+                Element change = (Element) changeNodes.item(j);
+
+                String fileName =
+                    getRequiredElementText(fileChanges, "Filename");
+
+                String newCode =
+                    getRequiredElementText(change, "NewCode");
+
+                String normalizedCode =
+                    normalizeProposedCode(newCode, fileName);
+
+                String comparisonCode =
+                    createComparisonCode(normalizedCode, fileName);
+
+                keys.add(createRemediationKey(
+                    fileChanges,
+                    change,
+                    sourceBasePath,
+                    comparisonCode));
+            }
+        }
+
+        return keys;
     }
 }
