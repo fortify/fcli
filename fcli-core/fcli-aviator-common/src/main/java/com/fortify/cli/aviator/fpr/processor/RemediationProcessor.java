@@ -189,14 +189,12 @@ public class RemediationProcessor {
             LOG.debug("Loaded {} remediation entries from {}", totalRemediations, remediationPath);
             appliedRemediations = 0;
             for (int i = 0; i < remediationNodes.getLength(); i++) {
-                Element remediation =
-                    (Element) remediationNodes.item(i);
+                Element remediation = (Element) remediationNodes.item(i);
 
                 String instanceId =
                     remediation.getAttribute("instanceId");
 
-                List<RemediationKey> remediationKeys =
-                    createRemediationKeys(
+                List<RemediationKey> remediationKeys = createRemediationKeys(
                         remediation,
                         sourceBasePath);
 
@@ -244,27 +242,14 @@ public class RemediationProcessor {
             }
 
         } catch (ParserConfigurationException | SAXException | IOException e) {
-            LOG.error(
-                "Error parsing remediations.xml file: {}",
-                remediationPath,
-                e);
-
-            throw new AviatorTechnicalException(
-                "Error processing remediation.xml file.",
-                e);
-
+            LOG.error("Error parsing remediations.xml file: {}", remediationPath, e);
+            throw new AviatorTechnicalException("Error processing remediation.xml file.", e);
         } catch (AviatorTechnicalException e) {
             throw e;
 
         } catch (Exception e) {
-            LOG.error(
-                "Unexpected error processing remediations.xml: {}",
-                remediationPath,
-                e);
-
-            throw new AviatorTechnicalException(
-                "Unexpected error processing remediations.xml.",
-                e);
+            LOG.error("Unexpected error processing remediation.xml: {}", remediationPath, e);
+            throw new AviatorTechnicalException("Unexpected error processing remediations.xml.", e);
         }
 
         int skippedRemediations =
@@ -279,16 +264,9 @@ public class RemediationProcessor {
 
         if (!skippedByReason.isEmpty()) {
             LOG.info(
-                "Skipped remediations by reason: {}",
-                formatSkippedReasons(skippedByReason));
+                "Skipped remediations by reason: {}",formatSkippedReasons(skippedByReason));
         }
-
-        return new RemediationMetric(
-            totalRemediations,
-            appliedRemediations,
-            skippedRemediations,
-            modifiedFiles,
-            skippedByReason);
+        return new RemediationMetric(totalRemediations, appliedRemediations, skippedRemediations, modifiedFiles, skippedByReason);
     }
 
 
