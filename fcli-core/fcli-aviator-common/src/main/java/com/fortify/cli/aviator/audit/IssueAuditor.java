@@ -323,6 +323,9 @@ public class IssueAuditor {
     }
 
     private boolean isResultTagSet(AuditIssue auditIssue, String tagId) {
+        if (auditIssue == null) {
+            return false;
+        }
         Map<String, String> tags = auditIssue.getTags();
         return tags != null && !StringUtil.isPendingReviewValue(tags.get(tagId));
     }

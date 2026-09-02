@@ -1,5 +1,17 @@
 # Changelog
 
+## [3.25.0](https://github.com/fortify/fcli/compare/v3.24.0...v3.25.0) (2026-08-31)
+
+
+### Features
+
+* `fcli aviator ssc audit`: Add `--force-reaudit` to re-audit Aviator-processed issues without overwriting human triage ([840ee90](https://github.com/fortify/fcli/commit/840ee90beed814507f06c01c0e456f1b610f4234))
+
+
+### Bug Fixes
+
+* `fcli aviator ssc apply-remediations`: Skip remediations when source context matches multiple locations ([840ee90](https://github.com/fortify/fcli/commit/840ee90beed814507f06c01c0e456f1b610f4234))
+
 ## [3.24.0](https://github.com/fortify/fcli/compare/v3.23.3...v3.24.0) (2026-08-21)
 
 
