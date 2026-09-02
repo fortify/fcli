@@ -252,15 +252,8 @@ public class RemediationProcessor {
             throw new AviatorTechnicalException("Unexpected error processing remediations.xml.", e);
         }
 
-        int skippedRemediations =
-            totalRemediations - appliedRemediations;
-
-        LOG.info(
-            "Auto-remediation summary: total={}, applied={}, identical={}, skipped={}",
-            totalRemediations,
-            appliedRemediations,
-            identicalRemediations,
-            skippedRemediations);
+        int skippedRemediations = totalRemediations - appliedRemediations;
+        LOG.info("Auto-remediation summary: total={}, applied={},indentical={},skipped={}", totalRemediations, appliedRemediations, identicalRemediations,skippedRemediations);
 
         if (!skippedByReason.isEmpty()) {
             LOG.info(
