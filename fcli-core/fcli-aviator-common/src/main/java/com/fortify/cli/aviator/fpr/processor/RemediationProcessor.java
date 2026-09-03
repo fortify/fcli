@@ -39,7 +39,6 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
-import com.fortify.cli.aviator.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
@@ -56,6 +55,7 @@ import com.fortify.cli.aviator.fpr.utils.ISourceDecoder.SourceDecodeException;
 import com.fortify.cli.aviator.fpr.utils.SourceDecoders;
 import com.fortify.cli.aviator.fpr.utils.SourceEncoder;
 import com.fortify.cli.aviator.fpr.utils.SourceEncoder.SourceEncodeException;
+import com.fortify.cli.aviator.util.*;
 
 public class RemediationProcessor {
     private static final Logger LOG = LoggerFactory.getLogger(RemediationProcessor.class);
@@ -65,10 +65,10 @@ public class RemediationProcessor {
     private final String sourceCodeDirectory;
     private final ISourceDecoder sourceDecoder;
 
-    public record RemediationMetric(int totalRemediations, int appliedRemediations, int skippedRemediations, Set<String> modifiedFiles,
+    public record RemediationMetric(int totalRemediations, int appliedRemediations,     int identicalRemediations,int skippedRemediations, Set<String> modifiedFiles,
                                     Map<String, Integer> skippedByReason) {
-        public RemediationMetric(int totalRemediations, int appliedRemediations, int skippedRemediations, Set<String> modifiedFiles) {
-            this(totalRemediations, appliedRemediations, skippedRemediations, modifiedFiles, Map.of());
+        public RemediationMetric(int totalRemediations, int appliedRemediations,int identicalRemediations,int  skippedRemediations, Set<String> modifiedFiles) {
+            this(totalRemediations, appliedRemediations,identicalRemediations, skippedRemediations, modifiedFiles, Map.of());
         }
     }
 
@@ -161,7 +161,7 @@ public class RemediationProcessor {
         Set<String> modifiedFiles = new LinkedHashSet<>();
         Map<String, Integer> skippedByReason = new LinkedHashMap<>();
         Map<RemediationKey, String> remediationLookup = new LinkedHashMap<>();
-
+        LOG.debug("in the processRemediationXML method");
         // Sanitize and normalize the base source directory path once.
         String trimmedSourceDir = sourceCodeDirectory.trim();
         if (trimmedSourceDir.length() > 1 &&
@@ -188,25 +188,49 @@ public class RemediationProcessor {
             totalRemediations = remediationNodes.getLength();
             LOG.debug("Loaded {} remediation entries from {}", totalRemediations, remediationPath);
             appliedRemediations = 0;
+
             for (int i = 0; i < remediationNodes.getLength(); i++) {
-                Element remediation = (Element) remediationNodes.item(i);
+                LOG.debug("........................");
+                Element remediation =
+                    (Element) remediationNodes.item(i);
 
                 String instanceId =
                     remediation.getAttribute("instanceId");
+                LOG.debug("remediation{}",instanceId);
 
-                List<RemediationKey> remediationKeys = createRemediationKeys(
+                List<RemediationKey> remediationKeys =
+                    createRemediationKeys(
                         remediation,
                         sourceBasePath);
 
+                LOG.debug(
+                    "Remediation {} generated {} lookup key(s): {}",
+                    instanceId,
+                    remediationKeys.size(),
+                    remediationKeys);
+
                 String identicalInstanceId = null;
 
-                for (RemediationKey key : remediationKeys) {
-                    String existingInstanceId =
-                        remediationLookup.get(key);
+                /*
+                 * A remediation is identical only when all of its changes
+                 * match an existing remediation.
+                 */
+                if (!remediationKeys.isEmpty()) {
+                    for (String existingInstanceId :
+                        new LinkedHashSet<>(remediationLookup.values())) {
 
-                    if (existingInstanceId != null) {
-                        identicalInstanceId = existingInstanceId;
-                        break;
+                        List<RemediationKey> existingKeys =
+                            remediationLookup.entrySet().stream()
+                                .filter(entry ->
+                                    existingInstanceId.equals(entry.getValue()))
+                                .map(Map.Entry::getKey)
+                                .toList();
+
+                        if (existingKeys.size() == remediationKeys.size()
+                            && existingKeys.containsAll(remediationKeys)) {
+                            identicalInstanceId = existingInstanceId;
+                            break;
+                        }
                     }
                 }
 
@@ -236,6 +260,7 @@ public class RemediationProcessor {
                     appliedRemediations++;
 
                     for (RemediationKey key : remediationKeys) {
+                        LOG.debug("putting {}",instanceId);
                         remediationLookup.put(key, instanceId);
                     }
                 }
@@ -256,10 +281,9 @@ public class RemediationProcessor {
         LOG.info("Auto-remediation summary: total={}, applied={},indentical={},skipped={}", totalRemediations, appliedRemediations, identicalRemediations,skippedRemediations);
 
         if (!skippedByReason.isEmpty()) {
-            LOG.info(
-                "Skipped remediations by reason: {}",formatSkippedReasons(skippedByReason));
+            LOG.info("Skipped remediations by reason: {}",formatSkippedReasons(skippedByReason));
         }
-        return new RemediationMetric(totalRemediations, appliedRemediations, skippedRemediations, modifiedFiles, skippedByReason);
+        return new RemediationMetric(totalRemediations, appliedRemediations, identicalRemediations, skippedRemediations, modifiedFiles, skippedByReason);
     }
 
 
