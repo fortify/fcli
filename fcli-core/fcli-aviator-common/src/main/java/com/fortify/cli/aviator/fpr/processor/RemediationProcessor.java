@@ -392,11 +392,30 @@ public class RemediationProcessor {
         int lineFrom = declaredLineFrom;
         int lineTo = declaredLineTo;
         if (!previousChanges.isEmpty()) {
-            int[] projectedRange = projectLineRange(declaredLineFrom, declaredLineTo, previousChanges, instanceId, filename);
+            int[] projectedRange = projectLineRange(
+                declaredLineFrom,
+                declaredLineTo,
+                previousChanges,
+                instanceId,
+                filename);
+
             lineFrom = projectedRange[0];
             lineTo = projectedRange[1];
-            validateLineRange(lineFrom, lineTo, originalLines.size(), filename);
-            verifyOriginalCodeAtRange(instanceId, filename, originalLines, lineFrom, lineTo, change);
+
+            validateLineRange(
+                lineFrom,
+                lineTo,
+                originalLines.size(),
+                filename);
+
+            verifyOriginalCodeAtRange(
+                instanceId,
+                filename,
+                originalLines,
+                lineFrom,
+                lineTo,
+                change);
+
         } else if (!fileHashMatches) {
             Element contextElement = getRequiredElement(change, "Context");
             List<String> contextLine = Arrays.asList(contextElement.getTextContent().split("\\r?\\n"));
@@ -441,22 +460,58 @@ public class RemediationProcessor {
         AppliedChange appliedChange = new AppliedChange(filePath, declaredLineFrom, declaredLineTo, lineFrom, lineFrom + newCodeLines.size() - 1, instanceId);
         return new ChangeApplication(updatedContent, appliedChange);
     }
-    private int[] projectLineRange(int originalStart, int originalEnd, List<AppliedChange> appliedChanges, String instanceId, String filename) {
+    private int[] projectLineRange(
+        int originalStart,
+        int originalEnd,
+        List<AppliedChange> appliedChanges,
+        String instanceId,
+        String filename) {
+
         int projectedStart = originalStart;
         int projectedEnd = originalEnd;
+
         for (AppliedChange applied : appliedChanges) {
-            boolean overlaps = originalStart <= applied.originalEnd() && originalEnd >= applied.originalStart();
+
+            /*
+             * Conflict detection is always performed against the
+             * original remediation line ranges.
+             */
+            boolean overlaps =
+                originalStart <= applied.originalEnd()
+                    && originalEnd >= applied.originalStart();
+
             if (overlaps) {
-                int overlapStart = Math.max(originalStart, applied.originalStart());
-                int overlapEnd = Math.min(originalEnd, applied.originalEnd());
-                throw new SkipRemediationException(SkipReason.CONFLICT, "Remediation '" + instanceId + "' conflicts with remediation '" + applied.remediationId() + "' in file '" + filename + "'; overlapping original lines " + overlapStart + "-" + overlapEnd);
+                int overlapStart =
+                    Math.max(originalStart, applied.originalStart());
+                int overlapEnd =
+                    Math.min(originalEnd, applied.originalEnd());
+
+                throw new SkipRemediationException(
+                    SkipReason.CONFLICT,
+                    "Remediation '" + instanceId
+                        + "' conflicts with remediation '"
+                        + applied.remediationId()
+                        + "' in file '" + filename
+                        + "'; overlapping original lines "
+                        + overlapStart + "-" + overlapEnd);
             }
+
+            /*
+             * Only changes that occur before this remediation need
+             * to shift its physical location.
+             */
             if (originalStart > applied.originalEnd()) {
-                projectedStart += applied.lineDelta();
-                projectedEnd += applied.lineDelta();
+                int delta = applied.lineDelta();
+
+                projectedStart += delta;
+                projectedEnd += delta;
             }
         }
-        return new int[] {projectedStart, projectedEnd};
+
+        return new int[] {
+            projectedStart,
+            projectedEnd
+        };
     }
     private void verifyOriginalCodeAtRange(String instanceId, String filename, List<String> sourceLines, int lineFrom, int lineTo, Element change) {
         List<String> expectedLines = Arrays.asList(normalizeLineEndings(getRequiredElementText(change, "OriginalCode")).split("\n", -1));
@@ -532,21 +587,57 @@ public class RemediationProcessor {
         }
     }
 
-    private int[] fuzzySearchOriginalCode(String instanceId, String filename, List<String> originalLines, List<String> originalCodeLine,
-            int contextLineFrom, int contextLineCount, int contextBefore, int contextAfter) {
+    private int[] fuzzySearchOriginalCode(
+        String instanceId,
+        String filename,
+        List<String> originalLines,
+        List<String> originalCodeLine,
+        int contextLineFrom,
+        int contextLineCount,
+        int contextBefore,
+        int contextAfter) {
+
+        /*
+         * First try the location implied by the context.
+         * This keeps the context as the primary anchor.
+         */
         int contextStart = contextLineFrom + contextBefore;
         int contextEnd = contextLineFrom + contextLineCount - contextAfter;
 
-        if (contextStart < 0 || contextStart >= contextEnd || contextEnd > originalLines.size()) {
-            return new int[] {-1, -1};
+        if (contextStart >= 0
+            && contextStart < contextEnd
+            && contextEnd <= originalLines.size()) {
+
+            int[] match = FuzzyContextSearcher.fuzzySearchOriginalCode(
+                originalLines.subList(contextStart, contextEnd),
+                originalCodeLine,
+                0,
+                0);
+
+            if (match[0] != -1 && match[1] != -1) {
+                return new int[] {
+                    match[0] + contextStart,
+                    match[1] + contextStart
+                };
+            }
         }
 
-        int[] lineFromTo = FuzzyContextSearcher.fuzzySearchOriginalCode(
-                originalLines.subList(contextStart, contextEnd), originalCodeLine, 0, 0);
-        if (lineFromTo[0] == -1 || lineFromTo[1] == -1) {
-            return lineFromTo;
-        }
-        return new int[] {lineFromTo[0] + contextStart, lineFromTo[1] + contextStart};
+        /*
+         * Context boundaries can become unreliable when blank lines,
+         * formatting changes, or inserted lines are involved.
+         *
+         * Fall back to searching the complete source file.
+         */
+        LOG.debug(
+            "Original code not found inside context window; searching entire source for remediation {} in '{}'",
+            instanceId,
+            filename);
+
+        return FuzzyContextSearcher.fuzzySearchOriginalCode(
+            originalLines,
+            originalCodeLine,
+            0,
+            0);
     }
 
     private boolean isFilePresent(Path path) {

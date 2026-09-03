@@ -110,20 +110,16 @@ public class FuzzyContextSearcher {
         return new int[] {-1, -1};
     }
 
-    private static int findOriginalCodeEnd(List<String> normalizedSource, List<String> normalizedOriginalCode, int maxMismatches,
-            int sourceIndex) {
+    private static int findOriginalCodeEnd(
+        List<String> normalizedSource,
+        List<String> normalizedOriginalCode,
+        int maxMismatches,
+        int sourceIndex) {
+
         int mismatches = 0;
         int lineTo = -1;
-        boolean matchedAnyLine = false;
 
         for (String originalCodeLine : normalizedOriginalCode) {
-            if (originalCodeLine.isEmpty()) {
-                continue;
-            }
-
-            if (matchedAnyLine) {
-                sourceIndex = skipEmptySourceLines(normalizedSource, sourceIndex);
-            }
             if (sourceIndex >= normalizedSource.size()) {
                 return -1;
             }
@@ -136,10 +132,9 @@ public class FuzzyContextSearcher {
             }
 
             lineTo = sourceIndex++;
-            matchedAnyLine = true;
         }
 
-        return matchedAnyLine ? lineTo : -1;
+        return lineTo;
     }
 
     private static int skipEmptySourceLines(List<String> normalizedSource, int sourceIndex) {
