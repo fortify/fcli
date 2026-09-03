@@ -33,7 +33,7 @@ public class FortifyCLI {
 
     private static final int execute(String[] args) {
         try {
-            System.out.println("FCLI3 started");
+            System.out.println("FCLI4 started");
             ConsoleHelper.installJAnsiConsole();
             return DefaultFortifyCLIRunner.run(args);
         } finally {

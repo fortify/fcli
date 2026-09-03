@@ -76,7 +76,7 @@ public class RemediationProcessor {
 
     private record PendingFileWrite(String filename, Path filePath, String content, Charset charset, String encodingSource,
                                     byte[] updatedBytes) {}
-    private record AppliedChange(Path filePath, int originalStart, int originalEnd, int resultingStart, int resultingEnd, String remediationId) {
+    private record AppliedChange(Path filePath, int originalStart, int originalEnd, int resultingStart, int resultingEnd, String remediationId, String originalCode, String newCode) {
         private int lineDelta() { return (resultingEnd - resultingStart + 1) - (originalEnd - originalStart + 1); }
     }
     private record ChangeApplication(String content, AppliedChange appliedChange) {}
@@ -391,13 +391,15 @@ public class RemediationProcessor {
         for (AppliedChange stagedChange : stagedChanges) { if (filePath.equals(stagedChange.filePath())) { previousChanges.add(stagedChange); } }
         int lineFrom = declaredLineFrom;
         int lineTo = declaredLineTo;
-        if (!previousChanges.isEmpty()) {
+        if (!previousChanges.isEmpty() && !fileHashMatches ) {
             int[] projectedRange = projectLineRange(
                 declaredLineFrom,
                 declaredLineTo,
                 previousChanges,
                 instanceId,
-                filename);
+                filename,
+                getRequiredElementText(change, "OriginalCode"),
+                getRequiredElementText(change, "NewCode"));
 
             lineFrom = projectedRange[0];
             lineTo = projectedRange[1];
@@ -457,7 +459,7 @@ public class RemediationProcessor {
         updatedLines.addAll(newCodeLines);
         updatedLines.addAll(originalLines.subList(lineTo, originalLines.size()));
         String updatedContent = String.join(lineSeparator, updatedLines);
-        AppliedChange appliedChange = new AppliedChange(filePath, declaredLineFrom, declaredLineTo, lineFrom, lineFrom + newCodeLines.size() - 1, instanceId);
+        AppliedChange appliedChange = new AppliedChange(filePath, declaredLineFrom, declaredLineTo, lineFrom, lineFrom + newCodeLines.size() - 1, instanceId, getRequiredElementText(change, "OriginalCode"), getRequiredElementText(change, "NewCode"));
         return new ChangeApplication(updatedContent, appliedChange);
     }
     private int[] projectLineRange(
@@ -465,7 +467,9 @@ public class RemediationProcessor {
         int originalEnd,
         List<AppliedChange> appliedChanges,
         String instanceId,
-        String filename) {
+        String filename,
+        String originalCode,
+        String newCode) {
 
         int projectedStart = originalStart;
         int projectedEnd = originalEnd;
@@ -481,19 +485,20 @@ public class RemediationProcessor {
                     && originalEnd >= applied.originalStart();
 
             if (overlaps) {
-                int overlapStart =
-                    Math.max(originalStart, applied.originalStart());
-                int overlapEnd =
-                    Math.min(originalEnd, applied.originalEnd());
+                boolean sameOriginal = normalizeLineEndings(originalCode)
+                    .equals(normalizeLineEndings(applied.originalCode()));
+                boolean sameNewCode = normalizeLineEndings(newCode)
+                    .equals(normalizeLineEndings(applied.newCode()));
 
-                throw new SkipRemediationException(
-                    SkipReason.CONFLICT,
-                    "Remediation '" + instanceId
-                        + "' conflicts with remediation '"
-                        + applied.remediationId()
-                        + "' in file '" + filename
-                        + "'; overlapping original lines "
-                        + overlapStart + "-" + overlapEnd);
+                if (!sameOriginal || !sameNewCode) {
+                    int overlapStart = Math.max(originalStart, applied.originalStart());
+                    int overlapEnd = Math.min(originalEnd, applied.originalEnd());
+                    throw new SkipRemediationException(
+                        SkipReason.CONFLICT,
+                        "Remediation '" + instanceId + "' conflicts with remediation '" + applied.remediationId()
+                            + "' in file '" + filename + "'; overlapping original lines "
+                            + overlapStart + "-" + overlapEnd);
+                }
             }
 
             /*
@@ -636,7 +641,7 @@ public class RemediationProcessor {
         return FuzzyContextSearcher.fuzzySearchOriginalCode(
             originalLines,
             originalCodeLine,
-            0,
+            2,
             0);
     }
 
