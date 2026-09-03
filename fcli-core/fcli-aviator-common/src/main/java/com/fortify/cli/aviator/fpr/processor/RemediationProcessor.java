@@ -406,8 +406,28 @@ public class RemediationProcessor {
             List<String> originalCodeLine = Arrays.asList(originalCodeText.split("\\r?\\n"));
             int contextBefore = parseRequiredContextAttribute(contextElement, "before");
             int contextAfter = parseRequiredContextAttribute(contextElement, "after");
+
+            LOG.debug("=== FUZZY ORIGINAL SEARCH ===");
+            LOG.debug("InstanceId:{}",instanceId);
+            LOG.debug("Declared range: {} {}",declaredLineFrom, declaredLineTo);
+            LOG.debug("File hash: {}", fileHash);
+            LOG.debug("Calculated hash: {}", calculatedHash);
+            LOG.debug("OriginalCode:\n{}", originalCodeText);
+            LOG.debug("Context:\n{}", contextElement.getTextContent());
+            LOG.debug("Context matches from: {}", contextLineFrom);
+            LOG.debug("==============================");
             int[] lineFromTo = fuzzySearchOriginalCode(instanceId, filename, originalLines, originalCodeLine, contextLineFrom, contextLine.size(), contextBefore, contextAfter);
-            if (lineFromTo[0] == -1 || lineFromTo[1] == -1) { throw new SkipRemediationException(SkipReason.ORIGINAL_CODE_NOT_FOUND, "Original code not found for file '" + filename + "'"); }
+            if (lineFromTo[0] == -1 || lineFromTo[1] == -1) {
+                LOG.debug("=== ORIGINAL CODE NOT FOUND ===");
+                LOG.debug("InstanceId: {}", instanceId);
+                LOG.debug("Filename: {}", filename);
+                LOG.debug("FilePath: {}", filePath);
+                LOG.debug("OriginalCode:\n{}", originalCodeText);
+                LOG.debug("Declared lines: {}-{}", declaredLineFrom, declaredLineTo);
+                LOG.debug("Context line: {}", contextLineFrom);
+                LOG.debug("===============================");
+                throw new SkipRemediationException(SkipReason.ORIGINAL_CODE_NOT_FOUND, "Original code not found for file '" + filename + "'");
+            }
             lineFrom = lineFromTo[0] + 1;
             lineTo = lineFromTo[1] + 1;
         }
@@ -495,6 +515,13 @@ public class RemediationProcessor {
                 String candidateLines = matches.stream()
                         .map(line -> String.valueOf(line + 1))
                         .collect(Collectors.joining(", "));
+
+                LOG.debug("=== SOURCE CONTEXT AMBIGUOUS ===");
+                LOG.debug("InstanceId: {}", instanceId);
+                LOG.debug("Filename: {}", filename);
+                LOG.debug("SourceContext:\n{}", String.join("\n", contextLine));
+                LOG.debug("Matching locations: {}", matches);
+                LOG.debug("===============================");
                 throw new SkipRemediationException(SkipReason.SOURCE_CONTEXT_AMBIGUOUS,
                         "Source context matched multiple locations in file '" + filename + "'; candidate lines: " + candidateLines);
             }
@@ -509,6 +536,7 @@ public class RemediationProcessor {
             int contextLineFrom, int contextLineCount, int contextBefore, int contextAfter) {
         int contextStart = contextLineFrom + contextBefore;
         int contextEnd = contextLineFrom + contextLineCount - contextAfter;
+
         if (contextStart < 0 || contextStart >= contextEnd || contextEnd > originalLines.size()) {
             return new int[] {-1, -1};
         }
