@@ -400,10 +400,11 @@ formatters:
               extra options to the fcliCmd:fcli sc-sast scan wait-for: command, and similarly, the `DAST_WAIT_EXTRA_OPTS`
               environment variable can be used to pass extra options to the fcliCmd:fcli sc-dast scan wait-for: command,
               and the `DEBRICKED_WAIT_EXTRA_OPTS` environment variable can be used to pass extra options to the
-              fcliCmd:fcli ssc artifact wait-for: command.\n\nWaiting for DAST scans can be disabled without affecting
-              other scan types by setting `DO_DAST_WAIT` to `false`.\n\nDAST scans can take considerably longer than
-              SAST scans, potentially exceeding CI/CD job time limits (for example on GitHub Actions or GitLab CI); if
-              the default wait timeout doesn't suffice, pass a `--timeout` option through `DAST_WAIT_EXTRA_OPTS`.
+              fcliCmd:fcli ssc artifact wait-for: command.\n\nUnlike other scan types, waiting for DAST scans is disabled
+              by default (as DAST scans are often long-running and only run on demand); set `DO_DAST_WAIT` to `true` to
+              wait for DAST scan completion.\n\nDAST scans can take considerably longer than SAST scans, potentially
+              exceeding CI/CD job time limits (for example on GitHub Actions or GitLab CI); if the default wait timeout
+              doesn't suffice, pass a `--timeout` option through `DAST_WAIT_EXTRA_OPTS`.
       - title: Post-Scan Actions
         overview: >
           Configure post-scan tasks including Aviator auditing, application version summaries, policy checks,

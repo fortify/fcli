@@ -188,12 +188,12 @@ steps:
               on.success:
                 - var.set: { postScan.skipReason: } # Reset postScan.skipReason to allow post-scan tasks to run
 
-            # DAST can be slow; use DAST_WAIT_EXTRA_OPTS to pass --timeout if needed
+            # DAST can be slow; disabled by default, enable with DO_DAST_WAIT=true. Use DAST_WAIT_EXTRA_OPTS to pass --timeout
             DAST_WAIT:
               cmd: "${#fcliCmd('DAST_WAIT', 'sc-dast scan wait-for')} ::sc_dast_scan::"
               skip.if-reason:
                 - ${wait.skipReason}                                 # Skip if wait.skipReason!=null
-                - ${#fcliCmdSkipFromEnvReason('DAST_WAIT', false)}   # Skip if DO_DAST_WAIT==false
+                - ${#fcliCmdSkipFromEnvReason('DAST_WAIT', true)}    # Skip unless DO_DAST_WAIT==true
                 - ${DAST_SCAN.dependencySkipReason}                  # Skip if DAST_SCAN was skipped or failed
               on.success:
                 - var.set: { postScan.skipReason: } # Reset postScan.skipReason to allow post-scan tasks to run
