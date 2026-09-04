@@ -10,7 +10,8 @@ usage:
     * Create & configure SSC application version if needed
     * Package source code
     * Submit SAST scan request
-    * Wait for SAST scan completion
+    * Submit DAST scan request, using pre-existing SC-DAST scan settings
+    * Wait for SAST/DAST scan completion
     * Perform post-scan activities, like checking policy outcome, exporting results, ...
     
     Configuration for this fcli action is done through environment variables; the
@@ -59,8 +60,11 @@ steps:
       # Configure session name
       sessionName: ci-${#action.runID()}
       # Configure scan types to run
-      dast.skipReason:  # TODO
-      dast.skip: true
+      dast.skipReason: > # Disabled by default; requires DO_DAST_SCAN=true and DAST_SETTINGS to be enabled
+        ${
+            #fcliCmdSkipFromEnvReason('DAST_SCAN', true)
+            ?:#skipBlankEnvReason('DAST_SETTINGS')
+        }
       sast.skipReason: > # Enabled by default, unless explicitly disabled
         ${
             #fcliCmdSkipFromEnvReason('SAST_SCAN', false)
@@ -86,6 +90,11 @@ steps:
         ${
             #fcliCmdSkipFromEnvReason('WAIT', false)
             ?:#fcliCmdSkipFromEnvReason('SAST_WAIT', false) 
+        }
+      # Sanitize ':'/'/' from app/repo names for SC-DAST; override via DAST_SCAN_NAME
+      dast.scanName: >-
+        ${
+            #env('DAST_SCAN_NAME')?:(global.ci.av + '-' + #action.runID()).replaceAll('[:/]', '-')
         }
       # Post-scan tasks will be skipped if wait is skipped or if no scans were completed
       # successfully. Post-scan skip reason will be reset to null once the wait task for
@@ -134,6 +143,12 @@ steps:
                 - ${sast.skipReason}                     # Skip if SAST scan is skipped
                 - ${PACKAGE_ACTION.dependencySkipReason} # Skip if PACKAGE_ACTION was skipped or failed
             
+            # DAST scan using pre-existing SC-DAST settings (DAST_SETTINGS); not created here
+            DAST_SCAN:
+              cmd: ${#fcliCmd('DAST_SCAN', 'sc-dast scan start')} --settings "${#env('DAST_SETTINGS')}" --name "${dast.scanName}" --store sc_dast_scan
+              skip.if-reason:
+                - ${dast.skipReason} # Skip if DAST scan is skipped
+            
             DEBRICKED_SCAN_ACTION:
               # --extra-scan-opts is passed through global.debrickedScan.extraOpts variable defined above
               cmd: >
@@ -170,6 +185,16 @@ steps:
               skip.if-reason:
                 - ${wait.skipReason}                                 # Skip if wait.skipReason!=null
                 - ${SAST_SCAN.dependencySkipReason}                  # Skip if SAST_SCAN was skipped or failed
+              on.success:
+                - var.set: { postScan.skipReason: } # Reset postScan.skipReason to allow post-scan tasks to run
+
+            # DAST can be slow; disabled by default, enable with DO_DAST_WAIT=true. Use DAST_WAIT_EXTRA_OPTS to pass --timeout
+            DAST_WAIT:
+              cmd: "${#fcliCmd('DAST_WAIT', 'sc-dast scan wait-for')} ::sc_dast_scan::"
+              skip.if-reason:
+                - ${wait.skipReason}                                 # Skip if wait.skipReason!=null
+                - ${#fcliCmdSkipFromEnvReason('DAST_WAIT', true)}    # Skip unless DO_DAST_WAIT==true
+                - ${DAST_SCAN.dependencySkipReason}                  # Skip if DAST_SCAN was skipped or failed
               on.success:
                 - var.set: { postScan.skipReason: } # Reset postScan.skipReason to allow post-scan tasks to run
                 
