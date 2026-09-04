@@ -193,6 +193,7 @@ steps:
               cmd: "${#fcliCmd('DAST_WAIT', 'sc-dast scan wait-for')} ::sc_dast_scan::"
               skip.if-reason:
                 - ${wait.skipReason}                                 # Skip if wait.skipReason!=null
+                - ${#fcliCmdSkipFromEnvReason('DAST_WAIT', false)}   # Skip if DO_DAST_WAIT==false
                 - ${DAST_SCAN.dependencySkipReason}                  # Skip if DAST_SCAN was skipped or failed
               on.success:
                 - var.set: { postScan.skipReason: } # Reset postScan.skipReason to allow post-scan tasks to run

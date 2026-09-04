@@ -392,7 +392,7 @@ formatters:
               \n  * `latest` to use the latest available Debricked CLI version
               \n  * `auto` (default) to use a pre-installed version if available, otherwise installs latest
               \n* If neither `DEBRICKED_VERSION` nor `DEBRICKED_HOME` are set, defaults to `auto` behavior.
-          - names: DO_WAIT\nDO_SAST_WAIT\nSAST_WAIT_EXTRA_OPTS\nDAST_WAIT_EXTRA_OPTS\nDEBRICKED_WAIT_EXTRA_OPTS
+          - names: DO_WAIT\nDO_SAST_WAIT\nSAST_WAIT_EXTRA_OPTS\nDO_DAST_WAIT\nDAST_WAIT_EXTRA_OPTS\nDEBRICKED_WAIT_EXTRA_OPTS
             desc: >-
               By default, the fcli `ci` action will wait for all started scans to complete; set `DO_WAIT` to
               `false` to just kick off any configured scans without waiting for completion. Note that doing so
@@ -400,9 +400,10 @@ formatters:
               extra options to the fcliCmd:fcli sc-sast scan wait-for: command, and similarly, the `DAST_WAIT_EXTRA_OPTS`
               environment variable can be used to pass extra options to the fcliCmd:fcli sc-dast scan wait-for: command,
               and the `DEBRICKED_WAIT_EXTRA_OPTS` environment variable can be used to pass extra options to the
-              fcliCmd:fcli ssc artifact wait-for: command.\n\nDAST scans can take considerably longer than SAST scans,
-              potentially exceeding CI/CD job time limits (for example on GitHub Actions or GitLab CI); if the
-              default wait timeout doesn't suffice, pass a `--timeout` option through `DAST_WAIT_EXTRA_OPTS`.
+              fcliCmd:fcli ssc artifact wait-for: command.\n\nWaiting for DAST scans can be disabled without affecting
+              other scan types by setting `DO_DAST_WAIT` to `false`.\n\nDAST scans can take considerably longer than
+              SAST scans, potentially exceeding CI/CD job time limits (for example on GitHub Actions or GitLab CI); if
+              the default wait timeout doesn't suffice, pass a `--timeout` option through `DAST_WAIT_EXTRA_OPTS`.
       - title: Post-Scan Actions
         overview: >
           Configure post-scan tasks including Aviator auditing, application version summaries, policy checks,
