@@ -397,9 +397,7 @@ public class RemediationProcessor {
                 declaredLineTo,
                 previousChanges,
                 instanceId,
-                filename,
-                getRequiredElementText(change, "OriginalCode"),
-                getRequiredElementText(change, "NewCode"));
+                filename);
 
             lineFrom = projectedRange[0];
             lineTo = projectedRange[1];
@@ -453,7 +451,7 @@ public class RemediationProcessor {
             lineTo = lineFromTo[1] + 1;
         }
         validateLineRange(lineFrom, lineTo, originalLines.size(), filename);
-        List<String> newCodeLines = Arrays.asList(getRequiredElementText(change, "NewCode").split("\n"));
+        List<String> newCodeLines =  getCodeLines(change, "NewCode");
         List<String> updatedLines = new ArrayList<>();
         updatedLines.addAll(originalLines.subList(0, lineFrom - 1));
         updatedLines.addAll(newCodeLines);
@@ -467,49 +465,67 @@ public class RemediationProcessor {
         int originalEnd,
         List<AppliedChange> appliedChanges,
         String instanceId,
-        String filename,
-        String originalCode,
-        String newCode) {
+        String filename) {
 
         int projectedStart = originalStart;
         int projectedEnd = originalEnd;
 
-        for (AppliedChange applied : appliedChanges) {
+        for (int i = 0; i < appliedChanges.size(); i++) {
+            AppliedChange applied = appliedChanges.get(i);
 
             /*
-             * Conflict detection is always performed against the
-             * original remediation line ranges.
+             * Project this previous change's physical range forward
+             * through all changes that were applied after it.
              */
-            boolean overlaps =
-                originalStart <= applied.originalEnd()
-                    && originalEnd >= applied.originalStart();
+            int appliedStart = applied.resultingStart();
+            int appliedEnd = applied.resultingEnd();
 
-            if (overlaps) {
-                boolean sameOriginal = normalizeLineEndings(originalCode)
-                    .equals(normalizeLineEndings(applied.originalCode()));
-                boolean sameNewCode = normalizeLineEndings(newCode)
-                    .equals(normalizeLineEndings(applied.newCode()));
+            for (int j = i + 1; j < appliedChanges.size(); j++) {
+                AppliedChange later = appliedChanges.get(j);
 
-                if (!sameOriginal || !sameNewCode) {
-                    int overlapStart = Math.max(originalStart, applied.originalStart());
-                    int overlapEnd = Math.min(originalEnd, applied.originalEnd());
-                    throw new SkipRemediationException(
-                        SkipReason.CONFLICT,
-                        "Remediation '" + instanceId + "' conflicts with remediation '" + applied.remediationId()
-                            + "' in file '" + filename + "'; overlapping original lines "
-                            + overlapStart + "-" + overlapEnd);
+                if (later.originalEnd() < applied.originalStart()) {
+                    int delta = later.lineDelta();
+                    appliedStart += delta;
+                    appliedEnd += delta;
                 }
             }
 
             /*
-             * Only changes that occur before this remediation need
-             * to shift its physical location.
+             * A previous change completely before this remediation
+             * shifts the target's physical location.
              */
             if (originalStart > applied.originalEnd()) {
                 int delta = applied.lineDelta();
 
                 projectedStart += delta;
                 projectedEnd += delta;
+
+                continue;
+            }
+
+            /*
+             * Compare against the previous change's CURRENT physical
+             * location, not the stale location recorded when it ran.
+             */
+            boolean physicalOverlap =
+                projectedStart <= appliedEnd
+                    && projectedEnd >= appliedStart;
+
+            if (physicalOverlap) {
+                int overlapStart =
+                    Math.max(projectedStart, appliedStart);
+
+                int overlapEnd =
+                    Math.min(projectedEnd, appliedEnd);
+
+                throw new SkipRemediationException(
+                    SkipReason.CONFLICT,
+                    "Remediation '" + instanceId
+                        + "' conflicts with remediation '"
+                        + applied.remediationId()
+                        + "' in file '" + filename
+                        + "'; overlapping physical lines "
+                        + overlapStart + "-" + overlapEnd);
             }
         }
 
@@ -518,12 +534,69 @@ public class RemediationProcessor {
             projectedEnd
         };
     }
-    private void verifyOriginalCodeAtRange(String instanceId, String filename, List<String> sourceLines, int lineFrom, int lineTo, Element change) {
-        List<String> expectedLines = Arrays.asList(normalizeLineEndings(getRequiredElementText(change, "OriginalCode")).split("\n", -1));
-        List<String> actualLines = sourceLines.subList(lineFrom - 1, lineTo);
-        if (!expectedLines.equals(actualLines)) {
-            throw new SkipRemediationException(SkipReason.ANCHOR_MISMATCH, "Anchor does not match for remediation '" + instanceId + "' in file '" + filename + "' at lines " + lineFrom + "-" + lineTo);
+    private void verifyOriginalCodeAtRange(
+        String instanceId,
+        String filename,
+        List<String> sourceLines,
+        int lineFrom,
+        int lineTo,
+        Element change) {
+
+        List<String> expectedLines =
+            getCodeLines(change, "OriginalCode");
+
+        List<String> actualLines =
+            sourceLines.subList(lineFrom - 1, lineTo);
+
+        List<String> normalizedActual =
+            actualLines.stream()
+                .map(String::trim)
+                .toList();
+
+        List<String> normalizedExpected =
+            expectedLines.stream()
+                .map(String::trim)
+                .toList();
+
+        if (!normalizedExpected.equals(normalizedActual)) {
+            throw new SkipRemediationException(
+                SkipReason.ANCHOR_MISMATCH,
+                "Anchor does not match for remediation '"
+                    + instanceId
+                    + "' in file '"
+                    + filename
+                    + "' at lines "
+                    + lineFrom + "-" + lineTo);
         }
+    }
+
+    private List<String> getCodeLines(
+        Element change,
+        String elementName) {
+
+        String code =
+            normalizeLineEndings(
+                getRequiredElementText(change, elementName));
+
+        String[] lines = code.split("\n", -1);
+
+        int start = 0;
+        int end = lines.length - 1;
+
+        while (start <= end && lines[start].isBlank()) {
+            start++;
+        }
+
+        while (end >= start && lines[end].isBlank()) {
+            end--;
+        }
+
+        if (start > end) {
+            return List.of();
+        }
+
+        return Arrays.asList(
+            Arrays.copyOfRange(lines, start, end + 1));
     }
 
     private SourceFileContent getPendingOrSourceContent(Path filePath, String filename, FVDLMetadata fvdlMetadata,
