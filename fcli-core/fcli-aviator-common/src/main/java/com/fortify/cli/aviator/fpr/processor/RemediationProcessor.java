@@ -588,6 +588,32 @@ public class RemediationProcessor {
             sourceLines.subList(lineFrom - 1, lineTo);
 
         if (expectedLines.size() != actualLines.size()) {
+
+            LOG.debug("========== ANCHOR SIZE MISMATCH ==========");
+            LOG.debug("Remediation instanceId: {}", instanceId);
+            LOG.debug("Filename: {}", filename);
+            LOG.debug("Expected range: {}-{}", lineFrom, lineTo);
+            LOG.debug("Expected line count: {}", expectedLines.size());
+            LOG.debug("Actual line count: {}", actualLines.size());
+
+            LOG.debug("Expected OriginalCode:");
+            for (int i = 0; i < expectedLines.size(); i++) {
+                LOG.debug(
+                    "  expected[{}] = [{}]",
+                    i,
+                    expectedLines.get(i));
+            }
+
+            LOG.debug("Actual source lines:");
+            for (int i = 0; i < actualLines.size(); i++) {
+                LOG.debug(
+                    "  actual[{}]   = [{}]",
+                    i,
+                    actualLines.get(i));
+            }
+
+            LOG.debug("==========================================");
+
             throw new SkipRemediationException(
                 SkipReason.ANCHOR_MISMATCH,
                 "Anchor does not match for remediation '"
@@ -599,12 +625,21 @@ public class RemediationProcessor {
                     + "-"
                     + lineTo);
         }
-
         for (int i = 0; i < expectedLines.size(); i++) {
             String expected = expectedLines.get(i).strip();
             String actual = actualLines.get(i).strip();
 
             if (!expected.equals(actual)) {
+
+                LOG.debug("========== ANCHOR CONTENT MISMATCH ==========");
+                LOG.debug("Remediation instanceId: {}", instanceId);
+                LOG.debug("Filename: {}", filename);
+                LOG.debug("Range: {}-{}", lineFrom, lineTo);
+                LOG.debug("Mismatch at relative line: {}", i);
+                LOG.debug("Expected: [{}]", expected);
+                LOG.debug("Actual:   [{}]", actual);
+                LOG.debug("==============================================");
+
                 throw new SkipRemediationException(
                     SkipReason.ANCHOR_MISMATCH,
                     "Anchor does not match for remediation '"
