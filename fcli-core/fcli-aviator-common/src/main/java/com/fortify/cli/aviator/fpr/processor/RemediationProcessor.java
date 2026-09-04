@@ -1189,6 +1189,7 @@ public class RemediationProcessor {
                     .split("\n", -1));
 
         int expectedCount = expectedLines.size();
+
         int targetStart = lineFrom - 1;
 
         int searchStart =
@@ -1215,12 +1216,16 @@ public class RemediationProcessor {
             for (int j = 0; j < expectedCount; j++) {
 
                 String expected =
-                    expectedLines.get(j).strip();
+                    expectedLines.get(j)
+                        .trim()
+                        .replaceAll("\\s+", " ");
 
                 String actual =
-                    sourceLines.get(i + j).strip();
+                    sourceLines.get(i + j)
+                        .trim()
+                        .replaceAll("\\s+", " ");
 
-                if (!expected.equals(actual)) {
+                if (!expected.equalsIgnoreCase(actual)) {
                     matches = false;
                     break;
                 }
@@ -1233,7 +1238,13 @@ public class RemediationProcessor {
                     i + 1,
                     i + expectedCount);
 
+                /*
+                 * More than one normalized match means we cannot
+                 * safely determine which occurrence is the remediation
+                 * target.
+                 */
                 if (matchStart != -1) {
+
                     LOG.debug(
                         "REANCHOR AMBIGUOUS: second match {}-{}",
                         i + 1,
