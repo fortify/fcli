@@ -534,7 +534,7 @@ public class RemediationProcessor {
             projectedEnd
         };
     }
-    private void verifyOriginalCodeAtRange(
+    /**private void verifyOriginalCodeAtRange(
         String instanceId,
         String filename,
         List<String> sourceLines,
@@ -567,6 +567,55 @@ public class RemediationProcessor {
                     + filename
                     + "' at lines "
                     + lineFrom + "-" + lineTo);
+        }
+    }**/
+    private void verifyOriginalCodeAtRange(
+        String instanceId,
+        String filename,
+        List<String> sourceLines,
+        int lineFrom,
+        int lineTo,
+        Element change) {
+
+        String originalCode =
+            normalizeLineEndings(
+                getRequiredElementText(change, "OriginalCode"));
+
+        List<String> expectedLines =
+            Arrays.asList(originalCode.split("\n", -1));
+
+        List<String> actualLines =
+            sourceLines.subList(lineFrom - 1, lineTo);
+
+        if (expectedLines.size() != actualLines.size()) {
+            throw new SkipRemediationException(
+                SkipReason.ANCHOR_MISMATCH,
+                "Anchor does not match for remediation '"
+                    + instanceId
+                    + "' in file '"
+                    + filename
+                    + "' at lines "
+                    + lineFrom
+                    + "-"
+                    + lineTo);
+        }
+
+        for (int i = 0; i < expectedLines.size(); i++) {
+            String expected = expectedLines.get(i).strip();
+            String actual = actualLines.get(i).strip();
+
+            if (!expected.equals(actual)) {
+                throw new SkipRemediationException(
+                    SkipReason.ANCHOR_MISMATCH,
+                    "Anchor does not match for remediation '"
+                        + instanceId
+                        + "' in file '"
+                        + filename
+                        + "' at lines "
+                        + lineFrom
+                        + "-"
+                        + lineTo);
+            }
         }
     }
 
