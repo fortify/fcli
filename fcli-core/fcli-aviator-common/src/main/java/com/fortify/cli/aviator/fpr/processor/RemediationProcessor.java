@@ -408,13 +408,58 @@ public class RemediationProcessor {
                 originalLines.size(),
                 filename);
 
-            verifyOriginalCodeAtRange(
-                instanceId,
-                filename,
-                originalLines,
-                lineFrom,
-                lineTo,
-                change);
+            try {
+                verifyOriginalCodeAtRange(
+                    instanceId,
+                    filename,
+                    originalLines,
+                    lineFrom,
+                    lineTo,
+                    change);
+            } catch (SkipRemediationException e) {
+                if (e.reason != SkipReason.ANCHOR_MISMATCH) {
+                    throw e;
+                }
+
+                LOG.debug("=== ANCHOR MISMATCH - TRYING REANCHOR ===");
+                LOG.debug("InstanceId: {}", instanceId);
+                LOG.debug("Filename: {}", filename);
+                LOG.debug("Projected range: {}-{}", lineFrom, lineTo);
+
+                int[] recoveredRange = findExactOriginalCodeNearRange(
+                    originalLines,
+                    lineFrom,
+                    lineTo,
+                    getRequiredElementText(change, "OriginalCode"),
+                    100);
+
+                if (recoveredRange[0] == -1) {
+                    LOG.debug("REANCHOR FAILED");
+                    throw e;
+                }
+
+                lineFrom = recoveredRange[0] + 1;
+                lineTo = recoveredRange[1] + 1;
+
+                LOG.debug(
+                    "REANCHOR SUCCESS: using range {}-{}",
+                    lineFrom,
+                    lineTo);
+
+                validateLineRange(
+                    lineFrom,
+                    lineTo,
+                    originalLines.size(),
+                    filename);
+
+                verifyOriginalCodeAtRange(
+                    instanceId,
+                    filename,
+                    originalLines,
+                    lineFrom,
+                    lineTo,
+                    change);
+            }
 
         } else if (!fileHashMatches) {
             Element contextElement = getRequiredElement(change, "Context");
@@ -1129,5 +1174,91 @@ public class RemediationProcessor {
         }
 
         return keys;
+    }
+
+    private int[] findExactOriginalCodeNearRange(
+        List<String> sourceLines,
+        int lineFrom,
+        int lineTo,
+        String originalCode,
+        int radius) {
+
+        List<String> expectedLines =
+            Arrays.asList(
+                normalizeLineEndings(originalCode)
+                    .split("\n", -1));
+
+        int expectedCount = expectedLines.size();
+        int targetStart = lineFrom - 1;
+
+        int searchStart =
+            Math.max(0, targetStart - radius);
+
+        int searchEnd =
+            Math.min(
+                sourceLines.size() - expectedCount,
+                targetStart + radius);
+
+        LOG.debug(
+            "REANCHOR SEARCH: projected={} - {}, search={} - {}",
+            lineFrom,
+            lineTo,
+            searchStart + 1,
+            searchEnd + expectedCount);
+
+        int matchStart = -1;
+
+        for (int i = searchStart; i <= searchEnd; i++) {
+
+            boolean matches = true;
+
+            for (int j = 0; j < expectedCount; j++) {
+
+                String expected =
+                    expectedLines.get(j).strip();
+
+                String actual =
+                    sourceLines.get(i + j).strip();
+
+                if (!expected.equals(actual)) {
+                    matches = false;
+                    break;
+                }
+            }
+
+            if (matches) {
+
+                LOG.debug(
+                    "REANCHOR CANDIDATE: {}-{}",
+                    i + 1,
+                    i + expectedCount);
+
+                if (matchStart != -1) {
+                    LOG.debug(
+                        "REANCHOR AMBIGUOUS: second match {}-{}",
+                        i + 1,
+                        i + expectedCount);
+
+                    return new int[] {-1, -1};
+                }
+
+                matchStart = i;
+            }
+        }
+
+        if (matchStart == -1) {
+            LOG.debug("REANCHOR NOT FOUND");
+            return new int[] {-1, -1};
+        }
+
+        LOG.debug(
+            "REANCHOR SUCCESS: {}-{}",
+            matchStart + 1,
+            matchStart + expectedCount);
+
+        return new int[] {
+            matchStart,
+            matchStart + expectedCount - 1
+        };
     }
 }
