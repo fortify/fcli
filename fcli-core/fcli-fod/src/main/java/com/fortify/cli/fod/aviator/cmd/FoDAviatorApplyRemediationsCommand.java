@@ -90,8 +90,9 @@ public class FoDAviatorApplyRemediationsCommand extends AbstractFoDJsonNodeOutpu
                 LOG.info("Total remediation {}", remediationMetric.totalRemediations());
                 String status = remediationMetric.appliedRemediations() > 0 ? "Remediation-Applied" : "No-Remediation-Applied";
                 return AviatorFoDApplyRemediationsHelper.buildResultNode(rd, remediationMetric.totalRemediations(),
-                    remediationMetric.appliedRemediations(), remediationMetric.skippedRemediations(), remediationMetric.modifiedFiles(),
-                    remediationMetric.skippedByReason(), status);
+                    remediationMetric.appliedRemediations(), remediationMetric.identicalRemediations(),
+                    remediationMetric.supersededRemediations(), remediationMetric.skippedRemediations(),
+                    remediationMetric.modifiedFiles(), remediationMetric.skippedByReason(), status);
             }
         } finally {
             if (downloadedFprPath != null) {

@@ -66,9 +66,11 @@ import com.fortify.cli.aviator.fpr.utils.FileUtils;
 import com.fortify.cli.aviator.fpr.utils.ISourceDecoder;
 import com.fortify.cli.aviator.fpr.utils.SourceDecoders;
 import com.fortify.cli.aviator.util.Constants;
+import com.fortify.cli.aviator.util.FileUtil;
 import com.fortify.cli.aviator.util.FprHandle;
 
 import lombok.Setter;
+
 
 
 public class AuditProcessor {
@@ -938,7 +940,9 @@ public class AuditProcessor {
                                 changeElement.appendChild(originalCodeElement);
 
                                 Element newCodeElement = finalDoc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "NewCode");
-                                newCodeElement.appendChild(finalDoc.createCDATASection(change.getReplaceWith() != null ? change.getReplaceWith() : ""));
+                                String sanitizedNewCode = FileUtil.stripSyntheticLineMarkers(
+                                    change.getReplaceWith() != null ? change.getReplaceWith() : "", filename);
+                                newCodeElement.appendChild(finalDoc.createCDATASection(sanitizedNewCode));
                                 changeElement.appendChild(newCodeElement);
 
                                 final int CONTEXT_LINES = 3;
@@ -1007,10 +1011,13 @@ public class AuditProcessor {
     }
 
     private String calculateHashBase64(String content, String algorithm) {
-        if (content == null) return "";
         try {
             MessageDigest md = MessageDigest.getInstance(algorithm);
-            byte[] digest = md.digest(content.getBytes(StandardCharsets.UTF_8));
+            // P2.2: hash the canonical form (LF-normalised, no trailing newline) so the apply
+            // side can reproduce the digest regardless of the OS that ran the audit or the
+            // file's trailing-newline state.
+            String canonical = FileUtil.canonicalizeForHash(content);
+            byte[] digest = md.digest(canonical.getBytes(StandardCharsets.UTF_8));
             return Base64.getEncoder().encodeToString(digest);
         } catch (NoSuchAlgorithmException e) {
             throw new AviatorTechnicalException("Hashing algorithm not available: " + algorithm, e);
