@@ -133,6 +133,22 @@ public final class FileUtil {
         }
     }
 
+    /**
+     * P2.2 canonical form for file hashing. Normalises line endings to LF and strips a single
+     * trailing newline. Both the audit side (writing the hash into remediations.xml) and the
+     * apply side (verifying it) must call this before hashing so the two sides agree
+     * byte-for-byte regardless of the OS that ran the audit or whether the file had a
+     * trailing newline on disk. Callers hash the UTF-8 bytes of the returned string.
+     */
+    public static String canonicalizeForHash(String content) {
+        if (content == null) return "";
+        String normalized = content.replace("\r\n", "\n").replace('\r', '\n');
+        if (normalized.endsWith("\n")) {
+            normalized = normalized.substring(0, normalized.length() - 1);
+        }
+        return normalized;
+    }
+
     public static String stripSyntheticLineMarkers(String content, String fileName) {
         if (content == null || content.isEmpty()) {
             return content;

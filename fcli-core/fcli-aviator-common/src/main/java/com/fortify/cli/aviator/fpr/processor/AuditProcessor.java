@@ -1011,10 +1011,13 @@ public class AuditProcessor {
     }
 
     private String calculateHashBase64(String content, String algorithm) {
-        if (content == null) return "";
         try {
             MessageDigest md = MessageDigest.getInstance(algorithm);
-            byte[] digest = md.digest(content.getBytes(StandardCharsets.UTF_8));
+            // P2.2: hash the canonical form (LF-normalised, no trailing newline) so the apply
+            // side can reproduce the digest regardless of the OS that ran the audit or the
+            // file's trailing-newline state.
+            String canonical = FileUtil.canonicalizeForHash(content);
+            byte[] digest = md.digest(canonical.getBytes(StandardCharsets.UTF_8));
             return Base64.getEncoder().encodeToString(digest);
         } catch (NoSuchAlgorithmException e) {
             throw new AviatorTechnicalException("Hashing algorithm not available: " + algorithm, e);

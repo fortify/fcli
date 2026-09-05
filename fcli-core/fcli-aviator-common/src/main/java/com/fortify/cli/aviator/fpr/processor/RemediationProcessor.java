@@ -417,7 +417,7 @@ public class RemediationProcessor {
             }
             int declaredLineFrom = parseRequiredInt(changeElement, "LineFrom");
             int declaredLineTo = parseRequiredInt(changeElement, "LineTo");
-            updatedContent = applyChange(instanceId, filename, fileHash, sourceEncoding, updatedContent,
+            updatedContent = applyChange(instanceId, filename, filePath, fileHash, sourceEncoding, updatedContent,
                 changeElement, k + 1);
             // P2.4: stage this hunk into the per-run offset map (merged on commit success).
             int origLines = declaredLineTo - declaredLineFrom + 1;
@@ -442,7 +442,7 @@ public class RemediationProcessor {
         return true;
     }
 
-    private String applyChange(String instanceId, String filename, String fileHash, Charset sourceEncoding, String originalContent,
+    private String applyChange(String instanceId, String filename, Path filePath, String fileHash, Charset sourceEncoding, String originalContent,
             Element change, int changeIndex) {
         String lineSeparator = detectLineSeparator(originalContent);
         String content = normalizeLineEndings(originalContent);
@@ -455,50 +455,121 @@ public class RemediationProcessor {
         int lineTo = parseRequiredInt(change, "LineTo");
         LOG.debug("Remediation {} change {} for '{}' targets lines {}-{}", instanceId, changeIndex, filename, lineFrom, lineTo);
 
-        String calculatedHash = calculateHashBase64(content, "SHA-256");
-        boolean fileHashMatches = calculatedHash.equals(fileHash);
-        LOG.debug("Remediation {} hash check for '{}': {}", instanceId, filename, fileHashMatches ? "matched" : "mismatched");
+        // P2.2: try canonical hash first (matches the new AuditProcessor form), then legacy raw-content
+        // hash so pre-P2.2 FPRs still match. Try each with BOTH UTF-8 and the file's declared source
+        // encoding — the doc's "5 of 53 files not valid UTF-8" case fails when audit and apply disagree
+        // on the encoding used for the getBytes step; accepting the source-encoding form covers it.
+        String canonicalStr = FileUtil.canonicalizeForHash(content);
+        String legacyStr = originalContent;
+        String canonicalHashUtf8 = calculateHashBase64Bytes(canonicalStr.getBytes(StandardCharsets.UTF_8), "SHA-256");
+        String legacyHashUtf8 = calculateHashBase64Bytes(legacyStr.getBytes(StandardCharsets.UTF_8), "SHA-256");
+        String canonicalHashSrc = calculateHashBase64Bytes(canonicalStr.getBytes(sourceEncoding), "SHA-256");
+        String legacyHashSrc = calculateHashBase64Bytes(legacyStr.getBytes(sourceEncoding), "SHA-256");
+        boolean fileHashMatches;
+        String matchedForm;
+        if (canonicalHashUtf8.equals(fileHash)) {
+            fileHashMatches = true;
+            matchedForm = "canonical";
+        } else if (legacyHashUtf8.equals(fileHash)) {
+            fileHashMatches = true;
+            matchedForm = "legacy";
+        } else if (canonicalHashSrc.equals(fileHash)) {
+            fileHashMatches = true;
+            matchedForm = "canonical/" + sourceEncoding.name();
+        } else if (legacyHashSrc.equals(fileHash)) {
+            fileHashMatches = true;
+            matchedForm = "legacy/" + sourceEncoding.name();
+        } else {
+            fileHashMatches = false;
+            matchedForm = "none";
+        }
+        LOG.debug("Remediation {} hash check for '{}': {}",
+            instanceId, filename, fileHashMatches ? ("matched (" + matchedForm + ")") : "mismatched");
         if (!fileHashMatches) {
             LOG.debug("File hash mismatch for remediation {} in {}; searching changed source content", instanceId, filename);
-            Element contextElement = getRequiredElement(change, "Context");
-            String contextText = contextElement.getTextContent();
-            List<String> contextLine = Arrays.asList(contextText.split("\\r?\\n"));
-            int contextLineFrom = fuzzySearchContext(instanceId, filename, originalLines, contextLine);
-            if (contextLineFrom == -1) {
-                LOG.debug("Context search failed for remediation {} in {}; trying whole-file OriginalCode fallback",
-                    instanceId, filename);
-                String fallbackOriginalCodeText = getRequiredElementText(change, "OriginalCode");
-                List<String> fallbackOriginalCodeLine = Arrays.asList(fallbackOriginalCodeText.split("\\r?\\n"));
-                int[] wholeFile = fuzzySearchOriginalCode(instanceId, filename, originalLines, fallbackOriginalCodeLine,
-                    0, originalLines.size(), 0, 0);
-                if (wholeFile[0] != -1 && wholeFile[1] != -1) {
-                    LOG.debug("Whole-file OriginalCode fallback matched remediation {} in {} at lines {}-{}",
-                        instanceId, filename, wholeFile[0] + 1, wholeFile[1] + 1);
-                    lineFrom = wholeFile[0] + 1;
-                    lineTo = wholeFile[1] + 1;
-                } else {
-                    LOG.debug("Whole-file OriginalCode fallback failed for remediation {} in {}", instanceId, filename);
-                    throw new SkipRemediationException(SkipReason.SOURCE_CONTEXT_NOT_FOUND, "Source context not found for file '" + filename +
-                        "'; file may have changed or remediation may overlap a previous change");
-                }
-            } else {
-                LOG.debug("Context for remediation {} in {} matched at line {}", instanceId, filename, contextLineFrom + 1);
 
-                String originalCodeText = getRequiredElementText(change, "OriginalCode");
-                List<String> originalCodeLine = Arrays.asList(originalCodeText.split("\\r?\\n"));
-                int contextBefore = parseRequiredContextAttribute(contextElement, "before");
-                int contextAfter = parseRequiredContextAttribute(contextElement, "after");
-                int[] lineFromTo = fuzzySearchOriginalCode(instanceId, filename, originalLines, originalCodeLine,
-                    contextLineFrom, contextLine.size(), contextBefore, contextAfter);
-                if (lineFromTo[0] == -1 || lineFromTo[1] == -1) {
-                    LOG.debug("Original code search failed for remediation {} in {}; context line={}, original code lines={}, source lines={}",
-                        instanceId, filename, contextLineFrom + 1, originalCodeLine.size(), originalLines.size());
-                    throw new SkipRemediationException(SkipReason.ORIGINAL_CODE_NOT_FOUND, "Original code not found for file '" + filename +
-                        "'; file may have changed or remediation may overlap a previous change");
+            // P2.4 offset projection: if a prior remediation this run modified this file, project the declared
+            // range through the accumulated line-delta of every AppliedChange whose original range sits strictly
+            // before this hunk's declared start. Verify the projected position holds the expected OriginalCode
+            // (whitespace-insensitive). On success we bypass the fuzzy fallback entirely.
+            List<AppliedChange> priorApplied = appliedByFile.getOrDefault(filePath, List.of());
+            boolean resolvedByProjection = false;
+            if (!priorApplied.isEmpty()) {
+                int shift = 0;
+                for (AppliedChange ac : priorApplied) {
+                    if (ac.originalLineTo() < lineFrom) {
+                        shift += ac.deltaLines();
+                    }
                 }
-                lineFrom = lineFromTo[0] + 1;
-                lineTo = lineFromTo[1] + 1;
-                LOG.debug("Original code for remediation {} in {} matched at lines {}-{}", instanceId, filename, lineFrom, lineTo);
+                int projectedFrom = lineFrom + shift;
+                int projectedTo = lineTo + shift;
+                if (projectedFrom >= 1 && projectedTo >= projectedFrom && projectedTo <= originalLines.size()) {
+                    String originalCodeText = getRequiredElementText(change, "OriginalCode");
+                    List<String> originalCodeLines = Arrays.asList(originalCodeText.split("\\r?\\n"));
+                    if (linesEqualNormalized(originalLines, projectedFrom - 1, projectedTo - 1, originalCodeLines)) {
+                        LOG.debug("Remediation {} projected via offset map for '{}': declared {}-{} shifted by {} to {}-{}",
+                            instanceId, filename, lineFrom, lineTo, shift, projectedFrom, projectedTo);
+                        lineFrom = projectedFrom;
+                        lineTo = projectedTo;
+                        resolvedByProjection = true;
+                    } else {
+                        LOG.debug("Remediation {} projection anchor mismatch for '{}' at projected {}-{}; falling back",
+                            instanceId, filename, projectedFrom, projectedTo);
+                    }
+                }
+            }
+
+            if (!resolvedByProjection) {
+                Element contextElement = getRequiredElement(change, "Context");
+                String contextText = contextElement.getTextContent();
+                List<String> contextLine = Arrays.asList(contextText.split("\\r?\\n"));
+                int contextLineFrom = fuzzySearchContext(instanceId, filename, originalLines, contextLine);
+                if (contextLineFrom == -1) {
+                    LOG.debug("Context search failed for remediation {} in {}; trying whole-file OriginalCode fallback",
+                        instanceId, filename);
+                    String fallbackOriginalCodeText = getRequiredElementText(change, "OriginalCode");
+                    List<String> fallbackOriginalCodeLine = Arrays.asList(fallbackOriginalCodeText.split("\\r?\\n"));
+                    int[] wholeFile = fuzzySearchOriginalCode(instanceId, filename, originalLines, fallbackOriginalCodeLine,
+                        0, originalLines.size(), 0, 0);
+                    if (wholeFile[0] != -1 && wholeFile[1] != -1) {
+                        LOG.debug("Whole-file OriginalCode fallback matched remediation {} in {} at lines {}-{}",
+                            instanceId, filename, wholeFile[0] + 1, wholeFile[1] + 1);
+                        lineFrom = wholeFile[0] + 1;
+                        lineTo = wholeFile[1] + 1;
+                    } else {
+                        LOG.debug("Whole-file OriginalCode fallback failed for remediation {} in {}", instanceId, filename);
+                        SkipReason failureReason = priorApplied.isEmpty()
+                            ? SkipReason.SOURCE_CONTEXT_NOT_FOUND
+                            : SkipReason.ANCHOR_DOES_NOT_MATCH;
+                        throw new SkipRemediationException(failureReason, "Anchor not found for file '" + filename +
+                            "'; " + (priorApplied.isEmpty()
+                                ? "file may have changed on disk or context is missing"
+                                : "prior remediation shifted or rewrote the anchor lines this run"));
+                    }
+                } else {
+                    LOG.debug("Context for remediation {} in {} matched at line {}", instanceId, filename, contextLineFrom + 1);
+
+                    String originalCodeText = getRequiredElementText(change, "OriginalCode");
+                    List<String> originalCodeLine = Arrays.asList(originalCodeText.split("\\r?\\n"));
+                    int contextBefore = parseRequiredContextAttribute(contextElement, "before");
+                    int contextAfter = parseRequiredContextAttribute(contextElement, "after");
+                    int[] lineFromTo = fuzzySearchOriginalCode(instanceId, filename, originalLines, originalCodeLine,
+                        contextLineFrom, contextLine.size(), contextBefore, contextAfter);
+                    if (lineFromTo[0] == -1 || lineFromTo[1] == -1) {
+                        LOG.debug("Original code search failed for remediation {} in {}; context line={}, original code lines={}, source lines={}",
+                            instanceId, filename, contextLineFrom + 1, originalCodeLine.size(), originalLines.size());
+                        SkipReason failureReason = priorApplied.isEmpty()
+                            ? SkipReason.ORIGINAL_CODE_NOT_FOUND
+                            : SkipReason.ANCHOR_DOES_NOT_MATCH;
+                        throw new SkipRemediationException(failureReason, "Original code not found for file '" + filename +
+                            "'; " + (priorApplied.isEmpty()
+                                ? "file may have changed on disk"
+                                : "prior remediation altered lines inside this hunk's context window"));
+                    }
+                    lineFrom = lineFromTo[0] + 1;
+                    lineTo = lineFromTo[1] + 1;
+                    LOG.debug("Original code for remediation {} in {} matched at lines {}-{}", instanceId, filename, lineFrom, lineTo);
+                }
             }
         }
 
@@ -730,6 +801,17 @@ public class RemediationProcessor {
         }
     }
 
+    /** Encoding-agnostic hash — caller supplies the already-encoded bytes. */
+    private String calculateHashBase64Bytes(byte[] bytes, String algorithm) {
+        if (bytes == null) return "";
+        try {
+            MessageDigest md = MessageDigest.getInstance(algorithm);
+            return Base64.getEncoder().encodeToString(md.digest(bytes));
+        } catch (NoSuchAlgorithmException e) {
+            throw new AviatorTechnicalException("Hashing algorithm not available: " + algorithm, e);
+        }
+    }
+
     private void recordSkipped(Map<String, Integer> skippedByReason, String reason) {
         skippedByReason.merge(reason, 1, Integer::sum);
     }
@@ -827,6 +909,24 @@ public class RemediationProcessor {
             }
         }
         return HunkOutcome.APPLIED;
+    }
+
+    /**
+     * P2.4 anchor verification: line-by-line whitespace-insensitive, case-insensitive comparison
+     * between a slice of the current file and the expected OriginalCode. Matches the same
+     * normalization ({@code trim().replaceAll("\\s+", " ")}, {@code equalsIgnoreCase}) that
+     * {@link FuzzyContextSearcher} uses so behaviour is consistent between the fast projection
+     * path and the fuzzy fallback.
+     */
+    private boolean linesEqualNormalized(List<String> source, int startInclusive, int endInclusive, List<String> expected) {
+        int len = endInclusive - startInclusive + 1;
+        if (len != expected.size()) return false;
+        for (int i = 0; i < len; i++) {
+            String a = source.get(startInclusive + i).trim().replaceAll("\\s+", " ");
+            String b = expected.get(i).trim().replaceAll("\\s+", " ");
+            if (!a.equalsIgnoreCase(b)) return false;
+        }
+        return true;
     }
 
     private String trimBlankLines(String content) {
