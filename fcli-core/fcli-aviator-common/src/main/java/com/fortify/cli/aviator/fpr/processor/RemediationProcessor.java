@@ -67,10 +67,10 @@ public class RemediationProcessor {
     private final String sourceCodeDirectory;
     private final ISourceDecoder sourceDecoder;
 
-    public record RemediationMetric(int totalRemediations, int appliedRemediations, int skippedRemediations, Set<String> modifiedFiles,
+    public record RemediationMetric(int totalRemediations, int appliedRemediations,     int identicalRemediations,int skippedRemediations, Set<String> modifiedFiles,
                                     Map<String, Integer> skippedByReason) {
-        public RemediationMetric(int totalRemediations, int appliedRemediations, int skippedRemediations, Set<String> modifiedFiles) {
-            this(totalRemediations, appliedRemediations, skippedRemediations, modifiedFiles, Map.of());
+        public RemediationMetric(int totalRemediations, int appliedRemediations,int identicalRemediations,int  skippedRemediations, Set<String> modifiedFiles) {
+            this(totalRemediations, appliedRemediations,identicalRemediations, skippedRemediations, modifiedFiles, Map.of());
         }
     }
 
@@ -192,9 +192,35 @@ public class RemediationProcessor {
             appliedRemediations = 0;
             for (int i = 0; i < remediationNodes.getLength(); i++) {
                 Element remediation = (Element) remediationNodes.item(i);
+                String instanceId =  remediation.getAttribute("instanceId");
+                List<RemediationKey> remediationKeys = createRemediationKeys(remediation, sourceBasePath);
+                String identicalInstanceId = null;
+                if (!remediationKeys.isEmpty()) {
+                    for (String existingInstanceId : new LinkedHashSet<>(remediationLookup.values())) {
+                        List<RemediationKey> existingKeys = remediationLookup.entrySet().stream()
+                            .filter(e -> existingInstanceId.equals(e.getValue()))
+                            .map(Map.Entry::getKey)
+                            .toList();
+                        if (existingKeys.size() == remediationKeys.size() && existingKeys.containsAll(remediationKeys)) {
+                            identicalInstanceId = existingInstanceId;
+                            break;
+                        }
+                    }
+                }
+                if (identicalInstanceId != null) {
+                    identicalRemediations++;
+                    continue;
+                }
+
                 if (processRemediation(remediation, sourceBasePath, fvdlMetadata, modifiedFiles, skippedByReason)) {
                     appliedRemediations++;
+                    for (RemediationKey key : remediationKeys) {
+                        LOG.debug("putting {}", instanceId);
+                        remediationLookup.put(key, instanceId);
+                    }
                 }
+
+
             }
 
         } catch (ParserConfigurationException | SAXException | IOException e) {
@@ -207,11 +233,11 @@ public class RemediationProcessor {
             throw new AviatorTechnicalException("Unexpected error processing remediations.xml.", e);
         }
         int skippedRemediations = totalRemediations - appliedRemediations;
-        LOG.info("Auto-remediation summary: total={}, applied={}, skipped={}", totalRemediations, appliedRemediations, skippedRemediations);
+        LOG.info("Auto-remediation summary: total={}, applied={},indentical={},skipped={}", totalRemediations, appliedRemediations, identicalRemediations,skippedRemediations);
         if (!skippedByReason.isEmpty()) {
             LOG.info("Skipped remediations by reason: {}", formatSkippedReasons(skippedByReason));
         }
-        return new RemediationMetric(totalRemediations, appliedRemediations, skippedRemediations, modifiedFiles, skippedByReason);
+        return new RemediationMetric(totalRemediations, appliedRemediations, identicalRemediations, skippedRemediations, modifiedFiles, skippedByReason);
     }
 
     private boolean processRemediation(Element remediation, Path sourceBasePath, FVDLMetadata fvdlMetadata,
@@ -583,5 +609,104 @@ public class RemediationProcessor {
         List<String> parts = new ArrayList<>();
         skippedByReason.forEach((reason, count) -> parts.add(reason + "=" + count));
         return String.join(", ", parts);
+    }
+
+    private RemediationKey createRemediationKey(
+        Element fileChanges, Element change, Path sourceBasePath, String comparisonCode) {
+
+        String fileName = getRequiredElementText(fileChanges, "Filename");
+        Path filePath = sourceBasePath.resolve(fileName).normalize();
+        int lineFrom = parseRequiredInt(change, "LineFrom");
+        int lineTo = parseRequiredInt(change, "LineTo");
+
+        return new RemediationKey(fileName, filePath, lineFrom, lineTo, comparisonCode);
+    }
+
+    private String trimBlankLines(String content) {
+        String[] lines = content.split("\\R", -1);
+        int start = 0, end = lines.length - 1;
+
+        while (start <= end && lines[start].isBlank()) start++;
+        while (end >= start && lines[end].isBlank()) end--;
+
+        return start > end ? "" :
+            String.join(System.lineSeparator(), Arrays.copyOfRange(lines, start, end + 1));
+    }
+
+    private String normalizeProposedCode(String content, String fileName) {
+        if (content == null) return null;
+
+        String language = FileTypeLanguageMapperUtil.getProgrammingLanguage(
+            FileUtil.getFileExtension(fileName));
+        String commentSymbol = LanguageCommentMapperUtil.getProgrammingLanguageComment(language);
+
+        if ("Unknown".equals(commentSymbol)) return trimBlankLines(content);
+
+        String closingToken = commentSymbol.equals("<!--") ? "-->"
+            : commentSymbol.equals("<%--") ? "--%>" : null;
+
+        Pattern markerPattern = Pattern.compile(
+            "[ \\t]*" + Pattern.quote(commentSymbol) + " L\\d+"
+                + (closingToken != null ? "[ \\t]*" + Pattern.quote(closingToken) : "")
+                + "[ \\t]*$");
+
+        String[] lines = content.split("\\R", -1);
+        StringBuilder result = new StringBuilder();
+
+        for (int i = 0; i < lines.length; i++) {
+            Matcher matcher = markerPattern.matcher(lines[i]);
+            result.append(matcher.find() ? lines[i].substring(0, matcher.start()) : lines[i]);
+            if (i < lines.length - 1) result.append(System.lineSeparator());
+        }
+
+        return trimBlankLines(result.toString());
+    }
+
+    private String createComparisonCode(String normalizedCode, String fileName) {
+        if (normalizedCode == null) return null;
+
+        String language = FileTypeLanguageMapperUtil.getProgrammingLanguage(
+            FileUtil.getFileExtension(fileName));
+        String commentSymbol = LanguageCommentMapperUtil.getProgrammingLanguageComment(language);
+
+        if ("Unknown".equals(commentSymbol)) return normalizedCode.replaceAll("\\s+", "");
+
+        String comparisonCode = normalizedCode;
+        String closingToken = commentSymbol.equals("<!--") ? "-->"
+            : commentSymbol.equals("<%--") ? "--%>" : null;
+
+        if (closingToken != null) {
+            comparisonCode = comparisonCode.replaceAll(
+                "(?s)" + Pattern.quote(commentSymbol) + ".*?" + Pattern.quote(closingToken), "");
+        } else if ("//".equals(commentSymbol)) {
+            comparisonCode = comparisonCode.replaceAll("(?m)" + Pattern.quote(commentSymbol) + ".*$", "")
+                .replaceAll("(?s)/\\*.*?\\*/", "");
+        } else if ("#".equals(commentSymbol)) {
+            comparisonCode = comparisonCode.replaceAll("(?m)" + Pattern.quote(commentSymbol) + ".*$", "");
+        }
+
+        return comparisonCode.replaceAll("\\s+", "");
+    }
+
+    private List<RemediationKey> createRemediationKeys(Element remediation, Path sourceBasePath) {
+        List<RemediationKey> keys = new ArrayList<>();
+        NodeList fileChangesNodes = remediation.getElementsByTagNameNS(NAMESPACE_URI, "FileChanges");
+
+        for (int i = 0; i < fileChangesNodes.getLength(); i++) {
+            Element fileChanges = (Element) fileChangesNodes.item(i);
+            NodeList changeNodes = fileChanges.getElementsByTagNameNS(NAMESPACE_URI, "Change");
+
+            for (int j = 0; j < changeNodes.getLength(); j++) {
+                Element change = (Element) changeNodes.item(j);
+                String fileName = getRequiredElementText(fileChanges, "Filename");
+                String newCode = getRequiredElementText(change, "NewCode");
+                String normalizedCode = normalizeProposedCode(newCode, fileName);
+                String comparisonCode = createComparisonCode(normalizedCode, fileName);
+
+                keys.add(createRemediationKey(fileChanges, change, sourceBasePath, comparisonCode));
+            }
+        }
+
+        return keys;
     }
 }
