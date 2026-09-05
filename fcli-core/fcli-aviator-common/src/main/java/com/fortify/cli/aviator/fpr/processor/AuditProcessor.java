@@ -69,6 +69,8 @@ import com.fortify.cli.aviator.util.Constants;
 import com.fortify.cli.aviator.util.FprHandle;
 
 import lombok.Setter;
+import com.fortify.cli.aviator.util.FileUtil;
+
 
 
 public class AuditProcessor {
@@ -938,7 +940,9 @@ public class AuditProcessor {
                                 changeElement.appendChild(originalCodeElement);
 
                                 Element newCodeElement = finalDoc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "NewCode");
-                                newCodeElement.appendChild(finalDoc.createCDATASection(change.getReplaceWith() != null ? change.getReplaceWith() : ""));
+                                String sanitizedNewCode = FileUtil.stripSyntheticLineMarkers(
+                                    change.getReplaceWith() != null ? change.getReplaceWith() : "", filename);
+                                newCodeElement.appendChild(finalDoc.createCDATASection(sanitizedNewCode));
                                 changeElement.appendChild(newCodeElement);
 
                                 final int CONTEXT_LINES = 3;
