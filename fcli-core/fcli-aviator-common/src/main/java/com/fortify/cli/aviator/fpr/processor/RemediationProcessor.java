@@ -55,6 +55,9 @@ import com.fortify.cli.aviator.fpr.utils.SourceEncoder;
 import com.fortify.cli.aviator.fpr.utils.SourceEncoder.SourceEncodeException;
 import com.fortify.cli.aviator.util.FprHandle;
 import com.fortify.cli.aviator.util.FuzzyContextSearcher;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import com.fortify.cli.aviator.util.*;
 
 public class RemediationProcessor {
     private static final Logger LOG = LoggerFactory.getLogger(RemediationProcessor.class);
@@ -71,7 +74,7 @@ public class RemediationProcessor {
         }
     }
 
-    private record RemediationKey(String fileName, Path filePath,int lineFrom,int lineTo,String comparisonCode){}s
+    private record RemediationKey(String fileName, Path filePath,int lineFrom,int lineTo,String comparisonCode){}
 
     private record SourceFileContent(String content, Charset charset, String encodingSource) {}
 
@@ -156,8 +159,10 @@ public class RemediationProcessor {
         Document remediationDoc;
         int totalRemediations;
         int appliedRemediations;
+        int identicalRemediations = 0;
         Set<String> modifiedFiles = new LinkedHashSet<>();
         Map<String, Integer> skippedByReason = new LinkedHashMap<>();
+        Map<RemediationKey, String> remediationLookup = new LinkedHashMap<>();
 
         // Sanitize and normalize the base source directory path once.
         String trimmedSourceDir = sourceCodeDirectory.trim();
