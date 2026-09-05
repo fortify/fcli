@@ -354,8 +354,6 @@ public class RemediationProcessor {
         }
         byte[] updatedBytes = encodeSourceFile(updatedContent, sourceEncoding, filename);
 
-
-        byte[] updatedBytes = encodeSourceFile(updatedContent, sourceEncoding, filename);
         pendingWrites.put(filePath, new PendingFileWrite(filename, filePath, updatedContent, sourceEncoding,
             sourceFileContent.encodingSource(), updatedBytes));
         LOG.debug("Staged remediation {} for '{}' using source encoding {}; changes={}, encodedBytes={}", instanceId, filename,

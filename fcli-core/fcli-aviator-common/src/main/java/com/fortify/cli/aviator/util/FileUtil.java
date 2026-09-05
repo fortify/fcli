@@ -21,6 +21,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.Comparator;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 import java.util.zip.ZipInputStream;
@@ -29,7 +30,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fortify.cli.common.exception.FcliTechnicalException;
-import java.util.regex.Matcher;
 
 
 public final class FileUtil {

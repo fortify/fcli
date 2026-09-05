@@ -66,10 +66,10 @@ import com.fortify.cli.aviator.fpr.utils.FileUtils;
 import com.fortify.cli.aviator.fpr.utils.ISourceDecoder;
 import com.fortify.cli.aviator.fpr.utils.SourceDecoders;
 import com.fortify.cli.aviator.util.Constants;
+import com.fortify.cli.aviator.util.FileUtil;
 import com.fortify.cli.aviator.util.FprHandle;
 
 import lombok.Setter;
-import com.fortify.cli.aviator.util.FileUtil;
 
 
 
