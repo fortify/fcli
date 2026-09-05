@@ -81,19 +81,6 @@ public class RemediationProcessor {
     }
     private record ChangeApplication(String content, AppliedChange appliedChange) {}
 
-    private record RemediationTrace(
-        String instanceId,
-        String filename,
-        int changeIndex,
-        int declaredLineFrom,
-        int declaredLineTo,
-        boolean fileHashMatches,
-        int previousChanges,
-        int projectedLineFrom,
-        int projectedLineTo,
-        String outcome,
-        String reason) {}
-
     private record RollbackFileWrite(String filename, Path filePath, byte[] originalBytes) {}
 
     private record RemediationKey(String fileName, Path filePath,int lineFrom,int lineTo,String comparisonCode){}
@@ -306,11 +293,9 @@ public class RemediationProcessor {
     private boolean processRemediation(Element remediation, Path sourceBasePath, FVDLMetadata fvdlMetadata, Set<String> modifiedFiles,
                                        Map<String, Integer> skippedByReason, Map<Path, List<AppliedChange>> appliedChangesByFile) {
         String instanceId = remediation.getAttribute("instanceId");
-        List<RemediationTrace> traces = new ArrayList<>();
         try {
             List<AppliedChange> stagedChanges = new ArrayList<>();
-
-            Map<Path, PendingFileWrite> pendingWrites = prepareFileChanges(remediation, sourceBasePath, fvdlMetadata, appliedChangesByFile, stagedChanges, traces);
+            Map<Path, PendingFileWrite> pendingWrites = prepareFileChanges(remediation, sourceBasePath, fvdlMetadata, appliedChangesByFile, stagedChanges);
             if (pendingWrites.isEmpty()) {
                 recordSkipped(skippedByReason, SkipReason.NO_CHANGES.displayName);
                 return false;
@@ -320,35 +305,6 @@ public class RemediationProcessor {
                 for (AppliedChange change : stagedChanges) {
                     appliedChangesByFile.computeIfAbsent(change.filePath(), key -> new ArrayList<>()).add(change);
                 }
-
-                LOG.info(
-                    "========== REMEDIATION TRACE {} ==========",
-                    instanceId);
-
-                for (RemediationTrace trace : traces) {
-                    LOG.info(
-                        "TRACE instance={} file={} change={} declared={}-{} hashMatches={} previousChanges={} resolved={}-{} outcome={} reason={}",
-                        trace.instanceId(),
-                        trace.filename(),
-                        trace.changeIndex(),
-                        trace.declaredLineFrom(),
-                        trace.declaredLineTo(),
-                        trace.fileHashMatches(),
-                        trace.previousChanges(),
-                        trace.projectedLineFrom(),
-                        trace.projectedLineTo(),
-                        trace.outcome(),
-                        trace.reason());
-                }
-
-                LOG.info(
-                    "TRACE FINAL instance={} outcome=APPLIED",
-                    instanceId);
-
-                LOG.info(
-                    "========== END REMEDIATION TRACE {} ==========",
-                    instanceId);
-
                 return true;
             } catch (RemediationCommitException e) {
                 rollbackRemediationWrites(instanceId, e.getRollbacks());
@@ -356,53 +312,8 @@ public class RemediationProcessor {
             }
         } catch (SkipRemediationException e) {
             recordSkipped(skippedByReason, skipReasonLabel(e));
-
             LOG.warn("Skipping remediation {}: {}", instanceId, e.getMessage());
-
-            LOG.info(
-                "========== REMEDIATION TRACE {} ==========",
-                instanceId);
-
-            if (traces.isEmpty()) {
-                LOG.info(
-                    "TRACE instance={} outcome=SKIPPED reason={} message={}",
-                    instanceId,
-                    e.reason.displayName,
-                    e.getMessage());
-            } else {
-                for (RemediationTrace trace : traces) {
-                    LOG.info(
-                        "TRACE instance={} file={} change={} declared={}-{} hashMatches={} previousChanges={} resolved={}-{} outcome={} reason={}",
-                        trace.instanceId(),
-                        trace.filename(),
-                        trace.changeIndex(),
-                        trace.declaredLineFrom(),
-                        trace.declaredLineTo(),
-                        trace.fileHashMatches(),
-                        trace.previousChanges(),
-                        trace.projectedLineFrom(),
-                        trace.projectedLineTo(),
-                        trace.outcome(),
-                        trace.reason());
-                }
-
-                LOG.info(
-                    "TRACE FINAL instance={} outcome=SKIPPED reason={} message={}",
-                    instanceId,
-                    e.reason.displayName,
-                    e.getMessage());
-            }
-
-            LOG.info(
-                "========== END REMEDIATION TRACE {} ==========",
-                instanceId);
-
-            LOG.debug(
-                "Skip reason for remediation {}: {}",
-                instanceId,
-                e.reason.displayName,
-                e);
-
+            LOG.debug("Skip reason for remediation {}: {}", instanceId, e.reason.displayName, e);
             return false;
         } catch (RollbackRemediationException e) {
             throw e;
@@ -414,7 +325,7 @@ public class RemediationProcessor {
         }
     }
 
-    private Map<Path, PendingFileWrite> prepareFileChanges(Element remediation, Path sourceBasePath, FVDLMetadata fvdlMetadata, Map<Path, List<AppliedChange>> appliedChangesByFile, List<AppliedChange> stagedChanges, List<RemediationTrace> traces) {
+    private Map<Path, PendingFileWrite> prepareFileChanges(Element remediation, Path sourceBasePath, FVDLMetadata fvdlMetadata, Map<Path, List<AppliedChange>> appliedChangesByFile, List<AppliedChange> stagedChanges) {
         NodeList fileChangesNodes = remediation.getElementsByTagNameNS(NAMESPACE_URI, "FileChanges");
         if (fileChangesNodes.getLength() == 0) {
             throw new SkipRemediationException(SkipReason.NO_CHANGES, "No file changes found");
@@ -422,13 +333,13 @@ public class RemediationProcessor {
 
         Map<Path, PendingFileWrite> pendingWrites = new LinkedHashMap<>();
         for (int j = 0; j < fileChangesNodes.getLength(); j++) {
-            processFileChanges(remediation, (Element) fileChangesNodes.item(j), sourceBasePath, fvdlMetadata, pendingWrites, appliedChangesByFile, stagedChanges, traces);
+            processFileChanges(remediation, (Element) fileChangesNodes.item(j), sourceBasePath, fvdlMetadata, pendingWrites, appliedChangesByFile, stagedChanges);
         }
         return pendingWrites;
     }
 
     private boolean processFileChanges(Element remediation, Element fileChanges, Path sourceBasePath, FVDLMetadata fvdlMetadata, Map<Path,
-        PendingFileWrite> pendingWrites, Map<Path, List<AppliedChange>> appliedChangesByFile, List<AppliedChange> stagedChanges, List<RemediationTrace> traces) {String instanceId = remediation.getAttribute("instanceId");
+        PendingFileWrite> pendingWrites, Map<Path, List<AppliedChange>> appliedChangesByFile, List<AppliedChange> stagedChanges) {String instanceId = remediation.getAttribute("instanceId");
         String filename = getRequiredElementText(fileChanges, "Filename");
         Path filePath = sourceBasePath.resolve(filename).normalize();
         LOG.debug("Processing remediation {} file change for '{}' resolved to '{}'", instanceId, filename, filePath);
@@ -454,7 +365,7 @@ public class RemediationProcessor {
 
         String updatedContent = sourceFileContent.content();
         for (int k = 0; k < changesNodes.getLength(); k++) {
-            ChangeApplication application = applyChange(instanceId, filename, filePath, fileHash, sourceEncoding, updatedContent, (Element) changesNodes.item(k), k + 1, appliedChangesByFile, stagedChanges, traces);
+            ChangeApplication application = applyChange(instanceId, filename, filePath, fileHash, sourceEncoding, updatedContent, (Element) changesNodes.item(k), k + 1, appliedChangesByFile, stagedChanges);
             updatedContent = application.content();
             stagedChanges.add(application.appliedChange());
         }
@@ -466,7 +377,7 @@ public class RemediationProcessor {
         return true;
     }
 
-    private ChangeApplication applyChange(String instanceId, String filename, Path filePath, String fileHash, Charset sourceEncoding, String originalContent, Element change, int changeIndex, Map<Path, List<AppliedChange>> appliedChangesByFile, List<AppliedChange> stagedChanges, List<RemediationTrace> traces) {
+    private ChangeApplication applyChange(String instanceId, String filename, Path filePath, String fileHash, Charset sourceEncoding, String originalContent, Element change, int changeIndex, Map<Path, List<AppliedChange>> appliedChangesByFile, List<AppliedChange> stagedChanges) {
         String lineSeparator = detectLineSeparator(originalContent);
         String content = normalizeLineEndings(originalContent);
         List<String> originalLines = Arrays.asList(content.split("\n", -1));
@@ -551,8 +462,6 @@ public class RemediationProcessor {
 
                 LOG.debug("=== ANCHOR MISMATCH - TRYING REANCHOR ===");
                 LOG.debug("InstanceId: {}", instanceId);
-                LOG.debug("=== ANCHOR MISMATCH - TRYING REANCHOR ===");
-                LOG.debug("InstanceId: {}", instanceId);
                 LOG.debug("Filename: {}", filename);
                 LOG.debug("Projected range: {}-{}", lineFrom, lineTo);
                 int debugStart = Math.max(1, lineFrom - 10);
@@ -605,6 +514,7 @@ public class RemediationProcessor {
                     lineTo,
                     change);
             }
+
         } else if (!fileHashMatches) {
             Element contextElement = getRequiredElement(change, "Context");
             List<String> contextLine = Arrays.asList(contextElement.getTextContent().split("\\r?\\n"));
@@ -647,21 +557,6 @@ public class RemediationProcessor {
         updatedLines.addAll(originalLines.subList(lineTo, originalLines.size()));
         String updatedContent = String.join(lineSeparator, updatedLines);
         AppliedChange appliedChange = new AppliedChange(filePath, declaredLineFrom, declaredLineTo, lineFrom, lineFrom + newCodeLines.size() - 1, instanceId, getRequiredElementText(change, "OriginalCode"), getRequiredElementText(change, "NewCode"));
-
-        traces.add(
-            new RemediationTrace(
-                instanceId,
-                filename,
-                changeIndex,
-                declaredLineFrom,
-                declaredLineTo,
-                fileHashMatches,
-                previousChanges.size(),
-                lineFrom,
-                lineTo,
-                "APPLIED",
-                "OriginalCode matched"));
-
         return new ChangeApplication(updatedContent, appliedChange);
     }
     private int[] projectLineRange(

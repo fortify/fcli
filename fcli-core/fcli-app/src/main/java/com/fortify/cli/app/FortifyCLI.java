@@ -17,9 +17,9 @@ import com.fortify.cli.common.util.ConsoleHelper;
 
 /**
  * <p>This class provides the {@link #main(String[])} entrypoint into the application,
- * and also registers some GraalVM features, allowing the application to run properly 
+ * and also registers some GraalVM features, allowing the application to run properly
  * as GraalVM native images.</p>
- * 
+ *
  * @author Ruud Senden
  */
 public class FortifyCLI {
@@ -33,6 +33,7 @@ public class FortifyCLI {
 
     private static final int execute(String[] args) {
         try {
+            System.out.println("FCLI9 started");
             ConsoleHelper.installJAnsiConsole();
             return DefaultFortifyCLIRunner.run(args);
         } finally {
