@@ -41,12 +41,13 @@ public final class AviatorSSCApplyRemediationsHelper {
      * @return An ObjectNode representing the result.
      */
     public static ObjectNode buildResultNode(SSCArtifactDescriptor ad, int totalRemediation, int appliedRemediation, int identicalRemediation,
-            int skippedRemediation, Set<String> modifiedFiles, String action) {
-        return buildResultNode(ad, totalRemediation, appliedRemediation, identicalRemediation, skippedRemediation, modifiedFiles, Map.of(), action);
+            int supersededRemediation, int skippedRemediation, Set<String> modifiedFiles, String action) {
+        return buildResultNode(ad, totalRemediation, appliedRemediation, identicalRemediation, supersededRemediation,
+            skippedRemediation, modifiedFiles, Map.of(), action);
     }
 
     public static ObjectNode buildResultNode(SSCArtifactDescriptor ad, int totalRemediation, int appliedRemediation, int identicalRemediation,
-            int skippedRemediation, Set<String> modifiedFiles, Map<String, Integer> skippedByReason, String action) {
+            int supersededRemediation, int skippedRemediation, Set<String> modifiedFiles, Map<String, Integer> skippedByReason, String action) {
         ObjectNode result = JsonHelper.getObjectMapper().createObjectNode();
         result.put("appVersionId", ad.asObjectNode().path("projectVersionId").asText("N/A"));
         result.put("artifactId", ad.getId());
@@ -55,6 +56,7 @@ public final class AviatorSSCApplyRemediationsHelper {
         result.put("totalRemediation", totalRemediation);
         result.put("appliedRemediation", appliedRemediation);
         result.put("identicalRemediation", identicalRemediation);
+        result.put("supersededRemediation", supersededRemediation);
         result.put("skippedRemediation", skippedRemediation);
         result.put("skippedReasons", formatSkippedReasons(skippedByReason));
         result.set("skippedByReason", toObjectNode(skippedByReason));
@@ -76,14 +78,15 @@ public final class AviatorSSCApplyRemediationsHelper {
      * @return An ObjectNode representing the aggregated result.
      */
     public static ObjectNode buildAggregatedResultNode(String appVersionId, int artifactsProcessed, int artifactsSkipped,
-            int totalRemediation, int appliedRemediation, int identicalRemediation, int skippedRemediation, Set<String> modifiedFiles, String action) {
+            int totalRemediation, int appliedRemediation, int identicalRemediation, int supersededRemediation,
+            int skippedRemediation, Set<String> modifiedFiles, String action) {
         return buildAggregatedResultNode(appVersionId, artifactsProcessed, artifactsSkipped, totalRemediation, appliedRemediation,
-                identicalRemediation, skippedRemediation, modifiedFiles, Map.of(), action);
+                identicalRemediation, supersededRemediation, skippedRemediation, modifiedFiles, Map.of(), action);
     }
 
     public static ObjectNode buildAggregatedResultNode(String appVersionId, int artifactsProcessed, int artifactsSkipped,
-            int totalRemediation, int appliedRemediation, int identicalRemediation, int skippedRemediation, Set<String> modifiedFiles,
-            Map<String, Integer> skippedByReason, String action) {
+            int totalRemediation, int appliedRemediation, int identicalRemediation, int supersededRemediation,
+            int skippedRemediation, Set<String> modifiedFiles, Map<String, Integer> skippedByReason, String action) {
         ObjectNode result = JsonHelper.getObjectMapper().createObjectNode();
         result.put("appVersionId", appVersionId);
         result.put("artifactId", "N/A");
@@ -92,6 +95,7 @@ public final class AviatorSSCApplyRemediationsHelper {
         result.put("totalRemediation", totalRemediation);
         result.put("appliedRemediation", appliedRemediation);
         result.put("identicalRemediation", identicalRemediation);
+        result.put("supersededRemediation", supersededRemediation);
         result.put("skippedRemediation", skippedRemediation);
         result.put("skippedReasons", formatSkippedReasons(skippedByReason));
         result.set("skippedByReason", toObjectNode(skippedByReason));

@@ -67,14 +67,44 @@ public class RemediationProcessor {
     private final String sourceCodeDirectory;
     private final ISourceDecoder sourceDecoder;
 
-    public record RemediationMetric(int totalRemediations, int appliedRemediations,     int identicalRemediations,int skippedRemediations, Set<String> modifiedFiles,
+    /**
+     * P2.4 per-run offset map. Populated when a hunk is written to disk; consulted before
+     * applying subsequent hunks to detect SUPERSEDED/CONFLICTS and to project declared line
+     * ranges through prior edits. Reset implicitly by using a fresh RemediationProcessor
+     * instance per apply operation.
+     */
+    private final Map<Path, List<AppliedChange>> appliedByFile = new LinkedHashMap<>();
+
+    /**
+     * P2.4 staging: hunks that a currently-processing remediation intends to apply. On
+     * successful commit these are merged into {@link #appliedByFile}; on skip/rollback they
+     * are discarded. Cleared at the start of every {@code processRemediation} invocation.
+     */
+    private final List<PendingAppliedChange> pendingAppliedChanges = new ArrayList<>();
+
+    private record PendingAppliedChange(Path filePath, String instanceId, int lineFrom, int lineTo, int deltaLines) {}
+
+    public record RemediationMetric(int totalRemediations, int appliedRemediations, int identicalRemediations,
+                                    int supersededRemediations, int skippedRemediations, Set<String> modifiedFiles,
                                     Map<String, Integer> skippedByReason) {
-        public RemediationMetric(int totalRemediations, int appliedRemediations,int identicalRemediations,int  skippedRemediations, Set<String> modifiedFiles) {
-            this(totalRemediations, appliedRemediations,identicalRemediations, skippedRemediations, modifiedFiles, Map.of());
+        public RemediationMetric(int totalRemediations, int appliedRemediations, int identicalRemediations,
+                                 int supersededRemediations, int skippedRemediations, Set<String> modifiedFiles) {
+            this(totalRemediations, appliedRemediations, identicalRemediations, supersededRemediations,
+                 skippedRemediations, modifiedFiles, Map.of());
         }
     }
 
     private record RemediationKey(String fileName, Path filePath,int lineFrom,int lineTo,String comparisonCode){}
+
+    /**
+     * P2.4 offset-map entry: records a hunk that was actually written to a file this run,
+     * in terms of the PRISTINE file's line numbers. `deltaLines` is
+     * (newLineCount - originalLineCount); positive means the file grew, negative means it shrunk.
+     */
+    private record AppliedChange(String instanceId, int originalLineFrom, int originalLineTo, int deltaLines) {}
+
+    /** Per-hunk classification for the P2.4 state machine. */
+    private enum HunkOutcome { APPLIED, IDENTICAL, SUPERSEDED, CONFLICTS, ANCHOR_MISMATCH }
 
     private record SourceFileContent(String content, Charset charset, String encodingSource) {}
 
@@ -93,6 +123,9 @@ public class RemediationProcessor {
         SOURCE_CONTEXT_NOT_FOUND("Source context not found"),
         SOURCE_CONTEXT_AMBIGUOUS("Source context matched multiple locations"),
         ORIGINAL_CODE_NOT_FOUND("Original code not found"),
+        SUPERSEDED_BY_BROADER_FIX("Superseded by broader fix"),
+        CONFLICTS_WITH_ANOTHER_FIX("Conflicts with another fix"),
+        ANCHOR_DOES_NOT_MATCH("Anchor does not match"),
         REMEDIATION_ENCODE_FAILED("Remediation encode failed"),
         SOURCE_WRITE_FAILED("Source file write failed"),
         NO_CHANGES("No file changes found"),
@@ -160,6 +193,7 @@ public class RemediationProcessor {
         int totalRemediations;
         int appliedRemediations;
         int identicalRemediations = 0;
+        int supersededRemediations = 0;
         Set<String> modifiedFiles = new LinkedHashSet<>();
         Map<String, Integer> skippedByReason = new LinkedHashMap<>();
         Map<RemediationKey, String> remediationLookup = new LinkedHashMap<>();
@@ -190,8 +224,15 @@ public class RemediationProcessor {
             totalRemediations = remediationNodes.getLength();
             LOG.debug("Loaded {} remediation entries from {}", totalRemediations, remediationPath);
             appliedRemediations = 0;
+
+            // P2.4 widest-first ordering: broader fixes land first so narrower nested ones classify as SUPERSEDED.
+            List<Element> orderedRemediations = new ArrayList<>();
             for (int i = 0; i < remediationNodes.getLength(); i++) {
-                Element remediation = (Element) remediationNodes.item(i);
+                orderedRemediations.add((Element) remediationNodes.item(i));
+            }
+            orderedRemediations.sort((a, b) -> Integer.compare(maxHunkWidth(b), maxHunkWidth(a)));
+
+            for (Element remediation : orderedRemediations) {
                 String instanceId =  remediation.getAttribute("instanceId");
                 List<RemediationKey> remediationKeys = createRemediationKeys(remediation, sourceBasePath);
 
@@ -209,11 +250,30 @@ public class RemediationProcessor {
                     }
                 }
 
-                // Fully identical: every hunk was already applied by an earlier remediation.
+                // Fully identical: every hunk was already applied by an earlier remediation with same content.
                 if (!remediationKeys.isEmpty() && toApplyKeys.isEmpty()) {
                     identicalRemediations++;
                     LOG.info("Remediation {} is fully identical to prior remediation(s) {}; {} hunk(s) already applied",
                         instanceId, satisfiedByInstances, satisfiedKeys.size());
+                    continue;
+                }
+
+                // P2.4 SUPERSEDED / CONFLICTS pre-check: classify each unsatisfied hunk against appliedByFile.
+                List<HunkOutcome> preClass = classifyRemediationHunks(remediation, sourceBasePath, toApplyKeys);
+                boolean anyApplyCandidate = preClass.stream().anyMatch(o -> o == HunkOutcome.APPLIED);
+                boolean allSuperseded = !preClass.isEmpty() && preClass.stream().allMatch(o -> o == HunkOutcome.SUPERSEDED);
+                boolean allConflicts  = !preClass.isEmpty() && preClass.stream().allMatch(o -> o == HunkOutcome.CONFLICTS);
+
+                if (!anyApplyCandidate && allSuperseded) {
+                    supersededRemediations++;
+                    LOG.info("Remediation {} is superseded by a broader prior fix for all {} hunk(s); no write needed",
+                        instanceId, preClass.size());
+                    continue;
+                }
+                if (!anyApplyCandidate && allConflicts) {
+                    recordSkipped(skippedByReason, SkipReason.CONFLICTS_WITH_ANOTHER_FIX.displayName);
+                    LOG.info("Remediation {} conflicts with prior fix(es) on all {} hunk(s); skipping",
+                        instanceId, preClass.size());
                     continue;
                 }
 
@@ -245,17 +305,20 @@ public class RemediationProcessor {
             LOG.error("Unexpected error processing remediation.xml: {}", remediationPath, e);
             throw new AviatorTechnicalException("Unexpected error processing remediations.xml.", e);
         }
-        int skippedRemediations = totalRemediations - appliedRemediations - identicalRemediations;
-        LOG.info("Auto-remediation summary: total={}, applied={},identical={},skipped={}", totalRemediations, appliedRemediations, identicalRemediations,skippedRemediations);
+        int skippedRemediations = totalRemediations - appliedRemediations - identicalRemediations - supersededRemediations;
+        LOG.info("Auto-remediation summary: total={}, applied={}, identical={}, superseded={}, skipped={}",
+            totalRemediations, appliedRemediations, identicalRemediations, supersededRemediations, skippedRemediations);
         if (!skippedByReason.isEmpty()) {
             LOG.info("Skipped remediations by reason: {}", formatSkippedReasons(skippedByReason));
         }
-        return new RemediationMetric(totalRemediations, appliedRemediations, identicalRemediations, skippedRemediations, modifiedFiles, skippedByReason);
+        return new RemediationMetric(totalRemediations, appliedRemediations, identicalRemediations,
+            supersededRemediations, skippedRemediations, modifiedFiles, skippedByReason);
     }
 
     private boolean processRemediation(Element remediation, Path sourceBasePath, FVDLMetadata fvdlMetadata,
                                        Set<String> modifiedFiles, Map<String, Integer> skippedByReason, Set<RemediationKey> keysToApply) {
         String instanceId = remediation.getAttribute("instanceId");
+        pendingAppliedChanges.clear();
         try {
             Map<Path, PendingFileWrite> pendingWrites = prepareFileChanges(remediation, sourceBasePath, fvdlMetadata, keysToApply);
 
@@ -265,12 +328,20 @@ public class RemediationProcessor {
             }
             try {
                 commitRemediationWrites(instanceId, pendingWrites, modifiedFiles);
+                // P2.4: only on successful commit do the staged hunks enter the per-run offset map.
+                for (PendingAppliedChange pac : pendingAppliedChanges) {
+                    appliedByFile.computeIfAbsent(pac.filePath(), k -> new ArrayList<>())
+                        .add(new AppliedChange(pac.instanceId(), pac.lineFrom(), pac.lineTo(), pac.deltaLines()));
+                }
+                pendingAppliedChanges.clear();
                 return true;
             } catch (RemediationCommitException e) {
+                pendingAppliedChanges.clear();
                 rollbackRemediationWrites(instanceId, e.getRollbacks());
                 throw new SkipRemediationException(SkipReason.SOURCE_WRITE_FAILED, e.getMessage(), e);
             }
         } catch (SkipRemediationException e) {
+            pendingAppliedChanges.clear();
             recordSkipped(skippedByReason, skipReasonLabel(e));
             LOG.warn("Skipping remediation {}: {}", instanceId, e.getMessage());
             LOG.debug("Skip reason for remediation {}: {}", instanceId, e.reason.displayName, e);
@@ -278,6 +349,7 @@ public class RemediationProcessor {
         } catch (RollbackRemediationException e) {
                 throw e;
         } catch (Exception e) {
+            pendingAppliedChanges.clear();
             recordSkipped(skippedByReason, SkipReason.UNEXPECTED_ERROR.displayName);
             LOG.warn("Skipping remediation {} due to an unexpected processing error", instanceId);
             LOG.debug("Unexpected error while processing remediation {}", instanceId, e);
@@ -343,8 +415,17 @@ public class RemediationProcessor {
                     continue;
                 }
             }
+            int declaredLineFrom = parseRequiredInt(changeElement, "LineFrom");
+            int declaredLineTo = parseRequiredInt(changeElement, "LineTo");
             updatedContent = applyChange(instanceId, filename, fileHash, sourceEncoding, updatedContent,
                 changeElement, k + 1);
+            // P2.4: stage this hunk into the per-run offset map (merged on commit success).
+            int origLines = declaredLineTo - declaredLineFrom + 1;
+            String newCodeText = FileUtil.stripSyntheticLineMarkers(
+                getRequiredElementText(changeElement, "NewCode"), filename);
+            int newLines = newCodeText.isEmpty() ? 0 : newCodeText.split("\n", -1).length;
+            int delta = newLines - origLines;
+            pendingAppliedChanges.add(new PendingAppliedChange(filePath, instanceId, declaredLineFrom, declaredLineTo, delta));
             appliedInThisFile++;
         }
         if (appliedInThisFile == 0) {
@@ -672,6 +753,80 @@ public class RemediationProcessor {
         int lineTo = parseRequiredInt(change, "LineTo");
 
         return new RemediationKey(fileName, filePath, lineFrom, lineTo, comparisonCode);
+    }
+
+    /**
+     * P2.4: widest hunk (lineTo - lineFrom) across all Changes in a Remediation.
+     * Used to order remediations broader-first so nested narrower fixes classify as SUPERSEDED.
+     */
+    private int maxHunkWidth(Element remediation) {
+        NodeList changes = remediation.getElementsByTagNameNS(NAMESPACE_URI, "Change");
+        int max = 0;
+        for (int i = 0; i < changes.getLength(); i++) {
+            Element c = (Element) changes.item(i);
+            try {
+                int from = Integer.parseInt(getRequiredElementText(c, "LineFrom"));
+                int to = Integer.parseInt(getRequiredElementText(c, "LineTo"));
+                max = Math.max(max, to - from);
+            } catch (Exception ignore) {
+                // best-effort ordering; malformed hunks fall to the back
+            }
+        }
+        return max;
+    }
+
+    /**
+     * P2.4: pre-classify each hunk of a Remediation against the per-run appliedByFile offset
+     * map. Returns {@link HunkOutcome#SUPERSEDED} if a prior applied hunk fully contains the
+     * range, {@link HunkOutcome#CONFLICTS} for partial overlap, {@link HunkOutcome#APPLIED}
+     * for no overlap (candidate to attempt). Identity-satisfied hunks whose exact range was
+     * written by a prior remediation naturally classify as SUPERSEDED, which is semantically
+     * correct.
+     */
+    private List<HunkOutcome> classifyRemediationHunks(Element remediation, Path sourceBasePath, Set<RemediationKey> toApplyKeys) {
+        List<HunkOutcome> outcomes = new ArrayList<>();
+        NodeList fileChangesNodes = remediation.getElementsByTagNameNS(NAMESPACE_URI, "FileChanges");
+        for (int i = 0; i < fileChangesNodes.getLength(); i++) {
+            Element fileChanges = (Element) fileChangesNodes.item(i);
+            String filename;
+            try {
+                filename = getRequiredElementText(fileChanges, "Filename");
+            } catch (SkipRemediationException e) {
+                outcomes.add(HunkOutcome.APPLIED);
+                continue;
+            }
+            Path filePath = sourceBasePath.resolve(filename).normalize();
+            List<AppliedChange> applied = appliedByFile.getOrDefault(filePath, List.of());
+            NodeList changes = fileChanges.getElementsByTagNameNS(NAMESPACE_URI, "Change");
+            for (int j = 0; j < changes.getLength(); j++) {
+                Element change = (Element) changes.item(j);
+                int from;
+                int to;
+                try {
+                    from = Integer.parseInt(getRequiredElementText(change, "LineFrom"));
+                    to = Integer.parseInt(getRequiredElementText(change, "LineTo"));
+                } catch (Exception e) {
+                    outcomes.add(HunkOutcome.APPLIED);
+                    continue;
+                }
+                outcomes.add(classifyRange(from, to, applied));
+            }
+        }
+        return outcomes;
+    }
+
+    /** SUPERSEDED if nested in any AppliedChange; CONFLICTS if partial overlap; APPLIED otherwise. */
+    private HunkOutcome classifyRange(int lineFrom, int lineTo, List<AppliedChange> applied) {
+        for (AppliedChange ac : applied) {
+            if (ac.originalLineFrom() <= lineFrom && lineTo <= ac.originalLineTo()) {
+                return HunkOutcome.SUPERSEDED;
+            }
+            boolean disjoint = lineTo < ac.originalLineFrom() || lineFrom > ac.originalLineTo();
+            if (!disjoint) {
+                return HunkOutcome.CONFLICTS;
+            }
+        }
+        return HunkOutcome.APPLIED;
     }
 
     private String trimBlankLines(String content) {
