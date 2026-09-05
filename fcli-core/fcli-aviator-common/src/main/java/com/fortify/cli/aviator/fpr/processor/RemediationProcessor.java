@@ -246,7 +246,7 @@ public class RemediationProcessor {
             throw new AviatorTechnicalException("Unexpected error processing remediations.xml.", e);
         }
         int skippedRemediations = totalRemediations - appliedRemediations - identicalRemediations;
-        LOG.info("Auto-remediation summary: total={}, applied={},indentical={},skipped={}", totalRemediations, appliedRemediations, identicalRemediations,skippedRemediations);
+        LOG.info("Auto-remediation summary: total={}, applied={},identical={},skipped={}", totalRemediations, appliedRemediations, identicalRemediations,skippedRemediations);
         if (!skippedByReason.isEmpty()) {
             LOG.info("Skipped remediations by reason: {}", formatSkippedReasons(skippedByReason));
         }
@@ -721,7 +721,9 @@ public class RemediationProcessor {
             FileUtil.getFileExtension(fileName));
         String commentSymbol = LanguageCommentMapperUtil.getProgrammingLanguageComment(language);
 
-        if ("Unknown".equals(commentSymbol)) return normalizedCode.replaceAll("\\s+", "");
+        if ("Unknown".equals(commentSymbol)) {
+            return normalizeLiteralAliases(normalizedCode).replaceAll("\\s+", "");
+        }
 
         String comparisonCode = normalizedCode;
         String closingToken = commentSymbol.equals("<!--") ? "-->"
@@ -737,7 +739,18 @@ public class RemediationProcessor {
             comparisonCode = comparisonCode.replaceAll("(?m)" + Pattern.quote(commentSymbol) + ".*$", "");
         }
 
-        return comparisonCode.replaceAll("\\s+", "");
+        return normalizeLiteralAliases(comparisonCode).replaceAll("\\s+", "");
+    }
+
+    /**
+     * Treats semantically-equivalent literal forms as identical for near-identical-fix
+     * comparison only; never applied to code actually written to source files.
+     */
+    private String normalizeLiteralAliases(String code) {
+        if (code == null) return null;
+        String normalized = code.replaceAll("'\\\\0'", "0");
+        normalized = normalized.replaceAll("\\bnullptr\\b", "NULL");
+        return normalized;
     }
 
     private List<RemediationKey> createRemediationKeys(Element remediation, Path sourceBasePath) {

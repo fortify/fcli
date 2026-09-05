@@ -118,7 +118,7 @@ public class AviatorSSCApplyRemediationsCommand extends AbstractSSCJsonNodeOutpu
             String appVersionId = artifactSelector.getAppVersionId(unirest);
             List<SSCArtifactDescriptor> artifacts = SSCArtifactHelper.getAllAviatorArtifacts(unirest, appVersionId, sinceDate);
 
-            int totalRemediations = 0, appliedRemediations = 0, skippedRemediations = 0;
+            int totalRemediations = 0, appliedRemediations = 0, identicalRemediations = 0, skippedRemediations = 0;
             int artifactsProcessed = 0, artifactsSkipped = 0;
             Set<String> allModifiedFiles = new LinkedHashSet<>();
             Map<String, Integer> skippedByReason = new LinkedHashMap<>();
@@ -134,6 +134,7 @@ public class AviatorSSCApplyRemediationsCommand extends AbstractSSCJsonNodeOutpu
                             sourceEncodingsMixin.getSourceDecoder(), logger);
                         totalRemediations   += metric.totalRemediations();
                         appliedRemediations += metric.appliedRemediations();
+                        identicalRemediations += metric.identicalRemediations();
                         skippedRemediations += metric.skippedRemediations();
                         allModifiedFiles.addAll(metric.modifiedFiles());
                         mergeSkippedByReason(skippedByReason, metric.skippedByReason());
@@ -156,7 +157,7 @@ public class AviatorSSCApplyRemediationsCommand extends AbstractSSCJsonNodeOutpu
             String action = appliedRemediations > 0 ? "Remediation-Applied" : "No-Remediation-Applied";
             return AviatorSSCApplyRemediationsHelper.buildAggregatedResultNode(
                     appVersionId, artifactsProcessed, artifactsSkipped,
-                    totalRemediations, appliedRemediations, skippedRemediations, allModifiedFiles, skippedByReason, action);
+                    totalRemediations, appliedRemediations, identicalRemediations, skippedRemediations, allModifiedFiles, skippedByReason, action);
         }
 
         private void mergeSkippedByReason(Map<String, Integer> target, Map<String, Integer> source) {
@@ -190,7 +191,8 @@ public class AviatorSSCApplyRemediationsCommand extends AbstractSSCJsonNodeOutpu
                         ? "Remediation-Applied"
                         : "No-Remediation-Applied";
                     return AviatorSSCApplyRemediationsHelper.buildResultNode(ad, remediationMetric.totalRemediations(),
-                            remediationMetric.appliedRemediations(), remediationMetric.skippedRemediations(),
+                            remediationMetric.appliedRemediations(), remediationMetric.identicalRemediations(),
+                            remediationMetric.skippedRemediations(),
                             remediationMetric.modifiedFiles(),
                             remediationMetric.skippedByReason(), status);
                 }
