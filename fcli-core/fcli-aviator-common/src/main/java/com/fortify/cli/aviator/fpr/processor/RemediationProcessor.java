@@ -71,6 +71,8 @@ public class RemediationProcessor {
         }
     }
 
+    private record RemediationKey(String fileName, Path filePath,int lineFrom,int lineTo,String comparisonCode){}s
+
     private record SourceFileContent(String content, Charset charset, String encodingSource) {}
 
     private record PendingFileWrite(String filename, Path filePath, String content, Charset charset, String encodingSource,
