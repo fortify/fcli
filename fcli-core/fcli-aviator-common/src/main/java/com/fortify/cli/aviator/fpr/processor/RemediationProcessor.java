@@ -111,6 +111,13 @@ public class RemediationProcessor {
     private record PendingFileWrite(String filename, Path filePath, String content, Charset charset, String encodingSource,
                                     byte[] updatedBytes) {}
 
+    /**
+     * Result of staging a remediation's {@code <FileChanges>} blocks: writes for whichever
+     * files succeeded, plus the keys of hunks that were actually applied (a strict subset of
+     * the requested keys when one or more files failed independently).
+     */
+    private record PreparedFileChanges(Map<Path, PendingFileWrite> pendingWrites, Set<RemediationKey> appliedKeys) {}
+
     private record RollbackFileWrite(String filename, Path filePath, byte[] originalBytes) {}
 
     private enum SkipReason {
@@ -284,9 +291,10 @@ public class RemediationProcessor {
                 }
 
                 Set<RemediationKey> filter = satisfiedKeys.isEmpty() ? null : toApplyKeys;
-                if (processRemediation(remediation, sourceBasePath, fvdlMetadata, modifiedFiles, skippedByReason, filter)) {
+                Set<RemediationKey> applied = processRemediation(remediation, sourceBasePath, fvdlMetadata, modifiedFiles, skippedByReason, filter);
+                if (!applied.isEmpty()) {
                     appliedRemediations++;
-                    for (RemediationKey key : toApplyKeys) {
+                    for (RemediationKey key : applied) {
                         LOG.debug("putting {}", instanceId);
                         remediationLookup.put(key, instanceId);
                     }
@@ -315,16 +323,17 @@ public class RemediationProcessor {
             supersededRemediations, skippedRemediations, modifiedFiles, skippedByReason);
     }
 
-    private boolean processRemediation(Element remediation, Path sourceBasePath, FVDLMetadata fvdlMetadata,
+    private Set<RemediationKey> processRemediation(Element remediation, Path sourceBasePath, FVDLMetadata fvdlMetadata,
                                        Set<String> modifiedFiles, Map<String, Integer> skippedByReason, Set<RemediationKey> keysToApply) {
         String instanceId = remediation.getAttribute("instanceId");
         pendingAppliedChanges.clear();
         try {
-            Map<Path, PendingFileWrite> pendingWrites = prepareFileChanges(remediation, sourceBasePath, fvdlMetadata, keysToApply);
+            PreparedFileChanges prepared = prepareFileChanges(remediation, sourceBasePath, fvdlMetadata, keysToApply);
+            Map<Path, PendingFileWrite> pendingWrites = prepared.pendingWrites();
 
             if (pendingWrites.isEmpty()) {
                 recordSkipped(skippedByReason, SkipReason.NO_CHANGES.displayName);
-                return false;
+                return Set.of();
             }
             try {
                 commitRemediationWrites(instanceId, pendingWrites, modifiedFiles);
@@ -334,7 +343,7 @@ public class RemediationProcessor {
                         .add(new AppliedChange(pac.instanceId(), pac.lineFrom(), pac.lineTo(), pac.deltaLines()));
                 }
                 pendingAppliedChanges.clear();
-                return true;
+                return prepared.appliedKeys();
             } catch (RemediationCommitException e) {
                 pendingAppliedChanges.clear();
                 rollbackRemediationWrites(instanceId, e.getRollbacks());
@@ -345,7 +354,7 @@ public class RemediationProcessor {
             recordSkipped(skippedByReason, skipReasonLabel(e));
             LOG.warn("Skipping remediation {}: {}", instanceId, e.getMessage());
             LOG.debug("Skip reason for remediation {}: {}", instanceId, e.reason.displayName, e);
-            return false;
+            return Set.of();
         } catch (RollbackRemediationException e) {
                 throw e;
         } catch (Exception e) {
@@ -353,26 +362,51 @@ public class RemediationProcessor {
             recordSkipped(skippedByReason, SkipReason.UNEXPECTED_ERROR.displayName);
             LOG.warn("Skipping remediation {} due to an unexpected processing error", instanceId);
             LOG.debug("Unexpected error while processing remediation {}", instanceId, e);
-            return false;
+            return Set.of();
         }
     }
 
-    private Map<Path, PendingFileWrite> prepareFileChanges(Element remediation, Path sourceBasePath,
+    private PreparedFileChanges prepareFileChanges(Element remediation, Path sourceBasePath,
                                                            FVDLMetadata fvdlMetadata, Set<RemediationKey> keysToApply) {
+        String instanceId = remediation.getAttribute("instanceId");
         NodeList fileChangesNodes = remediation.getElementsByTagNameNS(NAMESPACE_URI, "FileChanges");
         if (fileChangesNodes.getLength() == 0) {
             throw new SkipRemediationException(SkipReason.NO_CHANGES, "No file changes found");
         }
 
         Map<Path, PendingFileWrite> pendingWrites = new LinkedHashMap<>();
+        Set<RemediationKey> appliedKeys = new LinkedHashSet<>();
+        SkipRemediationException firstFailure = null;
         for (int j = 0; j < fileChangesNodes.getLength(); j++) {
-            processFileChanges(remediation, (Element) fileChangesNodes.item(j), sourceBasePath, fvdlMetadata, pendingWrites, keysToApply);
+            int appliedChangesMark = pendingAppliedChanges.size();
+            Set<RemediationKey> fileAppliedKeys = new LinkedHashSet<>();
+            try {
+                processFileChanges(remediation, (Element) fileChangesNodes.item(j), sourceBasePath, fvdlMetadata,
+                    pendingWrites, keysToApply, fileAppliedKeys);
+                appliedKeys.addAll(fileAppliedKeys);
+            } catch (SkipRemediationException e) {
+                // P2.4 fix: a failure applying ONE file's hunk(s) in a multi-file remediation must not
+                // discard otherwise-valid fixes already staged for OTHER files in the same remediation.
+                // Roll back only this file's partial staging (it never reached pendingWrites) and continue.
+                while (pendingAppliedChanges.size() > appliedChangesMark) {
+                    pendingAppliedChanges.remove(pendingAppliedChanges.size() - 1);
+                }
+                if (firstFailure == null) {
+                    firstFailure = e;
+                }
+                LOG.warn("Remediation {}: file change {}/{} could not be applied ({}); other file(s) in this remediation, if any, are still attempted",
+                    instanceId, j + 1, fileChangesNodes.getLength(), e.getMessage());
+            }
         }
-        return pendingWrites;
+        if (pendingWrites.isEmpty() && firstFailure != null) {
+            throw firstFailure;
+        }
+        return new PreparedFileChanges(pendingWrites, appliedKeys);
     }
 
     private boolean processFileChanges(Element remediation, Element fileChanges, Path sourceBasePath, FVDLMetadata fvdlMetadata,
-                                       Map<Path, PendingFileWrite> pendingWrites, Set<RemediationKey> keysToApply) {
+                                       Map<Path, PendingFileWrite> pendingWrites, Set<RemediationKey> keysToApply,
+                                       Set<RemediationKey> appliedKeysOut) {
 
         String instanceId = remediation.getAttribute("instanceId");
         String filename = getRequiredElementText(fileChanges, "Filename");
@@ -403,17 +437,15 @@ public class RemediationProcessor {
         int skippedAlreadySatisfied = 0;
         for (int k = 0; k < changesNodes.getLength(); k++) {
             Element changeElement = (Element) changesNodes.item(k);
-            if (keysToApply != null) {
-                String newCode = getRequiredElementText(changeElement, "NewCode");
-                String normalizedCode = normalizeProposedCode(newCode, filename);
-                String comparisonCode = createComparisonCode(normalizedCode, filename);
-                RemediationKey key = createRemediationKey(fileChanges, changeElement, sourceBasePath, comparisonCode);
-                if (!keysToApply.contains(key)) {
-                    LOG.info("Skipping hunk {} of remediation {} in '{}': already applied by prior identical hunk",
-                        k + 1, instanceId, filename);
-                    skippedAlreadySatisfied++;
-                    continue;
-                }
+            String newCode = getRequiredElementText(changeElement, "NewCode");
+            String normalizedCode = normalizeProposedCode(newCode, filename);
+            String comparisonCode = createComparisonCode(normalizedCode, filename);
+            RemediationKey key = createRemediationKey(fileChanges, changeElement, sourceBasePath, comparisonCode);
+            if (keysToApply != null && !keysToApply.contains(key)) {
+                LOG.info("Skipping hunk {} of remediation {} in '{}': already applied by prior identical hunk",
+                    k + 1, instanceId, filename);
+                skippedAlreadySatisfied++;
+                continue;
             }
             int declaredLineFrom = parseRequiredInt(changeElement, "LineFrom");
             int declaredLineTo = parseRequiredInt(changeElement, "LineTo");
@@ -421,11 +453,11 @@ public class RemediationProcessor {
                 changeElement, k + 1);
             // P2.4: stage this hunk into the per-run offset map (merged on commit success).
             int origLines = declaredLineTo - declaredLineFrom + 1;
-            String newCodeText = FileUtil.stripSyntheticLineMarkers(
-                getRequiredElementText(changeElement, "NewCode"), filename);
+            String newCodeText = FileUtil.stripSyntheticLineMarkers(newCode, filename);
             int newLines = newCodeText.isEmpty() ? 0 : newCodeText.split("\n", -1).length;
             int delta = newLines - origLines;
             pendingAppliedChanges.add(new PendingAppliedChange(filePath, instanceId, declaredLineFrom, declaredLineTo, delta));
+            appliedKeysOut.add(key);
             appliedInThisFile++;
         }
         if (appliedInThisFile == 0) {
