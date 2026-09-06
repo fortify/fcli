@@ -68,7 +68,7 @@ public class RemediationProcessor {
     private final ISourceDecoder sourceDecoder;
 
     /**
-     * P2.4 per-run offset map. Populated when a hunk is written to disk; consulted before
+     * Per-run offset map. Populated when a hunk is written to disk; consulted before
      * applying subsequent hunks to detect SUPERSEDED/CONFLICTS and to project declared line
      * ranges through prior edits. Reset implicitly by using a fresh RemediationProcessor
      * instance per apply operation.
@@ -76,7 +76,7 @@ public class RemediationProcessor {
     private final Map<Path, List<AppliedChange>> appliedByFile = new LinkedHashMap<>();
 
     /**
-     * P2.4 staging: hunks that a currently-processing remediation intends to apply. On
+     * Staging: hunks that a currently-processing remediation intends to apply. On
      * successful commit these are merged into {@link #appliedByFile}; on skip/rollback they
      * are discarded. Cleared at the start of every {@code processRemediation} invocation.
      */
@@ -97,13 +97,13 @@ public class RemediationProcessor {
     private record RemediationKey(String fileName, Path filePath,int lineFrom,int lineTo,String comparisonCode){}
 
     /**
-     * P2.4 offset-map entry: records a hunk that was actually written to a file this run,
+     * Offset-map entry: records a hunk that was actually written to a file this run,
      * in terms of the PRISTINE file's line numbers. `deltaLines` is
      * (newLineCount - originalLineCount); positive means the file grew, negative means it shrunk.
      */
     private record AppliedChange(String instanceId, int originalLineFrom, int originalLineTo, int deltaLines) {}
 
-    /** Per-hunk classification for the P2.4 state machine. */
+    /** Per-hunk classification for the state machine. */
     private enum HunkOutcome { APPLIED, IDENTICAL, SUPERSEDED, CONFLICTS, ANCHOR_MISMATCH }
 
     private record SourceFileContent(String content, Charset charset, String encodingSource) {}
@@ -232,7 +232,7 @@ public class RemediationProcessor {
             LOG.debug("Loaded {} remediation entries from {}", totalRemediations, remediationPath);
             appliedRemediations = 0;
 
-            // P2.4 widest-first ordering: broader fixes land first so narrower nested ones classify as SUPERSEDED.
+            // Widest-first ordering: broader fixes land first so narrower nested ones classify as SUPERSEDED.
             List<Element> orderedRemediations = new ArrayList<>();
             for (int i = 0; i < remediationNodes.getLength(); i++) {
                 orderedRemediations.add((Element) remediationNodes.item(i));
@@ -243,7 +243,7 @@ public class RemediationProcessor {
                 String instanceId =  remediation.getAttribute("instanceId");
                 List<RemediationKey> remediationKeys = createRemediationKeys(remediation, sourceBasePath);
 
-                // P2.3 hunk-level identity: partition keys into already-satisfied vs to-apply.
+                // Hunk-level identity: partition keys into already-satisfied vs to-apply.
                 Set<RemediationKey> satisfiedKeys = new LinkedHashSet<>();
                 Set<RemediationKey> toApplyKeys = new LinkedHashSet<>();
                 Set<String> satisfiedByInstances = new LinkedHashSet<>();
@@ -265,7 +265,7 @@ public class RemediationProcessor {
                     continue;
                 }
 
-                // P2.4 SUPERSEDED / CONFLICTS pre-check: classify each unsatisfied hunk against appliedByFile.
+                // SUPERSEDED / CONFLICTS pre-check: classify each unsatisfied hunk against appliedByFile.
                 List<HunkOutcome> preClass = classifyRemediationHunks(remediation, sourceBasePath, toApplyKeys);
                 boolean anyApplyCandidate = preClass.stream().anyMatch(o -> o == HunkOutcome.APPLIED);
                 boolean allSuperseded = !preClass.isEmpty() && preClass.stream().allMatch(o -> o == HunkOutcome.SUPERSEDED);
@@ -337,7 +337,7 @@ public class RemediationProcessor {
             }
             try {
                 commitRemediationWrites(instanceId, pendingWrites, modifiedFiles);
-                // P2.4: only on successful commit do the staged hunks enter the per-run offset map.
+                // Only on successful commit do the staged hunks enter the per-run offset map.
                 for (PendingAppliedChange pac : pendingAppliedChanges) {
                     appliedByFile.computeIfAbsent(pac.filePath(), k -> new ArrayList<>())
                         .add(new AppliedChange(pac.instanceId(), pac.lineFrom(), pac.lineTo(), pac.deltaLines()));
@@ -385,7 +385,7 @@ public class RemediationProcessor {
                     pendingWrites, keysToApply, fileAppliedKeys);
                 appliedKeys.addAll(fileAppliedKeys);
             } catch (SkipRemediationException e) {
-                // P2.4 fix: a failure applying ONE file's hunk(s) in a multi-file remediation must not
+                // Fix: a failure applying ONE file's hunk(s) in a multi-file remediation must not
                 // discard otherwise-valid fixes already staged for OTHER files in the same remediation.
                 // Roll back only this file's partial staging (it never reached pendingWrites) and continue.
                 while (pendingAppliedChanges.size() > appliedChangesMark) {
@@ -451,7 +451,7 @@ public class RemediationProcessor {
             int declaredLineTo = parseRequiredInt(changeElement, "LineTo");
             updatedContent = applyChange(instanceId, filename, filePath, fileHash, sourceEncoding, updatedContent,
                 changeElement, k + 1);
-            // P2.4: stage this hunk into the per-run offset map (merged on commit success).
+            // Stage this hunk into the per-run offset map (merged on commit success).
             int origLines = declaredLineTo - declaredLineFrom + 1;
             String newCodeText = FileUtil.stripSyntheticLineMarkers(newCode, filename);
             int newLines = newCodeText.isEmpty() ? 0 : newCodeText.split("\n", -1).length;
@@ -520,7 +520,7 @@ public class RemediationProcessor {
         if (!fileHashMatches) {
             LOG.debug("File hash mismatch for remediation {} in {}; searching changed source content", instanceId, filename);
 
-            // P2.4 offset projection: if a prior remediation this run modified this file, project the declared
+            // Offset projection: if a prior remediation this run modified this file, project the declared
             // range through the accumulated line-delta of every AppliedChange whose original range sits strictly
             // before this hunk's declared start. Verify the projected position holds the expected OriginalCode
             // (whitespace-insensitive). On success we bypass the fuzzy fallback entirely.
@@ -870,7 +870,7 @@ public class RemediationProcessor {
     }
 
     /**
-     * P2.4: widest hunk (lineTo - lineFrom) across all Changes in a Remediation.
+     * Widest hunk (lineTo - lineFrom) across all Changes in a Remediation.
      * Used to order remediations broader-first so nested narrower fixes classify as SUPERSEDED.
      */
     private int maxHunkWidth(Element remediation) {
@@ -890,7 +890,7 @@ public class RemediationProcessor {
     }
 
     /**
-     * P2.4: pre-classify each hunk of a Remediation against the per-run appliedByFile offset
+     * Pre-classify each hunk of a Remediation against the per-run appliedByFile offset
      * map. Returns {@link HunkOutcome#SUPERSEDED} if a prior applied hunk fully contains the
      * range, {@link HunkOutcome#CONFLICTS} for partial overlap, {@link HunkOutcome#APPLIED}
      * for no overlap (candidate to attempt). Identity-satisfied hunks whose exact range was
@@ -944,7 +944,7 @@ public class RemediationProcessor {
     }
 
     /**
-     * P2.4 anchor verification: line-by-line whitespace-insensitive, case-insensitive comparison
+     * Anchor verification: line-by-line whitespace-insensitive, case-insensitive comparison
      * between a slice of the current file and the expected OriginalCode. Matches the same
      * normalization ({@code trim().replaceAll("\\s+", " ")}, {@code equalsIgnoreCase}) that
      * {@link FuzzyContextSearcher} uses so behaviour is consistent between the fast projection
