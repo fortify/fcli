@@ -27,7 +27,7 @@ public class FoDReleaseUpdateRequest {
     private String releaseName;
     private String releaseDescription;
     private String sdlcStatusType;
-    private Integer ownerId;
+    private Long ownerId;
     private String microserviceId;
     private JsonNode attributes;
 }

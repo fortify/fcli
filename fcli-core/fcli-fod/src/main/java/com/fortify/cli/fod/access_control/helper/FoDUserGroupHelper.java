@@ -88,7 +88,7 @@ public class FoDUserGroupHelper {
         return FoDUserGroupHelper.getUserGroupDescriptor(unirest, groupId, true);
     }
 
-    public static final FoDUserGroupDescriptor updateUserGroup(UnirestInstance unirest, Integer groupId, FoDUserGroupUpdateRequest userGroupUpdateRequest) {
+    public static final FoDUserGroupDescriptor updateUserGroup(UnirestInstance unirest, Long groupId, FoDUserGroupUpdateRequest userGroupUpdateRequest) {
         ObjectNode body = objectMapper.valueToTree(userGroupUpdateRequest);
         unirest.put(FoDUrls.USER_GROUP)
                 .routeParam("groupId", String.valueOf(groupId))
@@ -128,7 +128,7 @@ public class FoDUserGroupHelper {
                                                                         FoDEnums.UserGroupMembershipAction action) {
         FoDUserDescriptor userDescriptor = FoDUserHelper.getUserDescriptor(unirest, userNameOrId, true);
         FoDUserGroupDescriptor userGroupDescriptor = FoDUserGroupHelper.getUserGroupDescriptor(unirest, userGroupNameOrId, true);
-        ArrayList<Integer> userIds = new ArrayList<>();
+        ArrayList<Long> userIds = new ArrayList<>();
         userIds.add(userDescriptor.getUserId());
         FoDUserGroupMembersRequest userGroupMembersRequest = FoDUserGroupMembersRequest.builder().build();
         if (action.equals(FoDEnums.UserGroupMembershipAction.Add)) {

@@ -22,7 +22,7 @@ import lombok.NoArgsConstructor;
 @Reflectable @NoArgsConstructor
 @Data @EqualsAndHashCode(callSuper = true)
 public class FoDUserDescriptor extends JsonNodeHolder {
-    private Integer userId;
+    private Long userId;
     private String userName;
     private String firstName;
     private String lastName;

@@ -22,5 +22,5 @@ import lombok.NoArgsConstructor;
 @Reflectable @NoArgsConstructor
 @Data @EqualsAndHashCode(callSuper=false)
 public class FoDScanConfigOssDescriptor extends JsonNodeHolder {
-    private Integer releaseId;
+    private Long releaseId;
 }

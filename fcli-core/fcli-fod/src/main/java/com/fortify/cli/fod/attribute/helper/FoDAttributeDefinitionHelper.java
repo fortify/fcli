@@ -67,7 +67,7 @@ public class FoDAttributeDefinitionHelper {
         }
         FoDAttributeDefinitionDescriptor result = null;
         try {
-            int id = Integer.parseInt(nameOrId);
+            long id = Long.parseLong(nameOrId);
             result = getAllDefinitions().stream()
                     .filter(d -> d.getId() != null && d.getId() == id)
                     .findFirst().orElse(null);
@@ -127,16 +127,16 @@ public class FoDAttributeDefinitionHelper {
         ArrayNode attrArray = JsonHelper.getObjectMapper().createArrayNode();
         if (updates == null || updates.isEmpty()) return attrArray;
 
-        Map<Integer, String> updatesWithId = new HashMap<>();
+        Map<Long, String> updatesWithId = new HashMap<>();
         for (Map.Entry<String, String> attr : updates.entrySet()) {
             var def = getDefinition(attr.getKey(), true);
             updatesWithId.put(def.getId(), attr.getValue());
         }
 
-        Set<Integer> processedIds = new HashSet<>();
+        Set<Long> processedIds = new HashSet<>();
         if (current != null) {
             for (FoDAttributeValueDescriptor attr : current) {
-                int id = attr.getId();
+                long id = attr.getId();
                 ObjectNode attrObj = JsonHelper.getObjectMapper().createObjectNode();
                 attrObj.put("id", id);
                 attrObj.put("value", updatesWithId.getOrDefault(id, attr.getValue()));
@@ -145,7 +145,7 @@ public class FoDAttributeDefinitionHelper {
             }
         }
 
-        for (Map.Entry<Integer, String> entry : updatesWithId.entrySet()) {
+        for (Map.Entry<Long, String> entry : updatesWithId.entrySet()) {
             if (!processedIds.contains(entry.getKey())) {
                 ObjectNode attrObj = JsonHelper.getObjectMapper().createObjectNode();
                 attrObj.put("id", entry.getKey());
@@ -201,7 +201,7 @@ public class FoDAttributeDefinitionHelper {
         var request = unirest.get(FoDUrls.ATTRIBUTES);
         JsonNode result;
         try {
-            int id = Integer.parseInt(nameOrId);
+            long id = Long.parseLong(nameOrId);
             result = FoDDataHelper.findUnique(request, String.format("id:%d", id));
         } catch (NumberFormatException nfe) {
             result = FoDDataHelper.findUnique(request, String.format("name:%s", nameOrId));

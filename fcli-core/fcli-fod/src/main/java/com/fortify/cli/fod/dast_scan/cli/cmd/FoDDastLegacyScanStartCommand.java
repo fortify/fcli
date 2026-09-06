@@ -58,7 +58,7 @@ public class FoDDastLegacyScanStartCommand extends AbstractFoDScanStartCommand {
     //private DynamicAssessmentTypes dynamicAssessmentType;
     private String dynamicAssessmentType;
     @Option(names = {"--entitlement-id"})
-    private Integer entitlementId;
+    private Long entitlementId;
     @Option(names = {"--start-date"})
     private String startDate;
     @Option(names = {"--notes"})
@@ -77,7 +77,7 @@ public class FoDDastLegacyScanStartCommand extends AbstractFoDScanStartCommand {
     protected FoDScanDescriptor startScan(UnirestInstance unirest, FoDReleaseDescriptor releaseDescriptor) {
         try ( var progressWriter = progressWriterFactory.create() ) {
             String relId = releaseDescriptor.getReleaseId();
-            Integer entitlementIdToUse = 0;
+            Long entitlementIdToUse = 0L;
             Integer assessmentTypeId = 0;
             Boolean isRemediation = false;
 
