@@ -1013,7 +1013,7 @@ public class AuditProcessor {
     private String calculateHashBase64(String content, String algorithm) {
         try {
             MessageDigest md = MessageDigest.getInstance(algorithm);
-            // P2.2: hash the canonical form (LF-normalised, no trailing newline) so the apply
+            // hash the canonical form (LF-normalised, no trailing newline) so the apply
             // side can reproduce the digest regardless of the OS that ran the audit or the
             // file's trailing-newline state.
             String canonical = FileUtil.canonicalizeForHash(content);

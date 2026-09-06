@@ -487,8 +487,8 @@ public class RemediationProcessor {
         int lineTo = parseRequiredInt(change, "LineTo");
         LOG.debug("Remediation {} change {} for '{}' targets lines {}-{}", instanceId, changeIndex, filename, lineFrom, lineTo);
 
-        // P2.2: try canonical hash first (matches the new AuditProcessor form), then legacy raw-content
-        // hash so pre-P2.2 FPRs still match. Try each with BOTH UTF-8 and the file's declared source
+        // Try canonical hash first (matches the new AuditProcessor form), then legacy raw-content
+        // hash so pre-fix FPRs still match. Try each with BOTH UTF-8 and the file's declared source
         // encoding — the doc's "5 of 53 files not valid UTF-8" case fails when audit and apply disagree
         // on the encoding used for the getBytes step; accepting the source-encoding form covers it.
         String canonicalStr = FileUtil.canonicalizeForHash(content);
