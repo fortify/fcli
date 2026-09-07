@@ -82,7 +82,7 @@ public class RemediationProcessor {
      */
     private final List<PendingAppliedChange> pendingAppliedChanges = new ArrayList<>();
 
-    private record PendingAppliedChange(Path filePath, String instanceId, int lineFrom, int lineTo, int deltaLines) {}
+    private record PendingAppliedChange(Path filePath, String instanceId, int lineFrom, int lineTo, int deltaLines, String comparisonCode) {}
 
     public record RemediationMetric(int totalRemediations, int appliedRemediations, int identicalRemediations,
                                     int supersededRemediations, int skippedRemediations, Set<String> modifiedFiles,
@@ -101,7 +101,7 @@ public class RemediationProcessor {
      * in terms of the PRISTINE file's line numbers. `deltaLines` is
      * (newLineCount - originalLineCount); positive means the file grew, negative means it shrunk.
      */
-    private record AppliedChange(String instanceId, int originalLineFrom, int originalLineTo, int deltaLines) {}
+    private record AppliedChange(String instanceId, int originalLineFrom, int originalLineTo, int deltaLines, String comparisonCode) {}
 
     /** Per-hunk classification for the state machine. */
     private enum HunkOutcome { APPLIED, IDENTICAL, SUPERSEDED, CONFLICTS, ANCHOR_MISMATCH }
@@ -130,6 +130,7 @@ public class RemediationProcessor {
         SOURCE_CONTEXT_NOT_FOUND("Source context not found"),
         SOURCE_CONTEXT_AMBIGUOUS("Source context matched multiple locations"),
         ORIGINAL_CODE_NOT_FOUND("Original code not found"),
+        ORIGINAL_CODE_AMBIGUOUS("Original code matched multiple locations"),
         SUPERSEDED_BY_BROADER_FIX("Superseded by broader fix"),
         CONFLICTS_WITH_ANOTHER_FIX("Conflicts with another fix"),
         ANCHOR_DOES_NOT_MATCH("Anchor does not match"),
@@ -266,7 +267,7 @@ public class RemediationProcessor {
                 }
 
                 // SUPERSEDED / CONFLICTS pre-check: classify each unsatisfied hunk against appliedByFile.
-                List<HunkOutcome> preClass = classifyRemediationHunks(remediation, sourceBasePath, toApplyKeys);
+                List<HunkOutcome> preClass = classifyRemediationHunks(remediation, sourceBasePath);
                 boolean anyApplyCandidate = preClass.stream().anyMatch(o -> o == HunkOutcome.APPLIED);
                 boolean allSuperseded = !preClass.isEmpty() && preClass.stream().allMatch(o -> o == HunkOutcome.SUPERSEDED);
                 boolean allConflicts  = !preClass.isEmpty() && preClass.stream().allMatch(o -> o == HunkOutcome.CONFLICTS);
@@ -340,7 +341,7 @@ public class RemediationProcessor {
                 // Only on successful commit do the staged hunks enter the per-run offset map.
                 for (PendingAppliedChange pac : pendingAppliedChanges) {
                     appliedByFile.computeIfAbsent(pac.filePath(), k -> new ArrayList<>())
-                        .add(new AppliedChange(pac.instanceId(), pac.lineFrom(), pac.lineTo(), pac.deltaLines()));
+                        .add(new AppliedChange(pac.instanceId(), pac.lineFrom(), pac.lineTo(), pac.deltaLines(), pac.comparisonCode()));
                 }
                 pendingAppliedChanges.clear();
                 return prepared.appliedKeys();
@@ -456,7 +457,7 @@ public class RemediationProcessor {
             String newCodeText = FileUtil.stripSyntheticLineMarkers(newCode, filename);
             int newLines = newCodeText.isEmpty() ? 0 : newCodeText.split("\n", -1).length;
             int delta = newLines - origLines;
-            pendingAppliedChanges.add(new PendingAppliedChange(filePath, instanceId, declaredLineFrom, declaredLineTo, delta));
+            pendingAppliedChanges.add(new PendingAppliedChange(filePath, instanceId, declaredLineFrom, declaredLineTo, delta, comparisonCode));
             appliedKeysOut.add(key);
             appliedInThisFile++;
         }
@@ -685,11 +686,19 @@ public class RemediationProcessor {
             return new int[] {-1, -1};
         }
 
-        int[] lineFromTo = FuzzyContextSearcher.fuzzySearchOriginalCode(
+        List<int[]> matches = FuzzyContextSearcher.fuzzySearchOriginalCodeMatches(
                 originalLines.subList(contextStart, contextEnd), originalCodeLine, 0, 0);
-        if (lineFromTo[0] == -1 || lineFromTo[1] == -1) {
-            return lineFromTo;
+        if (matches.size() > 1) {
+            String candidateLines = matches.stream()
+                    .map(m -> String.valueOf(m[0] + contextStart + 1))
+                    .collect(Collectors.joining(", "));
+            throw new SkipRemediationException(SkipReason.ORIGINAL_CODE_AMBIGUOUS,
+                    "Original code matched multiple locations in file '" + filename + "'; candidate lines: " + candidateLines);
         }
+        if (matches.isEmpty()) {
+            return new int[] {-1, -1};
+        }
+        int[] lineFromTo = matches.get(0);
         return new int[] {lineFromTo[0] + contextStart, lineFromTo[1] + contextStart};
     }
 
@@ -892,12 +901,15 @@ public class RemediationProcessor {
     /**
      * Pre-classify each hunk of a Remediation against the per-run appliedByFile offset
      * map. Returns {@link HunkOutcome#SUPERSEDED} if a prior applied hunk fully contains the
-     * range, {@link HunkOutcome#CONFLICTS} for partial overlap, {@link HunkOutcome#APPLIED}
-     * for no overlap (candidate to attempt). Identity-satisfied hunks whose exact range was
-     * written by a prior remediation naturally classify as SUPERSEDED, which is semantically
-     * correct.
+     * range AND its fix content actually covers this hunk's proposed change (normalized,
+     * comment/whitespace-insensitive substring match); {@link HunkOutcome#CONFLICTS} for
+     * partial overlap or for a fully-nested range whose content does NOT match what was
+     * actually written (a genuinely different fix silently hidden behind a broader one);
+     * {@link HunkOutcome#APPLIED} for no overlap (candidate to attempt). Identity-satisfied
+     * hunks whose exact range was written by a prior remediation naturally classify as
+     * SUPERSEDED, which is semantically correct.
      */
-    private List<HunkOutcome> classifyRemediationHunks(Element remediation, Path sourceBasePath, Set<RemediationKey> toApplyKeys) {
+    private List<HunkOutcome> classifyRemediationHunks(Element remediation, Path sourceBasePath) {
         List<HunkOutcome> outcomes = new ArrayList<>();
         NodeList fileChangesNodes = remediation.getElementsByTagNameNS(NAMESPACE_URI, "FileChanges");
         for (int i = 0; i < fileChangesNodes.getLength(); i++) {
@@ -923,17 +935,34 @@ public class RemediationProcessor {
                     outcomes.add(HunkOutcome.APPLIED);
                     continue;
                 }
-                outcomes.add(classifyRange(from, to, applied));
+                String candidateComparisonCode = null;
+                try {
+                    String newCode = getRequiredElementText(change, "NewCode");
+                    candidateComparisonCode = createComparisonCode(normalizeProposedCode(newCode, filename), filename);
+                } catch (SkipRemediationException e) {
+                    // Content unavailable for comparison; classifyRange falls back to range-only classification.
+                }
+                outcomes.add(classifyRange(from, to, applied, candidateComparisonCode));
             }
         }
         return outcomes;
     }
 
-    /** SUPERSEDED if nested in any AppliedChange; CONFLICTS if partial overlap; APPLIED otherwise. */
-    private HunkOutcome classifyRange(int lineFrom, int lineTo, List<AppliedChange> applied) {
+    /**
+     * SUPERSEDED if nested in an AppliedChange whose written content actually covers this
+     * hunk's proposed fix (normalized substring match); CONFLICTS if nested but the content
+     * differs, or if there is only a partial line overlap; APPLIED otherwise. When either
+     * side's content is unavailable ({@code null}), falls back to the conservative range-only
+     * default of SUPERSEDED for a fully-nested range.
+     */
+    private HunkOutcome classifyRange(int lineFrom, int lineTo, List<AppliedChange> applied, String candidateComparisonCode) {
         for (AppliedChange ac : applied) {
             if (ac.originalLineFrom() <= lineFrom && lineTo <= ac.originalLineTo()) {
-                return HunkOutcome.SUPERSEDED;
+                if (candidateComparisonCode == null || ac.comparisonCode() == null
+                        || ac.comparisonCode().contains(candidateComparisonCode)) {
+                    return HunkOutcome.SUPERSEDED;
+                }
+                return HunkOutcome.CONFLICTS;
             }
             boolean disjoint = lineTo < ac.originalLineFrom() || lineFrom > ac.originalLineTo();
             if (!disjoint) {

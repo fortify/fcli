@@ -93,8 +93,20 @@ public class FuzzyContextSearcher {
     }
 
     public static int[] fuzzySearchOriginalCode(List<String> sourceLines, List<String> originalCodeLine, int maxMismatches, int startIndex) {
+        List<int[]> matches = fuzzySearchOriginalCodeMatches(sourceLines, originalCodeLine, maxMismatches, startIndex);
+        return matches.isEmpty() ? new int[] {-1, -1} : matches.get(0);
+    }
+
+    /**
+     * Same search as {@link #fuzzySearchOriginalCode}, but returns every {@code {lineFrom, lineTo}}
+     * match found in the searched range instead of only the first, so callers can detect an
+     * ambiguous (multiple-candidate) match rather than silently acting on whichever occurrence
+     * comes first in scan order.
+     */
+    public static List<int[]> fuzzySearchOriginalCodeMatches(List<String> sourceLines, List<String> originalCodeLine, int maxMismatches, int startIndex) {
         List<String> normalizedSource = normalizeLines(sourceLines);
         List<String> normalizedOriginalCode = normalizeLines(originalCodeLine);
+        List<int[]> matches = new ArrayList<>();
 
         for (int i = Math.max(0, startIndex); i < normalizedSource.size(); i++) {
             if (normalizedSource.get(i).isEmpty()) {
@@ -103,11 +115,11 @@ public class FuzzyContextSearcher {
 
             int lineTo = findOriginalCodeEnd(normalizedSource, normalizedOriginalCode, maxMismatches, i);
             if (lineTo != -1) {
-                return new int[] {i, lineTo};
+                matches.add(new int[] {i, lineTo});
             }
         }
 
-        return new int[] {-1, -1};
+        return matches;
     }
 
     private static int findOriginalCodeEnd(List<String> normalizedSource, List<String> normalizedOriginalCode, int maxMismatches,
