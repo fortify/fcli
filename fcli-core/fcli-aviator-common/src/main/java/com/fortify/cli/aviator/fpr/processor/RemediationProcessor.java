@@ -85,12 +85,12 @@ public class RemediationProcessor {
     private record PendingAppliedChange(Path filePath, String instanceId, int lineFrom, int lineTo, int deltaLines, String comparisonCode) {}
 
     public record RemediationMetric(int totalRemediations, int appliedRemediations, int identicalRemediations,
-                                    int supersededRemediations, int skippedRemediations, Set<String> modifiedFiles,
-                                    Map<String, Integer> skippedByReason) {
+                                    int supersededRemediations, int possiblyRemediatedRemediations, int skippedRemediations,
+                                    Set<String> modifiedFiles, Map<String, Integer> skippedByReason) {
         public RemediationMetric(int totalRemediations, int appliedRemediations, int identicalRemediations,
                                  int supersededRemediations, int skippedRemediations, Set<String> modifiedFiles) {
             this(totalRemediations, appliedRemediations, identicalRemediations, supersededRemediations,
-                 skippedRemediations, modifiedFiles, Map.of());
+                 0, skippedRemediations, modifiedFiles, Map.of());
         }
     }
 
@@ -104,7 +104,7 @@ public class RemediationProcessor {
     private record AppliedChange(String instanceId, int originalLineFrom, int originalLineTo, int deltaLines, String comparisonCode) {}
 
     /** Per-hunk classification for the state machine. */
-    private enum HunkOutcome { APPLIED, IDENTICAL, SUPERSEDED, CONFLICTS, ANCHOR_MISMATCH }
+    private enum HunkOutcome { APPLIED, IDENTICAL, SUPERSEDED, CONFLICTS, POSSIBLY_REMEDIATED, ANCHOR_MISMATCH }
 
     private record SourceFileContent(String content, Charset charset, String encodingSource) {}
 
@@ -202,6 +202,7 @@ public class RemediationProcessor {
         int appliedRemediations;
         int identicalRemediations = 0;
         int supersededRemediations = 0;
+        int possiblyRemediatedRemediations = 0;
         Set<String> modifiedFiles = new LinkedHashSet<>();
         Map<String, Integer> skippedByReason = new LinkedHashMap<>();
         Map<RemediationKey, String> remediationLookup = new LinkedHashMap<>();
@@ -271,6 +272,9 @@ public class RemediationProcessor {
                 boolean anyApplyCandidate = preClass.stream().anyMatch(o -> o == HunkOutcome.APPLIED);
                 boolean allSuperseded = !preClass.isEmpty() && preClass.stream().allMatch(o -> o == HunkOutcome.SUPERSEDED);
                 boolean allConflicts  = !preClass.isEmpty() && preClass.stream().allMatch(o -> o == HunkOutcome.CONFLICTS);
+                boolean allPossiblyRemediated = !preClass.isEmpty()
+                    && preClass.stream().noneMatch(o -> o == HunkOutcome.APPLIED || o == HunkOutcome.CONFLICTS)
+                    && preClass.stream().anyMatch(o -> o == HunkOutcome.POSSIBLY_REMEDIATED);
 
                 if (!anyApplyCandidate && allSuperseded) {
                     supersededRemediations++;
@@ -281,6 +285,12 @@ public class RemediationProcessor {
                 if (!anyApplyCandidate && allConflicts) {
                     recordSkipped(skippedByReason, SkipReason.CONFLICTS_WITH_ANOTHER_FIX.displayName);
                     LOG.info("Remediation {} conflicts with prior fix(es) on all {} hunk(s); skipping",
+                        instanceId, preClass.size());
+                    continue;
+                }
+                if (!anyApplyCandidate && allPossiblyRemediated) {
+                    possiblyRemediatedRemediations++;
+                    LOG.info("Remediation {} possibly remediated by a sibling fix with different content for all {} hunk(s)",
                         instanceId, preClass.size());
                     continue;
                 }
@@ -314,14 +324,16 @@ public class RemediationProcessor {
             LOG.error("Unexpected error processing remediation.xml: {}", remediationPath, e);
             throw new AviatorTechnicalException("Unexpected error processing remediations.xml.", e);
         }
-        int skippedRemediations = totalRemediations - appliedRemediations - identicalRemediations - supersededRemediations;
-        LOG.info("Auto-remediation summary: total={}, applied={}, identical={}, superseded={}, skipped={}",
-            totalRemediations, appliedRemediations, identicalRemediations, supersededRemediations, skippedRemediations);
+        int skippedRemediations = totalRemediations - appliedRemediations - identicalRemediations - supersededRemediations
+            - possiblyRemediatedRemediations;
+        LOG.info("Auto-remediation summary: total={}, applied={}, identical={}, superseded={}, possiblyRemediated={}, skipped={}",
+            totalRemediations, appliedRemediations, identicalRemediations, supersededRemediations, possiblyRemediatedRemediations,
+            skippedRemediations);
         if (!skippedByReason.isEmpty()) {
             LOG.info("Skipped remediations by reason: {}", formatSkippedReasons(skippedByReason));
         }
         return new RemediationMetric(totalRemediations, appliedRemediations, identicalRemediations,
-            supersededRemediations, skippedRemediations, modifiedFiles, skippedByReason);
+            supersededRemediations, possiblyRemediatedRemediations, skippedRemediations, modifiedFiles, skippedByReason);
     }
 
     private Set<RemediationKey> processRemediation(Element remediation, Path sourceBasePath, FVDLMetadata fvdlMetadata,
@@ -902,10 +914,11 @@ public class RemediationProcessor {
      * Pre-classify each hunk of a Remediation against the per-run appliedByFile offset
      * map. Returns {@link HunkOutcome#SUPERSEDED} if a prior applied hunk fully contains the
      * range AND its fix content actually covers this hunk's proposed change (normalized,
-     * comment/whitespace-insensitive substring match); {@link HunkOutcome#CONFLICTS} for
-     * partial overlap or for a fully-nested range whose content does NOT match what was
-     * actually written (a genuinely different fix silently hidden behind a broader one);
-     * {@link HunkOutcome#APPLIED} for no overlap (candidate to attempt). Identity-satisfied
+     * comment/whitespace-insensitive substring match); {@link HunkOutcome#POSSIBLY_REMEDIATED}
+     * for a fully-nested range whose content does NOT match what was actually written (a
+     * different fix hidden behind a broader one, but the location is still covered);
+     * {@link HunkOutcome#CONFLICTS} for a partial, non-nested overlap (coverage is genuinely
+     * ambiguous); {@link HunkOutcome#APPLIED} for no overlap (candidate to attempt). Identity-satisfied
      * hunks whose exact range was written by a prior remediation naturally classify as
      * SUPERSEDED, which is semantically correct.
      */
@@ -950,10 +963,12 @@ public class RemediationProcessor {
 
     /**
      * SUPERSEDED if nested in an AppliedChange whose written content actually covers this
-     * hunk's proposed fix (normalized substring match); CONFLICTS if nested but the content
-     * differs, or if there is only a partial line overlap; APPLIED otherwise. When either
-     * side's content is unavailable ({@code null}), falls back to the conservative range-only
-     * default of SUPERSEDED for a fully-nested range.
+     * hunk's proposed fix (normalized substring match); POSSIBLY_REMEDIATED if nested but the
+     * content differs (the sibling fully covers this location, just not proven identical);
+     * CONFLICTS if there is only a partial, non-nested line overlap (neither range contains
+     * the other, so coverage is genuinely ambiguous); APPLIED otherwise. When either side's
+     * content is unavailable ({@code null}), falls back to the conservative range-only default
+     * of SUPERSEDED for a fully-nested range.
      */
     private HunkOutcome classifyRange(int lineFrom, int lineTo, List<AppliedChange> applied, String candidateComparisonCode) {
         for (AppliedChange ac : applied) {
@@ -962,7 +977,7 @@ public class RemediationProcessor {
                         || ac.comparisonCode().contains(candidateComparisonCode)) {
                     return HunkOutcome.SUPERSEDED;
                 }
-                return HunkOutcome.CONFLICTS;
+                return HunkOutcome.POSSIBLY_REMEDIATED;
             }
             boolean disjoint = lineTo < ac.originalLineFrom() || lineFrom > ac.originalLineTo();
             if (!disjoint) {

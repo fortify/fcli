@@ -91,7 +91,8 @@ public class FoDAviatorApplyRemediationsCommand extends AbstractFoDJsonNodeOutpu
                 String status = remediationMetric.appliedRemediations() > 0 ? "Remediation-Applied" : "No-Remediation-Applied";
                 return AviatorFoDApplyRemediationsHelper.buildResultNode(rd, remediationMetric.totalRemediations(),
                     remediationMetric.appliedRemediations(), remediationMetric.identicalRemediations(),
-                    remediationMetric.supersededRemediations(), remediationMetric.skippedRemediations(),
+                    remediationMetric.supersededRemediations(), remediationMetric.possiblyRemediatedRemediations(),
+                    remediationMetric.skippedRemediations(),
                     remediationMetric.modifiedFiles(), remediationMetric.skippedByReason(), status);
             }
         } finally {

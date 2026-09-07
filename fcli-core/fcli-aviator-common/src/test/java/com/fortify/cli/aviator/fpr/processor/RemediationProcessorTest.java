@@ -17,6 +17,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -95,6 +96,28 @@ class RemediationProcessorTest {
         assertEquals("header\n\nREPLACED\nafter\n", Files.readString(sourceFile));
       }
 
+    @Test
+    void nestedRemediationWithDifferentContentIsPossiblyRemediated() throws Exception {
+        Path sourceFile = writeSourceFile("before\nTARGET\nafter\n");
+        Path fprPath = createRemediationFpr(List.of(
+            new RemediationSpec("wide-fix", 1, 3, 0, 0, "before\nTARGET\nafter",
+                "before\nTARGET\nafter", "wideline1\nwideline2\nwideline3"),
+            new RemediationSpec("narrow-fix", 2, 2, 1, 1, "before\ntarget\nafter",
+                "TARGET", "NARROW_DIFFERENT")));
+
+        RemediationProcessor.RemediationMetric metric;
+        try (FprHandle fprHandle = new FprHandle(fprPath)) {
+            metric = new RemediationProcessor(fprHandle, tempDir.toString()).processRemediationXML();
+        }
+
+        assertEquals(2, metric.totalRemediations());
+        assertEquals(1, metric.appliedRemediations());
+        assertEquals(1, metric.possiblyRemediatedRemediations());
+        assertEquals(0, metric.skippedRemediations());
+        assertEquals(Map.of(), metric.skippedByReason());
+        assertEquals("wideline1\nwideline2\nwideline3\n", Files.readString(sourceFile));
+    }
+
     private Path writeSourceFile(String content) throws Exception {
         Path sourceFile = tempDir.resolve("Example.java");
         Files.writeString(sourceFile, content, StandardCharsets.UTF_8);
@@ -103,6 +126,52 @@ class RemediationProcessorTest {
 
     private Path createRemediationFpr(String context, String originalCode, String newCode) throws Exception {
         return createRemediationFpr(2, 2, 1, 1, context, originalCode, newCode);
+    }
+
+    private record RemediationSpec(String instanceId, int lineFrom, int lineTo, int contextBefore, int contextAfter,
+            String context, String originalCode, String newCode) {}
+
+    private Path createRemediationFpr(List<RemediationSpec> specs) throws Exception {
+        Path fprPath = tempDir.resolve("remediation.fpr");
+        StringBuilder remediations = new StringBuilder();
+        for (RemediationSpec spec : specs) {
+            remediations.append("""
+                    <r:Remediation instanceId="%s">
+                        <r:AuditComment>test</r:AuditComment>
+                        <r:FileChanges>
+                          <r:Filename>Example.java</r:Filename>
+                          <r:Hash type="SHA-256">not-the-source-hash</r:Hash>
+                          <r:Change>
+                            <r:LineFrom>%d</r:LineFrom>
+                            <r:LineTo>%d</r:LineTo>
+                            <r:Context before="%d" after="%d">%s</r:Context>
+                            <r:OriginalCode>%s</r:OriginalCode>
+                            <r:NewCode>%s</r:NewCode>
+                          </r:Change>
+                        </r:FileChanges>
+                      </r:Remediation>
+                    """.formatted(spec.instanceId(), spec.lineFrom(), spec.lineTo(), spec.contextBefore(),
+                    spec.contextAfter(), spec.context(), spec.originalCode(), spec.newCode()));
+        }
+        String remediationXml = """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <r:Remediations xmlns:r="%s">
+                  <r:ProjectInfo>
+                    <r:Name>test</r:Name>
+                    <r:WriteDate>2026-08-26T00:00:00Z</r:WriteDate>
+                  </r:ProjectInfo>
+                  <r:RemediationList>
+                  %s
+                  </r:RemediationList>
+                </r:Remediations>
+                """.formatted(REMEDIATIONS_NAMESPACE, remediations);
+
+        try (ZipOutputStream zipOutputStream = new ZipOutputStream(Files.newOutputStream(fprPath))) {
+            zipOutputStream.putNextEntry(new ZipEntry("remediations.xml"));
+            zipOutputStream.write(remediationXml.getBytes(StandardCharsets.UTF_8));
+            zipOutputStream.closeEntry();
+        }
+        return fprPath;
     }
 
     private Path createRemediationFpr(int lineFrom, int lineTo, int contextBefore, int contextAfter,
