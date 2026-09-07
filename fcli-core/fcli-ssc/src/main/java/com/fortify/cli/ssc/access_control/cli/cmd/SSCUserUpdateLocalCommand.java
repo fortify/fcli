@@ -26,6 +26,8 @@ import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.ssc._common.output.cli.cmd.AbstractSSCJsonNodeOutputCommand;
 import com.fortify.cli.ssc._common.rest.ssc.SSCUrls;
 import com.fortify.cli.ssc.access_control.cli.mixin.SSCUserResolverMixin;
+import com.fortify.cli.ssc.access_control.helper.SSCRoleDescriptor;
+import com.fortify.cli.ssc.access_control.helper.SSCRoleHelper;
 
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
@@ -65,7 +67,7 @@ public class SSCUserUpdateLocalCommand extends AbstractSSCJsonNodeOutputCommand 
         String userId = resolveUserId(unirest);
         ObjectNode userData = getLocalUser(unirest, userId);
         setUserAttributes(userData);
-        setUserRoles(userData);
+        setUserRoles(unirest, userData);
         return unirest.put(SSCUrls.LOCAL_USER(userId))
                 .body(userData)
                 .asObject(JsonNode.class).getBody();
@@ -95,35 +97,40 @@ public class SSCUserUpdateLocalCommand extends AbstractSSCJsonNodeOutputCommand 
         if (suspend != null) { userData.put("suspended", suspend); }
     }
 
-    private void setUserRoles(ObjectNode userData) {
+    private void setUserRoles(UnirestInstance unirest, ObjectNode userData) {
         if (roles != null) {
             ArrayNode rolesArray = userData.putArray("roles");
-            for (String roleId : roles) {
+            for (String roleNameOrId : roles) {
+                String roleId = resolveRoleId(unirest, roleNameOrId);
                 rolesArray.addObject().put("id", roleId);
             }
         }
         if (addRoles != null) {
-            addRolesToUser(userData);
+            addRolesToUser(unirest, userData);
         }
         if (rmRoles != null) {
-            removeRolesFromUser(userData);
+            removeRolesFromUser(unirest, userData);
         }
     }
 
-    private void addRolesToUser(ObjectNode userData) {
+    private void addRolesToUser(UnirestInstance unirest, ObjectNode userData) {
         ArrayNode existingRoles = getOrCreateRolesArray(userData);
         Set<String> existingRoleIds = collectRoleIds(existingRoles);
-        for (String roleId : addRoles) {
+        for (String roleNameOrId : addRoles) {
+            String roleId = resolveRoleId(unirest, roleNameOrId);
             if (!existingRoleIds.contains(roleId)) {
                 existingRoles.addObject().put("id", roleId);
             }
         }
     }
 
-    private void removeRolesFromUser(ObjectNode userData) {
+    private void removeRolesFromUser(UnirestInstance unirest, ObjectNode userData) {
         ArrayNode existingRoles = (ArrayNode) userData.get("roles");
         if (existingRoles == null) { return; }
-        Set<String> idsToRemove = new HashSet<>(rmRoles);
+        Set<String> idsToRemove = new HashSet<>();
+        for (String roleNameOrId : rmRoles) {
+            idsToRemove.add(resolveRoleId(unirest, roleNameOrId));
+        }
         ArrayNode filteredRoles = userData.putArray("roles");
         for (JsonNode role : existingRoles) {
             if (!idsToRemove.contains(role.get("id").asText())) {
@@ -143,6 +150,11 @@ public class SSCUserUpdateLocalCommand extends AbstractSSCJsonNodeOutputCommand 
             ids.add(role.get("id").asText());
         }
         return ids;
+    }
+
+    private String resolveRoleId(UnirestInstance unirest, String roleNameOrId) {
+        SSCRoleDescriptor descriptor = SSCRoleHelper.getRoleDescriptor(unirest, roleNameOrId, "id");
+        return descriptor.getRoleId();
     }
 
     @Override
