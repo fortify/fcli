@@ -97,7 +97,7 @@ public class FoDUserHelper {
         return descriptor;
     }
 
-    public static final FoDUserDescriptor updateUser(UnirestInstance unirest, Integer userId,
+    public static final FoDUserDescriptor updateUser(UnirestInstance unirest, Long userId,
                                                     FoDUserUpdateRequest userUpdateRequest) {
         ObjectNode body = objectMapper.valueToTree(userUpdateRequest);
         FoDUserDescriptor userDescriptor = getUserDescriptor(unirest, String.valueOf(userId), true);

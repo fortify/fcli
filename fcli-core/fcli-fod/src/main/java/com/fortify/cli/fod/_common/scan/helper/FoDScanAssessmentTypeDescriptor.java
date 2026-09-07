@@ -30,7 +30,7 @@ public class FoDScanAssessmentTypeDescriptor {
     private String name;
     private String scanType;
     private Integer scanTypeId;
-    private Integer entitlementId;
+    private Long entitlementId;
     private String entitlementDescription;
     private Integer frequencyTypeId;
     private String frequencyType;

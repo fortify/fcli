@@ -57,7 +57,7 @@ public class FoDAppCreateRequest {
     private String releaseName;
     private String releaseDescription;
     private String sdlcStatusType;
-    private Integer ownerId;
+    private Long ownerId;
     private String applicationType;
     @Builder.Default private boolean hasMicroservices = false;
     private JsonNode microservices;
@@ -141,10 +141,10 @@ public class FoDAppCreateRequest {
         }
         
         public FoDAppCreateRequestBuilder owner(UnirestInstance unirest, String owner) {
-            int userId = 0;
+            long userId = 0;
             if (owner == null) return ownerId(null);
             try {
-                userId = Integer.parseInt(owner);
+                userId = Long.parseLong(owner);
             } catch (NumberFormatException nfe) {
                 userId = FoDUserHelper.getUserDescriptor(unirest, owner, true).getUserId();
             }

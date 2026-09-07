@@ -204,7 +204,7 @@ public class FoDSastScanSetupCommand extends AbstractFoDScanSetupCommand<FoDScan
         }
     }
 
-    private void validateEntitlement(FoDScanConfigSastDescriptor currentSetup, Integer entitlementIdToUse, String relId, FoDReleaseAssessmentTypeDescriptor atd) {
+    private void validateEntitlement(FoDScanConfigSastDescriptor currentSetup, Long entitlementIdToUse, String relId, FoDReleaseAssessmentTypeDescriptor atd) {
         // validate entitlement specified or currently in use against assessment type found
         if (entitlementId != null && entitlementId > 0) {
             // check if "entitlement id" explicitly matches what has been found

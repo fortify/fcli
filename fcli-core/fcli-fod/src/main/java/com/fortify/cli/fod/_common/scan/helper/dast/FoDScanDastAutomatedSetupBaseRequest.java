@@ -38,7 +38,7 @@ public class FoDScanDastAutomatedSetupBaseRequest {
     }
 
     public Integer assessmentTypeId;
-    public Integer entitlementId;
+    public Long entitlementId;
     public FoDEnums.EntitlementFrequencyType entitlementFrequencyType; // ['SingleScan', 'Subscription']
     @Builder.Default
     public FoDEnums.DynamicScanEnvironmentFacingType dynamicScanEnvironmentFacingType = FoDEnums.DynamicScanEnvironmentFacingType.External; // ['Internal', 'External']
