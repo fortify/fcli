@@ -59,6 +59,10 @@ import com.fortify.cli.aviator.util.*;
 import com.fortify.cli.aviator.util.FprHandle;
 import com.fortify.cli.aviator.util.FuzzyContextSearcher;
 
+import com.fortify.cli.aviator.fpr.remediation.exception.*;
+import com.fortify.cli.aviator.fpr.remediation.model.*;
+import com.fortify.cli.aviator.fpr.remediation.write.*;
+
 public class RemediationProcessor {
     private static final Logger LOG = LoggerFactory.getLogger(RemediationProcessor.class);
     private static final String NAMESPACE_URI = "xmlns://www.fortify.com/schema/remediations";
@@ -118,72 +122,10 @@ public class RemediationProcessor {
      */
     private record PreparedFileChanges(Map<Path, PendingFileWrite> pendingWrites, Set<RemediationKey> appliedKeys) {}
 
-    private record RollbackFileWrite(String filename, Path filePath, byte[] originalBytes) {}
 
-    private enum SkipReason {
-        SOURCE_FILE_MISSING("Source file missing"),
-        SOURCE_FILE_OUTSIDE_SOURCE_DIR("Source file outside source directory"),
-        SOURCE_READ_FAILED("Source file read failed"),
-        SOURCE_DECODE_FAILED("Source file decode failed"),
-        REMEDIATION_DATA_INVALID("Remediation data invalid"),
-        REMEDIATION_LINE_RANGE_INVALID("Remediation line range invalid"),
-        SOURCE_CONTEXT_NOT_FOUND("Source context not found"),
-        SOURCE_CONTEXT_AMBIGUOUS("Source context matched multiple locations"),
-        ORIGINAL_CODE_NOT_FOUND("Original code not found"),
-        ORIGINAL_CODE_AMBIGUOUS("Original code matched multiple locations"),
-        SUPERSEDED_BY_BROADER_FIX("Superseded by broader fix"),
-        CONFLICTS_WITH_ANOTHER_FIX("Conflicts with another fix"),
-        ANCHOR_DOES_NOT_MATCH("Anchor does not match"),
-        REMEDIATION_ENCODE_FAILED("Remediation encode failed"),
-        SOURCE_WRITE_FAILED("Source file write failed"),
-        NO_CHANGES("No file changes found"),
-        UNEXPECTED_ERROR("Unexpected remediation processing error");
 
-        private final String displayName;
 
-        SkipReason(String displayName) {
-            this.displayName = displayName;
-        }
-    }
 
-    private static class SkipRemediationException extends AviatorSimpleException {
-        private static final long serialVersionUID = 1L;
-
-        private final SkipReason reason;
-
-        SkipRemediationException(SkipReason reason, String message) {
-            super(message);
-            this.reason = reason;
-        }
-
-        SkipRemediationException(SkipReason reason, String message, Throwable cause) {
-            super(message, cause);
-            this.reason = reason;
-        }
-    }
-
-    private static class RemediationCommitException extends AviatorTechnicalException {
-        private static final long serialVersionUID = 1L;
-
-        private final List<RollbackFileWrite> rollbacks;
-
-        RemediationCommitException(String message, Throwable cause, List<RollbackFileWrite> rollbacks) {
-            super(message, cause);
-            this.rollbacks = rollbacks;
-        }
-
-        List<RollbackFileWrite> getRollbacks() {
-            return rollbacks;
-        }
-    }
-
-    private static class RollbackRemediationException extends AviatorTechnicalException {
-        private static final long serialVersionUID = 1L;
-
-        RollbackRemediationException(String message, Throwable cause) {
-            super(message, cause);
-        }
-    }
 
     public RemediationProcessor(FprHandle fprHandle, String sourceCodeDirectory) {
         this(fprHandle, sourceCodeDirectory, SourceDecoders.defaults());
