@@ -10,7 +10,7 @@
  * herein. The information contained herein is subject to change
  * without notice.
  */
-package com.fortify.cli.aviator.fpr.processor;
+package com.fortify.cli.aviator.fpr.remediation;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -46,9 +46,10 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
-import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
 import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
 import com.fortify.cli.aviator.fpr.model.FVDLMetadata;
+import com.fortify.cli.aviator.fpr.remediation.exception.*;
+import com.fortify.cli.aviator.fpr.remediation.write.*;
 import com.fortify.cli.aviator.fpr.utils.ISourceDecoder;
 import com.fortify.cli.aviator.fpr.utils.ISourceDecoder.DecodeResult;
 import com.fortify.cli.aviator.fpr.utils.ISourceDecoder.SourceDecodeException;
@@ -58,10 +59,8 @@ import com.fortify.cli.aviator.fpr.utils.SourceEncoder.SourceEncodeException;
 import com.fortify.cli.aviator.util.*;
 import com.fortify.cli.aviator.util.FprHandle;
 import com.fortify.cli.aviator.util.FuzzyContextSearcher;
+import com.fortify.cli.aviator.fpr.processor.StreamingFVDLProcessor;
 
-import com.fortify.cli.aviator.fpr.remediation.exception.*;
-import com.fortify.cli.aviator.fpr.remediation.model.*;
-import com.fortify.cli.aviator.fpr.remediation.write.*;
 
 public class RemediationProcessor {
     private static final Logger LOG = LoggerFactory.getLogger(RemediationProcessor.class);
