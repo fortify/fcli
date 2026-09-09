@@ -175,7 +175,7 @@ public final class FileUtil {
             }
             stripped = result.toString();
         }
-        return trimBlankLines(stripped);
+        return stripped;
     }
 
     private static String trimBlankLines(String content) {

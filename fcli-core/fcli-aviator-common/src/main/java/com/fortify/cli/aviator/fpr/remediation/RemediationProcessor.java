@@ -48,7 +48,9 @@ import org.xml.sax.SAXException;
 
 import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
 import com.fortify.cli.aviator.fpr.model.FVDLMetadata;
+import com.fortify.cli.aviator.fpr.processor.StreamingFVDLProcessor;
 import com.fortify.cli.aviator.fpr.remediation.exception.*;
+import com.fortify.cli.aviator.fpr.remediation.model.*;
 import com.fortify.cli.aviator.fpr.remediation.write.*;
 import com.fortify.cli.aviator.fpr.utils.ISourceDecoder;
 import com.fortify.cli.aviator.fpr.utils.ISourceDecoder.DecodeResult;
@@ -59,7 +61,6 @@ import com.fortify.cli.aviator.fpr.utils.SourceEncoder.SourceEncodeException;
 import com.fortify.cli.aviator.util.*;
 import com.fortify.cli.aviator.util.FprHandle;
 import com.fortify.cli.aviator.util.FuzzyContextSearcher;
-import com.fortify.cli.aviator.fpr.processor.StreamingFVDLProcessor;
 
 
 public class RemediationProcessor {
@@ -87,17 +88,6 @@ public class RemediationProcessor {
 
     private record PendingAppliedChange(Path filePath, String instanceId, int lineFrom, int lineTo, int deltaLines, String comparisonCode) {}
 
-    public record RemediationMetric(int totalRemediations, int appliedRemediations, int identicalRemediations,
-                                    int supersededRemediations, int possiblyRemediatedRemediations, int skippedRemediations,
-                                    Set<String> modifiedFiles, Map<String, Integer> skippedByReason) {
-        public RemediationMetric(int totalRemediations, int appliedRemediations, int identicalRemediations,
-                                 int supersededRemediations, int skippedRemediations, Set<String> modifiedFiles) {
-            this(totalRemediations, appliedRemediations, identicalRemediations, supersededRemediations,
-                 0, skippedRemediations, modifiedFiles, Map.of());
-        }
-    }
-
-    private record RemediationKey(String fileName, Path filePath,int lineFrom,int lineTo,String comparisonCode){}
 
     /**
      * Offset-map entry: records a hunk that was actually written to a file this run,
@@ -307,7 +297,7 @@ public class RemediationProcessor {
             pendingAppliedChanges.clear();
             recordSkipped(skippedByReason, skipReasonLabel(e));
             LOG.warn("Skipping remediation {}: {}", instanceId, e.getMessage());
-            LOG.debug("Skip reason for remediation {}: {}", instanceId, e.reason.displayName, e);
+            LOG.debug("Skip reason for remediation {}: {}", instanceId, e.getReason().displayName, e);
             return Set.of();
         } catch (RollbackRemediationException e) {
                 throw e;
@@ -509,21 +499,24 @@ public class RemediationProcessor {
                 Element contextElement = getRequiredElement(change, "Context");
                 String contextText = contextElement.getTextContent();
                 List<String> contextLine = Arrays.asList(contextText.split("\\r?\\n"));
+                String originalCodeText = getRequiredElementText(change, "OriginalCode");
+                List<String> originalCodeLine = Arrays.asList(originalCodeText.split("\\r?\\n"));
+                int contextBefore = parseRequiredContextAttribute(contextElement, "before");
+                int contextAfter = parseRequiredContextAttribute(contextElement, "after");
+
                 int contextLineFrom = fuzzySearchContext(instanceId, filename, originalLines, contextLine);
                 if (contextLineFrom == -1) {
+                    // Context not found - try whole-file OriginalCode fallback
                     LOG.debug("Context search failed for remediation {} in {}; trying whole-file OriginalCode fallback",
                         instanceId, filename);
-                    String fallbackOriginalCodeText = getRequiredElementText(change, "OriginalCode");
-                    List<String> fallbackOriginalCodeLine = Arrays.asList(fallbackOriginalCodeText.split("\\r?\\n"));
-                    int[] wholeFile = fuzzySearchOriginalCode(instanceId, filename, originalLines, fallbackOriginalCodeLine,
+                    int[] result = fuzzySearchOriginalCode(instanceId, filename, originalLines, originalCodeLine,
                         0, originalLines.size(), 0, 0);
-                    if (wholeFile[0] != -1 && wholeFile[1] != -1) {
+                    if (result[0] != -1 && result[1] != -1) {
                         LOG.debug("Whole-file OriginalCode fallback matched remediation {} in {} at lines {}-{}",
-                            instanceId, filename, wholeFile[0] + 1, wholeFile[1] + 1);
-                        lineFrom = wholeFile[0] + 1;
-                        lineTo = wholeFile[1] + 1;
+                            instanceId, filename, result[0] + 1, result[1] + 1);
+                        lineFrom = result[0] + 1;
+                        lineTo = result[1] + 1;
                     } else {
-                        LOG.debug("Whole-file OriginalCode fallback failed for remediation {} in {}", instanceId, filename);
                         SkipReason failureReason = priorApplied.isEmpty()
                             ? SkipReason.SOURCE_CONTEXT_NOT_FOUND
                             : SkipReason.ANCHOR_DOES_NOT_MATCH;
@@ -533,12 +526,8 @@ public class RemediationProcessor {
                                 : "prior remediation shifted or rewrote the anchor lines this run"));
                     }
                 } else {
+                    // Context found - normal path: search for original code within context window
                     LOG.debug("Context for remediation {} in {} matched at line {}", instanceId, filename, contextLineFrom + 1);
-
-                    String originalCodeText = getRequiredElementText(change, "OriginalCode");
-                    List<String> originalCodeLine = Arrays.asList(originalCodeText.split("\\r?\\n"));
-                    int contextBefore = parseRequiredContextAttribute(contextElement, "before");
-                    int contextAfter = parseRequiredContextAttribute(contextElement, "after");
                     int[] lineFromTo = fuzzySearchOriginalCode(instanceId, filename, originalLines, originalCodeLine,
                         contextLineFrom, contextLine.size(), contextBefore, contextAfter);
                     if (lineFromTo[0] == -1 || lineFromTo[1] == -1) {
@@ -561,8 +550,9 @@ public class RemediationProcessor {
 
 
         validateLineRange(lineFrom, lineTo, originalLines.size(), filename);
-        List<String> newCodeLines = Arrays.asList(FileUtil.stripSyntheticLineMarkers(
-            getRequiredElementText(change, "NewCode"), filename).split("\n"));
+        List<String> newCodeLines = new ArrayList<>(Arrays.asList(FileUtil.stripSyntheticLineMarkers(
+            getRequiredElementText(change, "NewCode"), filename).split("\n")));
+        dropDuplicatedBoundaryTokens(newCodeLines, originalLines, lineFrom, lineTo, instanceId, filename);
         List<String> updatedLines = new ArrayList<>();
         updatedLines.addAll(originalLines.subList(0, lineFrom - 1));
         updatedLines.addAll(newCodeLines);
@@ -570,6 +560,45 @@ public class RemediationProcessor {
         LOG.debug("Staged remediation {} change {} for '{}' using FVDL encoding {}; updatedLines={}", instanceId, changeIndex,
                 filename, sourceEncoding.name(), updatedLines.size());
         return String.join(lineSeparator, updatedLines);
+    }
+
+    /**
+     * Boundary-token duplication guard: a remediation's declared LineFrom/LineTo sometimes
+     * excludes a boundary token (closing brace, {@code @Override}) that NewCode nonetheless
+     * re-supplies as its own first/last line. Applied literally, that duplicates the token
+     * (e.g. an extra closing brace breaking compilation). If the line immediately outside the
+     * declared range is an exact (whitespace-normalized) duplicate of NewCode's corresponding
+     * boundary line, drop it before splicing. Exact-match detection only, not a guess.
+     */
+    private void dropDuplicatedBoundaryTokens(List<String> newCodeLines, List<String> originalLines,
+            int lineFrom, int lineTo, String instanceId, String filename) {
+        if (newCodeLines.isEmpty()) return;
+
+        if (lineFrom > 1 && newCodeLines.size() > 1) {
+            String lineBefore = originalLines.get(lineFrom - 2);
+            if (boundaryLinesMatch(lineBefore, newCodeLines.get(0))) {
+                LOG.debug("Remediation {} for '{}': dropping duplicated leading boundary token in NewCode (matches line {})",
+                    instanceId, filename, lineFrom - 1);
+                newCodeLines.remove(0);
+            }
+        }
+
+        if (lineTo < originalLines.size() && newCodeLines.size() > 1) {
+            String lineAfter = originalLines.get(lineTo);
+            if (boundaryLinesMatch(lineAfter, newCodeLines.get(newCodeLines.size() - 1))) {
+                LOG.debug("Remediation {} for '{}': dropping duplicated trailing boundary token in NewCode (matches line {})",
+                    instanceId, filename, lineTo + 1);
+                newCodeLines.remove(newCodeLines.size() - 1);
+            }
+        }
+    }
+
+    /** Whitespace-normalized exact-line comparison used only for boundary-token duplicate detection. */
+    private boolean boundaryLinesMatch(String a, String b) {
+        if (a == null || b == null) return false;
+        String normA = a.trim().replaceAll("\\s+", " ");
+        String normB = b.trim().replaceAll("\\s+", " ");
+        return !normA.isEmpty() && normA.equals(normB);
     }
 
     private SourceFileContent getPendingOrSourceContent(Path filePath, String filename, FVDLMetadata fvdlMetadata,
@@ -643,7 +672,7 @@ public class RemediationProcessor {
                 originalLines.subList(contextStart, contextEnd), originalCodeLine, 0, 0);
         if (matches.size() > 1) {
             String candidateLines = matches.stream()
-                    .map(m -> String.valueOf(m[0] + contextStart + 1))
+                    .map(m -> (m[0] + contextStart + 1) + "-" + (m[1] + contextStart + 1))
                     .collect(Collectors.joining(", "));
             throw new SkipRemediationException(SkipReason.ORIGINAL_CODE_AMBIGUOUS,
                     "Original code matched multiple locations in file '" + filename + "'; candidate lines: " + candidateLines);
@@ -658,6 +687,7 @@ public class RemediationProcessor {
     private boolean isFilePresent(Path path) {
         return Files.exists(path) && Files.isRegularFile(path);
     }
+
 
     /** Nullable: missing/unreadable FVDL means FPR encoding candidate is skipped. */
     private FVDLMetadata loadFvdlMetadata() {
@@ -809,9 +839,8 @@ public class RemediationProcessor {
     private void recordSkipped(Map<String, Integer> skippedByReason, String reason) {
         skippedByReason.merge(reason, 1, Integer::sum);
     }
-
     private String skipReasonLabel(SkipRemediationException exception) {
-        return exception.reason.displayName;
+        return exception.getReason().displayName;
     }
 
     private String formatSkippedReasons(Map<String, Integer> skippedByReason) {

@@ -25,6 +25,8 @@ import java.util.zip.ZipOutputStream;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import com.fortify.cli.aviator.fpr.remediation.RemediationProcessor;
+import com.fortify.cli.aviator.fpr.remediation.model.*;
 import com.fortify.cli.aviator.util.FprHandle;
 
 class RemediationProcessorTest {
@@ -39,7 +41,7 @@ class RemediationProcessorTest {
         Path sourceFile = writeSourceFile(originalSource);
         Path fprPath = createRemediationFpr(2, 2, 1, 1, "before\ntarget\nafter", "TARGET", "REPLACED");
 
-        RemediationProcessor.RemediationMetric metric;
+       RemediationMetric metric;
         try (FprHandle fprHandle = new FprHandle(fprPath)) {
             metric = new RemediationProcessor(fprHandle, tempDir.toString()).processRemediationXML();
         }
@@ -58,7 +60,7 @@ class RemediationProcessorTest {
         Path sourceFile = writeSourceFile("before\nTARGET\nafter\n");
         Path fprPath = createRemediationFpr(2, 2, 1, 1, "before\ntarget\nafter", "TARGET", "REPLACED");
 
-        RemediationProcessor.RemediationMetric metric;
+        RemediationMetric metric;
         try (FprHandle fprHandle = new FprHandle(fprPath)) {
             metric = new RemediationProcessor(fprHandle, tempDir.toString()).processRemediationXML();
         }
@@ -73,7 +75,7 @@ class RemediationProcessorTest {
         Path sourceFile = writeSourceFile("TARGET\nkeep\nTARGET\nafter\n");
         Path fprPath = createRemediationFpr(3, 3, 2, 1, "TARGET\nkeep\nTARGET\nafter", "TARGET", "REPLACED");
 
-        RemediationProcessor.RemediationMetric metric;
+      RemediationMetric metric;
         try (FprHandle fprHandle = new FprHandle(fprPath)) {
           metric = new RemediationProcessor(fprHandle, tempDir.toString()).processRemediationXML();
         }
@@ -87,7 +89,7 @@ class RemediationProcessorTest {
         Path sourceFile = writeSourceFile("header\n\nTARGET\nafter\n");
         Path fprPath = createRemediationFpr(3, 3, 1, 1, "\nTARGET\nafter", "TARGET", "REPLACED");
 
-        RemediationProcessor.RemediationMetric metric;
+        RemediationMetric metric;
         try (FprHandle fprHandle = new FprHandle(fprPath)) {
           metric = new RemediationProcessor(fprHandle, tempDir.toString()).processRemediationXML();
         }
@@ -105,7 +107,7 @@ class RemediationProcessorTest {
             new RemediationSpec("narrow-fix", 2, 2, 1, 1, "before\ntarget\nafter",
                 "TARGET", "NARROW_DIFFERENT")));
 
-        RemediationProcessor.RemediationMetric metric;
+        RemediationMetric metric;
         try (FprHandle fprHandle = new FprHandle(fprPath)) {
             metric = new RemediationProcessor(fprHandle, tempDir.toString()).processRemediationXML();
         }

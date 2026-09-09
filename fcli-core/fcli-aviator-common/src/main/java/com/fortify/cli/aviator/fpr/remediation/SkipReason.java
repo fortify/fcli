@@ -12,7 +12,7 @@
  */
 package com.fortify.cli.aviator.fpr.remediation;
 
-public enum SkipReason {
+ public enum SkipReason {
     SOURCE_FILE_MISSING("Source file missing"),
     SOURCE_FILE_OUTSIDE_SOURCE_DIR("Source file outside source directory"),
     SOURCE_READ_FAILED("Source file read failed"),
@@ -37,7 +37,7 @@ public enum SkipReason {
         this.displayName = displayName;
     }
 
-    public String displayName() {
+     final String displayName() {
         return displayName;
     }
 }

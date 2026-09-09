@@ -18,7 +18,7 @@ import com.fortify.cli.aviator.fpr.remediation.SkipReason;
 public class SkipRemediationException extends AviatorSimpleException {
     private static final long serialVersionUID = 1L;
 
-    public final SkipReason reason;
+    private final SkipReason reason;
 
     public SkipRemediationException(SkipReason reason, String message) {
         super(message);
@@ -30,7 +30,8 @@ public class SkipRemediationException extends AviatorSimpleException {
         this.reason = reason;
     }
 
-    public SkipReason reason() {
+    public SkipReason getReason() {
+
         return reason;
     }
 }
