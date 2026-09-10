@@ -184,6 +184,38 @@ class RemediationProcessorTest {
         assertEquals("line1\nreplaced2\nline3\n", Files.readString(sourceFile));
     }
 
+    /**
+     * Regression test: the offset ledger must record the delta actually spliced into the file
+     * (post boundary-dedup), not the raw NewCode line count. A prior hunk in this file drops a
+     * duplicated boundary line (fix #1), shrinking the file by one more line than NewCode's raw
+     * length implies. A later hunk in the same file targets the second of two identical "TARGET"
+     * blocks; only a correctly-shifted projection lands exactly on it. With the pre-fix (buggy)
+     * delta, the projected position misses, the fuzzy fallback's context match is ambiguous
+     * between the two blocks, and neither lands on the declared/projected position either -
+     * causing an incorrect skip instead of resolving to the second occurrence.
+     */
+    @Test
+    void offsetLedgerAccountsForDedupWhenProjectingLaterHunkInSameFile() throws Exception {
+        String originalSource = "line0\nhead1\nhead2\nhead3\nbefore\nTARGET\nafter\nbefore\nTARGET\nafter\ntail\n";
+        Path sourceFile = writeSourceFile(originalSource);
+        Path fprPath = createRemediationFpr(List.of(
+            new RemediationSpec("hunkA", 2, 4, 1, 1, "line0\nhead1\nhead2\nhead3\nbefore",
+                "head1\nhead2\nhead3", "line0\nreplacedHead"),
+            new RemediationSpec("hunkB", 9, 9, 1, 1, "before\ntarget\nafter", "TARGET", "REPLACED")));
+
+        RemediationMetric metric;
+        try (FprHandle fprHandle = new FprHandle(fprPath)) {
+            metric = new RemediationProcessor(fprHandle, tempDir.toString()).processRemediationXML();
+        }
+
+        assertEquals(2, metric.totalRemediations());
+        assertEquals(2, metric.appliedRemediations());
+        assertEquals(0, metric.skippedRemediations());
+        assertEquals(Map.of(), metric.skippedByReason());
+        assertEquals("line0\nreplacedHead\nbefore\nTARGET\nafter\nbefore\nREPLACED\nafter\ntail\n",
+            Files.readString(sourceFile));
+    }
+
     private Path writeSourceFile(String content) throws Exception {
         Path sourceFile = tempDir.resolve("Example.java");
         Files.writeString(sourceFile, content, StandardCharsets.UTF_8);

@@ -42,7 +42,6 @@ import com.fortify.cli.aviator.fpr.utils.ISourceDecoder.DecodeResult;
 import com.fortify.cli.aviator.fpr.utils.ISourceDecoder.SourceDecodeException;
 import com.fortify.cli.aviator.fpr.utils.SourceEncoder;
 import com.fortify.cli.aviator.fpr.utils.SourceEncoder.SourceEncodeException;
-import com.fortify.cli.aviator.util.FileUtil;
 
 /** Houses the original prepareFileChanges/processFileChanges/commit/rollback/read/encode logic, unmodified. */
 public final class FileWriteCoordinator {
@@ -125,7 +124,6 @@ public final class FileWriteCoordinator {
         int skippedAlreadySatisfied = 0;
         for (int k = 0; k < hunks.size(); k++) {
             Hunk hunk = hunks.get(k);
-            String newCode = hunk.requiredNewCode();
             String comparisonCode = hunk.comparisonCode(filename);
             RemediationKey key = RemediationKey.of(fileChange, hunk, sourceBasePath, comparisonCode);
             if (keysToApply != null && !keysToApply.contains(key)) {
@@ -136,13 +134,14 @@ public final class FileWriteCoordinator {
             }
             int declaredLineFrom = hunk.lineFrom();
             int declaredLineTo = hunk.lineTo();
+            int linesBeforeChange = updatedContent.split("\n", -1).length;
             updatedContent = remediationApplier.applyChange(instanceId, filename, filePath, fileHash, sourceEncoding, updatedContent,
                 hunk, k + 1, ledger);
-            // Stage this hunk into the per-run offset map (merged on commit success).
-            int origLines = declaredLineTo - declaredLineFrom + 1;
-            String newCodeText = FileUtil.stripSyntheticLineMarkers(newCode, filename);
-            int newLines = newCodeText.isEmpty() ? 0 : newCodeText.split("\n", -1).length;
-            int delta = newLines - origLines;
+            // Stage this hunk into the per-run offset map (merged on commit success). Delta is measured
+            // from the actual before/after line count of the document, not the raw NewCode line count,
+            // since RemediationApplier may drop duplicated boundary lines from NewCode before splicing it in.
+            int linesAfterChange = updatedContent.split("\n", -1).length;
+            int delta = linesAfterChange - linesBeforeChange;
             ledger.stage(new PendingAppliedChange(filePath, instanceId, declaredLineFrom, declaredLineTo, delta, comparisonCode));
             appliedKeysOut.add(key);
             appliedInThisFile++;
