@@ -469,16 +469,16 @@ public class RemediationProcessor {
             // before this hunk's declared start. Verify the projected position holds the expected OriginalCode
             // (whitespace-insensitive). On success we bypass the fuzzy fallback entirely.
             List<AppliedChange> priorApplied = appliedByFile.getOrDefault(filePath, List.of());
+            int shift = 0;
+            for (AppliedChange ac : priorApplied) {
+                if (ac.originalLineTo() < lineFrom) {
+                    shift += ac.deltaLines();
+                }
+            }
+            int projectedFrom = lineFrom + shift;
+            int projectedTo = lineTo + shift;
             boolean resolvedByProjection = false;
             if (!priorApplied.isEmpty()) {
-                int shift = 0;
-                for (AppliedChange ac : priorApplied) {
-                    if (ac.originalLineTo() < lineFrom) {
-                        shift += ac.deltaLines();
-                    }
-                }
-                int projectedFrom = lineFrom + shift;
-                int projectedTo = lineTo + shift;
                 if (projectedFrom >= 1 && projectedTo >= projectedFrom && projectedTo <= originalLines.size()) {
                     String originalCodeText = getRequiredElementText(change, "OriginalCode");
                     List<String> originalCodeLines = Arrays.asList(originalCodeText.split("\\r?\\n"));
@@ -504,13 +504,14 @@ public class RemediationProcessor {
                 int contextBefore = parseRequiredContextAttribute(contextElement, "before");
                 int contextAfter = parseRequiredContextAttribute(contextElement, "after");
 
-                int contextLineFrom = fuzzySearchContext(instanceId, filename, originalLines, contextLine);
+                int contextLineFrom = fuzzySearchContext(instanceId, filename, originalLines, contextLine,
+                    projectedFrom, contextBefore);
                 if (contextLineFrom == -1) {
                     // Context not found - try whole-file OriginalCode fallback
                     LOG.debug("Context search failed for remediation {} in {}; trying whole-file OriginalCode fallback",
                         instanceId, filename);
                     int[] result = fuzzySearchOriginalCode(instanceId, filename, originalLines, originalCodeLine,
-                        0, originalLines.size(), 0, 0);
+                        0, originalLines.size(), 0, 0, projectedFrom, projectedTo);
                     if (result[0] != -1 && result[1] != -1) {
                         LOG.debug("Whole-file OriginalCode fallback matched remediation {} in {} at lines {}-{}",
                             instanceId, filename, result[0] + 1, result[1] + 1);
@@ -529,7 +530,7 @@ public class RemediationProcessor {
                     // Context found - normal path: search for original code within context window
                     LOG.debug("Context for remediation {} in {} matched at line {}", instanceId, filename, contextLineFrom + 1);
                     int[] lineFromTo = fuzzySearchOriginalCode(instanceId, filename, originalLines, originalCodeLine,
-                        contextLineFrom, contextLine.size(), contextBefore, contextAfter);
+                        contextLineFrom, contextLine.size(), contextBefore, contextAfter, projectedFrom, projectedTo);
                     if (lineFromTo[0] == -1 || lineFromTo[1] == -1) {
                         LOG.debug("Original code search failed for remediation {} in {}; context line={}, original code lines={}, source lines={}",
                             instanceId, filename, contextLineFrom + 1, originalCodeLine.size(), originalLines.size());
@@ -643,10 +644,27 @@ public class RemediationProcessor {
         }
     }
 
-    private int fuzzySearchContext(String instanceId, String filename, List<String> originalLines, List<String> contextLine) {
+    /**
+     * @param projectedDeclaredFrom the FPR's declared LineFrom for this hunk, projected through
+     *        this run's offset ledger (equals the raw declared value when no prior change in this
+     *        file precedes it). Used only to break a tie when fuzzy search finds >1 candidate: if
+     *        exactly one candidate's context-start line equals this trusted position, it is used
+     *        instead of throwing ambiguous. Zero or multiple coincident candidates still throw,
+     *        unchanged from before — this is an exact-equality check against already-trusted data,
+     *        not a proximity/best-match guess.
+     */
+    private int fuzzySearchContext(String instanceId, String filename, List<String> originalLines, List<String> contextLine,
+            int projectedDeclaredFrom, int contextBefore) {
         try {
             List<Integer> matches = FuzzyContextSearcher.fuzzySearchContextMatches(originalLines, contextLine, 0);
             if (matches.size() > 1) {
+                int expectedContextLineFrom = projectedDeclaredFrom - 1 - contextBefore;
+                List<Integer> exact = matches.stream().filter(m -> m == expectedContextLineFrom).toList();
+                if (exact.size() == 1) {
+                    LOG.debug("Remediation {} for '{}': {} candidate context matches, resolved to line {} via declared/projected position",
+                        instanceId, filename, matches.size(), exact.get(0) + 1);
+                    return exact.get(0);
+                }
                 String candidateLines = matches.stream()
                         .map(line -> String.valueOf(line + 1))
                         .collect(Collectors.joining(", "));
@@ -660,8 +678,15 @@ public class RemediationProcessor {
         }
     }
 
+    /**
+     * @param projectedDeclaredFrom @param projectedDeclaredTo the FPR's declared LineFrom/LineTo
+     *        for this hunk, projected through this run's offset ledger. Same exact-equality tie-
+     *        break as {@link #fuzzySearchContext}: only resolves a >1 match when exactly one
+     *        candidate's range equals this trusted position; otherwise still throws ambiguous.
+     */
     private int[] fuzzySearchOriginalCode(String instanceId, String filename, List<String> originalLines, List<String> originalCodeLine,
-            int contextLineFrom, int contextLineCount, int contextBefore, int contextAfter) {
+            int contextLineFrom, int contextLineCount, int contextBefore, int contextAfter,
+            int projectedDeclaredFrom, int projectedDeclaredTo) {
         int contextStart = contextLineFrom + contextBefore;
         int contextEnd = contextLineFrom + contextLineCount - contextAfter;
         if (contextStart < 0 || contextStart >= contextEnd || contextEnd > originalLines.size()) {
@@ -671,6 +696,15 @@ public class RemediationProcessor {
         List<int[]> matches = FuzzyContextSearcher.fuzzySearchOriginalCodeMatches(
                 originalLines.subList(contextStart, contextEnd), originalCodeLine, 0, 0);
         if (matches.size() > 1) {
+            int expectedFrom = projectedDeclaredFrom - 1 - contextStart;
+            int expectedTo = projectedDeclaredTo - 1 - contextStart;
+            List<int[]> exact = matches.stream().filter(m -> m[0] == expectedFrom && m[1] == expectedTo).toList();
+            if (exact.size() == 1) {
+                int[] m = exact.get(0);
+                LOG.debug("Remediation {} for '{}': {} candidate original-code matches, resolved to lines {}-{} via declared/projected position",
+                    instanceId, filename, matches.size(), m[0] + contextStart + 1, m[1] + contextStart + 1);
+                return new int[] {m[0] + contextStart, m[1] + contextStart};
+            }
             String candidateLines = matches.stream()
                     .map(m -> (m[0] + contextStart + 1) + "-" + (m[1] + contextStart + 1))
                     .collect(Collectors.joining(", "));
