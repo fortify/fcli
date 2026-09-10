@@ -10,24 +10,14 @@
  * herein. The information contained herein is subject to change
  * without notice.
  */
-package com.fortify.cli.aviator.fpr.remediation.model;
+package com.fortify.cli.aviator.fpr.remediation.writer;
 
-import java.util.List;
+import java.nio.file.Path;
+import java.util.Map;
+import java.util.Set;
 
-public final class Remediation {
-    private final String instanceId;
-    private final List<FileChange> fileChanges;
+import com.fortify.cli.aviator.fpr.remediation.model.RemediationKey;
 
-    public Remediation(String instanceId, List<FileChange> fileChanges) {
-        this.instanceId = instanceId;
-        this.fileChanges = fileChanges;
-    }
 
-    public String instanceId() {
-        return instanceId;
-    }
-
-    public List<FileChange> fileChanges() {
-        return fileChanges;
-    }
+public record PreparedFileChanges(Map<Path, PendingFileWrite> pendingWrites, Set<RemediationKey> appliedKeys) {
 }

@@ -10,24 +10,11 @@
  * herein. The information contained herein is subject to change
  * without notice.
  */
-package com.fortify.cli.aviator.fpr.remediation.model;
+package com.fortify.cli.aviator.fpr.remediation.writer;
 
-import java.util.List;
+import java.nio.charset.Charset;
+import java.nio.file.Path;
 
-public final class Remediation {
-    private final String instanceId;
-    private final List<FileChange> fileChanges;
-
-    public Remediation(String instanceId, List<FileChange> fileChanges) {
-        this.instanceId = instanceId;
-        this.fileChanges = fileChanges;
-    }
-
-    public String instanceId() {
-        return instanceId;
-    }
-
-    public List<FileChange> fileChanges() {
-        return fileChanges;
-    }
+public record PendingFileWrite(String filename, Path filePath, String content, Charset charset, String encodingSource,
+                                byte[] updatedBytes) {
 }

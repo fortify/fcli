@@ -35,13 +35,40 @@ class RemediationProcessorTest {
     @TempDir
     Path tempDir;
 
-   // @Test
-   /** void skipsAmbiguousContextWithoutChangingSource() throws Exception {
+    /**
+     * Fix #2 (exact-line disambiguation): two identical context blocks are ambiguous on their
+     * own, but the declared/projected LineFrom lands exactly on the first occurrence, so it
+     * resolves deterministically instead of being skipped as ambiguous.
+     */
+    @Test
+    void resolvesAmbiguousContextByExactDeclaredPosition() throws Exception {
         String originalSource = "before\nTARGET\nafter\nbefore\nTARGET\nafter\n";
         Path sourceFile = writeSourceFile(originalSource);
         Path fprPath = createRemediationFpr(2, 2, 1, 1, "before\ntarget\nafter", "TARGET", "REPLACED");
 
-       RemediationMetric metric;
+        RemediationMetric metric;
+        try (FprHandle fprHandle = new FprHandle(fprPath)) {
+            metric = new RemediationProcessor(fprHandle, tempDir.toString()).processRemediationXML();
+        }
+
+        assertEquals(1, metric.totalRemediations());
+        assertEquals(1, metric.appliedRemediations());
+        assertEquals(0, metric.skippedRemediations());
+        assertEquals(Map.of(), metric.skippedByReason());
+        assertEquals("before\nREPLACED\nafter\nbefore\nTARGET\nafter\n", Files.readString(sourceFile));
+    }
+
+    /**
+     * Fix #2 must not guess: when the declared/projected position doesn't exactly match any of
+     * the ambiguous candidates, it still throws SOURCE_CONTEXT_AMBIGUOUS rather than picking one.
+     */
+    @Test
+    void skipsAmbiguousContextWhenDeclaredPositionMatchesNoCandidate() throws Exception {
+        String originalSource = "before\nTARGET\nafter\nbefore\nTARGET\nafter\n";
+        Path sourceFile = writeSourceFile(originalSource);
+        Path fprPath = createRemediationFpr(99, 99, 1, 1, "before\ntarget\nafter", "TARGET", "REPLACED");
+
+        RemediationMetric metric;
         try (FprHandle fprHandle = new FprHandle(fprPath)) {
             metric = new RemediationProcessor(fprHandle, tempDir.toString()).processRemediationXML();
         }
@@ -54,7 +81,6 @@ class RemediationProcessorTest {
                 metric.skippedByReason());
         assertEquals(originalSource, Files.readString(sourceFile));
     }
-**/
     @Test
     void appliesRemediationWhenContextMatchesOnce() throws Exception {
         Path sourceFile = writeSourceFile("before\nTARGET\nafter\n");
@@ -118,6 +144,44 @@ class RemediationProcessorTest {
         assertEquals(0, metric.skippedRemediations());
         assertEquals(Map.of(), metric.skippedByReason());
         assertEquals("wideline1\nwideline2\nwideline3\n", Files.readString(sourceFile));
+    }
+
+    /**
+     * Fix #1 (boundary-token duplication): NewCode repeats the line immediately before LineFrom
+     * verbatim as its first line; that duplicate must be dropped rather than doubling the line.
+     */
+    @Test
+    void dropsDuplicatedLeadingBoundaryLineInNewCode() throws Exception {
+        Path sourceFile = writeSourceFile("line1\nline2\nline3\n");
+        Path fprPath = createRemediationFpr(2, 2, 1, 1, "line1\nline2\nline3", "line2", "line1\nreplaced2");
+
+        RemediationMetric metric;
+        try (FprHandle fprHandle = new FprHandle(fprPath)) {
+            metric = new RemediationProcessor(fprHandle, tempDir.toString()).processRemediationXML();
+        }
+
+        assertEquals(1, metric.appliedRemediations());
+        assertEquals(0, metric.skippedRemediations());
+        assertEquals("line1\nreplaced2\nline3\n", Files.readString(sourceFile));
+    }
+
+    /**
+     * Fix #1 (boundary-token duplication): NewCode repeats the line immediately after LineTo
+     * verbatim as its last line; that duplicate must be dropped rather than doubling the line.
+     */
+    @Test
+    void dropsDuplicatedTrailingBoundaryLineInNewCode() throws Exception {
+        Path sourceFile = writeSourceFile("line1\nline2\nline3\n");
+        Path fprPath = createRemediationFpr(2, 2, 1, 1, "line1\nline2\nline3", "line2", "replaced2\nline3");
+
+        RemediationMetric metric;
+        try (FprHandle fprHandle = new FprHandle(fprPath)) {
+            metric = new RemediationProcessor(fprHandle, tempDir.toString()).processRemediationXML();
+        }
+
+        assertEquals(1, metric.appliedRemediations());
+        assertEquals(0, metric.skippedRemediations());
+        assertEquals("line1\nreplaced2\nline3\n", Files.readString(sourceFile));
     }
 
     private Path writeSourceFile(String content) throws Exception {

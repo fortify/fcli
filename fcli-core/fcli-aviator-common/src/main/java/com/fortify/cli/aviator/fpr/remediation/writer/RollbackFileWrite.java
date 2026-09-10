@@ -10,7 +10,7 @@
  * herein. The information contained herein is subject to change
  * without notice.
  */
-package com.fortify.cli.aviator.fpr.remediation.write;
+package com.fortify.cli.aviator.fpr.remediation.writer;
 
 import java.nio.file.Path;
 

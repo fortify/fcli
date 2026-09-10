@@ -12,98 +12,67 @@
  */
 package com.fortify.cli.aviator.fpr.remediation;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Base64;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 import java.util.zip.ZipFile;
-
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.NodeList;
-import org.xml.sax.SAXException;
 
 import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
 import com.fortify.cli.aviator.fpr.model.FVDLMetadata;
 import com.fortify.cli.aviator.fpr.processor.StreamingFVDLProcessor;
-import com.fortify.cli.aviator.fpr.remediation.exception.*;
-import com.fortify.cli.aviator.fpr.remediation.model.*;
-import com.fortify.cli.aviator.fpr.remediation.write.*;
+import com.fortify.cli.aviator.fpr.remediation.applier.RemediationApplier;
+import com.fortify.cli.aviator.fpr.remediation.classifier.AppliedChangeLedger;
+import com.fortify.cli.aviator.fpr.remediation.classifier.HunkClassifier;
+import com.fortify.cli.aviator.fpr.remediation.exception.RemediationCommitException;
+import com.fortify.cli.aviator.fpr.remediation.exception.RollbackRemediationException;
+import com.fortify.cli.aviator.fpr.remediation.exception.SkipRemediationException;
+import com.fortify.cli.aviator.fpr.remediation.model.FileChange;
+import com.fortify.cli.aviator.fpr.remediation.model.Hunk;
+import com.fortify.cli.aviator.fpr.remediation.model.HunkOutcome;
+import com.fortify.cli.aviator.fpr.remediation.model.Remediation;
+import com.fortify.cli.aviator.fpr.remediation.model.RemediationDocument;
+import com.fortify.cli.aviator.fpr.remediation.model.RemediationKey;
+import com.fortify.cli.aviator.fpr.remediation.model.RemediationMetric;
+import com.fortify.cli.aviator.fpr.remediation.writer.FileWriteCoordinator;
+import com.fortify.cli.aviator.fpr.remediation.writer.PendingFileWrite;
+import com.fortify.cli.aviator.fpr.remediation.writer.PreparedFileChanges;
+import com.fortify.cli.aviator.fpr.remediation.xmlprocessor.RemediationDocumentMapper;
+import com.fortify.cli.aviator.fpr.remediation.xmlprocessor.RemediationXmlReader;
 import com.fortify.cli.aviator.fpr.utils.ISourceDecoder;
-import com.fortify.cli.aviator.fpr.utils.ISourceDecoder.DecodeResult;
-import com.fortify.cli.aviator.fpr.utils.ISourceDecoder.SourceDecodeException;
 import com.fortify.cli.aviator.fpr.utils.SourceDecoders;
-import com.fortify.cli.aviator.fpr.utils.SourceEncoder;
-import com.fortify.cli.aviator.fpr.utils.SourceEncoder.SourceEncodeException;
-import com.fortify.cli.aviator.util.*;
 import com.fortify.cli.aviator.util.FprHandle;
-import com.fortify.cli.aviator.util.FuzzyContextSearcher;
 
-
+/**
+ * Orchestrator. {@link #processRemediationXML()} runs the three phases in sequence: parse
+ * XML into a DOM {@link Document} ({@link RemediationXmlReader}), map the document into the
+ * domain model with zero business logic ({@link RemediationDocumentMapper}), then classify
+ * and apply each remediation ({@link #classifyAndApply}). Public API (constructors, method
+ * signature) is unchanged from the original single-class implementation.
+ */
 public class RemediationProcessor {
     private static final Logger LOG = LoggerFactory.getLogger(RemediationProcessor.class);
-    private static final String NAMESPACE_URI = "xmlns://www.fortify.com/schema/remediations";
 
     private final FprHandle fprHandle;
     private final String sourceCodeDirectory;
     private final ISourceDecoder sourceDecoder;
 
-    /**
-     * Per-run offset map. Populated when a hunk is written to disk; consulted before
-     * applying subsequent hunks to detect SUPERSEDED/CONFLICTS and to project declared line
-     * ranges through prior edits. Reset implicitly by using a fresh RemediationProcessor
-     * instance per apply operation.
-     */
-    private final Map<Path, List<AppliedChange>> appliedByFile = new LinkedHashMap<>();
-
-    /**
-     * Staging: hunks that a currently-processing remediation intends to apply. On
-     * successful commit these are merged into {@link #appliedByFile}; on skip/rollback they
-     * are discarded. Cleared at the start of every {@code processRemediation} invocation.
-     */
-    private final List<PendingAppliedChange> pendingAppliedChanges = new ArrayList<>();
-
-    private record PendingAppliedChange(Path filePath, String instanceId, int lineFrom, int lineTo, int deltaLines, String comparisonCode) {}
-
-    private record SourceFileContent(String content, Charset charset, String encodingSource) {}
-
-    private record PendingFileWrite(String filename, Path filePath, String content, Charset charset, String encodingSource,
-                                    byte[] updatedBytes) {}
-
-    /**
-     * Result of staging a remediation's {@code <FileChanges>} blocks: writes for whichever
-     * files succeeded, plus the keys of hunks that were actually applied (a strict subset of
-     * the requested keys when one or more files failed independently).
-     */
-    private record PreparedFileChanges(Map<Path, PendingFileWrite> pendingWrites, Set<RemediationKey> appliedKeys) {}
-
-
-
-
-
+    private final RemediationXmlReader xmlReader = new RemediationXmlReader();
+    private final RemediationDocumentMapper documentMapper = new RemediationDocumentMapper();
+    private final HunkClassifier hunkClassifier = new HunkClassifier();
+    private final AppliedChangeLedger ledger = new AppliedChangeLedger();
+    private final RemediationApplier remediationApplier = new RemediationApplier();
+    private final FileWriteCoordinator fileWriteCoordinator;
 
     public RemediationProcessor(FprHandle fprHandle, String sourceCodeDirectory) {
         this(fprHandle, sourceCodeDirectory, SourceDecoders.defaults());
@@ -113,13 +82,42 @@ public class RemediationProcessor {
         this.fprHandle = fprHandle;
         this.sourceCodeDirectory = sourceCodeDirectory;
         this.sourceDecoder = Objects.requireNonNull(sourceDecoder, "sourceDecoder");
+        this.fileWriteCoordinator = new FileWriteCoordinator(sourceDecoder, remediationApplier);
     }
 
     public RemediationMetric processRemediationXML() {
         Path remediationPath = fprHandle.getPath("/remediations.xml");
-        Document remediationDoc;
-        int totalRemediations;
-        int appliedRemediations;
+        Path sourceBasePath = resolveSourceBasePath();
+        LOG.debug("Applying remediations from {} to source directory {}", remediationPath, sourceBasePath);
+        FVDLMetadata fvdlMetadata = loadFvdlMetadata();
+
+        try {
+            Document remediationDoc = xmlReader.read(remediationPath);
+            RemediationDocument remediations = documentMapper.map(remediationDoc);
+            return classifyAndApply(remediations, sourceBasePath, fvdlMetadata);
+        } catch (AviatorTechnicalException e) {
+            throw e;
+        } catch (Exception e) {
+            LOG.error("Unexpected error processing remediation.xml: {}", remediationPath, e);
+            throw new AviatorTechnicalException("Unexpected error processing remediations.xml.", e);
+        }
+    }
+
+    private Path resolveSourceBasePath() {
+        String trimmedSourceDir = sourceCodeDirectory.trim();
+        if (trimmedSourceDir.length() > 1 &&
+            ((trimmedSourceDir.startsWith("\"") && trimmedSourceDir.endsWith("\"")) ||
+             (trimmedSourceDir.startsWith("'") && trimmedSourceDir.endsWith("'")))) {
+            trimmedSourceDir = trimmedSourceDir.substring(1, trimmedSourceDir.length() - 1);
+        }
+        return Paths.get(trimmedSourceDir).toAbsolutePath().normalize();
+    }
+
+    private RemediationMetric classifyAndApply(RemediationDocument remediationDocument, Path sourceBasePath, FVDLMetadata fvdlMetadata) {
+        List<Remediation> orderedRemediations = new ArrayList<>(remediationDocument.remediations());
+        int totalRemediations = orderedRemediations.size();
+        LOG.debug("Loaded {} remediation entries", totalRemediations);
+        int appliedRemediations = 0;
         int identicalRemediations = 0;
         int supersededRemediations = 0;
         int possiblyRemediatedRemediations = 0;
@@ -127,123 +125,80 @@ public class RemediationProcessor {
         Map<String, Integer> skippedByReason = new LinkedHashMap<>();
         Map<RemediationKey, String> remediationLookup = new LinkedHashMap<>();
 
-        // Sanitize and normalize the base source directory path once.
-        String trimmedSourceDir = sourceCodeDirectory.trim();
-        if (trimmedSourceDir.length() > 1 &&
-            ((trimmedSourceDir.startsWith("\"") && trimmedSourceDir.endsWith("\"")) ||
-             (trimmedSourceDir.startsWith("'") && trimmedSourceDir.endsWith("'")))) {
-            trimmedSourceDir = trimmedSourceDir.substring(1, trimmedSourceDir.length() - 1);
-        }
-        final Path sourceBasePath = Paths.get(trimmedSourceDir).toAbsolutePath().normalize();
-        LOG.debug("Applying remediations from {} to source directory {}", remediationPath, sourceBasePath);
-        final FVDLMetadata fvdlMetadata = loadFvdlMetadata();
+        // Widest-first ordering: broader fixes land first so narrower nested ones classify as SUPERSEDED.
+        orderedRemediations.sort((a, b) -> Integer.compare(maxHunkWidth(b), maxHunkWidth(a)));
 
-        try (InputStream remediationStream = Files.newInputStream(remediationPath)) {
-            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-            factory.setNamespaceAware(true);
-            factory.setFeature("http://xml.org/sax/features/external-general-entities", false);
-            factory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
-            factory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
-            factory.setXIncludeAware(false);
-            factory.setExpandEntityReferences(false);
-            DocumentBuilder builder = factory.newDocumentBuilder();
-            remediationDoc = builder.parse(remediationStream);
+        for (Remediation remediation : orderedRemediations) {
+            String instanceId = remediation.instanceId();
+            List<RemediationKey> remediationKeys = createRemediationKeys(remediation, sourceBasePath);
 
-            NodeList remediationNodes = remediationDoc.getElementsByTagNameNS(NAMESPACE_URI, "Remediation");
-            totalRemediations = remediationNodes.getLength();
-            LOG.debug("Loaded {} remediation entries from {}", totalRemediations, remediationPath);
-            appliedRemediations = 0;
-
-            // Widest-first ordering: broader fixes land first so narrower nested ones classify as SUPERSEDED.
-            List<Element> orderedRemediations = new ArrayList<>();
-            for (int i = 0; i < remediationNodes.getLength(); i++) {
-                orderedRemediations.add((Element) remediationNodes.item(i));
-            }
-            orderedRemediations.sort((a, b) -> Integer.compare(maxHunkWidth(b), maxHunkWidth(a)));
-
-            for (Element remediation : orderedRemediations) {
-                String instanceId =  remediation.getAttribute("instanceId");
-                List<RemediationKey> remediationKeys = createRemediationKeys(remediation, sourceBasePath);
-
-                // Hunk-level identity: partition keys into already-satisfied vs to-apply.
-                Set<RemediationKey> satisfiedKeys = new LinkedHashSet<>();
-                Set<RemediationKey> toApplyKeys = new LinkedHashSet<>();
-                Set<String> satisfiedByInstances = new LinkedHashSet<>();
-                for (RemediationKey key : remediationKeys) {
-                    String owner = remediationLookup.get(key);
-                    if (owner != null) {
-                        satisfiedKeys.add(key);
-                        satisfiedByInstances.add(owner);
-                    } else {
-                        toApplyKeys.add(key);
-                    }
+            // Hunk-level identity: partition keys into already-satisfied vs to-apply.
+            Set<RemediationKey> satisfiedKeys = new LinkedHashSet<>();
+            Set<RemediationKey> toApplyKeys = new LinkedHashSet<>();
+            Set<String> satisfiedByInstances = new LinkedHashSet<>();
+            for (RemediationKey key : remediationKeys) {
+                String owner = remediationLookup.get(key);
+                if (owner != null) {
+                    satisfiedKeys.add(key);
+                    satisfiedByInstances.add(owner);
+                } else {
+                    toApplyKeys.add(key);
                 }
-
-                // Fully identical: every hunk was already applied by an earlier remediation with same content.
-                if (!remediationKeys.isEmpty() && toApplyKeys.isEmpty()) {
-                    identicalRemediations++;
-                    LOG.info("Remediation {} is fully identical to prior remediation(s) {}; {} hunk(s) already applied",
-                        instanceId, satisfiedByInstances, satisfiedKeys.size());
-                    continue;
-                }
-
-                // SUPERSEDED / CONFLICTS pre-check: classify each unsatisfied hunk against appliedByFile.
-                List<HunkOutcome> preClass = classifyRemediationHunks(remediation, sourceBasePath);
-                boolean anyApplyCandidate = preClass.stream().anyMatch(o -> o == HunkOutcome.APPLIED);
-                boolean allSuperseded = !preClass.isEmpty() && preClass.stream().allMatch(o -> o == HunkOutcome.SUPERSEDED);
-                boolean allConflicts  = !preClass.isEmpty() && preClass.stream().allMatch(o -> o == HunkOutcome.CONFLICTS);
-                boolean allPossiblyRemediated = !preClass.isEmpty()
-                    && preClass.stream().noneMatch(o -> o == HunkOutcome.APPLIED || o == HunkOutcome.CONFLICTS)
-                    && preClass.stream().anyMatch(o -> o == HunkOutcome.POSSIBLY_REMEDIATED);
-
-                if (!anyApplyCandidate && allSuperseded) {
-                    supersededRemediations++;
-                    LOG.info("Remediation {} is superseded by a broader prior fix for all {} hunk(s); no write needed",
-                        instanceId, preClass.size());
-                    continue;
-                }
-                if (!anyApplyCandidate && allConflicts) {
-                    recordSkipped(skippedByReason, SkipReason.CONFLICTS_WITH_ANOTHER_FIX.displayName);
-                    LOG.info("Remediation {} conflicts with prior fix(es) on all {} hunk(s); skipping",
-                        instanceId, preClass.size());
-                    continue;
-                }
-                if (!anyApplyCandidate && allPossiblyRemediated) {
-                    possiblyRemediatedRemediations++;
-                    LOG.info("Remediation {} possibly remediated by a sibling fix with different content for all {} hunk(s)",
-                        instanceId, preClass.size());
-                    continue;
-                }
-
-                // Partial identity: some hunks already applied; apply only the rest.
-                if (!satisfiedKeys.isEmpty()) {
-                    LOG.info("Remediation {} is partially identical to prior remediation(s) {}; {} of {} hunk(s) already applied, {} still to apply",
-                        instanceId, satisfiedByInstances, satisfiedKeys.size(), remediationKeys.size(), toApplyKeys.size());
-                }
-
-                Set<RemediationKey> filter = satisfiedKeys.isEmpty() ? null : toApplyKeys;
-                Set<RemediationKey> applied = processRemediation(remediation, sourceBasePath, fvdlMetadata, modifiedFiles, skippedByReason, filter);
-                if (!applied.isEmpty()) {
-                    appliedRemediations++;
-                    for (RemediationKey key : applied) {
-                        LOG.debug("putting {}", instanceId);
-                        remediationLookup.put(key, instanceId);
-                    }
-                }
-
-
             }
 
+            // Fully identical: every hunk was already applied by an earlier remediation with same content.
+            if (!remediationKeys.isEmpty() && toApplyKeys.isEmpty()) {
+                identicalRemediations++;
+                LOG.info("Remediation {} is fully identical to prior remediation(s) {}; {} hunk(s) already applied",
+                    instanceId, satisfiedByInstances, satisfiedKeys.size());
+                continue;
+            }
 
-        } catch (ParserConfigurationException | SAXException | IOException e) {
-            LOG.error("Error parsing remediations.xml file: {}", remediationPath, e);
-            throw new AviatorTechnicalException("Error processing remediation.xml file.", e);
-        } catch (AviatorTechnicalException e) {
-            throw e;
-        } catch (Exception e) {
-            LOG.error("Unexpected error processing remediation.xml: {}", remediationPath, e);
-            throw new AviatorTechnicalException("Unexpected error processing remediations.xml.", e);
+            // SUPERSEDED / CONFLICTS pre-check: classify each unsatisfied hunk against the ledger.
+            List<HunkOutcome> preClass = hunkClassifier.classifyRemediationHunks(remediation, sourceBasePath, ledger);
+            boolean anyApplyCandidate = preClass.stream().anyMatch(o -> o == HunkOutcome.APPLIED);
+            boolean allSuperseded = !preClass.isEmpty() && preClass.stream().allMatch(o -> o == HunkOutcome.SUPERSEDED);
+            boolean allConflicts = !preClass.isEmpty() && preClass.stream().allMatch(o -> o == HunkOutcome.CONFLICTS);
+            boolean allPossiblyRemediated = !preClass.isEmpty()
+                && preClass.stream().noneMatch(o -> o == HunkOutcome.APPLIED || o == HunkOutcome.CONFLICTS)
+                && preClass.stream().anyMatch(o -> o == HunkOutcome.POSSIBLY_REMEDIATED);
+
+            if (!anyApplyCandidate && allSuperseded) {
+                supersededRemediations++;
+                LOG.info("Remediation {} is superseded by a broader prior fix for all {} hunk(s); no write needed",
+                    instanceId, preClass.size());
+                continue;
+            }
+            if (!anyApplyCandidate && allConflicts) {
+                recordSkipped(skippedByReason, SkipReason.CONFLICTS_WITH_ANOTHER_FIX.displayName());
+                LOG.info("Remediation {} conflicts with prior fix(es) on all {} hunk(s); skipping",
+                    instanceId, preClass.size());
+                continue;
+            }
+            if (!anyApplyCandidate && allPossiblyRemediated) {
+                possiblyRemediatedRemediations++;
+                LOG.info("Remediation {} possibly remediated by a sibling fix with different content for all {} hunk(s)",
+                    instanceId, preClass.size());
+                continue;
+            }
+
+            // Partial identity: some hunks already applied; apply only the rest.
+            if (!satisfiedKeys.isEmpty()) {
+                LOG.info("Remediation {} is partially identical to prior remediation(s) {}; {} of {} hunk(s) already applied, {} still to apply",
+                    instanceId, satisfiedByInstances, satisfiedKeys.size(), remediationKeys.size(), toApplyKeys.size());
+            }
+
+            Set<RemediationKey> filter = satisfiedKeys.isEmpty() ? null : toApplyKeys;
+            Set<RemediationKey> applied = processRemediation(remediation, sourceBasePath, fvdlMetadata, modifiedFiles, skippedByReason, filter);
+            if (!applied.isEmpty()) {
+                appliedRemediations++;
+                for (RemediationKey key : applied) {
+                    LOG.debug("putting {}", instanceId);
+                    remediationLookup.put(key, instanceId);
+                }
+            }
         }
+
         int skippedRemediations = totalRemediations - appliedRemediations - identicalRemediations - supersededRemediations
             - possiblyRemediatedRemediations;
         LOG.info("Auto-remediation summary: total={}, applied={}, identical={}, superseded={}, possiblyRemediated={}, skipped={}",
@@ -256,461 +211,90 @@ public class RemediationProcessor {
             supersededRemediations, possiblyRemediatedRemediations, skippedRemediations, modifiedFiles, skippedByReason);
     }
 
-    private Set<RemediationKey> processRemediation(Element remediation, Path sourceBasePath, FVDLMetadata fvdlMetadata,
-                                       Set<String> modifiedFiles, Map<String, Integer> skippedByReason, Set<RemediationKey> keysToApply) {
-        String instanceId = remediation.getAttribute("instanceId");
-        pendingAppliedChanges.clear();
+    private Set<RemediationKey> processRemediation(Remediation remediation, Path sourceBasePath, FVDLMetadata fvdlMetadata,
+            Set<String> modifiedFiles, Map<String, Integer> skippedByReason, Set<RemediationKey> keysToApply) {
+        String instanceId = remediation.instanceId();
+        ledger.discardStaged();
         try {
-            PreparedFileChanges prepared = prepareFileChanges(remediation, sourceBasePath, fvdlMetadata, keysToApply);
+            PreparedFileChanges prepared = fileWriteCoordinator.prepareFileChanges(remediation, sourceBasePath, fvdlMetadata, keysToApply, ledger);
             Map<Path, PendingFileWrite> pendingWrites = prepared.pendingWrites();
 
             if (pendingWrites.isEmpty()) {
-                recordSkipped(skippedByReason, SkipReason.NO_CHANGES.displayName);
+                recordSkipped(skippedByReason, SkipReason.NO_CHANGES.displayName());
                 return Set.of();
             }
             try {
-                commitRemediationWrites(instanceId, pendingWrites, modifiedFiles);
+                fileWriteCoordinator.commitRemediationWrites(instanceId, pendingWrites, modifiedFiles);
                 // Only on successful commit do the staged hunks enter the per-run offset map.
-                for (PendingAppliedChange pac : pendingAppliedChanges) {
-                    appliedByFile.computeIfAbsent(pac.filePath(), k -> new ArrayList<>())
-                        .add(new AppliedChange(pac.instanceId(), pac.lineFrom(), pac.lineTo(), pac.deltaLines(), pac.comparisonCode()));
-                }
-                pendingAppliedChanges.clear();
+                ledger.commitStaged();
                 return prepared.appliedKeys();
             } catch (RemediationCommitException e) {
-                pendingAppliedChanges.clear();
-                rollbackRemediationWrites(instanceId, e.getRollbacks());
+                ledger.discardStaged();
+                fileWriteCoordinator.rollbackRemediationWrites(instanceId, e.getRollbacks());
                 throw new SkipRemediationException(SkipReason.SOURCE_WRITE_FAILED, e.getMessage(), e);
             }
         } catch (SkipRemediationException e) {
-            pendingAppliedChanges.clear();
+            ledger.discardStaged();
             recordSkipped(skippedByReason, skipReasonLabel(e));
             LOG.warn("Skipping remediation {}: {}", instanceId, e.getMessage());
-            LOG.debug("Skip reason for remediation {}: {}", instanceId, e.getReason().displayName, e);
+            LOG.debug("Skip reason for remediation {}: {}", instanceId, e.getReason().displayName(), e);
             return Set.of();
         } catch (RollbackRemediationException e) {
-                throw e;
+            throw e;
         } catch (Exception e) {
-            pendingAppliedChanges.clear();
-            recordSkipped(skippedByReason, SkipReason.UNEXPECTED_ERROR.displayName);
+            ledger.discardStaged();
+            recordSkipped(skippedByReason, SkipReason.UNEXPECTED_ERROR.displayName());
             LOG.warn("Skipping remediation {} due to an unexpected processing error", instanceId);
             LOG.debug("Unexpected error while processing remediation {}", instanceId, e);
             return Set.of();
         }
     }
 
-    private PreparedFileChanges prepareFileChanges(Element remediation, Path sourceBasePath,
-                                                           FVDLMetadata fvdlMetadata, Set<RemediationKey> keysToApply) {
-        String instanceId = remediation.getAttribute("instanceId");
-        NodeList fileChangesNodes = remediation.getElementsByTagNameNS(NAMESPACE_URI, "FileChanges");
-        if (fileChangesNodes.getLength() == 0) {
-            throw new SkipRemediationException(SkipReason.NO_CHANGES, "No file changes found");
-        }
-
-        Map<Path, PendingFileWrite> pendingWrites = new LinkedHashMap<>();
-        Set<RemediationKey> appliedKeys = new LinkedHashSet<>();
-        SkipRemediationException firstFailure = null;
-        for (int j = 0; j < fileChangesNodes.getLength(); j++) {
-            int appliedChangesMark = pendingAppliedChanges.size();
-            Set<RemediationKey> fileAppliedKeys = new LinkedHashSet<>();
-            try {
-                processFileChanges(remediation, (Element) fileChangesNodes.item(j), sourceBasePath, fvdlMetadata,
-                    pendingWrites, keysToApply, fileAppliedKeys);
-                appliedKeys.addAll(fileAppliedKeys);
-            } catch (SkipRemediationException e) {
-                // Fix: a failure applying ONE file's hunk(s) in a multi-file remediation must not
-                // discard otherwise-valid fixes already staged for OTHER files in the same remediation.
-                // Roll back only this file's partial staging (it never reached pendingWrites) and continue.
-                while (pendingAppliedChanges.size() > appliedChangesMark) {
-                    pendingAppliedChanges.remove(pendingAppliedChanges.size() - 1);
-                }
-                if (firstFailure == null) {
-                    firstFailure = e;
-                }
-                LOG.warn("Remediation {}: file change {}/{} could not be applied ({}); other file(s) in this remediation, if any, are still attempted",
-                    instanceId, j + 1, fileChangesNodes.getLength(), e.getMessage());
-            }
-        }
-        if (pendingWrites.isEmpty() && firstFailure != null) {
-            throw firstFailure;
-        }
-        return new PreparedFileChanges(pendingWrites, appliedKeys);
+    private void recordSkipped(Map<String, Integer> skippedByReason, String reason) {
+        skippedByReason.merge(reason, 1, Integer::sum);
     }
 
-    private boolean processFileChanges(Element remediation, Element fileChanges, Path sourceBasePath, FVDLMetadata fvdlMetadata,
-                                       Map<Path, PendingFileWrite> pendingWrites, Set<RemediationKey> keysToApply,
-                                       Set<RemediationKey> appliedKeysOut) {
-
-        String instanceId = remediation.getAttribute("instanceId");
-        String filename = getRequiredElementText(fileChanges, "Filename");
-        Path filePath = sourceBasePath.resolve(filename).normalize();
-        LOG.debug("Processing remediation {} file change for '{}' resolved to '{}'", instanceId, filename, filePath);
-
-        if (!filePath.startsWith(sourceBasePath)) {
-            throw new SkipRemediationException(SkipReason.SOURCE_FILE_OUTSIDE_SOURCE_DIR,
-                    "Source file resolves outside source directory: " + filename);
-        }
-
-        if (!isFilePresent(filePath)) {
-            throw new SkipRemediationException(SkipReason.SOURCE_FILE_MISSING, "Source code file not present at: " + filePath);
-        }
-
-        String fileHash = getRequiredElementText(fileChanges, "Hash");
-        NodeList changesNodes = fileChanges.getElementsByTagNameNS(NAMESPACE_URI, "Change");
-        if (changesNodes.getLength() == 0) {
-            throw new SkipRemediationException(SkipReason.NO_CHANGES, "No changes found for file: " + filename);
-        }
-        SourceFileContent sourceFileContent = getPendingOrSourceContent(filePath, filename, fvdlMetadata, pendingWrites);
-        Charset sourceEncoding = sourceFileContent.charset();
-        LOG.debug("Remediation {} has {} change(s) for '{}' using source encoding {}", instanceId, changesNodes.getLength(), filename,
-            sourceFileContent.encodingSource());
-
-        String updatedContent = sourceFileContent.content();
-        int appliedInThisFile = 0;
-        int skippedAlreadySatisfied = 0;
-        for (int k = 0; k < changesNodes.getLength(); k++) {
-            Element changeElement = (Element) changesNodes.item(k);
-            String newCode = getRequiredElementText(changeElement, "NewCode");
-            String normalizedCode = normalizeProposedCode(newCode, filename);
-            String comparisonCode = createComparisonCode(normalizedCode, filename);
-            RemediationKey key = createRemediationKey(fileChanges, changeElement, sourceBasePath, comparisonCode);
-            if (keysToApply != null && !keysToApply.contains(key)) {
-                LOG.info("Skipping hunk {} of remediation {} in '{}': already applied by prior identical hunk",
-                    k + 1, instanceId, filename);
-                skippedAlreadySatisfied++;
-                continue;
-            }
-            int declaredLineFrom = parseRequiredInt(changeElement, "LineFrom");
-            int declaredLineTo = parseRequiredInt(changeElement, "LineTo");
-            updatedContent = applyChange(instanceId, filename, filePath, fileHash, sourceEncoding, updatedContent,
-                changeElement, k + 1);
-            // Stage this hunk into the per-run offset map (merged on commit success).
-            int origLines = declaredLineTo - declaredLineFrom + 1;
-            String newCodeText = FileUtil.stripSyntheticLineMarkers(newCode, filename);
-            int newLines = newCodeText.isEmpty() ? 0 : newCodeText.split("\n", -1).length;
-            int delta = newLines - origLines;
-            pendingAppliedChanges.add(new PendingAppliedChange(filePath, instanceId, declaredLineFrom, declaredLineTo, delta, comparisonCode));
-            appliedKeysOut.add(key);
-            appliedInThisFile++;
-        }
-        if (appliedInThisFile == 0) {
-            LOG.debug("Remediation {} produced no new hunks for '{}' ({} already satisfied); no write staged",
-                instanceId, filename, skippedAlreadySatisfied);
-            return true;
-        }
-        byte[] updatedBytes = encodeSourceFile(updatedContent, sourceEncoding, filename);
-
-        pendingWrites.put(filePath, new PendingFileWrite(filename, filePath, updatedContent, sourceEncoding,
-            sourceFileContent.encodingSource(), updatedBytes));
-        LOG.debug("Staged remediation {} for '{}' using source encoding {}; changes={}, encodedBytes={}", instanceId, filename,
-            sourceFileContent.encodingSource(), changesNodes.getLength(), updatedBytes.length);
-        return true;
+    private String skipReasonLabel(SkipRemediationException exception) {
+        return exception.getReason().displayName();
     }
 
-    private String applyChange(String instanceId, String filename, Path filePath, String fileHash, Charset sourceEncoding, String originalContent,
-            Element change, int changeIndex) {
-        String lineSeparator = detectLineSeparator(originalContent);
-        String content = normalizeLineEndings(originalContent);
-
-        List<String> originalLines = Arrays.asList(content.split("\n", -1));
-        LOG.debug("Decoded '{}' using {}; lineSeparator={}, normalizedLines={}", filename, sourceEncoding.name(),
-                describeLineSeparator(lineSeparator), originalLines.size());
-
-        int lineFrom = parseRequiredInt(change, "LineFrom");
-        int lineTo = parseRequiredInt(change, "LineTo");
-        LOG.debug("Remediation {} change {} for '{}' targets lines {}-{}", instanceId, changeIndex, filename, lineFrom, lineTo);
-
-        // Try canonical hash first (matches the new AuditProcessor form), then legacy raw-content
-        // hash so pre-fix FPRs still match. Try each with BOTH UTF-8 and the file's declared source
-        // encoding — the doc's "5 of 53 files not valid UTF-8" case fails when audit and apply disagree
-        // on the encoding used for the getBytes step; accepting the source-encoding form covers it.
-        String canonicalStr = FileUtil.canonicalizeForHash(content);
-        String legacyStr = originalContent;
-        String canonicalHashUtf8 = calculateHashBase64Bytes(canonicalStr.getBytes(StandardCharsets.UTF_8), "SHA-256");
-        String legacyHashUtf8 = calculateHashBase64Bytes(legacyStr.getBytes(StandardCharsets.UTF_8), "SHA-256");
-        String canonicalHashSrc = calculateHashBase64Bytes(canonicalStr.getBytes(sourceEncoding), "SHA-256");
-        String legacyHashSrc = calculateHashBase64Bytes(legacyStr.getBytes(sourceEncoding), "SHA-256");
-        boolean fileHashMatches;
-        String matchedForm;
-        if (canonicalHashUtf8.equals(fileHash)) {
-            fileHashMatches = true;
-            matchedForm = "canonical";
-        } else if (legacyHashUtf8.equals(fileHash)) {
-            fileHashMatches = true;
-            matchedForm = "legacy";
-        } else if (canonicalHashSrc.equals(fileHash)) {
-            fileHashMatches = true;
-            matchedForm = "canonical/" + sourceEncoding.name();
-        } else if (legacyHashSrc.equals(fileHash)) {
-            fileHashMatches = true;
-            matchedForm = "legacy/" + sourceEncoding.name();
-        } else {
-            fileHashMatches = false;
-            matchedForm = "none";
-        }
-        LOG.debug("Remediation {} hash check for '{}': {}",
-            instanceId, filename, fileHashMatches ? ("matched (" + matchedForm + ")") : "mismatched");
-        if (!fileHashMatches) {
-            LOG.debug("File hash mismatch for remediation {} in {}; searching changed source content", instanceId, filename);
-
-            // Offset projection: if a prior remediation this run modified this file, project the declared
-            // range through the accumulated line-delta of every AppliedChange whose original range sits strictly
-            // before this hunk's declared start. Verify the projected position holds the expected OriginalCode
-            // (whitespace-insensitive). On success we bypass the fuzzy fallback entirely.
-            List<AppliedChange> priorApplied = appliedByFile.getOrDefault(filePath, List.of());
-            int shift = 0;
-            for (AppliedChange ac : priorApplied) {
-                if (ac.originalLineTo() < lineFrom) {
-                    shift += ac.deltaLines();
-                }
-            }
-            int projectedFrom = lineFrom + shift;
-            int projectedTo = lineTo + shift;
-            boolean resolvedByProjection = false;
-            if (!priorApplied.isEmpty()) {
-                if (projectedFrom >= 1 && projectedTo >= projectedFrom && projectedTo <= originalLines.size()) {
-                    String originalCodeText = getRequiredElementText(change, "OriginalCode");
-                    List<String> originalCodeLines = Arrays.asList(originalCodeText.split("\\r?\\n"));
-                    if (linesEqualNormalized(originalLines, projectedFrom - 1, projectedTo - 1, originalCodeLines)) {
-                        LOG.debug("Remediation {} projected via offset map for '{}': declared {}-{} shifted by {} to {}-{}",
-                            instanceId, filename, lineFrom, lineTo, shift, projectedFrom, projectedTo);
-                        lineFrom = projectedFrom;
-                        lineTo = projectedTo;
-                        resolvedByProjection = true;
-                    } else {
-                        LOG.debug("Remediation {} projection anchor mismatch for '{}' at projected {}-{}; falling back",
-                            instanceId, filename, projectedFrom, projectedTo);
-                    }
-                }
-            }
-
-            if (!resolvedByProjection) {
-                Element contextElement = getRequiredElement(change, "Context");
-                String contextText = contextElement.getTextContent();
-                List<String> contextLine = Arrays.asList(contextText.split("\\r?\\n"));
-                String originalCodeText = getRequiredElementText(change, "OriginalCode");
-                List<String> originalCodeLine = Arrays.asList(originalCodeText.split("\\r?\\n"));
-                int contextBefore = parseRequiredContextAttribute(contextElement, "before");
-                int contextAfter = parseRequiredContextAttribute(contextElement, "after");
-
-                int contextLineFrom = fuzzySearchContext(instanceId, filename, originalLines, contextLine,
-                    projectedFrom, contextBefore);
-                if (contextLineFrom == -1) {
-                    // Context not found - try whole-file OriginalCode fallback
-                    LOG.debug("Context search failed for remediation {} in {}; trying whole-file OriginalCode fallback",
-                        instanceId, filename);
-                    int[] result = fuzzySearchOriginalCode(instanceId, filename, originalLines, originalCodeLine,
-                        0, originalLines.size(), 0, 0, projectedFrom, projectedTo);
-                    if (result[0] != -1 && result[1] != -1) {
-                        LOG.debug("Whole-file OriginalCode fallback matched remediation {} in {} at lines {}-{}",
-                            instanceId, filename, result[0] + 1, result[1] + 1);
-                        lineFrom = result[0] + 1;
-                        lineTo = result[1] + 1;
-                    } else {
-                        SkipReason failureReason = priorApplied.isEmpty()
-                            ? SkipReason.SOURCE_CONTEXT_NOT_FOUND
-                            : SkipReason.ANCHOR_DOES_NOT_MATCH;
-                        throw new SkipRemediationException(failureReason, "Anchor not found for file '" + filename +
-                            "'; " + (priorApplied.isEmpty()
-                                ? "file may have changed on disk or context is missing"
-                                : "prior remediation shifted or rewrote the anchor lines this run"));
-                    }
-                } else {
-                    // Context found - normal path: search for original code within context window
-                    LOG.debug("Context for remediation {} in {} matched at line {}", instanceId, filename, contextLineFrom + 1);
-                    int[] lineFromTo = fuzzySearchOriginalCode(instanceId, filename, originalLines, originalCodeLine,
-                        contextLineFrom, contextLine.size(), contextBefore, contextAfter, projectedFrom, projectedTo);
-                    if (lineFromTo[0] == -1 || lineFromTo[1] == -1) {
-                        LOG.debug("Original code search failed for remediation {} in {}; context line={}, original code lines={}, source lines={}",
-                            instanceId, filename, contextLineFrom + 1, originalCodeLine.size(), originalLines.size());
-                        SkipReason failureReason = priorApplied.isEmpty()
-                            ? SkipReason.ORIGINAL_CODE_NOT_FOUND
-                            : SkipReason.ANCHOR_DOES_NOT_MATCH;
-                        throw new SkipRemediationException(failureReason, "Original code not found for file '" + filename +
-                            "'; " + (priorApplied.isEmpty()
-                                ? "file may have changed on disk"
-                                : "prior remediation altered lines inside this hunk's context window"));
-                    }
-                    lineFrom = lineFromTo[0] + 1;
-                    lineTo = lineFromTo[1] + 1;
-                    LOG.debug("Original code for remediation {} in {} matched at lines {}-{}", instanceId, filename, lineFrom, lineTo);
-                }
-            }
-        }
-
-
-        validateLineRange(lineFrom, lineTo, originalLines.size(), filename);
-        List<String> newCodeLines = new ArrayList<>(Arrays.asList(FileUtil.stripSyntheticLineMarkers(
-            getRequiredElementText(change, "NewCode"), filename).split("\n")));
-        dropDuplicatedBoundaryTokens(newCodeLines, originalLines, lineFrom, lineTo, instanceId, filename);
-        List<String> updatedLines = new ArrayList<>();
-        updatedLines.addAll(originalLines.subList(0, lineFrom - 1));
-        updatedLines.addAll(newCodeLines);
-        updatedLines.addAll(originalLines.subList(lineTo, originalLines.size()));
-        LOG.debug("Staged remediation {} change {} for '{}' using FVDL encoding {}; updatedLines={}", instanceId, changeIndex,
-                filename, sourceEncoding.name(), updatedLines.size());
-        return String.join(lineSeparator, updatedLines);
+    private String formatSkippedReasons(Map<String, Integer> skippedByReason) {
+        List<String> parts = new ArrayList<>();
+        skippedByReason.forEach((reason, count) -> parts.add(reason + "=" + count));
+        return String.join(", ", parts);
     }
 
     /**
-     * Boundary-token duplication guard: a remediation's declared LineFrom/LineTo sometimes
-     * excludes a boundary token (closing brace, {@code @Override}) that NewCode nonetheless
-     * re-supplies as its own first/last line. Applied literally, that duplicates the token
-     * (e.g. an extra closing brace breaking compilation). If the line immediately outside the
-     * declared range is an exact (whitespace-normalized) duplicate of NewCode's corresponding
-     * boundary line, drop it before splicing. Exact-match detection only, not a guess.
+     * Widest hunk (lineTo - lineFrom) across all FileChanges/Hunks in a Remediation. Used to
+     * order remediations broader-first so nested narrower fixes classify as SUPERSEDED.
      */
-    private void dropDuplicatedBoundaryTokens(List<String> newCodeLines, List<String> originalLines,
-            int lineFrom, int lineTo, String instanceId, String filename) {
-        if (newCodeLines.isEmpty()) return;
-
-        if (lineFrom > 1 && newCodeLines.size() > 1) {
-            String lineBefore = originalLines.get(lineFrom - 2);
-            if (boundaryLinesMatch(lineBefore, newCodeLines.get(0))) {
-                LOG.debug("Remediation {} for '{}': dropping duplicated leading boundary token in NewCode (matches line {})",
-                    instanceId, filename, lineFrom - 1);
-                newCodeLines.remove(0);
-            }
-        }
-
-        if (lineTo < originalLines.size() && newCodeLines.size() > 1) {
-            String lineAfter = originalLines.get(lineTo);
-            if (boundaryLinesMatch(lineAfter, newCodeLines.get(newCodeLines.size() - 1))) {
-                LOG.debug("Remediation {} for '{}': dropping duplicated trailing boundary token in NewCode (matches line {})",
-                    instanceId, filename, lineTo + 1);
-                newCodeLines.remove(newCodeLines.size() - 1);
-            }
-        }
-    }
-
-    /** Whitespace-normalized exact-line comparison used only for boundary-token duplicate detection. */
-    private boolean boundaryLinesMatch(String a, String b) {
-        if (a == null || b == null) return false;
-        String normA = a.trim().replaceAll("\\s+", " ");
-        String normB = b.trim().replaceAll("\\s+", " ");
-        return !normA.isEmpty() && normA.equals(normB);
-    }
-
-    private SourceFileContent getPendingOrSourceContent(Path filePath, String filename, FVDLMetadata fvdlMetadata,
-            Map<Path, PendingFileWrite> pendingWrites) {
-        PendingFileWrite pendingWrite = pendingWrites.get(filePath);
-        return pendingWrite == null
-                ? readSourceFile(filePath, filename, fvdlMetadata)
-                : new SourceFileContent(pendingWrite.content(), pendingWrite.charset(), pendingWrite.encodingSource());
-    }
-
-    private void commitRemediationWrites(String instanceId, Map<Path, PendingFileWrite> pendingWrites, Set<String> modifiedFiles)
-            throws RemediationCommitException {
-        List<RollbackFileWrite> rollbacks = new ArrayList<>();
-        for (PendingFileWrite pendingWrite : pendingWrites.values()) {
-            try {
-                byte[] originalBytes = Files.readAllBytes(pendingWrite.filePath());
-                rollbacks.add(new RollbackFileWrite(pendingWrite.filename(), pendingWrite.filePath(), originalBytes));
-                LOG.debug("Writing remediation {} to '{}' using staged bytes; encodedBytes={}", instanceId, pendingWrite.filename(),
-                        pendingWrite.updatedBytes().length);
-                Files.write(pendingWrite.filePath(), pendingWrite.updatedBytes());
-            } catch (Exception e) {
-                throw new RemediationCommitException("Error writing source code file '" + pendingWrite.filename() + "'", e, rollbacks);
-            }
-        }
-
-        for (PendingFileWrite pendingWrite : pendingWrites.values()) {
-            modifiedFiles.add(pendingWrite.filename());
-            LOG.info("Remediation applied for {} in file {}", instanceId, pendingWrite.filename());
-        }
-    }
-
-    private void rollbackRemediationWrites(String instanceId, List<RollbackFileWrite> rollbacks) {
-        for (RollbackFileWrite rollback : rollbacks) {
-            try {
-                Files.write(rollback.filePath(), rollback.originalBytes());
-                LOG.warn("Rolled back remediation {} changes for '{}' after write failure", instanceId, rollback.filename());
-            } catch (IOException rollbackException) {
-                LOG.error("Failed to roll back remediation {} changes for '{}'", instanceId, rollback.filename(), rollbackException);
-                throw new RollbackRemediationException("Failed to roll back remediation changes for '" + rollback.filename() +
-                        "'. Source files may be partially modified; inspect the source tree before retrying", rollbackException);
-            }
-        }
-    }
-
-    /**
-     * @param projectedDeclaredFrom the FPR's declared LineFrom for this hunk, projected through
-     *        this run's offset ledger (equals the raw declared value when no prior change in this
-     *        file precedes it). Used only to break a tie when fuzzy search finds >1 candidate: if
-     *        exactly one candidate's context-start line equals this trusted position, it is used
-     *        instead of throwing ambiguous. Zero or multiple coincident candidates still throw,
-     *        unchanged from before — this is an exact-equality check against already-trusted data,
-     *        not a proximity/best-match guess.
-     */
-    private int fuzzySearchContext(String instanceId, String filename, List<String> originalLines, List<String> contextLine,
-            int projectedDeclaredFrom, int contextBefore) {
-        try {
-            List<Integer> matches = FuzzyContextSearcher.fuzzySearchContextMatches(originalLines, contextLine, 0);
-            if (matches.size() > 1) {
-                int expectedContextLineFrom = projectedDeclaredFrom - 1 - contextBefore;
-                List<Integer> exact = matches.stream().filter(m -> m == expectedContextLineFrom).toList();
-                if (exact.size() == 1) {
-                    LOG.debug("Remediation {} for '{}': {} candidate context matches, resolved to line {} via declared/projected position",
-                        instanceId, filename, matches.size(), exact.get(0) + 1);
-                    return exact.get(0);
+    private int maxHunkWidth(Remediation remediation) {
+        int max = 0;
+        for (FileChange fileChange : remediation.fileChanges()) {
+            for (Hunk hunk : fileChange.hunks()) {
+                try {
+                    int from = hunk.lineFrom();
+                    int to = hunk.lineTo();
+                    max = Math.max(max, to - from);
+                } catch (Exception ignore) {
+                    // best-effort ordering; malformed hunks fall to the back
                 }
-                String candidateLines = matches.stream()
-                        .map(line -> String.valueOf(line + 1))
-                        .collect(Collectors.joining(", "));
-                throw new SkipRemediationException(SkipReason.SOURCE_CONTEXT_AMBIGUOUS,
-                        "Source context matched multiple locations in file '" + filename + "'; candidate lines: " + candidateLines);
             }
-            return matches.isEmpty() ? -1 : matches.get(0);
-        } catch (IOException e) {
-            throw new SkipRemediationException(SkipReason.SOURCE_CONTEXT_NOT_FOUND,
-                    "Error searching source context for remediation '" + instanceId + "' in file '" + filename + "'", e);
         }
+        return max;
     }
 
-    /**
-     * @param projectedDeclaredFrom @param projectedDeclaredTo the FPR's declared LineFrom/LineTo
-     *        for this hunk, projected through this run's offset ledger. Same exact-equality tie-
-     *        break as {@link #fuzzySearchContext}: only resolves a >1 match when exactly one
-     *        candidate's range equals this trusted position; otherwise still throws ambiguous.
-     */
-    private int[] fuzzySearchOriginalCode(String instanceId, String filename, List<String> originalLines, List<String> originalCodeLine,
-            int contextLineFrom, int contextLineCount, int contextBefore, int contextAfter,
-            int projectedDeclaredFrom, int projectedDeclaredTo) {
-        int contextStart = contextLineFrom + contextBefore;
-        int contextEnd = contextLineFrom + contextLineCount - contextAfter;
-        if (contextStart < 0 || contextStart >= contextEnd || contextEnd > originalLines.size()) {
-            return new int[] {-1, -1};
-        }
-
-        List<int[]> matches = FuzzyContextSearcher.fuzzySearchOriginalCodeMatches(
-                originalLines.subList(contextStart, contextEnd), originalCodeLine, 0, 0);
-        if (matches.size() > 1) {
-            int expectedFrom = projectedDeclaredFrom - 1 - contextStart;
-            int expectedTo = projectedDeclaredTo - 1 - contextStart;
-            List<int[]> exact = matches.stream().filter(m -> m[0] == expectedFrom && m[1] == expectedTo).toList();
-            if (exact.size() == 1) {
-                int[] m = exact.get(0);
-                LOG.debug("Remediation {} for '{}': {} candidate original-code matches, resolved to lines {}-{} via declared/projected position",
-                    instanceId, filename, matches.size(), m[0] + contextStart + 1, m[1] + contextStart + 1);
-                return new int[] {m[0] + contextStart, m[1] + contextStart};
+    private List<RemediationKey> createRemediationKeys(Remediation remediation, Path sourceBasePath) {
+        List<RemediationKey> keys = new ArrayList<>();
+        for (FileChange fileChange : remediation.fileChanges()) {
+            for (Hunk hunk : fileChange.hunks()) {
+                String filename = fileChange.requiredFilename();
+                String comparisonCode = hunk.comparisonCode(filename);
+                keys.add(RemediationKey.of(fileChange, hunk, sourceBasePath, comparisonCode));
             }
-            String candidateLines = matches.stream()
-                    .map(m -> (m[0] + contextStart + 1) + "-" + (m[1] + contextStart + 1))
-                    .collect(Collectors.joining(", "));
-            throw new SkipRemediationException(SkipReason.ORIGINAL_CODE_AMBIGUOUS,
-                    "Original code matched multiple locations in file '" + filename + "'; candidate lines: " + candidateLines);
         }
-        if (matches.isEmpty()) {
-            return new int[] {-1, -1};
-        }
-        int[] lineFromTo = matches.get(0);
-        return new int[] {lineFromTo[0] + contextStart, lineFromTo[1] + contextStart};
+        return keys;
     }
-
-    private boolean isFilePresent(Path path) {
-        return Files.exists(path) && Files.isRegularFile(path);
-    }
-
 
     /** Nullable: missing/unreadable FVDL means FPR encoding candidate is skipped. */
     private FVDLMetadata loadFvdlMetadata() {
@@ -730,372 +314,5 @@ public class RemediationProcessor {
             LOG.warn("Error reading source file encodings from audit.fvdl; FPR encoding candidate will be skipped", e);
             return null;
         }
-    }
-
-    private SourceFileContent readSourceFile(Path filePath, String filename, FVDLMetadata fvdlMetadata) {
-        try {
-            byte[] sourceBytes = Files.readAllBytes(filePath);
-            // Metadata may be null (FVDL missing); FPR candidate fails and other encodings are tried.
-            DecodeResult decodeResult = sourceDecoder.decode(sourceBytes, filename, fvdlMetadata);
-            LOG.debug("Strict decoded '{}' using {}; sourceBytes={}, decodedChars={}", filename, decodeResult.source(), sourceBytes.length,
-                    decodeResult.content().length());
-            return new SourceFileContent(decodeResult.content(), decodeResult.charset(), decodeResult.source());
-        } catch (SourceDecodeException e) {
-            throw new SkipRemediationException(SkipReason.SOURCE_DECODE_FAILED, e.getMessage(), e);
-        } catch (IOException e) {
-            throw new SkipRemediationException(SkipReason.SOURCE_READ_FAILED, "Error reading source code file '" + filePath + "'", e);
-        }
-    }
-
-    private byte[] encodeSourceFile(String content, Charset charset, String filename) {
-        try {
-            return SourceEncoder.encode(content, charset, filename);
-        } catch (SourceEncodeException e) {
-            throw new SkipRemediationException(SkipReason.REMEDIATION_ENCODE_FAILED, e.getMessage(), e);
-        }
-    }
-
-    private String getRequiredElementText(Element parent, String elementName) {
-        return getRequiredElement(parent, elementName).getTextContent();
-    }
-
-    private Element getRequiredElement(Element parent, String elementName) {
-        NodeList nodes = parent.getElementsByTagNameNS(NAMESPACE_URI, elementName);
-        if (nodes.getLength() == 0 || nodes.item(0) == null) {
-            throw new SkipRemediationException(SkipReason.REMEDIATION_DATA_INVALID,
-                    "Missing required remediation element '" + elementName + "'");
-        }
-        return (Element) nodes.item(0);
-    }
-
-    private int parseRequiredContextAttribute(Element context, String attributeName) {
-        String value = context.getAttribute(attributeName);
-        if (value == null || value.isBlank()) {
-            throw new SkipRemediationException(SkipReason.REMEDIATION_DATA_INVALID,
-                    "Missing required remediation context attribute '" + attributeName + "'");
-        }
-        try {
-            int parsedValue = Integer.parseInt(value);
-            if (parsedValue < 0) {
-                throw new NumberFormatException("negative value");
-            }
-            return parsedValue;
-        } catch (NumberFormatException e) {
-            throw new SkipRemediationException(SkipReason.REMEDIATION_DATA_INVALID,
-                    "Invalid remediation context attribute '" + attributeName + "': " + value, e);
-        }
-    }
-
-    private int parseRequiredInt(Element parent, String elementName) {
-        String value = getRequiredElementText(parent, elementName);
-        try {
-            return Integer.parseInt(value);
-        } catch (NumberFormatException e) {
-            throw new SkipRemediationException(SkipReason.REMEDIATION_DATA_INVALID,
-                    "Invalid integer value for remediation element '" + elementName + "': " + value, e);
-        }
-    }
-
-    private void validateLineRange(int lineFrom, int lineTo, int sourceLineCount, String filename) {
-        if (lineFrom < 1 || lineTo < lineFrom || lineTo > sourceLineCount) {
-            throw new SkipRemediationException(SkipReason.REMEDIATION_LINE_RANGE_INVALID,
-                    "Invalid remediation line range " + lineFrom + "-" + lineTo + " for file '" + filename + "'");
-        }
-    }
-
-    private String detectLineSeparator(String content) {
-        int crlfIndex = content.indexOf("\r\n");
-        int lfIndex = content.indexOf('\n');
-        int crIndex = content.indexOf('\r');
-
-        if (crlfIndex >= 0 && (lfIndex == crlfIndex + 1 || lfIndex < 0) && (crIndex == crlfIndex || crIndex < 0)) {
-            return "\r\n";
-        }
-        if (lfIndex >= 0 && (crIndex < 0 || lfIndex < crIndex)) {
-            return "\n";
-        }
-        if (crIndex >= 0) {
-            return "\r";
-        }
-        return System.lineSeparator();
-    }
-
-    private String normalizeLineEndings(String content) {
-        return content.replace("\r\n", "\n").replace('\r', '\n');
-    }
-
-    private String describeLineSeparator(String lineSeparator) {
-        return switch (lineSeparator) {
-            case "\r\n" -> "CRLF";
-            case "\n" -> "LF";
-            case "\r" -> "CR";
-            default -> "system";
-        };
-    }
-
-    private String calculateHashBase64(String content, String algorithm) {
-        String hash;
-        if (content == null) {
-            return "";
-        }
-        try {
-            MessageDigest md = MessageDigest.getInstance(algorithm);
-            byte[] digest = md.digest(content.getBytes(StandardCharsets.UTF_8));
-            hash = Base64.getEncoder().encodeToString(digest);
-            return hash;
-        } catch (NoSuchAlgorithmException e) {
-            throw new AviatorTechnicalException("Hashing algorithm not available: " + algorithm, e);
-        }
-    }
-
-    /** Encoding-agnostic hash — caller supplies the already-encoded bytes. */
-    private String calculateHashBase64Bytes(byte[] bytes, String algorithm) {
-        if (bytes == null) return "";
-        try {
-            MessageDigest md = MessageDigest.getInstance(algorithm);
-            return Base64.getEncoder().encodeToString(md.digest(bytes));
-        } catch (NoSuchAlgorithmException e) {
-            throw new AviatorTechnicalException("Hashing algorithm not available: " + algorithm, e);
-        }
-    }
-
-    private void recordSkipped(Map<String, Integer> skippedByReason, String reason) {
-        skippedByReason.merge(reason, 1, Integer::sum);
-    }
-    private String skipReasonLabel(SkipRemediationException exception) {
-        return exception.getReason().displayName;
-    }
-
-    private String formatSkippedReasons(Map<String, Integer> skippedByReason) {
-        List<String> parts = new ArrayList<>();
-        skippedByReason.forEach((reason, count) -> parts.add(reason + "=" + count));
-        return String.join(", ", parts);
-    }
-
-    private RemediationKey createRemediationKey(
-        Element fileChanges, Element change, Path sourceBasePath, String comparisonCode) {
-
-        String fileName = getRequiredElementText(fileChanges, "Filename");
-        Path filePath = sourceBasePath.resolve(fileName).normalize();
-        int lineFrom = parseRequiredInt(change, "LineFrom");
-        int lineTo = parseRequiredInt(change, "LineTo");
-
-        return new RemediationKey(fileName, filePath, lineFrom, lineTo, comparisonCode);
-    }
-
-    /**
-     * Widest hunk (lineTo - lineFrom) across all Changes in a Remediation.
-     * Used to order remediations broader-first so nested narrower fixes classify as SUPERSEDED.
-     */
-    private int maxHunkWidth(Element remediation) {
-        NodeList changes = remediation.getElementsByTagNameNS(NAMESPACE_URI, "Change");
-        int max = 0;
-        for (int i = 0; i < changes.getLength(); i++) {
-            Element c = (Element) changes.item(i);
-            try {
-                int from = Integer.parseInt(getRequiredElementText(c, "LineFrom"));
-                int to = Integer.parseInt(getRequiredElementText(c, "LineTo"));
-                max = Math.max(max, to - from);
-            } catch (Exception ignore) {
-                // best-effort ordering; malformed hunks fall to the back
-            }
-        }
-        return max;
-    }
-
-    /**
-     * Pre-classify each hunk of a Remediation against the per-run appliedByFile offset
-     * map. Returns {@link HunkOutcome#SUPERSEDED} if a prior applied hunk fully contains the
-     * range AND its fix content actually covers this hunk's proposed change (normalized,
-     * comment/whitespace-insensitive substring match); {@link HunkOutcome#POSSIBLY_REMEDIATED}
-     * for a fully-nested range whose content does NOT match what was actually written (a
-     * different fix hidden behind a broader one, but the location is still covered);
-     * {@link HunkOutcome#CONFLICTS} for a partial, non-nested overlap (coverage is genuinely
-     * ambiguous); {@link HunkOutcome#APPLIED} for no overlap (candidate to attempt). Identity-satisfied
-     * hunks whose exact range was written by a prior remediation naturally classify as
-     * SUPERSEDED, which is semantically correct.
-     */
-    private List<HunkOutcome> classifyRemediationHunks(Element remediation, Path sourceBasePath) {
-        List<HunkOutcome> outcomes = new ArrayList<>();
-        NodeList fileChangesNodes = remediation.getElementsByTagNameNS(NAMESPACE_URI, "FileChanges");
-        for (int i = 0; i < fileChangesNodes.getLength(); i++) {
-            Element fileChanges = (Element) fileChangesNodes.item(i);
-            String filename;
-            try {
-                filename = getRequiredElementText(fileChanges, "Filename");
-            } catch (SkipRemediationException e) {
-                outcomes.add(HunkOutcome.APPLIED);
-                continue;
-            }
-            Path filePath = sourceBasePath.resolve(filename).normalize();
-            List<AppliedChange> applied = appliedByFile.getOrDefault(filePath, List.of());
-            NodeList changes = fileChanges.getElementsByTagNameNS(NAMESPACE_URI, "Change");
-            for (int j = 0; j < changes.getLength(); j++) {
-                Element change = (Element) changes.item(j);
-                int from;
-                int to;
-                try {
-                    from = Integer.parseInt(getRequiredElementText(change, "LineFrom"));
-                    to = Integer.parseInt(getRequiredElementText(change, "LineTo"));
-                } catch (Exception e) {
-                    outcomes.add(HunkOutcome.APPLIED);
-                    continue;
-                }
-                String candidateComparisonCode = null;
-                try {
-                    String newCode = getRequiredElementText(change, "NewCode");
-                    candidateComparisonCode = createComparisonCode(normalizeProposedCode(newCode, filename), filename);
-                } catch (SkipRemediationException e) {
-                    // Content unavailable for comparison; classifyRange falls back to range-only classification.
-                }
-                outcomes.add(classifyRange(from, to, applied, candidateComparisonCode));
-            }
-        }
-        return outcomes;
-    }
-
-    /**
-     * SUPERSEDED if nested in an AppliedChange whose written content actually covers this
-     * hunk's proposed fix (normalized substring match); POSSIBLY_REMEDIATED if nested but the
-     * content differs (the sibling fully covers this location, just not proven identical);
-     * CONFLICTS if there is only a partial, non-nested line overlap (neither range contains
-     * the other, so coverage is genuinely ambiguous); APPLIED otherwise. When either side's
-     * content is unavailable ({@code null}), falls back to the conservative range-only default
-     * of SUPERSEDED for a fully-nested range.
-     */
-    private HunkOutcome classifyRange(int lineFrom, int lineTo, List<AppliedChange> applied, String candidateComparisonCode) {
-        for (AppliedChange ac : applied) {
-            if (ac.originalLineFrom() <= lineFrom && lineTo <= ac.originalLineTo()) {
-                if (candidateComparisonCode == null || ac.comparisonCode() == null
-                        || ac.comparisonCode().contains(candidateComparisonCode)) {
-                    return HunkOutcome.SUPERSEDED;
-                }
-                return HunkOutcome.POSSIBLY_REMEDIATED;
-            }
-            boolean disjoint = lineTo < ac.originalLineFrom() || lineFrom > ac.originalLineTo();
-            if (!disjoint) {
-                return HunkOutcome.CONFLICTS;
-            }
-        }
-        return HunkOutcome.APPLIED;
-    }
-
-    /**
-     * Anchor verification: line-by-line whitespace-insensitive, case-insensitive comparison
-     * between a slice of the current file and the expected OriginalCode. Matches the same
-     * normalization ({@code trim().replaceAll("\\s+", " ")}, {@code equalsIgnoreCase}) that
-     * {@link FuzzyContextSearcher} uses so behaviour is consistent between the fast projection
-     * path and the fuzzy fallback.
-     */
-    private boolean linesEqualNormalized(List<String> source, int startInclusive, int endInclusive, List<String> expected) {
-        int len = endInclusive - startInclusive + 1;
-        if (len != expected.size()) return false;
-        for (int i = 0; i < len; i++) {
-            String a = source.get(startInclusive + i).trim().replaceAll("\\s+", " ");
-            String b = expected.get(i).trim().replaceAll("\\s+", " ");
-            if (!a.equalsIgnoreCase(b)) return false;
-        }
-        return true;
-    }
-
-    private String trimBlankLines(String content) {
-        String[] lines = content.split("\\R", -1);
-        int start = 0, end = lines.length - 1;
-
-        while (start <= end && lines[start].isBlank()) start++;
-        while (end >= start && lines[end].isBlank()) end--;
-
-        return start > end ? "" :
-            String.join(System.lineSeparator(), Arrays.copyOfRange(lines, start, end + 1));
-    }
-
-    private String normalizeProposedCode(String content, String fileName) {
-        if (content == null) return null;
-
-        String language = FileTypeLanguageMapperUtil.getProgrammingLanguage(
-            FileUtil.getFileExtension(fileName));
-        String commentSymbol = LanguageCommentMapperUtil.getProgrammingLanguageComment(language);
-
-        if ("Unknown".equals(commentSymbol)) return trimBlankLines(content);
-
-        String closingToken = commentSymbol.equals("<!--") ? "-->"
-            : commentSymbol.equals("<%--") ? "--%>" : null;
-
-        Pattern markerPattern = Pattern.compile(
-            "[ \\t]*" + Pattern.quote(commentSymbol) + " L\\d+"
-                + (closingToken != null ? "[ \\t]*" + Pattern.quote(closingToken) : "")
-                + "[ \\t]*$");
-
-        String[] lines = content.split("\\R", -1);
-        StringBuilder result = new StringBuilder();
-
-        for (int i = 0; i < lines.length; i++) {
-            Matcher matcher = markerPattern.matcher(lines[i]);
-            result.append(matcher.find() ? lines[i].substring(0, matcher.start()) : lines[i]);
-            if (i < lines.length - 1) result.append(System.lineSeparator());
-        }
-
-        return trimBlankLines(result.toString());
-    }
-
-    private String createComparisonCode(String normalizedCode, String fileName) {
-        if (normalizedCode == null) return null;
-
-        String language = FileTypeLanguageMapperUtil.getProgrammingLanguage(
-            FileUtil.getFileExtension(fileName));
-        String commentSymbol = LanguageCommentMapperUtil.getProgrammingLanguageComment(language);
-
-        if ("Unknown".equals(commentSymbol)) {
-            return normalizeLiteralAliases(normalizedCode).replaceAll("\\s+", "");
-        }
-
-        String comparisonCode = normalizedCode;
-        String closingToken = commentSymbol.equals("<!--") ? "-->"
-            : commentSymbol.equals("<%--") ? "--%>" : null;
-
-        if (closingToken != null) {
-            comparisonCode = comparisonCode.replaceAll(
-                "(?s)" + Pattern.quote(commentSymbol) + ".*?" + Pattern.quote(closingToken), "");
-        } else if ("//".equals(commentSymbol)) {
-            comparisonCode = comparisonCode.replaceAll("(?m)" + Pattern.quote(commentSymbol) + ".*$", "")
-                .replaceAll("(?s)/\\*.*?\\*/", "");
-        } else if ("#".equals(commentSymbol)) {
-            comparisonCode = comparisonCode.replaceAll("(?m)" + Pattern.quote(commentSymbol) + ".*$", "");
-        }
-
-        return normalizeLiteralAliases(comparisonCode).replaceAll("\\s+", "");
-    }
-
-    /**
-     * Treats semantically-equivalent literal forms as identical for near-identical-fix
-     * comparison only; never applied to code actually written to source files.
-     */
-    private String normalizeLiteralAliases(String code) {
-        if (code == null) return null;
-        String normalized = code.replaceAll("'\\\\0'", "0");
-        normalized = normalized.replaceAll("\\bnullptr\\b", "NULL");
-        return normalized;
-    }
-
-    private List<RemediationKey> createRemediationKeys(Element remediation, Path sourceBasePath) {
-        List<RemediationKey> keys = new ArrayList<>();
-        NodeList fileChangesNodes = remediation.getElementsByTagNameNS(NAMESPACE_URI, "FileChanges");
-
-        for (int i = 0; i < fileChangesNodes.getLength(); i++) {
-            Element fileChanges = (Element) fileChangesNodes.item(i);
-            NodeList changeNodes = fileChanges.getElementsByTagNameNS(NAMESPACE_URI, "Change");
-
-            for (int j = 0; j < changeNodes.getLength(); j++) {
-                Element change = (Element) changeNodes.item(j);
-                String fileName = getRequiredElementText(fileChanges, "Filename");
-                String newCode = getRequiredElementText(change, "NewCode");
-                String normalizedCode = normalizeProposedCode(newCode, fileName);
-                String comparisonCode = createComparisonCode(normalizedCode, fileName);
-
-                keys.add(createRemediationKey(fileChanges, change, sourceBasePath, comparisonCode));
-            }
-        }
-
-        return keys;
     }
 }

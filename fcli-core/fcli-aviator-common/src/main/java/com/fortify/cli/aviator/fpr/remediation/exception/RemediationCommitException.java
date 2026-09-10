@@ -15,7 +15,7 @@ package com.fortify.cli.aviator.fpr.remediation.exception;
 import java.util.List;
 
 import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
-import com.fortify.cli.aviator.fpr.remediation.write.RollbackFileWrite;
+import com.fortify.cli.aviator.fpr.remediation.writer.RollbackFileWrite;
 
 public class RemediationCommitException extends AviatorTechnicalException {
     private static final long serialVersionUID = 1L;
