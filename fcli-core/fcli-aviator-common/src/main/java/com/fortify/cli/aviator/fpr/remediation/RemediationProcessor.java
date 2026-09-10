@@ -88,17 +88,6 @@ public class RemediationProcessor {
 
     private record PendingAppliedChange(Path filePath, String instanceId, int lineFrom, int lineTo, int deltaLines, String comparisonCode) {}
 
-
-    /**
-     * Offset-map entry: records a hunk that was actually written to a file this run,
-     * in terms of the PRISTINE file's line numbers. `deltaLines` is
-     * (newLineCount - originalLineCount); positive means the file grew, negative means it shrunk.
-     */
-    private record AppliedChange(String instanceId, int originalLineFrom, int originalLineTo, int deltaLines, String comparisonCode) {}
-
-    /** Per-hunk classification for the state machine. */
-    private enum HunkOutcome { APPLIED, IDENTICAL, SUPERSEDED, CONFLICTS, POSSIBLY_REMEDIATED, ANCHOR_MISMATCH }
-
     private record SourceFileContent(String content, Charset charset, String encodingSource) {}
 
     private record PendingFileWrite(String filename, Path filePath, String content, Charset charset, String encodingSource,
