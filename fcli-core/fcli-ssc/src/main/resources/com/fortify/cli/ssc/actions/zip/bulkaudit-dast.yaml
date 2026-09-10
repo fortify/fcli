@@ -1,0 +1,490 @@
+# yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-dev-2.x.json
+
+author: Fortify
+usage:
+  header: (PREVIEW) Perform Fortify DAST Aviator audits of SSC application versions in bulk.
+  description: |
+    This action identifies SSC application versions with a processed DAST FPR and
+    submits only versions whose DAST scan is newer than the last recorded DAST audit.
+    Versions without a processed WebInspect result, or whose DAST scan has already
+    been evaluated, are skipped before any audit command is invoked.
+
+    Before using this action, run `fcli aviator ssc prepare` with an Aviator admin
+    configuration so the Aviator tags and the `last_dast_audit` application-version
+    attribute are available in SSC. The action requires an active SSC session, an
+    Aviator user session for DAST auditing, and an Aviator admin configuration for
+    listing and creating Aviator applications. Unless nested command defaults are
+    overridden, these use the `default` SSC session, Aviator user session, and admin
+    configuration.
+
+    For application versions that don't already exist in Fortify Aviator, the action
+    automatically creates them before submitting the DAST audit. By default
+    (--aviator-app-mapping=app), SSC project versions map to one Fortify Aviator
+    application per SSC project. Set --aviator-app-mapping=version to map each SSC
+    project version to its own Fortify Aviator application.
+
+    If Aviator entitlement is exhausted while creating applications, further creation
+    attempts are suppressed and versions with existing applications continue.
+
+config:
+  output: immediate
+  rest.target.default: ssc
+  run.fcli.status.log.default: true
+  run.fcli.status.check.default: false
+  mcp: exclude # Not suitable for MCP tool invocation
+
+cli.options:
+  max-audits:
+    names: --max-audits, -m
+    description: "Maximum number of application versions to audit. Default: -1 (unlimited)"
+    required: false
+    default: -1
+    type: int
+  aviator-app-mapping:
+    names: --aviator-app-mapping
+    description: "Controls how SSC project versions map to Fortify Aviator applications. 'app' (default) maps one application per SSC project; 'version' maps one application per project version."
+    required: false
+    default: app
+  filter:
+    names: --filter, -f
+    description: "Optional filter to restrict the SSC application versions considered. Example: 'Languages:java'. Default: no filtering"
+    required: false
+    default: ""
+  exclude-filter:
+    names: --exclude-filter, -e
+    description: "Optional filter to exclude SSC application versions. Example: 'Languages:c#'. Default: no exclusion"
+    required: false
+    default: ""
+  dry-run:
+    names: --dry-run, -n
+    description: "Show application versions and Aviator commands that would be processed without creating applications or running audits. Default: false"
+    required: false
+    default: false
+    type: boolean
+  tag-mapping:
+    names: --tag-mapping, -t
+    description: "Optional path to a custom DAST tag mapping YAML file. If omitted, the default DAST mapping is used"
+    required: false
+  refresh:
+    names: --refresh
+    description: "Refresh application version metrics before audit. Default: true"
+    required: false
+    type: boolean
+    default: true
+  refresh-timeout:
+    names: --refresh-timeout
+    description: "Timeout for metric refresh, for example 30s, 5m, or 1h. Default: 60s"
+    required: false
+    default: "60s"
+
+steps:
+  - var.set:
+      module: ssc
+      stats.missing_dast_skipped: 0
+      stats.unchanged_skipped: 0
+      stats.create_attempts: 0
+      stats.create_successes: 0
+      stats.create_failures: 0
+      stats.audit_attempts: 0
+      stats.audit_failures: 0
+      stats.failures: 0
+      stats.selection_failures: 0
+      stats.entitlement_exhausted: false
+      stats.creation_blocked: false
+      stats.create_skipped_after_failure: 0
+      stats.would_create_count: 0
+
+  - if: ${cli['max-audits'] < -1}
+    throw: "Invalid --max-audits value '${cli['max-audits']}'. Use -1 for unlimited or a non-negative number"
+
+  - if: ${!(cli['aviator-app-mapping'] matches 'app|version')}
+    throw: "Invalid --aviator-app-mapping value '${cli['aviator-app-mapping']}'. Valid values are: app, version"
+
+  - log.progress: "Using Fortify Aviator app mapping: ${cli['aviator-app-mapping']}"
+
+  - log.progress: Retrieving existing Fortify Aviator applications...
+  - run.fcli:
+      aviator_apps:
+        cmd: aviator app ls -o json
+        status.check: true
+        records.collect: true
+
+  - var.set:
+      aviator_app_names: null
+  - records.for-each:
+      from: ${aviator_apps.records}
+      record.var-name: aviator_app
+      do:
+        - var.set:
+            aviator_app_names..: ${aviator_app.name}
+
+  - var.set:
+      last_dast_audit_guid: null
+      last_dast_audit_id: null
+  - rest.call:
+      dast_audit_attribute_definitions:
+        uri: /api/v1/attributeDefinitions
+        type: paged
+        query:
+          limit: -1
+        records.for-each:
+          record.var-name: attribute_definition
+          breakIf: ${last_dast_audit_guid != null || last_dast_audit_id != null}
+          if: ${attribute_definition.name == 'last_dast_audit' && attribute_definition.category == 'TECHNICAL' && attribute_definition.type == 'TEXT'}
+          do:
+            - var.set:
+                last_dast_audit_guid: ${attribute_definition.guid}
+                last_dast_audit_id: ${attribute_definition.id}
+  - if: ${last_dast_audit_guid == null && last_dast_audit_id == null}
+    log.warn: "SSC attribute definition 'last_dast_audit' was not found. Run 'fcli aviator ssc prepare' before using bulk DAST audit"
+
+  - log.progress: Querying SSC application versions...
+  - var.set:
+      candidate_versions: null
+
+  - if: ${cli.filter == ''}
+    rest.call:
+      app_versions:
+        uri: /api/v1/projectVersions
+        type: paged
+        query:
+          limit: -1
+        records.for-each:
+          record.var-name: version
+          do:
+            - var.set:
+                current_project_name: ${version.project.name}
+                current_version_name: ${version.name}
+                current_aviator_app_name: ${version.project.name.replaceAll('"', '')}
+            - if: ${'version'.equals(cli['aviator-app-mapping'])}
+              var.set:
+                current_aviator_app_name: ${(current_project_name + '__' + current_version_name).replaceAll('"', '')}
+            - var.set:
+                project_exists_in_aviator: ${aviator_app_names != null && aviator_app_names.contains(current_aviator_app_name)}
+            - var.set:
+                candidate_versions..: {fmt: candidate_version}
+
+  - if: ${cli.filter != ''}
+    do:
+      - log.progress: Using issue aging filter scope for candidate discovery...
+      - rest.call:
+          app_versions:
+            uri: /api/v1/issueaging
+            type: paged
+            query:
+              limit: -1
+              filterby: ${cli.filter}
+            records.for-each:
+              record.var-name: version
+              embed:
+                project_details:
+                  uri: /api/v1/projectVersions/${version.id}
+              do:
+                - var.set:
+                    current_project_name: ${version.project_details.project.name}
+                    current_version_name: ${version.project_details.name}
+                    current_aviator_app_name: ${version.project_details.project.name.replaceAll('"', '')}
+                - if: ${'version'.equals(cli['aviator-app-mapping'])}
+                  var.set:
+                    current_aviator_app_name: ${(current_project_name + '__' + current_version_name).replaceAll('"', '')}
+                - var.set:
+                    project_exists_in_aviator: ${aviator_app_names != null && aviator_app_names.contains(current_aviator_app_name)}
+                - var.set:
+                    candidate_versions..: {fmt: candidate_version}
+
+  - if: ${candidate_versions != null}
+    log.progress: Found ${candidate_versions.size()} SSC application versions in initial scope
+  - if: ${candidate_versions == null}
+    log.progress: Found 0 SSC application versions in initial scope
+
+  - var.set:
+      scoped_versions: ${candidate_versions}
+
+  - if: ${candidate_versions != null && candidate_versions.size() > 0 && cli['exclude-filter'] != ''}
+    do:
+      - log.progress: Resolving exclusion filter scope...
+      - var.set:
+          excluded_version_lookup: null
+      - rest.call:
+          excluded_versions:
+            uri: /api/v1/issueaging
+            type: paged
+            query:
+              limit: -1
+              filterby: ${cli['exclude-filter']}
+            records.for-each:
+              record.var-name: excluded_version
+              do:
+                - var.set:
+                    excluded_version_lookup.${excluded_version.id}: true
+
+      - var.set:
+          filtered_versions: null
+          excluded_count: 0
+
+      - records.for-each:
+          from: ${candidate_versions}
+          record.var-name: candidate
+          do:
+            - var.set:
+                should_exclude: false
+            - if: ${excluded_version_lookup != null && excluded_version_lookup[candidate.id.toString()] != null}
+              var.set:
+                should_exclude: true
+            - if: ${should_exclude}
+              var.set:
+                excluded_count: ${excluded_count + 1}
+            - if: ${!should_exclude}
+              var.set:
+                filtered_versions..: ${candidate}
+
+      - var.set:
+          scoped_versions: ${filtered_versions}
+      - if: ${scoped_versions != null}
+        log.progress: Excluded ${excluded_count} application versions, ${scoped_versions.size()} remaining
+      - if: ${scoped_versions == null}
+        log.progress: Excluded ${excluded_count} application versions, 0 remaining
+
+  - if: ${candidate_versions == null}
+    log.progress: 0 application versions remain after filtering
+  - if: ${candidate_versions != null && cli['exclude-filter'] == ''}
+    log.progress: ${scoped_versions.size()} application versions remain after filtering
+
+  - if: ${scoped_versions != null && scoped_versions.size() > 0}
+    do:
+      - log.progress: Evaluating application versions for bulk DAST audit...
+      - var.set:
+          selected_versions: null
+      - records.for-each:
+          from: ${scoped_versions}
+          record.var-name: candidate
+          do:
+            - var.set:
+                latest_dast_scan_date: null
+                latest_dast_scan_invalid: false
+                latest_dast_scan_date_parsed: null
+                last_dast_audit_value: null
+                last_dast_audit_invalid: false
+                last_dast_audit_date_parsed: null
+                candidate_selection_failed: false
+            - rest.call:
+                candidate_artifacts:
+                  uri: /api/v1/projectVersions/${candidate.id}/artifacts
+                  type: paged
+                  query:
+                    limit: -1
+                    embed: scans
+                    orderby: uploadDate DESC
+                  records.for-each:
+                    record.var-name: artifact
+                    breakIf: ${latest_dast_scan_date != null}
+                    do:
+                      - var.set:
+                          artifact_scan_date: ${#ifBlank(artifact.lastScanDate, artifact.uploadDate)}
+                      - if: ${latest_dast_scan_date == null && artifact.status == 'PROCESS_COMPLETE' && !#isBlank(artifact_scan_date) && artifact._embed.scans?.^[type=='WEBINSPECT'] != null}
+                        var.set:
+                          latest_dast_scan_date: ${artifact_scan_date}
+                  on.fail:
+                    - var.set:
+                        candidate_selection_failed: true
+                        stats.selection_failures: ${stats.selection_failures + 1}
+                        stats.failures: ${stats.failures + 1}
+                    - log.warn: "Unable to inspect DAST artifacts for ${candidate.project_name}:${candidate.version_name}; skipping this version and continuing"
+            - if: ${!candidate_selection_failed && latest_dast_scan_date == null}
+              do:
+                - var.set:
+                    stats.missing_dast_skipped: ${stats.missing_dast_skipped + 1}
+            - if: ${!candidate_selection_failed && latest_dast_scan_date != null}
+              do:
+                - var.set:
+                    latest_dast_scan_date_parsed: ${#date(latest_dast_scan_date)}
+                  on.fail:
+                    - var.set:
+                        latest_dast_scan_invalid: true
+                    - log.warn: "Ignoring invalid DAST scan date for ${candidate.project_name}:${candidate.version_name}; selecting the version for audit"
+                - rest.call:
+                    candidate_attributes:
+                      uri: /api/v1/projectVersions/${candidate.id}/attributes
+                      records.for-each:
+                        record.var-name: attribute
+                        breakIf: ${last_dast_audit_value != null}
+                        if: "${last_dast_audit_guid != null && attribute.guid == last_dast_audit_guid || last_dast_audit_id != null && attribute.attributeDefinitionId != null && attribute.attributeDefinitionId.toString() == last_dast_audit_id.toString()}"
+                        do:
+                          - var.set:
+                              last_dast_audit_value: ${attribute.value}
+                      on.fail:
+                        - var.set:
+                            candidate_selection_failed: true
+                            stats.selection_failures: ${stats.selection_failures + 1}
+                            stats.failures: ${stats.failures + 1}
+                        - log.warn: "Unable to inspect DAST audit state for ${candidate.project_name}:${candidate.version_name}; skipping this version and continuing"
+                - if: ${!candidate_selection_failed && !#isBlank(last_dast_audit_value)}
+                  var.set:
+                    last_dast_audit_date_parsed: ${#date(last_dast_audit_value)}
+                  on.fail:
+                    - var.set:
+                        last_dast_audit_invalid: true
+                    - log.warn: "Ignoring invalid last_dast_audit value for ${candidate.project_name}:${candidate.version_name}; selecting the version for audit"
+                - if: ${!candidate_selection_failed && !latest_dast_scan_invalid && !#isBlank(last_dast_audit_value) && !last_dast_audit_invalid && !#date(latest_dast_scan_date).isAfter(#date(last_dast_audit_value))}
+                  var.set:
+                    stats.unchanged_skipped: ${stats.unchanged_skipped + 1}
+                - if: "${!candidate_selection_failed && (latest_dast_scan_invalid || #isBlank(last_dast_audit_value) || last_dast_audit_invalid || #date(latest_dast_scan_date).isAfter(#date(last_dast_audit_value)))}"
+                  var.set:
+                    selected_versions..: {fmt: selected_version}
+
+  - if: ${selected_versions != null}
+    log.progress: Found ${selected_versions.size()} application versions requiring DAST audit before limit
+  - if: ${selected_versions == null}
+    log.progress: Found 0 application versions requiring DAST audit before limit
+
+  - if: ${selected_versions != null && selected_versions.size() > 0}
+    do:
+      - var.set:
+          audit_candidates: ${selected_versions}
+      - if: ${cli['max-audits'] != -1 && selected_versions.size() > cli['max-audits']}
+        do:
+          - log.progress: Limiting bulk DAST audit run to ${cli['max-audits']} application versions
+          - var.set:
+              audit_candidates: null
+              audit_counter: 0
+          - records.for-each:
+              from: ${selected_versions}
+              record.var-name: selected_version
+              breakIf: ${audit_counter >= cli['max-audits']}
+              do:
+                - var.set:
+                    audit_candidates..: ${selected_version}
+                    audit_counter: ${audit_counter + 1}
+
+  - if: ${audit_candidates != null}
+    log.progress: Processing ${audit_candidates.size()} application versions for DAST audit
+  - if: ${audit_candidates == null}
+    log.progress: Processing 0 application versions for DAST audit
+
+  - var.set:
+      known_aviator_app_names: ${aviator_app_names}
+
+  - if: ${audit_candidates != null && audit_candidates.size() > 0}
+    do:
+      - records.for-each:
+          from: ${audit_candidates}
+          record.var-name: project
+          do:
+            - var.set:
+                app_known_in_aviator: ${known_aviator_app_names != null && known_aviator_app_names.contains(project.aviator_app_name)}
+            - if: ${cli['dry-run']}
+              do:
+                - if: ${!app_known_in_aviator}
+                  do:
+                    - log.info: Would create app ${project.aviator_app_name}
+                    - var.set:
+                        stats.would_create_count: ${stats.would_create_count + 1}
+                        known_aviator_app_names..: ${project.aviator_app_name}
+                - log.info: Would audit ${project.project_name}:${project.version_name}
+            - if: ${!cli['dry-run']}
+              do:
+                - var.set:
+                    app_ready: ${app_known_in_aviator}
+                    app_needs_creation: ${!app_known_in_aviator}
+                - if: ${!app_known_in_aviator && !stats.creation_blocked}
+                  do:
+                    - var.set:
+                        stats.create_attempts: ${stats.create_attempts + 1}
+                        create_app.stdout: ""
+                        create_app.stderr: ""
+                    - run.fcli:
+                        create_app:
+                          cmd: aviator app create "${project.aviator_app_name}"
+                          status.check: false
+                          stdout: collect
+                          stderr: collect
+                    - if: ${create_app.exitCode == 0}
+                      var.set:
+                        app_ready: true
+                        stats.create_successes: ${stats.create_successes + 1}
+                        known_aviator_app_names..: ${project.aviator_app_name}
+                    - if: ${create_app.exitCode != 0}
+                      do:
+                        - var.set:
+                            create_app_error_text: "${(create_app.stderr == null ? '' : create_app.stderr) + ' ' + (create_app.stdout == null ? '' : create_app.stdout)}"
+                            create_app_already_exists: ${create_app_error_text.toLowerCase().contains('already exists')}
+                            create_app_entitlement_or_quota_error: ${create_app_error_text.toLowerCase().contains('entitlement') || create_app_error_text.toLowerCase().contains('quota')}
+                        - if: ${create_app_already_exists}
+                          do:
+                            - var.set:
+                                app_ready: true
+                                known_aviator_app_names..: ${project.aviator_app_name}
+                            - log.warn: App ${project.aviator_app_name} already exists; continuing with audit
+                        - if: ${!create_app_already_exists}
+                          do:
+                            - var.set:
+                                stats.create_failures: ${stats.create_failures + 1}
+                                stats.failures: ${stats.failures + 1}
+                                stats.creation_blocked: true
+                            - if: ${create_app_entitlement_or_quota_error && !stats.entitlement_exhausted}
+                              do:
+                                - log.warn: App creation failed due to entitlement or quota; suppressing further create attempts
+                                - var.set:
+                                    stats.entitlement_exhausted: true
+                            - if: ${!create_app_entitlement_or_quota_error}
+                              log.warn: App creation failed for ${project.aviator_app_name}; suppressing further application creation attempts
+                - if: ${app_needs_creation && !app_ready && stats.creation_blocked}
+                  do:
+                    - var.set:
+                        stats.create_skipped_after_failure: ${stats.create_skipped_after_failure + 1}
+                    - if: ${stats.entitlement_exhausted}
+                      log.warn: Skipping ${project.project_name}:${project.version_name} because Aviator entitlement is exhausted
+                    - if: ${!stats.entitlement_exhausted}
+                      log.warn: Skipping ${project.project_name}:${project.version_name} because application creation previously failed
+                - if: ${app_ready}
+                  do:
+                    - var.set:
+                        stats.audit_attempts: ${stats.audit_attempts + 1}
+                    - if: ${cli['tag-mapping'] != null && cli['tag-mapping'] != ''}
+                      run.fcli:
+                        run_audit:
+                          cmd: "aviator ssc audit-dast --av \"${project.id}\" --app \"${project.aviator_app_name}\" --log-level=INFO --tag-mapping=\"${cli['tag-mapping']}\" --refresh=${cli.refresh} --refresh-timeout=\"${cli['refresh-timeout']}\""
+                          status.check: false
+                          records.collect: true
+                          stdout: show
+                          stderr: collect
+                    - if: ${cli['tag-mapping'] == null || cli['tag-mapping'] == ''}
+                      run.fcli:
+                        run_audit:
+                          cmd: "aviator ssc audit-dast --av \"${project.id}\" --app \"${project.aviator_app_name}\" --log-level=INFO --refresh=${cli.refresh} --refresh-timeout=\"${cli['refresh-timeout']}\""
+                          status.check: false
+                          records.collect: true
+                          stdout: show
+                          stderr: collect
+                    - if: "${run_audit.exitCode != 0 || (run_audit.records != null && run_audit.records.size() > 0 && (run_audit.records[0].__action__ == 'FAILED' || run_audit.records[0].__action__ == 'PARTIALLY_AUDITED'))}"
+                      do:
+                        - var.set:
+                            stats.audit_failures: ${stats.audit_failures + 1}
+                            stats.failures: ${stats.failures + 1}
+                        - log.warn: DAST audit failed for ${project.project_name}:${project.version_name}; continuing with remaining candidates
+
+  - if: ${cli['dry-run']}
+    log.info: "Dry-run complete (mapping: ${cli['aviator-app-mapping']}) - would process ${audit_candidates == null ? 0 : audit_candidates.size()} versions, missing DAST artifact skipped ${stats.missing_dast_skipped}, up-to-date last_dast_audit skipped ${stats.unchanged_skipped}, selection failures ${stats.selection_failures}, create ${stats.would_create_count} apps"
+
+  - if: ${!cli['dry-run']}
+    do:
+      - log.info: "Complete (mapping: ${cli['aviator-app-mapping']}) - Apps created ${stats.create_successes}/${stats.create_attempts}, Audits attempted ${stats.audit_attempts}, Failures ${stats.failures} (create ${stats.create_failures}, audit ${stats.audit_failures}, selection ${stats.selection_failures}), app creations skipped after failure ${stats.create_skipped_after_failure}, missing DAST artifact skipped ${stats.missing_dast_skipped}, up-to-date last_dast_audit skipped ${stats.unchanged_skipped}"
+      - if: ${stats.entitlement_exhausted}
+        log.info: Note - Aviator entitlement was exhausted; some application creations and audits were skipped
+
+formatters:
+  candidate_version:
+    id: ${version.id}
+    project_name: ${current_project_name}
+    version_name: ${current_version_name}
+    aviator_app_name: ${current_aviator_app_name}
+    exists_in_aviator: ${project_exists_in_aviator}
+
+  selected_version:
+    id: ${candidate.id}
+    project_name: ${candidate.project_name}
+    version_name: ${candidate.version_name}
+    aviator_app_name: ${candidate.aviator_app_name}
+    exists_in_aviator: ${candidate.exists_in_aviator}
+    latest_dast_scan_date: ${latest_dast_scan_date}
+    last_dast_audit: ${last_dast_audit_value}
