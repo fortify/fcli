@@ -392,13 +392,13 @@ class RemediationProcessorTest {
     }
 
     /**
-     * Fix #4 (multi-file partial-failure isolation): one remediation touching two files where one
-     * file's hunk cannot be located must not discard the other file's otherwise-valid fix. The
-     * good file's change must still be written and counted as applied.
+     * All-or-nothing multi-file remediations: one remediation touching two files where one
+     * file's hunk cannot be located must skip the WHOLE remediation, not just that file. Neither
+     * file may end up written - a half-applied remediation is worse than one left unapplied.
      */
     @Test
-    void multiFileRemediationAppliesSucceedingFileWhenAnotherFileFails() throws Exception {
-        writeSourceFile("Bad.java", "one\ntwo\nthree\n");
+    void multiFileRemediationSkipsEntirelyWhenAnyFileFails() throws Exception {
+        Path badFile = writeSourceFile("Bad.java", "one\ntwo\nthree\n");
         Path goodFile = writeSourceFile("Good.java", "before\nTARGET\nafter\n");
         Path fprPath = createMultiFileRemediationFpr("multi-file-fix", List.of(
             new FileChangeSpec("Bad.java", 2, 2, 1, 1, "nomatch-a\nnomatch-b\nnomatch-c", "NOMATCH", "X"),
@@ -410,11 +410,12 @@ class RemediationProcessorTest {
         }
 
         assertEquals(1, metric.totalRemediations());
-        assertEquals(1, metric.appliedRemediations());
-        assertEquals(0, metric.skippedRemediations());
-        assertEquals(Set.of("Good.java"), metric.modifiedFiles());
-        assertEquals("before\nREPLACED\nafter\n", Files.readString(goodFile));
-        assertEquals("one\ntwo\nthree\n", Files.readString(tempDir.resolve("Bad.java")));
+        assertEquals(0, metric.appliedRemediations());
+        assertEquals(1, metric.skippedRemediations());
+        assertEquals(Map.of("Source context not found", 1), metric.skippedByReason());
+        assertEquals(Set.of(), metric.modifiedFiles());
+        assertEquals("before\nTARGET\nafter\n", Files.readString(goodFile));
+        assertEquals("one\ntwo\nthree\n", Files.readString(badFile));
     }
 
     private static String sha256Base64(byte[] bytes) throws Exception {

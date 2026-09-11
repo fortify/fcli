@@ -44,18 +44,6 @@ public final class AppliedChangeLedger {
         pendingAppliedChanges.add(pendingAppliedChange);
     }
 
-    /** Current staging-list size, to be passed back to {@link #discardStagedSince(int)} for a partial rollback. */
-    public int stagedMark() {
-        return pendingAppliedChanges.size();
-    }
-
-    /** Discards only the staged entries added since {@code mark} (a single file's failed staging), keeping earlier ones. */
-    public void discardStagedSince(int mark) {
-        while (pendingAppliedChanges.size() > mark) {
-            pendingAppliedChanges.remove(pendingAppliedChanges.size() - 1);
-        }
-    }
-
     /** Discards all currently staged entries (skip/rollback of the whole remediation). */
     public void discardStaged() {
         pendingAppliedChanges.clear();

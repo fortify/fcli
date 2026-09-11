@@ -57,7 +57,6 @@ public final class FileWriteCoordinator {
 
     public PreparedFileChanges prepareFileChanges(Remediation remediation, Path sourceBasePath, FVDLMetadata fvdlMetadata,
             Set<RemediationKey> keysToApply, AppliedChangeLedger ledger) {
-        String instanceId = remediation.instanceId();
         List<FileChange> fileChanges = remediation.fileChanges();
         if (fileChanges.isEmpty()) {
             throw new SkipRemediationException(SkipReason.NO_CHANGES, "No file changes found");
@@ -65,28 +64,11 @@ public final class FileWriteCoordinator {
 
         Map<Path, PendingFileWrite> pendingWrites = new LinkedHashMap<>();
         Set<RemediationKey> appliedKeys = new LinkedHashSet<>();
-        SkipRemediationException firstFailure = null;
-        for (int j = 0; j < fileChanges.size(); j++) {
-            int appliedChangesMark = ledger.stagedMark();
-            Set<RemediationKey> fileAppliedKeys = new LinkedHashSet<>();
-            try {
-                processFileChanges(remediation, fileChanges.get(j), sourceBasePath, fvdlMetadata, pendingWrites, keysToApply,
-                    fileAppliedKeys, ledger);
-                appliedKeys.addAll(fileAppliedKeys);
-            } catch (SkipRemediationException e) {
-                // Fix: a failure applying ONE file's hunk(s) in a multi-file remediation must not
-                // discard otherwise-valid fixes already staged for OTHER files in the same remediation.
-                // Roll back only this file's partial staging (it never reached pendingWrites) and continue.
-                ledger.discardStagedSince(appliedChangesMark);
-                if (firstFailure == null) {
-                    firstFailure = e;
-                }
-                LOG.warn("Remediation {}: file change {}/{} could not be applied ({}); other file(s) in this remediation, if any, are still attempted",
-                    instanceId, j + 1, fileChanges.size(), e.getMessage());
-            }
-        }
-        if (pendingWrites.isEmpty() && firstFailure != null) {
-            throw firstFailure;
+        // All-or-nothing: if any file's hunk(s) in this remediation can't be applied, the whole
+        // remediation is skipped rather than partially written to some files but not others.
+        for (FileChange fileChange : fileChanges) {
+            processFileChanges(remediation, fileChange, sourceBasePath, fvdlMetadata, pendingWrites, keysToApply,
+                appliedKeys, ledger);
         }
         return new PreparedFileChanges(pendingWrites, appliedKeys);
     }
