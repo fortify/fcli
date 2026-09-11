@@ -35,24 +35,29 @@ public class AviatorFoDApplyRemediationsHelper {
      * @param action Final action.
      * @return An ObjectNode representing the result.
      */
-    public static ObjectNode buildResultNode(FoDReleaseDescriptor rd, int totalRemediation, int appliedRemediation, int skippedRemediation,
-            String action) {
-        return buildResultNode(rd, totalRemediation, appliedRemediation, skippedRemediation, Set.of(), Map.of(), action);
+    public static ObjectNode buildResultNode(FoDReleaseDescriptor rd, int totalRemediation, int appliedRemediation, int identicalRemediation,
+            int supersededRemediation, int possiblyRemediatedRemediation, int skippedRemediation, String action) {
+        return buildResultNode(rd, totalRemediation, appliedRemediation, identicalRemediation, supersededRemediation,
+            possiblyRemediatedRemediation, skippedRemediation, Set.of(), Map.of(), action);
     }
 
-    public static ObjectNode buildResultNode(FoDReleaseDescriptor rd, int totalRemediation, int appliedRemediation, int skippedRemediation,
-            Set<String> modifiedFiles, String action) {
-        return buildResultNode(rd, totalRemediation, appliedRemediation, skippedRemediation, modifiedFiles, Map.of(), action);
+    public static ObjectNode buildResultNode(FoDReleaseDescriptor rd, int totalRemediation, int appliedRemediation, int identicalRemediation,
+            int supersededRemediation, int possiblyRemediatedRemediation, int skippedRemediation, Set<String> modifiedFiles, String action) {
+        return buildResultNode(rd, totalRemediation, appliedRemediation, identicalRemediation, supersededRemediation,
+            possiblyRemediatedRemediation, skippedRemediation, modifiedFiles, Map.of(), action);
     }
 
-    public static ObjectNode buildResultNode(FoDReleaseDescriptor rd, int totalRemediation, int appliedRemediation, int skippedRemediation,
-            Set<String> modifiedFiles, Map<String, Integer> skippedByReason, String action) {
+    public static ObjectNode buildResultNode(FoDReleaseDescriptor rd, int totalRemediation, int appliedRemediation, int identicalRemediation,
+            int supersededRemediation, int possiblyRemediatedRemediation, int skippedRemediation, Set<String> modifiedFiles, Map<String, Integer> skippedByReason, String action) {
         ObjectNode result = JsonHelper.getObjectMapper().createObjectNode();
         result.put("releaseId", rd.getReleaseId());
         result.put("applicationName", rd.getApplicationName());
         result.put("releaseName", rd.getReleaseName());
         result.put("totalRemediation", totalRemediation);
         result.put("appliedRemediation", appliedRemediation);
+        result.put("identicalRemediation", identicalRemediation);
+        result.put("supersededRemediation", supersededRemediation);
+        result.put("possiblyRemediatedRemediation", possiblyRemediatedRemediation);
         result.put("skippedRemediation", skippedRemediation);
         result.put("skippedReasons", formatSkippedReasons(skippedByReason));
         result.set("skippedByReason", toObjectNode(skippedByReason));
