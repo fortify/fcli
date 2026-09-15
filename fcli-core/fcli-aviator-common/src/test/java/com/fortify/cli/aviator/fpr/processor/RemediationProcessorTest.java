@@ -19,6 +19,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.util.Base64;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -367,6 +368,40 @@ class RemediationProcessorTest {
     }
 
     /**
+     * Mixed outcome within a single remediation: one file-change is a valid APPLY candidate
+     * while a sibling file-change in the SAME remediation conflicts with an already-applied
+     * prior fix. Remediations apply atomically, so the whole remediation must be rejected as
+     * CONFLICTS_WITH_ANOTHER_FIX as soon as any hunk is CONFLICTS, rather than falling through
+     * to the applier's best-effort offset/fuzzy-anchor fallback for the conflicting hunk while
+     * silently applying the valid one.
+     */
+    @Test
+    void mixedOutcomeRemediationWithOneConflictingHunkIsSkippedEntirely() throws Exception {
+        Path sharedFile = writeSourceFile("Shared.java", "s1\ns2\ns3\ns4\ns5\n");
+        Path exampleFile = writeSourceFile("Example.java", "before\nTARGET\nafter\n");
+
+        LinkedHashMap<String, List<FileChangeSpec>> remediations = new LinkedHashMap<>();
+        remediations.put("fix-prior", List.of(
+            new FileChangeSpec("Shared.java", 2, 3, 1, 1, "s1\ns2\ns3\ns4", "s2\ns3", "P2\nP3")));
+        remediations.put("fix-mixed", List.of(
+            new FileChangeSpec("Example.java", 2, 2, 1, 1, "before\nTARGET\nafter", "TARGET", "REPLACED"),
+            new FileChangeSpec("Shared.java", 3, 4, 1, 1, "s2\ns3\ns4\ns5", "s3\ns4", "M3\nM4")));
+        Path fprPath = createRemediationFprWithRemediations(remediations);
+
+        RemediationMetric metric;
+        try (FprHandle fprHandle = new FprHandle(fprPath)) {
+            metric = new RemediationProcessor(fprHandle, tempDir.toString()).processRemediationXML();
+        }
+
+        assertEquals(2, metric.totalRemediations());
+        assertEquals(1, metric.appliedRemediations());
+        assertEquals(1, metric.skippedRemediations());
+        assertEquals(Map.of("Conflicts with another fix", 1), metric.skippedByReason());
+        assertEquals("s1\nP2\nP3\ns4\ns5\n", Files.readString(sharedFile));
+        assertEquals("before\nTARGET\nafter\n", Files.readString(exampleFile));
+    }
+
+    /**
      * Near-identical recognition (Phase 2): two remediations at the same location whose NewCode
      * differs only by a trailing Java comment normalize to the same comparisonCode. The second
      * must be recognized as fully identical to the first and counted once, not re-applied and not
@@ -596,6 +631,61 @@ class RemediationProcessorTest {
                   </r:RemediationList>
                 </r:Remediations>
                 """.formatted(REMEDIATIONS_NAMESPACE, instanceId, fileChanges);
+
+        try (ZipOutputStream zipOutputStream = new ZipOutputStream(Files.newOutputStream(fprPath))) {
+            zipOutputStream.putNextEntry(new ZipEntry("remediations.xml"));
+            zipOutputStream.write(remediationXml.getBytes(StandardCharsets.UTF_8));
+            zipOutputStream.closeEntry();
+        }
+        return fprPath;
+    }
+
+    /**
+     * Builds an FPR with multiple remediations (insertion order preserved), each of which may
+     * itself contain multiple file changes/hunks - used to construct mixed-outcome scenarios
+     * where hunks within the same remediation classify differently against the ledger.
+     */
+    private Path createRemediationFprWithRemediations(LinkedHashMap<String, List<FileChangeSpec>> remediationFileChanges)
+            throws Exception {
+        Path fprPath = tempDir.resolve("remediation.fpr");
+        StringBuilder remediationsXml = new StringBuilder();
+        for (Map.Entry<String, List<FileChangeSpec>> entry : remediationFileChanges.entrySet()) {
+            StringBuilder fileChanges = new StringBuilder();
+            for (FileChangeSpec spec : entry.getValue()) {
+                fileChanges.append("""
+                        <r:FileChanges>
+                          <r:Filename>%s</r:Filename>
+                          <r:Hash type="SHA-256">not-the-source-hash</r:Hash>
+                          <r:Change>
+                            <r:LineFrom>%d</r:LineFrom>
+                            <r:LineTo>%d</r:LineTo>
+                            <r:Context before="%d" after="%d">%s</r:Context>
+                            <r:OriginalCode>%s</r:OriginalCode>
+                            <r:NewCode>%s</r:NewCode>
+                          </r:Change>
+                        </r:FileChanges>
+                        """.formatted(spec.filename(), spec.lineFrom(), spec.lineTo(), spec.contextBefore(),
+                        spec.contextAfter(), spec.context(), spec.originalCode(), spec.newCode()));
+            }
+            remediationsXml.append("""
+                    <r:Remediation instanceId="%s">
+                      <r:AuditComment>test</r:AuditComment>
+                      %s
+                    </r:Remediation>
+                    """.formatted(entry.getKey(), fileChanges));
+        }
+        String remediationXml = """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <r:Remediations xmlns:r="%s">
+                  <r:ProjectInfo>
+                    <r:Name>test</r:Name>
+                    <r:WriteDate>2026-08-26T00:00:00Z</r:WriteDate>
+                  </r:ProjectInfo>
+                  <r:RemediationList>
+                  %s
+                  </r:RemediationList>
+                </r:Remediations>
+                """.formatted(REMEDIATIONS_NAMESPACE, remediationsXml);
 
         try (ZipOutputStream zipOutputStream = new ZipOutputStream(Files.newOutputStream(fprPath))) {
             zipOutputStream.putNextEntry(new ZipEntry("remediations.xml"));
