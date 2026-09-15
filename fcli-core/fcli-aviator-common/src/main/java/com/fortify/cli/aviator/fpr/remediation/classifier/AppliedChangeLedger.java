@@ -53,7 +53,7 @@ public final class AppliedChangeLedger {
     public void commitStaged() {
         for (PendingAppliedChange pac : pendingAppliedChanges) {
             appliedByFile.computeIfAbsent(pac.filePath(), k -> new ArrayList<>())
-                .add(new AppliedChange(pac.instanceId(), pac.lineFrom(), pac.lineTo(), pac.deltaLines(), pac.comparisonCode()));
+                .add(new AppliedChange(pac.lineFrom(), pac.lineTo(), pac.deltaLines(), pac.comparisonCode()));
         }
         pendingAppliedChanges.clear();
     }

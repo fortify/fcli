@@ -23,7 +23,6 @@ package com.fortify.cli.aviator.fpr.remediation;
     SOURCE_CONTEXT_AMBIGUOUS("Source context matched multiple locations"),
     ORIGINAL_CODE_NOT_FOUND("Original code not found"),
     ORIGINAL_CODE_AMBIGUOUS("Original code matched multiple locations"),
-    SUPERSEDED_BY_BROADER_FIX("Superseded by broader fix"),
     CONFLICTS_WITH_ANOTHER_FIX("Conflicts with another fix"),
     ANCHOR_DOES_NOT_MATCH("Anchor does not match"),
     REMEDIATION_ENCODE_FAILED("Remediation encode failed"),

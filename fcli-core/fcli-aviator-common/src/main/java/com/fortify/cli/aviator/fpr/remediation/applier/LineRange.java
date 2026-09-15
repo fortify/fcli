@@ -10,10 +10,8 @@
  * herein. The information contained herein is subject to change
  * without notice.
  */
-package com.fortify.cli.aviator.fpr.remediation.classifier;
+package com.fortify.cli.aviator.fpr.remediation.applier;
 
-import java.nio.file.Path;
-
-public record PendingAppliedChange(Path filePath, int lineFrom, int lineTo, int deltaLines,
-                                    String comparisonCode) {
+/** Inclusive 0-based [from, to] line range located by fuzzy anchor search. */
+public record LineRange(int from, int to) {
 }

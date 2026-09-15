@@ -150,6 +150,11 @@ public final class FileUtil {
     }
 
     public static String stripSyntheticLineMarkers(String content, String fileName) {
+        return stripSyntheticLineMarkers(content, fileName, "\n");
+    }
+
+    /** Same as {@link #stripSyntheticLineMarkers(String, String)}, but joins with a caller-chosen line separator. */
+    public static String stripSyntheticLineMarkers(String content, String fileName, String lineSeparator) {
         if (content == null || content.isEmpty()) {
             return content;
         }
@@ -170,27 +175,12 @@ public final class FileUtil {
                 Matcher matcher = markerPattern.matcher(lines[i]);
                 result.append(matcher.find() ? lines[i].substring(0, matcher.start()) : lines[i]);
                 if (i < lines.length - 1) {
-                    result.append('\n');
+                    result.append(lineSeparator);
                 }
             }
             stripped = result.toString();
         }
         return stripped;
-    }
-
-    private static String trimBlankLines(String content) {
-        String[] lines = content.split("\\R", -1);
-        int start = 0;
-        int end = lines.length - 1;
-        while (start <= end && lines[start].isBlank()) start++;
-        while (end >= start && lines[end].isBlank()) end--;
-        if (start > end) return "";
-        StringBuilder sb = new StringBuilder();
-        for (int i = start; i <= end; i++) {
-            sb.append(lines[i]);
-            if (i < end) sb.append('\n');
-        }
-        return sb.toString();
     }
 
 }

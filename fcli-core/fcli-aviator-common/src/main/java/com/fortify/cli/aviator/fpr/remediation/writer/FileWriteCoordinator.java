@@ -73,7 +73,7 @@ public final class FileWriteCoordinator {
         return new PreparedFileChanges(pendingWrites, appliedKeys);
     }
 
-    private boolean processFileChanges(Remediation remediation, FileChange fileChange, Path sourceBasePath, FVDLMetadata fvdlMetadata,
+    private void processFileChanges(Remediation remediation, FileChange fileChange, Path sourceBasePath, FVDLMetadata fvdlMetadata,
             Map<Path, PendingFileWrite> pendingWrites, Set<RemediationKey> keysToApply, Set<RemediationKey> appliedKeysOut,
             AppliedChangeLedger ledger) {
 
@@ -124,14 +124,14 @@ public final class FileWriteCoordinator {
             // since RemediationApplier may drop duplicated boundary lines from NewCode before splicing it in.
             int linesAfterChange = updatedContent.split("\n", -1).length;
             int delta = linesAfterChange - linesBeforeChange;
-            ledger.stage(new PendingAppliedChange(filePath, instanceId, declaredLineFrom, declaredLineTo, delta, comparisonCode));
+            ledger.stage(new PendingAppliedChange(filePath, declaredLineFrom, declaredLineTo, delta, comparisonCode));
             appliedKeysOut.add(key);
             appliedInThisFile++;
         }
         if (appliedInThisFile == 0) {
             LOG.debug("Remediation {} produced no new hunks for '{}' ({} already satisfied); no write staged",
                 instanceId, filename, skippedAlreadySatisfied);
-            return true;
+            return;
         }
         byte[] updatedBytes = encodeSourceFile(updatedContent, sourceEncoding, filename);
 
@@ -139,7 +139,6 @@ public final class FileWriteCoordinator {
             sourceFileContent.encodingSource(), updatedBytes));
         LOG.debug("Staged remediation {} for '{}' using source encoding {}; changes={}, encodedBytes={}", instanceId, filename,
             sourceFileContent.encodingSource(), hunks.size(), updatedBytes.length);
-        return true;
     }
 
     public void commitRemediationWrites(String instanceId, Map<Path, PendingFileWrite> pendingWrites, Set<String> modifiedFiles)

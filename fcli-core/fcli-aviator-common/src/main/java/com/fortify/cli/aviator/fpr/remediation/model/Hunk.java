@@ -13,7 +13,6 @@
 package com.fortify.cli.aviator.fpr.remediation.model;
 
 import java.util.Arrays;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import com.fortify.cli.aviator.util.FileTypeLanguageMapperUtil;
@@ -77,31 +76,7 @@ public final class Hunk {
 
     private static String normalizeProposedCode(String content, String fileName) {
         if (content == null) return null;
-
-        String language = FileTypeLanguageMapperUtil.getProgrammingLanguage(
-            FileUtil.getFileExtension(fileName));
-        String commentSymbol = LanguageCommentMapperUtil.getProgrammingLanguageComment(language);
-
-        if ("Unknown".equals(commentSymbol)) return trimBlankLines(content);
-
-        String closingToken = commentSymbol.equals("<!--") ? "-->"
-            : commentSymbol.equals("<%--") ? "--%>" : null;
-
-        Pattern markerPattern = Pattern.compile(
-            "[ \\t]*" + Pattern.quote(commentSymbol) + " L\\d+"
-                + (closingToken != null ? "[ \\t]*" + Pattern.quote(closingToken) : "")
-                + "[ \\t]*$");
-
-        String[] lines = content.split("\\R", -1);
-        StringBuilder result = new StringBuilder();
-
-        for (int i = 0; i < lines.length; i++) {
-            Matcher matcher = markerPattern.matcher(lines[i]);
-            result.append(matcher.find() ? lines[i].substring(0, matcher.start()) : lines[i]);
-            if (i < lines.length - 1) result.append(System.lineSeparator());
-        }
-
-        return trimBlankLines(result.toString());
+        return trimBlankLines(FileUtil.stripSyntheticLineMarkers(content, fileName, System.lineSeparator()));
     }
 
     private static String createComparisonCode(String normalizedCode, String fileName) {

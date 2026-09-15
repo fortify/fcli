@@ -37,8 +37,6 @@ import com.fortify.cli.aviator.fpr.remediation.classifier.HunkClassifier;
 import com.fortify.cli.aviator.fpr.remediation.exception.RemediationCommitException;
 import com.fortify.cli.aviator.fpr.remediation.exception.RollbackRemediationException;
 import com.fortify.cli.aviator.fpr.remediation.exception.SkipRemediationException;
-import com.fortify.cli.aviator.fpr.remediation.model.FileChange;
-import com.fortify.cli.aviator.fpr.remediation.model.Hunk;
 import com.fortify.cli.aviator.fpr.remediation.model.HunkOutcome;
 import com.fortify.cli.aviator.fpr.remediation.model.Remediation;
 import com.fortify.cli.aviator.fpr.remediation.model.RemediationDocument;
@@ -70,7 +68,6 @@ public class RemediationProcessor {
     private final RemediationXmlReader xmlReader = new RemediationXmlReader();
     private final RemediationDocumentMapper documentMapper = new RemediationDocumentMapper();
     private final HunkClassifier hunkClassifier = new HunkClassifier();
-    private final AppliedChangeLedger ledger = new AppliedChangeLedger();
     private final RemediationApplier remediationApplier = new RemediationApplier();
     private final FileWriteCoordinator fileWriteCoordinator;
 
@@ -94,7 +91,8 @@ public class RemediationProcessor {
         try {
             Document remediationDoc = xmlReader.read(remediationPath);
             RemediationDocument remediations = documentMapper.map(remediationDoc);
-            return classifyAndApply(remediations, sourceBasePath, fvdlMetadata);
+            AppliedChangeLedger ledger = new AppliedChangeLedger();
+            return classifyAndApply(remediations, sourceBasePath, fvdlMetadata, ledger);
         } catch (AviatorTechnicalException e) {
             throw e;
         } catch (Exception e) {
@@ -113,7 +111,8 @@ public class RemediationProcessor {
         return Paths.get(trimmedSourceDir).toAbsolutePath().normalize();
     }
 
-    private RemediationMetric classifyAndApply(RemediationDocument remediationDocument, Path sourceBasePath, FVDLMetadata fvdlMetadata) {
+    private RemediationMetric classifyAndApply(RemediationDocument remediationDocument, Path sourceBasePath, FVDLMetadata fvdlMetadata,
+            AppliedChangeLedger ledger) {
         List<Remediation> orderedRemediations = new ArrayList<>(remediationDocument.remediations());
         int totalRemediations = orderedRemediations.size();
         LOG.debug("Loaded {} remediation entries", totalRemediations);
@@ -126,11 +125,19 @@ public class RemediationProcessor {
         Map<RemediationKey, String> remediationLookup = new LinkedHashMap<>();
 
         // Widest-first ordering: broader fixes land first so narrower nested ones classify as SUPERSEDED.
-        orderedRemediations.sort((a, b) -> Integer.compare(maxHunkWidth(b), maxHunkWidth(a)));
+        orderedRemediations.sort((a, b) -> Integer.compare(b.maxHunkWidth(), a.maxHunkWidth()));
 
         for (Remediation remediation : orderedRemediations) {
             String instanceId = remediation.instanceId();
-            List<RemediationKey> remediationKeys = createRemediationKeys(remediation, sourceBasePath);
+            List<RemediationKey> remediationKeys;
+            try {
+                remediationKeys = remediation.createRemediationKeys(sourceBasePath);
+            } catch (SkipRemediationException e) {
+                recordSkipped(skippedByReason, skipReasonLabel(e));
+                LOG.warn("Skipping remediation {}: {}", instanceId, e.getMessage());
+                LOG.debug("Skip reason for remediation {}: {}", instanceId, e.getReason().displayName(), e);
+                continue;
+            }
 
             // Hunk-level identity: partition keys into already-satisfied vs to-apply.
             Set<RemediationKey> satisfiedKeys = new LinkedHashSet<>();
@@ -192,7 +199,7 @@ public class RemediationProcessor {
             }
 
             Set<RemediationKey> filter = satisfiedKeys.isEmpty() ? null : toApplyKeys;
-            Set<RemediationKey> applied = processRemediation(remediation, sourceBasePath, fvdlMetadata, modifiedFiles, skippedByReason, filter);
+            Set<RemediationKey> applied = processRemediation(remediation, sourceBasePath, fvdlMetadata, modifiedFiles, skippedByReason, filter, ledger);
             if (!applied.isEmpty()) {
                 appliedRemediations++;
                 for (RemediationKey key : applied) {
@@ -215,7 +222,8 @@ public class RemediationProcessor {
     }
 
     private Set<RemediationKey> processRemediation(Remediation remediation, Path sourceBasePath, FVDLMetadata fvdlMetadata,
-            Set<String> modifiedFiles, Map<String, Integer> skippedByReason, Set<RemediationKey> keysToApply) {
+            Set<String> modifiedFiles, Map<String, Integer> skippedByReason, Set<RemediationKey> keysToApply,
+            AppliedChangeLedger ledger) {
         String instanceId = remediation.instanceId();
         ledger.discardStaged();
         try {
@@ -265,38 +273,6 @@ public class RemediationProcessor {
         List<String> parts = new ArrayList<>();
         skippedByReason.forEach((reason, count) -> parts.add(reason + "=" + count));
         return String.join(", ", parts);
-    }
-
-    /**
-     * Widest hunk (lineTo - lineFrom) across all FileChanges/Hunks in a Remediation. Used to
-     * order remediations broader-first so nested narrower fixes classify as SUPERSEDED.
-     */
-    private int maxHunkWidth(Remediation remediation) {
-        int max = 0;
-        for (FileChange fileChange : remediation.fileChanges()) {
-            for (Hunk hunk : fileChange.hunks()) {
-                try {
-                    int from = hunk.lineFrom();
-                    int to = hunk.lineTo();
-                    max = Math.max(max, to - from);
-                } catch (Exception ignore) {
-                    // best-effort ordering; malformed hunks fall to the back
-                }
-            }
-        }
-        return max;
-    }
-
-    private List<RemediationKey> createRemediationKeys(Remediation remediation, Path sourceBasePath) {
-        List<RemediationKey> keys = new ArrayList<>();
-        for (FileChange fileChange : remediation.fileChanges()) {
-            for (Hunk hunk : fileChange.hunks()) {
-                String filename = fileChange.requiredFilename();
-                String comparisonCode = hunk.comparisonCode(filename);
-                keys.add(RemediationKey.of(fileChange, hunk, sourceBasePath, comparisonCode));
-            }
-        }
-        return keys;
     }
 
     /** Nullable: missing/unreadable FVDL means FPR encoding candidate is skipped. */

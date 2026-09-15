@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.List;
+import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -57,15 +58,15 @@ public final class RemediationApplier {
             LOG.debug("File hash mismatch for remediation {} in {}; searching changed source content", instanceId, filename);
             List<AppliedChange> priorApplied = ledger.changesFor(filePath);
 
-            int[] projected = tryOffsetProjection(instanceId, filename, hunk, originalLines, lineFrom, lineTo, priorApplied, ledger, filePath);
-            if (projected != null) {
-                lineFrom = projected[0];
-                lineTo = projected[1];
+            Optional<LineRange> projected = tryOffsetProjection(instanceId, filename, hunk, originalLines, lineFrom, lineTo, priorApplied, ledger, filePath);
+            if (projected.isPresent()) {
+                lineFrom = projected.get().from();
+                lineTo = projected.get().to();
             } else {
-                int[] anchored = tryFuzzyAnchor(instanceId, filename, hunk, originalLines, priorApplied,
+                LineRange anchored = tryFuzzyAnchor(instanceId, filename, hunk, originalLines, priorApplied,
                     lineFrom, lineTo, filePath, ledger);
-                lineFrom = anchored[0];
-                lineTo = anchored[1];
+                lineFrom = anchored.from();
+                lineTo = anchored.to();
             }
         }
 
@@ -127,10 +128,10 @@ public final class RemediationApplier {
      * instead) if there is no prior history, the projected range is out of bounds, or the
      * anchor at the projected position doesn't match.
      */
-    private int[] tryOffsetProjection(String instanceId, String filename, Hunk hunk, List<String> originalLines,
+    private Optional<LineRange> tryOffsetProjection(String instanceId, String filename, Hunk hunk, List<String> originalLines,
             int lineFrom, int lineTo, List<AppliedChange> priorApplied, AppliedChangeLedger ledger, Path filePath) {
         if (priorApplied.isEmpty()) {
-            return null;
+            return Optional.empty();
         }
         int shift = ledger.projectOffset(filePath, lineFrom);
         int projectedFrom = lineFrom + shift;
@@ -141,17 +142,17 @@ public final class RemediationApplier {
             if (linesEqualNormalized(originalLines, projectedFrom - 1, projectedTo - 1, originalCodeLines)) {
                 LOG.debug("Remediation {} projected via offset map for '{}': declared {}-{} shifted by {} to {}-{}",
                     instanceId, filename, lineFrom, lineTo, shift, projectedFrom, projectedTo);
-                return new int[] {projectedFrom, projectedTo};
+                return Optional.of(new LineRange(projectedFrom, projectedTo));
             } else {
                 LOG.debug("Remediation {} projection anchor mismatch for '{}' at projected {}-{}; falling back",
                     instanceId, filename, projectedFrom, projectedTo);
             }
         }
-        return null;
+        return Optional.empty();
     }
 
     /** Context search first, then a whole-file OriginalCode fallback if no context match was found. */
-    private int[] tryFuzzyAnchor(String instanceId, String filename, Hunk hunk, List<String> originalLines,
+    private LineRange tryFuzzyAnchor(String instanceId, String filename, Hunk hunk, List<String> originalLines,
             List<AppliedChange> priorApplied, int lineFrom, int lineTo, Path filePath, AppliedChangeLedger ledger) {
         int shift = ledger.projectOffset(filePath, lineFrom);
         int projectedFrom = lineFrom + shift;
@@ -167,12 +168,12 @@ public final class RemediationApplier {
                 instanceId, filename);
             String fallbackOriginalCodeText = hunk.requiredOriginalCode();
             List<String> fallbackOriginalCodeLine = Arrays.asList(fallbackOriginalCodeText.split("\\r?\\n"));
-            int[] wholeFile = fuzzyAnchorLocator.searchOriginalCode(instanceId, filename, originalLines, fallbackOriginalCodeLine,
+            Optional<LineRange> wholeFile = fuzzyAnchorLocator.searchOriginalCode(instanceId, filename, originalLines, fallbackOriginalCodeLine,
                 0, originalLines.size(), 0, 0, projectedFrom, projectedTo);
-            if (wholeFile[0] != -1 && wholeFile[1] != -1) {
+            if (wholeFile.isPresent()) {
                 LOG.debug("Whole-file OriginalCode fallback matched remediation {} in {} at lines {}-{}",
-                    instanceId, filename, wholeFile[0] + 1, wholeFile[1] + 1);
-                return new int[] {wholeFile[0] + 1, wholeFile[1] + 1};
+                    instanceId, filename, wholeFile.get().from() + 1, wholeFile.get().to() + 1);
+                return new LineRange(wholeFile.get().from() + 1, wholeFile.get().to() + 1);
             } else {
                 LOG.debug("Whole-file OriginalCode fallback failed for remediation {} in {}", instanceId, filename);
                 SkipReason failureReason = priorApplied.isEmpty()
@@ -187,9 +188,9 @@ public final class RemediationApplier {
             LOG.debug("Context for remediation {} in {} matched at line {}", instanceId, filename, contextLineFrom + 1);
             String originalCodeText = hunk.requiredOriginalCode();
             List<String> originalCodeLine = Arrays.asList(originalCodeText.split("\\r?\\n"));
-            int[] lineFromTo = fuzzyAnchorLocator.searchOriginalCode(instanceId, filename, originalLines, originalCodeLine,
+            Optional<LineRange> lineFromTo = fuzzyAnchorLocator.searchOriginalCode(instanceId, filename, originalLines, originalCodeLine,
                 contextLineFrom, contextLine.size(), contextBefore, contextAfter, projectedFrom, projectedTo);
-            if (lineFromTo[0] == -1 || lineFromTo[1] == -1) {
+            if (lineFromTo.isEmpty()) {
                 LOG.debug("Original code search failed for remediation {} in {}; context line={}, original code lines={}, source lines={}",
                     instanceId, filename, contextLineFrom + 1, originalCodeLine.size(), originalLines.size());
                 SkipReason failureReason = priorApplied.isEmpty()
@@ -200,10 +201,10 @@ public final class RemediationApplier {
                         ? "file may have changed on disk"
                         : "prior remediation altered lines inside this hunk's context window"));
             }
-            int resultLineFrom = lineFromTo[0] + 1;
-            int resultLineTo = lineFromTo[1] + 1;
+            int resultLineFrom = lineFromTo.get().from() + 1;
+            int resultLineTo = lineFromTo.get().to() + 1;
             LOG.debug("Original code for remediation {} in {} matched at lines {}-{}", instanceId, filename, resultLineFrom, resultLineTo);
-            return new int[] {resultLineFrom, resultLineTo};
+            return new LineRange(resultLineFrom, resultLineTo);
         }
     }
 
@@ -288,21 +289,6 @@ public final class RemediationApplier {
             case "\r" -> "CR";
             default -> "system";
         };
-    }
-
-    private String calculateHashBase64(String content, String algorithm) {
-        String hash;
-        if (content == null) {
-            return "";
-        }
-        try {
-            MessageDigest md = MessageDigest.getInstance(algorithm);
-            byte[] digest = md.digest(content.getBytes(StandardCharsets.UTF_8));
-            hash = Base64.getEncoder().encodeToString(digest);
-            return hash;
-        } catch (NoSuchAlgorithmException e) {
-            throw new AviatorTechnicalException("Hashing algorithm not available: " + algorithm, e);
-        }
     }
 
     /** Encoding-agnostic hash — caller supplies the already-encoded bytes. */

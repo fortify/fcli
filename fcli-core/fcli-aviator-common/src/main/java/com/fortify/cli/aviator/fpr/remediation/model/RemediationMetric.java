@@ -18,9 +18,4 @@ import java.util.Set;
 public record RemediationMetric(int totalRemediations, int appliedRemediations, int identicalRemediations,
                                  int supersededRemediations, int possiblyRemediatedRemediations, int skippedRemediations,
                                  Set<String> modifiedFiles, Map<String, Integer> skippedByReason) {
-    public RemediationMetric(int totalRemediations, int appliedRemediations, int identicalRemediations,
-                             int supersededRemediations, int skippedRemediations, Set<String> modifiedFiles) {
-        this(totalRemediations, appliedRemediations, identicalRemediations, supersededRemediations,
-             0, skippedRemediations, modifiedFiles, Map.of());
-    }
 }

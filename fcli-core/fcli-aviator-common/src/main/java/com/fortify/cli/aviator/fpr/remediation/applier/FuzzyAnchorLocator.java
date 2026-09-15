@@ -14,6 +14,7 @@ package com.fortify.cli.aviator.fpr.remediation.applier;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import com.fortify.cli.aviator.fpr.remediation.SkipReason;
@@ -46,13 +47,13 @@ public final class FuzzyAnchorLocator {
         }
     }
 
-    public int[] searchOriginalCode(String instanceId, String filename, List<String> originalLines, List<String> originalCodeLine,
+    public Optional<LineRange> searchOriginalCode(String instanceId, String filename, List<String> originalLines, List<String> originalCodeLine,
             int contextLineFrom, int contextLineCount, int contextBefore, int contextAfter,
             int projectedDeclaredFrom, int projectedDeclaredTo) {
         int contextStart = contextLineFrom + contextBefore;
         int contextEnd = contextLineFrom + contextLineCount - contextAfter;
         if (contextStart < 0 || contextStart >= contextEnd || contextEnd > originalLines.size()) {
-            return new int[] {-1, -1};
+            return Optional.empty();
         }
 
         List<int[]> matches = FuzzyContextSearcher.fuzzySearchOriginalCodeMatches(
@@ -63,7 +64,7 @@ public final class FuzzyAnchorLocator {
             List<int[]> exact = matches.stream().filter(m -> m[0] == expectedFrom && m[1] == expectedTo).toList();
             if (exact.size() == 1) {
                 int[] m = exact.get(0);
-                return new int[] {m[0] + contextStart, m[1] + contextStart};
+                return Optional.of(new LineRange(m[0] + contextStart, m[1] + contextStart));
             }
             String candidateLines = matches.stream()
                     .map(m -> String.valueOf(m[0] + contextStart + 1))
@@ -72,9 +73,9 @@ public final class FuzzyAnchorLocator {
                     "Original code matched multiple locations in file '" + filename + "'; candidate lines: " + candidateLines);
         }
         if (matches.isEmpty()) {
-            return new int[] {-1, -1};
+            return Optional.empty();
         }
         int[] lineFromTo = matches.get(0);
-        return new int[] {lineFromTo[0] + contextStart, lineFromTo[1] + contextStart};
+        return Optional.of(new LineRange(lineFromTo[0] + contextStart, lineFromTo[1] + contextStart));
     }
 }

@@ -53,7 +53,7 @@ public final class HunkClassifier {
                 try {
                     from = hunk.lineFrom();
                     to = hunk.lineTo();
-                } catch (Exception e) {
+                } catch (SkipRemediationException e) {
                     outcomes.add(HunkOutcome.APPLIED);
                     continue;
                 }

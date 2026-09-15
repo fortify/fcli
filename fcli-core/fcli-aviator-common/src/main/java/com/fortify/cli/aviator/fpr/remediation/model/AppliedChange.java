@@ -22,26 +22,16 @@ package com.fortify.cli.aviator.fpr.remediation.model;
  * them, not as free functions in the caller.
  */
 public final class AppliedChange {
-    private final String instanceId;
     private final int originalLineFrom;
     private final int originalLineTo;
     private final int deltaLines;
     private final String comparisonCode;
 
-    public AppliedChange(String instanceId, int originalLineFrom, int originalLineTo, int deltaLines, String comparisonCode) {
-        this.instanceId = instanceId;
+    public AppliedChange(int originalLineFrom, int originalLineTo, int deltaLines, String comparisonCode) {
         this.originalLineFrom = originalLineFrom;
         this.originalLineTo = originalLineTo;
         this.deltaLines = deltaLines;
         this.comparisonCode = comparisonCode;
-    }
-
-    public String instanceId() {
-        return instanceId;
-    }
-
-    public int originalLineFrom() {
-        return originalLineFrom;
     }
 
     public int originalLineTo() {
@@ -50,10 +40,6 @@ public final class AppliedChange {
 
     public int deltaLines() {
         return deltaLines;
-    }
-
-    public String comparisonCode() {
-        return comparisonCode;
     }
 
     /** True if this change's original range fully contains [lineFrom, lineTo]. */
