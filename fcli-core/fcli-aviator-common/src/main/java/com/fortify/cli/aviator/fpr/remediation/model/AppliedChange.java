@@ -54,11 +54,25 @@ public final class AppliedChange {
     }
 
     /**
+     * Below this length a normalized comparison code (e.g. {@code "return;"}) is too short and
+     * generic to prove that a substring hit inside a broader fix's content is the same fix,
+     * rather than an incidental match.
+     */
+    private static final int MIN_PROVEN_COVERAGE_LENGTH = 8;
+
+    /**
      * True if this change's own comparison code contains the candidate's comparison code
-     * (normalized substring match), or if either side is unavailable for comparison — in which
-     * case the caller conservatively treats coverage as proven.
+     * (normalized substring match). Unavailable content (either side {@code null}) and
+     * too-short/blank candidates prove nothing, so coverage is NOT assumed in those cases —
+     * callers fall back to {@code POSSIBLY_REMEDIATED} rather than {@code SUPERSEDED}.
      */
     public boolean contentCovers(String candidateComparisonCode) {
-        return candidateComparisonCode == null || comparisonCode == null || comparisonCode.contains(candidateComparisonCode);
+        if (candidateComparisonCode == null || comparisonCode == null) {
+            return false;
+        }
+        if (candidateComparisonCode.length() < MIN_PROVEN_COVERAGE_LENGTH) {
+            return false;
+        }
+        return comparisonCode.contains(candidateComparisonCode);
     }
 }

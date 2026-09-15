@@ -85,7 +85,7 @@ public class FoDAviatorApplyRemediationsCommand extends AbstractFoDJsonNodeOutpu
             logger.progress("Status: Processing FPR with Aviator for Applying Auto Remediations");
             try (FprHandle fprHandle = new FprHandle(downloadedFprPath)) {
                 var remediationMetric = ApplyAutoRemediationOnSource.applyRemediations(fprHandle, sourceCodeDirectory,
-                    sourceEncodingsMixin.getSourceDecoder(), logger);
+                    sourceEncodingsMixin.getSourceDecoder());
                 LOG.info("Applied remediation {}", remediationMetric.appliedRemediations());
                 LOG.info("Total remediation {}", remediationMetric.totalRemediations());
                 String status = remediationMetric.appliedRemediations() > 0 ? "Remediation-Applied" : "No-Remediation-Applied";

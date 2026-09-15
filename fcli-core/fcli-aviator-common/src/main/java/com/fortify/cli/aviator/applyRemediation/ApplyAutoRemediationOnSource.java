@@ -19,7 +19,6 @@ import org.slf4j.LoggerFactory;
 
 import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
 import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
-import com.fortify.cli.aviator.config.IAviatorLogger;
 import com.fortify.cli.aviator.fpr.remediation.RemediationProcessor;
 import com.fortify.cli.aviator.fpr.remediation.model.RemediationMetric;
 import com.fortify.cli.aviator.fpr.utils.ISourceDecoder;
@@ -30,13 +29,13 @@ import com.fortify.cli.aviator.util.FprHandle;
 public class ApplyAutoRemediationOnSource {
     private static final Logger LOG = LoggerFactory.getLogger(ApplyAutoRemediationOnSource.class);
 
-    public static RemediationMetric applyRemediations(FprHandle fprHandle, String sourceCodeDirectory, IAviatorLogger logger)
+    public static RemediationMetric applyRemediations(FprHandle fprHandle, String sourceCodeDirectory)
             throws AviatorSimpleException, AviatorTechnicalException {
-        return applyRemediations(fprHandle, sourceCodeDirectory, SourceDecoders.defaults(), logger);
+        return applyRemediations(fprHandle, sourceCodeDirectory, SourceDecoders.defaults());
     }
 
     public static RemediationMetric applyRemediations(FprHandle fprHandle, String sourceCodeDirectory,
-            ISourceDecoder sourceDecoder, IAviatorLogger logger)
+            ISourceDecoder sourceDecoder)
             throws AviatorSimpleException, AviatorTechnicalException {
 
         LOG.info("Starting apply auto-remediation process for file: {}", fprHandle.getFprPath());

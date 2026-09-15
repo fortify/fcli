@@ -198,7 +198,25 @@ public class RemediationProcessor {
                     instanceId, satisfiedByInstances, satisfiedKeys.size(), remediationKeys.size(), toApplyKeys.size());
             }
 
-            Set<RemediationKey> filter = satisfiedKeys.isEmpty() ? null : toApplyKeys;
+            // Mixed classification: a hunk already covered by a broader prior fix (SUPERSEDED or
+            // POSSIBLY_REMEDIATED) must not be re-attempted alongside a genuinely-applicable
+            // sibling hunk, or the covered hunk's stale anchor drags the whole remediation down.
+            // preClass and remediationKeys iterate the same fileChanges/hunks in the same order.
+            boolean classifierNarrowed = false;
+            for (int i = 0; i < preClass.size(); i++) {
+                HunkOutcome outcome = preClass.get(i);
+                if (outcome == HunkOutcome.SUPERSEDED || outcome == HunkOutcome.POSSIBLY_REMEDIATED) {
+                    if (toApplyKeys.remove(remediationKeys.get(i))) {
+                        classifierNarrowed = true;
+                    }
+                }
+            }
+            if (classifierNarrowed) {
+                LOG.info("Remediation {} has {} hunk(s) already covered by a broader prior fix; applying only the rest",
+                    instanceId, remediationKeys.size() - toApplyKeys.size() - satisfiedKeys.size());
+            }
+
+            Set<RemediationKey> filter = (satisfiedKeys.isEmpty() && !classifierNarrowed) ? null : toApplyKeys;
             Set<RemediationKey> applied = processRemediation(remediation, sourceBasePath, fvdlMetadata, modifiedFiles, skippedByReason, filter, ledger);
             if (!applied.isEmpty()) {
                 appliedRemediations++;

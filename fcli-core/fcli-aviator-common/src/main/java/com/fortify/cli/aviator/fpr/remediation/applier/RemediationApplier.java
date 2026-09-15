@@ -71,8 +71,11 @@ public final class RemediationApplier {
         }
 
         validateLineRange(lineFrom, lineTo, originalLines.size(), filename);
-        List<String> newCodeLines = new ArrayList<>(Arrays.asList(FileUtil.stripSyntheticLineMarkers(
-            hunk.requiredNewCode(), filename).split("\n")));
+        // Normalize line endings the same way the file content already was (line 46): unmapped
+        // extensions get no such normalization from stripSyntheticLineMarkers, so a CRLF NewCode
+        // would otherwise leave a stray CR on every line once rejoined with the file's own separator.
+        String normalizedNewCode = normalizeLineEndings(FileUtil.stripSyntheticLineMarkers(hunk.requiredNewCode(), filename));
+        List<String> newCodeLines = new ArrayList<>(Arrays.asList(normalizedNewCode.split("\n")));
         dropDuplicatedBoundaryTokens(newCodeLines, originalLines, lineFrom, lineTo, instanceId, filename);
         List<String> updatedLines = new ArrayList<>();
         updatedLines.addAll(originalLines.subList(0, lineFrom - 1));
