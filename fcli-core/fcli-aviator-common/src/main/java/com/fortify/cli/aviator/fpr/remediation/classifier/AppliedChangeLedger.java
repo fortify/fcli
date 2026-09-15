@@ -34,9 +34,25 @@ public final class AppliedChangeLedger {
     private final Map<Path, List<AppliedChange>> appliedByFile = new LinkedHashMap<>();
     private final List<PendingAppliedChange> pendingAppliedChanges = new ArrayList<>();
 
-    /** Committed changes for a file, or an empty list if none have been applied yet this run. */
+    /**
+     * Committed changes for a file, plus any changes staged so far by the remediation currently
+     * being processed (not yet committed). Hunks of the same remediation are applied one at a
+     * time in a single pass ({@code FileWriteCoordinator.processFileChanges}), so a later hunk's
+     * offset projection must be able to see the shift an earlier hunk in that same remediation
+     * already staged, not just changes committed by prior remediations.
+     */
     public List<AppliedChange> changesFor(Path filePath) {
-        return appliedByFile.getOrDefault(filePath, List.of());
+        List<AppliedChange> committed = appliedByFile.getOrDefault(filePath, List.of());
+        List<AppliedChange> staged = pendingAppliedChanges.stream()
+            .filter(pac -> pac.filePath().equals(filePath))
+            .map(pac -> new AppliedChange(pac.lineFrom(), pac.lineTo(), pac.deltaLines(), pac.comparisonCode()))
+            .toList();
+        if (staged.isEmpty()) {
+            return committed;
+        }
+        List<AppliedChange> combined = new ArrayList<>(committed);
+        combined.addAll(staged);
+        return combined;
     }
 
     /** Stage a hunk this remediation intends to apply. Merged into the ledger on {@link #commitStaged()}. */
