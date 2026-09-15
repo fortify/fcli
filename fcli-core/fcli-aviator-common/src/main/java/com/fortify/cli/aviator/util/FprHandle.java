@@ -155,7 +155,8 @@ public final class FprHandle implements AutoCloseable {
         if (sourceFileMap == null) {
             //03358915/OCTCR11A2429097 fix for audit issue
             boolean dastOnly = Files.exists(zipfs.getPath("/webinspect.xml"))
-           sourceFileMap = dastOnly
+                && !Files.exists(zipfs.getPath("/audit.fvdl"));
+            sourceFileMap = dastOnly
                 ? new ConcurrentHashMap<>()
                 : loadSourceFileMap();
             //03358915/OCTCR11A2429097 fix for audit issue
