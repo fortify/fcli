@@ -158,7 +158,7 @@ public class RemediationProcessor {
             List<HunkOutcome> preClass = hunkClassifier.classifyRemediationHunks(remediation, sourceBasePath, ledger);
             boolean anyApplyCandidate = preClass.stream().anyMatch(o -> o == HunkOutcome.APPLIED);
             boolean allSuperseded = !preClass.isEmpty() && preClass.stream().allMatch(o -> o == HunkOutcome.SUPERSEDED);
-            boolean allConflicts = !preClass.isEmpty() && preClass.stream().allMatch(o -> o == HunkOutcome.CONFLICTS);
+            boolean anyConflicts = preClass.stream().anyMatch(o -> o == HunkOutcome.CONFLICTS);
             boolean allPossiblyRemediated = !preClass.isEmpty()
                 && preClass.stream().noneMatch(o -> o == HunkOutcome.APPLIED || o == HunkOutcome.CONFLICTS)
                 && preClass.stream().anyMatch(o -> o == HunkOutcome.POSSIBLY_REMEDIATED);
@@ -169,10 +169,13 @@ public class RemediationProcessor {
                     instanceId, preClass.size());
                 continue;
             }
-            if (!anyApplyCandidate && allConflicts) {
+            // Remediations are applied atomically: even one CONFLICTS hunk means this remediation
+            // cannot be fully/correctly applied, so reject it now rather than let the applier's
+            // best-effort offset/fuzzy-anchor recovery (meant for non-conflicting shifts) decide.
+            if (anyConflicts) {
                 recordSkipped(skippedByReason, SkipReason.CONFLICTS_WITH_ANOTHER_FIX.displayName());
-                LOG.info("Remediation {} conflicts with prior fix(es) on all {} hunk(s); skipping",
-                    instanceId, preClass.size());
+                LOG.info("Remediation {} conflicts with prior fix(es) on {} of {} hunk(s); skipping",
+                    instanceId, preClass.stream().filter(o -> o == HunkOutcome.CONFLICTS).count(), preClass.size());
                 continue;
             }
             if (!anyApplyCandidate && allPossiblyRemediated) {
