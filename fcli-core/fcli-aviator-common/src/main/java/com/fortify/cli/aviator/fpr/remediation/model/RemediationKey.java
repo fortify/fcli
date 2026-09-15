@@ -14,13 +14,12 @@ package com.fortify.cli.aviator.fpr.remediation.model;
 
 import java.nio.file.Path;
 
-public record RemediationKey(String fileName, Path filePath, int lineFrom, int lineTo, String comparisonCode) {
+public record RemediationKey(Path filePath, int lineFrom, int lineTo, String comparisonCode) {
 
     public static RemediationKey of(FileChange fileChange, Hunk hunk, Path sourceBasePath, String comparisonCode) {
-        String fileName = fileChange.requiredFilename();
-        Path filePath = sourceBasePath.resolve(fileName).normalize();
+        Path filePath = sourceBasePath.resolve(fileChange.requiredFilename()).normalize();
         int lineFrom = hunk.lineFrom();
         int lineTo = hunk.lineTo();
-        return new RemediationKey(fileName, filePath, lineFrom, lineTo, comparisonCode);
+        return new RemediationKey(filePath, lineFrom, lineTo, comparisonCode);
     }
 }

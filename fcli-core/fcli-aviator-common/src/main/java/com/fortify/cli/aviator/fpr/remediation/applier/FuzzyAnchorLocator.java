@@ -21,7 +21,7 @@ import com.fortify.cli.aviator.fpr.remediation.SkipReason;
 import com.fortify.cli.aviator.fpr.remediation.exception.SkipRemediationException;
 import com.fortify.cli.aviator.util.FuzzyContextSearcher;
 
-/** Wraps the {@link FuzzyContextSearcher} utility's context/original-code matching, unmodified from the original. */
+/** Wraps the FuzzyContextSearcher utility's context/original-code matching, unmodified from the original. */
 public final class FuzzyAnchorLocator {
 
     public int searchContext(String instanceId, String filename, List<String> originalLines, List<String> contextLine,
