@@ -61,16 +61,16 @@ public final class AppliedChange {
     private static final int MIN_PROVEN_COVERAGE_LENGTH = 8;
 
     /**
-     * True if this change's own comparison code contains the candidate's comparison code
-     * (normalized substring match). Unavailable content (either side {@code null}) and
-     * too-short/blank candidates prove nothing, so coverage is NOT assumed in those cases —
-     * callers fall back to {@code POSSIBLY_REMEDIATED} rather than {@code SUPERSEDED}.
+     * True if this change's comparison code contains the candidate's comparison code
+     * (normalized substring match). Unavailable content (either side {@code null}), blank
+     * candidates, and too-short candidates prove nothing, so coverage is NOT assumed in those
+     * cases — callers fall back to {@code POSSIBLY_REMEDIATED} rather than {@code SUPERSEDED}.
      */
     public boolean contentCovers(String candidateComparisonCode) {
         if (candidateComparisonCode == null || comparisonCode == null) {
             return false;
         }
-        if (candidateComparisonCode.length() < MIN_PROVEN_COVERAGE_LENGTH) {
+        if (candidateComparisonCode.isBlank() || candidateComparisonCode.length() < MIN_PROVEN_COVERAGE_LENGTH) {
             return false;
         }
         return comparisonCode.contains(candidateComparisonCode);

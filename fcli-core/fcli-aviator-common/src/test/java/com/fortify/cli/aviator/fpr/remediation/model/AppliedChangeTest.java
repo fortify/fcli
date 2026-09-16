@@ -20,11 +20,12 @@ class AppliedChangeTest {
 
     /**
      * {@code contentCovers} must return {@code false}, not {@code true}, when either side's
-     * comparison code is unavailable ({@code null}) - unavailable content is not proof of
-     * coverage. These branches are unreachable end-to-end through
-     * {@code RemediationProcessor.processRemediationXML}: a missing comparison code causes the
-     * remediation to be skipped (as REMEDIATION_DATA_INVALID) before the classifier is ever
-     * reached for it, so this is asserted directly against {@link AppliedChange}.
+     * comparison code is unavailable ({@code null}) or blank - unavailable content is not proof
+     * of coverage. These branches are unreachable end-to-end through
+     * {@code RemediationProcessor.processRemediationXML}
+     * (see {@link RemediationProcessorKnownIssuesTest#malformedRemediationIsSkippedAndValidRemediationsStillApply}:
+     * a missing comparison code causes the remediation to be skipped before the classifier is
+     * ever reached for it), so this is asserted directly against {@link AppliedChange}.
      */
     @Test
     void unavailableComparisonCodeIsNotTreatedAsProvenCoverage() {

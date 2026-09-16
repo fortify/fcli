@@ -21,14 +21,20 @@ import java.util.Map;
 import com.fortify.cli.aviator.fpr.remediation.model.AppliedChange;
 
 /**
- * Per-run offset ledger. Replaces the two raw fields ({@code appliedByFile},
- * {@code pendingAppliedChanges}) that used to live directly on the orchestrator, giving the
- * stage -&gt; commit-or-discard lifecycle one explicit, independently-testable home.
+ * Per-FPR offset ledger, NOT shared across artifacts in multi-FPR runs (e.g., --all-open-issues).
+ * Each RemediationProcessor gets a fresh instance isolated to that artifact's scan.
+ *
+ * <p>Line numbers in AppliedChange are expressed in pristine-file coordinates relative to that
+ * FPR's audit. Different artifacts are scans of potentially different source revisions, so
+ * sharing a ledger across artifacts would incorrectly project deltas from one coordinate system
+ * onto another. Anchor verification (hash checking) is the safety mechanism for multi-FPR runs:
+ * once an earlier FPR has touched a file, the declared hash no longer matches, so every later
+ * hunk is written only where its OriginalCode still literally matches. Phase 3 (server-side
+ * re-audit on code change) is the fundamental fix for multi-FPR consistency.
  *
  * <p>Populated when a hunk is written to disk; consulted before applying subsequent hunks to
- * detect SUPERSEDED/CONFLICTS and to project declared line ranges through prior edits. A fresh
- * instance is used per apply operation (there is no reset method), matching the original's
- * per-{@code RemediationProcessor}-instance lifetime.
+ * detect SUPERSEDED/CONFLICTS and to project declared line ranges through prior edits within
+ * the same FPR.
  */
 public final class AppliedChangeLedger {
     private final Map<Path, List<AppliedChange>> appliedByFile = new LinkedHashMap<>();

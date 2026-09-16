@@ -57,6 +57,14 @@ import com.fortify.cli.aviator.util.FprHandle;
  * domain model with zero business logic ({@link RemediationDocumentMapper}), then classify
  * and apply each remediation ({@link #classifyAndApply}). Public API (constructors, method
  * signature) is unchanged from the original single-class implementation.
+ *
+ * <p><b>Per-FPR isolation:</b> Each processor instance handles exactly one FPR. In multi-FPR
+ * scenarios (e.g., --all-open-issues), each artifact gets its own processor with a fresh
+ * {@link AppliedChangeLedger}. Ledgers are NOT shared across artifacts because line numbers
+ * are relative to pristine-file coordinates, and different artifacts are scans of potentially
+ * different source revisions. Correctness across FPRs is maintained by anchor verification
+ * (hash checking): once an earlier FPR has touched a file, the declared hash no longer matches,
+ * so later hunks apply only where their OriginalCode still literally matches.
  */
 public class RemediationProcessor {
     private static final Logger LOG = LoggerFactory.getLogger(RemediationProcessor.class);

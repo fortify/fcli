@@ -17,7 +17,7 @@ import java.nio.file.Path;
 public record RemediationKey(Path filePath, int lineFrom, int lineTo, String comparisonCode) {
 
     public static RemediationKey of(FileChange fileChange, Hunk hunk, Path sourceBasePath, String comparisonCode) {
-        Path filePath = sourceBasePath.resolve(fileChange.requiredFilename()).normalize();
+        Path filePath = fileChange.resolve(sourceBasePath);
         int lineFrom = hunk.lineFrom();
         int lineTo = hunk.lineTo();
         return new RemediationKey(filePath, lineFrom, lineTo, comparisonCode);

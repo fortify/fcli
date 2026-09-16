@@ -28,6 +28,7 @@ import org.slf4j.LoggerFactory;
 
 import com.fortify.cli.aviator.fpr.model.FVDLMetadata;
 import com.fortify.cli.aviator.fpr.remediation.SkipReason;
+import com.fortify.cli.aviator.fpr.remediation.applier.AppliedChangeResult;
 import com.fortify.cli.aviator.fpr.remediation.applier.RemediationApplier;
 import com.fortify.cli.aviator.fpr.remediation.classifier.AppliedChangeLedger;
 import com.fortify.cli.aviator.fpr.remediation.classifier.PendingAppliedChange;
@@ -117,14 +118,18 @@ public final class FileWriteCoordinator {
             int declaredLineFrom = hunk.lineFrom();
             int declaredLineTo = hunk.lineTo();
             int linesBeforeChange = updatedContent.split("\n", -1).length;
-            updatedContent = remediationApplier.applyChange(instanceId, filename, filePath, fileHash, sourceEncoding, updatedContent,
+            AppliedChangeResult applyResult = remediationApplier.applyChange(instanceId, filename, filePath, fileHash, sourceEncoding, updatedContent,
                 hunk, k + 1, ledger);
-            // Stage this hunk into the per-run offset map (merged on commit success). Delta is measured
-            // from the actual before/after line count of the document, not the raw NewCode line count,
-            // since RemediationApplier may drop duplicated boundary lines from NewCode before splicing it in.
+            updatedContent = applyResult.updatedContent();
+            // Stage this hunk into the per-run offset map using the *actual* coordinates where it was written,
+            // not the declared ones (which may differ if the applier relocated it via offset projection or
+            // fuzzy anchor). The ledger must reflect reality for later hunks to correctly project offsets
+            // and for the classifier to compare against the right region.
+            int actualLineFrom = applyResult.actualLineFrom();
+            int actualLineTo = applyResult.actualLineTo();
             int linesAfterChange = updatedContent.split("\n", -1).length;
             int delta = linesAfterChange - linesBeforeChange;
-            ledger.stage(new PendingAppliedChange(filePath, declaredLineFrom, declaredLineTo, delta, comparisonCode));
+            ledger.stage(new PendingAppliedChange(filePath, actualLineFrom, actualLineTo, delta, comparisonCode));
             appliedKeysOut.add(key);
             appliedInThisFile++;
         }

@@ -12,8 +12,12 @@
  */
 package com.fortify.cli.aviator.fpr.remediation.model;
 
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.List;
+
+import com.fortify.cli.aviator.fpr.remediation.SkipReason;
+import com.fortify.cli.aviator.fpr.remediation.exception.SkipRemediationException;
 
 
 public final class FileChange {
@@ -40,6 +44,11 @@ public final class FileChange {
     }
 
     public Path resolve(Path sourceBasePath) {
-        return sourceBasePath.resolve(requiredFilename()).normalize();
+        try {
+            return sourceBasePath.resolve(requiredFilename()).normalize();
+        } catch (InvalidPathException e) {
+            throw new SkipRemediationException(SkipReason.REMEDIATION_DATA_INVALID,
+                "Invalid filename in remediation: " + requiredFilename(), e);
+        }
     }
 }

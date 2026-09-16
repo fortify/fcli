@@ -117,6 +117,9 @@ public class AviatorSSCApplyRemediationsCommand extends AbstractSSCJsonNodeOutpu
         JsonNode processAllAviatorArtifacts(OffsetDateTime sinceDate) {
             String appVersionId = artifactSelector.getAppVersionId(unirest);
             List<SSCArtifactDescriptor> artifacts = SSCArtifactHelper.getAllAviatorArtifacts(unirest, appVersionId, sinceDate);
+            // Process newest-first: the best-matching artifact (most recent scan of the checkout) applies first
+            // with clean hash matches, and older artifacts then fail anchor checks and are correctly skipped.
+            java.util.Collections.reverse(artifacts);
 
             int totalRemediations = 0, appliedRemediations = 0, identicalRemediations = 0, supersededRemediations = 0, possiblyRemediatedRemediations = 0, skippedRemediations = 0;
             int artifactsProcessed = 0, artifactsSkipped = 0;

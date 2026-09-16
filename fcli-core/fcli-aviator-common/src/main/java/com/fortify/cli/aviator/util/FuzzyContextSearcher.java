@@ -16,6 +16,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.fortify.cli.aviator.fpr.remediation.applier.LineRange;
+
 public class FuzzyContextSearcher {
 
     /**
@@ -26,11 +28,6 @@ public class FuzzyContextSearcher {
      * @param maxMismatches  Maximum allowed mismatches (line count-wise) between context and file.
      * @return The line number (0-based) in sourceFile where context starts, or -1 if not found.
      */
-
-    public static int fuzzySearchContext(List<String> sourceLines, List<String> contextLines, int maxMismatches) throws IOException {
-        List<Integer> matches = fuzzySearchContextMatches(sourceLines, contextLines, maxMismatches);
-        return matches.isEmpty() ? -1 : matches.get(0);
-    }
 
     public static List<Integer> fuzzySearchContextMatches(List<String> sourceLines, List<String> contextLines,
             int maxMismatches) throws IOException {
@@ -92,21 +89,11 @@ public class FuzzyContextSearcher {
         return contextIndex == normalizedContext.size() && mismatchCount <= maxMismatches ? startIndex : null;
     }
 
-    public static int[] fuzzySearchOriginalCode(List<String> sourceLines, List<String> originalCodeLine, int maxMismatches, int startIndex) {
-        List<int[]> matches = fuzzySearchOriginalCodeMatches(sourceLines, originalCodeLine, maxMismatches, startIndex);
-        return matches.isEmpty() ? new int[] {-1, -1} : matches.get(0);
-    }
-
-    /**
-     * Same search as {@link #fuzzySearchOriginalCode}, but returns every {@code {lineFrom, lineTo}}
-     * match found in the searched range instead of only the first, so callers can detect an
-     * ambiguous (multiple-candidate) match rather than silently acting on whichever occurrence
-     * comes first in scan order.
-     */
-    public static List<int[]> fuzzySearchOriginalCodeMatches(List<String> sourceLines, List<String> originalCodeLine, int maxMismatches, int startIndex) {
+    /** Returns every {@code LineRange} match found, so callers can detect ambiguous (multiple-candidate) matches. */
+    public static List<LineRange> fuzzySearchOriginalCodeMatches(List<String> sourceLines, List<String> originalCodeLine, int maxMismatches, int startIndex) {
         List<String> normalizedSource = normalizeLines(sourceLines);
         List<String> normalizedOriginalCode = normalizeLines(originalCodeLine);
-        List<int[]> matches = new ArrayList<>();
+        List<LineRange> matches = new ArrayList<>();
 
         for (int i = Math.max(0, startIndex); i < normalizedSource.size(); i++) {
             if (normalizedSource.get(i).isEmpty()) {
@@ -115,7 +102,7 @@ public class FuzzyContextSearcher {
 
             int lineTo = findOriginalCodeEnd(normalizedSource, normalizedOriginalCode, maxMismatches, i);
             if (lineTo != -1) {
-                matches.add(new int[] {i, lineTo});
+                matches.add(new LineRange(i, lineTo));
             }
         }
 

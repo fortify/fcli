@@ -75,7 +75,7 @@ public final class HunkClassifier {
      * content differs (the sibling fully covers this location, just not proven identical);
      * CONFLICTS if there is only a partial, non-nested line overlap (neither range contains
      * the other, so coverage is genuinely ambiguous); APPLIED otherwise. When either side's
-     * content is unavailable ({@code null}) or too short/blank to prove anything, a nested range
+     * content is unavailable ({@code null}) or blank to prove anything, a nested range
      * falls back to POSSIBLY_REMEDIATED rather than being assumed SUPERSEDED.
      */
     private HunkOutcome classifyRange(int lineFrom, int lineTo, List<AppliedChange> applied, String candidateComparisonCode) {

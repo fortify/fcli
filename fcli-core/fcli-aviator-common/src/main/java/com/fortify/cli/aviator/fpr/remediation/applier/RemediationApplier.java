@@ -40,7 +40,7 @@ public final class RemediationApplier {
 
     private final FuzzyAnchorLocator fuzzyAnchorLocator = new FuzzyAnchorLocator();
 
-    public String applyChange(String instanceId, String filename, Path filePath, String fileHash, Charset sourceEncoding,
+    public AppliedChangeResult applyChange(String instanceId, String filename, Path filePath, String fileHash, Charset sourceEncoding,
             String originalContent, Hunk hunk, int changeIndex, AppliedChangeLedger ledger) {
         String lineSeparator = detectLineSeparator(originalContent);
         String content = normalizeLineEndings(originalContent);
@@ -83,7 +83,8 @@ public final class RemediationApplier {
         updatedLines.addAll(originalLines.subList(lineTo, originalLines.size()));
         LOG.debug("Staged remediation {} change {} for '{}' using FVDL encoding {}; updatedLines={}", instanceId, changeIndex,
                 filename, sourceEncoding.name(), updatedLines.size());
-        return String.join(lineSeparator, updatedLines);
+        String updatedContent = String.join(lineSeparator, updatedLines);
+        return new AppliedChangeResult(updatedContent, lineFrom, lineTo);
     }
 
     /**

@@ -68,7 +68,7 @@ public final class Hunk {
         return RequiredFields.requireText(newCodeRaw, "NewCode");
     }
 
-    
+
     public String comparisonCode(String filename) {
         String normalizedCode = normalizeProposedCode(requiredNewCode(), filename);
         return createComparisonCode(normalizedCode, filename);

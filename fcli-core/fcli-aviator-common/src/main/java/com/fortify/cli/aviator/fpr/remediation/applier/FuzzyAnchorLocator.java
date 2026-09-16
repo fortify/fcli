@@ -56,18 +56,18 @@ public final class FuzzyAnchorLocator {
             return Optional.empty();
         }
 
-        List<int[]> matches = FuzzyContextSearcher.fuzzySearchOriginalCodeMatches(
+        List<LineRange> matches = FuzzyContextSearcher.fuzzySearchOriginalCodeMatches(
                 originalLines.subList(contextStart, contextEnd), originalCodeLine, 0, 0);
         if (matches.size() > 1) {
             int expectedFrom = projectedDeclaredFrom - 1 - contextStart;
             int expectedTo = projectedDeclaredTo - 1 - contextStart;
-            List<int[]> exact = matches.stream().filter(m -> m[0] == expectedFrom && m[1] == expectedTo).toList();
+            List<LineRange> exact = matches.stream().filter(m -> m.from() == expectedFrom && m.to() == expectedTo).toList();
             if (exact.size() == 1) {
-                int[] m = exact.get(0);
-                return Optional.of(new LineRange(m[0] + contextStart, m[1] + contextStart));
+                LineRange m = exact.get(0);
+                return Optional.of(new LineRange(m.from() + contextStart, m.to() + contextStart));
             }
             String candidateLines = matches.stream()
-                    .map(m -> String.valueOf(m[0] + contextStart + 1))
+                    .map(m -> String.valueOf(m.from() + contextStart + 1))
                     .collect(Collectors.joining(", "));
             throw new SkipRemediationException(SkipReason.ORIGINAL_CODE_AMBIGUOUS,
                     "Original code matched multiple locations in file '" + filename + "'; candidate lines: " + candidateLines);
@@ -75,7 +75,7 @@ public final class FuzzyAnchorLocator {
         if (matches.isEmpty()) {
             return Optional.empty();
         }
-        int[] lineFromTo = matches.get(0);
-        return Optional.of(new LineRange(lineFromTo[0] + contextStart, lineFromTo[1] + contextStart));
+        LineRange lineFromTo = matches.get(0);
+        return Optional.of(new LineRange(lineFromTo.from() + contextStart, lineFromTo.to() + contextStart));
     }
 }
