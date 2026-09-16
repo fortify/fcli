@@ -74,6 +74,12 @@ public final class Hunk {
         return createComparisonCode(normalizedCode, filename);
     }
 
+    /** Normalized code with each line normalized but newlines preserved (for offset-anchored comparison). */
+    public String lineNormalizedCode(String filename) {
+        String normalizedCode = normalizeProposedCode(requiredNewCode(), filename);
+        return createLineNormalizedCode(normalizedCode, filename);
+    }
+
     private static String normalizeProposedCode(String content, String fileName) {
         if (content == null) return null;
         return trimBlankLines(FileUtil.stripSyntheticLineMarkers(content, fileName, System.lineSeparator()));
@@ -105,6 +111,43 @@ public final class Hunk {
         }
 
         return normalizeLiteralAliases(comparisonCode).replaceAll("\\s+", "");
+    }
+
+    private static String createLineNormalizedCode(String normalizedCode, String fileName) {
+        if (normalizedCode == null) return null;
+
+        String language = FileTypeLanguageMapperUtil.getProgrammingLanguage(
+            FileUtil.getFileExtension(fileName));
+        String commentSymbol = LanguageCommentMapperUtil.getProgrammingLanguageComment(language);
+
+        if ("Unknown".equals(commentSymbol)) {
+            return normalizeLinesByPreservingNewlines(normalizeLiteralAliases(normalizedCode));
+        }
+
+        String lineNormalizedCode = normalizedCode;
+        String closingToken = commentSymbol.equals("<!--") ? "-->"
+            : commentSymbol.equals("<%--") ? "--%>" : null;
+
+        if (closingToken != null) {
+            lineNormalizedCode = lineNormalizedCode.replaceAll(
+                "(?s)" + Pattern.quote(commentSymbol) + ".*?" + Pattern.quote(closingToken), "");
+        } else if ("//".equals(commentSymbol)) {
+            lineNormalizedCode = lineNormalizedCode.replaceAll("(?m)" + Pattern.quote(commentSymbol) + ".*$", "")
+                .replaceAll("(?s)/\\*.*?\\*/", "");
+        } else if ("#".equals(commentSymbol)) {
+            lineNormalizedCode = lineNormalizedCode.replaceAll("(?m)" + Pattern.quote(commentSymbol) + ".*$", "");
+        }
+
+        return normalizeLinesByPreservingNewlines(normalizeLiteralAliases(lineNormalizedCode));
+    }
+
+    private static String normalizeLinesByPreservingNewlines(String code) {
+        if (code == null) return null;
+        String[] lines = code.split("\n", -1);
+        for (int i = 0; i < lines.length; i++) {
+            lines[i] = lines[i].replaceAll("\\s+", "");
+        }
+        return String.join("\n", lines);
     }
 
     /**

@@ -124,6 +124,12 @@ public class RemediationProcessor {
         List<Remediation> orderedRemediations = new ArrayList<>(remediationDocument.remediations());
         int totalRemediations = orderedRemediations.size();
         LOG.debug("Loaded {} remediation entries", totalRemediations);
+        try {
+            // Widest-first ordering: broader fixes land first so narrower nested ones classify as SUPERSEDED.
+            orderedRemediations.sort((a, b) -> Integer.compare(b.maxHunkWidth(), a.maxHunkWidth()));
+        } catch (SkipRemediationException e) {
+            LOG.debug("Unable to sort remediations by width; proceeding with original order", e);
+        }
         int appliedRemediations = 0;
         int identicalRemediations = 0;
         int supersededRemediations = 0;
@@ -131,9 +137,6 @@ public class RemediationProcessor {
         Set<String> modifiedFiles = new LinkedHashSet<>();
         Map<String, Integer> skippedByReason = new LinkedHashMap<>();
         Map<RemediationKey, String> remediationLookup = new LinkedHashMap<>();
-
-        // Widest-first ordering: broader fixes land first so narrower nested ones classify as SUPERSEDED.
-        orderedRemediations.sort((a, b) -> Integer.compare(b.maxHunkWidth(), a.maxHunkWidth()));
 
         for (Remediation remediation : orderedRemediations) {
             String instanceId = remediation.instanceId();

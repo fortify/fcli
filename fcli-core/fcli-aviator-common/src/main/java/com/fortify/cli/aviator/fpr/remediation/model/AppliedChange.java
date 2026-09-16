@@ -26,12 +26,23 @@ public final class AppliedChange {
     private final int originalLineTo;
     private final int deltaLines;
     private final String comparisonCode;
+    private final String[] lineNormalizedContent;
 
     public AppliedChange(int originalLineFrom, int originalLineTo, int deltaLines, String comparisonCode) {
+        this(originalLineFrom, originalLineTo, deltaLines, comparisonCode, null);
+    }
+
+    public AppliedChange(int originalLineFrom, int originalLineTo, int deltaLines, String comparisonCode, String lineNormalizedCode) {
         this.originalLineFrom = originalLineFrom;
         this.originalLineTo = originalLineTo;
         this.deltaLines = deltaLines;
         this.comparisonCode = comparisonCode;
+        // Store line-by-line normalized content for offset-anchored comparison (newlines preserved, each line normalized)
+        if (lineNormalizedCode != null && !lineNormalizedCode.isEmpty()) {
+            this.lineNormalizedContent = lineNormalizedCode.split("\n", -1);
+        } else {
+            this.lineNormalizedContent = null;
+        }
     }
 
     public int originalLineTo() {
@@ -61,18 +72,44 @@ public final class AppliedChange {
     private static final int MIN_PROVEN_COVERAGE_LENGTH = 8;
 
     /**
-     * True if this change's comparison code contains the candidate's comparison code
-     * (normalized substring match). Unavailable content (either side {@code null}), blank
-     * candidates, and too-short candidates prove nothing, so coverage is NOT assumed in those
-     * cases — callers fall back to {@code POSSIBLY_REMEDIATED} rather than {@code SUPERSEDED}.
+     * True if this change's comparison code contains the candidate's comparison code at the
+     * expected offset (offset-anchored matching). Calculates where the candidate hunk is
+     * located relative to this broader fix (as an offset of lines), then checks if the candidate
+     * content appears at that offset within this fix's content. Falls back to false (POSSIBLY_REMEDIATED)
+     * if the substring appears but not at the expected offset (incidental match, not proof of coverage).
+     *
+     * <p>Unavailable content (either side {@code null}), blank candidates, and too-short
+     * candidates prove nothing, so coverage is NOT assumed — callers fall back to
+     * {@code POSSIBLY_REMEDIATED} rather than {@code SUPERSEDED}.
      */
-    public boolean contentCovers(String candidateComparisonCode) {
-        if (candidateComparisonCode == null || comparisonCode == null) {
+    public boolean contentCovers(String candidateComparisonCode, int candidateLineFrom, int candidateLineTo) {
+        if (candidateComparisonCode == null || comparisonCode == null || lineNormalizedContent == null) {
             return false;
         }
         if (candidateComparisonCode.isBlank() || candidateComparisonCode.length() < MIN_PROVEN_COVERAGE_LENGTH) {
             return false;
         }
-        return comparisonCode.contains(candidateComparisonCode);
+
+        // Offset-anchored comparison: check if candidate appears at the expected offset within this fix's content
+        // Calculate the offset: where does candidateLineFrom sit relative to originalLineFrom?
+        int offsetFromAppliedStart = candidateLineFrom - originalLineFrom;
+        int candidateLineCount = candidateLineTo - candidateLineFrom + 1;
+
+        // Check if candidate fits at expected offset within applied content
+        if (offsetFromAppliedStart < 0 || offsetFromAppliedStart + candidateLineCount > lineNormalizedContent.length) {
+            return false;
+        }
+
+        // Reconstruct what we expect to see at the candidate's offset
+        StringBuilder expectedAtOffset = new StringBuilder();
+        for (int i = offsetFromAppliedStart; i < offsetFromAppliedStart + candidateLineCount; i++) {
+            if (i > offsetFromAppliedStart) {
+                expectedAtOffset.append("\n");
+            }
+            expectedAtOffset.append(lineNormalizedContent[i]);
+        }
+
+        // Exact match at expected offset (not just substring anywhere)
+        return expectedAtOffset.toString().equals(candidateComparisonCode);
     }
 }

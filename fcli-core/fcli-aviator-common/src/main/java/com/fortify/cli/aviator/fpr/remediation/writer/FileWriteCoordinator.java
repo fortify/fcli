@@ -129,7 +129,8 @@ public final class FileWriteCoordinator {
             int actualLineTo = applyResult.actualLineTo();
             int linesAfterChange = updatedContent.split("\n", -1).length;
             int delta = linesAfterChange - linesBeforeChange;
-            ledger.stage(new PendingAppliedChange(filePath, actualLineFrom, actualLineTo, delta, comparisonCode));
+            String lineNormalizedCode = hunk.lineNormalizedCode(filename);
+            ledger.stage(new PendingAppliedChange(filePath, actualLineFrom, actualLineTo, delta, comparisonCode, lineNormalizedCode));
             appliedKeysOut.add(key);
             appliedInThisFile++;
         }

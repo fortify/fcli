@@ -51,7 +51,7 @@ public final class AppliedChangeLedger {
         List<AppliedChange> committed = appliedByFile.getOrDefault(filePath, List.of());
         List<AppliedChange> staged = pendingAppliedChanges.stream()
             .filter(pac -> pac.filePath().equals(filePath))
-            .map(pac -> new AppliedChange(pac.lineFrom(), pac.lineTo(), pac.deltaLines(), pac.comparisonCode()))
+            .map(pac -> new AppliedChange(pac.lineFrom(), pac.lineTo(), pac.deltaLines(), pac.comparisonCode(), pac.lineNormalizedCode()))
             .toList();
         if (staged.isEmpty()) {
             return committed;
@@ -75,7 +75,7 @@ public final class AppliedChangeLedger {
     public void commitStaged() {
         for (PendingAppliedChange pac : pendingAppliedChanges) {
             appliedByFile.computeIfAbsent(pac.filePath(), k -> new ArrayList<>())
-                .add(new AppliedChange(pac.lineFrom(), pac.lineTo(), pac.deltaLines(), pac.comparisonCode()));
+                .add(new AppliedChange(pac.lineFrom(), pac.lineTo(), pac.deltaLines(), pac.comparisonCode(), pac.lineNormalizedCode()));
         }
         pendingAppliedChanges.clear();
     }
