@@ -165,6 +165,7 @@ public class AviatorSSCAuditCommand extends AbstractSSCJsonNodeOutputCommand imp
 
     /**
      * Checks quota constraints when --skip-if-exceeding-quota or --test-exceeding-quota is active.
+     * Fails closed when quota cannot be reliably determined and user requested quota protection.
      * @return a result JsonNode if the audit should be skipped/reported, or null if the audit should proceed.
      */
     private JsonNode checkQuota(UnirestInstance unirest, SSCAppVersionDescriptor av,
@@ -189,8 +190,16 @@ public class AviatorSSCAuditCommand extends AbstractSSCJsonNodeOutputCommand imp
             }
         }
 
-        // If auditable issue count is unknown (-1), skip quota comparison and proceed with audit
+        // If auditable issue count is unknown (-1), fail closed when user requested quota protection
         if (auditableIssueCount < 0) {
+            if (isSkipIfExceedingQuota()) {
+                LOG.warn("Auditable issue count unknown; cannot honor --skip-if-exceeding-quota for {}:{}. Audit skipped.",
+                    av.getApplicationName(), av.getVersionName());
+                ObjectNode result = AviatorSSCAuditHelper.buildResultNode(av, null, "SKIPPED");
+                AviatorSSCAuditHelper.setOperationMessage(result,
+                    "Cannot determine issue count; audit skipped per --skip-if-exceeding-quota");
+                return result;
+            }
             LOG.info("Auditable issue count unknown; skipping quota evaluation for {}:{}.",
                 av.getApplicationName(), av.getVersionName());
             return null;
@@ -201,6 +210,7 @@ public class AviatorSSCAuditCommand extends AbstractSSCJsonNodeOutputCommand imp
 
     /**
      * Handles the case where the application is not found in Aviator.
+     * Fails closed when default quota cannot be determined and quota protection is enabled.
      * @return the resolved quota (possibly from default), or QUOTA_APP_NOT_FOUND if audit should be skipped.
      */
     private long handleAppNotFound(AviatorUserSessionDescriptor sessionDescriptor,
@@ -214,6 +224,11 @@ public class AviatorSSCAuditCommand extends AbstractSSCJsonNodeOutputCommand imp
                     // Caller will need to handle this — we return QUOTA_UNKNOWN to signal
                     return AviatorSSCAuditHelper.QUOTA_UNKNOWN;
                 }
+                // Fail closed when user requested quota protection but cannot determine default quota
+                if (isSkipIfExceedingQuota()) {
+                    LOG.warn("Could not retrieve default quota; cannot honor --skip-if-exceeding-quota. Audit will be skipped.");
+                    return AviatorSSCAuditHelper.QUOTA_APP_NOT_FOUND;
+                }
                 logger.progress("Warning: Could not retrieve default quota, proceeding with audit.");
                 return AviatorSSCAuditHelper.QUOTA_UNKNOWN;
             }
@@ -226,7 +241,8 @@ public class AviatorSSCAuditCommand extends AbstractSSCJsonNodeOutputCommand imp
 
     /**
      * Evaluates the resolved quota against the auditable issue count and returns
-     * a result node if audit should be skipped, or null to proceed with the audit.
+     * a result node if audit should be skipped/reported, or null to proceed with the audit.
+     * Fails closed when quota cannot be reliably determined and user requested quota protection.
      */
     private JsonNode evaluateQuota(UnirestInstance unirest, SSCAppVersionDescriptor av,
             String effectiveAppName, long auditableIssueCount, long availableQuota,
@@ -235,6 +251,15 @@ public class AviatorSSCAuditCommand extends AbstractSSCJsonNodeOutputCommand imp
             if (testExceedingQuota) {
                 ObjectNode result = AviatorSSCAuditHelper.buildResultNode(av, null, "QUOTA_UNKNOWN");
                 AviatorSSCAuditHelper.setOperationMessage(result, "Could not retrieve quota for application '" + effectiveAppName + "'");
+                return result;
+            }
+            // Fail closed when user requested quota protection but cannot determine quota
+            if (isSkipIfExceedingQuota()) {
+                LOG.warn("Could not retrieve quota; cannot honor --skip-if-exceeding-quota for {}:{}. Audit skipped.",
+                    av.getApplicationName(), av.getVersionName());
+                ObjectNode result = AviatorSSCAuditHelper.buildResultNode(av, null, "SKIPPED");
+                AviatorSSCAuditHelper.setOperationMessage(result,
+                    "Could not retrieve quota; audit skipped per --skip-if-exceeding-quota");
                 return result;
             }
             logger.progress("Warning: Could not retrieve quota for '%s', proceeding with audit.", effectiveAppName);
