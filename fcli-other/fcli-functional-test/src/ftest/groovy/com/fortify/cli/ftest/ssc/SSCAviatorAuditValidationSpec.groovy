@@ -32,16 +32,47 @@ class SSCAviatorAuditValidationSpec extends FcliBaseSpec {
             }
     }
 
-    def "ssc bulkaudit action rejects skip-if-exceeding-quota with folder-priority-order"() {
+    def "ssc #action action rejects skip-if-exceeding-quota with folder-priority-order"() {
         when:
             def result = Fcli.run(
-                "ssc action run bulkaudit --progress=none --on-unsigned=ignore --on-invalid-version=ignore --add-aviator-tags --skip-if-exceeding-quota --folder-priority-order High",
+                "ssc action run ${action} --progress=none --on-unsigned=ignore --on-invalid-version=ignore " +
+                    "--add-aviator-tags --skip-if-exceeding-quota --folder-priority-order High",
                 { it.expectSuccess(false) })
         then:
             verifyAll(result) {
                 nonZeroExitCode
                 stderr.any { line ->
                     line.contains("--skip-if-exceeding-quota and --folder-priority-order cannot be used together")
+                }
+            }
+        where:
+            action << ["bulkaudit-sast", "bulkaudit"]
+    }
+
+    def "ssc bulkaudit-dast action rejects invalid app mapping"() {
+        when:
+            def result = Fcli.run(
+                "ssc action run bulkaudit-dast --progress=none --aviator-app-mapping invalid",
+                { it.expectSuccess(false) })
+        then:
+            verifyAll(result) {
+                nonZeroExitCode
+                stderr.any { line ->
+                    line.contains("Invalid --aviator-app-mapping value 'invalid'")
+                }
+            }
+    }
+
+    def "ssc bulkaudit-dast action rejects invalid max audits"() {
+        when:
+            def result = Fcli.run(
+                "ssc action run bulkaudit-dast --progress=none --max-audits=-2",
+                { it.expectSuccess(false) })
+        then:
+            verifyAll(result) {
+                nonZeroExitCode
+                stderr.any { line ->
+                    line.contains("Invalid --max-audits value '-2'")
                 }
             }
     }

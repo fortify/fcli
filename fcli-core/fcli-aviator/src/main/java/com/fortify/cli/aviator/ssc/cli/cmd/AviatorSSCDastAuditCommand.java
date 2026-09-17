@@ -29,12 +29,14 @@ import com.fortify.cli.aviator._common.session.user.cli.mixin.AviatorUserSession
 import com.fortify.cli.aviator._common.session.user.helper.AviatorUserSessionDescriptor;
 import com.fortify.cli.aviator.audit.DastAuditFPR;
 import com.fortify.cli.aviator.audit.DastAuditFprResult;
+import com.fortify.cli.aviator.audit.DastAuditFprStatus;
 import com.fortify.cli.aviator.config.AviatorLoggerImpl;
 import com.fortify.cli.aviator.config.IAviatorLogger;
 import com.fortify.cli.aviator.config.TagMappingConfig;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClientHelper;
 import com.fortify.cli.aviator.grpc.DastAuditStreamConfig;
 import com.fortify.cli.aviator.grpc.DastAuditStreamProcessor;
+import com.fortify.cli.aviator.ssc.helper.AviatorSSCAttributeHelper;
 import com.fortify.cli.aviator.ssc.helper.AviatorSSCAuditHelper;
 import com.fortify.cli.aviator.ssc.helper.AviatorSSCFprTransferHelper;
 import com.fortify.cli.aviator.ssc.helper.AviatorSSCTagValidator;
@@ -96,6 +98,11 @@ public class AviatorSSCDastAuditCommand extends AbstractSSCJsonNodeOutputCommand
                 logger.progress("Status: Uploading audited DAST FPR to SSC");
                 artifactId = AviatorSSCFprTransferHelper.uploadDastFpr(
                     unirest, appVersion, downloadedFpr, progressWriter);
+            }
+            if (result.status() == DastAuditFprStatus.AUDITED
+                    || result.status() == DastAuditFprStatus.SKIPPED) {
+                AviatorSSCAttributeHelper.writeLastDastAuditTimestamp(
+                    unirest, appVersion.getVersionId());
             }
             return buildOutput(appVersion, result, artifactId);
         } catch (RuntimeException e) {

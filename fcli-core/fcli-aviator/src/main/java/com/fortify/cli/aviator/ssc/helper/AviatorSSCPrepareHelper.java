@@ -126,7 +126,9 @@ public class AviatorSSCPrepareHelper {
     /** Synchronizes Aviator custom attributes. */
     private void synchronizeAttributes(PrepareResult result, IProgressWriter progress) {
         progress.writeProgress("Synchronizing Aviator custom attributes...");
-        new AviatorSSCCorrelationAttributeHelper(unirest, AviatorSSCCorrelationAttributeDefs.LAST_CORRELATION_ATTR)
+        new AviatorSSCAttributeHelper(unirest, AviatorSSCAttributeDefinitions.LAST_CORRELATION_ATTR)
+            .synchronize(result);
+        new AviatorSSCAttributeHelper(unirest, AviatorSSCAttributeDefinitions.LAST_DAST_AUDIT_ATTR)
             .synchronize(result);
     }
 

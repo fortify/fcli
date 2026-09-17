@@ -21,32 +21,33 @@ import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fortify.cli.aviator.ssc.helper.AviatorSSCCorrelationAttributeDefs.AttributeDefinition;
+import com.fortify.cli.aviator.ssc.helper.AviatorSSCAttributeDefinitions.AttributeDefinition;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.rest.unirest.UnexpectedHttpResponseException;
 import com.fortify.cli.ssc._common.rest.ssc.SSCUrls;
 import com.fortify.cli.ssc.attribute.helper.SSCAttributeUpdateBuilder;
 
+import kong.unirest.UnirestException;
 import kong.unirest.UnirestInstance;
 import lombok.RequiredArgsConstructor;
 
 /**
- * Manages the SSC attribute definitions used by the SAST-DAST correlation feature.
+ * Manages SSC application-version attributes used by Aviator workflows.
  *
  * <p>The attribute definition is created by {@code aviator ssc prepare} (admin-only).
  * The attribute value is written per application version by
- * {@code aviator ssc correlate-sast-dast} (non-admin).
+ * {@code aviator ssc correlate-sast-dast} and {@code aviator ssc audit-dast} (non-admin).
  *
  * <p>This is distinct from the generic SSC attribute helpers in the SSC module
  * ({@code SSCAttributeHelper}, {@code SSCAttributeDefinitionHelper}) which
  * handle reading/updating existing attributes. This class also handles
- * <em>creating</em> attribute definitions specific to correlation.
+ * <em>creating</em> attribute definitions specific to Aviator workflows.
  */
 @RequiredArgsConstructor
-public class AviatorSSCCorrelationAttributeHelper {
+public class AviatorSSCAttributeHelper {
 
-    private static final Logger LOG = LoggerFactory.getLogger(AviatorSSCCorrelationAttributeHelper.class);
+    private static final Logger LOG = LoggerFactory.getLogger(AviatorSSCAttributeHelper.class);
     private final UnirestInstance unirest;
     private final AttributeDefinition attrDef;
 
@@ -63,7 +64,7 @@ public class AviatorSSCCorrelationAttributeHelper {
      */
     public void synchronize(AviatorSSCPrepareHelper.PrepareResult result) {
         try {
-            LOG.debug("Searching for attribute definition '{}' (GUID: {})", attrDef.name(), attrDef.guid());
+            LOG.debug("Searching for SSC attribute definition '{}'", attrDef.name());
             if (findDefinition() != null) {
                 LOG.info("Attribute definition '{}' is already present.", attrDef.name());
                 result.addEntry("Attribute Definition", "VERIFIED",
@@ -82,9 +83,18 @@ public class AviatorSSCCorrelationAttributeHelper {
         }
     }
 
+    /** Writes the current UTC timestamp to the {@code last_correlation} attribute. */
+    public static void writeLastCorrelationTimestamp(UnirestInstance unirest, String versionId) {
+        writeTimestamp(unirest, versionId, AviatorSSCAttributeDefinitions.LAST_CORRELATION_ATTR);
+    }
+
+    /** Writes the current UTC timestamp to the {@code last_dast_audit} attribute. */
+    public static void writeLastDastAuditTimestamp(UnirestInstance unirest, String versionId) {
+        writeTimestamp(unirest, versionId, AviatorSSCAttributeDefinitions.LAST_DAST_AUDIT_ATTR);
+    }
+
     /**
-     * Writes the current UTC timestamp to the {@code last_correlation} attribute on
-     * the given application version.
+     * Writes the current UTC timestamp to the given attribute on the application version.
      *
      * <p>This method assumes the attribute definition already exists — it must have
      * been created by a prior {@code aviator ssc prepare} run. If the definition
@@ -93,19 +103,21 @@ public class AviatorSSCCorrelationAttributeHelper {
      * @param unirest   active SSC session
      * @param versionId SSC project version ID
      */
-    public static void writeLastCorrelationTimestamp(UnirestInstance unirest, String versionId) {
+    private static void writeTimestamp(
+            UnirestInstance unirest, String versionId, AttributeDefinition attributeDefinition) {
         String timestamp = Instant.now().toString();
-        LOG.debug("Writing last_correlation timestamp '{}' to app version {}", timestamp, versionId);
+        LOG.debug("Writing {} timestamp to app version {}", attributeDefinition.name(), versionId);
 
         try {
             new SSCAttributeUpdateBuilder(unirest)
-                .add(Map.of(AviatorSSCCorrelationAttributeDefs.LAST_CORRELATION_ATTR.name(), timestamp))
+                .add(Map.of(attributeDefinition.category() + ":" + attributeDefinition.name(), timestamp))
                 .buildRequest(versionId)
                 .asObject(JsonNode.class);
 
-            LOG.info("last_correlation timestamp '{}' written to app version {}", timestamp, versionId);
-        } catch (FcliSimpleException e) {
-            LOG.warn("WARN: Could not write last_correlation timestamp. Run 'fcli aviator ssc prepare' to create the attribute definition.");
+            LOG.info("{} timestamp written to app version {}", attributeDefinition.name(), versionId);
+        } catch (FcliSimpleException | UnirestException e) {
+            LOG.warn("Could not write {} timestamp; the audit result remains successful but bulk selection may retry this version. "
+                    + "Run 'fcli aviator ssc prepare' if the attribute definition is missing.", attributeDefinition.name());
         }
     }
 
@@ -122,7 +134,9 @@ public class AviatorSSCCorrelationAttributeHelper {
         JsonNode data = responseBody.get("data");
         if (data == null || !data.isArray()) return null;
         return JsonHelper.stream((ArrayNode) data)
-            .filter(n -> attrDef.name().equals(n.path("name").asText()))
+            .filter(n -> attrDef.name().equals(n.path("name").asText())
+                && attrDef.category().equals(n.path("category").asText())
+                && attrDef.type().equals(n.path("type").asText()))
             .findFirst().orElse(null);
     }
 

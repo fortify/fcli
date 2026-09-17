@@ -37,11 +37,11 @@ import com.fortify.cli.aviator.grpc.CorrelatedPair;
 import com.fortify.cli.aviator.grpc.CorrelationResult;
 import com.fortify.cli.aviator.grpc.CorrelationStreamConfig;
 import com.fortify.cli.aviator.grpc.CorrelationStreamProcessor;
+import com.fortify.cli.aviator.ssc.helper.AviatorSSCAttributeHelper;
 import com.fortify.cli.aviator.ssc.helper.AviatorSSCCorrelateDownloadHelper;
 import com.fortify.cli.aviator.ssc.helper.AviatorSSCCorrelateFprParser;
 import com.fortify.cli.aviator.ssc.helper.AviatorSSCCorrelateFprParser.ParseResult;
 import com.fortify.cli.aviator.ssc.helper.AviatorSSCCorrelateHelper;
-import com.fortify.cli.aviator.ssc.helper.AviatorSSCCorrelationAttributeHelper;
 import com.fortify.cli.aviator.ssc.helper.CategoryBucket;
 import com.fortify.cli.aviator.ssc.helper.CategoryGrouper;
 import com.fortify.cli.aviator.ssc.helper.DastFprCorrelationEnricher;
@@ -260,7 +260,7 @@ public class AviatorSSCCorrelateSastDastCommand extends AbstractSSCJsonNodeOutpu
 
         private void writeLastCorrelationTimestamp() {
             logger.progress("Status: Writing last_correlation timestamp to app version...");
-            AviatorSSCCorrelationAttributeHelper.writeLastCorrelationTimestamp(unirest, av.getVersionId());
+            AviatorSSCAttributeHelper.writeLastCorrelationTimestamp(unirest, av.getVersionId());
             logger.progress("Status: last_correlation timestamp written successfully.");
         }
 
