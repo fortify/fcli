@@ -12,6 +12,8 @@
  */
 package com.fortify.cli.aviator.fpr.remediation.model;
 
+import lombok.Builder;
+
 /**
  * Offset-map entry: records a hunk that was actually written to a file this run,
  * in terms of the PRISTINE file's line numbers. {@code deltaLines} is
@@ -32,6 +34,7 @@ public final class AppliedChange {
         this(originalLineFrom, originalLineTo, deltaLines, comparisonCode, null);
     }
 
+    @Builder
     public AppliedChange(int originalLineFrom, int originalLineTo, int deltaLines, String comparisonCode, String lineNormalizedCode) {
         this.originalLineFrom = originalLineFrom;
         this.originalLineTo = originalLineTo;

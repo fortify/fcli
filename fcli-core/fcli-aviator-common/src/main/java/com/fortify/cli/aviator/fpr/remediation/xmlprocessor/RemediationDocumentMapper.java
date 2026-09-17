@@ -73,7 +73,15 @@ public final class RemediationDocumentMapper {
         String contextAfter = contextElement == null ? null : contextElement.getAttribute("after");
         String originalCode = optionalElementText(changeElement, "OriginalCode");
         String newCode = optionalElementText(changeElement, "NewCode");
-        return new Hunk(lineFrom, lineTo, contextText, contextBefore, contextAfter, originalCode, newCode);
+        return Hunk.builder()
+            .lineFromRaw(lineFrom)
+            .lineToRaw(lineTo)
+            .contextTextRaw(contextText)
+            .contextBeforeRaw(contextBefore)
+            .contextAfterRaw(contextAfter)
+            .originalCodeRaw(originalCode)
+            .newCodeRaw(newCode)
+            .build();
     }
 
     private String optionalElementText(Element parent, String elementName) {

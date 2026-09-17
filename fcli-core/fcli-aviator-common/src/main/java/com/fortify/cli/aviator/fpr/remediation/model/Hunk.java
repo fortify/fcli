@@ -19,6 +19,8 @@ import com.fortify.cli.aviator.util.FileTypeLanguageMapperUtil;
 import com.fortify.cli.aviator.util.FileUtil;
 import com.fortify.cli.aviator.util.LanguageCommentMapperUtil;
 
+import lombok.Builder;
+
 
 public final class Hunk {
     private final String lineFromRaw;
@@ -29,6 +31,7 @@ public final class Hunk {
     private final String originalCodeRaw;
     private final String newCodeRaw;
 
+    @Builder
     public Hunk(String lineFromRaw, String lineToRaw, String contextTextRaw, String contextBeforeRaw,
                 String contextAfterRaw, String originalCodeRaw, String newCodeRaw) {
         this.lineFromRaw = lineFromRaw;

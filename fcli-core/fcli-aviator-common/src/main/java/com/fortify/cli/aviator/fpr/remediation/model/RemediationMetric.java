@@ -17,6 +17,13 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.experimental.Accessors;
+
+@Getter
+@Accessors(fluent = true)
+@AllArgsConstructor
 public final class RemediationMetric {
     private final int totalRemediations;
     private final int appliedRemediations;
@@ -26,28 +33,6 @@ public final class RemediationMetric {
     private final int skippedRemediations;
     private final Set<String> modifiedFiles;
     private final Map<String, Integer> skippedByReason;
-
-    public RemediationMetric(int totalRemediations, int appliedRemediations, int identicalRemediations,
-                             int supersededRemediations, int possiblyRemediatedRemediations, int skippedRemediations,
-                             Set<String> modifiedFiles, Map<String, Integer> skippedByReason) {
-        this.totalRemediations = totalRemediations;
-        this.appliedRemediations = appliedRemediations;
-        this.identicalRemediations = identicalRemediations;
-        this.supersededRemediations = supersededRemediations;
-        this.possiblyRemediatedRemediations = possiblyRemediatedRemediations;
-        this.skippedRemediations = skippedRemediations;
-        this.modifiedFiles = modifiedFiles;
-        this.skippedByReason = skippedByReason;
-    }
-
-    public int totalRemediations() { return totalRemediations; }
-    public int appliedRemediations() { return appliedRemediations; }
-    public int identicalRemediations() { return identicalRemediations; }
-    public int supersededRemediations() { return supersededRemediations; }
-    public int possiblyRemediatedRemediations() { return possiblyRemediatedRemediations; }
-    public int skippedRemediations() { return skippedRemediations; }
-    public Set<String> modifiedFiles() { return modifiedFiles; }
-    public Map<String, Integer> skippedByReason() { return skippedByReason; }
 
     public static Builder builder() {
         return new Builder();
