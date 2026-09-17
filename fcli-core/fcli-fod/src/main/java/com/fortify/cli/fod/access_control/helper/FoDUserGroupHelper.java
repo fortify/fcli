@@ -152,7 +152,7 @@ public class FoDUserGroupHelper {
         FoDAppDescriptor appDescriptor = FoDAppHelper.getAppDescriptor(unirest, appNameOrId, true);
         if (action.equals(FoDEnums.UserGroupApplicationAccessAction.Add)) {
             FoDUserGroupAppAccessRequest appAccessRequest = FoDUserGroupAppAccessRequest.builder()
-                    .applicationId(Integer.valueOf(appDescriptor.getApplicationId())).build();
+                    .applicationId(Long.valueOf(appDescriptor.getApplicationId())).build();
             ObjectNode body = objectMapper.valueToTree(appAccessRequest);
             unirest.post(FoDUrls.USER_GROUP_APPLICATION_ACCESS).routeParam("userGroupId", String.valueOf(userGroupDescriptor.getId()))
                     .body(body).asString().getBody();
