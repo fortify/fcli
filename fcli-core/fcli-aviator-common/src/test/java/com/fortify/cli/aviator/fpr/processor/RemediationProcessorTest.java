@@ -27,6 +27,8 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledOnOs;
+import org.junit.jupiter.api.condition.OS;
 import org.junit.jupiter.api.io.TempDir;
 
 import com.fortify.cli.aviator.fpr.remediation.RemediationProcessor;
@@ -641,6 +643,140 @@ class RemediationProcessorTest {
         assertEquals("W1\nW2\nW3\n", Files.readString(sourceFile));
     }
 
+    // ------------------------------------------------------------------------------------------
+    // Folded in from the former RemediationProcessorRemainingIssuesTest (REVIEW_3 points 1-4) once
+    // every scenario there turned green.
+    // ------------------------------------------------------------------------------------------
+
+    /**
+     * A filename that is not a legal path on this OS ({@code FileChange.resolve} throwing
+     * {@code InvalidPathException}) must be translated to {@code REMEDIATION_DATA_INVALID} and
+     * skipped on its own, rather than escaping the per-remediation loop and aborting the whole
+     * batch; the well-formed remediation alongside it must still apply.
+     *
+     * <p>Windows only: {@code ':'} is illegal in a Windows path but legal on Linux, so the
+     * scenario cannot be reproduced there (the only character a Unix path rejects is NUL, which
+     * XML 1.0 cannot carry).
+     */
+    @Test
+    @EnabledOnOs(OS.WINDOWS)
+    void illegalFilenameIsSkippedAndValidRemediationsStillApply() throws Exception {
+        Path sourceFile = writeSourceFile("Example.java", "before\nTARGET\nafter\n");
+        Path fprPath = buildFpr(List.of(
+            new MultiHunkRemediationSpec("illegal-filename", List.of(new FileSpec("src/bad:name.java", List.of(
+                new HunkSpec(1, 1, 0, 0, "before", "before", "BROKEN"))))),
+            new MultiHunkRemediationSpec("valid", List.of(new FileSpec("Example.java", List.of(
+                new HunkSpec(2, 2, 1, 1, "before\ntarget\nafter", "TARGET", "REPLACED")))))));
+
+        RemediationMetric metric = apply(fprPath);
+
+        assertEquals(2, metric.totalRemediations());
+        assertEquals(1, metric.appliedRemediations(), "the valid remediation must still be applied");
+        assertEquals(1, metric.skippedRemediations());
+        assertEquals(1, metric.skippedByReason().values().stream().mapToInt(Integer::intValue).sum(),
+            "the illegal filename must be recorded as exactly one skip");
+        assertEquals("before\nREPLACED\nafter\n", Files.readString(sourceFile));
+    }
+
+    /**
+     * The offset ledger must record where a hunk actually landed via the fuzzy anchor, not where
+     * it was declared: {@code relocated} declares line 12 but its context/OriginalCode only exist
+     * at line 3, so it lands there with delta +2 and the ledger must stage {@code (3, 3, +2)} -
+     * not {@code (12, 12, +2)}. {@code later} genuinely targets the second {@code DUP} block at
+     * declared line 11, which needs that correctly-staged shift to disambiguate between the two
+     * identical context blocks; a stale staged range causes the shift to compute as 0 and the
+     * exact-position disambiguation to match neither candidate.
+     */
+    @Test
+    void offsetLedgerRecordsWhereHunkActuallyLandedNotWhereItWasDeclared() throws Exception {
+        Path sourceFile = writeSourceFile("Example.java",
+            "aa\nHEAD\nTARGET\nTAIL\nbb\nctx\nDUP\nctx2\ncc\nctx\nDUP\nctx2\ndd\n");
+        Path fprPath = buildFpr(List.of(
+            // Declared line 12 is stale; the anchor really sits at line 3.
+            new MultiHunkRemediationSpec("relocated", List.of(new FileSpec("Example.java", List.of(
+                new HunkSpec(12, 12, 1, 1, "HEAD\nTARGET\nTAIL", "TARGET", "R1\nR2\nR3"))))),
+            // Genuinely targets the SECOND DUP block, declared (correctly) at line 11.
+            new MultiHunkRemediationSpec("later", List.of(new FileSpec("Example.java", List.of(
+                new HunkSpec(11, 11, 1, 1, "ctx\nDUP\nctx2", "DUP", "FIXED")))))));
+
+        RemediationMetric metric = apply(fprPath);
+
+        assertEquals(2, metric.appliedRemediations());
+        assertEquals(0, metric.skippedRemediations());
+        assertEquals(Map.of(), metric.skippedByReason());
+        assertEquals("aa\nHEAD\nR1\nR2\nR3\nTAIL\nbb\nctx\nDUP\nctx2\ncc\nctx\nFIXED\nctx2\ndd\n",
+            Files.readString(sourceFile));
+    }
+
+    /**
+     * {@code contentCovers} must not treat an incidental substring hit as proof of coverage even
+     * above the minimum-length guard: {@code return null;} normalises to 11 characters and occurs
+     * in the wide fix's replacement only incidentally, inside a null guard several lines away from
+     * where the narrow fix targets - they are not the same fix, so this must classify as
+     * POSSIBLY_REMEDIATED, not SUPERSEDED.
+     */
+    @Test
+    void incidentalSubstringAboveTheLengthGuardIsNotProvenSupersession() throws Exception {
+        Path sourceFile = writeSourceFile("Example.java", "value = getInput();\nprocess(value);\nfinish();\n");
+        Path fprPath = buildFpr(List.of(
+            new MultiHunkRemediationSpec("wide-fix", List.of(new FileSpec("Example.java", List.of(
+                new HunkSpec(1, 3, 0, 0,
+                    "value = getInput();\nprocess(value);\nfinish();",
+                    "value = getInput();\nprocess(value);\nfinish();",
+                    "value = sanitize(getInput());\nif (value == null) { return null; }\nprocess(value);"))))),
+            new MultiHunkRemediationSpec("narrow-fix", List.of(new FileSpec("Example.java", List.of(
+                new HunkSpec(2, 2, 1, 1, "value = getInput();\nprocess(value);\nfinish();",
+                    "process(value);", "return null;")))))));
+
+        RemediationMetric metric = apply(fprPath);
+
+        assertEquals(2, metric.totalRemediations());
+        assertEquals(1, metric.appliedRemediations());
+        assertEquals(0, metric.supersededRemediations(),
+            "an incidental substring hit is not proof that the broader fix covers this hunk, "
+                + "however long the candidate happens to be");
+        assertEquals(1, metric.possiblyRemediatedRemediations());
+        assertEquals("value = sanitize(getInput());\nif (value == null) { return null; }\nprocess(value);\n",
+            Files.readString(sourceFile), "only the broader fix may be written");
+    }
+
+    /**
+     * Safety property that per-FPR ledgers depend on: {@code apply-remediations --all-open-issues}
+     * uses a fresh {@code RemediationProcessor} (and therefore a fresh ledger) per artifact, since
+     * different artifacts may be scans of different source revisions. What keeps a multi-FPR run
+     * safe is not the ledger but anchor verification - once an earlier FPR has rewritten a file,
+     * the declared hash no longer matches, so a later FPR's hunk goes through the projection/fuzzy
+     * path and is written only where its OriginalCode still literally matches. Here the narrow
+     * fix's OriginalCode was consumed by the wide fix from the first FPR, so the second FPR must
+     * skip it rather than write it against stale text.
+     */
+    @Test
+    void secondFprDoesNotApplyOverAFixTheFirstFprAlreadyRewrote() throws Exception {
+        Path sourceFile = writeSourceFile("Example.java", "value = getInput();\nprocess(value);\nfinish();\n");
+        Path firstFpr = buildFpr("artifact-1.fpr", List.of(
+            new MultiHunkRemediationSpec("wide-fix", List.of(new FileSpec("Example.java", List.of(
+                new HunkSpec(1, 3, 0, 0,
+                    "value = getInput();\nprocess(value);\nfinish();",
+                    "value = getInput();\nprocess(value);\nfinish();",
+                    "value = sanitize(getInput());\nprocess(sanitized);\nfinish();")))))));
+        Path secondFpr = buildFpr("artifact-2.fpr", List.of(
+            new MultiHunkRemediationSpec("narrow-fix", List.of(new FileSpec("Example.java", List.of(
+                new HunkSpec(2, 2, 1, 1, "value = getInput();\nprocess(value);\nfinish();",
+                    "process(value);", "process(escape(value));")))))));
+
+        RemediationMetric first = apply(firstFpr);
+        assertEquals(1, first.appliedRemediations());
+        String afterFirst = "value = sanitize(getInput());\nprocess(sanitized);\nfinish();\n";
+        assertEquals(afterFirst, Files.readString(sourceFile));
+
+        RemediationMetric second = apply(secondFpr);
+
+        assertEquals(0, second.appliedRemediations(),
+            "the narrower fix's OriginalCode no longer exists, so it must not be written anywhere");
+        assertEquals(1, second.skippedRemediations());
+        assertEquals(afterFirst, Files.readString(sourceFile), "the second FPR must leave the file untouched");
+    }
+
     private record HunkSpec(int lineFrom, int lineTo, int contextBefore, int contextAfter,
             String context, String originalCode, String newCode) {}
 
@@ -656,6 +792,10 @@ class RemediationProcessorTest {
     }
 
     private Path buildFpr(List<MultiHunkRemediationSpec> specs) throws Exception {
+        return buildFpr("remediation.fpr", specs);
+    }
+
+    private Path buildFpr(String fprName, List<MultiHunkRemediationSpec> specs) throws Exception {
         StringBuilder remediations = new StringBuilder();
         for (MultiHunkRemediationSpec spec : specs) {
             remediations.append("<r:Remediation instanceId=\"").append(spec.instanceId()).append("\">\n")
@@ -695,7 +835,7 @@ class RemediationProcessorTest {
                 </r:Remediations>
                 """.formatted(REMEDIATIONS_NAMESPACE, remediations);
 
-        Path fprPath = tempDir.resolve("remediation.fpr");
+        Path fprPath = tempDir.resolve(fprName);
         try (ZipOutputStream zipOutputStream = new ZipOutputStream(Files.newOutputStream(fprPath))) {
             zipOutputStream.putNextEntry(new ZipEntry("remediations.xml"));
             zipOutputStream.write(remediationXml.getBytes(StandardCharsets.UTF_8));
