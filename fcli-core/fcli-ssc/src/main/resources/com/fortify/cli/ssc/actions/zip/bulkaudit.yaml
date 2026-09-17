@@ -114,6 +114,7 @@ cli.options:
     default: ""
 
 steps:
+  - log.warn: "The 'bulkaudit' action is deprecated; use 'bulkaudit-sast' instead."
   - run.fcli:
       bulkaudit_sast:
         cmd: ssc action run bulkaudit-sast ${#action.copyParametersFromGroup('bulkaudit-sast-options')}
