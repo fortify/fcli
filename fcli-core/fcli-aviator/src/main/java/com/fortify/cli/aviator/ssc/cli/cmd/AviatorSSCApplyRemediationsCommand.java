@@ -118,7 +118,7 @@ public class AviatorSSCApplyRemediationsCommand extends AbstractSSCJsonNodeOutpu
             // with clean hash matches, and older artifacts then fail anchor checks and are correctly skipped.
             java.util.Collections.reverse(artifacts);
 
-            RemediationMetric.Builder aggregatedMetrics = RemediationMetric.builder();
+            var aggregatedMetrics = RemediationMetric.builder();
             int artifactsProcessed = 0, artifactsSkipped = 0;
 
             for (SSCArtifactDescriptor ad : artifacts) {

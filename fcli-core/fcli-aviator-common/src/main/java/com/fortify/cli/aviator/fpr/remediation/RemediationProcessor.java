@@ -246,8 +246,16 @@ public class RemediationProcessor {
         if (!skippedByReason.isEmpty()) {
             LOG.info("Skipped remediations by reason: {}", formatSkippedReasons(skippedByReason));
         }
-        return new RemediationMetric(totalRemediations, appliedRemediations, identicalRemediations,
-            supersededRemediations, possiblyRemediatedRemediations, skippedRemediations, modifiedFiles, skippedByReason);
+        return RemediationMetric.builder()
+            .totalRemediations(totalRemediations)
+            .appliedRemediations(appliedRemediations)
+            .identicalRemediations(identicalRemediations)
+            .supersededRemediations(supersededRemediations)
+            .possiblyRemediatedRemediations(possiblyRemediatedRemediations)
+            .skippedRemediations(skippedRemediations)
+            .modifiedFiles(modifiedFiles)
+            .skippedByReason(skippedByReason)
+            .build();
     }
 
     private Set<RemediationKey> processRemediation(Remediation remediation, Path sourceBasePath, FVDLMetadata fvdlMetadata,
