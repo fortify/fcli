@@ -1,0 +1,504 @@
+# yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-dev-2.x.json
+
+author: Fortify
+usage:
+  header: (PREVIEW) Perform Fortify Remediation Aviator SAST audits of SSC application versions in bulk.
+  description: |
+    This action identifies SSC application versions with pending SAST audit issues and
+    automatically submits them for auditing by Fortify Remediation Aviator. The action
+    intelligently filters to only process versions with actual pending audit issues,
+    while ignoring versions for which audit information needs to be refreshed.
+
+    For application versions that don't already exist in Fortify Aviator, the action will
+    automatically create them before submitting for audit.
+
+    By default (--aviator-app-mapping=app), SSC project versions map to a single
+    Fortify Aviator application per SSC project. Set --aviator-app-mapping=version to map
+    each SSC project version to its own Fortify Aviator application (project_name__version_name).
+
+    When quota limits are exceeded for any application, issues are prioritized by
+    folder using either the default order (Critical > High > Medium > Low) or a
+    custom priority order specified via --folder-priority-order. The same priority
+    order is applied to all audited versions in the bulk operation.
+
+    Either --tag-mapping or --add-aviator-tags must be specified. The default tag
+    mapping leaves unsure issues unaudited, causing indefinite reselection. Use
+    a custom mapping file or 'fcli ssc aviator prepare' to configure Fortify Remediation Aviator-specific
+    issue templates.
+
+    This action assumes active sessions with SSC, Fortify Remediation Aviator (user role for auditing),
+    and Fortify Aviator (admin role for application listing and creation).
+
+config:
+  output: immediate
+  rest.target.default: ssc
+  run.fcli.status.log.default: true
+  run.fcli.status.check.default: false
+  mcp: exclude # Not suitable for MCP tool invocation
+
+cli.options:
+  max-audits:
+    names: --max-audits, -m
+    description: "Maximum number of project versions to audit. Default: -1 (unlimited)"
+    required: false
+    default: -1
+    type: int
+  aviator-app-mapping:
+    names: --aviator-app-mapping
+    description: "Controls how SSC project versions map to Fortify Aviator applications. 'app' (default) maps one Fortify Aviator app per SSC project; 'version' maps one Fortify Aviator app per SSC project version (using project_name__version_name)."
+    required: false
+    default: app
+  filter:
+    names: --filter, -f
+    description: "Optional filter to apply when querying SSC for projects. Example: 'Languages:java'. Default: no filtering"
+    required: false
+    default: ""
+  exclude-filter:
+    names: --exclude-filter, -e
+    description: "Optional inverse filter to exclude projects from audit. Projects matching this filter will be skipped. Example: 'Languages:c#' to exclude .NET projects. Can be combined with --filter. Default: no exclusion"
+    required: false
+    default: ""
+  dry-run:
+    names: --dry-run, -n
+    description: "Show what aviator commands would be executed without actually running them. Default: false"
+    required: false
+    default: false
+    type: boolean
+  tag-mapping:
+    names: --tag-mapping, -t
+    description: "Path to tag mapping YAML file. This custom mapping ensures that Fortify Remediation Aviator 'Unsure' audit results are properly handled. Required unless --add-aviator-tags is specified."
+    required: false
+  add-aviator-tags:
+    names: --add-aviator-tags
+    description: "If specified, runs 'fcli aviator ssc prepare' for the application before audit. Required unless --tag-mapping is specified."
+    required: false
+    type: boolean
+    default: false
+  refresh:
+    names: --refresh
+    description: "Refresh application version metrics before audit. For large applications this can lead to timeout errors. Default: true"
+    required: false
+    type: boolean
+    default: true
+  refresh-timeout:
+    names: --refresh-timeout
+    description: "Timeout period for metric refresh, e.g., 30s (30 seconds), 5m (5 minutes), 1h (1 hour). Default: 60s"
+    required: false
+    default: "60s"
+  skip-if-exceeding-quota:
+    names: --skip-if-exceeding-quota
+    description: "Skip audit if the number of open issues exceeds the available Fortify Remediation Aviator quota. When skipped, a summary with top unaudited categories is shown. Default: false"
+    required: false
+    default: false
+    type: boolean
+  test-exceeding-quota:
+    names: --test-exceeding-quota
+    description: "Check whether the number of open issues exceeds the available Fortify Remediation Aviator quota and report the result without performing an audit. Default: false"
+    required: false
+    default: false
+    type: boolean
+  folder-priority-order:
+    names: --folder-priority-order
+    description: "Custom priority order for folder-based filtering when quota is exceeded (comma-separated, highest priority first). Example: Critical,High,Medium,Low. Applied to all audited versions. Default: uses server default (Critical > High > Medium > Low)"
+    required: false
+    default: ""
+
+functions:
+  runSastAudit:
+    description: Run a SAST audit and return the command result
+    export: false
+    args:
+      projectId: { required: true }
+      aviatorAppName: { required: true }
+      tagMapping: { required: true }
+      refresh: { required: true, type: boolean }
+      refreshTimeout: { required: true }
+      quotaFlags: { required: true }
+      folderPriorityOrder: { required: true }
+    return: ${run_audit}
+    steps:
+      - run.fcli:
+          run_audit:
+            cmd: >-
+              aviator ssc audit-sast --av "${args.projectId}" --app "${args.aviatorAppName}"
+              --log-level=INFO${#isBlank(args.tagMapping) ? '' : ' --tag-mapping="' + args.tagMapping + '"'}
+              --refresh=${args.refresh} --refresh-timeout="${args.refreshTimeout}"${args.quotaFlags}
+              ${#isBlank(args.folderPriorityOrder) ? '' : ' --folder-priority-order="' + args.folderPriorityOrder + '"'}
+            status.check: false
+            records.collect: true
+            stdout: show
+
+steps:
+  # Configure module
+  - var.set:
+      module: ssc
+
+  # Validate --aviator-app-mapping value
+  - if: ${!(cli['aviator-app-mapping'] matches 'app|version')}
+    throw: "Invalid --aviator-app-mapping value '${cli['aviator-app-mapping']}'. Valid values are: app, version"
+
+  # Validate that at least one of --tag-mapping or --add-aviator-tags is specified
+  - if: ${(cli['tag-mapping'] == null || cli['tag-mapping'] == '') && !cli['add-aviator-tags']}
+    throw: "Either --tag-mapping or --add-aviator-tags must be specified."
+
+  # Validate that --dry-run and --test-exceeding-quota are not used together
+  - if: ${cli['dry-run'] && cli['test-exceeding-quota']}
+    do:
+      - log.progress: "ERROR: --dry-run and --test-exceeding-quota cannot be used together. Use --test-exceeding-quota alone to check quota without auditing."
+      - throw: "--dry-run and --test-exceeding-quota cannot be used together. Use --test-exceeding-quota alone to check quota without auditing."
+
+  # Validate that --dry-run and --skip-if-exceeding-quota are not used together
+  - if: ${cli['dry-run'] && cli['skip-if-exceeding-quota']}
+    do:
+      - log.progress: "ERROR: --dry-run and --skip-if-exceeding-quota cannot be used together. --dry-run prevents server interaction, but --skip-if-exceeding-quota requires quota retrieval."
+      - throw: "--dry-run and --skip-if-exceeding-quota cannot be used together. --dry-run prevents server interaction, but --skip-if-exceeding-quota requires quota retrieval."
+
+  # Validate that --skip-if-exceeding-quota and --folder-priority-order are not used together
+  - if: ${cli['skip-if-exceeding-quota'] && cli['folder-priority-order'] != null && cli['folder-priority-order'] != ''}
+    do:
+      - log.progress: "ERROR: --skip-if-exceeding-quota and --folder-priority-order cannot be used together. --skip-if-exceeding-quota skips the audit when quota is insufficient, while --folder-priority-order only applies when auditing within quota constraints."
+      - throw: "--skip-if-exceeding-quota and --folder-priority-order cannot be used together. --skip-if-exceeding-quota skips the audit when quota is insufficient, while --folder-priority-order only applies when auditing within quota constraints."
+
+  - log.progress: "Using Fortify Aviator app mapping: ${cli['aviator-app-mapping']}"
+
+  # Get existing Fortify Aviator applications
+  - log.progress: Retrieving existing Fortify Aviator applications...
+  - run.fcli:
+      aviator_apps:
+        cmd: aviator app ls -o json
+        records.collect: true
+
+  # Build Aviator app name set for fast membership checks
+  - var.set:
+      aviator_app_names: null
+  - records.for-each:
+      from: ${aviator_apps.records}
+      record.var-name: aviator_app
+      do:
+        - var.set:
+            aviator_app_names..: ${aviator_app.name}
+
+  # Query SSC for projects needing audit
+  - log.progress: Querying SSC for projects with pending audit issues...
+
+  - var.set:
+      enriched_versions: null
+
+  - rest.call:
+      projects_needing_audit:
+        uri: /api/v1/issueaging
+        type: paged
+        query:
+          limit: -1
+          filterby: ${cli.filter}
+        records.for-each:
+          record.var-name: version
+          if: ${version.issuesPendingReview > 0 && !version.snapshotOutOfDate}
+          embed:
+            project_details:
+              uri: /api/v1/projectVersions/${version.id}
+          do:
+            - var.set:
+                current_project_name: ${version.project_details.project.name}
+                current_version_name: ${version.project_details.name}
+                current_aviator_app_name: ${version.project_details.project.name.replaceAll('"', '')}
+            - if: ${'version'.equals(cli['aviator-app-mapping'])}
+              var.set:
+                current_aviator_app_name: ${(current_project_name + '__' + current_version_name).replaceAll('"', '')}
+            - var.set:
+                project_exists_in_aviator: ${aviator_app_names != null && aviator_app_names.contains(current_aviator_app_name)}
+            - var.set:
+                enriched_versions..: {fmt: enriched_project}
+
+  - if: ${enriched_versions != null}
+    log.progress: Found ${enriched_versions.size()} application versions with pending audit issues
+  - if: ${enriched_versions == null}
+    log.progress: Found 0 application versions with pending audit issues
+
+  # Apply exclusion filter if specified
+  - if: ${enriched_versions != null && enriched_versions.size() > 0 && cli['exclude-filter'] != ""}
+    do:
+      - log.progress: Applying exclusion filter...
+      - rest.call:
+          exclusion_list:
+            uri: /api/v1/issueaging
+            type: paged
+            query:
+              limit: -1
+              filterby: ${cli['exclude-filter']}
+            records.for-each:
+              record.var-name: excluded_version
+              if: ${excluded_version.issuesPendingReview > 0 && !excluded_version.snapshotOutOfDate}
+              do:
+                - var.set:
+                    excluded_ids..: ${excluded_version.id}
+
+      - var.set:
+          filtered_versions: null
+          excluded_count: 0
+
+      - records.for-each:
+          from: ${enriched_versions}
+          record.var-name: candidate
+          do:
+            - var.set:
+                should_exclude: false
+            - if: ${excluded_ids != null && excluded_ids.contains(candidate.id)}
+              var.set:
+                should_exclude: true
+            - if: ${should_exclude}
+              var.set:
+                excluded_count: ${excluded_count + 1}
+            - if: ${!should_exclude}
+              var.set:
+                filtered_versions..: ${candidate}
+
+      - var.set:
+          enriched_versions: ${filtered_versions}
+      - if: ${enriched_versions != null}
+        log.progress: Excluded ${excluded_count} application versions, ${enriched_versions.size()} remaining
+      - if: ${enriched_versions == null}
+        log.progress: Excluded ${excluded_count} application versions, 0 remaining
+
+  # Early exit if no candidates
+  - if: ${enriched_versions == null || enriched_versions.size() == 0}
+    do:
+      - log.info: No application versions found that require audit
+      - var.set:
+          audit_candidates: null
+
+  # Apply max-audits limit if we have candidates
+  - if: ${enriched_versions != null && enriched_versions.size() > 0}
+    do:
+      - var.set:
+          audit_candidates: ${enriched_versions}
+      - if: ${cli['max-audits'] != -1 && enriched_versions.size() > cli['max-audits']}
+        do:
+          - var.set:
+              audit_counter: 0
+              audit_candidates: null
+          - records.for-each:
+              from: ${enriched_versions}
+              record.var-name: candidate
+              breakIf: ${audit_counter >= cli['max-audits']}
+              do:
+                - var.set:
+                    audit_candidates..: ${candidate}
+                    audit_counter: ${audit_counter + 1}
+
+  - if: ${audit_candidates != null}
+    log.progress: Processing ${audit_candidates.size()} application versions
+  - if: ${audit_candidates == null}
+    log.progress: Processing 0 application versions
+
+  # Process audit candidates
+  - if: ${audit_candidates != null && audit_candidates.size() > 0}
+    do:
+      # Initialize execution tracking
+      - var.set:
+          stats.create_attempts: 0
+          stats.create_successes: 0
+          stats.create_failures: 0
+          stats.audit_attempts: 0
+          stats.audit_failures: 0
+          stats.quota_skipped: 0
+          stats.entitlement_exhausted: false
+          stats.create_skipped_due_to_entitlement: 0
+          stats.would_create_count: 0
+          known_aviator_app_names: ${aviator_app_names}
+
+      # Process each candidate
+      - records.for-each:
+          from: ${audit_candidates}
+          record.var-name: project
+          do:
+            - var.set:
+                app_known_in_aviator: ${known_aviator_app_names != null && known_aviator_app_names.contains(project.aviator_app_name)}
+
+            - if: ${cli['dry-run']}
+              do:
+                - if: ${!app_known_in_aviator}
+                  do:
+                    - log.info: Would create app ${project.aviator_app_name}
+                    - var.set:
+                        stats.would_create_count: ${stats.would_create_count + 1}
+                        known_aviator_app_names..: ${project.aviator_app_name}
+                - if: ${cli['add-aviator-tags']}
+                  do:
+                    - log.info: Would prepare tags for ${project.project_name}:${project.version_name}
+
+                - if: "${cli['folder-priority-order'] != null && cli['folder-priority-order'] != ''}"
+                  do:
+                    - log.info: "Would audit ${project.project_name}:${project.version_name} with custom priority order: ${cli['folder-priority-order']}"
+                - if: "${cli['folder-priority-order'] == null || cli['folder-priority-order'] == ''}"
+                  do:
+                    - log.info: Would audit ${project.project_name}:${project.version_name}
+            - if: ${!cli['dry-run']}
+              do:
+                - var.set:
+                    app_ready: ${app_known_in_aviator}
+                    skip_this_version: false
+
+                # --- TEST-EXCEEDING-QUOTA MODE ---
+                # In test mode we only check quota and report; no app creation, no audit.
+                # For non-existing apps, --default-quota-fallback tells the audit command
+                # to use the tenant's default quota instead of reporting "app not found".
+                - if: ${cli['test-exceeding-quota']}
+                  do:
+                    - var.set:
+                        stats.audit_attempts: ${stats.audit_attempts + 1}
+                        quota_flags: " --test-exceeding-quota"
+                    - if: ${!app_known_in_aviator}
+                      var.set:
+                        quota_flags: " --test-exceeding-quota --default-quota-fallback"
+
+                    - var.set:
+                        run_audit: >-
+                          ${#fn.call('runSastAudit', project.id, project.aviator_app_name,
+                          #ifBlank(cli['tag-mapping'], ''), cli.refresh, cli['refresh-timeout'], quota_flags,
+                          #ifBlank(cli['folder-priority-order'], ''))}
+
+                    - if: ${run_audit.exitCode == 0 && run_audit.records != null && run_audit.records.size() > 0 && run_audit.records[0].__action__ != null && run_audit.records[0].__action__ == 'QUOTA_EXCEEDED'}
+                      var.set:
+                        stats.quota_skipped: ${stats.quota_skipped + 1}
+
+                    - if: ${run_audit.exitCode != 0}
+                      do:
+                        - var.set:
+                            stats.audit_failures: ${stats.audit_failures + 1}
+                        - log.warn: Quota test failed for ${project.aviator_app_name}:${project.version_name}
+
+                    - var.set:
+                        skip_this_version: true
+
+                # --- SKIP-IF-EXCEEDING-QUOTA + NON-EXISTING APP ---
+                # Pre-check default quota before creating the app. If the default quota
+                # would be exceeded, skip the version entirely (don't create, don't audit).
+                - if: ${!skip_this_version && cli['skip-if-exceeding-quota'] && !app_known_in_aviator}
+                  do:
+                    - log.progress: Pre-checking default quota for new app ${project.aviator_app_name}...
+
+                    - var.set:
+                        quota_precheck: >-
+                          ${#fn.call('runSastAudit', project.id, project.aviator_app_name,
+                          #ifBlank(cli['tag-mapping'], ''), cli.refresh, cli['refresh-timeout'],
+                          ' --test-exceeding-quota --default-quota-fallback',
+                          #ifBlank(cli['folder-priority-order'], ''))}
+
+                    # If pre-check shows quota exceeded, skip this version entirely
+                    - if: ${quota_precheck.exitCode == 0 && quota_precheck.records != null && quota_precheck.records.size() > 0 && quota_precheck.records[0].__action__ != null && quota_precheck.records[0].__action__ == 'QUOTA_EXCEEDED'}
+                      do:
+                        - log.progress: Default quota exceeded for ${project.aviator_app_name} - skipping app creation and audit
+                        - var.set:
+                            skip_this_version: true
+                            stats.quota_skipped: ${stats.quota_skipped + 1}
+
+                # --- NORMAL FLOW: create app, prepare tags, run audit ---
+                - if: ${!skip_this_version}
+                  do:
+                    # Create app if needed
+                    - if: ${!app_known_in_aviator && !stats.entitlement_exhausted}
+                      do:
+                        - var.set:
+                            stats.create_attempts: ${stats.create_attempts + 1}
+                        - run.fcli:
+                            create_app:
+                              cmd: aviator app create "${project.aviator_app_name}"
+                              status.check: false
+                        - if: ${create_app.exitCode == 0}
+                          var.set:
+                            app_ready: true
+                            stats.create_successes: ${stats.create_successes + 1}
+                            known_aviator_app_names..: ${project.aviator_app_name}
+                        - if: ${create_app.exitCode != 0}
+                          do:
+                            - var.set:
+                                create_app_error_text: "${(create_app.stderr == null ? '' : create_app.stderr) + ' ' + (create_app.stdout == null ? '' : create_app.stdout)}"
+                                create_app_already_exists: ${create_app_error_text.toLowerCase().contains('already exists')}
+                                create_app_entitlement_or_quota_error: ${create_app_error_text.toLowerCase().contains('entitlement') || create_app_error_text.toLowerCase().contains('quota')}
+                            - if: ${create_app_already_exists}
+                              var.set:
+                                app_ready: true
+                                known_aviator_app_names..: ${project.aviator_app_name}
+                            - if: ${!create_app_already_exists}
+                              do:
+                                - var.set:
+                                    stats.create_failures: ${stats.create_failures + 1}
+                                - if: ${create_app_entitlement_or_quota_error && !stats.entitlement_exhausted}
+                                  do:
+                                    - log.warn: App creation failed due to entitlement/quota - suppressing further create attempts
+                                    - var.set:
+                                        stats.entitlement_exhausted: true
+                                - if: ${!create_app_entitlement_or_quota_error}
+                                  log.warn: App creation failed for ${project.aviator_app_name}; continuing with remaining candidates
+
+                    - if: ${!app_known_in_aviator && stats.entitlement_exhausted}
+                      var.set:
+                        stats.create_skipped_due_to_entitlement: ${stats.create_skipped_due_to_entitlement + 1}
+
+                    # Prepare Fortify Remediation Aviator tags if requested
+                    - if: ${cli['add-aviator-tags']}
+                      do:
+                        - log.progress: Preparing Fortify Remediation Aviator tags for ${project.project_name}:${project.version_name}
+                        - run.fcli:
+                            prepare_tags:
+                              cmd: aviator ssc prepare --av "${project.id}"
+                              status.check: false
+                        - if: ${prepare_tags.exitCode != 0}
+                          do:
+                            - log.warn: Fortify Remediation Aviator tag preparation failed for ${project.project_name}:${project.version_name}
+
+                    # Run audit if app is ready
+                    - if: ${app_ready}
+                      do:
+                        - var.set:
+                            stats.audit_attempts: ${stats.audit_attempts + 1}
+
+                        # Build quota flags string (only --skip-if-exceeding-quota here;
+                        # --test-exceeding-quota is handled in its own block above)
+                        - var.set:
+                            quota_flags: ""
+                        - if: ${cli['skip-if-exceeding-quota']}
+                          var.set:
+                            quota_flags: " --skip-if-exceeding-quota"
+
+                        - var.set:
+                            run_audit: >-
+                              ${#fn.call('runSastAudit', project.id, project.aviator_app_name,
+                              #ifBlank(cli['tag-mapping'], ''), cli.refresh, cli['refresh-timeout'], quota_flags,
+                              #ifBlank(cli['folder-priority-order'], ''))}
+
+                        # Track quota-skipped results
+                        - if: ${run_audit.exitCode == 0 && run_audit.records != null && run_audit.records.size() > 0 && run_audit.records[0].__action__ != null && run_audit.records[0].__action__ == 'QUOTA_EXCEEDED'}
+                          var.set:
+                            stats.quota_skipped: ${stats.quota_skipped + 1}
+
+                        - if: ${run_audit.exitCode != 0}
+                          do:
+                            - var.set:
+                                stats.audit_failures: ${stats.audit_failures + 1}
+                            - log.warn: Audit failed for ${project.aviator_app_name}:${project.version_name}
+
+      # Summary
+      - if: ${cli['dry-run']}
+        do:
+          - log.info: "Dry-run complete (mapping: ${cli['aviator-app-mapping']}) - would process ${audit_candidates.size()} versions and create ${stats.would_create_count} apps"
+
+      - if: ${!cli['dry-run']}
+        do:
+          - if: ${stats.quota_skipped > 0}
+            log.info: "Complete (mapping: ${cli['aviator-app-mapping']}) - Apps created ${stats.create_successes}/${stats.create_attempts}, Audits attempted ${stats.audit_attempts}, Quota-skipped ${stats.quota_skipped}"
+          - if: ${stats.quota_skipped == 0}
+            log.info: "Complete (mapping: ${cli['aviator-app-mapping']}) - Apps created ${stats.create_successes}/${stats.create_attempts}, Audits attempted ${stats.audit_attempts}"
+          - if: ${stats.entitlement_exhausted}
+            log.info: Note - Entitlement exhausted, some app creations were skipped
+
+formatters:
+  enriched_project:
+    id: ${version.id}
+    name: ${version.name}
+    issuesPendingReview: ${version.issuesPendingReview}
+    project_name: ${version.project_details.project.name}
+    version_name: ${version.project_details.name}
+    aviator_app_name: ${current_aviator_app_name}
+    exists_in_aviator: ${project_exists_in_aviator}

@@ -32,10 +32,11 @@ class SSCAviatorAuditValidationSpec extends FcliBaseSpec {
             }
     }
 
-    def "ssc bulkaudit action rejects skip-if-exceeding-quota with folder-priority-order"() {
+    def "ssc #action action rejects skip-if-exceeding-quota with folder-priority-order"() {
         when:
             def result = Fcli.run(
-                "ssc action run bulkaudit --progress=none --on-unsigned=ignore --on-invalid-version=ignore --add-aviator-tags --skip-if-exceeding-quota --folder-priority-order High",
+                "ssc action run ${action} --progress=none --on-unsigned=ignore --on-invalid-version=ignore " +
+                    "--add-aviator-tags --skip-if-exceeding-quota --folder-priority-order High",
                 { it.expectSuccess(false) })
         then:
             verifyAll(result) {
@@ -44,6 +45,8 @@ class SSCAviatorAuditValidationSpec extends FcliBaseSpec {
                     line.contains("--skip-if-exceeding-quota and --folder-priority-order cannot be used together")
                 }
             }
+        where:
+            action << ["bulkaudit-sast", "bulkaudit"]
     }
 
     def "ssc bulkaudit-dast action rejects invalid app mapping"() {
