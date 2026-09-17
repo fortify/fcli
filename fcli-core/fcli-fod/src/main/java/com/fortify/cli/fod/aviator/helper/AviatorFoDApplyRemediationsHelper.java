@@ -19,6 +19,7 @@ import java.util.Set;
 
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fortify.cli.aviator.fpr.remediation.model.RemediationMetric;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.fod.release.helper.FoDReleaseDescriptor;
@@ -28,35 +29,25 @@ public class AviatorFoDApplyRemediationsHelper {
 
     /**
      * Builds the final JSON result node for the command output.
-     * @param rd The SSCAppVersionDescriptor.
-     * @param totalRemediation Total no. of Remediations
-     * @param appliedRemediation Remediations that has been applied successfully
-     * @param skippedRemediation Remediations that has been skipped
+     * @param rd The FoDReleaseDescriptor.
+     * @param metric The remediation metric for this release.
      * @param action Final action.
      * @return An ObjectNode representing the result.
      */
-    public static ObjectNode buildResultNode(FoDReleaseDescriptor rd, int totalRemediation, int appliedRemediation, int skippedRemediation,
-            String action) {
-        return buildResultNode(rd, totalRemediation, appliedRemediation, skippedRemediation, Set.of(), Map.of(), action);
-    }
-
-    public static ObjectNode buildResultNode(FoDReleaseDescriptor rd, int totalRemediation, int appliedRemediation, int skippedRemediation,
-            Set<String> modifiedFiles, String action) {
-        return buildResultNode(rd, totalRemediation, appliedRemediation, skippedRemediation, modifiedFiles, Map.of(), action);
-    }
-
-    public static ObjectNode buildResultNode(FoDReleaseDescriptor rd, int totalRemediation, int appliedRemediation, int skippedRemediation,
-            Set<String> modifiedFiles, Map<String, Integer> skippedByReason, String action) {
+    public static ObjectNode buildResultNode(FoDReleaseDescriptor rd, RemediationMetric metric, String action) {
         ObjectNode result = JsonHelper.getObjectMapper().createObjectNode();
         result.put("releaseId", rd.getReleaseId());
         result.put("applicationName", rd.getApplicationName());
         result.put("releaseName", rd.getReleaseName());
-        result.put("totalRemediation", totalRemediation);
-        result.put("appliedRemediation", appliedRemediation);
-        result.put("skippedRemediation", skippedRemediation);
-        result.put("skippedReasons", formatSkippedReasons(skippedByReason));
-        result.set("skippedByReason", toObjectNode(skippedByReason));
-        result.set("modifiedFiles", toArrayNode(modifiedFiles));
+        result.put("totalRemediation", metric.totalRemediations());
+        result.put("appliedRemediation", metric.appliedRemediations());
+        result.put("identicalRemediation", metric.identicalRemediations());
+        result.put("supersededRemediation", metric.supersededRemediations());
+        result.put("possiblyRemediatedRemediation", metric.possiblyRemediatedRemediations());
+        result.put("skippedRemediation", metric.skippedRemediations());
+        result.put("skippedReasons", formatSkippedReasons(metric.skippedByReason()));
+        result.set("skippedByReason", toObjectNode(metric.skippedByReason()));
+        result.set("modifiedFiles", toArrayNode(metric.modifiedFiles()));
         result.put(IActionCommandResultSupplier.actionFieldName, action);
         return result;
     }

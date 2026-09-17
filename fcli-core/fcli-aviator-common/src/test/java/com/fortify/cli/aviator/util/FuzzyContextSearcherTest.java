@@ -12,35 +12,36 @@
  */
 package com.fortify.cli.aviator.util;
 
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
+import com.fortify.cli.aviator.fpr.remediation.applier.LineRange;
+
 class FuzzyContextSearcherTest {
 
     @Test
-    void shouldReturnNotFoundWhenOriginalCodeRunsPastEndOfSource() {
-        int[] lineFromTo = FuzzyContextSearcher.fuzzySearchOriginalCode(
+    void shouldReturnAllMatchingOriginalCodeMatches() {
+        List<LineRange> lineFromTo = FuzzyContextSearcher.fuzzySearchOriginalCodeMatches(
                 List.of("line one", "line two"),
                 List.of("line two", "line three"),
                 0,
                 1);
 
-        assertArrayEquals(new int[] {-1, -1}, lineFromTo);
+        assertEquals(List.of(), lineFromTo);
     }
 
     @Test
     void shouldMatchOriginalCodeAcrossBlankSourceLines() {
-        int[] lineFromTo = FuzzyContextSearcher.fuzzySearchOriginalCode(
+        List<LineRange> lineFromTo = FuzzyContextSearcher.fuzzySearchOriginalCodeMatches(
                 List.of("line one", "", "", "line two"),
                 List.of("line one", "line two"),
                 0,
                 0);
 
-        assertArrayEquals(new int[] {0, 3}, lineFromTo);
+        assertEquals(List.of(new LineRange(0, 3)), lineFromTo);
     }
 
     @Test
