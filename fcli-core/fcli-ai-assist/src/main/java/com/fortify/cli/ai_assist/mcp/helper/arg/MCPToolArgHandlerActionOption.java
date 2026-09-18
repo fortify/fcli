@@ -59,7 +59,21 @@ public final class MCPToolArgHandlerActionOption implements IMCPToolArgHandler {
         if ( values.isEmpty() ) {
             return "";
         }
-        return String.format("\"%s=%s\"", name, String.join(",", values));
+        // Escape embedded quotes to prevent command injection via quote breakout
+        var escapedValues = values.stream()
+            .map(MCPToolArgHandlerActionOption::escapeQuotes)
+            .toList();
+        return String.format("\"%s=%s\"", name, String.join(",", escapedValues));
+    }
+
+    /**
+     * Escapes embedded double quotes by prefixing with backslash.
+     * Prevents command injection when this value is used in a quoted command string.
+     * @param value The unescaped value
+     * @return The value with embedded quotes escaped (e.g., " becomes \")
+     */
+    private static String escapeQuotes(String value) {
+        return value.replace("\"", "\\\"");
     }
     
     private static Stream<String> streamValueElements(Object value) {

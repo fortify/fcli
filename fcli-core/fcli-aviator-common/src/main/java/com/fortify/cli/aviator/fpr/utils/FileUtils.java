@@ -29,6 +29,7 @@ import org.slf4j.LoggerFactory;
 
 import com.fortify.cli.aviator.audit.model.Fragment;
 import com.fortify.cli.aviator.fpr.model.FVDLMetadata;
+import com.fortify.cli.aviator.util.Constants;
 import com.fortify.cli.aviator.util.FileTypeLanguageMapperUtil;
 import com.fortify.cli.aviator.util.FileUtil;
 import com.fortify.cli.aviator.util.FprHandle;
@@ -68,6 +69,12 @@ public class FileUtils {
     private List<String> readFileWithFallback(Path filePath, String filename) {
         return fileContentCache.computeIfAbsent(filePath, path -> {
             try {
+                long fileSize = Files.size(path);
+                if (fileSize > Constants.MAX_SOURCE_FILE_SIZE) {
+                    logger.warn("Source file exceeds maximum allowed size ({} bytes): {} (actual size: {} bytes)",
+                        Constants.MAX_SOURCE_FILE_SIZE, path, fileSize);
+                    return Collections.emptyList();
+                }
                 byte[] fileBytes = Files.readAllBytes(path);
                 String content = sourceDecoder.decode(fileBytes, filename, fvdlMetadata).content();
                 return Arrays.asList(content.split("\\r?\\n"));
@@ -161,6 +168,12 @@ public class FileUtils {
         Path actualSourcePath = resolveFullPath(fprHandle, relativePath);
         if (actualSourcePath == null) {
             throw new IOException("Source file key not found in sourceFileMap: " + relativePath);
+        }
+
+        long fileSize = Files.size(actualSourcePath);
+        if (fileSize > Constants.MAX_SOURCE_FILE_SIZE) {
+            throw new IOException("Source file exceeds maximum allowed size (" + Constants.MAX_SOURCE_FILE_SIZE
+                + " bytes): " + relativePath + " (actual size: " + fileSize + " bytes)");
         }
 
         byte[] fileBytes = Files.readAllBytes(actualSourcePath);

@@ -159,6 +159,17 @@ public class DastFprCorrelationEnricher {
     @SneakyThrows
     private Document parseXml(Path path) {
         var factory = DocumentBuilderFactory.newInstance();
+        // Disable DOCTYPE declarations and external entity processing to prevent XXE attacks
+        try {
+            factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+            factory.setFeature("http://xml.org/sax/features/external-general-entities", false);
+            factory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+            factory.setXIncludeAware(false);
+            factory.setExpandEntityReferences(false);
+        } catch (Exception e) {
+            LOG.warn("Could not configure XXE protection for DocumentBuilderFactory; some protections may be unavailable: {}",
+                e.getMessage());
+        }
         factory.setNamespaceAware(false);
         return factory.newDocumentBuilder().parse(Files.newInputStream(path));
     }
