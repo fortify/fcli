@@ -62,6 +62,8 @@ public class FoDSastScanSetupCommand extends AbstractFoDScanSetupCommand<FoDScan
     private Boolean performOpenSourceAnalysis;
     @Option(names = {"--audit-preference"}, required = true)
     private FoDEnums.AuditPreferenceTypes auditPreferenceType;
+    @Option(names = {"--scan-policy"})
+    private String scanPolicy;
     @Option(names = {"--include-third-party-libs"})
     private final Boolean includeThirdPartyLibraries = false;
     @Option(names = {"--use-source-control"})
@@ -149,6 +151,8 @@ public class FoDSastScanSetupCommand extends AbstractFoDScanSetupCommand<FoDScan
         } else if (currentSetup != null && currentSetup.getIncludeFortifyAviator() != null) {
             builder.includeFortifyAviator(currentSetup.getIncludeFortifyAviator());
         }
+
+        builder.scanPolicy(FoDScanSastHelper.normalizeSetupScanPolicy(scanPolicy));
 
         FoDScanConfigSastSetupRequest setupSastScanRequest = builder.build();
 
