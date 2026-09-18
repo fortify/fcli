@@ -153,10 +153,13 @@ public final class FileWriteCoordinator {
         for (PendingFileWrite pendingWrite : pendingWrites.values()) {
             try {
                 byte[] originalBytes = Files.readAllBytes(pendingWrite.filePath());
-                rollbacks.add(new RollbackFileWrite(pendingWrite.filename(), pendingWrite.filePath(), originalBytes));
                 LOG.debug("Writing remediation {} to '{}' using staged bytes; encodedBytes={}", instanceId, pendingWrite.filename(),
                         pendingWrite.updatedBytes().length);
                 Files.write(pendingWrite.filePath(), pendingWrite.updatedBytes());
+                // Only record a rollback entry once the write has actually succeeded: a file whose
+                // write itself failed (e.g., permission denied) is already in its original state and
+                // needs no rollback, so retrying that same failing write during rollback is avoided.
+                rollbacks.add(new RollbackFileWrite(pendingWrite.filename(), pendingWrite.filePath(), originalBytes));
             } catch (Exception e) {
                 throw new RemediationCommitException("Error writing source code file '" + pendingWrite.filename() + "'", e, rollbacks);
             }
