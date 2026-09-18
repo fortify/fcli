@@ -69,7 +69,7 @@ public class FoDReleaseUpdateCommand extends AbstractFoDJsonNodeOutputCommand im
         FoDReleaseUpdateRequest appRelUpdateRequest = FoDReleaseUpdateRequest.builder()
                 .releaseName(StringUtils.isNotBlank(releaseName) ? getUnqualifiedReleaseName(releaseName, releaseDescriptor) : releaseDescriptor.getReleaseName())
                 .releaseDescription(StringUtils.isNotBlank(description) ? description : releaseDescriptor.getReleaseDescription())
-                .ownerId(StringUtils.isNotBlank(releaseOwner) ? Integer.valueOf(releaseOwner) : releaseDescriptor.getOwnerId())
+                .ownerId(StringUtils.isNotBlank(releaseOwner) ? Long.valueOf(releaseOwner) : releaseDescriptor.getOwnerId())
                 .microserviceId(releaseDescriptor.getMicroserviceId())
                 .sdlcStatusType(sdlcStatusTypeNew != null ? String.valueOf(sdlcStatusTypeNew) : releaseDescriptor.getSdlcStatusType())
                 .attributes(jsonAttrs).build();

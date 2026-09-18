@@ -50,7 +50,7 @@ public class FoDAppHelper {
         GetRequest request = unirest.get(FoDUrls.APPLICATIONS);
         JsonNode result = null;
         try {
-            int appId = Integer.parseInt(appNameOrId);
+            long appId = Long.parseLong(appNameOrId);
             result = FoDDataHelper.findUnique(request, String.format("applicationId:%d", appId));
         } catch (NumberFormatException nfe) {
             result = FoDDataHelper.findUnique(request, String.format("applicationName:%s", appNameOrId));

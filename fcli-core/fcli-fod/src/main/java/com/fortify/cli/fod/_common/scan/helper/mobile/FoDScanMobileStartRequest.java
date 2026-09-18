@@ -27,7 +27,7 @@ public class FoDScanMobileStartRequest {
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "MM/dd/yyyy HH:mm")
     private String startDate;
     private Integer assessmentTypeId;
-    private Integer entitlementId;
+    private Long entitlementId;
     private String entitlementFrequencyType;
     private String timeZone;
     private String frameworkType;

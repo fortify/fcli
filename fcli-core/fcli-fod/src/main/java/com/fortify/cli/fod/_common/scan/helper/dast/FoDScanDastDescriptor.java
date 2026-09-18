@@ -24,7 +24,7 @@ import lombok.ToString;
 @Data @ToString
 @EqualsAndHashCode(callSuper = true)
 public class FoDScanDastDescriptor extends JsonNodeHolder {
-    private Integer scanId;
+    private Long scanId;
     private String scanType;
 
 }

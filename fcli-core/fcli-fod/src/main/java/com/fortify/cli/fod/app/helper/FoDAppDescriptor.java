@@ -35,8 +35,8 @@ public class FoDAppDescriptor extends JsonNodeHolder {
     private String emailList;
     private boolean hasMicroservices;
 
-    public Map<Integer, String> attributesAsMap() {
-        Map<Integer, String> attrMap = new HashMap<>();
+    public Map<Long, String> attributesAsMap() {
+        Map<Long, String> attrMap = new HashMap<>();
         for (FoDAttributeValueDescriptor attr : attributes) {
             attrMap.put(attr.getId(), attr.getValue());
         }

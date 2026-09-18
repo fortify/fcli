@@ -100,7 +100,7 @@ public class FoDMastScanSetupCommand extends AbstractFoDScanSetupCommand<FoDScan
         var atd = FoDReleaseAssessmentTypeHelper.getAssessmentTypeDescriptor(unirest, releaseId, FoDScanType.Mobile,
                 entitlementFrequencyTypeMixin.getEntitlementFrequencyType(), assessmentType);
         Integer assessmentTypeId = atd.getAssessmentTypeId();
-        Integer entitlementIdToUse = atd.getEntitlementId();
+        Long entitlementIdToUse = atd.getEntitlementId();
         assessmentTypeName = atd.getName();
 
         validateEntitlement(currentSetup, entitlementIdToUse, releaseId, atd);
@@ -124,7 +124,7 @@ public class FoDMastScanSetupCommand extends AbstractFoDScanSetupCommand<FoDScan
         return FoDScanConfigMobileHelper.setupScan(unirest, releaseDescriptor, setupMastScanRequest).asJsonNode();
     }
 
-    private void validateEntitlement(FoDScanConfigMobileDescriptor currentSetup, Integer entitlementIdToUse, String releaseId, FoDReleaseAssessmentTypeDescriptor atd) {
+    private void validateEntitlement(FoDScanConfigMobileDescriptor currentSetup, Long entitlementIdToUse, String releaseId, FoDReleaseAssessmentTypeDescriptor atd) {
         // validate entitlement specified or currently in use against assessment type found
         if (entitlementId != null && entitlementId > 0) {
             // check if "entitlement id" explicitly matches what has been found

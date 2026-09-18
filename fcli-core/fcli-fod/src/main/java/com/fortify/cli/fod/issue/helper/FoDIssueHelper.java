@@ -162,7 +162,7 @@ public class FoDIssueHelper {
         sortedRecords.sort(
                 Comparator.comparingInt((ObjectNode n) -> n.get("severity").asInt()).reversed()
                         .thenComparing(n -> n.get("category").asText())
-                        .thenComparing(n -> n.get("releaseId").asInt())
+                        .thenComparing(n -> n.get("releaseId").asLong())
         );
 
         ArrayNode result = JsonHelper.getObjectMapper().createArrayNode();
