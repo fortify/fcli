@@ -151,12 +151,25 @@ public final class FileWriteCoordinator {
             throws RemediationCommitException {
         List<RollbackFileWrite> rollbacks = new ArrayList<>();
         for (PendingFileWrite pendingWrite : pendingWrites.values()) {
+            Path filePath = pendingWrite.filePath();
+            // A permission failure is rejected atomically before any bytes are written, so a file
+            // that's already known unwritable needs no rollback entry at all: attempting one would
+            // just retry the same failing write. Checking this upfront (rather than relying on
+            // Files.write's exception to prove the file was untouched) matters once a write CAN
+            // start: e.g. running out of disk space mid-write can truncate/partially overwrite the
+            // file before failing, so a write that's confirmed writable must be recorded for
+            // rollback before attempting it, not after.
+            if (!Files.isWritable(filePath)) {
+                throw new RemediationCommitException(
+                        "Source code file is not writable: '" + pendingWrite.filename() + "'",
+                        new IOException("File not writable: " + filePath), rollbacks);
+            }
             try {
-                byte[] originalBytes = Files.readAllBytes(pendingWrite.filePath());
-                rollbacks.add(new RollbackFileWrite(pendingWrite.filename(), pendingWrite.filePath(), originalBytes));
+                byte[] originalBytes = Files.readAllBytes(filePath);
+                rollbacks.add(new RollbackFileWrite(pendingWrite.filename(), filePath, originalBytes));
                 LOG.debug("Writing remediation {} to '{}' using staged bytes; encodedBytes={}", instanceId, pendingWrite.filename(),
                         pendingWrite.updatedBytes().length);
-                Files.write(pendingWrite.filePath(), pendingWrite.updatedBytes());
+                Files.write(filePath, pendingWrite.updatedBytes());
             } catch (Exception e) {
                 throw new RemediationCommitException("Error writing source code file '" + pendingWrite.filename() + "'", e, rollbacks);
             }

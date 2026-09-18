@@ -679,6 +679,39 @@ class RemediationProcessorTest {
     }
 
     /**
+     * A source file whose write fails (e.g., made read-only) must be skipped via
+     * {@code SOURCE_WRITE_FAILED} on its own, not abort the whole batch: the rollback attempt for
+     * that failed write must not itself retry writing to the same permission-denied file, which
+     * previously escalated into a batch-aborting {@code RollbackRemediationException} and caused
+     * every other remediation in the run - even ones touching unrelated, writable files - to fail.
+     */
+    @Test
+    @EnabledOnOs(OS.WINDOWS)
+    void readOnlyFileWriteFailureIsSkippedAndOtherRemediationsStillApply() throws Exception {
+        Path readOnlyFile = writeSourceFile("ReadOnly.java", "before\nTARGET\nafter\n");
+        Path goodFile = writeSourceFile("Good.java", "before\nTARGET\nafter\n");
+        readOnlyFile.toFile().setReadOnly();
+        try {
+            Path fprPath = buildFpr(List.of(
+                new MultiHunkRemediationSpec("blocked", List.of(new FileSpec("ReadOnly.java", List.of(
+                    new HunkSpec(2, 2, 1, 1, "before\ntarget\nafter", "TARGET", "REPLACED"))))),
+                new MultiHunkRemediationSpec("valid", List.of(new FileSpec("Good.java", List.of(
+                    new HunkSpec(2, 2, 1, 1, "before\ntarget\nafter", "TARGET", "REPLACED")))))));
+
+            RemediationMetric metric = apply(fprPath);
+
+            assertEquals(2, metric.totalRemediations());
+            assertEquals(1, metric.appliedRemediations(), "the remediation for the writable file must still be applied");
+            assertEquals(1, metric.skippedRemediations());
+            assertEquals(Map.of("Source file write failed", 1), metric.skippedByReason());
+            assertEquals("before\nTARGET\nafter\n", Files.readString(readOnlyFile));
+            assertEquals("before\nREPLACED\nafter\n", Files.readString(goodFile));
+        } finally {
+            readOnlyFile.toFile().setWritable(true);
+        }
+    }
+
+    /**
      * The offset ledger must record where a hunk actually landed via the fuzzy anchor, not where
      * it was declared: {@code relocated} declares line 12 but its context/OriginalCode only exist
      * at line 3, so it lands there with delta +2 and the ledger must stage {@code (3, 3, +2)} -
