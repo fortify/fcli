@@ -187,16 +187,6 @@ steps:
                 - ${SAST_SCAN.dependencySkipReason}                  # Skip if SAST_SCAN was skipped or failed
               on.success:
                 - var.set: { postScan.skipReason: } # Reset postScan.skipReason to allow post-scan tasks to run
-
-            # DAST can be slow; disabled by default, enable with DO_DAST_WAIT=true. Use DAST_WAIT_EXTRA_OPTS to pass --timeout
-            DAST_WAIT:
-              cmd: "${#fcliCmd('DAST_WAIT', 'sc-dast scan wait-for')} ::sc_dast_scan::"
-              skip.if-reason:
-                - ${wait.skipReason}                                 # Skip if wait.skipReason!=null
-                - ${#fcliCmdSkipFromEnvReason('DAST_WAIT', true)}    # Skip unless DO_DAST_WAIT==true
-                - ${DAST_SCAN.dependencySkipReason}                  # Skip if DAST_SCAN was skipped or failed
-              on.success:
-                - var.set: { postScan.skipReason: } # Reset postScan.skipReason to allow post-scan tasks to run
                 
             DOWNLOAD_SAST_LOG:
               cmd: "${#fcliCmd('DOWNLOAD_SAST_LOG', 'sc-sast scan download -t log')} ::sc_sast_scan::"
@@ -240,6 +230,17 @@ steps:
                 - ${postScan.skipReason}                               # Skip if no scans were run
                 - ${aviator.skipReason}                                # Skip if Aviator is not configured
                 - ${AVIATOR_WAIT.dependencySkipReason}                 # Skip if AVIATOR_WAIT was skipped or failed (no remediations available)
+
+            # Placed after SAST-only post-scan steps so those can run while the DAST scan is still going.
+            # DAST can be slow; disabled by default, enable with DO_DAST_WAIT=true. Use DAST_WAIT_EXTRA_OPTS to pass --timeout
+            DAST_WAIT:
+              cmd: "${#fcliCmd('DAST_WAIT', 'sc-dast scan wait-for')} ::sc_dast_scan::"
+              skip.if-reason:
+                - ${wait.skipReason}                                 # Skip if wait.skipReason!=null
+                - ${#fcliCmdSkipFromEnvReason('DAST_WAIT', true)}    # Skip unless DO_DAST_WAIT==true
+                - ${DAST_SCAN.dependencySkipReason}                  # Skip if DAST_SCAN was skipped or failed
+              on.success:
+                - var.set: { postScan.skipReason: } # Reset postScan.skipReason to allow post-scan tasks to run
 
             CHECK_POLICY:
               cmd: ${#actionCmd('CHECK_POLICY', 'ssc', 'check-policy')} "--av=${global.ci.av}" "--progress=none"
