@@ -1,6 +1,6 @@
 ---
 title: 'Action Documentation: <a href="manpage/fcli-ssc-action.html"><code>fcli ssc action</code></a>'
-fcli_version: 0.20260918.112554-dev_v3.x
+fcli_version: 0.20260918.121043-dev_v3.x
 ---
 
 <!DOCTYPE html>
@@ -17,13 +17,13 @@ fcli_version: 0.20260918.112554-dev_v3.x
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260918.112554-dev_v3.x" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260918.121043-dev_v3.x" %}
 
 
 <div id="header">
 <h1>Action Documentation: <a href="manpage/fcli-ssc-action.html"><code>fcli ssc action</code></a></h1>
 <div class="details">
-<span id="revnumber">version 0.20260918.112554-dev_v3.x</span>
+<span id="revnumber">version 0.20260918.121043-dev_v3.x</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -617,7 +617,10 @@ following activities:</p>
 <p>Submit SAST scan request</p>
 </li>
 <li>
-<p>Wait for SAST scan completion</p>
+<p>Submit DAST scan request, using pre-existing SC-DAST scan settings</p>
+</li>
+<li>
+<p>Wait for SAST/DAST scan completion</p>
 </li>
 <li>
 <p>Perform post-scan activities, like checking policy outcome, exporting results, &#8230;&#8203;</p>
@@ -743,7 +746,7 @@ By default: <br>
 <div class="sect2">
 <h3 id="_scan_execution"><a class="anchor" href="#_scan_execution"></a>Scan Execution</h3>
 <div class="paragraph">
-<p>Configure SAST and Debricked scan execution and waiting behavior for OpenText Application Security (Fortify Software Security Center).</p>
+<p>Configure SAST, DAST, and Debricked scan execution and waiting behavior for OpenText Application Security (Fortify Software Security Center).</p>
 </div>
 <table class="tableblock frame-all grid-all fit-content">
 <colgroup>
@@ -760,6 +763,15 @@ By default: <br>
 SAST_SCAN_EXTRA_OPTS</p></td>
 <td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
 <p>The fcli <code>ci</code> action by default runs a SAST scan, optionally in combination with other scan types. The <code>DO_SAST_SCAN</code> environment variable can be set to <code>false</code> to disable the SAST scan. The <code>SAST_SCAN_EXTRA_OPTS</code> environment variable can be used to provide additional options to the <a href="../manpage/fcli-sc-sast-scan-start.html"><code>fcli sc-sast scan start</code></a> command, for example to request a scan completion email notification. Note that these environment variables only control the submission of the scan request; see the information below for details on waiting for the scan to complete.</p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">DAST_SETTINGS<br>
+DO_DAST_SCAN<br>
+DAST_SCAN_NAME<br>
+DAST_SCAN_EXTRA_OPTS</p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>The fcli <code>ci</code> action can run a ScanCentral DAST scan using pre-existing scan settings that have already been configured for the target application version; this action does not create or modify scan settings. Set <code>DAST_SETTINGS</code> to the CI/CD token or numeric id of the SC-DAST scan settings to use (see the <code>cicdToken</code> and <code>id</code> fields returned by <a href="../manpage/fcli-sc-dast-scan-settings-list.html"><code>fcli sc-dast scan-settings list</code></a>). Unlike the SAST scan, the DAST scan is disabled by default, even if <code>DAST_SETTINGS</code> is configured, as <code>DAST_SETTINGS</code> may be a permanent CI/CD variable while DAST scans are often only meant to run on demand. Set <code>DO_DAST_SCAN</code> to <code>true</code> to enable the DAST scan for a given pipeline run (in addition to <code>DAST_SETTINGS</code> being set). By default, the scan name is auto-generated from the application version and run id (with <code>:</code>/<code>/</code> characters replaced by <code>-</code>); set <code>DAST_SCAN_NAME</code> to use a custom scan name instead. The <code>DAST_SCAN_EXTRA_OPTS</code> environment variable can be used to provide additional options to the <a href="../manpage/fcli-sc-dast-scan-start.html"><code>fcli sc-dast scan start</code></a> command. Note that these environment variables only control the submission of the scan request; see the information below for details on waiting for the scan to complete.</p>
 </div></div></td>
 </tr>
 <tr>
@@ -786,9 +798,15 @@ By default: <br>
 <td class="tableblock halign-left valign-top"><p class="tableblock">DO_WAIT<br>
 DO_SAST_WAIT<br>
 SAST_WAIT_EXTRA_OPTS<br>
+DO_DAST_WAIT<br>
+DAST_WAIT_EXTRA_OPTS<br>
 DEBRICKED_WAIT_EXTRA_OPTS</p></td>
 <td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
-<p>By default, the fcli <code>ci</code> action will wait for all started scans to complete; set <code>DO_WAIT</code> to <code>false</code> to just kick off any configured scans without waiting for completion. Note that doing so will skip any post-scan tasks. The <code>SAST_WAIT_EXTRA_OPTS</code> environment variable can be used to pass extra options to the <a href="../manpage/fcli-sc-sast-scan-wait-for.html"><code>fcli sc-sast scan wait-for</code></a> command, and similarly, the <code>DEBRICKED_WAIT_EXTRA_OPTS</code> environment variable can be used to pass extra options to the <a href="../manpage/fcli-ssc-artifact-wait-for.html"><code>fcli ssc artifact wait-for</code></a> command.</p>
+<p>By default, the fcli <code>ci</code> action will wait for all started scans to complete; set <code>DO_WAIT</code> to <code>false</code> to just kick off any configured scans without waiting for completion. Note that doing so will skip any post-scan tasks. The <code>SAST_WAIT_EXTRA_OPTS</code> environment variable can be used to pass extra options to the <a href="../manpage/fcli-sc-sast-scan-wait-for.html"><code>fcli sc-sast scan wait-for</code></a> command, and similarly, the <code>DAST_WAIT_EXTRA_OPTS</code> environment variable can be used to pass extra options to the <a href="../manpage/fcli-sc-dast-scan-wait-for.html"><code>fcli sc-dast scan wait-for</code></a> command, and the <code>DEBRICKED_WAIT_EXTRA_OPTS</code> environment variable can be used to pass extra options to the <a href="../manpage/fcli-ssc-artifact-wait-for.html"><code>fcli ssc artifact wait-for</code></a> command.<br>
+<br>
+Unlike other scan types, waiting for DAST scans is disabled by default (as DAST scans are often long-running and only run on demand); set <code>DO_DAST_WAIT</code> to <code>true</code> to wait for DAST scan completion.<br>
+<br>
+DAST scans can take considerably longer than SAST scans, potentially exceeding CI/CD job time limits (for example on GitHub Actions or GitLab CI); if the default wait timeout doesn&#8217;t suffice, pass a <code>--timeout</code> option through <code>DAST_WAIT_EXTRA_OPTS</code>.</p>
 </div></div></td>
 </tr>
 </tbody>
@@ -1849,8 +1867,8 @@ appropriate option values and setup commands to run.</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20260918.112554-dev_v3.x<br>
-Last updated 2026-09-18 11:29:26 UTC
+Version 0.20260918.121043-dev_v3.x<br>
+Last updated 2026-09-18 12:14:27 UTC
 </div>
 </div>
 </body>
