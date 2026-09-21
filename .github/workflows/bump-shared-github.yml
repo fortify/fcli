@@ -4,10 +4,11 @@ on:
   schedule:
     - cron: '0 6 * * *'   # daily
   workflow_dispatch:
+  push:
 
 permissions:
   contents: read
 
 jobs:
   bump:
-    uses: fortify/shared-github/.github/workflows/reusable-bump-shared-pin.yml@6b5f260306c9b9d6aadd2a606801c6ffe77cdb14
+    uses: fortify/shared-github/.github/workflows/reusable-bump-shared-pin.yml@32d62c22c636c1b185f297ed573e2caf2d53d33f
