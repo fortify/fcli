@@ -11,4 +11,4 @@ permissions:
 
 jobs:
   bump:
-    uses: fortify/shared-github/.github/workflows/reusable-bump-shared-pin.yml@32d62c22c636c1b185f297ed573e2caf2d53d33f
+    uses: fortify/shared-github/.github/workflows/reusable-bump-shared-pin.yml@6660783b1acb464406106b3d2d4f45810fca41ee
