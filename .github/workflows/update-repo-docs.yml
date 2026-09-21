@@ -12,4 +12,5 @@ jobs:
   update-repo-docs:
     permissions:
       contents: write
-    uses: fortify/shared-doc-resources/.github/workflows/update-repo-docs.yml@main
+      pull-requests: write
+    uses: fortify/shared-github/.github/workflows/reusable-update-repo-docs.yml@32d62c22c636c1b185f297ed573e2caf2d53d33f
