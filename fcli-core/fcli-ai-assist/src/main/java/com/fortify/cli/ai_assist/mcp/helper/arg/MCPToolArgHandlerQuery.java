@@ -181,7 +181,19 @@ public final class MCPToolArgHandlerQuery implements IMCPToolArgHandler {
     }
 
     private final void addQuery(ArrayList<String> queries, String schemaPropertyName, String value) {
-        var fieldName = fieldsBySchemaPropertyName.getOrDefault(schemaPropertyName, schemaPropertyName);
-        queries.add(String.format("%s matches '%s'", fieldName, value));
+        // Validate that schemaPropertyName is in the known set of safe fields (do not fall back to attacker-supplied name)
+        if ( !fieldsBySchemaPropertyName.containsKey(schemaPropertyName) ) {
+            throw new FcliSimpleException("Unknown query field '%s'; allowed fields are: %s", 
+                schemaPropertyName, String.join(", ", fieldsBySchemaPropertyName.keySet()));
+        }
+        var fieldName = fieldsBySchemaPropertyName.get(schemaPropertyName);
+        // Escape backslashes first, then single quotes to prevent SpEL string literal breakout
+        var escapedValue = value.replace("\\", "\\\\")
+                                 .replace("'", "\\'");
+        // Reject values containing unescaped double quotes or certain problematic characters that could break CLI token boundaries
+        if ( value.contains("\"") ) {
+            throw new FcliSimpleException("Query value contains unescaped double quote which is not allowed for CLI safety");
+        }
+        queries.add(String.format("%s matches '%s'", fieldName, escapedValue));
     }
 }

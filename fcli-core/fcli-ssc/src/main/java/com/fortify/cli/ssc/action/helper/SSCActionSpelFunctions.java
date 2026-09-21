@@ -21,6 +21,7 @@ import java.util.function.Supplier;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
+import javax.xml.XMLConstants;
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
@@ -174,7 +175,9 @@ public final class SSCActionSpelFunctions {
         
         private final void processAuditFvdl(InputStream is, Function<JsonNode, Boolean> consumer) throws XMLStreamException {
             var factory = XMLInputFactory.newInstance();
-            factory.setXMLResolver(null); // Prevent XML External Entity Injection
+            // Disable DTD processing and external entity resolution to prevent XXE attacks
+            factory.setProperty(XMLInputFactory.SUPPORT_DTD, false);
+            factory.setProperty(XMLConstants.ACCESS_EXTERNAL_DTD, "");
             var reader = factory.createXMLStreamReader(is);
             while(reader.hasNext()) {
                 int eventType = reader.next();
