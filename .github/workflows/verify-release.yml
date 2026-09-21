@@ -44,13 +44,13 @@ jobs:
     steps:
       # Java is required for running the functional tests
       - name: Setup Java
-        uses: actions/setup-java@v5
+        uses: fortify/shared-github/actions/3rdparty/actions/setup-java/v5@6b5f260306c9b9d6aadd2a606801c6ffe77cdb14
         with:
           distribution: 'temurin'
           java-version: '17'
 
       - name: Download release artifact
-        uses: actions/download-artifact@v8
+        uses: fortify/shared-github/actions/3rdparty/actions/download-artifact/v8@6b5f260306c9b9d6aadd2a606801c6ffe77cdb14
         with:
           run-id: ${{ inputs.runId }}
           name: ${{ matrix.type == 'jar' && 'fcli-jar' || matrix.os == 'ubuntu-latest' && 'fcli-linux' || matrix.os == 'windows-latest' && 'fcli-windows' || 'fcli-mac' }}
@@ -58,7 +58,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Download fcli-ftest.jar
-        uses: actions/download-artifact@v8
+        uses: fortify/shared-github/actions/3rdparty/actions/download-artifact/v8@6b5f260306c9b9d6aadd2a606801c6ffe77cdb14
         with:
           run-id: ${{ inputs.runId }}
           name: fcli-ftest-jar
@@ -93,7 +93,7 @@ jobs:
         
       - name: Publish test logs
         if: failure()
-        uses: actions/upload-artifact@v7
+        uses: fortify/shared-github/actions/3rdparty/actions/upload-artifact/v7@6b5f260306c9b9d6aadd2a606801c6ffe77cdb14
         with:
           name: test-log-${{ matrix.os }}-${{ matrix.type }}
           path: test-*.log
@@ -111,13 +111,13 @@ jobs:
     steps:
       # Java is required for running the functional tests
       - name: Setup Java
-        uses: actions/setup-java@v5
+        uses: fortify/shared-github/actions/3rdparty/actions/setup-java/v5@6b5f260306c9b9d6aadd2a606801c6ffe77cdb14
         with:
           distribution: 'temurin'
           java-version: '17'
 
       - name: Download fcli-linux.tgz
-        uses: actions/download-artifact@v8
+        uses: fortify/shared-github/actions/3rdparty/actions/download-artifact/v8@6b5f260306c9b9d6aadd2a606801c6ffe77cdb14
         with:
           run-id: ${{ inputs.runId }}
           name: fcli-linux
@@ -125,7 +125,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Download fcli-ftest.jar
-        uses: actions/download-artifact@v8
+        uses: fortify/shared-github/actions/3rdparty/actions/download-artifact/v8@6b5f260306c9b9d6aadd2a606801c6ffe77cdb14
         with:
           run-id: ${{ inputs.runId }}
           name: fcli-ftest-jar
@@ -164,7 +164,7 @@ jobs:
         
       - name: Publish test logs
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: fortify/shared-github/actions/3rdparty/actions/upload-artifact/v7@6b5f260306c9b9d6aadd2a606801c6ffe77cdb14
         with:
           name: test-log-${{ matrix.type }}
           path: test-*.log

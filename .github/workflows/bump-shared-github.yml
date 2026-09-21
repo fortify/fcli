@@ -1,0 +1,14 @@
+name: Bump shared-github pin
+
+on:
+  schedule:
+    - cron: '0 6 * * *'   # daily
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  bump:
+    uses: fortify/shared-github/.github/workflows/reusable-bump-shared-pin.yml@6b5f260306c9b9d6aadd2a606801c6ffe77cdb14

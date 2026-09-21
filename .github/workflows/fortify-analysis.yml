@@ -15,12 +15,12 @@ permissions:
 
 jobs:
   check-duplicate-run:
-    uses: fortify/.github/.github/workflows/check-duplicate-run.yml@main
+    uses: fortify/shared-github/.github/workflows/reusable-check-duplicate-run.yml@6b5f260306c9b9d6aadd2a606801c6ffe77cdb14
 
   FoD-Scan:
     needs: check-duplicate-run
     if: needs.check-duplicate-run.outputs.should_skip != 'true'
-    uses: fortify/.github/.github/workflows/fortify-analysis.yml@main
+    uses: fortify/shared-github/.github/workflows/reusable-fortify-analysis.yml@6b5f260306c9b9d6aadd2a606801c6ffe77cdb14
     with:
       java-version: '17'
     secrets: inherit
