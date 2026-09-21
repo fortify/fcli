@@ -133,9 +133,9 @@ public class FoDScanHelper {
 
     public static FoDScanAssessmentTypeDescriptor getEntitlementToUse(UnirestInstance unirest, String relId, FoDScanType scanType,
                                                                     String assessmentType, FoDEnums.EntitlementFrequencyType entitlementFrequencyType,
-                                                                    int entitlementId) {
+                                                                    long entitlementId) {
         FoDScanConfigDastAutomatedDescriptor currentSetup = FoDScanDastAutomatedHelper.getSetupDescriptor(unirest, relId);
-        Integer entitlementIdToUse = 0;
+        Long entitlementIdToUse = 0L;
         Integer assessmentTypeId = 0;
         LOG.info("Finding/Validating entitlement to use.");
 

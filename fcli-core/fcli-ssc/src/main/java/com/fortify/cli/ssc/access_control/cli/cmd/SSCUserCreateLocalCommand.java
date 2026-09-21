@@ -21,6 +21,8 @@ import com.fortify.cli.common.cli.util.CommandGroup;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.ssc._common.output.cli.cmd.AbstractSSCJsonNodeOutputCommand;
 import com.fortify.cli.ssc._common.rest.ssc.SSCUrls;
+import com.fortify.cli.ssc.access_control.helper.SSCRoleDescriptor;
+import com.fortify.cli.ssc.access_control.helper.SSCRoleHelper;
 import com.fortify.cli.ssc.access_control.helper.SSCUserCreateRequest;
 
 import kong.unirest.UnirestInstance;
@@ -65,7 +67,13 @@ public class SSCUserCreateLocalCommand extends AbstractSSCJsonNodeOutputCommand 
                 .requirePasswordChange(requirePwChange)
                 .suspended(suspend)
                 .build();
-        userCreateRequest.addRoles(roles);
+        // Resolve each role name/ID to its actual ID
+        ArrayList<String> resolvedRoles = new ArrayList<>();
+        for (String roleNameOrId : roles) {
+            SSCRoleDescriptor descriptor = SSCRoleHelper.getRoleDescriptor(unirest, roleNameOrId, "id");
+            resolvedRoles.add(descriptor.getRoleId());
+        }
+        userCreateRequest.addRoles(resolvedRoles);
         ObjectNode body = objectMapper.valueToTree(userCreateRequest);
         
         return unirest.post(SSCUrls.LOCAL_USERS)

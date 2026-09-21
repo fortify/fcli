@@ -51,10 +51,10 @@ public class FoDAttributeResolverMixin {
                     .collect(Collectors.toList());
         }
 
-        public Integer[] getAttributeIds(UnirestInstance unirest) {
+        public Long[] getAttributeIds(UnirestInstance unirest) {
             return Stream.of(getAttributeDescriptors(unirest))
                     .map(FoDAttributeDefinitionDescriptor::getId)
-                    .toArray(Integer[]::new);
+                    .toArray(Long[]::new);
         }
     }
 

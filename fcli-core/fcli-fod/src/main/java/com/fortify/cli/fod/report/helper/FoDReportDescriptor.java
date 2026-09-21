@@ -22,7 +22,7 @@ import lombok.NoArgsConstructor;
 @Reflectable @NoArgsConstructor
 @Data @EqualsAndHashCode(callSuper = true)
 public class FoDReportDescriptor extends JsonNodeHolder {
-    private Integer reportId;
+    private Long reportId;
     private String reportName;
     private String reportNotes;
     private Integer reportStatusTypeId;
@@ -32,7 +32,7 @@ public class FoDReportDescriptor extends JsonNodeHolder {
     private String customReportTypeName;
     private Boolean isReceived;
     private String language;
-    private Integer applicationId;
-    private Integer releaseId;
-    private Integer userId;
+    private Long applicationId;
+    private Long releaseId;
+    private Long userId;
 }

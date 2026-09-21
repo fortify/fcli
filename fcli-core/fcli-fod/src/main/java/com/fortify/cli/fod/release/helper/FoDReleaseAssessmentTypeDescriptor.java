@@ -29,7 +29,7 @@ public class FoDReleaseAssessmentTypeDescriptor extends JsonNodeHolder {
     private String name;
     private String scanType;
     private Integer scanTypeId;
-    private Integer entitlementId;
+    private Long entitlementId;
     private String frequencyType;
     private Integer frequencyTypeId;
     private Integer units;

@@ -26,7 +26,7 @@ import lombok.NoArgsConstructor;
 @Reflectable @NoArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class FoDAttributeDefinitionDescriptor extends JsonNodeHolder {
-    private Integer id;
+    private Long id;
     private String name;
     private Integer attributeTypeId;
     private String attributeType;

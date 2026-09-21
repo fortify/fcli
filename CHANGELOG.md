@@ -1,5 +1,26 @@
 # Changelog
 
+## [3.26.0](https://github.com/fortify/fcli/compare/v3.25.0...v3.26.0) (2026-09-18)
+
+
+### Features
+
+* SSC `ci` action: Add support for running DAST scans using existing DAST settings in SSC, and optionally waiting for DAST scan completion ([3bc78d7](https://github.com/fortify/fcli/commit/3bc78d72b8ddcea7a21080113ecea6cca8b0319c))
+
+
+### Bug Fixes
+
+* `fcli aviator ssc apply-remediations`: Improve handling of non-writable files ([270a143](https://github.com/fortify/fcli/commit/270a143777ec57ebae2acc951781657dd914aac3))
+* `fcli aviator ssc apply-remediations`: Improve handling of overlapping remediations ([f4a46aa](https://github.com/fortify/fcli/commit/f4a46aa2d04bbcbfd6c865888c52b9ff519f9cce))
+* `fcli aviator ssc apply-remediations`: More accurate application of auto-remediations ([f4a46aa](https://github.com/fortify/fcli/commit/f4a46aa2d04bbcbfd6c865888c52b9ff519f9cce))
+* `fcli fod aviator apply-remediations`: Improve handling of non-writable files ([270a143](https://github.com/fortify/fcli/commit/270a143777ec57ebae2acc951781657dd914aac3))
+* `fcli fod aviator apply-remediations`: Improve handling of overlapping remediations ([f4a46aa](https://github.com/fortify/fcli/commit/f4a46aa2d04bbcbfd6c865888c52b9ff519f9cce))
+* `fcli fod aviator apply-remediations`: More accurate application of auto-remediations ([f4a46aa](https://github.com/fortify/fcli/commit/f4a46aa2d04bbcbfd6c865888c52b9ff519f9cce))
+* `fcli fod`: Change id fields from `int` to `long` to avoid potential integer overflows ([93f166d](https://github.com/fortify/fcli/commit/93f166d09c0c0c033f25e458e3a26de1c9052001))
+* `fcli ssc ac create-local-user`: The `--roles` option now properly accepts role names as per option description ([05bf6c4](https://github.com/fortify/fcli/commit/05bf6c4c89343a0c31af3a5269b4396866c399ef))
+* `fcli ssc ac update-local-user`: The `--roles`, `--add-roles`, and `--rm-roles` options now properly accept role names as per option description ([05bf6c4](https://github.com/fortify/fcli/commit/05bf6c4c89343a0c31af3a5269b4396866c399ef))
+* Various MCP & Aviator security fixes ([99fa798](https://github.com/fortify/fcli/commit/99fa798125fada823d64265470ddf0f86fba1c21))
+
 ## [3.25.0](https://github.com/fortify/fcli/compare/v3.24.0...v3.25.0) (2026-08-31)
 
 

@@ -33,8 +33,8 @@ public class FoDMicroserviceDescriptor extends JsonNodeHolder {
     private String microserviceName;
     private ArrayList<FoDAttributeValueDescriptor> attributes;
 
-    public Map<Integer, String> attributesAsMap() {
-        Map<Integer, String> attrMap = new HashMap<>();
+    public Map<Long, String> attributesAsMap() {
+        Map<Long, String> attrMap = new HashMap<>();
         for (FoDAttributeValueDescriptor attr : attributes) {
             attrMap.put(attr.getId(), attr.getValue());
         }
