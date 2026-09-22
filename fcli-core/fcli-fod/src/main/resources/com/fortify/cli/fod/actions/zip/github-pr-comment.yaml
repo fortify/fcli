@@ -100,6 +100,7 @@ steps:
       issues:
         uri: /api/v3/releases/${rel.releaseId}/vulnerabilities?limit=50
         query:
+          excludeFilters: true # fcli does not use the top-level 'filters' object; excluding it improves FoD-side performance
           includeFixed: true
           filters: scantype:${cli['scan-type']}
         log.progress:

@@ -197,6 +197,7 @@ public class FoDIssueListCommand extends AbstractFoDOutputCommand implements ISe
         String releaseName = releaseDescriptor.getReleaseName();
         HttpRequest<?> request = unirest.get(FoDUrls.VULNERABILITIES)
                 .routeParam("relId", releaseId)
+                .queryString("excludeFilters", "true") // fcli never consumes the top-level 'filters' object; excluding it improves FoD-side performance
                 .queryString("orderBy", "severity")
                 .queryString("orderDirection", "ASC");
         return requestObjectNodeProducerBuilder(ObjectNodeProducerApplyFrom.SPEC)
