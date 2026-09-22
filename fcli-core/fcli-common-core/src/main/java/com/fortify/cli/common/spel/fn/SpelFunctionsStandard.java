@@ -45,6 +45,7 @@ import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.crypto.helper.EncryptionHelper;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.exception.FcliTechnicalException;
+import com.fortify.cli.common.json.JSONDateTimeConverter;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunction;
 import com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunctionParam;
@@ -285,7 +286,9 @@ public class SpelFunctionsStandard {
             Parses the given string as a Java `OffsetDateTime` object, for example to allow for date/time \
             comparisons, formatting, or retrieval of individual elements like month or year. See \
             https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/OffsetDateTime.html for \
-            information on methods that can be invoked on the returned object.
+            information on methods that can be invoked on the returned object. ISO-8601 date/time values \
+            are accepted, including offsets written without a colon. A date without a time is interpreted \
+            as midnight UTC.
             """,
             returns="""
             The parsed `OffsetDateTime` instance representing the date/time encoded in the string, \
@@ -297,14 +300,21 @@ public class SpelFunctionsStandard {
         if (s == null) {
             return null;
         }
-        OffsetDateTime dt = null;
         try {
-            dt = OffsetDateTime.parse(s);
-        } catch (DateTimeParseException e) {
-            LocalDate d = LocalDate.parse(s);
-            dt = OffsetDateTime.of(d.atStartOfDay(), ZoneOffset.UTC);
+            return OffsetDateTime.parse(s);
+        } catch (DateTimeParseException isoEx) {
+            try {
+                return OffsetDateTime.of(LocalDate.parse(s).atStartOfDay(), ZoneOffset.UTC);
+            } catch (DateTimeParseException dateOnlyEx) {
+                try {
+                    return new JSONDateTimeConverter(ZoneOffset.UTC)
+                        .parseZonedDateTime(s)
+                        .toOffsetDateTime();
+                } catch (RuntimeException ignored) {
+                    throw isoEx;
+                }
+            }
         }
-        return dt;
     }
 
     @SpelFunction(cat=date, returns="""

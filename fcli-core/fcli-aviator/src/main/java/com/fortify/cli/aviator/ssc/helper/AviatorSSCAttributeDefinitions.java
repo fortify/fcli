@@ -59,11 +59,17 @@ public final class AviatorSSCAttributeDefinitions {
     );
 
     /**
-     * Free-text attribute written after a DAST audit evaluation completes successfully.
+     * Free-text attribute written after a DAST audit evaluation completes successfully,
+     * including a run that finds no eligible findings.
      *
-     * <p>The value is an ISO-8601 UTC timestamp. A successful evaluation includes a
-     * run that finds no eligible findings, allowing bulk DAST audit selection to avoid
-     * repeating a completed no-op evaluation until a newer DAST scan is available.
+     * <p>Value is an ISO-8601 UTC timestamp produced by {@code Instant.now().toString()},
+     * the same kind of value written to {@code last_correlation}. Bulk DAST audit reads
+     * it and selects a version only when the newest processed WebInspect scan date is
+     * later than this timestamp.
+     *
+     * <p>TEXT type is used rather than DATE because SSC's DATE type only accepts
+     * {@code yyyy-MM-dd}, which loses the time-of-day precision required for reliable
+     * comparison with artifact {@code lastScanDate} values.
      */
     public static final AttributeDefinition LAST_DAST_AUDIT_ATTR = new AttributeDefinition(
         "last_dast_audit",

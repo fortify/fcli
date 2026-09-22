@@ -4,10 +4,14 @@ author: Fortify
 usage:
   header: (PREVIEW) Perform Fortify DAST Aviator audits of SSC application versions in bulk.
   description: |
-    This action identifies SSC application versions with a processed DAST FPR and
-    submits only versions whose DAST scan is newer than the last recorded DAST audit.
-    Versions without a processed WebInspect result, or whose DAST scan has already
-    been evaluated, are skipped before any audit command is invoked.
+    This action identifies SSC application versions with a processed DAST FPR,
+    determines whether that scan is newer than the last successful DAST audit, and
+    runs `fcli aviator ssc audit-dast` for the selected versions.
+
+    Versions without a processed WebInspect result are skipped before any attribute
+    lookup is performed. For versions that have one, the action compares the most
+    recent DAST scan date with the SSC `last_dast_audit` attribute written by the
+    audit command, using the same rule as bulk SAST-DAST correlation.
 
     Before each DAST audit, the action runs `fcli aviator ssc prepare` for the selected
     application version so the Aviator tags and the `last_dast_audit`
@@ -286,13 +290,9 @@ steps:
           record.var-name: candidate
           do:
             - var.set:
-                dast_artifact_found: false
                 latest_dast_scan_date: null
-                latest_dast_scan_invalid: false
-                latest_dast_scan_date_parsed: null
                 last_dast_audit_value: null
-                last_dast_audit_invalid: false
-                last_dast_audit_date_parsed: null
+                dast_scan_after_last_audit: false
                 candidate_selection_failed: false
             - rest.call:
                 candidate_artifacts:
@@ -304,42 +304,24 @@ steps:
                     orderby: uploadDate DESC
                   records.for-each:
                     record.var-name: artifact
+                    breakIf: ${latest_dast_scan_date != null}
                     do:
                       - var.set:
                           artifact_scan_date: ${#ifBlank(artifact.lastScanDate, artifact.uploadDate)}
-                          artifact_scan_date_parsed: null
-                      - if: >-
-                          ${artifact.status == 'PROCESS_COMPLETE' && !#isBlank(artifact_scan_date)
-                          && artifact._embed.scans?.^[type=='WEBINSPECT'] != null}
-                        do:
-                          - var.set:
-                              dast_artifact_found: true
-                          - var.set:
-                              artifact_scan_date_parsed: ${#date(artifact_scan_date)}
-                            on.fail:
-                              - var.set:
-                                  latest_dast_scan_invalid: true
-                                  latest_dast_scan_date: "${latest_dast_scan_date == null ? artifact_scan_date : latest_dast_scan_date}"
-                              - log.warn: >-
-                                  Ignoring invalid DAST scan date for
-                                  ${candidate.project_name}:${candidate.version_name}; selecting the version for audit
-                          - if: >-
-                              ${artifact_scan_date_parsed != null && (latest_dast_scan_date_parsed == null
-                              || #date(artifact_scan_date).isAfter(#date(latest_dast_scan_date)))}
-                            var.set:
-                              latest_dast_scan_date: ${artifact_scan_date}
-                              latest_dast_scan_date_parsed: ${artifact_scan_date_parsed}
+                      - if: ${latest_dast_scan_date == null && artifact.status == 'PROCESS_COMPLETE' && !#isBlank(artifact_scan_date) && artifact._embed.scans?.^[type=='WEBINSPECT'] != null}
+                        var.set:
+                          latest_dast_scan_date: ${artifact_scan_date}
                   on.fail:
                     - var.set:
                         candidate_selection_failed: true
                         stats.selection_failures: ${stats.selection_failures + 1}
                         stats.failures: ${stats.failures + 1}
                     - log.warn: "Unable to inspect DAST artifacts for ${candidate.project_name}:${candidate.version_name}; skipping this version and continuing"
-            - if: ${!candidate_selection_failed && !dast_artifact_found}
+            - if: ${!candidate_selection_failed && latest_dast_scan_date == null}
               do:
                 - var.set:
                     stats.missing_dast_skipped: ${stats.missing_dast_skipped + 1}
-            - if: ${!candidate_selection_failed && dast_artifact_found}
+            - if: ${!candidate_selection_failed && latest_dast_scan_date != null}
               do:
                 - rest.call:
                     candidate_attributes:
@@ -359,15 +341,17 @@ steps:
                         - log.warn: "Unable to inspect DAST audit state for ${candidate.project_name}:${candidate.version_name}; skipping this version and continuing"
                 - if: ${!candidate_selection_failed && !#isBlank(last_dast_audit_value)}
                   var.set:
-                    last_dast_audit_date_parsed: ${#date(last_dast_audit_value)}
+                    dast_scan_after_last_audit: ${#date(latest_dast_scan_date).isAfter(#date(last_dast_audit_value))}
                   on.fail:
                     - var.set:
-                        last_dast_audit_invalid: true
-                    - log.warn: "Ignoring invalid last_dast_audit value for ${candidate.project_name}:${candidate.version_name}; selecting the version for audit"
-                - if: ${!candidate_selection_failed && !latest_dast_scan_invalid && !#isBlank(last_dast_audit_value) && !last_dast_audit_invalid && !#date(latest_dast_scan_date).isAfter(#date(last_dast_audit_value))}
+                        candidate_selection_failed: true
+                        stats.selection_failures: ${stats.selection_failures + 1}
+                        stats.failures: ${stats.failures + 1}
+                    - log.warn: "Unable to compare DAST scan date '${latest_dast_scan_date}' with last_dast_audit '${last_dast_audit_value}' for ${candidate.project_name}:${candidate.version_name}; skipping this version and continuing"
+                - if: ${!candidate_selection_failed && !#isBlank(last_dast_audit_value) && !dast_scan_after_last_audit}
                   var.set:
                     stats.unchanged_skipped: ${stats.unchanged_skipped + 1}
-                - if: "${!candidate_selection_failed && (latest_dast_scan_invalid || #isBlank(last_dast_audit_value) || last_dast_audit_invalid || #date(latest_dast_scan_date).isAfter(#date(last_dast_audit_value)))}"
+                - if: ${!candidate_selection_failed && (#isBlank(last_dast_audit_value) || dast_scan_after_last_audit)}
                   var.set:
                     selected_versions..: {fmt: selected_version}
 
