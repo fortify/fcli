@@ -13,4 +13,4 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
-    uses: fortify/shared-github/.github/workflows/reusable-update-repo-docs.yml@d9552c48d8270d8e320ff2ab4d356c8a69356686
+    uses: fortify/shared-github/.github/workflows/reusable-update-repo-docs.yml@f770891b6964394472880428517a4b5c7cd57740
