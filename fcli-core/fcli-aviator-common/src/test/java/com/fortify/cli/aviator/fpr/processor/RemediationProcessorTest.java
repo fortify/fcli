@@ -810,6 +810,41 @@ class RemediationProcessorTest {
         assertEquals(afterFirst, Files.readString(sourceFile), "the second FPR must leave the file untouched");
     }
 
+    /**
+     * Regression test for coordinate-space mismatch bug: HunkClassifier must compare declared
+     * (pristine-file) line numbers against declared ranges, not actual (post-shift) ranges, when
+     * pre-classifying narrower hunks nested inside a broader fix that shifted them. The broader
+     * fix (wide-deletes) declares lines 1-5 and deletes them, replacing with 2 lines (delta -3).
+     * The narrower fix (narrow-inside) declares line 3, which sits inside 1-5's declared range.
+     * Before the fix, classifyRange would compare declared-3 against the broader hunk's ACTUAL
+     * range (which is now at a shifted position), missing the nesting; after the fix, it compares
+     * declared-against-declared and correctly classifies as POSSIBLY_REMEDIATED.
+     */
+    @Test
+    void narrowerRemediationInsideBroaderDeleteIsClassifiedAsPossiblyRemediated() throws Exception {
+        String originalSource = "line1\nline2\nline3\nline4\nline5\nline6\n";
+        writeSourceFile("Example.java", originalSource);
+        Path fprPath = buildFpr(List.of(
+            new MultiHunkRemediationSpec("wide-deletes", List.of(new FileSpec("Example.java", List.of(
+                new HunkSpec(1, 5, 0, 0,
+                    "line1\nline2\nline3\nline4\nline5",
+                    "line1\nline2\nline3\nline4\nline5",
+                    "replacement1\nreplacement2"))))),
+            new MultiHunkRemediationSpec("narrow-inside", List.of(new FileSpec("Example.java", List.of(
+                new HunkSpec(3, 3, 1, 1, "line2\nline3\nline4",
+                    "line3", "line3-modified")))))));
+
+        RemediationMetric metric = apply(fprPath);
+
+        assertEquals(2, metric.totalRemediations());
+        assertEquals(1, metric.appliedRemediations(), "the broader fix must be applied");
+        assertEquals(1, metric.possiblyRemediatedRemediations(),
+            "the narrower fix's declared line 3 sits inside the broader fix's declared 1-5, so it must be "
+                + "pre-classified as POSSIBLY_REMEDIATED even though its actual position shifted");
+        assertEquals(0, metric.skippedRemediations(),
+            "no remediation should be skipped; the narrower one must not fail with ANCHOR_DOES_NOT_MATCH");
+    }
+
     private record HunkSpec(int lineFrom, int lineTo, int contextBefore, int contextAfter,
             String context, String originalCode, String newCode) {}
 

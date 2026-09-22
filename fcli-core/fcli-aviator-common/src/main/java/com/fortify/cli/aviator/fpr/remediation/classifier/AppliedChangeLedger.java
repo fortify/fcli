@@ -84,6 +84,8 @@ public final class AppliedChangeLedger {
         return AppliedChange.builder()
             .originalLineFrom(pac.lineFrom())
             .originalLineTo(pac.lineTo())
+            .declaredLineFrom(pac.declaredLineFrom())
+            .declaredLineTo(pac.declaredLineTo())
             .deltaLines(pac.deltaLines())
             .comparisonCode(pac.comparisonCode())
             .lineNormalizedCode(pac.lineNormalizedCode())

@@ -80,13 +80,13 @@ public final class HunkClassifier {
      */
     private HunkOutcome classifyRange(int lineFrom, int lineTo, List<AppliedChange> applied, String candidateComparisonCode) {
         for (AppliedChange ac : applied) {
-            if (ac.coversFully(lineFrom, lineTo)) {
+            if (ac.coversDeclaredRange(lineFrom, lineTo)) {
                 if (ac.contentCovers(candidateComparisonCode, lineFrom, lineTo)) {
                     return HunkOutcome.SUPERSEDED;
                 }
                 return HunkOutcome.POSSIBLY_REMEDIATED;
             }
-            if (ac.overlapsPartially(lineFrom, lineTo)) {
+            if (ac.overlapsDeclaredRangePartially(lineFrom, lineTo)) {
                 return HunkOutcome.CONFLICTS;
             }
         }

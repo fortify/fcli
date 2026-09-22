@@ -14,6 +14,6 @@ package com.fortify.cli.aviator.fpr.remediation.classifier;
 
 import java.nio.file.Path;
 
-public record PendingAppliedChange(Path filePath, int lineFrom, int lineTo, int deltaLines,
-                                    String comparisonCode, String lineNormalizedCode) {
+public record PendingAppliedChange(Path filePath, int lineFrom, int lineTo, int declaredLineFrom, int declaredLineTo,
+                                    int deltaLines, String comparisonCode, String lineNormalizedCode) {
 }
