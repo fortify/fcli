@@ -67,8 +67,9 @@ public final class AppliedChange {
 
     /** True if [lineFrom, lineTo] overlaps this change's original range without either side fully containing the other. */
     public boolean overlapsPartially(int lineFrom, int lineTo) {
-        boolean disjoint = lineTo < originalLineFrom || lineFrom > originalLineTo;
-        return !disjoint;
+        boolean overlaps = lineFrom <= originalLineTo && originalLineFrom <= lineTo;
+        boolean candidateContainsThis = lineFrom <= originalLineFrom && originalLineTo <= lineTo;
+        return overlaps && !coversFully(lineFrom, lineTo) && !candidateContainsThis;
     }
 
     /** True if this change's declared range fully contains [lineFrom, lineTo]. */
@@ -79,7 +80,8 @@ public final class AppliedChange {
     /** True if [lineFrom, lineTo] overlaps this change's declared range without either side fully containing the other. */
     public boolean overlapsDeclaredRangePartially(int lineFrom, int lineTo) {
         boolean overlaps = lineFrom <= declaredLineTo && declaredLineFrom <= lineTo;
-        return overlaps && !coversDeclaredRange(lineFrom, lineTo);
+        boolean candidateContainsThis = lineFrom <= declaredLineFrom && declaredLineTo <= lineTo;
+        return overlaps && !coversDeclaredRange(lineFrom, lineTo) && !candidateContainsThis;
     }
 
     /**
