@@ -57,6 +57,7 @@ public class FoDIssueGetCommand extends AbstractFoDOutputCommand {
         String releaseId = releaseDescriptor.getReleaseId().toString();
         HttpRequest<?> request = unirest.get(FoDUrls.VULNERABILITIES)
                 .routeParam("relId", releaseId)
+                .queryString("excludeFilters", "true") // fcli never consumes the top-level 'filters' object; excluding it improves FoD-side performance
                 .queryString("filters", "vulnId:" + vulnId)
                 .queryString("includeFixed", "true")
                 .queryString("includeSuppressed", "true")
