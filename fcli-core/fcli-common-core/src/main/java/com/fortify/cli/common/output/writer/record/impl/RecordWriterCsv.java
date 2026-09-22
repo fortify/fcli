@@ -19,6 +19,7 @@ import java.util.function.Function;
 import com.fasterxml.jackson.core.JsonGenerator.Feature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.node.TextNode;
 import com.fasterxml.jackson.dataformat.csv.CsvFactory;
 import com.fasterxml.jackson.dataformat.csv.CsvGenerator;
 import com.fasterxml.jackson.dataformat.csv.CsvSchema;
@@ -30,11 +31,27 @@ import lombok.RequiredArgsConstructor;
 // TODO This class uses a Jackson generator, so should we extend from AbstractRecordWriterJackson? 
 @RequiredArgsConstructor
 public class RecordWriterCsv extends AbstractRecordWriter<CsvGenerator> {
+    // Leading characters that spreadsheet applications interpret as the start of a formula
+    private static final String FORMULA_TRIGGER_CHARS = "=+-@\t\r\n";
     @Getter private final RecordWriterConfig config;
     
     @Override
     protected void append(CsvGenerator out, ObjectNode formattedRecord) throws IOException {
-        out.writeTree(formattedRecord);
+        out.writeTree(escapeFormulas(formattedRecord));
+    }
+
+    /** Neutralize CSV formula injection by prefixing affected text values with a single quote. */
+    private static ObjectNode escapeFormulas(ObjectNode formattedRecord) {
+        formattedRecord.fields().forEachRemaining(e->{
+            var value = e.getValue();
+            if ( value!=null && value.isTextual() ) {
+                var text = value.textValue();
+                if ( !text.isEmpty() && FORMULA_TRIGGER_CHARS.indexOf(text.charAt(0))>=0 ) {
+                    e.setValue(new TextNode("'"+text));
+                }
+            }
+        });
+        return formattedRecord;
     }
     
     @Override
