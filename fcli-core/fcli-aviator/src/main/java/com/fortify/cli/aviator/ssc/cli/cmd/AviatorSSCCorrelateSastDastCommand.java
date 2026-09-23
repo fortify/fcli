@@ -15,6 +15,8 @@ package com.fortify.cli.aviator.ssc.cli.cmd;
 import static com.fortify.cli.ssc.artifact.helper.SSCArtifactHelper.getLatestDASTArtifact;
 import static com.fortify.cli.ssc.artifact.helper.SSCArtifactHelper.getLatestSASTArtifact;
 
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.List;
@@ -33,15 +35,15 @@ import com.fortify.cli.aviator.dast.DastIssue;
 import com.fortify.cli.aviator.fpr.Vulnerability;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClient;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClientHelper;
-import com.fortify.cli.aviator.grpc.CorrelatedPair;
 import com.fortify.cli.aviator.grpc.CorrelationResult;
 import com.fortify.cli.aviator.grpc.CorrelationStreamConfig;
 import com.fortify.cli.aviator.grpc.CorrelationStreamProcessor;
 import com.fortify.cli.aviator.ssc.helper.AviatorSSCAttributeHelper;
-import com.fortify.cli.aviator.ssc.helper.AviatorSSCCorrelateDownloadHelper;
 import com.fortify.cli.aviator.ssc.helper.AviatorSSCCorrelateFprParser;
 import com.fortify.cli.aviator.ssc.helper.AviatorSSCCorrelateFprParser.ParseResult;
 import com.fortify.cli.aviator.ssc.helper.AviatorSSCCorrelateHelper;
+import com.fortify.cli.aviator.ssc.helper.AviatorSSCFprTransferHelper;
+import com.fortify.cli.aviator.ssc.helper.AviatorSSCRefreshHelper;
 import com.fortify.cli.aviator.ssc.helper.CategoryBucket;
 import com.fortify.cli.aviator.ssc.helper.CategoryGrouper;
 import com.fortify.cli.aviator.ssc.helper.DastFprCorrelationEnricher;
@@ -52,9 +54,9 @@ import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.progress.cli.mixin.ProgressWriterFactoryMixin;
 import com.fortify.cli.common.progress.helper.IProgressWriter;
 import com.fortify.cli.ssc._common.output.cli.cmd.AbstractSSCJsonNodeOutputCommand;
+import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionRefreshOptions;
 import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionResolverMixin;
 import com.fortify.cli.ssc.appversion.helper.SSCAppVersionDescriptor;
-import com.fortify.cli.ssc.artifact.helper.SSCArtifactDescriptor;
 
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
@@ -69,6 +71,7 @@ public class AviatorSSCCorrelateSastDastCommand extends AbstractSSCJsonNodeOutpu
     @Mixin private ProgressWriterFactoryMixin progressWriterFactoryMixin;
     @Mixin private SSCAppVersionResolverMixin.RequiredOption appVersionResolver;
     @Mixin private AviatorUserSessionDescriptorSupplier sessionDescriptorSupplier;
+    @Mixin private SSCAppVersionRefreshOptions refreshOptions;
     @Option(names = {"--app"}) private String appName;
 
     private static final Logger LOG = LoggerFactory.getLogger(AviatorSSCCorrelateSastDastCommand.class);
@@ -97,46 +100,84 @@ public class AviatorSSCCorrelateSastDastCommand extends AbstractSSCJsonNodeOutpu
         private final SSCAppVersionDescriptor av;
         private final AviatorUserSessionDescriptor sessionDescriptor;
 
-        private record DownloadedFprs(Path sastPath, Path dastPath, SSCArtifactDescriptor adDast) {}
+        private record CorrelationFiles(Path statePath, Path historyPath, boolean unchangedSinceCorrelation)
+                implements AutoCloseable {
+            @Override
+            public void close() {
+                deleteTemporaryFile(statePath);
+                deleteTemporaryFile(historyPath);
+            }
+        }
 
         JsonNode run() {
             logger.progress("Status: Starting SAST-DAST correlation for %s:%s", av.getApplicationName(), av.getVersionName());
 
-            var fprs = downloadFprs();
-            var sastResult = parseFpr(fprs.sastPath, "SAST");
-            var dastResult = parseFpr(fprs.dastPath, "DAST");
+            AviatorSSCRefreshHelper.refreshMetricsIfNeeded(
+                unirest, av, refreshOptions.isRefresh(), refreshOptions.getRefreshTimeout(), logger);
+            try (var files = downloadCorrelationFiles()) {
+                return correlate(files);
+            }
+        }
+
+        private JsonNode correlate(CorrelationFiles files) {
+            var sastResult = parseFpr(files.statePath(), "SAST");
+            var dastResult = parseFpr(files.statePath(), "DAST");
 
             var unsuppressedSast = filterUnsuppressedSast(sastResult);
             var unsuppressedDast = filterUnsuppressedDast(dastResult);
-            var alreadyTriedKeys = buildAlreadyTriedKeys(unsuppressedDast, fprs.sastPath, sastResult, dastResult);
+            var alreadyTriedKeys = buildAlreadyTriedKeys(
+                unsuppressedDast, files.statePath(), files.historyPath(), sastResult, dastResult);
+
+            if (files.unchangedSinceCorrelation() && !alreadyTriedKeys.isEmpty()) {
+                actionResult = "SKIPPED";
+                logger.progress("Status: No newer SAST or DAST scan found — skipping correlation and FPR upload.");
+                return AviatorSSCCorrelateHelper.buildOutputJson(
+                    av, null, CorrelationResult.empty(), actionResult);
+            }
 
             var mixedBuckets = groupByCategory(unsuppressedSast, unsuppressedDast);
-            int submitted = countNewSastFindings(mixedBuckets, alreadyTriedKeys);
 
-            var grpcResult = correlateViaGrpc(mixedBuckets, alreadyTriedKeys, submitted, sastResult);
-            String uploadedArtifactId = uploadCorrelatedFprs(fprs, grpcResult);
+            var grpcResult = correlateViaGrpc(mixedBuckets, alreadyTriedKeys, sastResult);
+            String uploadedArtifactId = uploadCorrelationResults(files.statePath(), grpcResult);
 
             logger.progress("Status: Correlation process complete for %s:%s — result: %s",
                 av.getApplicationName(), av.getVersionName(), actionResult);
             return AviatorSSCCorrelateHelper.buildOutputJson(
-                av, uploadedArtifactId, submitted, grpcResult.succeeded, grpcResult.confirmed, actionResult);
+                av, uploadedArtifactId, grpcResult, actionResult);
         }
 
-        private DownloadedFprs downloadFprs() {
+        private CorrelationFiles downloadCorrelationFiles() {
+            Path statePath = null;
+            Path historyPath = null;
             try {
-                logger.progress("Status: Downloading SAST FPR from SSC for %s:%s", av.getApplicationName(), av.getVersionName());
-                var adSast = getLatestSASTArtifact(unirest, av.getVersionId());
-                var sastPath = AviatorSSCCorrelateDownloadHelper.downloadArtifactFpr(unirest, adSast, logger, progressWriter);
-
-                logger.progress("Status: Downloading DAST FPR from SSC for %s:%s", av.getApplicationName(), av.getVersionName());
-                var adDast = getLatestDASTArtifact(unirest, av.getVersionId());
-                var dastPath = AviatorSSCCorrelateDownloadHelper.downloadArtifactFpr(unirest, adDast, logger, progressWriter);
-
-                AviatorSSCCorrelateHelper.validateDownloadedFpr(sastPath, "SAST");
-                AviatorSSCCorrelateHelper.validateDownloadedFpr(dastPath, "DAST");
-                return new DownloadedFprs(sastPath, dastPath, adDast);
-            } catch (java.io.IOException e) {
+                statePath = AviatorSSCFprTransferHelper.downloadCurrentStateFpr(
+                    unirest, av, logger, progressWriter);
+                var sastArtifact = getLatestSASTArtifact(unirest, av.getVersionId());
+                var historyArtifact = getLatestDASTArtifact(unirest, av.getVersionId());
+                historyPath = AviatorSSCFprTransferHelper.downloadArtifactFpr(
+                    unirest, historyArtifact, logger, progressWriter);
+                AviatorSSCCorrelateHelper.validateDownloadedFpr(statePath, "merged");
+                AviatorSSCCorrelateHelper.validateDownloadedFpr(historyPath, "correlation history");
+                boolean unchangedSinceCorrelation = AviatorSSCCorrelateHelper.isUnchangedSinceCorrelation(
+                    sastArtifact, historyArtifact);
+                return new CorrelationFiles(statePath, historyPath, unchangedSinceCorrelation);
+            } catch (IOException e) {
+                deleteTemporaryFile(statePath);
+                deleteTemporaryFile(historyPath);
                 throw new FcliSimpleException("Failed to download FPR from SSC: " + e.getMessage(), e);
+            } catch (RuntimeException e) {
+                deleteTemporaryFile(statePath);
+                deleteTemporaryFile(historyPath);
+                throw e;
+            }
+        }
+
+        private static void deleteTemporaryFile(Path path) {
+            if (path == null) return;
+            try {
+                Files.deleteIfExists(path);
+            } catch (IOException e) {
+                LOG.warn("Failed to delete temporary correlation FPR {}", path, e);
             }
         }
 
@@ -159,17 +200,20 @@ public class AviatorSSCCorrelateSastDastCommand extends AbstractSSCJsonNodeOutpu
                 .collect(Collectors.toList());
         }
 
-        private Set<String> buildAlreadyTriedKeys(List<DastIssue> unsuppressedDast, Path sastFprPath,
+        private Set<String> buildAlreadyTriedKeys(List<DastIssue> unsuppressedDast, Path statePath, Path historyPath,
                                                    ParseResult sastResult, ParseResult dastResult) {
             Set<String> confirmedPairKeys = buildPreviouslyCorrelatedPairKeys(unsuppressedDast);
-            Set<String> rejectedPairKeys = SastFprCorrelationRecorder.readTriedPairKeys(sastFprPath);
+            Set<String> statePairKeys = SastFprCorrelationRecorder.readTriedPairKeys(statePath);
+            Set<String> historyPairKeys = SastFprCorrelationRecorder.readTriedPairKeys(historyPath);
             Set<String> alreadyTriedKeys = new HashSet<>(confirmedPairKeys);
-            alreadyTriedKeys.addAll(rejectedPairKeys);
+            alreadyTriedKeys.addAll(statePairKeys);
+            alreadyTriedKeys.addAll(historyPairKeys);
 
             LOG.info("Total SAST issues {}", sastResult.vulnerabilities.size());
             LOG.info("Total DAST issues {}", dastResult.dastIssues.size());
             LOG.info("Confirmed pairs (from ExternalFindings): {}", confirmedPairKeys.size());
-            LOG.info("Pairs from DAST_CORRELATION_STATUS tag: {}", rejectedPairKeys.size());
+            LOG.info("Pairs from current-state DAST_CORRELATION_STATUS tags: {}", statePairKeys.size());
+            LOG.info("Pairs from latest successful DAST artifact tags: {}", historyPairKeys.size());
             LOG.info("Total already-tried pairs (will be skipped): {}", alreadyTriedKeys.size());
             return alreadyTriedKeys;
         }
@@ -183,18 +227,16 @@ public class AviatorSSCCorrelateSastDastCommand extends AbstractSSCJsonNodeOutpu
             return grouper.getMixedBuckets();
         }
 
-        private record GrpcResult(List<CorrelatedPair> confirmed, List<CorrelatedPair> rejected, int succeeded) {}
-
-        private GrpcResult correlateViaGrpc(List<CategoryBucket> mixedBuckets, Set<String> alreadyTriedKeys,
-                                            int submitted, ParseResult sastResult) {
+        private CorrelationResult correlateViaGrpc(List<CategoryBucket> mixedBuckets,
+                               Set<String> alreadyTriedKeys,
+                               ParseResult sastResult) {
             if (mixedBuckets.isEmpty()) {
                 actionResult = "SKIPPED";
                 logger.progress("Status: No mixed categories found — skipping correlation.");
-                return new GrpcResult(List.of(), List.of(), 0);
+                return CorrelationResult.empty();
             }
 
-            logger.progress("Status: Found %d mixed category bucket(s) with %d SAST findings to correlate",
-                mixedBuckets.size(), submitted);
+            logger.progress("Status: Found %d mixed category bucket(s) to correlate", mixedBuckets.size());
 
             var bucketData = mixedBuckets.stream()
                 .map(b -> new CorrelationStreamProcessor.CorrelationBucketData(
@@ -206,56 +248,54 @@ public class AviatorSSCCorrelateSastDastCommand extends AbstractSSCJsonNodeOutpu
                 appName != null ? appName : "",
                 av.getApplicationName(), av.getVersionName(), sastResult.buildId);
 
-            List<CorrelatedPair> confirmed;
-            List<CorrelatedPair> rejected;
-            int succeeded;
+            CorrelationResult result;
             try (var grpcClient = AviatorGrpcClientHelper.createClient(sessionDescriptor.getAviatorUrl(), logger, 30)) {
-                var result = performCorrelation(grpcClient, config, bucketData, sastResult.scanGuid, alreadyTriedKeys);
-                confirmed = result.confirmedPairs();
-                rejected = result.rejectedPairs();
-                succeeded = result.receivedCorrelationResponses();
+                result = performCorrelation(grpcClient, config, bucketData, sastResult.scanGuid, alreadyTriedKeys);
             }
 
-            logger.progress("Status: Correlation complete — %d of %d SAST findings confirmed as correlated",
-                confirmed.size(), submitted);
-            actionResult = succeeded == 0 ? "SKIPPED" : succeeded < submitted ? "PARTIALLY_CORRELATED" : "CORRELATED";
-            return new GrpcResult(confirmed, rejected, succeeded);
+            logger.progress("Status: Correlation complete — %d pairs confirmed from %d submitted SAST findings",
+                result.confirmedPairs().size(), result.submittedCorrelationRequests());
+            actionResult = getActionResult(result);
+            return result;
         }
 
-        private String uploadCorrelatedFprs(DownloadedFprs fprs, GrpcResult grpcResult) {
-            String uploadedArtifactId = null;
-            if (!grpcResult.confirmed.isEmpty()) {
-                uploadedArtifactId = uploadEnrichedDastFpr(fprs, grpcResult.confirmed);
-            } else {
-                logger.progress("Status: No correlated pairs found — skipping DAST FPR upload.");
-            }
-
-            if (!grpcResult.confirmed.isEmpty() || !grpcResult.rejected.isEmpty()) {
-                uploadTaggedSastFpr(fprs.sastPath, grpcResult.confirmed, grpcResult.rejected);
-                writeLastCorrelationTimestamp();
-            }
-            return uploadedArtifactId;
+        private String getActionResult(CorrelationResult result) {
+            int submitted = result.submittedCorrelationRequests();
+            int succeeded = result.successfulCorrelationResponses();
+            int skipped = result.skippedCorrelationResponses();
+            int failed = result.failedCorrelationResponses();
+            return submitted == 0 ? "SKIPPED"
+                : failed == submitted ? "FAILED"
+                : succeeded == 0 ? "SKIPPED"
+                : failed > 0 || skipped > 0 ? "PARTIALLY_CORRELATED" : "CORRELATED";
         }
 
-        private String uploadEnrichedDastFpr(DownloadedFprs fprs, List<CorrelatedPair> confirmed) {
-            logger.progress("Status: Injecting correlation data into DAST FPR (%d correlated pair(s))...", confirmed.size());
-            new DastFprCorrelationEnricher().injectAndRepackage(fprs.dastPath, confirmed);
+        private String uploadCorrelationResults(Path statePath, CorrelationResult result) {
+            if (result.confirmedPairs().isEmpty() && result.rejectedPairs().isEmpty()) {
+                logger.progress("Status: No correlation results found — skipping FPR upload.");
+                return null;
+            }
 
-            logger.progress("Status: Uploading correlated DAST FPR to SSC...");
-            String artifactId = AviatorSSCCorrelateDownloadHelper.uploadEnrichedDastFpr(
-                unirest, av, fprs.dastPath, progressWriter);
-            logger.progress("Status: Correlated DAST FPR uploaded successfully (artifact id=%s)", artifactId);
+            if (!result.confirmedPairs().isEmpty()) {
+                logger.progress("Status: Injecting correlation data into merged FPR (%d correlated pair(s))...",
+                    result.confirmedPairs().size());
+                new DastFprCorrelationEnricher().injectAndRepackage(statePath, result.confirmedPairs());
+            }
+            logger.progress("Status: Writing correlation status tags to merged FPR (%d confirmed, %d rejected)...",
+                result.confirmedPairs().size(), result.rejectedPairs().size());
+            SastFprCorrelationRecorder.writeCorrelationTags(
+                statePath, result.confirmedPairs(), result.rejectedPairs());
+
+            logger.progress("Status: Uploading correlated merged FPR to SSC...");
+            String artifactId = AviatorSSCFprTransferHelper.uploadFpr(
+                unirest, av, statePath, progressWriter);
+            logger.progress("Status: Correlated merged FPR uploaded (artifact id=%s)", artifactId);
+            logger.progress("Status: Waiting for correlated merged FPR processing...");
+            AviatorSSCFprTransferHelper.waitForArtifactProcessing(unirest, artifactId);
+            logger.progress("Status: Correlated merged FPR processing complete (artifact id=%s)", artifactId);
+
+            writeLastCorrelationTimestamp();
             return artifactId;
-        }
-
-        private void uploadTaggedSastFpr(Path sastPath, List<CorrelatedPair> confirmed, List<CorrelatedPair> rejected) {
-            logger.progress("Status: Writing correlation status tags to SAST FPR (%d confirmed, %d rejected)...",
-                confirmed.size(), rejected.size());
-            SastFprCorrelationRecorder.writeCorrelationTags(sastPath, confirmed, rejected);
-
-            logger.progress("Status: Uploading updated SAST FPR to SSC...");
-            AviatorSSCCorrelateDownloadHelper.uploadEnrichedSastFpr(unirest, av, sastPath, progressWriter);
-            logger.progress("Status: Updated SAST FPR uploaded successfully.");
         }
 
         private void writeLastCorrelationTimestamp() {
@@ -293,21 +333,6 @@ public class AviatorSSCCorrelateSastDastCommand extends AbstractSSCJsonNodeOutpu
         }
         LOG.debug("Built {} previously-correlated pair keys from ExternalFindings", keys.size());
         return keys;
-    }
-
-    private int countNewSastFindings(List<CategoryBucket> buckets, Set<String> alreadyTriedKeys) {
-        if (alreadyTriedKeys.isEmpty()) {
-            return buckets.stream().mapToInt(CategoryBucket::getSastCount).sum();
-        }
-        int count = 0;
-        for (CategoryBucket bucket : buckets) {
-            for (Vulnerability sast : bucket.getSastFindings()) {
-                boolean hasNewPairing = bucket.getDastFindings().stream()
-                    .anyMatch(dast -> !alreadyTriedKeys.contains(sast.getInstanceID() + "::" + dast.getId()));
-                if (hasNewPairing) count++;
-            }
-        }
-        return count;
     }
 
     @Override

@@ -15,20 +15,24 @@ package com.fortify.cli.aviator.ssc.helper;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Set;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.aviator.config.IAviatorLogger;
 import com.fortify.cli.common.exception.FcliTechnicalException;
 import com.fortify.cli.common.progress.helper.IProgressWriter;
+import com.fortify.cli.common.rest.wait.WaitHelper;
+import com.fortify.cli.common.rest.wait.WaitType;
 import com.fortify.cli.ssc._common.rest.ssc.SSCUrls;
 import com.fortify.cli.ssc._common.rest.ssc.transfer.SSCFileTransferHelper;
 import com.fortify.cli.ssc.appversion.helper.SSCAppVersionDescriptor;
 import com.fortify.cli.ssc.artifact.helper.SSCArtifactDescriptor;
+import com.fortify.cli.ssc.artifact.helper.SSCArtifactStatus;
 
 import kong.unirest.UnirestInstance;
 
 /**
- * Shared SSC transfer operations for DAST FPR workflows.
+ * Shared SSC transfer operations for Aviator FPR workflows.
  */
 public final class AviatorSSCFprTransferHelper {
     private AviatorSSCFprTransferHelper() {}
@@ -38,10 +42,19 @@ public final class AviatorSSCFprTransferHelper {
             SSCAppVersionDescriptor appVersion,
             IAviatorLogger logger,
             IProgressWriter progressWriter) throws IOException {
+        return downloadCurrentStateFpr(unirest, appVersion, logger, progressWriter, true);
+    }
+
+    public static Path downloadCurrentStateFpr(
+            UnirestInstance unirest,
+            SSCAppVersionDescriptor appVersion,
+            IAviatorLogger logger,
+            IProgressWriter progressWriter,
+            boolean includeSource) throws IOException {
         logger.progress("Status: Downloading current FPR state from SSC for app version %s:%s (id=%s)",
             appVersion.getApplicationName(), appVersion.getVersionName(), appVersion.getVersionId());
         return downloadFpr(unirest, "aviator_" + appVersion.getVersionId() + "_",
-            SSCUrls.DOWNLOAD_CURRENT_FPR(appVersion.getVersionId(), true), progressWriter);
+            SSCUrls.DOWNLOAD_CURRENT_FPR(appVersion.getVersionId(), includeSource), progressWriter);
     }
 
     public static Path downloadArtifactFpr(
@@ -78,25 +91,40 @@ public final class AviatorSSCFprTransferHelper {
         }
     }
 
-    public static String uploadDastFpr(
+    public static String uploadFpr(
             UnirestInstance unirest,
             SSCAppVersionDescriptor appVersion,
-            Path dastFpr,
+            Path fprPath,
             IProgressWriter progressWriter) {
         JsonNode uploadResponse = SSCFileTransferHelper.restUpload(
             unirest,
             SSCUrls.PROJECT_VERSION_ARTIFACTS(appVersion.getVersionId()),
-            dastFpr.toFile(),
+            fprPath.toFile(),
             JsonNode.class,
             progressWriter);
         return getUploadedArtifactId(uploadResponse);
+    }
+
+    public static void waitForArtifactProcessing(UnirestInstance unirest, String artifactId) {
+        WaitHelper.builder()
+            .recordSupplier(u -> u.get(SSCUrls.ARTIFACT(artifactId))
+                .asObject(JsonNode.class).getBody().path("data"))
+            .currentStateProperty("status")
+            .knownStates(SSCArtifactStatus.getKnownStateNames())
+            .failureStates(SSCArtifactStatus.getFailureStateNames())
+            .matchStates(Set.of(SSCArtifactStatus.PROCESS_COMPLETE.name()))
+            .intervalPeriod("1s")
+            .timeoutPeriod("10m")
+            .waitType(new WaitType(WaitType.LoopType.Until, WaitType.AnyOrAll.all_match))
+            .build()
+            .wait(unirest);
     }
 
     static String getUploadedArtifactId(JsonNode uploadResponse) {
         String artifactId = uploadResponse == null
             ? null : uploadResponse.path("data").path("id").asText(null);
         if (artifactId == null || artifactId.isBlank()) {
-            throw new FcliTechnicalException("SSC DAST FPR upload response did not contain an artifact ID");
+            throw new FcliTechnicalException("SSC FPR upload response did not contain an artifact ID");
         }
         return artifactId;
     }

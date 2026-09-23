@@ -39,6 +39,7 @@ import com.fortify.cli.aviator.grpc.DastAuditStreamProcessor;
 import com.fortify.cli.aviator.ssc.helper.AviatorSSCAttributeHelper;
 import com.fortify.cli.aviator.ssc.helper.AviatorSSCAuditHelper;
 import com.fortify.cli.aviator.ssc.helper.AviatorSSCFprTransferHelper;
+import com.fortify.cli.aviator.ssc.helper.AviatorSSCRefreshHelper;
 import com.fortify.cli.aviator.ssc.helper.AviatorSSCTagValidator;
 import com.fortify.cli.aviator.util.FprHandle;
 import com.fortify.cli.aviator.util.ResourceUtil;
@@ -51,9 +52,6 @@ import com.fortify.cli.ssc._common.output.cli.cmd.AbstractSSCJsonNodeOutputComma
 import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionRefreshOptions;
 import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionResolverMixin;
 import com.fortify.cli.ssc.appversion.helper.SSCAppVersionDescriptor;
-import com.fortify.cli.ssc.appversion.helper.SSCAppVersionHelper;
-import com.fortify.cli.ssc.system_state.helper.SSCJobDescriptor;
-import com.fortify.cli.ssc.system_state.helper.SSCJobHelper;
 
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
@@ -84,7 +82,8 @@ public class AviatorSSCDastAuditCommand extends AbstractSSCJsonNodeOutputCommand
             var session = sessionDescriptorSupplier.getSessionDescriptor();
             TagMappingConfig tagMappingConfig = loadTagMappingConfig();
 
-            refreshMetricsIfNeeded(unirest, appVersion, logger);
+            AviatorSSCRefreshHelper.refreshMetricsIfNeeded(
+                unirest, appVersion, refreshOptions.isRefresh(), refreshOptions.getRefreshTimeout(), logger);
 
             downloadedFpr = AviatorSSCFprTransferHelper.downloadCurrentStateFpr(
                 unirest, appVersion, logger, progressWriter);
@@ -96,7 +95,7 @@ public class AviatorSSCDastAuditCommand extends AbstractSSCJsonNodeOutputCommand
             if (result.updatedFile() != null && result.succeeded() > 0) {
                 validateSSCTagsBeforeUpload(unirest, appVersion, logger, tagMappingConfig);
                 logger.progress("Status: Uploading audited DAST FPR to SSC");
-                artifactId = AviatorSSCFprTransferHelper.uploadDastFpr(
+                artifactId = AviatorSSCFprTransferHelper.uploadFpr(
                     unirest, appVersion, downloadedFpr, progressWriter);
             }
             if (result.status() == DastAuditFprStatus.AUDITED
@@ -118,21 +117,6 @@ public class AviatorSSCDastAuditCommand extends AbstractSSCJsonNodeOutputCommand
                 } catch (Exception e) {
                     LOG.warn("Failed to delete temporary DAST FPR {}", downloadedFpr, e);
                 }
-            }
-        }
-    }
-
-    private void refreshMetricsIfNeeded(
-            UnirestInstance unirest,
-            SSCAppVersionDescriptor appVersion,
-            AviatorLoggerImpl logger) {
-        if (refreshOptions.isRefresh() && appVersion.isRefreshRequired()) {
-            logger.progress("Status: Metrics for application version %s:%s are out of date, starting refresh...",
-                appVersion.getApplicationName(), appVersion.getVersionName());
-            SSCJobDescriptor refreshJob = SSCAppVersionHelper.refreshMetrics(unirest, appVersion);
-            if (refreshJob != null) {
-                SSCJobHelper.waitForJob(unirest, refreshJob, refreshOptions.getRefreshTimeout());
-                logger.progress("Status: Metrics refreshed successfully.");
             }
         }
     }

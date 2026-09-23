@@ -24,10 +24,13 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.aviator.fpr.Vulnerability;
 import com.fortify.cli.aviator.fpr.model.AuditIssue;
 import com.fortify.cli.aviator.grpc.CorrelatedPair;
+import com.fortify.cli.aviator.grpc.CorrelationResult;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.ssc.appversion.helper.SSCAppVersionDescriptor;
+import com.fortify.cli.ssc.artifact.helper.SSCArtifactDescriptor;
+import com.fortify.cli.ssc.artifact.helper.SSCArtifactHelper;
 
 /**
  * Stateless utility helpers for the correlate-sast-dast command:
@@ -40,15 +43,38 @@ public final class AviatorSSCCorrelateHelper {
 
     /**
      * Builds the final JSON output node for the correlate-sast-dast command.
+     * Submitted and succeeded describe Phase 1 SAST finding requests, matching
+     * SAST audit semantics. Correlated counts newly confirmed Phase 2 pairs.
      */
+    public static ObjectNode buildOutputJson(SSCAppVersionDescriptor av,
+                                              String artifactId,
+                                              CorrelationResult correlationResult,
+                                              String actionResult) {
+        return buildOutputJson(
+            av,
+            artifactId,
+            correlationResult.submittedCorrelationRequests(),
+            correlationResult.successfulCorrelationResponses(),
+            correlationResult.skippedCorrelationResponses(),
+            correlationResult.failedCorrelationResponses(),
+            correlationResult.confirmedPairs(),
+            actionResult
+        );
+    }
+
     public static ObjectNode buildOutputJson(SSCAppVersionDescriptor av,
                                               String artifactId,
                                               int submitted,
                                               int succeeded,
+                                              int skipped,
+                                              int failed,
                                               List<CorrelatedPair> newPairs,
                                               String actionResult) {
         int correlated = newPairs.size();
-        int skipped = submitted - succeeded;
+                            int normalizedSucceeded = Math.max(0, Math.min(succeeded, submitted));
+        int normalizedSkipped = Math.max(0, Math.min(skipped, submitted - normalizedSucceeded));
+        int normalizedFailed = Math.max(0, Math.min(failed,
+            submitted - normalizedSucceeded - normalizedSkipped));
 
         ObjectNode result = JsonHelper.getObjectMapper().createObjectNode();
         result.put("id", av.getVersionId());
@@ -65,17 +91,20 @@ public final class AviatorSSCCorrelateHelper {
         ObjectNode correlate = operation.putObject("correlate");
 
         if (submitted > 0) {
-            String message = String.format("%d SAST findings submitted, %d correlated pairs confirmed",
-                    submitted, correlated);
+            String message = String.format(
+                "%d SAST findings submitted: %d succeeded, %d skipped, %d failed; %d correlated pairs confirmed",
+                submitted, normalizedSucceeded, normalizedSkipped, normalizedFailed, correlated);
             correlate.put("message", message);
             correlate.put("submitted", submitted);
-            correlate.put("succeeded", succeeded);
-            correlate.put("skipped", skipped);
+            correlate.put("succeeded", normalizedSucceeded);
+            correlate.put("skipped", normalizedSkipped);
+            correlate.put("failed", normalizedFailed);
         } else {
             correlate.putNull("message");
             correlate.putNull("submitted");
             correlate.putNull("succeeded");
             correlate.putNull("skipped");
+            correlate.putNull("failed");
         }
         correlate.put("correlated", correlated);
 
@@ -91,6 +120,17 @@ public final class AviatorSSCCorrelateHelper {
         }
         AuditIssue auditIssue = auditIssueMap.get(vuln.getInstanceID());
         return auditIssue != null && auditIssue.isSuppressed();
+    }
+
+    /**
+     * Returns whether the latest successful SAST and DAST scans are from the same
+     * Aviator-generated mixed artifact.
+     */
+    public static boolean isUnchangedSinceCorrelation(
+            SSCArtifactDescriptor sastArtifact,
+            SSCArtifactDescriptor dastArtifact) {
+        return sastArtifact.getId().equals(dastArtifact.getId())
+            && SSCArtifactHelper.isAviatorArtifact(dastArtifact);
     }
 
     /**

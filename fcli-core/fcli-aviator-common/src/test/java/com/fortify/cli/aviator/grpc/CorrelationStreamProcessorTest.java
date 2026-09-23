@@ -15,9 +15,11 @@ package com.fortify.cli.aviator.grpc;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertIterableEquals;
 
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 
@@ -59,6 +61,25 @@ class CorrelationStreamProcessorTest {
         );
     }
 
+    @Test
+    void buildCorrelationWorkItemsSkipsFindingWhenAllPairsWereTried() throws Exception {
+        CorrelationStreamProcessor processor = new CorrelationStreamProcessor(null, null, null, null, 0, 0);
+        CorrelationStreamProcessor.CorrelationBucketData bucket = createBucket(
+            "SQL Injection",
+            List.of("https://example.com/login", "https://example.com/admin")
+        );
+        Map<String, List<DastIssue>> urlMap = invokeBuildUrlToDastMap(processor, List.of(bucket));
+        setField(processor, "urlToDastIssues", urlMap);
+        setField(processor, "previouslyTriedPairKeys", Set.of(
+            "SAST-1::https://example.com/login",
+            "SAST-1::https://example.com/admin"
+        ));
+
+        List<?> items = invokeBuildCorrelationWorkItems(processor, List.of(bucket));
+
+        assertEquals(0, items.size());
+    }
+
     private CorrelationStreamProcessor.CorrelationBucketData createBucket(String category, List<String> sessionUrls) {
         List<DastIssue> dastIssues = sessionUrls.stream()
             .map(this::createDastIssue)
@@ -95,5 +116,11 @@ class CorrelationStreamProcessorTest {
         Method method = workItem.getClass().getDeclaredMethod("dastUrls");
         method.setAccessible(true);
         return (List<String>) method.invoke(workItem);
+    }
+
+    private void setField(CorrelationStreamProcessor processor, String fieldName, Object value) throws Exception {
+        Field field = CorrelationStreamProcessor.class.getDeclaredField(fieldName);
+        field.setAccessible(true);
+        field.set(processor, value);
     }
 }

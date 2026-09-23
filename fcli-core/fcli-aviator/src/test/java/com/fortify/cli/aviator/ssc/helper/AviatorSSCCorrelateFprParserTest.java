@@ -66,6 +66,26 @@ class AviatorSSCCorrelateFprParserTest {
         assertEquals("SQL Injection", result.dastIssues.get(0).getName());
     }
 
+    @Test
+    void parseDastFprMapsSuppressionFromAuditState() throws Exception {
+        Path fprPath = createMinimalDastFpr(true, true);
+
+        AviatorSSCCorrelateFprParser.ParseResult result = AviatorSSCCorrelateFprParser.parseDastFpr(fprPath);
+
+        assertEquals(1, result.dastIssues.size());
+        assertTrue(result.dastIssues.get(0).isSuppressed());
+    }
+
+    @Test
+    void parseSastFprMapsSuppressionFromAuditState() throws Exception {
+        Path fprPath = createMinimalSastFpr(true);
+
+        AviatorSSCCorrelateFprParser.ParseResult result = AviatorSSCCorrelateFprParser.parseSastFpr(fprPath);
+
+        assertEquals(1, result.vulnerabilities.size());
+        assertTrue(result.vulnerabilities.get(0).isSuppressed());
+    }
+
     private Path createMinimalSastFpr(boolean includeAuditXml) throws Exception {
         Path fprPath = tempDir.resolve(includeAuditXml ? "sast-with-audit.fpr" : "sast-no-audit.fpr");
         if (Files.exists(fprPath)) {
@@ -133,7 +153,10 @@ class AviatorSSCCorrelateFprParserTest {
               <ProjectInfo>
                 <Name>TestProject</Name>
               </ProjectInfo>
-              <IssueList/>
+                            <IssueList>
+                                <Issue instanceId="instance-1" suppressed="true" revision="0"/>
+                                <Issue instanceId="DAST-1" suppressed="true" revision="0"/>
+                            </IssueList>
             </Audit>
             """;
     }

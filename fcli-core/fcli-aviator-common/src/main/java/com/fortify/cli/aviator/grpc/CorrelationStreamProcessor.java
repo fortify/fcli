@@ -20,6 +20,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -94,16 +95,15 @@ public class CorrelationStreamProcessor implements AutoCloseable {
     // Input data retained for building validation requests
     private List<CorrelationWorkItem> correlationWorkItems;
     private Map<String, List<DastIssue>> urlToDastIssues;
-    private final java.util.concurrent.ConcurrentHashMap<String, String> validationRequestToDastId =
-        new java.util.concurrent.ConcurrentHashMap<>();
+    private final Set<String> pendingCorrelationRequestIds = ConcurrentHashMap.newKeySet();
+    private final ConcurrentHashMap<String, String> validationRequestToDastId = new ConcurrentHashMap<>();
     private volatile CompletableFuture<CorrelationResult> resultFuture;
 
     /**
-     * Keys of SAST–DAST pairs that were confirmed in a previous run and should
-     * be skipped during both Phase 1 (correlation) and Phase 2 (validation).
+     * Keys of SAST–DAST pairs that were confirmed or rejected in a previous run.
      * Each key is formatted as {@code "sastInstanceId::dastIssueId"}.
      */
-    private Set<String> previouslyCorrelatedPairKeys = Set.of();
+    private Set<String> previouslyTriedPairKeys = Set.of();
 
     public CorrelationStreamProcessor(
             AviatorGrpcClient client,
@@ -122,23 +122,25 @@ public class CorrelationStreamProcessor implements AutoCloseable {
 
     /**
      * Entry point: run correlation on the provided mixed-category buckets.
-     * Previously confirmed pairs (from prior runs) are not re-processed.
+    * Previously tried pairs (from prior runs) are not re-processed.
      *
      * @param config                      stream init configuration (token, app name, etc.)
      * @param mixedBuckets                category buckets containing both SAST and DAST findings
      * @param scanGuid                    SAST scan UUID for building CorrelatedPair results
-     * @param previouslyCorrelatedPairKeys keys of already-confirmed pairs to skip, each formatted as
-     *                                    {@code "sastInstanceId::dastIssueId"}; may be {@code null}
+    * @param previouslyTriedPairKeys keys of already-tried pairs to skip, each formatted as
+    *                                {@code "sastInstanceId::dastIssueId"}; may be {@code null}
      * @return future that completes with the list of confirmed correlated pairs
      */
     public CompletableFuture<CorrelationResult> processCorrelation(
             CorrelationStreamConfig config,
             List<? extends Object> mixedBuckets,
             String scanGuid,
-            Set<String> previouslyCorrelatedPairKeys) {
+            Set<String> previouslyTriedPairKeys) {
 
-        this.previouslyCorrelatedPairKeys =
-            previouslyCorrelatedPairKeys != null ? previouslyCorrelatedPairKeys : Set.of();
+        this.previouslyTriedPairKeys =
+            previouslyTriedPairKeys != null ? previouslyTriedPairKeys : Set.of();
+        pendingCorrelationRequestIds.clear();
+        validationRequestToDastId.clear();
 
         // Build URL→DAST map first; needed to evaluate Phase 1 skip eligibility
         this.urlToDastIssues = buildUrlToDastMap(mixedBuckets);
@@ -149,7 +151,7 @@ public class CorrelationStreamProcessor implements AutoCloseable {
         urlToDastIssues.forEach((k,v)->LOG.debug(" For url {} no. of dast issues {}", k, v.size()));
         if (workItems.isEmpty()) {
             LOG.info("No SAST findings in mixed buckets; skipping correlation stream.");
-            return CompletableFuture.completedFuture(new CorrelationResult(List.of(), List.of(), 0));
+            return CompletableFuture.completedFuture(CorrelationResult.empty());
         }
 
         String streamId = UUID.randomUUID().toString();
@@ -165,6 +167,17 @@ public class CorrelationStreamProcessor implements AutoCloseable {
         startStream(resultFuture, scanGuid);
 
         return resultFuture;
+    }
+
+    private CorrelationResult createResultSnapshot() {
+        return new CorrelationResult(
+            new ArrayList<>(state.confirmedPairs),
+            new ArrayList<>(state.rejectedPairs),
+            state.totalCorrelationRequests,
+            state.successfulCorrelations.get(),
+            state.skippedCorrelations.get(),
+            state.failedCorrelations.get()
+        );
     }
 
     /**
@@ -220,6 +233,7 @@ public class CorrelationStreamProcessor implements AutoCloseable {
 
         for (var item : correlationWorkItems) {
             var req = buildCorrelationRequest(state.streamId, item);
+            pendingCorrelationRequestIds.add(req.getRequestId());
             requestHandler.sendRequest(
                 CorrelationClientMessage.newBuilder().setCorrelation(req).build()
             );
@@ -238,11 +252,7 @@ public class CorrelationStreamProcessor implements AutoCloseable {
         if (validationItems.isEmpty()) {
             logger.info("No candidates to validate. Completing stream.");
             if (!resultFuture.isDone()) {
-                resultFuture.complete(new CorrelationResult(
-                    new ArrayList<>(state.confirmedPairs),
-                    new ArrayList<>(state.rejectedPairs),
-                    state.successfulCorrelations.get()
-                ));
+                resultFuture.complete(createResultSnapshot());
             }
             requestHandler.complete();
             streamLatch.countDown();
@@ -312,11 +322,7 @@ public class CorrelationStreamProcessor implements AutoCloseable {
             state.currentPhase = CorrelationStreamState.Phase.COMPLETE;
             logger.info("Correlation stream completed — " + state.confirmedPairs.size() + " confirmed pairs");
             if (!resultFuture.isDone()) {
-                resultFuture.complete(new CorrelationResult(
-                    new ArrayList<>(state.confirmedPairs),
-                    new ArrayList<>(state.rejectedPairs),
-                    state.successfulCorrelations.get()
-                ));
+                resultFuture.complete(createResultSnapshot());
             }
             streamLatch.countDown();
         }
@@ -340,6 +346,10 @@ public class CorrelationStreamProcessor implements AutoCloseable {
     }
 
     private void handleCorrelationResponse(CorrelationResponse resp) {
+        if (!pendingCorrelationRequestIds.remove(resp.getRequestId())) {
+            LOG.warn("Ignoring correlation response for unknown or completed request {}", resp.getRequestId());
+            return;
+        }
         int received = state.receivedCorrelations.incrementAndGet();
         LOG.debug("Correlation response {}/{} for SAST {}: status={}",
             received, state.totalCorrelationRequests, resp.getSastId(), resp.getStatus());
@@ -356,7 +366,11 @@ public class CorrelationStreamProcessor implements AutoCloseable {
                     match.getRationale()
                 ));
             }
+        } else if ("SKIPPED".equalsIgnoreCase(resp.getStatus())) {
+            state.skippedCorrelations.incrementAndGet();
+            LOG.debug("Skipped correlation for SAST {}: {}", resp.getSastId(), resp.getNoCorrelationReason());
         } else {
+            state.failedCorrelations.incrementAndGet();
             LOG.debug("Non-OK correlation for SAST {}: {} — {}",
                 resp.getSastId(), resp.getStatus(), resp.getNoCorrelationReason());
         }
@@ -408,11 +422,7 @@ public class CorrelationStreamProcessor implements AutoCloseable {
                 state.confirmedPairs.size() + " confirmed pairs, " +
                 state.rejectedPairs.size() + " rejected pairs.");
             if (!resultFuture.isDone()) {
-                resultFuture.complete(new CorrelationResult(
-                    new ArrayList<>(state.confirmedPairs),
-                    new ArrayList<>(state.rejectedPairs),
-                    state.successfulCorrelations.get()
-                ));
+                resultFuture.complete(createResultSnapshot());
             }
             requestHandler.complete();
             streamLatch.countDown();
@@ -568,10 +578,10 @@ public class CorrelationStreamProcessor implements AutoCloseable {
                 if (dastUrls.isEmpty()) continue;
                 List<String> urlList = new ArrayList<>(dastUrls);
                 for (Vulnerability vuln : data.sastFindings()) {
-                    // Strip URLs where every mapped DAST issue is already confirmed with this SAST finding
+                    // Strip URLs where every mapped DAST issue was already tried with this SAST finding.
                     List<String> newUrls = filterNewUrls(vuln.getInstanceID(), urlList);
                     if (newUrls.isEmpty()) {
-                        LOG.debug("Skipping SAST finding {} from Phase 1 — all reachable DAST issues already confirmed",
+                        LOG.debug("Skipping SAST finding {} from Phase 1 — all reachable DAST issues already tried",
                             vuln.getInstanceID());
                         continue;
                     }
@@ -585,16 +595,16 @@ public class CorrelationStreamProcessor implements AutoCloseable {
 
     /**
      * Returns the subset of {@code urls} for which at least one mapped DAST issue
-     * is NOT yet confirmed with {@code sastInstanceId}.
+    * has NOT yet been tried with {@code sastInstanceId}.
      *
      * <ul>
      *   <li>URLs with no mapped DAST issues are kept (the server may resolve them).</li>
      *   <li>URLs where every mapped DAST issue is already in
-     *       {@link #previouslyCorrelatedPairKeys} are excluded — they add no new work.</li>
+    *       {@link #previouslyTriedPairKeys} are excluded — they add no new work.</li>
      * </ul>
      */
     private List<String> filterNewUrls(String sastInstanceId, List<String> urls) {
-        if (previouslyCorrelatedPairKeys.isEmpty()) return urls; // fast path: nothing confirmed yet
+        if (previouslyTriedPairKeys.isEmpty()) return urls;
         List<String> result = new ArrayList<>();
         for (String url : urls) {
             List<DastIssue> issues = urlToDastIssues.getOrDefault(url, List.of());
@@ -604,7 +614,7 @@ public class CorrelationStreamProcessor implements AutoCloseable {
             }
             boolean hasUncorrelated = issues.stream()
                 .filter(d -> d.getId() != null && !d.getId().isEmpty())
-                .anyMatch(d -> !previouslyCorrelatedPairKeys.contains(sastInstanceId + "::" + d.getId()));
+                .anyMatch(d -> !previouslyTriedPairKeys.contains(sastInstanceId + "::" + d.getId()));
             if (hasUncorrelated) {
                 result.add(url);
             }
@@ -645,8 +655,8 @@ public class CorrelationStreamProcessor implements AutoCloseable {
 
             for (DastIssue dastIssue : issues) {
                 String pairKey = match.sastInstanceId() + "::" + dastIssue.getId();
-                if (previouslyCorrelatedPairKeys.contains(pairKey)) {
-                    LOG.debug("Skipping already confirmed pair sast={} dast={} from Phase 2 validation",
+                if (previouslyTriedPairKeys.contains(pairKey)) {
+                    LOG.debug("Skipping already-tried pair sast={} dast={} from Phase 2 validation",
                         match.sastInstanceId(), dastIssue.getId());
                     continue;
                 }
