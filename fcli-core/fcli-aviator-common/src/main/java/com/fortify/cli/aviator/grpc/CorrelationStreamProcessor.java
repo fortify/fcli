@@ -170,14 +170,14 @@ public class CorrelationStreamProcessor implements AutoCloseable {
     }
 
     private CorrelationResult createResultSnapshot() {
-        return new CorrelationResult(
-            new ArrayList<>(state.confirmedPairs),
-            new ArrayList<>(state.rejectedPairs),
-            state.totalCorrelationRequests,
-            state.successfulCorrelations.get(),
-            state.skippedCorrelations.get(),
-            state.failedCorrelations.get()
-        );
+        return CorrelationResult.builder()
+            .confirmedPairs(new ArrayList<>(state.confirmedPairs))
+            .rejectedPairs(new ArrayList<>(state.rejectedPairs))
+            .submittedCorrelationRequests(state.totalCorrelationRequests)
+            .successfulCorrelationResponses(state.successfulCorrelations.get())
+            .skippedCorrelationResponses(state.skippedCorrelations.get())
+            .failedCorrelationResponses(state.failedCorrelations.get())
+            .build();
     }
 
     /**

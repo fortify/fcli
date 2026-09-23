@@ -15,19 +15,15 @@ package com.fortify.cli.aviator.ssc.helper;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Set;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.aviator.config.IAviatorLogger;
 import com.fortify.cli.common.exception.FcliTechnicalException;
 import com.fortify.cli.common.progress.helper.IProgressWriter;
-import com.fortify.cli.common.rest.wait.WaitHelper;
-import com.fortify.cli.common.rest.wait.WaitType;
 import com.fortify.cli.ssc._common.rest.ssc.SSCUrls;
 import com.fortify.cli.ssc._common.rest.ssc.transfer.SSCFileTransferHelper;
 import com.fortify.cli.ssc.appversion.helper.SSCAppVersionDescriptor;
 import com.fortify.cli.ssc.artifact.helper.SSCArtifactDescriptor;
-import com.fortify.cli.ssc.artifact.helper.SSCArtifactStatus;
 
 import kong.unirest.UnirestInstance;
 
@@ -103,21 +99,6 @@ public final class AviatorSSCFprTransferHelper {
             JsonNode.class,
             progressWriter);
         return getUploadedArtifactId(uploadResponse);
-    }
-
-    public static void waitForArtifactProcessing(UnirestInstance unirest, String artifactId) {
-        WaitHelper.builder()
-            .recordSupplier(u -> u.get(SSCUrls.ARTIFACT(artifactId))
-                .asObject(JsonNode.class).getBody().path("data"))
-            .currentStateProperty("status")
-            .knownStates(SSCArtifactStatus.getKnownStateNames())
-            .failureStates(SSCArtifactStatus.getFailureStateNames())
-            .matchStates(Set.of(SSCArtifactStatus.PROCESS_COMPLETE.name()))
-            .intervalPeriod("1s")
-            .timeoutPeriod("10m")
-            .waitType(new WaitType(WaitType.LoopType.Until, WaitType.AnyOrAll.all_match))
-            .build()
-            .wait(unirest);
     }
 
     static String getUploadedArtifactId(JsonNode uploadResponse) {

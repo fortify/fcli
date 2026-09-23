@@ -42,6 +42,7 @@ import com.fortify.cli.aviator.ssc.helper.AviatorSSCAttributeHelper;
 import com.fortify.cli.aviator.ssc.helper.AviatorSSCCorrelateFprParser;
 import com.fortify.cli.aviator.ssc.helper.AviatorSSCCorrelateFprParser.ParseResult;
 import com.fortify.cli.aviator.ssc.helper.AviatorSSCCorrelateHelper;
+import com.fortify.cli.aviator.ssc.helper.AviatorSSCCorrelateOutput;
 import com.fortify.cli.aviator.ssc.helper.AviatorSSCFprTransferHelper;
 import com.fortify.cli.aviator.ssc.helper.AviatorSSCRefreshHelper;
 import com.fortify.cli.aviator.ssc.helper.CategoryBucket;
@@ -133,8 +134,7 @@ public class AviatorSSCCorrelateSastDastCommand extends AbstractSSCJsonNodeOutpu
                 actionResult = "SKIPPED";
                 actionMessage = "No newer SAST or DAST scan found";
                 logger.progress("Status: No newer SAST or DAST scan found — skipping correlation and FPR upload.");
-                return AviatorSSCCorrelateHelper.buildOutputJson(
-                    av, null, CorrelationResult.empty(), actionResult, actionMessage);
+                return buildOutputJson(null, CorrelationResult.empty());
             }
 
             var mixedBuckets = groupByCategory(unsuppressedSast, unsuppressedDast);
@@ -144,8 +144,18 @@ public class AviatorSSCCorrelateSastDastCommand extends AbstractSSCJsonNodeOutpu
 
             logger.progress("Status: Correlation process complete for %s:%s — result: %s",
                 av.getApplicationName(), av.getVersionName(), actionResult);
-            return AviatorSSCCorrelateHelper.buildOutputJson(
-                av, uploadedArtifactId, grpcResult, actionResult);
+            return buildOutputJson(uploadedArtifactId, grpcResult);
+        }
+
+        private JsonNode buildOutputJson(String artifactId, CorrelationResult correlationResult) {
+            return AviatorSSCCorrelateOutput.builder()
+                .appVersion(av)
+                .artifactId(artifactId)
+                .correlationResult(correlationResult)
+                .actionResult(actionResult)
+                .message(actionMessage)
+                .build()
+                .toJsonNode();
         }
 
         private CorrelationFiles downloadCorrelationFiles() {

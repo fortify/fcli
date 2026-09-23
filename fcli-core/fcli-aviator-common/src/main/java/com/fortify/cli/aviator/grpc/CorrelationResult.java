@@ -14,6 +14,8 @@ package com.fortify.cli.aviator.grpc;
 
 import java.util.List;
 
+import lombok.Builder;
+
 /**
  * Holds the outcome of a full correlation stream run — both confirmed
  * and rejected SAST–DAST pairs, plus request statistics for the correlation phase.
@@ -25,6 +27,7 @@ import java.util.List;
  * @param skippedCorrelationResponses   number of Phase 1 requests skipped by the server
  * @param failedCorrelationResponses    number of Phase 1 requests that failed
  */
+@Builder
 public record CorrelationResult(
     List<CorrelatedPair> confirmedPairs,
     List<CorrelatedPair> rejectedPairs,
@@ -33,7 +36,13 @@ public record CorrelationResult(
     int skippedCorrelationResponses,
     int failedCorrelationResponses
 ) {
+    public CorrelationResult {
+        confirmedPairs = confirmedPairs == null ? List.of() : List.copyOf(confirmedPairs);
+        rejectedPairs = rejectedPairs == null ? List.of() : List.copyOf(rejectedPairs);
+    }
+
     public static CorrelationResult empty() {
-        return new CorrelationResult(List.of(), List.of(), 0, 0, 0, 0);
+        return CorrelationResult.builder()
+            .build();
     }
 }
