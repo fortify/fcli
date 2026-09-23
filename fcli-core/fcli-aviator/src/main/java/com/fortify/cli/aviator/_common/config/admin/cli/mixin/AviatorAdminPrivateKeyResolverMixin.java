@@ -16,6 +16,8 @@ import org.apache.commons.lang3.StringUtils;
 
 import com.fortify.cli.common.cli.mixin.CommonOptionMixins.AbstractTextResolverMixin;
 import com.fortify.cli.common.exception.FcliSimpleException;
+import com.fortify.cli.common.log.LogSensitivityLevel;
+import com.fortify.cli.common.log.MaskValue;
 
 import lombok.Getter;
 import picocli.CommandLine.Option;
@@ -23,6 +25,7 @@ import picocli.CommandLine.Option;
 /**
  * Mixin for resolving an Aviator admin private key from various sources (file, string, environment variable).
  */
+@MaskValue(sensitivity = LogSensitivityLevel.high, description = "AVIATOR ADMIN PRIVATE KEY")
 public class AviatorAdminPrivateKeyResolverMixin extends AbstractTextResolverMixin {
     @Option(names = {"--private-key", "-p"}, descriptionKey = "fcli.aviator.admin-config.create.private-key", paramLabel = "source", required = true, order = 3)
     @Getter private String privateKeySource;
