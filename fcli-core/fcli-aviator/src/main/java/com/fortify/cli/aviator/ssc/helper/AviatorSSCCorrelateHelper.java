@@ -50,6 +50,14 @@ public final class AviatorSSCCorrelateHelper {
                                               String artifactId,
                                               CorrelationResult correlationResult,
                                               String actionResult) {
+        return buildOutputJson(av, artifactId, correlationResult, actionResult, null);
+    }
+
+    public static ObjectNode buildOutputJson(SSCAppVersionDescriptor av,
+                                              String artifactId,
+                                              CorrelationResult correlationResult,
+                                              String actionResult,
+                                              String actionMessage) {
         return buildOutputJson(
             av,
             artifactId,
@@ -58,7 +66,8 @@ public final class AviatorSSCCorrelateHelper {
             correlationResult.skippedCorrelationResponses(),
             correlationResult.failedCorrelationResponses(),
             correlationResult.confirmedPairs(),
-            actionResult
+            actionResult,
+            actionMessage
         );
     }
 
@@ -70,8 +79,20 @@ public final class AviatorSSCCorrelateHelper {
                                               int failed,
                                               List<CorrelatedPair> newPairs,
                                               String actionResult) {
+        return buildOutputJson(av, artifactId, submitted, succeeded, skipped, failed, newPairs, actionResult, null);
+    }
+
+    public static ObjectNode buildOutputJson(SSCAppVersionDescriptor av,
+                                              String artifactId,
+                                              int submitted,
+                                              int succeeded,
+                                              int skipped,
+                                              int failed,
+                                              List<CorrelatedPair> newPairs,
+                                              String actionResult,
+                                              String actionMessage) {
         int correlated = newPairs.size();
-                            int normalizedSucceeded = Math.max(0, Math.min(succeeded, submitted));
+        int normalizedSucceeded = Math.max(0, Math.min(succeeded, submitted));
         int normalizedSkipped = Math.max(0, Math.min(skipped, submitted - normalizedSucceeded));
         int normalizedFailed = Math.max(0, Math.min(failed,
             submitted - normalizedSucceeded - normalizedSkipped));
@@ -90,17 +111,22 @@ public final class AviatorSSCCorrelateHelper {
         ObjectNode operation = result.putObject("operation");
         ObjectNode correlate = operation.putObject("correlate");
 
-        if (submitted > 0) {
+        if (actionMessage != null) {
+            correlate.put("message", actionMessage);
+        } else if (submitted > 0) {
             String message = String.format(
                 "%d SAST findings submitted: %d succeeded, %d skipped, %d failed; %d correlated pairs confirmed",
                 submitted, normalizedSucceeded, normalizedSkipped, normalizedFailed, correlated);
             correlate.put("message", message);
+        } else {
+            correlate.putNull("message");
+        }
+        if (submitted > 0) {
             correlate.put("submitted", submitted);
             correlate.put("succeeded", normalizedSucceeded);
             correlate.put("skipped", normalizedSkipped);
             correlate.put("failed", normalizedFailed);
         } else {
-            correlate.putNull("message");
             correlate.putNull("submitted");
             correlate.putNull("succeeded");
             correlate.putNull("skipped");

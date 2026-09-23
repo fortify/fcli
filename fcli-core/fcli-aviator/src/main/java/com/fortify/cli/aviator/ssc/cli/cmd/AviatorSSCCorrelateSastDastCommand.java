@@ -76,6 +76,7 @@ public class AviatorSSCCorrelateSastDastCommand extends AbstractSSCJsonNodeOutpu
 
     private static final Logger LOG = LoggerFactory.getLogger(AviatorSSCCorrelateSastDastCommand.class);
     private String actionResult = "CORRELATED";
+    private String actionMessage;
 
     @Override
     public JsonNode getJsonNode(UnirestInstance unirest) {
@@ -130,9 +131,10 @@ public class AviatorSSCCorrelateSastDastCommand extends AbstractSSCJsonNodeOutpu
 
             if (files.unchangedSinceCorrelation() && !alreadyTriedKeys.isEmpty()) {
                 actionResult = "SKIPPED";
+                actionMessage = "No newer SAST or DAST scan found";
                 logger.progress("Status: No newer SAST or DAST scan found — skipping correlation and FPR upload.");
                 return AviatorSSCCorrelateHelper.buildOutputJson(
-                    av, null, CorrelationResult.empty(), actionResult);
+                    av, null, CorrelationResult.empty(), actionResult, actionMessage);
             }
 
             var mixedBuckets = groupByCategory(unsuppressedSast, unsuppressedDast);
@@ -232,6 +234,7 @@ public class AviatorSSCCorrelateSastDastCommand extends AbstractSSCJsonNodeOutpu
                                ParseResult sastResult) {
             if (mixedBuckets.isEmpty()) {
                 actionResult = "SKIPPED";
+                actionMessage = "No issues present for correlation";
                 logger.progress("Status: No mixed categories found — skipping correlation.");
                 return CorrelationResult.empty();
             }
@@ -256,6 +259,9 @@ public class AviatorSSCCorrelateSastDastCommand extends AbstractSSCJsonNodeOutpu
             logger.progress("Status: Correlation complete — %d pairs confirmed from %d submitted SAST findings",
                 result.confirmedPairs().size(), result.submittedCorrelationRequests());
             actionResult = getActionResult(result);
+            if ("SKIPPED".equals(actionResult)) {
+                actionMessage = "No issues present for correlation";
+            }
             return result;
         }
 
@@ -290,10 +296,6 @@ public class AviatorSSCCorrelateSastDastCommand extends AbstractSSCJsonNodeOutpu
             String artifactId = AviatorSSCFprTransferHelper.uploadFpr(
                 unirest, av, statePath, progressWriter);
             logger.progress("Status: Correlated merged FPR uploaded (artifact id=%s)", artifactId);
-            logger.progress("Status: Waiting for correlated merged FPR processing...");
-            AviatorSSCFprTransferHelper.waitForArtifactProcessing(unirest, artifactId);
-            logger.progress("Status: Correlated merged FPR processing complete (artifact id=%s)", artifactId);
-
             writeLastCorrelationTimestamp();
             return artifactId;
         }

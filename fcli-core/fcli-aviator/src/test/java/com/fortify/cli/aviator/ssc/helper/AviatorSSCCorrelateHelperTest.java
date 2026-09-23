@@ -103,13 +103,14 @@ class AviatorSSCCorrelateHelperTest {
     @Test
     void testBuildOutputJson_noPairsSubmitted() {
         var av = createAppVersionDescriptor("42", "TestApp", "2.0");
-        var result = AviatorSSCCorrelateHelper.buildOutputJson(av, null, 0, 0, 0, 0, List.of(), "SKIPPED");
+        var result = AviatorSSCCorrelateHelper.buildOutputJson(
+            av, null, 0, 0, 0, 0, List.of(), "SKIPPED", "No issues present for correlation");
 
         assertTrue(result.get("artifactId").isNull());
         assertEquals("SKIPPED", result.get(IActionCommandResultSupplier.actionFieldName).asText());
 
         JsonNode correlate = result.get("operation").get("correlate");
-        assertTrue(correlate.get("message").isNull());
+        assertEquals("No issues present for correlation", correlate.get("message").asText());
         assertTrue(correlate.get("submitted").isNull());
         assertTrue(correlate.get("succeeded").isNull());
         assertTrue(correlate.get("skipped").isNull());
