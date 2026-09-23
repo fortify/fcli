@@ -33,6 +33,7 @@ import com.fortify.cli.aviator.audit.model.FPRAuditResult;
 import com.fortify.cli.aviator.config.AviatorLoggerImpl;
 import com.fortify.cli.aviator.config.TagMappingConfig;
 import com.fortify.cli.aviator.ssc.helper.AviatorSSCAuditHelper;
+import com.fortify.cli.aviator.ssc.helper.AviatorSSCRefreshHelper;
 import com.fortify.cli.aviator.ssc.helper.AviatorSSCTagValidator;
 import com.fortify.cli.aviator.util.FprHandle;
 import com.fortify.cli.aviator.util.ResourceUtil;
@@ -48,10 +49,7 @@ import com.fortify.cli.ssc._common.rest.ssc.transfer.SSCFileTransferHelper;
 import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionRefreshOptions;
 import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionResolverMixin;
 import com.fortify.cli.ssc.appversion.helper.SSCAppVersionDescriptor;
-import com.fortify.cli.ssc.appversion.helper.SSCAppVersionHelper;
 import com.fortify.cli.ssc.issue.cli.mixin.SSCIssueFilterSetOptionMixin;
-import com.fortify.cli.ssc.system_state.helper.SSCJobDescriptor;
-import com.fortify.cli.ssc.system_state.helper.SSCJobHelper;
 
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
@@ -94,7 +92,8 @@ abstract class AbstractAviatorSSCSastAuditCommand extends AbstractSSCJsonNodeOut
             AviatorLoggerImpl logger = new AviatorLoggerImpl(progressWriter);
             SSCAppVersionDescriptor av = appVersionResolver.getAppVersionDescriptor(unirest);
 
-            refreshMetricsIfNeeded(unirest, av, logger);
+            AviatorSSCRefreshHelper.refreshMetricsIfNeeded(
+                unirest, av, refreshOptions.isRefresh(), refreshOptions.getRefreshTimeout(), logger);
 
             long auditableIssueCount = AviatorSSCAuditHelper.getAuditableIssueCount(unirest, av, logger, isNoFilterSet(), getFilterSetTitleOrId(), folderNames);
             if (auditableIssueCount == 0) {
@@ -134,17 +133,6 @@ abstract class AbstractAviatorSSCSastAuditCommand extends AbstractSSCJsonNodeOut
 
     boolean isNoFilterSet() {
         return noFilterSet;
-    }
-
-    private void refreshMetricsIfNeeded(UnirestInstance unirest, SSCAppVersionDescriptor av, AviatorLoggerImpl logger) {
-        if (refreshOptions.isRefresh() && av.isRefreshRequired()) {
-            logger.progress("Status: Metrics for application version %s:%s are out of date, starting refresh...", av.getApplicationName(), av.getVersionName());
-            SSCJobDescriptor refreshJobDesc = SSCAppVersionHelper.refreshMetrics(unirest, av);
-            if (refreshJobDesc != null) {
-                SSCJobHelper.waitForJob(unirest, refreshJobDesc, refreshOptions.getRefreshTimeout());
-                logger.progress("Status: Metrics refreshed successfully.");
-            }
-        }
     }
 
     private boolean isSkipIfExceedingQuota() {

@@ -256,7 +256,8 @@ public final class SSCArtifactHelper {
             if (data == null || !data.isArray() || data.isEmpty()) { break; }
 
             for (JsonNode artifact : data) {
-                if (hasEmbeddedScanType(artifact, scanType)) {
+                if ("PROCESS_COMPLETE".equalsIgnoreCase(artifact.path("status").asText())
+                        && hasEmbeddedScanType(artifact, scanType)) {
                     return getDescriptor(artifact);
                 }
             }

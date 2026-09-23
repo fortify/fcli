@@ -31,15 +31,17 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.aviator.fpr.Vulnerability;
 import com.fortify.cli.aviator.fpr.model.AuditIssue;
 import com.fortify.cli.aviator.grpc.CorrelatedPair;
+import com.fortify.cli.aviator.grpc.CorrelationResult;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.ssc.appversion.helper.SSCAppVersionDescriptor;
+import com.fortify.cli.ssc.artifact.helper.SSCArtifactDescriptor;
 
 class AviatorSSCCorrelateHelperTest {
 
     @TempDir Path tempDir;
 
-    // ── buildOutputJson ──────────────────────────────────────────────────
+    // ── correlation output ───────────────────────────────────────────────
 
     @Test
     void testBuildOutputJson_withCorrelatedPairs() {
@@ -49,7 +51,19 @@ class AviatorSSCCorrelateHelperTest {
             new CorrelatedPair("SAST-2", "DAST-2", "scan-guid", "MEDIUM", "match")
         );
 
-        var result = AviatorSSCCorrelateHelper.buildOutputJson(av, "artifact-123", 5, 4, pairs, "CORRELATED");
+        var correlationResult = CorrelationResult.builder()
+            .confirmedPairs(pairs)
+            .submittedCorrelationRequests(5)
+            .successfulCorrelationResponses(4)
+            .skippedCorrelationResponses(1)
+            .build();
+        var result = AviatorSSCCorrelateOutput.builder()
+            .appVersion(av)
+            .artifactId("artifact-123")
+            .correlationResult(correlationResult)
+            .actionResult("CORRELATED")
+            .build()
+            .toJsonNode();
 
         assertEquals("37", result.get("id").asText());
         assertEquals("MyApp", result.get("applicationName").asText());
@@ -61,25 +75,81 @@ class AviatorSSCCorrelateHelperTest {
         assertEquals(5, correlate.get("submitted").asInt());
         assertEquals(4, correlate.get("succeeded").asInt());
         assertEquals(1, correlate.get("skipped").asInt());
+        assertEquals(0, correlate.get("failed").asInt());
         assertEquals(2, correlate.get("correlated").asInt());
         assertEquals(
-            "5 SAST findings submitted, 2 correlated pairs confirmed",
+            "5 SAST findings submitted: 4 succeeded, 1 skipped, 0 failed; 2 correlated pairs confirmed",
+            correlate.get("message").asText());
+    }
+
+    @Test
+    void testBuildOutputJson_moreSuccessfulResponsesThanSubmitted() {
+        var av = createAppVersionDescriptor("95", "APPHANDLE", "2");
+
+        var correlationResult = CorrelationResult.builder()
+            .submittedCorrelationRequests(40)
+            .successfulCorrelationResponses(46)
+            .build();
+        var result = AviatorSSCCorrelateOutput.builder()
+            .appVersion(av)
+            .artifactId("4168")
+            .correlationResult(correlationResult)
+            .actionResult("CORRELATED")
+            .build()
+            .toJsonNode();
+
+        JsonNode correlate = result.get("operation").get("correlate");
+        assertEquals(40, correlate.get("submitted").asInt());
+        assertEquals(40, correlate.get("succeeded").asInt());
+        assertEquals(0, correlate.get("skipped").asInt());
+        assertEquals(0, correlate.get("failed").asInt());
+    }
+
+    @Test
+    void testBuildOutputJson_failedResponsesAreNotReportedAsSkipped() {
+        var av = createAppVersionDescriptor("194", "cor1", "1.0");
+
+        var correlationResult = CorrelationResult.builder()
+            .submittedCorrelationRequests(53)
+            .failedCorrelationResponses(53)
+            .build();
+        var result = AviatorSSCCorrelateOutput.builder()
+            .appVersion(av)
+            .correlationResult(correlationResult)
+            .actionResult("FAILED")
+            .build()
+            .toJsonNode();
+
+        JsonNode correlate = result.get("operation").get("correlate");
+        assertEquals(53, correlate.get("submitted").asInt());
+        assertEquals(0, correlate.get("succeeded").asInt());
+        assertEquals(0, correlate.get("skipped").asInt());
+        assertEquals(53, correlate.get("failed").asInt());
+        assertEquals(
+            "53 SAST findings submitted: 0 succeeded, 0 skipped, 53 failed; 0 correlated pairs confirmed",
             correlate.get("message").asText());
     }
 
     @Test
     void testBuildOutputJson_noPairsSubmitted() {
         var av = createAppVersionDescriptor("42", "TestApp", "2.0");
-        var result = AviatorSSCCorrelateHelper.buildOutputJson(av, null, 0, 0, List.of(), "SKIPPED");
+        var result = AviatorSSCCorrelateOutput.builder()
+            .appVersion(av)
+            .correlationResult(CorrelationResult.empty())
+            .actionResult("SKIPPED")
+            .message("No issues present for correlation")
+            .build()
+            .toJsonNode();
 
         assertTrue(result.get("artifactId").isNull());
         assertEquals("SKIPPED", result.get(IActionCommandResultSupplier.actionFieldName).asText());
 
         JsonNode correlate = result.get("operation").get("correlate");
-        assertTrue(correlate.get("message").isNull());
+        assertEquals("No issues present for correlation", correlate.get("message").asText());
         assertTrue(correlate.get("submitted").isNull());
         assertTrue(correlate.get("succeeded").isNull());
         assertTrue(correlate.get("skipped").isNull());
+        assertTrue(correlate.get("failed").isNull());
         assertEquals(0, correlate.get("correlated").asInt());
     }
 
@@ -124,6 +194,32 @@ class AviatorSSCCorrelateHelperTest {
         assertFalse(AviatorSSCCorrelateHelper.isVulnerabilitySuppressed(vuln, auditMap));
     }
 
+    // ── isUnchangedSinceCorrelation ─────────────────────────────────────
+
+    @Test
+    void identifiesUnchangedAviatorCorrelationArtifact() {
+        var sastArtifact = createArtifact("100", "aviator_42_state.fpr");
+        var dastArtifact = createArtifact("100", "aviator_42_state.fpr");
+
+        assertTrue(AviatorSSCCorrelateHelper.isUnchangedSinceCorrelation(sastArtifact, dastArtifact));
+    }
+
+    @Test
+    void treatsNewUserMixedArtifactAsChanged() {
+        var sastArtifact = createArtifact("101", "mixed-scan.fpr");
+        var dastArtifact = createArtifact("101", "mixed-scan.fpr");
+
+        assertFalse(AviatorSSCCorrelateHelper.isUnchangedSinceCorrelation(sastArtifact, dastArtifact));
+    }
+
+    @Test
+    void treatsDifferentLatestArtifactsAsChanged() {
+        var sastArtifact = createArtifact("101", "sast.fpr");
+        var dastArtifact = createArtifact("102", "dast.fpr");
+
+        assertFalse(AviatorSSCCorrelateHelper.isUnchangedSinceCorrelation(sastArtifact, dastArtifact));
+    }
+
     // ── validateDownloadedFpr ────────────────────────────────────────────
 
     @Test
@@ -165,5 +261,12 @@ class AviatorSSCCorrelateHelperTest {
         descriptor.setApplicationName(appName);
         descriptor.setVersionName(versionName);
         return descriptor;
+    }
+
+    private SSCArtifactDescriptor createArtifact(String id, String originalFileName) {
+        var artifact = new SSCArtifactDescriptor();
+        artifact.setId(id);
+        artifact.asObjectNode().put("originalFileName", originalFileName);
+        return artifact;
     }
 }

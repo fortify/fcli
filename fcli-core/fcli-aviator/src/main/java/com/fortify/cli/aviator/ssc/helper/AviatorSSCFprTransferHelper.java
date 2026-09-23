@@ -28,7 +28,7 @@ import com.fortify.cli.ssc.artifact.helper.SSCArtifactDescriptor;
 import kong.unirest.UnirestInstance;
 
 /**
- * Shared SSC transfer operations for DAST FPR workflows.
+ * Shared SSC transfer operations for Aviator FPR workflows.
  */
 public final class AviatorSSCFprTransferHelper {
     private AviatorSSCFprTransferHelper() {}
@@ -38,10 +38,19 @@ public final class AviatorSSCFprTransferHelper {
             SSCAppVersionDescriptor appVersion,
             IAviatorLogger logger,
             IProgressWriter progressWriter) throws IOException {
+        return downloadCurrentStateFpr(unirest, appVersion, logger, progressWriter, true);
+    }
+
+    public static Path downloadCurrentStateFpr(
+            UnirestInstance unirest,
+            SSCAppVersionDescriptor appVersion,
+            IAviatorLogger logger,
+            IProgressWriter progressWriter,
+            boolean includeSource) throws IOException {
         logger.progress("Status: Downloading current FPR state from SSC for app version %s:%s (id=%s)",
             appVersion.getApplicationName(), appVersion.getVersionName(), appVersion.getVersionId());
         return downloadFpr(unirest, "aviator_" + appVersion.getVersionId() + "_",
-            SSCUrls.DOWNLOAD_CURRENT_FPR(appVersion.getVersionId(), true), progressWriter);
+            SSCUrls.DOWNLOAD_CURRENT_FPR(appVersion.getVersionId(), includeSource), progressWriter);
     }
 
     public static Path downloadArtifactFpr(
@@ -78,15 +87,15 @@ public final class AviatorSSCFprTransferHelper {
         }
     }
 
-    public static String uploadDastFpr(
+    public static String uploadFpr(
             UnirestInstance unirest,
             SSCAppVersionDescriptor appVersion,
-            Path dastFpr,
+            Path fprPath,
             IProgressWriter progressWriter) {
         JsonNode uploadResponse = SSCFileTransferHelper.restUpload(
             unirest,
             SSCUrls.PROJECT_VERSION_ARTIFACTS(appVersion.getVersionId()),
-            dastFpr.toFile(),
+            fprPath.toFile(),
             JsonNode.class,
             progressWriter);
         return getUploadedArtifactId(uploadResponse);
@@ -96,7 +105,7 @@ public final class AviatorSSCFprTransferHelper {
         String artifactId = uploadResponse == null
             ? null : uploadResponse.path("data").path("id").asText(null);
         if (artifactId == null || artifactId.isBlank()) {
-            throw new FcliTechnicalException("SSC DAST FPR upload response did not contain an artifact ID");
+            throw new FcliTechnicalException("SSC FPR upload response did not contain an artifact ID");
         }
         return artifactId;
     }
