@@ -26,6 +26,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.rest.unirest.UnirestHelper;
 import com.fortify.cli.common.rest.unirest.config.UnirestJsonHeaderConfigurer;
+import com.fortify.cli.common.rest.unirest.config.UnirestUnexpectedHttpResponseConfigurer;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 
@@ -62,6 +63,7 @@ class AviatorSSCAttributeHelperTest {
     private static UnirestInstance newUnirest(TestSscServer server) {
         return UnirestHelper.createUnirestInstance(unirest -> {
             UnirestJsonHeaderConfigurer.configure(unirest);
+            UnirestUnexpectedHttpResponseConfigurer.configure(unirest);
             unirest.config().defaultBaseUrl(server.getBaseUrl());
         });
     }

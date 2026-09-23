@@ -88,7 +88,10 @@ public class AviatorSSCAttributeHelper {
         writeTimestamp(unirest, versionId, AviatorSSCAttributeDefinitions.LAST_CORRELATION_ATTR);
     }
 
-    /** Writes the current UTC timestamp to the {@code last_dast_audit} attribute. */
+    /**
+     * Writes the current UTC timestamp to the {@code last_dast_audit} attribute.
+     * Same value shape as {@link #writeLastCorrelationTimestamp}: {@code Instant.now()}.
+     */
     public static void writeLastDastAuditTimestamp(UnirestInstance unirest, String versionId) {
         writeTimestamp(unirest, versionId, AviatorSSCAttributeDefinitions.LAST_DAST_AUDIT_ATTR);
     }
@@ -96,24 +99,18 @@ public class AviatorSSCAttributeHelper {
     /**
      * Writes the current UTC timestamp to the given attribute on the application version.
      *
-     * <p>This method assumes the attribute definition already exists — it must have
-     * been created by a prior {@code aviator ssc prepare} run. If the definition
-     * does not exist, SSC will reject the update and an error is thrown.
-     *
-     * @param unirest   active SSC session
-     * @param versionId SSC project version ID
+     * <p>A rejected update is logged and swallowed so the completed audit or correlation
+     * stays successful and bulk selection can retry the version.
      */
     private static void writeTimestamp(
             UnirestInstance unirest, String versionId, AttributeDefinition attributeDefinition) {
         String timestamp = Instant.now().toString();
         LOG.debug("Writing {} timestamp to app version {}", attributeDefinition.name(), versionId);
-
         try {
             new SSCAttributeUpdateBuilder(unirest)
                 .add(Map.of(attributeDefinition.category() + ":" + attributeDefinition.name(), timestamp))
                 .buildRequest(versionId)
                 .asObject(JsonNode.class);
-
             LOG.info("{} timestamp written to app version {}", attributeDefinition.name(), versionId);
         } catch (FcliSimpleException | UnirestException e) {
             LOG.warn("Could not write {} timestamp; the audit result remains successful but bulk selection may retry this version. "
