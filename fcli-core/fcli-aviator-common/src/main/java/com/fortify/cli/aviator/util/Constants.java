@@ -12,6 +12,9 @@
  */
 package com.fortify.cli.aviator.util;
 
+import java.util.Locale;
+import java.util.Set;
+
 public class Constants {
 
     // Audit Result Values
@@ -45,8 +48,19 @@ public class Constants {
     public static final String AUDITOR_STATUS_TAG_ID = "ACB05E55-E74D-468C-8501-52E1FDC27D71";
     public static final String FOD_TAG_ID = "604f0fbe-b5fe-47cd-a9cb-587ad8ebe93a";
 
-    // User Names
+    // User Names written into audit.xml TagHistory / comments
     public static final String USER_NAME = "Fortify Remediation Aviator";
+    public static final String USER_NAME_LEGACY_FORTIFY_AVIATOR = "Fortify Aviator";
+    public static final String USER_NAME_LEGACY_CORE_SAST_AVIATOR = "Core SAST Aviator";
+    private static final Set<String> AVIATOR_AUDIT_USERNAMES = Set.of(
+            USER_NAME.toLowerCase(Locale.ROOT),
+            USER_NAME_LEGACY_FORTIFY_AVIATOR.toLowerCase(Locale.ROOT),
+            USER_NAME_LEGACY_CORE_SAST_AVIATOR.toLowerCase(Locale.ROOT)
+    );
+
+    public static boolean isAviatorAuditUsername(String username) {
+        return username != null && AVIATOR_AUDIT_USERNAMES.contains(username.trim().toLowerCase(Locale.ROOT));
+    }
 
     // Other Constants
     public static final String AUDIT_NAMESPACE_URI = "xmlns://www.fortify.com/schema/audit";
@@ -58,6 +72,9 @@ public class Constants {
     public static final int MAX_TOTAL = 2500;
     public static final String MAX_PER_CATEGORY_EXCEEDED = "Fortify detected {issues_new_in_category} new issues in this (sub)category. Fortify Remediation Aviator auditing was limited to the first {MAX_PER_CATEGORY}.";
     public static final String MAX_TOTAL_EXCEEDED = "Fortify detected {issues_new_total} new issues. Fortify Remediation Aviator auditing was limited to {MAX_TOTAL} issues in total, while ensuring that representative issues in each category were audited.";
+
+    // File size protection — prevent zip bomb and decompression DOS attacks
+    public static final long MAX_SOURCE_FILE_SIZE = 50L * 1024L * 1024L; // 50 MB
 
     // Operation constants for error messages
     public static final String OP_CREATE_APP = "application creation";

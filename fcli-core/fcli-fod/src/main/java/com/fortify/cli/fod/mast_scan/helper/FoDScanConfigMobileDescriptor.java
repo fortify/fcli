@@ -22,9 +22,9 @@ import lombok.NoArgsConstructor;
 @Reflectable @NoArgsConstructor
 @Data @EqualsAndHashCode(callSuper=false)
 public class FoDScanConfigMobileDescriptor extends JsonNodeHolder {
-    private Integer releaseId;
+    private Long releaseId;
     private Integer assessmentTypeId;
-    private Integer entitlementId;
+    private Long entitlementId;
     private String entitlementFrequencyType;
     private String frameworkType;
     private String auditPreferenceType;

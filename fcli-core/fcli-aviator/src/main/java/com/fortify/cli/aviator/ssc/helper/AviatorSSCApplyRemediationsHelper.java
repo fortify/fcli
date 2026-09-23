@@ -20,7 +20,7 @@ import java.util.Set;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.aviator._common.remediations_cache.RemediationsApplyHelper.ApplyResult;
 import com.fortify.cli.aviator._common.util.AviatorRemediationMetricsHelper;
-import com.fortify.cli.aviator.fpr.processor.RemediationProcessor.RemediationMetric;
+import com.fortify.cli.aviator.fpr.remediation.model.RemediationMetric;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.ssc.artifact.helper.SSCArtifactDescriptor;
 
@@ -69,7 +69,7 @@ public final class AviatorSSCApplyRemediationsHelper {
         result.put("artifactId", AviatorRemediationMetricsHelper.na(artifactId));
         result.put("artifactsProcessed", applyResult.metrics().size());
         result.put("artifactsSkipped", applyResult.skipped());
-        result.put("previewMode", aggregated instanceof RemediationMetric.Preview);
+        result.put("previewMode", aggregated.isPreview());
         AviatorRemediationMetricsHelper.putMetricAndAction(result, aggregated);
         return result;
     }

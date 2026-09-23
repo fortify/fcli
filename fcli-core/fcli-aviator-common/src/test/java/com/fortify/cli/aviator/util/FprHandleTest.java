@@ -170,6 +170,46 @@ class FprHandleTest {
         }
     }
 
+    //03358915/OCTCR11A2429097 fix for audit issue
+    @Test
+    @DisplayName("loads source map for merged SAST+DAST FPR containing both audit.fvdl and webinspect.xml")
+    void loadsSourceMapForMergedSastAndDastFpr() throws Exception {
+        Path fprPath = createFprWithWebInspect(true);
+
+        try (FprHandle handle = new FprHandle(fprPath)) {
+            assertEquals("src-archive/Test.java", handle.getSourceFileMap().get("Test.java"));
+        }
+    }
+
+    @Test
+    @DisplayName("returns empty source map for DAST-only FPR containing webinspect.xml but no audit.fvdl")
+    void returnsEmptySourceMapForDastOnlyFpr() throws Exception {
+        Path fprPath = createFprWithWebInspect(false);
+
+        try (FprHandle handle = new FprHandle(fprPath)) {
+            assertTrue(handle.getSourceFileMap().isEmpty());
+        }
+    }
+    //03358915/OCTCR11A2429097 fix for audit issue
+
+    private Path createFprWithWebInspect(boolean includeAuditFvdl) throws IOException {
+        Path fprPath = tempDir.resolve("webinspect.fpr");
+        try (ZipOutputStream zipOutputStream = new ZipOutputStream(Files.newOutputStream(fprPath))) {
+            if (includeAuditFvdl) {
+                writeEntry(zipOutputStream, "audit.fvdl", "<FVDL />");
+            }
+            writeEntry(zipOutputStream, "webinspect.xml", "<WebInspectScan />");
+            writeEntry(zipOutputStream, "src-archive/index.xml", """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <index>
+                    <entry key="Test.java">src-archive/Test.java</entry>
+                </index>
+                """);
+            writeEntry(zipOutputStream, "src-archive/Test.java", "public class Test {}\n");
+        }
+        return fprPath;
+    }
+
     private Path createFpr(String indexXml) throws IOException {
         Path fprPath = tempDir.resolve("test.fpr");
         try (ZipOutputStream zipOutputStream = new ZipOutputStream(Files.newOutputStream(fprPath))) {

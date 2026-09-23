@@ -19,7 +19,7 @@ import java.util.Set;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.aviator._common.remediations_cache.RemediationsApplyHelper.ApplyResult;
 import com.fortify.cli.aviator._common.util.AviatorRemediationMetricsHelper;
-import com.fortify.cli.aviator.fpr.processor.RemediationProcessor.RemediationMetric;
+import com.fortify.cli.aviator.fpr.remediation.model.RemediationMetric;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.fod.release.helper.FoDReleaseDescriptor;
 
@@ -61,7 +61,7 @@ public final class AviatorFoDApplyRemediationsHelper {
         result.put("releaseId", AviatorRemediationMetricsHelper.na(releaseId));
         result.put("applicationName", AviatorRemediationMetricsHelper.na(applicationName));
         result.put("releaseName", AviatorRemediationMetricsHelper.na(releaseName));
-        result.put("previewMode", aggregated instanceof RemediationMetric.Preview);
+        result.put("previewMode", aggregated.isPreview());
         AviatorRemediationMetricsHelper.putMetricAndAction(result, aggregated);
         return result;
     }

@@ -22,7 +22,10 @@ import com.fortify.cli.common.rest.cli.mixin.UrlConfigOptions;
 import com.fortify.cli.common.session.cli.mixin.UserCredentialOptions;
 import com.fortify.cli.fod._common.rest.helper.FoDProductHelper;
 import com.fortify.cli.fod._common.session.helper.oauth.IFoDClientCredentials;
+import com.fortify.cli.fod._common.session.helper.oauth.IFoDUserAuthCode;
 import com.fortify.cli.fod._common.session.helper.oauth.IFoDUserCredentials;
+import com.fortify.cli.fod._common.session.helper.oauth.impl.BasicFoDUserAuthCode;
+import com.fortify.cli.fod._common.session.helper.oauth.impl.BasicFoDUserCredentials;
 
 import lombok.Getter;
 import lombok.SneakyThrows;
@@ -33,28 +36,33 @@ import picocli.CommandLine.Option;
 
 public class FoDSessionLoginOptions {
     @Mixin @Getter private FoDUrlConfigOptions urlConfigOptions = new FoDUrlConfigOptions();
-    
+
     @ArgGroup(exclusive = false, multiplicity = "1", order = 2)
     @Getter private FoDAuthOptions authOptions = new FoDAuthOptions();
-    
+
     public static class FoDAuthOptions {
         @ArgGroup(exclusive = true, multiplicity = "1", order = 3)
         @Getter private FoDCredentialOptions credentialOptions = new FoDCredentialOptions();
         @Option(names="--scopes", defaultValue="api-tenant", split=",")
         @Getter private String[] scopes;
     }
-    
+
     public static class FoDCredentialOptions {
-        @ArgGroup(exclusive = false, multiplicity = "1", order = 1) 
+        @ArgGroup(exclusive = false, multiplicity = "1", order = 1)
         @Getter private FoDUserCredentialOptions userCredentialOptions = new FoDUserCredentialOptions();
-        @ArgGroup(exclusive = false, multiplicity = "1", order = 2) 
+        @ArgGroup(exclusive = false, multiplicity = "1", order = 2)
         @Getter private FoDClientCredentialOptions clientCredentialOptions = new FoDClientCredentialOptions();
     }
-    
+
     public static class FoDUserCredentialOptions extends UserCredentialOptions {
         @Option(names = {"-t", "--tenant"}, required = true)
         @MaskValue(sensitivity = LogSensitivityLevel.low, description = "FOD TENANT")
         @Getter private String tenant;
+        @Option(names = {"--code", "-c" }, paramLabel = "<code>", arity = "0..1", interactive = true, echo = false)
+        @MaskValue(sensitivity = LogSensitivityLevel.low, description = "FOD TOTP/MFA CODE")
+        @Getter private String securityCode;
+        @Option(names = {"--totp" })
+        @Getter private boolean isTotp;
     }
 
     public static class FoDClientCredentialOptions implements IFoDClientCredentials {
@@ -72,7 +80,7 @@ public class FoDSessionLoginOptions {
                 .map(FoDCredentialOptions::getUserCredentialOptions)
                 .orElse(null);
     }
-    
+
     public FoDClientCredentialOptions getClientCredentialOptions() {
         return Optional.ofNullable(authOptions)
                 .map(FoDAuthOptions::getCredentialOptions)
@@ -89,55 +97,56 @@ public class FoDSessionLoginOptions {
                 && userCredentialOptions.getPassword().length > 0;
     }
 
-    public final BasicFoDUserCredentials getUserCredentials() {
+    public final IFoDUserCredentials getUserCredentials() {
         var u = getUserCredentialOptions();
-        return BasicFoDUserCredentials.builder().tenant(u.getTenant()).user(u.getUser()).password(u.getPassword()).build();
+        return BasicFoDUserCredentials.builder()
+                .tenant(u.getTenant())
+                .user(u.getUser())
+                .password(u.getPassword())
+                .build();
     }
-    
+
     public final boolean hasClientCredentials() {
         FoDClientCredentialOptions clientCredentialOptions = getClientCredentialOptions();
         return clientCredentialOptions!=null
                 && StringUtils.isNotBlank(clientCredentialOptions.getClientId())
                 && StringUtils.isNotBlank(clientCredentialOptions.getClientSecret());
     }
-    
+
+    public boolean hasSecurityCode() {
+        var userCred = getUserCredentialOptions();
+        return userCred != null && StringUtils.isNotBlank(userCred.getSecurityCode());
+    }
+
+    public String getSecurityCode() {
+        var userCred = getUserCredentialOptions();
+        return userCred != null ? userCred.getSecurityCode() : null;
+    }
+
+    public boolean isTotp() {
+        var userCred = getUserCredentialOptions();
+        return userCred != null && userCred.isTotp();
+    }
+
+    public IFoDUserAuthCode getAuthCode() {
+        var u = getUserCredentialOptions();
+        if (u == null || StringUtils.isBlank(u.getSecurityCode())) { return null; }
+        return BasicFoDUserAuthCode.builder()
+                .securityCode(u.getSecurityCode())
+                .isTotp(u.isTotp())
+                .build();
+    }
+
     @Command
     public static final class FoDUrlConfigOptions extends UrlConfigOptions {
         @Override @SneakyThrows
         public String getUrl() {
             return FoDProductHelper.INSTANCE.getApiUrl(super.getUrl());
         }
-        
+
         @Override
         protected int getDefaultSocketTimeoutInMillis() {
             return 600000;
-        }
-    }
-
-    /**
-     * Basic immutable FoD user credentials with builder pattern.
-     */
-    public static final class BasicFoDUserCredentials implements IFoDUserCredentials {
-        private final String tenant;
-        private final String user;
-        private final char[] password;
-        private BasicFoDUserCredentials(Builder b) {
-            this.tenant = b.tenant;
-            this.user = b.user;
-            this.password = b.password;
-        }
-        public static Builder builder() { return new Builder(); }
-        @Override public String getTenant() { return tenant; }
-        @Override public String getUser() { return user; }
-        @Override public char[] getPassword() { return password; }
-        public static final class Builder {
-            private String tenant; private String user; private char[] password;
-            public Builder tenant(String tenant){ this.tenant=tenant; return this; }
-            public Builder user(String user){ this.user=user; return this; }
-            public Builder password(char[] password){ this.password=password; return this; }
-            public BasicFoDUserCredentials build(){
-                return new BasicFoDUserCredentials(this);
-            }
         }
     }
 }

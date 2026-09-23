@@ -93,6 +93,7 @@ public class AiAssistMCPStartStdioCommand extends AbstractRunnableCommand implem
     @Option(names={"--module", "-m"}, required = false) private McpModule module;
     @DisableTest(TestType.MULTI_OPT_PLURAL_NAME)
     @Option(names={"--import"}, split=",") private List<String> importFiles;
+    @Option(names={"--server-name"}) private String serverName;
     @Option(names={"--work-threads"}, defaultValue="10") private int workThreads;
     @Option(names={"--progress-threads"}, defaultValue="4") private int progressThreads;
     @Option(names={"--job-safe-return"}, defaultValue="25s") private String jobSafeReturnPeriod;
@@ -110,6 +111,13 @@ public class AiAssistMCPStartStdioCommand extends AbstractRunnableCommand implem
     public Integer call() throws Exception {
         if (module == null && (importFiles == null || importFiles.isEmpty())) {
             throw new FcliSimpleException("At least one of --module or --import must be specified");
+        }
+        if (serverName == null) {
+            if (module != null) {
+                serverName = "fcli-" + module.toString();
+            } else {
+                serverName = "fcli";
+            }
         }
         var rawOut = StdioHelper.getRawOut();
         var rawErr = StdioHelper.getRawErr();
@@ -147,7 +155,7 @@ public class AiAssistMCPStartStdioCommand extends AbstractRunnableCommand implem
         // Use rawOut to bypass the delegation/masking stack, ensuring
         // MCP JSON-RPC responses are never corrupted by masking
         var serverBuilder = McpServer.sync(new StdioServerTransportProvider(new JacksonMcpJsonMapper(objectMapper), wrappedIn, rawOut))
-                .serverInfo("fcli", FcliBuildProperties.INSTANCE.getFcliVersion())
+                .serverInfo(serverName, FcliBuildProperties.INSTANCE.getFcliVersion())
                 .requestTimeout(Duration.ofSeconds(120))
                 .instructions("""
                         - For tools that accept a --*-session option and user hasn't asked for a specific \

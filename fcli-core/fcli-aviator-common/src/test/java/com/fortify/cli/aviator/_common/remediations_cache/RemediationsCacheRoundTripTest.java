@@ -31,6 +31,7 @@ import org.junit.jupiter.api.io.TempDir;
 
 import com.fortify.cli.aviator.util.FprHandle;
 import com.fortify.cli.common.exception.FcliSimpleException;
+import com.fortify.cli.common.exception.FcliTechnicalException;
 
 class RemediationsCacheRoundTripTest {
     @TempDir Path tempDir;
@@ -74,7 +75,7 @@ class RemediationsCacheRoundTripTest {
                     throw new RuntimeException(e);
                 }
             });
-            // close() writes manifest and publishes
+            writer.commit();
         }
         try (RemediationsCacheReader reader = RemediationsCacheReader.open(zip)) {
             reader.requireProduct(RemediationsCacheConstants.PRODUCT_FOD);
@@ -116,11 +117,38 @@ class RemediationsCacheRoundTripTest {
                     throw new RuntimeException(e);
                 }
             });
+            writer.commit();
         }
         try (RemediationsCacheReader reader = RemediationsCacheReader.open(zip)) {
             assertEquals("new-fpr", Files.readString(reader.getOrderedFprPaths().get(0)));
         }
         assertTrue(Files.notExists(zip.resolveSibling("existing.zip.partial")));
+    }
+
+    @Test
+    void failedEntryDoesNotPublishPartialCache() throws Exception {
+        Path zip = tempDir.resolve("failed.zip");
+        Files.writeString(zip, "prior-cache-bytes");
+
+        assertThrows(FcliTechnicalException.class, () -> {
+            try (RemediationsCacheWriter writer = RemediationsCacheWriter.create(
+                    zip, RemediationsCacheConstants.PRODUCT_SSC, Map.of("mode", "all"))) {
+                writer.addSscFpr("1", null, path -> {
+                    try {
+                        Files.writeString(path, "first-fpr");
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                });
+                writer.addSscFpr("2", null, path -> {
+                    throw new RuntimeException("download failed");
+                });
+                writer.commit();
+            }
+        });
+
+        assertEquals("prior-cache-bytes", Files.readString(zip));
+        assertTrue(Files.notExists(zip.resolveSibling("failed.zip.partial")));
     }
 
     @Test

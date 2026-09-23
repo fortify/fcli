@@ -65,7 +65,7 @@ public class FoDIssueHelper {
                 .releaseNames(Set.of(releaseName))
                 .releaseIds(Set.of(releaseId))
                 .ids(Set.of(id))
-                .vulnIds(Set.of(vulnId))
+                .vulnIds(vulnId!=null ? Set.of(vulnId) : Collections.emptySet())
                 .build();
         }
 
@@ -92,7 +92,7 @@ public class FoDIssueHelper {
         }
 
         public String getIdsString() {
-        return asString(ids);
+            return asString(ids);
         }
 
         private String asString(Set<String> values) {
@@ -162,7 +162,7 @@ public class FoDIssueHelper {
         sortedRecords.sort(
                 Comparator.comparingInt((ObjectNode n) -> n.get("severity").asInt()).reversed()
                         .thenComparing(n -> n.get("category").asText())
-                        .thenComparing(n -> n.get("releaseId").asInt())
+                        .thenComparing(n -> n.get("releaseId").asLong())
         );
 
         ArrayNode result = JsonHelper.getObjectMapper().createArrayNode();

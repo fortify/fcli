@@ -38,7 +38,7 @@ import lombok.ToString;
 @Builder
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class FoDBulkIssueUpdateRequest {
-    private Integer userId;
+    private Long userId;
     private String developerStatus;
     private String auditorStatus;
     private String severity;
@@ -73,10 +73,10 @@ public class FoDBulkIssueUpdateRequest {
 
     public static class FoDBulkIssueUpdateRequestBuilder {
         public FoDBulkIssueUpdateRequestBuilder user(UnirestInstance unirest, String user) {
-            int userId = 0;
+            long userId = 0;
             if (user == null) return userId(null);
             try {
-                userId = Integer.parseInt(user);
+                userId = Long.parseLong(user);
             } catch (NumberFormatException nfe) {
                 userId = FoDUserHelper.getUserDescriptor(unirest, user, true).getUserId();
             }

@@ -10,7 +10,7 @@
  * herein. The information contained herein is subject to change
  * without notice.
  */
-package com.fortify.cli.aviator.fpr.processor.preview;
+package com.fortify.cli.aviator.fpr.remediation.preview;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.formkiq.graalvm.annotations.Reflectable;
@@ -18,22 +18,10 @@ import com.fortify.cli.aviator._common.exception.AviatorBugException;
 
 import lombok.Builder;
 
-/**
- * A single code change within a file remediation, with context metadata.
- * Represents one transformation: replacing lines lineFrom-lineTo with newCode.
- * 
- * @param changeIndex 1-based index of this change within the file (for ordering)
- * @param lineFrom Starting line number (1-based, inclusive)
- * @param lineTo Ending line number (1-based, inclusive)
- * @param originalCode The code being replaced
- * @param newCode The replacement code
- * @param context Context lines surrounding the change (for validation)
- * @param fuzzyMatched True if file hash didn't match and fuzzy context search was used
- */
 @Reflectable
 @Builder
 @JsonPropertyOrder({"changeIndex", "lineFrom", "lineTo", "originalCode", "newCode", "context", "fuzzyMatched"})
-public record FileChange(
+public record PreviewFileChange(
         int changeIndex,
         int lineFrom,
         int lineTo,
@@ -41,16 +29,15 @@ public record FileChange(
         String newCode,
         ContextMetadata context,
         boolean fuzzyMatched) {
-
-    public FileChange {
+    public PreviewFileChange {
         if (changeIndex < 1) {
-            throw new AviatorBugException("FileChange changeIndex must be positive");
+            throw new AviatorBugException("PreviewFileChange changeIndex must be positive");
         }
         if (lineFrom < 1 || lineTo < lineFrom) {
-            throw new AviatorBugException("FileChange invalid line range: " + lineFrom + "-" + lineTo);
+            throw new AviatorBugException("PreviewFileChange invalid line range: " + lineFrom + "-" + lineTo);
         }
         if (context == null) {
-            throw new AviatorBugException("FileChange context is required");
+            throw new AviatorBugException("PreviewFileChange context is required");
         }
     }
 }

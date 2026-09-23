@@ -52,11 +52,11 @@ public class FoDScanDescriptor extends JsonNodeHolder {
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyy-MM-dd'T'hh:mm:ss")
     private Date completedDateTime;
 
-    public Map<Integer, String> attributesAsMap() {
+    public Map<Long, String> attributesAsMap() {
         if (attributes == null || attributes.isEmpty()) {
             return Collections.emptyMap();
         }
-        Map<Integer, String> attrMap = new HashMap<>();
+        Map<Long, String> attrMap = new HashMap<>();
         for (FoDAttributeValueDescriptor attr : attributes) {
             attrMap.put(attr.getId(), attr.getValue());
         }

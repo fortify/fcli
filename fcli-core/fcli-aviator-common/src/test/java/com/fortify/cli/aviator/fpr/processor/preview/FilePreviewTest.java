@@ -10,7 +10,7 @@
  * herein. The information contained herein is subject to change
  * without notice.
  */
-package com.fortify.cli.aviator.fpr.processor.preview;
+package com.fortify.cli.aviator.fpr.remediation.preview;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -59,13 +59,13 @@ class FilePreviewTest {
     @Test
     void changesListIsUnmodifiable() {
         ContextMetadata context = new ContextMetadata(1, 1, "context");
-        FileChange change = FileChange.builder()
+        PreviewFileChange change = PreviewFileChange.builder()
                 .changeIndex(1).lineFrom(10).lineTo(12)
                 .originalCode("old").newCode("new").context(context).build();
         FilePreview preview = new FilePreview("/path", "UTF-8", List.of(change));
 
         assertThrows(UnsupportedOperationException.class,
-            () -> preview.changes().add(FileChange.builder()
+            () -> preview.changes().add(PreviewFileChange.builder()
                     .changeIndex(2).lineFrom(20).lineTo(22)
                     .originalCode("old2").newCode("new2").context(context).build()));
     }
@@ -73,10 +73,10 @@ class FilePreviewTest {
     @Test
     void totalChangesReturnsCorrectCount() {
         ContextMetadata context = new ContextMetadata(1, 1, "context");
-        List<FileChange> changes = List.of(
-            FileChange.builder().changeIndex(1).lineFrom(10).lineTo(12).originalCode("old1").newCode("new1").context(context).build(),
-            FileChange.builder().changeIndex(2).lineFrom(20).lineTo(22).originalCode("old2").newCode("new2").context(context).build(),
-            FileChange.builder().changeIndex(3).lineFrom(30).lineTo(32).originalCode("old3").newCode("new3").context(context).build()
+        List<PreviewFileChange> changes = List.of(
+            PreviewFileChange.builder().changeIndex(1).lineFrom(10).lineTo(12).originalCode("old1").newCode("new1").context(context).build(),
+            PreviewFileChange.builder().changeIndex(2).lineFrom(20).lineTo(22).originalCode("old2").newCode("new2").context(context).build(),
+            PreviewFileChange.builder().changeIndex(3).lineFrom(30).lineTo(32).originalCode("old3").newCode("new3").context(context).build()
         );
         FilePreview preview = new FilePreview("/path", "UTF-8", changes);
 

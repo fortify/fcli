@@ -106,7 +106,7 @@ public abstract class AbstractFoDDastAutomatedScanSetupCommand extends AbstractF
         return FoDScanDastAutomatedHelper.getSetupDescriptor(unirest, releaseId);
     }
 
-    protected void validateEntitlement(FoDScanConfigDastAutomatedDescriptor currentSetup, Integer entitlementIdToUse,
+    protected void validateEntitlement(FoDScanConfigDastAutomatedDescriptor currentSetup, Long entitlementIdToUse,
                                     String relId, FoDReleaseAssessmentTypeDescriptor atd) {
         // validate entitlement specified or currently in use against assessment type found
         if (entitlementId != null && entitlementId > 0) {

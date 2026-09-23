@@ -23,9 +23,9 @@ import lombok.ToString;
 @Reflectable @NoArgsConstructor @AllArgsConstructor
 @Getter @ToString @Builder
 public class FoDReportCreateRequest {
-    private Integer applicationId;
-    private Integer releaseId;
-    private Integer reportTemplateTypeId;
+    private Long applicationId;
+    private Long releaseId;
+    private Long reportTemplateTypeId;
     private String reportName;
     private String reportFormat;
     private String notes;

@@ -41,7 +41,7 @@ import com.fortify.cli.fod._common.session.helper.FoDSessionDescriptor;
 import com.fortify.cli.fod._common.session.helper.oauth.FoDOAuthHelper;
 import com.fortify.cli.fod._common.session.helper.oauth.FoDTokenCreateResponse;
 import com.fortify.cli.fod._common.session.helper.oauth.IFoDClientCredentials;
-import com.fortify.cli.fod._common.session.helper.oauth.IFoDUserCredentials;
+import com.fortify.cli.fod._common.session.helper.oauth.impl.BasicFoDUserCredentials;
 import com.fortify.cli.ssc._common.session.cli.mixin.SSCAndScanCentralSessionLoginOptions.SSCAndScanCentralUrlConfigOptions.SSCComponentDisable;
 import com.fortify.cli.ssc._common.session.helper.ISSCAndScanCentralCredentialsConfig;
 import com.fortify.cli.ssc._common.session.helper.ISSCAndScanCentralUrlConfig;
@@ -348,11 +348,11 @@ public final class MCPServerHttpSessionDescriptorResolver {
         try {
             return FoDOAuthHelper.createToken(
                     urlConfig,
-                    new HttpMcpFoDUserCredentials(
-                            auth.fodTenant(),
-                            auth.fodUser(),
-                            pwd
-                    ),
+                    BasicFoDUserCredentials.builder()
+                        .tenant(auth.fodTenant())
+                        .user(auth.fodUser())
+                        .password(pwd)
+                        .build(),
                     DEFAULT_FOD_SCOPES
             );
         } finally {
@@ -377,33 +377,6 @@ public final class MCPServerHttpSessionDescriptorResolver {
         @Override
         public String getClientSecret() {
             return clientSecret;
-        }
-    }
-
-    private static final class HttpMcpFoDUserCredentials implements IFoDUserCredentials {
-        private final String tenant;
-        private final String user;
-        private final char[] password;
-
-        private HttpMcpFoDUserCredentials(String tenant, String user, char[] password) {
-            this.tenant = tenant;
-            this.user = user;
-            this.password = password;
-        }
-
-        @Override
-        public String getUser() {
-            return user;
-        }
-
-        @Override
-        public char[] getPassword() {
-            return password;
-        }
-
-        @Override
-        public String getTenant() {
-            return tenant;
         }
     }
 

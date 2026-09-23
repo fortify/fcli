@@ -14,11 +14,14 @@ package com.fortify.cli.aviator._common.remediations_cache;
 
 import java.util.List;
 
+import com.fortify.cli.aviator.fpr.utils.ISourceDecoder;
+
 /** Abstraction over the shared apply-remediations CLI options, allowing RemediationsApplyHelper
  *  to remain independent of concrete Picocli types. */
 public interface IApplyRemediationsOptions {
     String getSourceCodeDirectory();
     List<String> getIssueIds();
+    ISourceDecoder getSourceDecoder();
     boolean isPreviewMode();
     void validate();
 }

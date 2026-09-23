@@ -35,11 +35,11 @@ import com.fortify.cli.common.util.ZipHelper;
 /**
  * Builds a remediations cache zip at a destination path. FPR content is written
  * directly into a ZipFS (no per-FPR temp staging). The ZipFS is opened on a sibling
- * {@code *.partial} work file; on successful {@link #close()}, the work file is moved
+ * {@code *.partial} work file; on successful {@link #commit()}, the work file is moved
  * onto {@code destination} (atomic when the filesystem supports it).
  *
- * <p>Use with try-with-resources. {@link #close()} writes the manifest (when entries
- * exist), closes ZipFS, and publishes or discards the work file.
+ * <p>Use with try-with-resources. Call {@link #commit()} after all entries have been written
+ * successfully. {@link #close()} closes ZipFS and discards any uncommitted work file.
  */
 public final class RemediationsCacheWriter implements AutoCloseable {
     private static final Logger logger = LoggerFactory.getLogger(RemediationsCacheWriter.class);
@@ -50,6 +50,7 @@ public final class RemediationsCacheWriter implements AutoCloseable {
     private final FileSystem zipFs;
     private final RemediationsCacheManifest manifest;
     private int nextOrder = 1;
+    private boolean committed;
 
     /**
      * Opens ZipFS on a sibling work file. Exceptions from open are thrown immediately.
@@ -73,7 +74,7 @@ public final class RemediationsCacheWriter implements AutoCloseable {
 
     /**
      * Convenience for callers that already have FPR files on disk (for example unit tests).
-     * Publishes on successful try-with-resources close.
+      * Publishes after all entries have been written successfully.
      */
     public static RemediationsCacheManifest write(
             Path destination,
@@ -92,11 +93,12 @@ public final class RemediationsCacheWriter implements AutoCloseable {
                     throw new FcliTechnicalException("Unsupported local FPR type: " + source.getClass().getName());
                 }
             }
+            writer.commit();
             return writer.getManifest();
         }
     }
 
-    /** In-memory manifest (complete after successful close with entries). */
+    /** In-memory manifest (complete after successful commit with entries). */
     public RemediationsCacheManifest getManifest() {
         return manifest;
     }
@@ -173,12 +175,11 @@ public final class RemediationsCacheWriter implements AutoCloseable {
                 "Cache entry was not written: %s", entryPath);
     }
 
-    /**
-     * Writes manifest when entries exist, closes ZipFS, then publishes the work file
-     * or deletes it if incomplete. Intended for try-with-resources (single close).
-     */
-    @Override
-    public void close() {
+    /** Completes the cache and publishes it after all entries have been written successfully. */
+    public void commit() {
+        if (committed) {
+            return;
+        }
         try {
             if (zipFs.isOpen()) {
                 if (!manifest.getEntries().isEmpty()) {
@@ -196,13 +197,32 @@ public final class RemediationsCacheWriter implements AutoCloseable {
             deleteQuietly(workPath);
             throw new FcliTechnicalException("Failed to finalize remediations cache zip: " + destination, e);
         }
-        // Guard with workPath existence so a second close is a no-op after publish/delete.
+        // Guard with workPath existence so a second commit is a no-op after publish/delete.
         if (!Files.exists(workPath)) {
+            committed = true;
             return;
         }
         if (!manifest.getEntries().isEmpty()) {
             publishWorkFile();
         } else {
+            deleteQuietly(workPath);
+        }
+        committed = true;
+    }
+
+    /** Discards an uncommitted work file when the try-with-resources body fails. */
+    @Override
+    public void close() {
+        if (committed) {
+            return;
+        }
+        try {
+            if (zipFs.isOpen()) {
+                zipFs.close();
+            }
+        } catch (IOException e) {
+            throw new FcliTechnicalException("Failed to close remediations cache zip: " + destination, e);
+        } finally {
             deleteQuietly(workPath);
         }
     }
