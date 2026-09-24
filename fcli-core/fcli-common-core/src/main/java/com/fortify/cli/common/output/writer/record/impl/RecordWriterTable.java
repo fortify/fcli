@@ -96,9 +96,27 @@ public class RecordWriterTable extends AbstractRecordWriter<RecordWriterTable.Ta
             var node = formattedRecord.get(property);
             if ( node==null || node.isNull() ) { return "N/A"; }
             if ( node.isArray() ) {
-                return JsonHelper.stream((ArrayNode)node).map(n->n.asText()).collect(Collectors.joining(","));
+                return JsonHelper.stream((ArrayNode)node).map(n->stripAnsiAndControlChars(n.asText())).collect(Collectors.joining(","));
             }
-            return node.asText();
+            return stripAnsiAndControlChars(node.asText());
+        }
+
+        /**
+         * Strip ANSI escape sequences and control characters from string to prevent terminal injection attacks.
+         * Preserves newlines and tabs as they may be used intentionally in table layout.
+         * Removes: ESC (0x1B) and C0 control chars (0x00-0x1F) except TAB (0x09) and LF (0x0A).
+         */
+        private String stripAnsiAndControlChars(String input) {
+            if ( input == null || input.isEmpty() ) { return input; }
+            // Remove ANSI escape sequences and C0 control chars, preserving TAB and LF
+            StringBuilder result = new StringBuilder();
+            for ( char c : input.toCharArray() ) {
+                // Keep printable chars and common whitespace (TAB, LF); skip ESC and other control chars
+                if ( (c >= 0x20 && c <= 0x7E) || c == 0x09 || c == 0x0A ) {
+                    result.append(c);
+                }
+            }
+            return result.toString();
         }
 
         @Override
