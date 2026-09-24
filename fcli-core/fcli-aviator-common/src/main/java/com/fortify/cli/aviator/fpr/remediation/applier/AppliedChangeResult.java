@@ -12,4 +12,4 @@
  */
 package com.fortify.cli.aviator.fpr.remediation.applier;
 
-public record AppliedChangeResult(String updatedContent, int actualLineFrom, int actualLineTo, boolean fuzzyMatched) {}
+public record AppliedChangeResult(String updatedContent, int actualLineFrom, int actualLineTo) {}

@@ -15,23 +15,14 @@ package com.fortify.cli.aviator.fpr.remediation;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.fortify.cli.aviator.fpr.remediation.model.Hunk;
 import com.fortify.cli.aviator.fpr.remediation.model.RemediationMetric;
-import com.fortify.cli.aviator.fpr.remediation.preview.ChangeDetail;
 import com.fortify.cli.aviator.fpr.remediation.preview.FilePreview;
 import com.fortify.cli.aviator.fpr.remediation.preview.PreviewDetail;
-import com.fortify.cli.aviator.fpr.remediation.preview.PreviewFileChange;
-import com.fortify.cli.aviator.fpr.remediation.writer.PendingFileWrite;
-import com.fortify.cli.aviator.fpr.remediation.writer.PreparedFileChanges;
-import com.fortify.cli.aviator.fpr.remediation.writer.PreparedHunkChange;
 
 final class RemediationProcessingState {
-    private static final String IDENTICAL_REASON = "Identical remediation already satisfied";
-    private static final String SUPERSEDED_REASON = "Superseded by a broader remediation";
     private static final String POSSIBLY_REMEDIATED_REASON = "Possibly remediated by a sibling fix";
     private static final String REQUESTED_ISSUE_NOT_FOUND = "Requested issue not found in remediations";
 
@@ -77,36 +68,38 @@ final class RemediationProcessingState {
         }
     }
 
-    void recordApplied(String instanceId, PreparedFileChanges prepared) {
+    void recordApplied(String instanceId) {
         appliedRemediations++;
         recordSatisfied(instanceId);
         appliedIssueIds.add(instanceId);
         issueSkipReasons.remove(instanceId);
-        if (options.isPreview()) {
-            previewDetailsByIssue.put(instanceId,
-                PreviewDetail.available(instanceId, descriptionsByIssue.get(instanceId), toFilePreviews(prepared)));
+    }
+
+    void recordPreviewAvailable(String instanceId, Map<String, FilePreview> files) {
+        recordApplied(instanceId);
+        for (FilePreview filePreview : files.values()) {
+            modifiedFiles.add(filePreview.path());
         }
+        previewDetailsByIssue.put(instanceId,
+            PreviewDetail.available(instanceId, descriptionsByIssue.get(instanceId), files));
     }
 
     void recordIdentical(String instanceId) {
         identicalRemediations++;
         identicalIssueIds.add(instanceId);
         recordSatisfied(instanceId);
-        recordPreviewClassification(instanceId, IDENTICAL_REASON);
     }
 
     void recordSuperseded(String instanceId) {
         supersededRemediations++;
         supersededIssueIds.add(instanceId);
         recordSatisfied(instanceId);
-        recordPreviewClassification(instanceId, SUPERSEDED_REASON);
     }
 
     void recordPossiblyRemediated(String instanceId) {
         possiblyRemediatedRemediations++;
         possiblyRemediatedIssueIds.add(instanceId);
         issueSkipReasons.put(instanceId, POSSIBLY_REMEDIATED_REASON);
-        recordPreviewClassification(instanceId, POSSIBLY_REMEDIATED_REASON);
     }
 
     void recordSkipped(String instanceId, SkipReason reason) {
@@ -184,42 +177,5 @@ final class RemediationProcessingState {
             satisfiedIssueIds.add(instanceId);
             issueSkipReasons.remove(instanceId);
         }
-    }
-
-    private void recordPreviewClassification(String instanceId, String reason) {
-        if (options.isPreview() && instanceId != null && !instanceId.isBlank()) {
-            previewDetailsByIssue.put(instanceId,
-                PreviewDetail.skipped(instanceId, descriptionsByIssue.get(instanceId), reason));
-        }
-    }
-
-    private Map<String, FilePreview> toFilePreviews(PreparedFileChanges prepared) {
-        Map<String, String> encodings = new LinkedHashMap<>();
-        for (PendingFileWrite pendingWrite : prepared.pendingWrites().values()) {
-            encodings.put(pendingWrite.filename(), pendingWrite.charset().name());
-        }
-
-        Map<String, List<PreviewFileChange>> changesByFile = new LinkedHashMap<>();
-        for (PreparedHunkChange preparedChange : prepared.preparedHunkChanges()) {
-            Hunk hunk = preparedChange.hunk();
-            ChangeDetail detail = ChangeDetail.builder()
-                    .changeIndex(preparedChange.changeIndex())
-                    .lineFrom(preparedChange.actualLineFrom())
-                    .lineTo(preparedChange.actualLineTo())
-                    .originalCode(hunk.requiredOriginalCode())
-                    .newCode(hunk.requiredNewCode())
-                    .contextLinesBefore(hunk.contextBeforeOrZero())
-                    .contextLinesAfter(hunk.contextAfterOrZero())
-                    .contextContent(hunk.requiredContextText())
-                    .fuzzyMatched(preparedChange.fuzzyMatched())
-                    .build();
-            changesByFile.computeIfAbsent(preparedChange.filename(), ignored -> new ArrayList<>())
-                    .add(detail.toPreviewFileChange());
-        }
-
-        Map<String, FilePreview> result = new LinkedHashMap<>();
-        changesByFile.forEach((filename, changes) ->
-            result.put(filename, new FilePreview(filename, encodings.get(filename), List.copyOf(changes))));
-        return result;
     }
 }

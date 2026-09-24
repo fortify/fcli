@@ -555,8 +555,14 @@ class RemediationProcessorTest {
         assertEquals("before\nREPLACED\nafter\n", Files.readString(sourceFile));
     }
 
+    /**
+     * A nested multi-line candidate whose NewCode matches the wide fix still does not prove
+     * SUPERSEDED: the classifier passes {@code comparisonCode} (all whitespace removed), and
+     * {@code contentCovers} equals that against a newline-preserving slice. The narrow hunk is
+     * POSSIBLY_REMEDIATED and is not re-applied.
+     */
     @Test
-    void multilineSupersededRemediationWithMatchingContentIsNotReapplied() throws Exception {
+    void multilineNestedMatchingContentIsPossiblyRemediatedNotReapplied() throws Exception {
         Path sourceFile = writeSourceFile("before\nline2\nline3\nafter\n");
         Path fprPath = createRemediationFpr(List.of(
             new RemediationSpec("wide-fix", 1, 4, 0, 0, "before\nline2\nline3\nafter",
@@ -571,8 +577,8 @@ class RemediationProcessorTest {
 
         assertEquals(2, metric.totalRemediations());
         assertEquals(1, metric.appliedRemediations());
-        assertEquals(1, metric.supersededRemediations());
-        assertEquals(0, metric.possiblyRemediatedRemediations());
+        assertEquals(0, metric.supersededRemediations());
+        assertEquals(1, metric.possiblyRemediatedRemediations());
         assertEquals("before\nREPLACED2\nREPLACED3\nafter\n", Files.readString(sourceFile));
     }
 
@@ -1301,7 +1307,34 @@ class RemediationProcessorTest {
             assertEquals(3, change.lineTo());
             assertTrue(change.originalCode().contains("oldOne"));
             assertTrue(change.newCode().contains("newOne"));
+            assertFalse(change.fuzzyMatched());
         }
+    }
+
+    @Test
+    void previewShowsDeclaredXmlFieldsWhenSourceHashDoesNotMatch() throws Exception {
+        Path sourceDir = Files.createDirectory(tempDir.resolve("src-preview-xml-only"));
+        Path sourceFile = sourceDir.resolve("Example.java");
+        Files.writeString(sourceFile, "class Example {\n    void run() {\n        drifted();\n    }\n}\n",
+            StandardCharsets.UTF_8);
+
+        String xmlHash = TestHashUtil.sha256Base64Unix("class Example {\n    void run() {\n        oldOne();\n    }\n}\n");
+        Path fprPath = createFpr(singleRemediationXml(xmlHash));
+
+        try (FprHandle fprHandle = new FprHandle(fprPath)) {
+            var metric = new RemediationProcessor(fprHandle, sourceDir.toString(),
+                options(Set.of(), RemediationExecutionMode.PREVIEW)).processRemediationXML();
+
+            assertTrue(metric.isPreview());
+            assertEquals(1, metric.appliedRemediations());
+            var change = metric.previewDetails().get(0).files().get("Example.java").changes().get(0);
+            assertEquals(3, change.lineFrom());
+            assertEquals(3, change.lineTo());
+            assertTrue(change.originalCode().contains("oldOne"));
+            assertTrue(change.newCode().contains("newOne"));
+            assertFalse(change.fuzzyMatched());
+        }
+        assertTrue(Files.readString(sourceFile, StandardCharsets.UTF_8).contains("drifted();"));
     }
 
     @Test

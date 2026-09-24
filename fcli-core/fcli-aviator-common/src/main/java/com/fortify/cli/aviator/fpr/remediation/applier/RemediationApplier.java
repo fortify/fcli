@@ -84,7 +84,7 @@ public final class RemediationApplier {
         LOG.debug("Staged remediation {} change {} for '{}' using FVDL encoding {}; updatedLines={}", instanceId, changeIndex,
                 filename, sourceEncoding.name(), updatedLines.size());
         String updatedContent = String.join(lineSeparator, updatedLines);
-        return new AppliedChangeResult(updatedContent, lineFrom, lineTo, !fileHashMatches);
+        return new AppliedChangeResult(updatedContent, lineFrom, lineTo);
     }
 
     /**

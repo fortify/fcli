@@ -65,19 +65,22 @@ public final class FileWriteCoordinator {
 
         Map<Path, PendingFileWrite> pendingWrites = new LinkedHashMap<>();
         Set<RemediationKey> appliedKeys = new LinkedHashSet<>();
-        List<PreparedHunkChange> preparedHunkChanges = new ArrayList<>();
         // All-or-nothing: if any file's hunk(s) in this remediation can't be applied, the whole
         // remediation is skipped rather than partially written to some files but not others.
         for (FileChange fileChange : fileChanges) {
             processFileChanges(remediation, fileChange, sourceBasePath, fvdlMetadata, pendingWrites, keysToApply,
-                appliedKeys, preparedHunkChanges, ledger);
+                appliedKeys, ledger);
         }
-        return new PreparedFileChanges(pendingWrites, appliedKeys, List.copyOf(preparedHunkChanges));
+        return new PreparedFileChanges(pendingWrites, appliedKeys);
+    }
+
+    public Charset encodingFor(Path filePath, String filename, FVDLMetadata fvdlMetadata) {
+        return readSourceFile(filePath, filename, fvdlMetadata).charset();
     }
 
     private void processFileChanges(Remediation remediation, FileChange fileChange, Path sourceBasePath, FVDLMetadata fvdlMetadata,
             Map<Path, PendingFileWrite> pendingWrites, Set<RemediationKey> keysToApply, Set<RemediationKey> appliedKeysOut,
-            List<PreparedHunkChange> preparedHunkChanges, AppliedChangeLedger ledger) {
+            AppliedChangeLedger ledger) {
 
         String instanceId = remediation.instanceId();
         String filename = fileChange.requiredFilename();
@@ -133,8 +136,6 @@ public final class FileWriteCoordinator {
             String lineNormalizedCode = hunk.lineNormalizedCode(filename);
             ledger.stage(new PendingAppliedChange(filePath, actualLineFrom, actualLineTo, delta, comparisonCode, lineNormalizedCode));
             appliedKeysOut.add(key);
-            preparedHunkChanges.add(new PreparedHunkChange(filename, k + 1, hunk, actualLineFrom, actualLineTo,
-                applyResult.fuzzyMatched()));
             appliedInThisFile++;
         }
         if (appliedInThisFile == 0) {

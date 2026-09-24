@@ -57,13 +57,13 @@ public final class HunkClassifier {
                     outcomes.add(HunkOutcome.APPLIED);
                     continue;
                 }
-                String candidateLineNormalizedCode = null;
+                String candidateComparisonCode = null;
                 try {
-                    candidateLineNormalizedCode = hunk.lineNormalizedCode(fileChange.requiredFilename());
+                    candidateComparisonCode = hunk.comparisonCode(fileChange.requiredFilename());
                 } catch (SkipRemediationException e) {
                     // Content unavailable for comparison; classifyRange falls back to range-only classification.
                 }
-                outcomes.add(classifyRange(from, to, applied, candidateLineNormalizedCode));
+                outcomes.add(classifyRange(from, to, applied, candidateComparisonCode));
             }
         }
         return outcomes;

@@ -13,15 +13,11 @@
 package com.fortify.cli.aviator.fpr.remediation.writer;
 
 import java.nio.file.Path;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import com.fortify.cli.aviator.fpr.remediation.model.RemediationKey;
 
 
-public record PreparedFileChanges(
-    Map<Path, PendingFileWrite> pendingWrites,
-    Set<RemediationKey> appliedKeys,
-    List<PreparedHunkChange> preparedHunkChanges) {
+public record PreparedFileChanges(Map<Path, PendingFileWrite> pendingWrites, Set<RemediationKey> appliedKeys) {
 }

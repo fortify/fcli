@@ -39,11 +39,16 @@ import com.fortify.cli.aviator.fpr.remediation.classifier.HunkClassifier;
 import com.fortify.cli.aviator.fpr.remediation.exception.RemediationCommitException;
 import com.fortify.cli.aviator.fpr.remediation.exception.RollbackRemediationException;
 import com.fortify.cli.aviator.fpr.remediation.exception.SkipRemediationException;
+import com.fortify.cli.aviator.fpr.remediation.model.FileChange;
+import com.fortify.cli.aviator.fpr.remediation.model.Hunk;
 import com.fortify.cli.aviator.fpr.remediation.model.HunkOutcome;
 import com.fortify.cli.aviator.fpr.remediation.model.Remediation;
 import com.fortify.cli.aviator.fpr.remediation.model.RemediationDocument;
 import com.fortify.cli.aviator.fpr.remediation.model.RemediationKey;
 import com.fortify.cli.aviator.fpr.remediation.model.RemediationMetric;
+import com.fortify.cli.aviator.fpr.remediation.preview.ChangeDetail;
+import com.fortify.cli.aviator.fpr.remediation.preview.FilePreview;
+import com.fortify.cli.aviator.fpr.remediation.preview.PreviewFileChange;
 import com.fortify.cli.aviator.fpr.remediation.writer.FileWriteCoordinator;
 import com.fortify.cli.aviator.fpr.remediation.writer.PendingFileWrite;
 import com.fortify.cli.aviator.fpr.remediation.writer.PreparedFileChanges;
@@ -57,8 +62,8 @@ import com.fortify.cli.aviator.util.FprHandle;
  * Orchestrator. {@link #processRemediationXML()} runs the three phases in sequence: parse
  * XML into a DOM {@link Document} ({@link RemediationXmlReader}), map the document into the
  * domain model with zero business logic ({@link RemediationDocumentMapper}), then classify
- * and apply each remediation ({@link #classifyAndApply}). Apply and preview construction both
- * accept the source directory directly; preview prepares changes without committing them.
+ * and apply each remediation ({@link #classifyAndApply}). Preview lists declared remediations.xml
+ * fields without running the applier.
  *
  * <p><b>Per-FPR isolation:</b> Each processor instance handles exactly one FPR. In multi-FPR
  * scenarios (e.g., --all-open-issues), each artifact gets its own processor with a fresh
@@ -103,15 +108,19 @@ public class RemediationProcessor {
     public RemediationMetric processRemediationXML() {
         Path remediationPath = fprHandle.getPath("/remediations.xml");
         Path sourceBasePath = resolveSourceBasePath();
-        LOG.debug("Applying remediations from {} to source directory {}", remediationPath, sourceBasePath);
+        LOG.debug("{} remediations from {} to source directory {}",
+            options.isPreview() ? "Previewing" : "Applying", remediationPath, sourceBasePath);
         FVDLMetadata fvdlMetadata = loadFvdlMetadata();
 
         try {
             Document remediationDoc = xmlReader.read(remediationPath);
             RemediationDocument remediations = documentMapper.map(remediationDoc);
-            AppliedChangeLedger ledger = new AppliedChangeLedger();
             RemediationProcessingState state = new RemediationProcessingState(options);
             recordDescriptions(remediationDoc, state);
+            if (options.isPreview()) {
+                return previewRemediations(remediations, sourceBasePath, fvdlMetadata, state);
+            }
+            AppliedChangeLedger ledger = new AppliedChangeLedger();
             return classifyAndApply(remediations, sourceBasePath, fvdlMetadata, ledger, state);
         } catch (AviatorTechnicalException e) {
             throw e;
@@ -129,6 +138,80 @@ public class RemediationProcessor {
             trimmedSourceDir = trimmedSourceDir.substring(1, trimmedSourceDir.length() - 1);
         }
         return Paths.get(trimmedSourceDir).toAbsolutePath().normalize();
+    }
+
+    private RemediationMetric previewRemediations(RemediationDocument remediationDocument, Path sourceBasePath,
+            FVDLMetadata fvdlMetadata, RemediationProcessingState state) {
+        List<Remediation> remediations = remediationDocument.remediations();
+        state.setXmlEntryCount(remediations.size());
+        LOG.debug("Previewing {} remediation entries from remediations.xml", remediations.size());
+        for (Remediation remediation : remediations) {
+            String instanceId = remediation.instanceId();
+            if (!state.shouldProcess(instanceId)) {
+                continue;
+            }
+            state.recordSeen(instanceId);
+            try {
+                Map<String, FilePreview> files = xmlFilePreviews(remediation, sourceBasePath, fvdlMetadata);
+                state.recordPreviewAvailable(instanceId, files);
+            } catch (SkipRemediationException e) {
+                state.recordSkipped(instanceId, skipReasonLabel(e));
+                LOG.warn("Skipping remediation {}: {}", instanceId, e.getMessage());
+                LOG.debug("Skip reason for remediation {}: {}", instanceId, e.getReason().displayName(), e);
+            } catch (Exception e) {
+                state.recordSkipped(instanceId, SkipReason.UNEXPECTED_ERROR);
+                LOG.warn("Skipping remediation {} due to an unexpected processing error", instanceId);
+                LOG.debug("Unexpected error while previewing remediation {}", instanceId, e);
+            }
+        }
+        return finish(state);
+    }
+
+    private Map<String, FilePreview> xmlFilePreviews(Remediation remediation, Path sourceBasePath, FVDLMetadata fvdlMetadata) {
+        List<FileChange> fileChanges = remediation.fileChanges();
+        if (fileChanges.isEmpty()) {
+            throw new SkipRemediationException(SkipReason.NO_CHANGES, "No file changes found");
+        }
+        Map<String, FilePreview> files = new LinkedHashMap<>();
+        for (FileChange fileChange : fileChanges) {
+            String filename = fileChange.requiredFilename();
+            Path filePath = fileChange.resolve(sourceBasePath);
+            if (!filePath.startsWith(sourceBasePath)) {
+                throw new SkipRemediationException(SkipReason.SOURCE_FILE_OUTSIDE_SOURCE_DIR,
+                    "Source file resolves outside source directory: " + filename);
+            }
+            if (!Files.exists(filePath) || !Files.isRegularFile(filePath)) {
+                throw new SkipRemediationException(SkipReason.SOURCE_FILE_MISSING,
+                    "Source code file not present at: " + filePath);
+            }
+            List<Hunk> hunks = fileChange.hunks();
+            if (hunks.isEmpty()) {
+                throw new SkipRemediationException(SkipReason.NO_CHANGES, "No changes found for file: " + filename);
+            }
+            String encoding = fileWriteCoordinator.encodingFor(filePath, filename, fvdlMetadata).name();
+            List<PreviewFileChange> changes = new ArrayList<>();
+            FilePreview existing = files.get(filename);
+            if (existing != null) {
+                changes.addAll(existing.changes());
+            }
+            int changeIndex = changes.size();
+            for (Hunk hunk : hunks) {
+                changes.add(ChangeDetail.builder()
+                    .changeIndex(++changeIndex)
+                    .lineFrom(hunk.lineFrom())
+                    .lineTo(hunk.lineTo())
+                    .originalCode(hunk.requiredOriginalCode())
+                    .newCode(hunk.requiredNewCode())
+                    .contextLinesBefore(hunk.contextBeforeOrZero())
+                    .contextLinesAfter(hunk.contextAfterOrZero())
+                    .contextContent(hunk.contextTextOrEmpty())
+                    .fuzzyMatched(false)
+                    .build()
+                    .toPreviewFileChange());
+            }
+            files.put(filename, new FilePreview(filename, encoding, List.copyOf(changes)));
+        }
+        return files;
     }
 
     private RemediationMetric classifyAndApply(RemediationDocument remediationDocument, Path sourceBasePath, FVDLMetadata fvdlMetadata,
@@ -241,7 +324,7 @@ public class RemediationProcessor {
             Set<RemediationKey> filter = (satisfiedKeys.isEmpty() && !classifierNarrowed) ? null : toApplyKeys;
             PreparedFileChanges prepared = processRemediation(remediation, sourceBasePath, fvdlMetadata, state, filter, ledger);
             if (prepared != null && !prepared.appliedKeys().isEmpty()) {
-                state.recordApplied(instanceId, prepared);
+                state.recordApplied(instanceId);
                 for (RemediationKey key : prepared.appliedKeys()) {
                     LOG.debug("putting {}", instanceId);
                     remediationLookup.put(key, instanceId);
@@ -249,6 +332,10 @@ public class RemediationProcessor {
             }
         }
 
+        return finish(state);
+    }
+
+    private RemediationMetric finish(RemediationProcessingState state) {
         RemediationMetric metric = state.toMetric();
         LOG.info("Auto-remediation summary: total={}, applied={}, identical={}, superseded={}, possiblyRemediated={}, skipped={}",
             metric.totalRemediations(), metric.appliedRemediations(), metric.identicalRemediations(), metric.supersededRemediations(),
@@ -270,13 +357,6 @@ public class RemediationProcessor {
             if (pendingWrites.isEmpty()) {
                 state.recordSkipped(instanceId, SkipReason.NO_CHANGES);
                 return null;
-            }
-            if (options.isPreview()) {
-                for (PendingFileWrite pendingWrite : pendingWrites.values()) {
-                    state.modifiedFiles().add(pendingWrite.filename());
-                }
-                ledger.commitStaged();
-                return prepared;
             }
             try {
                 fileWriteCoordinator.commitRemediationWrites(instanceId, pendingWrites, state.modifiedFiles());

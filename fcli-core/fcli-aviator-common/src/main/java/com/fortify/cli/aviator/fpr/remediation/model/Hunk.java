@@ -55,6 +55,10 @@ public final class Hunk {
         return RequiredFields.requireText(contextTextRaw, "Context");
     }
 
+    public String contextTextOrEmpty() {
+        return contextTextRaw == null ? "" : contextTextRaw;
+    }
+
     public int contextBefore() {
         return RequiredFields.requireContextAttribute(contextBeforeRaw, "before");
     }
