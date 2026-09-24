@@ -1307,7 +1307,6 @@ class RemediationProcessorTest {
             assertEquals(3, change.lineTo());
             assertTrue(change.originalCode().contains("oldOne"));
             assertTrue(change.newCode().contains("newOne"));
-            assertFalse(change.fuzzyMatched());
         }
     }
 
@@ -1332,7 +1331,6 @@ class RemediationProcessorTest {
             assertEquals(3, change.lineTo());
             assertTrue(change.originalCode().contains("oldOne"));
             assertTrue(change.newCode().contains("newOne"));
-            assertFalse(change.fuzzyMatched());
         }
         assertTrue(Files.readString(sourceFile, StandardCharsets.UTF_8).contains("drifted();"));
     }
@@ -1421,7 +1419,6 @@ class RemediationProcessorTest {
                     .filter(d -> "skipped".equals(d.status()))
                     .findFirst().orElseThrow();
             assertEquals("ISSUE-MISSING", skipped.issueId());
-            assertEquals("Source file missing", skipped.skipReason());
             assertTrue(skipped.files().isEmpty());
         }
     }

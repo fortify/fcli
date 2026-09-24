@@ -55,7 +55,7 @@ class RemediationMetricTest {
 
     @Test
     void previewMetricCarriesTopLevelPreviewDetails() {
-        PreviewDetail detail = PreviewDetail.skipped("ISSUE-1", null, "Source file missing");
+        PreviewDetail detail = PreviewDetail.skipped("ISSUE-1", null);
         RemediationMetric metric = RemediationMetric.builder()
                 .executionMode(RemediationExecutionMode.PREVIEW)
                 .previewDetails(List.of(detail))

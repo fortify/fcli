@@ -32,7 +32,6 @@ public class ChangeDetail {
     private final int contextLinesBefore;
     private final int contextLinesAfter;
     private final String contextContent;
-    private final boolean fuzzyMatched;
 
     public PreviewFileChange toPreviewFileChange() {
         ContextMetadata context = new ContextMetadata(contextLinesBefore, contextLinesAfter, contextContent);
@@ -43,7 +42,6 @@ public class ChangeDetail {
                 .originalCode(originalCode)
                 .newCode(newCode)
                 .context(context)
-                .fuzzyMatched(fuzzyMatched)
                 .build();
     }
 }

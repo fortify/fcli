@@ -13,7 +13,6 @@
 package com.fortify.cli.aviator.fpr.remediation.preview;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -45,48 +44,47 @@ class FileChangeTest {
         assertEquals("old code", change.originalCode());
         assertEquals("new code", change.newCode());
         assertEquals(context, change.context());
-        assertFalse(change.fuzzyMatched());
     }
 
     @Test
     void changeIndexZeroThrowsException() {
         ContextMetadata context = new ContextMetadata(1, 1, "context");
         assertThrows(AviatorBugException.class,
-            () -> new PreviewFileChange(0, 10, 12, "old", "new", context, false));
+            () -> new PreviewFileChange(0, 10, 12, "old", "new", context));
     }
 
     @Test
     void changeIndexNegativeThrowsException() {
         ContextMetadata context = new ContextMetadata(1, 1, "context");
         assertThrows(AviatorBugException.class,
-            () -> new PreviewFileChange(-1, 10, 12, "old", "new", context, false));
+            () -> new PreviewFileChange(-1, 10, 12, "old", "new", context));
     }
 
     @Test
     void lineFromZeroThrowsException() {
         ContextMetadata context = new ContextMetadata(1, 1, "context");
         assertThrows(AviatorBugException.class,
-            () -> new PreviewFileChange(1, 0, 12, "old", "new", context, false));
+            () -> new PreviewFileChange(1, 0, 12, "old", "new", context));
     }
 
     @Test
     void lineFromNegativeThrowsException() {
         ContextMetadata context = new ContextMetadata(1, 1, "context");
         assertThrows(AviatorBugException.class,
-            () -> new PreviewFileChange(1, -1, 12, "old", "new", context, false));
+            () -> new PreviewFileChange(1, -1, 12, "old", "new", context));
     }
 
     @Test
     void lineToLessThanLineFromThrowsException() {
         ContextMetadata context = new ContextMetadata(1, 1, "context");
         assertThrows(AviatorBugException.class,
-            () -> new PreviewFileChange(1, 12, 10, "old", "new", context, false));
+            () -> new PreviewFileChange(1, 12, 10, "old", "new", context));
     }
 
     @Test
     void lineToEqualToLineFromIsValid() {
         ContextMetadata context = new ContextMetadata(1, 1, "context");
-        PreviewFileChange change = new PreviewFileChange(1, 10, 10, "old", "new", context, false);
+        PreviewFileChange change = new PreviewFileChange(1, 10, 10, "old", "new", context);
         
         assertNotNull(change);
         assertEquals(10, change.lineFrom());
@@ -96,6 +94,6 @@ class FileChangeTest {
     @Test
     void nullContextThrowsException() {
         assertThrows(AviatorBugException.class,
-            () -> new PreviewFileChange(1, 10, 12, "old", "new", null, false));
+            () -> new PreviewFileChange(1, 10, 12, "old", "new", null));
     }
 }

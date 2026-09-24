@@ -112,7 +112,7 @@ final class RemediationProcessingState {
             issueSkipReasons.put(instanceId, reason);
             if (options.isPreview()) {
                 previewDetailsByIssue.put(instanceId,
-                    PreviewDetail.skipped(instanceId, descriptionsByIssue.get(instanceId), reason));
+                    PreviewDetail.skipped(instanceId, descriptionsByIssue.get(instanceId)));
             }
         }
     }
@@ -167,7 +167,7 @@ final class RemediationProcessingState {
             skippedByReason.merge(REQUESTED_ISSUE_NOT_FOUND, 1, Integer::sum);
             if (options.isPreview()) {
                 previewDetailsByIssue.put(requestedIssueId,
-                    PreviewDetail.skipped(requestedIssueId, null, REQUESTED_ISSUE_NOT_FOUND));
+                    PreviewDetail.skipped(requestedIssueId, null));
             }
         }
     }

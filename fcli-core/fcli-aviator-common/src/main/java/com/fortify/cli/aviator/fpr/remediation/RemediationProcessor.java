@@ -205,7 +205,6 @@ public class RemediationProcessor {
                     .contextLinesBefore(hunk.contextBeforeOrZero())
                     .contextLinesAfter(hunk.contextAfterOrZero())
                     .contextContent(hunk.contextTextOrEmpty())
-                    .fuzzyMatched(false)
                     .build()
                     .toPreviewFileChange());
             }

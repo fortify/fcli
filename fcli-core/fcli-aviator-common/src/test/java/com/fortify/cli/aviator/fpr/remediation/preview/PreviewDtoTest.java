@@ -13,7 +13,6 @@
 package com.fortify.cli.aviator.fpr.remediation.preview;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -38,11 +37,11 @@ class PreviewDtoTest {
         ContextMetadata context = new ContextMetadata(1, 1, "context");
 
         assertThrows(AviatorBugException.class,
-            () -> new PreviewFileChange(0, 10, 12, "old", "new", context, false));
+            () -> new PreviewFileChange(0, 10, 12, "old", "new", context));
         assertThrows(AviatorBugException.class,
-            () -> new PreviewFileChange(1, 12, 10, "old", "new", context, false));
+            () -> new PreviewFileChange(1, 12, 10, "old", "new", context));
         assertThrows(AviatorBugException.class,
-            () -> new PreviewFileChange(1, 10, 12, "old", "new", null, false));
+            () -> new PreviewFileChange(1, 10, 12, "old", "new", null));
     }
 
     @Test
@@ -59,7 +58,6 @@ class PreviewDtoTest {
 
         assertEquals(1, change.changeIndex());
         assertEquals(context, change.context());
-        assertFalse(change.fuzzyMatched());
     }
 
     @Test
@@ -68,7 +66,7 @@ class PreviewDtoTest {
         assertEquals(List.of(), new FilePreview("Example.java", "UTF-8", null).changes());
 
         PreviewFileChange change = new PreviewFileChange(1, 1, 1, "old", "new",
-                new ContextMetadata(0, 0, "old"), false);
+                new ContextMetadata(0, 0, "old"));
         FilePreview preview = new FilePreview("Example.java", "UTF-8", List.of(change));
         assertEquals(1, preview.totalChanges());
         assertThrows(UnsupportedOperationException.class, () -> preview.changes().add(change));
@@ -80,7 +78,7 @@ class PreviewDtoTest {
         files.put("Example.java", new FilePreview("Example.java", "UTF-8", List.of()));
 
         PreviewDetail available = PreviewDetail.available("ISSUE-1", "description", files);
-        PreviewDetail skipped = PreviewDetail.skipped("ISSUE-2", null, "Source file missing");
+        PreviewDetail skipped = PreviewDetail.skipped("ISSUE-2", null);
 
         assertTrue(available.isAvailable());
         assertTrue(skipped.isSkipped());
@@ -88,6 +86,6 @@ class PreviewDtoTest {
         assertThrows(UnsupportedOperationException.class,
             () -> available.files().put("Other.java", new FilePreview("Other.java", "UTF-8", List.of())));
         assertThrows(AviatorBugException.class,
-            () -> new PreviewDetail("", "available", null, Map.of(), null));
+            () -> new PreviewDetail("", "available", null, Map.of()));
     }
 }

@@ -92,7 +92,7 @@ public final class AviatorRemediationMetricsHelper {
                 issueSkipReasons.put(requestedIssueId, REQUESTED_ISSUE_NOT_FOUND);
                 if (previewMode) {
                     previewDetailsByIssue.put(requestedIssueId,
-                        PreviewDetail.skipped(requestedIssueId, null, REQUESTED_ISSUE_NOT_FOUND));
+                        PreviewDetail.skipped(requestedIssueId, null));
                 }
             }
         }

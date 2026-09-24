@@ -84,7 +84,7 @@ class AviatorRemediationMetricsHelperTest {
                 .totalRemediations(1)
                 .skippedRemediations(1)
                 .executionMode(RemediationExecutionMode.PREVIEW)
-                .previewDetails(List.of(PreviewDetail.skipped("ISSUE-2", null, "Source file missing")))
+                .previewDetails(List.of(PreviewDetail.skipped("ISSUE-2", null)))
                 .build();
 
         RemediationMetric aggregated = AviatorRemediationMetricsHelper.aggregateMetrics(

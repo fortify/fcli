@@ -39,49 +39,47 @@ class PreviewDetailTest {
         assertEquals("available", detail.status());
         assertEquals("Remediation rationale", detail.description());
         assertEquals(1, detail.files().size());
-        assertEquals(null, detail.skipReason());
         assertTrue(detail.isAvailable());
     }
 
     @Test
     void skippedPreviewDetailCreatedCorrectly() {
-        PreviewDetail detail = PreviewDetail.skipped("ISSUE-456", null, "Source file missing");
+        PreviewDetail detail = PreviewDetail.skipped("ISSUE-456", null);
         
         assertNotNull(detail);
         assertEquals("ISSUE-456", detail.issueId());
         assertEquals("skipped", detail.status());
         assertEquals(0, detail.files().size());
-        assertEquals("Source file missing", detail.skipReason());
         assertTrue(detail.isSkipped());
     }
 
     @Test
     void nullIssueIdThrowsException() {
         assertThrows(AviatorBugException.class, 
-            () -> new PreviewDetail(null, "available", null, Map.of(), null));
+            () -> new PreviewDetail(null, "available", null, Map.of()));
     }
 
     @Test
     void blankIssueIdThrowsException() {
         assertThrows(AviatorBugException.class, 
-            () -> new PreviewDetail("", "available", null, Map.of(), null));
+            () -> new PreviewDetail("", "available", null, Map.of()));
     }
 
     @Test
     void nullStatusThrowsException() {
         assertThrows(AviatorBugException.class, 
-            () -> new PreviewDetail("ISSUE-1", null, null, Map.of(), null));
+            () -> new PreviewDetail("ISSUE-1", null, null, Map.of()));
     }
 
     @Test
     void blankStatusThrowsException() {
         assertThrows(AviatorBugException.class, 
-            () -> new PreviewDetail("ISSUE-1", "   ", null, Map.of(), null));
+            () -> new PreviewDetail("ISSUE-1", "   ", null, Map.of()));
     }
 
     @Test
     void nullFilesMapIsConvertedToEmptyMap() {
-        PreviewDetail detail = new PreviewDetail("ISSUE-1", "available", null, null, null);
+        PreviewDetail detail = new PreviewDetail("ISSUE-1", "available", null, null);
         assertNotNull(detail.files());
         assertEquals(0, detail.files().size());
     }
@@ -90,7 +88,7 @@ class PreviewDetailTest {
     void filesMapIsUnmodifiable() {
         Map<String, FilePreview> files = new java.util.LinkedHashMap<>();
         files.put("Test.java", new FilePreview("/path", "UTF-8", java.util.List.of()));
-        PreviewDetail detail = new PreviewDetail("ISSUE-1", "available", null, files, null);
+        PreviewDetail detail = new PreviewDetail("ISSUE-1", "available", null, files);
         
         assertThrows(UnsupportedOperationException.class, 
             () -> detail.files().put("Another.java", new FilePreview("/path2", "UTF-8", java.util.List.of())));

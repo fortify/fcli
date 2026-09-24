@@ -20,15 +20,14 @@ import lombok.Builder;
 
 @Reflectable
 @Builder
-@JsonPropertyOrder({"changeIndex", "lineFrom", "lineTo", "originalCode", "newCode", "context", "fuzzyMatched"})
+@JsonPropertyOrder({"changeIndex", "lineFrom", "lineTo", "originalCode", "newCode", "context"})
 public record PreviewFileChange(
         int changeIndex,
         int lineFrom,
         int lineTo,
         String originalCode,
         String newCode,
-        ContextMetadata context,
-        boolean fuzzyMatched) {
+        ContextMetadata context) {
     public PreviewFileChange {
         if (changeIndex < 1) {
             throw new AviatorBugException("PreviewFileChange changeIndex must be positive");
