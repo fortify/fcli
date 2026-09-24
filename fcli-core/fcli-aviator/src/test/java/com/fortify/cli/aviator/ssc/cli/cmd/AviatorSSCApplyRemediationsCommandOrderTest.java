@@ -59,25 +59,13 @@ import picocli.CommandLine;
 import picocli.CommandLine.Model.CommandSpec;
 
 /**
- * The order in which {@code apply-remediations --all} walks an application version's artifacts is a
- * yield decision, and the current order is the losing one.
+ * {@code --all} walks newest upload first for both download-remediations-cache and online apply.
  *
- * <p>{@code SSCArtifactHelper.getAllAviatorArtifacts} fetches {@code uploadDate DESC} and then
- * reverses the list "to maintain ascending order contract", so
- * {@code AviatorSSCApplyRemediationsCommand} applies the OLDEST scan first. The oldest scan is the
- * one whose line numbers are the most stale relative to the customer's current checkout: letting it
- * go first rewrites the file and destroys the newest scan's chance of a clean hash match, after
- * which the newest scan has to fall back on fuzzy anchoring and can lose its hunk to an ambiguous
- * match. Newest-first applies the best-matching artifact while the file is still pristine, and the
- * older artifacts then simply fail their own anchor checks, which is the correct outcome.
- *
- * <p>This is NOT a correctness test. Whatever gets written is written in the right place in either
- * order - that is guaranteed by anchor verification, not by ordering. What the order costs us is
- * fixes we could have landed. {@code getAllAviatorArtifacts} has exactly one caller, this command,
- * so the fix can be a local reverse in the {@code --all} loop or a change to the helper's ordering
- * contract; this test only cares that the newest artifact is applied first.
- *
- * <p>Currently: red, {@code appliedRemediation} is 1. Turns green when the order is reversed.
+ * <p>SSC returns {@code uploadDate DESC}. {@code getAllAviatorArtifacts} reverses that to oldest-first.
+ * The shared selector reverses again, so the latest artifact is processed first. That newer hunk matches
+ * the pristine file. The older hunk is then applied at its own lines, which the newer edit did not move,
+ * so both fixes land. Oldest-first applies the stale scan first, shifts the file, and the newer hunk then
+ * misses its hash and loses an ambiguous fuzzy match.
  */
 class AviatorSSCApplyRemediationsCommandOrderTest {
     private static final String APP_VERSION_ID = "42";
