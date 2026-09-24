@@ -40,23 +40,41 @@ public final class AviatorRemediationMetricsHelper {
     /**
      * Aggregates per-FPR metrics. {@code requestedIssueIds == null} selects unfiltered
      * aggregation (XML totals); non-null selects filtered aggregation (requested IDs).
+     * An empty metric list is apply mode.
      */
     public static RemediationMetric aggregateMetrics(Set<String> requestedIssueIds, Collection<RemediationMetric> metrics) {
-        Collection<RemediationMetric> safeMetrics = metrics == null ? List.of() : metrics;
-        return requestedIssueIds == null
-                ? aggregateUnfiltered(safeMetrics)
-                : aggregateFiltered(requestedIssueIds, safeMetrics);
+        return aggregateMetrics(requestedIssueIds, metrics, RemediationExecutionMode.APPLY);
     }
 
-    private static RemediationMetric aggregateUnfiltered(Collection<RemediationMetric> metrics) {
-        RemediationMetric.RemediationMetricBuilder builder = RemediationMetric.builder();
+    /**
+     * Same aggregation, with the command's requested mode kept when every FPR was skipped
+     * before a metric existed. A preview metric still forces preview.
+     */
+    public static RemediationMetric aggregateMetrics(
+            Set<String> requestedIssueIds,
+            Collection<RemediationMetric> metrics,
+            RemediationExecutionMode requestedMode) {
+        Collection<RemediationMetric> safeMetrics = metrics == null ? List.of() : metrics;
+        RemediationExecutionMode mode = requestedMode == null ? RemediationExecutionMode.APPLY : requestedMode;
+        return requestedIssueIds == null
+                ? aggregateUnfiltered(safeMetrics, mode)
+                : aggregateFiltered(requestedIssueIds, safeMetrics, mode);
+    }
+
+    private static RemediationMetric aggregateUnfiltered(
+            Collection<RemediationMetric> metrics, RemediationExecutionMode requestedMode) {
+        RemediationMetric.RemediationMetricBuilder builder = RemediationMetric.builder()
+                .executionMode(requestedMode);
         for (RemediationMetric metric : metrics) {
             builder.add(metric);
         }
         return builder.build();
     }
 
-    private static RemediationMetric aggregateFiltered(Set<String> requestedIssueIds, Collection<RemediationMetric> metrics) {
+    private static RemediationMetric aggregateFiltered(
+            Set<String> requestedIssueIds,
+            Collection<RemediationMetric> metrics,
+            RemediationExecutionMode requestedMode) {
         Set<String> seenIssueIds = new LinkedHashSet<>();
         Set<String> satisfiedIssueIds = new LinkedHashSet<>();
         Set<String> appliedIssueIds = new LinkedHashSet<>();
@@ -66,7 +84,7 @@ public final class AviatorRemediationMetricsHelper {
         Set<String> modifiedFiles = new LinkedHashSet<>();
         Map<String, String> issueSkipReasons = new LinkedHashMap<>();
         Map<String, PreviewDetail> previewDetailsByIssue = new LinkedHashMap<>();
-        boolean previewMode = false;
+        boolean previewMode = requestedMode == RemediationExecutionMode.PREVIEW;
         for (RemediationMetric metric : metrics) {
             seenIssueIds.addAll(metric.seenIssueIds());
             satisfiedIssueIds.addAll(metric.satisfiedIssueIds());

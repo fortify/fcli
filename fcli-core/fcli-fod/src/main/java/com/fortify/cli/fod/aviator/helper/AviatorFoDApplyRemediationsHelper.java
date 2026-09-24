@@ -19,6 +19,7 @@ import java.util.Set;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.aviator._common.remediations_cache.RemediationsApplyHelper.ApplyResult;
 import com.fortify.cli.aviator._common.util.AviatorRemediationMetricsHelper;
+import com.fortify.cli.aviator.fpr.remediation.RemediationExecutionMode;
 import com.fortify.cli.aviator.fpr.remediation.model.RemediationMetric;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.fod.release.helper.FoDReleaseDescriptor;
@@ -30,9 +31,10 @@ import com.fortify.cli.fod.release.helper.FoDReleaseDescriptor;
 public final class AviatorFoDApplyRemediationsHelper {
     private AviatorFoDApplyRemediationsHelper() {}
 
-    public static ObjectNode buildOnlineResultNode(FoDReleaseDescriptor releaseDescriptor, ApplyResult applyResult) {
+    public static ObjectNode buildOnlineResultNode(
+            FoDReleaseDescriptor releaseDescriptor, ApplyResult applyResult, RemediationExecutionMode executionMode) {
         RemediationMetric aggregated = AviatorRemediationMetricsHelper.aggregateMetrics(
-                null, applyResult.metrics());
+                null, applyResult.metrics(), executionMode);
         return buildCommonNode(
                 releaseDescriptor.getReleaseId(),
                 releaseDescriptor.getApplicationName(),
@@ -41,9 +43,9 @@ public final class AviatorFoDApplyRemediationsHelper {
     }
 
     public static ObjectNode buildCacheResultNode(
-            Path cacheZip, ApplyResult applyResult, Set<String> issueIdFilter) {
+            Path cacheZip, ApplyResult applyResult, Set<String> issueIdFilter, RemediationExecutionMode executionMode) {
         RemediationMetric aggregated = AviatorRemediationMetricsHelper.aggregateMetrics(
-                issueIdFilter, applyResult.metrics());
+                issueIdFilter, applyResult.metrics(), executionMode);
         List<String> releaseIds = applyResult.processedIds();
         String releaseId = releaseIds != null && !releaseIds.isEmpty() ? releaseIds.get(0) : null;
         ObjectNode result = buildCommonNode(releaseId, null, null, aggregated);

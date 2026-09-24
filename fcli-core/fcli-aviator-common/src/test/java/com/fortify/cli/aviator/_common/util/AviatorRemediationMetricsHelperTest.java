@@ -95,6 +95,25 @@ class AviatorRemediationMetricsHelperTest {
     }
 
     @Test
+    void skippedPreviewRunWithNoMetricsStaysPreview() {
+        RemediationMetric aggregated = AviatorRemediationMetricsHelper.aggregateMetrics(
+                null, List.of(), RemediationExecutionMode.PREVIEW);
+
+        assertTrue(aggregated.isPreview());
+        assertEquals(0, aggregated.appliedRemediations());
+        assertEquals("No-Remediation-Previewed", AviatorRemediationMetricsHelper.actionLabel(aggregated));
+    }
+
+    @Test
+    void skippedApplyRunWithNoMetricsStaysApply() {
+        RemediationMetric aggregated = AviatorRemediationMetricsHelper.aggregateMetrics(
+                null, List.of(), RemediationExecutionMode.APPLY);
+
+        assertFalse(aggregated.isPreview());
+        assertEquals("No-Remediation-Applied", AviatorRemediationMetricsHelper.actionLabel(aggregated));
+    }
+
+    @Test
         void aggregatingOnlyAppliedMetricsYieldsApplyResult() {
                 RemediationMetric metricOne = unfilteredMetric(1, 1, Set.of("A.java"), Map.of());
                 RemediationMetric metricTwo = unfilteredMetric(1, 0, Set.of(), Map.of());

@@ -71,12 +71,14 @@ public class AviatorSSCApplyRemediationsCommand extends AbstractAviatorApplyReme
     private JsonNode buildCacheResultNode(IRemediationsFprSource fprSource, ApplyResult result, Set<String> issueIdFilter) {
         return AviatorSSCApplyRemediationsHelper.buildCacheResultNode(
                 applyOptions.getFromCache(), result, issueIdFilter,
-                ((CacheRemediationsFprSource) fprSource).reader().getManifest().getSelection());
+                ((CacheRemediationsFprSource) fprSource).reader().getManifest().getSelection(),
+                applyOptions.executionMode());
     }
 
     private JsonNode buildOnlineResultNode(IRemediationsFprSource fprSource, ApplyResult result, Set<String> issueIdFilter) {
         ResolvedOnlineArtifacts resolvedOnline = ((SSCOnlineRemediationsFprSource) fprSource).getResolvedOnline();
         return AviatorSSCApplyRemediationsHelper.buildOnlineResultNode(
-                resolvedOnline.artifacts(), resolvedOnline.appVersionId(), result, issueIdFilter);
+                resolvedOnline.artifacts(), resolvedOnline.appVersionId(), result, issueIdFilter,
+                applyOptions.executionMode());
     }
 }

@@ -20,6 +20,7 @@ import java.util.Set;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.aviator._common.remediations_cache.RemediationsApplyHelper.ApplyResult;
 import com.fortify.cli.aviator._common.util.AviatorRemediationMetricsHelper;
+import com.fortify.cli.aviator.fpr.remediation.RemediationExecutionMode;
 import com.fortify.cli.aviator.fpr.remediation.model.RemediationMetric;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.ssc.artifact.helper.SSCArtifactDescriptor;
@@ -35,9 +36,10 @@ public final class AviatorSSCApplyRemediationsHelper {
             List<SSCArtifactDescriptor> artifacts,
             String appVersionId,
             ApplyResult applyResult,
-            Set<String> issueIdFilter) {
+            Set<String> issueIdFilter,
+            RemediationExecutionMode executionMode) {
         RemediationMetric aggregated = AviatorRemediationMetricsHelper.aggregateMetrics(
-                issueIdFilter, applyResult.metrics());
+                issueIdFilter, applyResult.metrics(), executionMode);
         return buildCommonNode(
                 resolveAppVersionId(artifacts, appVersionId),
                 resolveSingleArtifactId(artifacts, applyResult),
@@ -49,9 +51,10 @@ public final class AviatorSSCApplyRemediationsHelper {
             Path cacheZip,
             ApplyResult applyResult,
             Set<String> issueIdFilter,
-            Map<String, String> selection) {
+            Map<String, String> selection,
+            RemediationExecutionMode executionMode) {
         RemediationMetric aggregated = AviatorRemediationMetricsHelper.aggregateMetrics(
-                issueIdFilter, applyResult.metrics());
+                issueIdFilter, applyResult.metrics(), executionMode);
         String appVersionId = selection != null ? selection.get("appVersionId") : null;
         ObjectNode result = buildCommonNode(appVersionId, null, applyResult, aggregated);
         AviatorRemediationMetricsHelper.putCacheExtras(
