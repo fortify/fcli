@@ -22,9 +22,9 @@ import picocli.CommandLine.Option;
 /**
  * Mixin for resolving an Aviator user token from various sources (direct string, file, environment variable).
  */
+@MaskValue(sensitivity = LogSensitivityLevel.high, description = "AVIATOR TOKEN")
 public class AviatorUserTokenResolverMixin extends AbstractTextResolverMixin {
     @Option(names = {"--token", "-t"}, descriptionKey = "fcli.aviator.session.login.token", paramLabel = "source", required = true, order = 1)
-    @MaskValue(sensitivity = LogSensitivityLevel.high, description = "AVIATOR TOKEN")
     private String textSource;
 
     @Override
