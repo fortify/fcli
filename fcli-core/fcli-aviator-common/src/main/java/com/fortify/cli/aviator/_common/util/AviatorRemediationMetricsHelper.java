@@ -23,8 +23,9 @@ import java.util.Set;
 
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fortify.cli.aviator.fpr.processor.RemediationProcessor.RemediationMetric;
-import com.fortify.cli.aviator.fpr.processor.preview.PreviewDetail;
+import com.fortify.cli.aviator.fpr.remediation.RemediationExecutionMode;
+import com.fortify.cli.aviator.fpr.remediation.model.RemediationMetric;
+import com.fortify.cli.aviator.fpr.remediation.preview.PreviewDetail;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 
@@ -32,62 +33,111 @@ import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
  * Shared metric aggregation and result-field helpers for SSC/FoD apply-remediations flows.
  */
 public final class AviatorRemediationMetricsHelper {
+    private static final String REQUESTED_ISSUE_NOT_FOUND = "Requested issue not found in remediations";
+
     private AviatorRemediationMetricsHelper() {}
 
     /**
      * Aggregates per-FPR metrics. {@code requestedIssueIds == null} selects unfiltered
      * aggregation (XML totals); non-null selects filtered aggregation (requested IDs).
+     * An empty metric list is apply mode.
      */
     public static RemediationMetric aggregateMetrics(Set<String> requestedIssueIds, Collection<RemediationMetric> metrics) {
+        return aggregateMetrics(requestedIssueIds, metrics, RemediationExecutionMode.APPLY);
+    }
+
+    /**
+     * Same aggregation, with the command's requested mode kept when every FPR was skipped
+     * before a metric existed. A preview metric still forces preview.
+     */
+    public static RemediationMetric aggregateMetrics(
+            Set<String> requestedIssueIds,
+            Collection<RemediationMetric> metrics,
+            RemediationExecutionMode requestedMode) {
         Collection<RemediationMetric> safeMetrics = metrics == null ? List.of() : metrics;
+        RemediationExecutionMode mode = requestedMode == null ? RemediationExecutionMode.APPLY : requestedMode;
         return requestedIssueIds == null
-                ? aggregateUnfiltered(safeMetrics)
-                : aggregateFiltered(requestedIssueIds, safeMetrics);
+                ? aggregateUnfiltered(safeMetrics, mode)
+                : aggregateFiltered(requestedIssueIds, safeMetrics, mode);
     }
 
-    private static RemediationMetric aggregateUnfiltered(Collection<RemediationMetric> metrics) {
-        int totalRemediations = 0, appliedRemediations = 0;
-        Set<String> modifiedFiles = new LinkedHashSet<>();
-        Map<String, Integer> skippedByReason = new LinkedHashMap<>();
-        List<PreviewDetail> previewDetails = new ArrayList<>();
-        boolean previewMode = false;
+    private static RemediationMetric aggregateUnfiltered(
+            Collection<RemediationMetric> metrics, RemediationExecutionMode requestedMode) {
+        RemediationMetric.RemediationMetricBuilder builder = RemediationMetric.builder()
+                .executionMode(requestedMode);
         for (RemediationMetric metric : metrics) {
-            totalRemediations += metric.totalRemediations();
-            appliedRemediations += metric.appliedRemediations();
-            accumulateFilesAndSkips(metric, modifiedFiles, skippedByReason);
-            if (metric instanceof RemediationMetric.Preview preview) {
-                previewMode = true;
-                previewDetails.addAll(preview.previewDetails());
-            }
+            builder.add(metric);
         }
-        return previewMode
-                ? RemediationMetric.previewUnfiltered(totalRemediations, appliedRemediations, modifiedFiles, skippedByReason, previewDetails)
-                : RemediationMetric.unfiltered(totalRemediations, appliedRemediations, modifiedFiles, skippedByReason);
+        return builder.build();
     }
 
-    private static RemediationMetric aggregateFiltered(Set<String> requestedIssueIds, Collection<RemediationMetric> metrics) {
+    private static RemediationMetric aggregateFiltered(
+            Set<String> requestedIssueIds,
+            Collection<RemediationMetric> metrics,
+            RemediationExecutionMode requestedMode) {
+        Set<String> seenIssueIds = new LinkedHashSet<>();
+        Set<String> satisfiedIssueIds = new LinkedHashSet<>();
         Set<String> appliedIssueIds = new LinkedHashSet<>();
+        Set<String> identicalIssueIds = new LinkedHashSet<>();
+        Set<String> supersededIssueIds = new LinkedHashSet<>();
+        Set<String> possiblyRemediatedIssueIds = new LinkedHashSet<>();
         Set<String> modifiedFiles = new LinkedHashSet<>();
-        Map<String, Integer> skippedByReason = new LinkedHashMap<>();
-        List<PreviewDetail> previewDetails = new ArrayList<>();
-        boolean previewMode = false;
+        Map<String, String> issueSkipReasons = new LinkedHashMap<>();
+        Map<String, PreviewDetail> previewDetailsByIssue = new LinkedHashMap<>();
+        boolean previewMode = requestedMode == RemediationExecutionMode.PREVIEW;
         for (RemediationMetric metric : metrics) {
+            seenIssueIds.addAll(metric.seenIssueIds());
+            satisfiedIssueIds.addAll(metric.satisfiedIssueIds());
             appliedIssueIds.addAll(metric.appliedIssueIds());
-            accumulateFilesAndSkips(metric, modifiedFiles, skippedByReason);
-            if (metric instanceof RemediationMetric.Preview preview) {
-                previewMode = true;
-                previewDetails.addAll(preview.previewDetails());
+            identicalIssueIds.addAll(metric.identicalIssueIds());
+            supersededIssueIds.addAll(metric.supersededIssueIds());
+            possiblyRemediatedIssueIds.addAll(metric.possiblyRemediatedIssueIds());
+            modifiedFiles.addAll(metric.modifiedFiles());
+            issueSkipReasons.putAll(metric.issueSkipReasons());
+            previewMode |= metric.isPreview();
+            for (PreviewDetail detail : metric.previewDetails()) {
+                PreviewDetail existing = previewDetailsByIssue.get(detail.issueId());
+                if (existing == null || detail.isAvailable() || !existing.isAvailable()) {
+                    previewDetailsByIssue.put(detail.issueId(), detail);
+                }
             }
         }
-        return previewMode
-                ? RemediationMetric.previewFiltered(requestedIssueIds, appliedIssueIds, modifiedFiles, skippedByReason, previewDetails)
-                : RemediationMetric.filtered(requestedIssueIds, appliedIssueIds, modifiedFiles, skippedByReason);
-    }
 
-    private static void accumulateFilesAndSkips(
-            RemediationMetric metric, Set<String> modifiedFiles, Map<String, Integer> skippedByReason) {
-        modifiedFiles.addAll(metric.modifiedFiles());
-        mergeSkippedByReason(skippedByReason, metric.skippedByReason());
+        issueSkipReasons.keySet().removeAll(satisfiedIssueIds);
+        possiblyRemediatedIssueIds.removeAll(satisfiedIssueIds);
+        for (String requestedIssueId : requestedIssueIds) {
+            if (!satisfiedIssueIds.contains(requestedIssueId) && !seenIssueIds.contains(requestedIssueId)) {
+                issueSkipReasons.put(requestedIssueId, REQUESTED_ISSUE_NOT_FOUND);
+                if (previewMode) {
+                    previewDetailsByIssue.put(requestedIssueId,
+                        PreviewDetail.skipped(requestedIssueId, null));
+                }
+            }
+        }
+
+        Map<String, Integer> skippedByReason = new LinkedHashMap<>();
+        issueSkipReasons.values().forEach(reason -> skippedByReason.merge(reason, 1, Integer::sum));
+        int skippedRemediations = requestedIssueIds.size() - satisfiedIssueIds.size();
+        return RemediationMetric.builder()
+                .totalRemediations(requestedIssueIds.size())
+                .appliedRemediations(appliedIssueIds.size())
+                .identicalRemediations(identicalIssueIds.size())
+                .supersededRemediations(supersededIssueIds.size())
+                .possiblyRemediatedRemediations(possiblyRemediatedIssueIds.size())
+                .skippedRemediations(skippedRemediations)
+                .modifiedFiles(modifiedFiles)
+                .skippedByReason(skippedByReason)
+                .executionMode(previewMode ? RemediationExecutionMode.PREVIEW : RemediationExecutionMode.APPLY)
+                .requestedIssueIds(requestedIssueIds)
+                .seenIssueIds(seenIssueIds)
+                .satisfiedIssueIds(satisfiedIssueIds)
+                .appliedIssueIds(appliedIssueIds)
+                .identicalIssueIds(identicalIssueIds)
+                .supersededIssueIds(supersededIssueIds)
+                .possiblyRemediatedIssueIds(possiblyRemediatedIssueIds)
+                .issueSkipReasons(issueSkipReasons)
+                .previewDetails(new ArrayList<>(previewDetailsByIssue.values()))
+                .build();
     }
 
     public static Set<String> getRemainingIssueIds(Set<String> requestedIssueIds, RemediationMetric metric) {
@@ -95,7 +145,7 @@ public final class AviatorRemediationMetricsHelper {
             return requestedIssueIds;
         }
         Set<String> remainingIssueIds = new LinkedHashSet<>(requestedIssueIds);
-        remainingIssueIds.removeAll(metric.appliedIssueIds());
+        remainingIssueIds.removeAll(metric.satisfiedIssueIds());
         return remainingIssueIds;
     }
 
@@ -117,7 +167,7 @@ public final class AviatorRemediationMetricsHelper {
     }
 
     public static String actionLabel(RemediationMetric metric) {
-        boolean previewMode = metric instanceof RemediationMetric.Preview;
+        boolean previewMode = metric != null && metric.isPreview();
         if (metric != null && metric.appliedRemediations() > 0) {
             return previewMode ? "Remediation-Previewed" : "Remediation-Applied";
         } else {
@@ -137,12 +187,15 @@ public final class AviatorRemediationMetricsHelper {
         int total = metric == null ? 0 : metric.totalRemediations();
         int applied = metric == null ? 0 : metric.appliedRemediations();
         int skipped = metric == null ? 0 : metric.skippedRemediations();
-        String appliedFieldName = metric instanceof RemediationMetric.Preview ? "availableRemediation" : "appliedRemediation";
+        String appliedFieldName = metric != null && metric.isPreview() ? "availableRemediation" : "appliedRemediation";
         Map<String, Integer> skippedByReason = metric == null ? Map.of() : metric.skippedByReason();
         Set<String> modifiedFiles = metric == null ? Set.of() : metric.modifiedFiles();
 
         result.put("totalRemediation", total);
         result.put(appliedFieldName, applied);
+        result.put("identicalRemediation", metric == null ? 0 : metric.identicalRemediations());
+        result.put("supersededRemediation", metric == null ? 0 : metric.supersededRemediations());
+        result.put("possiblyRemediatedRemediation", metric == null ? 0 : metric.possiblyRemediatedRemediations());
         result.put("skippedRemediation", skipped);
         result.put("skippedReasons", formatSkippedReasons(skippedByReason));
         result.set("skippedByReason", toObjectNode(skippedByReason));
@@ -154,8 +207,8 @@ public final class AviatorRemediationMetricsHelper {
         putRemediationMetricFields(result, metric);
         result.put(IActionCommandResultSupplier.actionFieldName, actionLabel(metric));
 
-        if (metric instanceof RemediationMetric.Preview preview) {
-            result.set("previewDetails", toPreviewDetailsArray(preview.previewDetails()));
+        if (metric != null && metric.isPreview()) {
+            result.set("previewDetails", toPreviewDetailsArray(metric.previewDetails()));
         }
     }
     

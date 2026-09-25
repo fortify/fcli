@@ -39,7 +39,7 @@ public abstract class AbstractFoDScanSetupCommand<T> extends AbstractFoDJsonNode
     protected String assessmentType; // Plain text name as custom assessment types can be created
     @Mixin protected FoDEntitlementFrequencyTypeMixins.RequiredOption entitlementFrequencyTypeMixin;
     @Option(names = {"--entitlement-id"})
-    protected Integer entitlementId;
+    protected Long entitlementId;
 
     protected String assessmentTypeName;
 

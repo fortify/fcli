@@ -1,5 +1,70 @@
 # Changelog
 
+## [3.26.1](https://github.com/fortify/fcli/compare/v3.26.0...v3.26.1) (2026-09-22)
+
+
+### Bug Fixes
+
+* Skip unused FoD vulnerability filters for large-tenant performance ([80c6b1b](https://github.com/fortify/fcli/commit/80c6b1bd24de0c51ee6a9bfe4f919f6af9b83f2d))
+
+## [3.26.0](https://github.com/fortify/fcli/compare/v3.25.0...v3.26.0) (2026-09-18)
+
+
+### Features
+
+* SSC `ci` action: Add support for running DAST scans using existing DAST settings in SSC, and optionally waiting for DAST scan completion ([3bc78d7](https://github.com/fortify/fcli/commit/3bc78d72b8ddcea7a21080113ecea6cca8b0319c))
+
+
+### Bug Fixes
+
+* `fcli aviator ssc apply-remediations`: Improve handling of non-writable files ([270a143](https://github.com/fortify/fcli/commit/270a143777ec57ebae2acc951781657dd914aac3))
+* `fcli aviator ssc apply-remediations`: Improve handling of overlapping remediations ([f4a46aa](https://github.com/fortify/fcli/commit/f4a46aa2d04bbcbfd6c865888c52b9ff519f9cce))
+* `fcli aviator ssc apply-remediations`: More accurate application of auto-remediations ([f4a46aa](https://github.com/fortify/fcli/commit/f4a46aa2d04bbcbfd6c865888c52b9ff519f9cce))
+* `fcli fod aviator apply-remediations`: Improve handling of non-writable files ([270a143](https://github.com/fortify/fcli/commit/270a143777ec57ebae2acc951781657dd914aac3))
+* `fcli fod aviator apply-remediations`: Improve handling of overlapping remediations ([f4a46aa](https://github.com/fortify/fcli/commit/f4a46aa2d04bbcbfd6c865888c52b9ff519f9cce))
+* `fcli fod aviator apply-remediations`: More accurate application of auto-remediations ([f4a46aa](https://github.com/fortify/fcli/commit/f4a46aa2d04bbcbfd6c865888c52b9ff519f9cce))
+* `fcli fod`: Change id fields from `int` to `long` to avoid potential integer overflows ([93f166d](https://github.com/fortify/fcli/commit/93f166d09c0c0c033f25e458e3a26de1c9052001))
+* `fcli ssc ac create-local-user`: The `--roles` option now properly accepts role names as per option description ([05bf6c4](https://github.com/fortify/fcli/commit/05bf6c4c89343a0c31af3a5269b4396866c399ef))
+* `fcli ssc ac update-local-user`: The `--roles`, `--add-roles`, and `--rm-roles` options now properly accept role names as per option description ([05bf6c4](https://github.com/fortify/fcli/commit/05bf6c4c89343a0c31af3a5269b4396866c399ef))
+* Various MCP & Aviator security fixes ([99fa798](https://github.com/fortify/fcli/commit/99fa798125fada823d64265470ddf0f86fba1c21))
+
+## [3.25.0](https://github.com/fortify/fcli/compare/v3.24.0...v3.25.0) (2026-08-31)
+
+
+### Features
+
+* `fcli aviator ssc audit`: Add `--force-reaudit` to re-audit Aviator-processed issues without overwriting human triage ([840ee90](https://github.com/fortify/fcli/commit/840ee90beed814507f06c01c0e456f1b610f4234))
+
+
+### Bug Fixes
+
+* `fcli aviator ssc apply-remediations`: Skip remediations when source context matches multiple locations ([840ee90](https://github.com/fortify/fcli/commit/840ee90beed814507f06c01c0e456f1b610f4234))
+
+## [3.24.0](https://github.com/fortify/fcli/compare/v3.23.3...v3.24.0) (2026-08-21)
+
+
+### Features
+
+* `fcli ai-assist mcp start-stdio`: Add `--server-name` option to configure custom MCP server name, defaulting to either `fcli-<module>` or `fcli` (depending on whether `--module` is specified) ([65ddc65](https://github.com/fortify/fcli/commit/65ddc653789849de6d5703c5b40a5058df95c1c7))
+* `fcli aviator ssc apply-remediations`: Add `--source-encodings` option for source file decoding and encoding ([e63c814](https://github.com/fortify/fcli/commit/e63c814e531c5aab8748a145dff4000c0c21913e))
+* `fcli aviator ssc audit`: Add `--source-encodings` option for source decoding and audit skip reporting ([e63c814](https://github.com/fortify/fcli/commit/e63c814e531c5aab8748a145dff4000c0c21913e))
+* `fcli fod aviator apply-remediations`: Add `--source-encodings` option for source file decoding and encoding ([e63c814](https://github.com/fortify/fcli/commit/e63c814e531c5aab8748a145dff4000c0c21913e))
+* `fcli fod issue get`: New command for retrieving issue data for a single issue ([f4f5bf1](https://github.com/fortify/fcli/commit/f4f5bf1498a4ff79ba4c8db38a317508373f43ec))
+* `fcli fod session login`: Add `--code` and `--totp` options to support MFA-based logins (resolves [#1059](https://github.com/fortify/fcli/issues/1059)) ([cf882bb](https://github.com/fortify/fcli/commit/cf882bb41eafa92f66e570facad1fb0a008a78f5))
+* `fcli ssc issue get`: New command for retrieving issue data for a single issue ([f4f5bf1](https://github.com/fortify/fcli/commit/f4f5bf1498a4ff79ba4c8db38a317508373f43ec))
+
+
+### Bug Fixes
+
+* `fcli aviator ssc apply-remediations`: apply source edits using the encoding declared in `audit.fvdl` instead of assuming UTF-8 ([71919f7](https://github.com/fortify/fcli/commit/71919f76a58fa21ba029b03659ee7202c010e16f))
+* `fcli aviator ssc apply-remediations`: Atomic Remediation with Exception Handling and Compliance Reporting ([92bcbe1](https://github.com/fortify/fcli/commit/92bcbe1aa035ec29a807075333ce3603545ca55d))
+* `fcli aviator ssc audit`: Upload only issues written in the current audit run ([#1063](https://github.com/fortify/fcli/issues/1063)) ([97e587a](https://github.com/fortify/fcli/commit/97e587ab0cd730b3fff76c8d4f1963cb63e5f2d0))
+* `fcli fod aviator apply-remediations`: apply source edits using the encoding declared in `audit.fvdl` instead of assuming UTF-8 ([71919f7](https://github.com/fortify/fcli/commit/71919f76a58fa21ba029b03659ee7202c010e16f))
+* `fcli fod aviator apply-remediations`: Atomic Remediation with Exception Handling and Compliance Reporting ([92bcbe1](https://github.com/fortify/fcli/commit/92bcbe1aa035ec29a807075333ce3603545ca55d))
+* `fcli fod dast-scan start`: Restore  `--vpn` support and 422 active-scan fallback (lost in Aviator 26.2 merge) ([fbf4f7b](https://github.com/fortify/fcli/commit/fbf4f7bcbd20f24e56445a2b70adc056d7e115fc))
+* `fcli fod dast-scan start`: Restore fix to allow DAST scan to start if no prior scans exist (lost in Aviator 26.2 merge) (fixes [#1068](https://github.com/fortify/fcli/issues/1068)) ([fbf4f7b](https://github.com/fortify/fcli/commit/fbf4f7bcbd20f24e56445a2b70adc056d7e115fc))
+* `fcli fod microservice create`: Re-add non-microservice application guard (lost in Aviator 26.2 merge) ([fbf4f7b](https://github.com/fortify/fcli/commit/fbf4f7bcbd20f24e56445a2b70adc056d7e115fc))
+
 ## [3.23.3](https://github.com/fortify/fcli/compare/v3.23.2...v3.23.3) (2026-07-15)
 
 

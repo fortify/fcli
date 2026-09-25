@@ -22,6 +22,6 @@ import lombok.NoArgsConstructor;
 @Data @EqualsAndHashCode(callSuper = true)
 @Reflectable @NoArgsConstructor
 public class FoDPickListDescriptor extends JsonNodeHolder {
-    private Integer id;
+    private Long id;
     private String name;
 }

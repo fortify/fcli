@@ -29,6 +29,7 @@ import com.fortify.aviator.grpc.StackTraceElementList;
 import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
 import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
 import com.fortify.cli.aviator.audit.model.AuditResponse;
+import com.fortify.cli.aviator.audit.model.AuditResponse.AuditSkipReason;
 import com.fortify.cli.aviator.audit.model.Autoremediation;
 import com.fortify.cli.aviator.audit.model.Change;
 import com.fortify.cli.aviator.audit.model.StackTraceElement;
@@ -195,7 +196,11 @@ class GrpcUtil {
         auditResponse.setOutputToken(response.getOutputToken());
         auditResponse.setStatus(response.getStatus());
         auditResponse.setStatusMessage(response.getStatusMessage());
+        if ("SKIPPED".equalsIgnoreCase(response.getStatus())) {
+            auditResponse.setAuditSkipReason(AuditSkipReason.SKIPPED_BY_AVIATOR);
+        }
         auditResponse.setIssueId(response.getIssueId());
+        auditResponse.setSubmittedToAviator(true);
         auditResponse.setTier(response.getTier());
         auditResponse.setAviatorPredictionTag(response.getAviatorPredictionTag());
         auditResponse.setIsAviatorProcessed(response.getIsAviatorProcessed());

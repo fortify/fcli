@@ -62,6 +62,8 @@ public class FoDSastScanSetupCommand extends AbstractFoDScanSetupCommand<FoDScan
     private Boolean performOpenSourceAnalysis;
     @Option(names = {"--audit-preference"}, required = true)
     private FoDEnums.AuditPreferenceTypes auditPreferenceType;
+    @Option(names = {"--scan-policy"})
+    private String scanPolicy;
     @Option(names = {"--include-third-party-libs"})
     private final Boolean includeThirdPartyLibraries = false;
     @Option(names = {"--use-source-control"})
@@ -150,6 +152,8 @@ public class FoDSastScanSetupCommand extends AbstractFoDScanSetupCommand<FoDScan
             builder.includeFortifyAviator(currentSetup.getIncludeFortifyAviator());
         }
 
+        builder.scanPolicy(FoDScanSastHelper.normalizeSetupScanPolicy(scanPolicy));
+
         FoDScanConfigSastSetupRequest setupSastScanRequest = builder.build();
 
         return FoDScanConfigSastHelper.setupScan(unirest, releaseDescriptor, setupSastScanRequest).asJsonNode();
@@ -204,7 +208,7 @@ public class FoDSastScanSetupCommand extends AbstractFoDScanSetupCommand<FoDScan
         }
     }
 
-    private void validateEntitlement(FoDScanConfigSastDescriptor currentSetup, Integer entitlementIdToUse, String relId, FoDReleaseAssessmentTypeDescriptor atd) {
+    private void validateEntitlement(FoDScanConfigSastDescriptor currentSetup, Long entitlementIdToUse, String relId, FoDReleaseAssessmentTypeDescriptor atd) {
         // validate entitlement specified or currently in use against assessment type found
         if (entitlementId != null && entitlementId > 0) {
             // check if "entitlement id" explicitly matches what has been found

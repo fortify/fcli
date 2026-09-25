@@ -13,6 +13,8 @@
 package com.fortify.cli.aviator.ssc.cli.mixin;
 
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
@@ -97,8 +99,11 @@ public final class AviatorSSCRemediationsSelectorArgGroups {
         public ResolvedOnlineArtifacts resolveArtifacts(UnirestInstance unirest, OffsetDateTime sinceDate) {
             if (isAllSelected()) {
                 String appVersionId = getAppVersionId(unirest);
+                List<SSCArtifactDescriptor> artifacts = new ArrayList<>(
+                    SSCArtifactHelper.getAllAviatorArtifacts(unirest, appVersionId, sinceDate));
+                Collections.reverse(artifacts);
                 return new ResolvedOnlineArtifacts(
-                        SSCArtifactHelper.getAllAviatorArtifacts(unirest, appVersionId, sinceDate),
+                    artifacts,
                         appVersionId);
             }
             if (isLatestSelected()) {

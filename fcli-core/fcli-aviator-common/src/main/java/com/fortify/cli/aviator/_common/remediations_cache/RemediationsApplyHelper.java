@@ -23,7 +23,9 @@ import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
 import com.fortify.cli.aviator._common.util.AviatorRemediationMetricsHelper;
 import com.fortify.cli.aviator.applyRemediation.ApplyAutoRemediationOnSource;
 import com.fortify.cli.aviator.config.IAviatorLogger;
-import com.fortify.cli.aviator.fpr.processor.RemediationProcessor.RemediationMetric;
+import com.fortify.cli.aviator.fpr.remediation.RemediationExecutionMode;
+import com.fortify.cli.aviator.fpr.remediation.RemediationProcessingOptions;
+import com.fortify.cli.aviator.fpr.remediation.model.RemediationMetric;
 import com.fortify.cli.aviator.util.FprHandle;
 import com.fortify.cli.common.exception.FcliTechnicalException;
 
@@ -58,9 +60,7 @@ public final class RemediationsApplyHelper {
                 return false;
             }
             RemediationMetric metric = applyOne(
-                    fprPath, label, index, total,
-                    options.getSourceCodeDirectory(), logger, acc.remaining,
-                    options.isPreviewMode());
+                    fprPath, label, index, total, options, logger, acc.remaining);
             if (metric == null) {
                 acc.skipped++;
             } else {
@@ -84,14 +84,19 @@ public final class RemediationsApplyHelper {
             String entryLabel,
             int index,
             int total,
-            String sourceCodeDirectory,
+            IApplyRemediationsOptions options,
             IAviatorLogger logger,
-            Set<String> issueFilter,
-            boolean previewMode) {
+            Set<String> issueFilter) {
+        boolean previewMode = options.isPreviewMode();
         logger.progress("Processing FPR " + index + "/" + total + " (" + entryLabel + ")");
         logger.progress("Status: Processing FPR with Aviator for " + (previewMode ? "Previewing" : "Applying") + " Auto Remediations");
         try (FprHandle fprHandle = new FprHandle(fprPath)) {
-            return ApplyAutoRemediationOnSource.applyRemediations(fprHandle, sourceCodeDirectory, logger, issueFilter, previewMode);
+            RemediationProcessingOptions processingOptions = new RemediationProcessingOptions(
+                    issueFilter,
+                    previewMode ? RemediationExecutionMode.PREVIEW : RemediationExecutionMode.APPLY,
+                    options.getSourceDecoder());
+            return ApplyAutoRemediationOnSource.applyRemediations(
+                    fprHandle, options.getSourceCodeDirectory(), logger, processingOptions);
         } catch (AviatorSimpleException e) {
             log.warn("Skipping entry {} as {}", entryLabel, e.getMessage());
             return null;

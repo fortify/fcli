@@ -31,7 +31,7 @@ import picocli.CommandLine.Option;
 
 public class SSCIssueIncludeMixin implements IHttpRequestUpdater, IRecordTransformer {
     @DisableTest(TestType.MULTI_OPT_PLURAL_NAME)
-    @Option(names = {"--include", "-i"}, split = ",", defaultValue = "visible", descriptionKey = "fcli.ssc.issue.list.includeIssue", paramLabel="<status>")
+    @Option(names = {"--include", "-i"}, split = ",", defaultValue = "visible", descriptionKey = "fcli.ssc.issue.includeIssue", paramLabel="<status>")
     private Set<SSCIssueInclude> includes;
 
     public HttpRequest<?> updateRequest(HttpRequest<?> request) {

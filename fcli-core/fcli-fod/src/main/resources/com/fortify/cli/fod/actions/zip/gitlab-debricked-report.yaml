@@ -46,6 +46,7 @@ steps:
       issues:
         uri: /api/v3/releases/${rel.releaseId}/vulnerabilities
         query:
+          excludeFilters: true # fcli does not use the top-level 'filters' object; excluding it improves FoD-side performance
           limit: 50
           filters: "Category:Open Source"
         log.progress:

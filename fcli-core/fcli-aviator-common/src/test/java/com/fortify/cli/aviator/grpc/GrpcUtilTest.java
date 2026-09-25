@@ -19,6 +19,9 @@ import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 
+import com.fortify.aviator.grpc.AuditorResponse;
+import com.fortify.cli.aviator.audit.model.AuditResponse;
+import com.fortify.cli.aviator.audit.model.AuditResponse.AuditSkipReason;
 import com.fortify.cli.aviator.audit.model.File;
 import com.fortify.cli.aviator.audit.model.UserPrompt;
 
@@ -42,5 +45,17 @@ class GrpcUtilTest {
 
         assertEquals(List.of("PLSQL"), auditRequest.getProgrammingLanguagesList());
         assertEquals("PLSQL", auditRequest.getLanguage());
+    }
+
+    @Test
+    void shouldClassifySkippedServerResponseWithoutInspectingMessage() {
+        AuditorResponse response = AuditorResponse.newBuilder()
+                .setStatus("SKIPPED")
+                .setStatusMessage("example could not be read from the FPR")
+                .build();
+
+        AuditResponse auditResponse = GrpcUtil.convertToAuditResponse(response);
+
+        assertEquals(AuditSkipReason.SKIPPED_BY_AVIATOR, auditResponse.getAuditSkipReason());
     }
 }

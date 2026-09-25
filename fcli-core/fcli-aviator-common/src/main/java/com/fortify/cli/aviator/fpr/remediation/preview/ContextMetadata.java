@@ -10,27 +10,15 @@
  * herein. The information contained herein is subject to change
  * without notice.
  */
-package com.fortify.cli.aviator.fpr.processor.preview;
+package com.fortify.cli.aviator.fpr.remediation.preview;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.aviator._common.exception.AviatorBugException;
 
-/**
- * Context metadata from the remediations XML, including before/after line counts
- * and the full context text. Used for fuzzy matching when file hashes don't match.
- * 
- * @param linesBefore Number of context lines before the changed code
- * @param linesAfter Number of context lines after the changed code
- * @param content Full context text as a single string (may contain newlines)
- */
 @Reflectable
 @JsonPropertyOrder({"linesBefore", "linesAfter", "content"})
-public record ContextMetadata(
-        int linesBefore,
-        int linesAfter,
-        String content) {
-
+public record ContextMetadata(int linesBefore, int linesAfter, String content) {
     public ContextMetadata {
         if (linesBefore < 0) {
             throw new AviatorBugException("ContextMetadata linesBefore must be non-negative");

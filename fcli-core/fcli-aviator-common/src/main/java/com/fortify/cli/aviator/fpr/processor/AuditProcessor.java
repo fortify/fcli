@@ -27,8 +27,10 @@ import java.util.Base64;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -60,11 +62,16 @@ import com.fortify.cli.aviator.audit.model.AuditTier;
 import com.fortify.cli.aviator.config.TagMappingConfig;
 import com.fortify.cli.aviator.fpr.model.AuditIssue;
 import com.fortify.cli.aviator.fpr.model.FPRInfo;
+import com.fortify.cli.aviator.fpr.model.FVDLMetadata;
 import com.fortify.cli.aviator.fpr.utils.FileUtils;
+import com.fortify.cli.aviator.fpr.utils.ISourceDecoder;
+import com.fortify.cli.aviator.fpr.utils.SourceDecoders;
 import com.fortify.cli.aviator.util.Constants;
+import com.fortify.cli.aviator.util.FileUtil;
 import com.fortify.cli.aviator.util.FprHandle;
 
 import lombok.Setter;
+
 
 
 public class AuditProcessor {
@@ -84,9 +91,39 @@ public class AuditProcessor {
 
     private final Map<String, AuditIssue> auditIssueMap = new HashMap<>();
     private final FprHandle fprHandle;
+    private final ISourceDecoder sourceDecoder;
+    private RemediationGenerationMetric lastRemediationGenerationMetric = RemediationGenerationMetric.empty();
+
+    public record RemediationGenerationMetric(int skippedRemediations, Map<String, Integer> skippedByReason) {
+        public static RemediationGenerationMetric empty() {
+            return new RemediationGenerationMetric(0, Map.of());
+        }
+    }
+
+    private enum RemediationSkipReason {
+        SOURCE_READ_OR_DECODE_FAILED("Source file read/decode failed"),
+        INVALID_LINE_NUMBER("Invalid line number"),
+        STRUCTURALLY_INVALID("Structurally invalid remediation"),
+        NO_VALID_CHANGES("No valid changes");
+
+        private final String label;
+
+        RemediationSkipReason(String label) {
+            this.label = label;
+        }
+    }
 
     public AuditProcessor(FprHandle fprHandle) {
+        this(fprHandle, SourceDecoders.defaults());
+    }
+
+    public AuditProcessor(FprHandle fprHandle, ISourceDecoder sourceDecoder) {
         this.fprHandle = fprHandle;
+        this.sourceDecoder = Objects.requireNonNull(sourceDecoder, "sourceDecoder");
+    }
+
+    public RemediationGenerationMetric getLastRemediationGenerationMetric() {
+        return lastRemediationGenerationMetric;
     }
 
     /**
@@ -215,6 +252,7 @@ public class AuditProcessor {
             tags.put(tagId, tagValue);
         }
         auditIssueBuilder.tags(tags);
+        auditIssueBuilder.lastTagUsernames(lastTagUsernames(issueElement));
 
         List<AuditIssue.Comment> threadedComments = new ArrayList<>();
         NodeList commentNodes = issueElement.getElementsByTagNameNS(AUDIT_NAMESPACE_URI, "Comment");
@@ -232,6 +270,24 @@ public class AuditProcessor {
         return auditIssueBuilder.build();
     }
 
+
+    private Map<String, String> lastTagUsernames(Element issueElement) {
+        Map<String, String> lastTagUsernames = new HashMap<>();
+        NodeList tagHistories = issueElement.getElementsByTagNameNS(AUDIT_NAMESPACE_URI, "TagHistory");
+        for (int index = 0; index < tagHistories.getLength(); index++) {
+            Element tagHistory = (Element) tagHistories.item(index);
+            NodeList tags = tagHistory.getElementsByTagNameNS(AUDIT_NAMESPACE_URI, "Tag");
+            if (tags.getLength() == 0) {
+                continue;
+            }
+            String tagId = ((Element) tags.item(0)).getAttribute("id");
+            String username = Optional.ofNullable(getFirstElementContentNS(tagHistory, "Username")).orElse("");
+            if (tagId != null && !tagId.isBlank()) {
+                lastTagUsernames.put(tagId, username);
+            }
+        }
+        return lastTagUsernames;
+    }
 
     private String getTagValue(Element tagElement) {
         NodeList valueNodes = tagElement.getElementsByTagNameNS(AUDIT_NAMESPACE_URI, "Value");
@@ -710,6 +766,13 @@ public class AuditProcessor {
     public File updateAndSaveAuditAndRemediationsXml(Map<String, AuditResponse> auditResponses,
             TagMappingConfig tagMappingConfig, Map<String, String> issueCategoryLookup,
             FPRInfo fprInfo) throws AviatorTechnicalException {
+        return updateAndSaveAuditAndRemediationsXml(auditResponses, tagMappingConfig, issueCategoryLookup, fprInfo, null);
+    }
+
+    public File updateAndSaveAuditAndRemediationsXml(Map<String, AuditResponse> auditResponses,
+            TagMappingConfig tagMappingConfig, Map<String, String> issueCategoryLookup,
+            FPRInfo fprInfo, FVDLMetadata fvdlMetadata) throws AviatorTechnicalException {
+        lastRemediationGenerationMetric = RemediationGenerationMetric.empty();
         // Step 1: Apply this save's audit responses. writtenInstanceIds is the local retain set.
         Map<String, String> effectiveIssueCategoryLookup = issueCategoryLookup == null ? Map.of() : issueCategoryLookup;
         AuditXmlUpdateResult updateResult = updateAuditXml(
@@ -729,7 +792,10 @@ public class AuditProcessor {
 
         // Step 4: Generate the in-memory remediations.xml document if needed.
         if (hasRemediations && !remediationCommentTimestamps.isEmpty()) {
-            this.remediationsDoc = generateRemediationsXml(auditResponses, remediationCommentTimestamps, fprInfo);
+            Map<String, Integer> skippedByReason = new LinkedHashMap<>();
+            this.remediationsDoc = generateRemediationsXml(auditResponses, remediationCommentTimestamps, fprInfo,
+                    fvdlMetadata, skippedByReason);
+            lastRemediationGenerationMetric = toRemediationGenerationMetric(skippedByReason);
         } else {
             this.remediationsDoc = null;
             if (hasRemediations) {
@@ -856,7 +922,8 @@ public class AuditProcessor {
 
     private Document generateRemediationsXml(Map<String, AuditResponse> auditResponses,
                                             Map<String, String> remediationCommentTimestamps,
-                                            FPRInfo fprInfo) throws AviatorTechnicalException {
+                                            FPRInfo fprInfo, FVDLMetadata fvdlMetadata,
+                                            Map<String, Integer> skippedByReason) throws AviatorTechnicalException {
         try {
             DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
             docFactory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
@@ -885,6 +952,7 @@ public class AuditProcessor {
             Element remediationListElement = finalDoc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "RemediationList");
             rootElement.appendChild(remediationListElement);
 
+            FileUtils fileUtils = new FileUtils(this.sourceDecoder, fvdlMetadata);
             int validRemediationCount = 0;
 
             for (Map.Entry<String, AuditResponse> entry : auditResponses.entrySet()) {
@@ -919,12 +987,11 @@ public class AuditProcessor {
                         filenameElement.setTextContent(filename);
                         fileChangesElement.appendChild(filenameElement);
 
-                        //Optional<String> originalFileContentOptional = fvdlProcessor.getSourceFileContent(filename);
-                        FileUtils fileUtils = new FileUtils();
-                        Optional<String> originalFileContentOptional =  fileUtils.getSourceFileContent(fprHandle, filename);
+                        Optional<String> originalFileContentOptional = fileUtils.getSourceFileContent(fprHandle, filename);
 
                         if (originalFileContentOptional.isEmpty()) {
                             logger.warn("WARN: Could not retrieve source code for file '{}'. Skipping remediation generation for this file for instanceId '{}'.", filename, instanceId);
+                            recordSkipped(skippedByReason, RemediationSkipReason.SOURCE_READ_OR_DECODE_FAILED);
                             continue;
                         }
 
@@ -964,7 +1031,9 @@ public class AuditProcessor {
                                 changeElement.appendChild(originalCodeElement);
 
                                 Element newCodeElement = finalDoc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "NewCode");
-                                newCodeElement.appendChild(finalDoc.createCDATASection(change.getReplaceWith() != null ? change.getReplaceWith() : ""));
+                                String sanitizedNewCode = FileUtil.stripSyntheticLineMarkers(
+                                    change.getReplaceWith() != null ? change.getReplaceWith() : "", filename);
+                                newCodeElement.appendChild(finalDoc.createCDATASection(sanitizedNewCode));
                                 changeElement.appendChild(newCodeElement);
 
                                 final int CONTEXT_LINES = 3;
@@ -991,6 +1060,7 @@ public class AuditProcessor {
                                 fileChangesElement.appendChild(changeElement);
                             } catch (NumberFormatException e) {
                                 logger.error("Skipping change for issue {} due to invalid line number format. Details: {}", instanceId, e.getMessage());
+                                recordSkipped(skippedByReason, RemediationSkipReason.INVALID_LINE_NUMBER);
                             }
                         }
                         if (fileChangesElement.getElementsByTagNameNS(REMEDIATIONS_NAMESPACE_URI, "Change").getLength() > 0) {
@@ -1006,9 +1076,11 @@ public class AuditProcessor {
                             validRemediationCount++;
                         } else {
                             logger.warn("WARN: Skipping structurally invalid remediation for issue instanceId: {}", instanceId);
+                            recordSkipped(skippedByReason, RemediationSkipReason.STRUCTURALLY_INVALID);
                         }
                     } else {
                         logger.warn("WARN: Skipping remediation for instanceId '{}' because all of its proposed changes were invalid and could not be processed.", instanceId);
+                        recordSkipped(skippedByReason, RemediationSkipReason.NO_VALID_CHANGES);
                     }
 
                 }
@@ -1020,11 +1092,23 @@ public class AuditProcessor {
         }
     }
 
+    private RemediationGenerationMetric toRemediationGenerationMetric(Map<String, Integer> skippedByReason) {
+        int skippedRemediations = skippedByReason.values().stream().mapToInt(Integer::intValue).sum();
+        return new RemediationGenerationMetric(skippedRemediations, Map.copyOf(skippedByReason));
+    }
+
+    private void recordSkipped(Map<String, Integer> skippedByReason, RemediationSkipReason reason) {
+        skippedByReason.merge(reason.label, 1, Integer::sum);
+    }
+
     private String calculateHashBase64(String content, String algorithm) {
-        if (content == null) return "";
         try {
             MessageDigest md = MessageDigest.getInstance(algorithm);
-            byte[] digest = md.digest(content.getBytes(StandardCharsets.UTF_8));
+            // hash the canonical form (LF-normalised, no trailing newline) so the apply
+            // side can reproduce the digest regardless of the OS that ran the audit or the
+            // file's trailing-newline state.
+            String canonical = FileUtil.canonicalizeForHash(content);
+            byte[] digest = md.digest(canonical.getBytes(StandardCharsets.UTF_8));
             return Base64.getEncoder().encodeToString(digest);
         } catch (NoSuchAlgorithmException e) {
             throw new AviatorTechnicalException("Hashing algorithm not available: " + algorithm, e);

@@ -39,8 +39,44 @@ import kong.unirest.UnirestInstance;
 import lombok.Getter;
 
 public class FoDScanSastHelper extends FoDScanHelper {
+    private static final String LEGACY_SETUP_SCAN_POLICY = "FoD_Legacy";
+    private static final String LEGACY_START_SCAN_POLICY = "FoD_Legacy_";
+    private static final String SECURITY_SCAN_POLICY = "Security";
+    private static final String DEVOPS_SCAN_POLICY = "DevOps";
+    private static final String CLASSIC_SCAN_POLICY = "Classic";
+
     @Getter
     private static final ObjectMapper objectMapper = new ObjectMapper();
+
+    public static final String normalizeSetupScanPolicy(String scanPolicy) {
+        String normalizedScanPolicy = normalizeScanPolicy(scanPolicy);
+        return isLegacyScanPolicy(normalizedScanPolicy) ? LEGACY_SETUP_SCAN_POLICY : normalizedScanPolicy;
+    }
+
+    public static final String normalizeStartScanPolicy(String scanPolicy) {
+        String normalizedScanPolicy = normalizeScanPolicy(scanPolicy);
+        return isLegacyScanPolicy(normalizedScanPolicy) ? LEGACY_START_SCAN_POLICY : normalizedScanPolicy;
+    }
+
+    private static String normalizeScanPolicy(String scanPolicy) {
+        String normalizedScanPolicy = StringUtils.trimToNull(scanPolicy);
+        if (SECURITY_SCAN_POLICY.equalsIgnoreCase(normalizedScanPolicy)) {
+            return SECURITY_SCAN_POLICY;
+        } else if (DEVOPS_SCAN_POLICY.equalsIgnoreCase(normalizedScanPolicy)) {
+            return DEVOPS_SCAN_POLICY;
+        } else if (CLASSIC_SCAN_POLICY.equalsIgnoreCase(normalizedScanPolicy)) {
+            return CLASSIC_SCAN_POLICY;
+        }
+        return normalizedScanPolicy;
+    }
+
+    private static boolean isLegacyScanPolicy(String scanPolicy) {
+        return "Legacy".equalsIgnoreCase(scanPolicy)
+            || LEGACY_SETUP_SCAN_POLICY.equalsIgnoreCase(scanPolicy)
+            || LEGACY_START_SCAN_POLICY.equalsIgnoreCase(scanPolicy)
+                || "FoD(Legacy)".equalsIgnoreCase(scanPolicy)
+                || "FoD (Legacy)".equalsIgnoreCase(scanPolicy);
+    }
 
     public static final FoDScanDescriptor startScanWithDefaults(UnirestInstance unirest, FoDReleaseDescriptor releaseDescriptor,
                                                                 FoDScanSastStartRequest req, File scanFile, IProgressWriter progressWriter) {
@@ -53,6 +89,9 @@ public class FoDScanSastHelper extends FoDScanHelper {
         if (req.getNotes() != null && !req.getNotes().isEmpty()) {
             String truncatedNotes = StringUtils.abbreviate(req.getNotes(), FoDConstants.MAX_NOTES_LENGTH);
             request = request.queryString("notes", truncatedNotes);
+        }
+        if (StringUtils.isNotBlank(req.getSastScanPolicy())) {
+            request = request.queryString("sastScanPolicy", req.getSastScanPolicy());
         }
         return startScan(unirest, releaseDescriptor, request, scanFile, progressWriter);
     }
@@ -77,6 +116,9 @@ public class FoDScanSastHelper extends FoDScanHelper {
         if (req.getNotes() != null && !req.getNotes().isEmpty()) {
             String truncatedNotes = StringUtils.abbreviate(req.getNotes(), FoDConstants.MAX_NOTES_LENGTH);
             request = request.queryString("notes", truncatedNotes);
+        }
+        if (StringUtils.isNotBlank(req.getSastScanPolicy())) {
+            request = request.queryString("sastScanPolicy", req.getSastScanPolicy());
         }
         return startScan(unirest, releaseDescriptor, request, scanFile, progressWriter);
     }

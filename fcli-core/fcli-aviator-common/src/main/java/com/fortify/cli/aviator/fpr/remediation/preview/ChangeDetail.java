@@ -10,7 +10,7 @@
  * herein. The information contained herein is subject to change
  * without notice.
  */
-package com.fortify.cli.aviator.fpr.processor.preview;
+package com.fortify.cli.aviator.fpr.remediation.preview;
 
 import com.formkiq.graalvm.annotations.Reflectable;
 
@@ -19,10 +19,6 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
-/**
- * Internal change detail captured during preview processing.
- * This is an internal representation that gets converted to FileChange for output.
- */
 @Reflectable
 @Builder
 @Getter
@@ -36,18 +32,16 @@ public class ChangeDetail {
     private final int contextLinesBefore;
     private final int contextLinesAfter;
     private final String contextContent;
-    private final boolean fuzzyMatched;
 
-    public FileChange toFileChange() {
+    public PreviewFileChange toPreviewFileChange() {
         ContextMetadata context = new ContextMetadata(contextLinesBefore, contextLinesAfter, contextContent);
-        return FileChange.builder()
+        return PreviewFileChange.builder()
                 .changeIndex(changeIndex)
                 .lineFrom(lineFrom)
                 .lineTo(lineTo)
                 .originalCode(originalCode)
                 .newCode(newCode)
                 .context(context)
-                .fuzzyMatched(fuzzyMatched)
                 .build();
     }
 }
