@@ -29,6 +29,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.aviator.config.AviatorLoggerImpl;
+import com.fortify.cli.aviator.util.Constants;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.progress.helper.IProgressWriter;
 import com.fortify.cli.common.rest.unirest.UnirestHelper;
@@ -43,7 +44,7 @@ class AviatorSSCAuditHelperTest {
 
     @Test
     void excludesPreviouslyProcessedIssuesFromNormalPreflightCount() throws Exception {
-        try (var server = new TestSscServer(processedIssue(), unprocessedIssue());
+        try (var server = new TestSscServer(processedIssue(), legacyAnalysisIssue(), unprocessedIssue());
                 var unirest = newUnirest(server)) {
             assertEquals(1, AviatorSSCAuditHelper.getAuditableIssueCount(
                     unirest, appVersion(), logger(), true, null, null, false));
@@ -62,6 +63,15 @@ class AviatorSSCAuditHelperTest {
     }
 
     @Test
+    void forceReauditPreflightIncludesLegacyAnalysisTagCandidates() throws Exception {
+        try (var server = new TestSscServer(legacyAnalysisIssue());
+                var unirest = newUnirest(server)) {
+            assertEquals(1, AviatorSSCAuditHelper.getAuditableIssueCount(
+                    unirest, appVersion(), logger(), true, null, null, true));
+        }
+    }
+
+    @Test
     void forceReauditPreflightDoesNotSkipAnAllProcessedApplicationVersion() throws Exception {
         try (var server = new TestSscServer(processedIssue());
                 var unirest = newUnirest(server)) {
@@ -72,7 +82,7 @@ class AviatorSSCAuditHelperTest {
     }
 
     @Test
-    void forceReauditPreflightExcludesHumanAuditedIssuesThatAviatorNeverProcessed() throws Exception {
+    void forceReauditPreflightExcludesAuditedIssuesWithoutAviatorOrLegacyResultTag() throws Exception {
         try (var server = new TestSscServer(processedIssue(), unprocessedIssue(), humanAuditedIssue());
                 var unirest = newUnirest(server)) {
             assertEquals(2, AviatorSSCAuditHelper.getAuditableIssueCount(
@@ -83,7 +93,7 @@ class AviatorSSCAuditHelperTest {
 
     @Test
     void forceReauditPreflightExcludesSuppressedAviatorIssues() throws Exception {
-        try (var server = new TestSscServer(processedIssue(), suppressedProcessedIssue());
+        try (var server = new TestSscServer(processedIssue(), suppressedProcessedIssue(), suppressedLegacyAnalysisIssue());
                 var unirest = newUnirest(server)) {
             assertEquals(1, AviatorSSCAuditHelper.getAuditableIssueCount(
                     unirest, appVersion(), logger(), true, null, null, true));
@@ -140,6 +150,16 @@ class AviatorSSCAuditHelperTest {
         return issue;
     }
 
+    private static ObjectNode legacyAnalysisIssue() {
+        ObjectNode issue = JsonHelper.getObjectMapper().createObjectNode();
+        issue.put("audited", true);
+        issue.putObject("_embed").putArray("auditValues")
+                .addObject()
+                .put("customTagGuid", Constants.ANALYSIS_TAG_ID)
+                .put("customTagIndex", 4);
+        return issue;
+    }
+
     private static ObjectNode humanAuditedIssue() {
         ObjectNode issue = JsonHelper.getObjectMapper().createObjectNode();
         issue.put("audited", true);
@@ -149,6 +169,12 @@ class AviatorSSCAuditHelperTest {
 
     private static ObjectNode suppressedProcessedIssue() {
         ObjectNode issue = processedIssue();
+        issue.put("suppressed", true);
+        return issue;
+    }
+
+    private static ObjectNode suppressedLegacyAnalysisIssue() {
+        ObjectNode issue = legacyAnalysisIssue();
         issue.put("suppressed", true);
         return issue;
     }

@@ -243,9 +243,10 @@ public final class AviatorSSCAuditHelper {
     }
 
     /**
-     * Coarse SSC download gate. Force re-audit counts Aviator-processed issues even when
-     * SSC marks them audited; suppressed issues and human-audited issues Aviator never
-     * processed stay excluded. Last TagHistory writer is applied later from the FPR.
+     * Coarse SSC download gate. Force re-audit counts Aviator-processed issues and
+     * legacy Analysis-tag candidates even when SSC marks them audited. The Analysis tag
+     * is only a compatibility signal; final ownership and human-triage decisions are
+     * applied from TagHistory in the FPR.
      */
     public static long getAuditableIssueCount(UnirestInstance unirest, SSCAppVersionDescriptor av, AviatorLoggerImpl logger,
             boolean noFilterSet, String filterSetTitleOrId, List<String> folderNames, boolean forceReaudit) {
@@ -378,9 +379,9 @@ public final class AviatorSSCAuditHelper {
     }
 
     /**
-     * Force re-audit includes previously processed Aviator issues even when SSC
-     * already marks them audited. Suppressed issues and human-audited issues that
-     * Aviator never processed stay out. Normal audit still excludes processed issues.
+     * Force re-audit includes previously processed Aviator issues and legacy
+     * Analysis-tag candidates even when SSC already marks them audited. Normal audit
+     * still excludes processed issues.
      */
     private static boolean isEligibleForRequestedAudit(JsonNode issue, boolean forceReaudit) {
         if (issue.path("suppressed").asBoolean(false)) {
@@ -389,7 +390,10 @@ public final class AviatorSSCAuditHelper {
         if (isProcessedByAviator(issue)) {
             return forceReaudit;
         }
-        return !issue.path("audited").asBoolean(false);
+        if (!issue.path("audited").asBoolean(false)) {
+            return true;
+        }
+        return forceReaudit && hasAnalysisTag(issue);
     }
 
     /**
@@ -406,6 +410,21 @@ public final class AviatorSSCAuditHelper {
                         statusTagGuid.equals(tagValue.path("customTagGuid").asText()) &&
                                 tagValue.has("customTagIndex")
                 );
+    }
+
+    /**
+     * Legacy Aviator versions wrote audit results to the Analysis tag without the
+     * explicit Aviator status tag. This only identifies an FPR download candidate;
+     * TagHistory is required to determine who wrote the result.
+     */
+    private static boolean hasAnalysisTag(JsonNode issue) {
+        JsonNode auditValues = issue.path("_embed").path("auditValues");
+        if (!auditValues.isArray()) {
+            return false;
+        }
+        return JsonHelper.stream((ArrayNode) auditValues)
+                .anyMatch(tagValue -> Constants.ANALYSIS_TAG_ID.equalsIgnoreCase(
+                        tagValue.path("customTagGuid").asText()));
     }
 
     /**
