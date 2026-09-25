@@ -22,6 +22,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.cli.util.EnvSuffix;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonHelper;
+import com.fortify.cli.common.json.producer.IObjectNodeProducer;
+import com.fortify.cli.common.json.producer.ObjectNodeProducerApplyFrom;
 import com.fortify.cli.common.output.cli.cmd.AbstractOutputCommand;
 import com.fortify.cli.common.output.cli.cmd.IBaseRequestSupplier;
 import com.fortify.cli.common.output.product.IProductHelper;
@@ -31,6 +33,7 @@ import com.fortify.cli.common.rest.paging.INextPageUrlProducer;
 import com.fortify.cli.common.rest.paging.INextPageUrlProducerSupplier;
 import com.fortify.cli.common.rest.paging.IPagingSuppressor;
 import com.fortify.cli.common.rest.unirest.IUnirestInstanceSupplier;
+import com.fortify.cli.common.rest.unirest.RestResponseBodyHelper;
 import com.fortify.cli.common.util.DisableTest;
 import com.fortify.cli.common.util.DisableTest.TestType;
 import com.fortify.cli.common.util.JavaHelper;
@@ -42,6 +45,7 @@ import lombok.Getter;
 import lombok.SneakyThrows;
 import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Option;
+import picocli.CommandLine.ParameterException;
 import picocli.CommandLine.Parameters;
 
 /**
@@ -72,6 +76,12 @@ public abstract class AbstractRestCallCommand extends AbstractOutputCommand impl
         private String transformExpression;
     }
     
+    @ArgGroup(exclusive = true) private ResponseArgGroup response = new ResponseArgGroup();
+    private static class ResponseArgGroup {
+        @Option(names="--response-file", paramLabel = "<file>")
+        private Path responseFile;
+    }
+    
     // TODO Add options for content-type, arbitrary headers, ...?
     
     @Override
@@ -89,11 +99,36 @@ public abstract class AbstractRestCallCommand extends AbstractOutputCommand impl
 
     @Override
     public boolean isSingular() {
-        return false;
+        return isResponseFileMode();
+    }
+    
+    @Override
+    protected IObjectNodeProducer getObjectNodeProducer() {
+        if ( isResponseFileMode() ) {
+            checkNotCombined("--response-file", "--transform", StringUtils.isNotBlank(transform.transformExpression));
+            checkNotCombined("--response-file", "--no-transform", transform.noTransform);
+            var record = RestResponseBodyHelper.saveToFile(prepareRequest(getUnirestInstance()), response.responseFile, null);
+            return simpleObjectNodeProducerBuilder(ObjectNodeProducerApplyFrom.SPEC)
+                    .source(record.asObjectNode()).build();
+        }
+        return super.getObjectNodeProducer();
+    }
+    
+    private boolean isResponseFileMode() {
+        return response.responseFile!=null;
+    }
+    
+    private void checkNotCombined(String modeOption, String otherOption, boolean otherOptionSpecified) {
+        if ( otherOptionSpecified ) {
+            throw new ParameterException(getCommandHelper().getCommandSpec().commandLine(),
+                    String.format("Option '%s' cannot be combined with '%s'", otherOption, modeOption));
+        }
     }
     
     @Override
     public final JsonNode transformInput(JsonNode input) {
+        // The file record produced in response file mode must not be subjected to product transformations
+        if ( isResponseFileMode() ) { return input; }
         if ( StringUtils.isNotBlank(transform.transformExpression) ) {
             input = JsonHelper.evaluateSpelExpression(input, transform.transformExpression, JsonNode.class);
         } else if ( !transform.noTransform ) {
@@ -104,7 +139,7 @@ public abstract class AbstractRestCallCommand extends AbstractOutputCommand impl
 
     @Override
     public final JsonNode transformRecord(JsonNode input) {
-        if ( !transform.noTransform ) {
+        if ( !isResponseFileMode() && !transform.noTransform ) {
             input = _transformRecord(input);
         }
         return input;
@@ -112,7 +147,7 @@ public abstract class AbstractRestCallCommand extends AbstractOutputCommand impl
 
     @Override
     public boolean isPagingSuppressed() {
-        return noPaging;
+        return noPaging || isResponseFileMode();
     }
 
     @Override
