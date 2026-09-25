@@ -181,19 +181,19 @@ public final class MCPToolArgHandlerQuery implements IMCPToolArgHandler {
     }
 
     private final void addQuery(ArrayList<String> queries, String schemaPropertyName, String value) {
-        // Validate that schemaPropertyName is in the known set of safe fields (do not fall back to attacker-supplied name)
-        if ( !fieldsBySchemaPropertyName.containsKey(schemaPropertyName) ) {
-            throw new FcliSimpleException("Unknown query field '%s'; allowed fields are: %s", 
-                schemaPropertyName, String.join(", ", fieldsBySchemaPropertyName.keySet()));
+        // Get mapped field name if available, otherwise use schema property name (allows extensibility for unmapped fields)
+        var fieldName = fieldsBySchemaPropertyName.getOrDefault(schemaPropertyName, schemaPropertyName);
+
+        // Validate field name to prevent SpEL injection - allow alphanumeric, dots, underscores, and hyphens
+        if ( !fieldName.matches("[a-zA-Z0-9._\\-]+") ) {
+            throw new FcliSimpleException("Invalid query field name '%s'; must contain only alphanumeric characters, dots, underscores, and hyphens", fieldName);
         }
-        var fieldName = fieldsBySchemaPropertyName.get(schemaPropertyName);
+
         // Escape backslashes first, then single quotes to prevent SpEL string literal breakout
+        // (value goes inside single quotes in SpEL expression, so double quotes don't need escaping)
         var escapedValue = value.replace("\\", "\\\\")
                                  .replace("'", "\\'");
-        // Reject values containing unescaped double quotes or certain problematic characters that could break CLI token boundaries
-        if ( value.contains("\"") ) {
-            throw new FcliSimpleException("Query value contains unescaped double quote which is not allowed for CLI safety");
-        }
+
         queries.add(String.format("%s matches '%s'", fieldName, escapedValue));
     }
 }

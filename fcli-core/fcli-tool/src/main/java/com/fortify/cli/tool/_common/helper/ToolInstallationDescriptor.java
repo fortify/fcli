@@ -28,6 +28,7 @@ import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.formkiq.graalvm.annotations.Reflectable;
+import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.tool.definitions.helper.ToolDefinitionVersionDescriptor;
 import com.fortify.cli.common.util.FcliDataHelper;
@@ -172,7 +173,17 @@ public class ToolInstallationDescriptor {
         return StringUtils.isNotBlank(dir) ? Paths.get(dir) : null;
     }
     
+    private static final void validateVersionString(String version) {
+        if (StringUtils.isBlank(version)) {
+            throw new FcliSimpleException("Version string cannot be blank");
+        }
+        if (!version.matches("[A-Za-z0-9._+-]+")) {
+            throw new FcliSimpleException("Invalid version string: " + version + ". Version must contain only alphanumeric characters, dots, hyphens, underscores, or plus signs.");
+        }
+    }
+
     private static final Path getInstallDescriptorPath(String toolName, String version) {
+        validateVersionString(version);
         return getInstallDescriptorsDirPath(toolName).resolve(version);
     }
 
@@ -181,6 +192,7 @@ public class ToolInstallationDescriptor {
     }
     
     private static final Path getInstallDescriptorToolCopyPath(Path installPath, String toolName, ToolDefinitionVersionDescriptor versionDescriptor) {
+        validateVersionString(versionDescriptor.getVersion());
         return installPath.resolve("install-descriptor").resolve(toolName).resolve(versionDescriptor.getVersion());
     }
 

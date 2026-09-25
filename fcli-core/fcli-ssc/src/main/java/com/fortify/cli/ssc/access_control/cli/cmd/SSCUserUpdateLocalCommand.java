@@ -44,10 +44,13 @@ public class SSCUserUpdateLocalCommand extends AbstractSSCJsonNodeOutputCommand 
     @Mixin private SSCUserResolverMixin.PositionalParameterSingle userResolver;
 
     @Option(names = {"--firstname"})
+    @MaskValue(sensitivity = LogSensitivityLevel.low, description = "FIRSTNAME")
     private String firstName;
     @Option(names = {"--lastname"})
+    @MaskValue(sensitivity = LogSensitivityLevel.low, description = "LASTNAME")
     private String lastName;
     @Option(names = {"--email"})
+    @MaskValue(sensitivity = LogSensitivityLevel.low, description = "EMAIL")
     private String email;
     @Option(names = {"--password"}, interactive = true, echo = false, arity = "0..1")
     @MaskValue(sensitivity = LogSensitivityLevel.high, description = "PASSWORD")
