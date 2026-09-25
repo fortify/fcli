@@ -29,6 +29,7 @@ import com.fortify.cli.common.report.writer.IReportWriter;
 import com.fortify.cli.common.report.writer.ReportDirWriter;
 import com.fortify.cli.common.report.writer.ReportZipWriter;
 import com.fortify.cli.common.util.FcliBuildProperties;
+import com.fortify.cli.common.util.FileUtils;
 
 import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Mixin;
@@ -74,7 +75,7 @@ public abstract class AbstractReportGenerateCommand extends AbstractOutputComman
             deleteExisting(outputArgGroup.reportZipName, File::delete);
             return new ReportZipWriter(outputArgGroup.reportZipName, getCommandHelper().getMessageResolver());
         } else if ( StringUtils.isNotBlank(outputArgGroup.reportDirName) ) {
-            deleteExisting(outputArgGroup.reportDirName, this::deleteDirectory);
+            deleteExisting(outputArgGroup.reportDirName, f->FileUtils.deleteRecursive(f.toPath()));
             return new ReportDirWriter(outputArgGroup.reportDirName, getCommandHelper().getMessageResolver());
         } else {
             throw new FcliSimpleException("Either --report-file or --report-dir must be specified");
@@ -89,16 +90,6 @@ public abstract class AbstractReportGenerateCommand extends AbstractOutputComman
         }
     }
     
-    private boolean deleteDirectory(File directoryToBeDeleted) {
-        File[] allContents = directoryToBeDeleted.listFiles();
-        if (allContents != null) {
-            for (File file : allContents) {
-                deleteDirectory(file);
-            }
-        }
-        return directoryToBeDeleted.delete();
-    }
-
     @Override
     public final boolean isSingular() {
         return true;
