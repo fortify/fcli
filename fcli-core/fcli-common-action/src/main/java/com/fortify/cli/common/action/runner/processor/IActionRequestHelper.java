@@ -12,17 +12,21 @@
  */
 package com.fortify.cli.common.action.runner.processor;
 
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.common.action.model.ActionStepRestCallEntry.ActionStepRestCallResponseType;
+import com.fortify.cli.common.exception.FcliBugException;
 import com.fortify.cli.common.output.product.IProductHelper;
 import com.fortify.cli.common.output.transform.IInputTransformer;
 import com.fortify.cli.common.rest.paging.INextPageUrlProducer;
 import com.fortify.cli.common.rest.paging.INextPageUrlProducerSupplier;
 import com.fortify.cli.common.rest.paging.PagingHelper;
 import com.fortify.cli.common.rest.unirest.IUnirestInstanceSupplier;
+import com.fortify.cli.common.rest.unirest.RestResponseBodyHelper;
 import com.fortify.cli.common.util.JavaHelper;
 
 import kong.unirest.HttpRequest;
@@ -44,8 +48,11 @@ public interface IActionRequestHelper extends AutoCloseable {
         private final String uri;
         private final Map<String, Object> queryParams;
         private final Object body;
+        private final ActionStepRestCallResponseType responseType;
+        /** Resolved destination for {@link ActionStepRestCallResponseType#file}, null otherwise */
+        private final Path responseFile;
         private final Consumer<JsonNode> responseConsumer;
-        private final Consumer<UnirestException> failureConsumer;
+        private final Consumer<RuntimeException> failureConsumer;
         private Runnable prePageLoad;
         private Runnable postPageLoad;
         private Runnable postPageProcess;
@@ -109,6 +116,22 @@ public interface IActionRequestHelper extends AutoCloseable {
             requestDescriptors.forEach(r->executeSimpleRequest(unirest, r));
         }
         private void executeSimpleRequest(UnirestInstance unirest, ActionRequestDescriptor requestDescriptor) {
+            executeSingleRequest(unirest, requestDescriptor);
+        }
+        
+        /**
+         * Execute a single (non-paged) request, handling the response body according to the
+         * descriptor's response type, and pass the result or failure to the descriptor's consumers.
+         */
+        protected final void executeSingleRequest(UnirestInstance unirest, ActionRequestDescriptor requestDescriptor) {
+            if ( requestDescriptor.getResponseType()==ActionStepRestCallResponseType.auto ) {
+                executeJsonRequest(unirest, requestDescriptor);
+            } else {
+                executeNonJsonRequest(unirest, requestDescriptor);
+            }
+        }
+        
+        private void executeJsonRequest(UnirestInstance unirest, ActionRequestDescriptor requestDescriptor) {
             try {
                 createRequest(unirest, requestDescriptor)
                     .asObject(JsonNode.class)
@@ -117,8 +140,25 @@ public interface IActionRequestHelper extends AutoCloseable {
                 requestDescriptor.getFailureConsumer().accept(e);
             }
         }
+        
+        private void executeNonJsonRequest(UnirestInstance unirest, ActionRequestDescriptor requestDescriptor) {
+            JsonNode result;
+            try {
+                var request = createRequest(unirest, requestDescriptor);
+                result = switch (requestDescriptor.getResponseType()) {
+                    case file -> RestResponseBodyHelper.saveToFile(request, requestDescriptor.getResponseFile(), null).asObjectNode();
+                    default -> throw new FcliBugException("Unsupported response type: "+requestDescriptor.getResponseType());
+                };
+            } catch ( RuntimeException e ) {
+                // Besides UnirestException, this includes fcli exceptions like a missing destination directory
+                requestDescriptor.getFailureConsumer().accept(e);
+                return;
+            }
+            // Invoked outside the try block, so failures in response processing are not reported as request failures
+            requestDescriptor.getResponseConsumer().accept(result);
+        }
 
-        private HttpRequest<?> createRequest(UnirestInstance unirest, ActionRequestDescriptor r) {
+        protected final HttpRequest<?> createRequest(UnirestInstance unirest, ActionRequestDescriptor r) {
             var result = unirest.request(r.getMethod(), r.getUri())
                 .queryString(r.getQueryParams());
             return r.getBody()==null ? result : result.body(r.getBody());

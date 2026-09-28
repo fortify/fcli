@@ -38,6 +38,8 @@ public abstract class AbstractActionRunCommand extends AbstractRunnableCommand {
     @DisableTest({TestType.MULTI_OPT_SPLIT, TestType.MULTI_OPT_PLURAL_NAME, TestType.OPT_LONG_NAME, TestType.OPT_LONG_NAME_COUNT, TestType.OPT_NAME_FORMAT, TestType.OPT_ARITY_PRESENT})
     @Option(names="action-parameters", arity="0", descriptionKey="fcli.action.run.action-parameter") 
     private List<String> dummyForSynopsis;
+    @Option(names="--allow-unrestricted-file-paths", descriptionKey="fcli.action.run.allow-unrestricted-file-paths")
+    private boolean allowUnrestrictedFilePaths;
     @Mixin private ProgressWriterFactoryMixin progressWriterFactory;
     @Mixin private UnirestContextMixin unirestContextMixin;
     @Mixin private ActionValidationMixin actionValidationMixin;
@@ -51,6 +53,7 @@ public abstract class AbstractActionRunCommand extends AbstractRunnableCommand {
             var configBuilder = ActionRunnerConfig.builder()
                 .onValidationErrors(this::onValidationErrors)
                 .action(action)
+                .allowUnrestrictedFilePaths(allowUnrestrictedFilePaths)
                 .progressWriter(progressWriter)
                 .unirestContext(unirestContextMixin.getUnirestContext());
             configure(configBuilder);

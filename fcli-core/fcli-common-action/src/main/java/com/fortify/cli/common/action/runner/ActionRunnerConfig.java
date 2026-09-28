@@ -45,6 +45,10 @@ public class ActionRunnerConfig {
     @NonNull private final IProgressWriterI18n progressWriter;
     /** Action to run */
     @NonNull private final Action action;
+    /** Whether the action may write files outside the current working directory */
+    private final boolean allowUnrestrictedFilePaths;
+    /** Policy for resolving and validating file paths specified in the action */
+    @Getter(lazy = true) private final ActionFilePathPolicy filePathPolicy = ActionFilePathPolicy.forCurrentDirectory(allowUnrestrictedFilePaths);
     /** Callback to handle validation errors */
     @NonNull private final Function<OptionsParseResult, RuntimeException> onValidationErrors;
     /** Action context configurers. Main purpose is to register request helpers on the context. */

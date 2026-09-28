@@ -14,6 +14,7 @@ package com.fortify.cli.common.action.runner.processor;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -32,6 +33,7 @@ import com.fortify.cli.common.action.model.ActionStepRestCallEntry;
 import com.fortify.cli.common.action.model.ActionStepRestCallEntry.ActionStepRequestForEachResponseRecord;
 import com.fortify.cli.common.action.model.ActionStepRestCallEntry.ActionStepRequestType;
 import com.fortify.cli.common.action.model.ActionStepRestCallEntry.ActionStepRestCallLogProgressDescriptor;
+import com.fortify.cli.common.action.model.ActionStepRestCallEntry.ActionStepRestCallResponseType;
 import com.fortify.cli.common.action.model.FcliActionValidationException;
 import com.fortify.cli.common.action.runner.ActionRunnerContextLocal;
 import com.fortify.cli.common.action.runner.ActionRunnerVars;
@@ -39,7 +41,6 @@ import com.fortify.cli.common.action.runner.FcliActionStepException;
 import com.fortify.cli.common.action.runner.processor.IActionRequestHelper.ActionRequestDescriptor;
 import com.fortify.cli.common.spel.wrapper.TemplateExpression;
 
-import kong.unirest.UnirestException;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.RequiredArgsConstructor;
@@ -60,14 +61,24 @@ public class ActionStepProcessorRestCall extends AbstractActionStepProcessor {
     
     private final void processResponse(ActionStepRestCallEntry requestDescriptor, JsonNode rawBody) {
         var name = requestDescriptor.getKey();
-        var body = ctx.getRequestHelper(requestDescriptor.getTarget()).transformInput(rawBody);
+        var body = transformInput(requestDescriptor, rawBody);
         getVars().setLocal(name+"_raw", rawBody);
         getVars().setLocal(name, body);
         processOnResponse(requestDescriptor);
         processRequestStepForEach(requestDescriptor);
     }
     
-    private final void processFailure(ActionStepRestCallEntry requestDescriptor, UnirestException e) {
+    /**
+     * Apply product-specific transformations to JSON responses; text and file results
+     * are not transformed.
+     */
+    private final JsonNode transformInput(ActionStepRestCallEntry requestDescriptor, JsonNode rawBody) {
+        return requestDescriptor.getResponseType()==ActionStepRestCallResponseType.auto
+                ? ctx.getRequestHelper(requestDescriptor.getTarget()).transformInput(rawBody)
+                : rawBody;
+    }
+    
+    private final void processFailure(ActionStepRestCallEntry requestDescriptor, RuntimeException e) {
         var onFailSteps = requestDescriptor.getOnFail();
         if ( onFailSteps==null ) { throw e; }
         // Set generic lastException* and ${name}_exception* variables (with .message, .type, .httpStatus sub-properties)
@@ -143,7 +154,7 @@ public class ActionStepProcessorRestCall extends AbstractActionStepProcessor {
                 throw new FcliActionStepException("Cannot embed data on non-object nodes: "+forEach.getVarName());
             }
             requestExecutor.addRequests(forEach.getEmbed(), 
-                    (rd,r)->((ObjectNode)currentNode).set(rd.getKey(), ctx.getRequestHelper(rd.getTarget()).transformInput(r)), 
+                    (rd,r)->((ObjectNode)currentNode).set(rd.getKey(), transformInput(rd, r)), 
                     this::processFailure, childCtx);
         };
     }
@@ -154,13 +165,13 @@ public class ActionStepProcessorRestCall extends AbstractActionStepProcessor {
         private final Map<String, List<IActionRequestHelper.ActionRequestDescriptor>> simpleRequests = new LinkedHashMap<>();
         private final Map<String, List<IActionRequestHelper.ActionRequestDescriptor>> pagedRequests = new LinkedHashMap<>();
         
-        final void addRequests(Map<String, ActionStepRestCallEntry> requestDescriptors, BiConsumer<ActionStepRestCallEntry, JsonNode> responseConsumer, BiConsumer<ActionStepRestCallEntry, UnirestException> failureConsumer, ActionRunnerContextLocal reqCtx) {
+        final void addRequests(Map<String, ActionStepRestCallEntry> requestDescriptors, BiConsumer<ActionStepRestCallEntry, JsonNode> responseConsumer, BiConsumer<ActionStepRestCallEntry, RuntimeException> failureConsumer, ActionRunnerContextLocal reqCtx) {
             if ( requestDescriptors!=null ) {
                 requestDescriptors.values().forEach(r->addRequest(r, responseConsumer, failureConsumer, reqCtx));
             }
         }
         
-        private final void addRequest(ActionStepRestCallEntry requestDescriptor, BiConsumer<ActionStepRestCallEntry, JsonNode> responseConsumer, BiConsumer<ActionStepRestCallEntry, UnirestException> failureConsumer, ActionRunnerContextLocal reqCtx) {
+        private final void addRequest(ActionStepRestCallEntry requestDescriptor, BiConsumer<ActionStepRestCallEntry, JsonNode> responseConsumer, BiConsumer<ActionStepRestCallEntry, RuntimeException> failureConsumer, ActionRunnerContextLocal reqCtx) {
             var vars = reqCtx.getVars();
             var _if = requestDescriptor.get_if();
             if ( _if==null || vars.eval(_if, Boolean.class) ) {
@@ -169,7 +180,16 @@ public class ActionStepProcessorRestCall extends AbstractActionStepProcessor {
                 checkUri(uri);
                 var query = vars.eval(requestDescriptor.getQuery(), Object.class);
                 var body = requestDescriptor.getBody()==null ? null : vars.eval(requestDescriptor.getBody(), Object.class);
-                var requestData = new IActionRequestHelper.ActionRequestDescriptor(method, uri, query, body, r->responseConsumer.accept(requestDescriptor, r), e->failureConsumer.accept(requestDescriptor, e));
+                var responseType = requestDescriptor.getResponseType();
+                Path responseFile;
+                try {
+                    responseFile = resolveResponseFile(requestDescriptor, vars);
+                } catch ( FcliActionValidationException e ) {
+                    // Report path violations like request failures (allowing on.fail to handle them), without sending the request
+                    failureConsumer.accept(requestDescriptor, e);
+                    return;
+                }
+                var requestData = new IActionRequestHelper.ActionRequestDescriptor(method, uri, query, body, responseType, responseFile, r->responseConsumer.accept(requestDescriptor, r), e->failureConsumer.accept(requestDescriptor, e));
                 addLogProgress(requestData, requestDescriptor.getLogProgress(), vars);
                 if ( requestDescriptor.getType()==ActionStepRequestType.paged ) {
                     pagedRequests.computeIfAbsent(requestDescriptor.getTarget(), s->new ArrayList<IActionRequestHelper.ActionRequestDescriptor>()).add(requestData);
@@ -177,6 +197,15 @@ public class ActionStepProcessorRestCall extends AbstractActionStepProcessor {
                     simpleRequests.computeIfAbsent(requestDescriptor.getTarget(), s->new ArrayList<IActionRequestHelper.ActionRequestDescriptor>()).add(requestData);
                 }
             }
+        }
+
+        private Path resolveResponseFile(ActionStepRestCallEntry requestDescriptor, ActionRunnerVars vars) {
+            if ( requestDescriptor.getResponseType()!=ActionStepRestCallResponseType.file ) { return null; }
+            var responseFile = vars.eval(requestDescriptor.getResponseFile(), String.class);
+            if ( StringUtils.isBlank(responseFile) ) {
+                throw new FcliActionValidationException("response.file evaluates to an empty value", requestDescriptor);
+            }
+            return ctx.getConfig().getFilePathPolicy().resolve(responseFile);
         }
 
         private void checkUri(String uriString) {

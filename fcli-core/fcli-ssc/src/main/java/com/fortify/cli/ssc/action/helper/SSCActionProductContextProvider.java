@@ -12,9 +12,10 @@
  */
 package com.fortify.cli.ssc.action.helper;
 
+import java.util.ArrayList;
 import java.util.List;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.common.action.model.ActionStepRestCallEntry.ActionStepRestCallResponseType;
 import com.fortify.cli.common.action.runner.ActionRunnerContextLocal;
 import com.fortify.cli.common.action.runner.IActionProductContextProvider;
 import com.fortify.cli.common.action.runner.processor.IActionRequestHelper.BasicActionRequestHelper;
@@ -30,7 +31,6 @@ import com.fortify.cli.ssc._common.rest.ssc.helper.SSCProductHelper;
 import com.fortify.cli.ssc._common.session.helper.SSCAndScanCentralSessionDescriptor;
 import com.fortify.cli.ssc._common.session.helper.SSCAndScanCentralSessionHelper;
 
-import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
 
 public class SSCActionProductContextProvider implements IActionProductContextProvider {
@@ -79,29 +79,30 @@ public class SSCActionProductContextProvider implements IActionProductContextPro
                 u -> SSCAndScanCentralUnirestHelper.configureScDastControllerUnirestInstance(u, descriptor));
     }
 
-    private static final class SSCActionRequestHelper extends BasicActionRequestHelper {
+    // Package-private for testing
+    static final class SSCActionRequestHelper extends BasicActionRequestHelper {
         public SSCActionRequestHelper(IUnirestInstanceSupplier unirestInstanceSupplier, IProductHelper productHelper) {
             super(unirestInstanceSupplier, productHelper);
         }
 
         @Override
         public void executeSimpleRequests(List<ActionRequestDescriptor> requestDescriptors) {
-            if (requestDescriptors.size() == 1) {
-                var rd = requestDescriptors.get(0);
-                createRequest(rd).asObject(JsonNode.class)
-                        .ifSuccess(r -> rd.getResponseConsumer().accept(r.getBody()));
-            } else {
+            // Bulk responses are JSON-only, so text and file requests are always executed individually
+            var bulkableRequests = new ArrayList<ActionRequestDescriptor>();
+            for ( var rd : requestDescriptors ) {
+                if ( rd.getResponseType()==ActionStepRestCallResponseType.auto ) {
+                    bulkableRequests.add(rd);
+                } else {
+                    executeSingleRequest(getUnirestInstance(), rd);
+                }
+            }
+            if (bulkableRequests.size() == 1) {
+                executeSingleRequest(getUnirestInstance(), bulkableRequests.get(0));
+            } else if ( !bulkableRequests.isEmpty() ) {
                 var bulkRequestBuilder = new SSCBulkRequestBuilder();
-                requestDescriptors.forEach(r -> bulkRequestBuilder.request(createRequest(r), r.getResponseConsumer()));
+                bulkableRequests.forEach(r -> bulkRequestBuilder.request(createRequest(getUnirestInstance(), r), r.getResponseConsumer()));
                 bulkRequestBuilder.execute(getUnirestInstance());
             }
-        }
-
-        private HttpRequest<?> createRequest(ActionRequestDescriptor requestDescriptor) {
-            var request = getUnirestInstance().request(requestDescriptor.getMethod(), requestDescriptor.getUri())
-                    .queryString(requestDescriptor.getQueryParams());
-            var body = requestDescriptor.getBody();
-            return body == null ? request : request.body(body);
         }
     }
 }
