@@ -37,7 +37,6 @@ public class UnirestHelper {
             ProxyHelper.configureProxy(unirest, fcliModule, parsedUrl.getRequestUrl());
             var request = unirest.get(parsedUrl.getRequestUrl());
             parsedUrl.getHeaders().forEach(request::headerReplace);
-            // Also fails on HTTP errors, as this Unirest instance doesn't have the unexpected response interceptor
             RestResponseBodyHelper.saveToFile(request, dest.toPath(), null);
             return dest;
         }

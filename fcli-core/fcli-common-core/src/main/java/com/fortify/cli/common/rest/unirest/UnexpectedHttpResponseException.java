@@ -43,9 +43,7 @@ public final class UnexpectedHttpResponseException extends UnirestException {
     private static final ObjectMapper yamlObjectMapper = createYamlObjectMapper();
     private static final int MAX_ERROR_FILE_BYTES = 64 * 1024;
     @Getter private final int status;
-    /** Content-Type of the failure response, or null if not available */
     @Getter private final String contentType;
-    /** True if the response had a successful status code, but its body couldn't be parsed */
     @Getter private final boolean parsingFailure;
 
     public UnexpectedHttpResponseException(HttpResponse<?> failureResponse) {
@@ -114,11 +112,6 @@ public final class UnexpectedHttpResponseException extends UnirestException {
         return StringHelper.indent("\n" + StringUtils.abbreviate(body.toString().trim(), 255), "  ") + "\n----";
     }
 
-    /**
-     * Responses retrieved as bytes or files (for example by {@link RestResponseBodyHelper})
-     * don't provide a meaningful toString() representation, so we convert these to a string,
-     * or JSON if the body is valid JSON.
-     */
     private static final Object getRawBody(Object body) {
         String text = null;
         if ( body instanceof byte[] bytes ) {

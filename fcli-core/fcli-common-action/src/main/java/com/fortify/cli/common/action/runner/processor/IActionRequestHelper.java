@@ -50,7 +50,6 @@ public interface IActionRequestHelper extends AutoCloseable {
         private final Map<String, Object> queryParams;
         private final Object body;
         private final ActionStepRestCallResponseType responseType;
-        /** Resolved destination for {@link ActionStepRestCallResponseType#file}, null otherwise */
         private final Path responseFile;
         private final Consumer<JsonNode> responseConsumer;
         private final Consumer<RuntimeException> failureConsumer;
@@ -121,10 +120,6 @@ public interface IActionRequestHelper extends AutoCloseable {
             executeSingleRequest(unirest, requestDescriptor);
         }
         
-        /**
-         * Execute a single (non-paged) request, handling the response body according to the
-         * descriptor's response type, and pass the result or failure to the descriptor's consumers.
-         */
         protected final void executeSingleRequest(UnirestInstance unirest, ActionRequestDescriptor requestDescriptor) {
             if ( requestDescriptor.getResponseType()==ActionStepRestCallResponseType.auto ) {
                 executeJsonRequest(unirest, requestDescriptor);
@@ -138,7 +133,6 @@ public interface IActionRequestHelper extends AutoCloseable {
             try {
                 result = RestResponseBodyHelper.asJsonOrText(createRequest(unirest, requestDescriptor), BINARY_GUIDANCE);
             } catch ( RuntimeException e ) {
-                // Besides UnirestException, this includes fcli exceptions for binary or malformed responses
                 requestDescriptor.getFailureConsumer().accept(e);
                 return;
             }
@@ -161,11 +155,9 @@ public interface IActionRequestHelper extends AutoCloseable {
                     case auto -> throw new FcliBugException("JSON requests must be handled by executeJsonRequest");
                 };
             } catch ( RuntimeException e ) {
-                // Besides UnirestException, this includes fcli exceptions like a missing destination directory
                 requestDescriptor.getFailureConsumer().accept(e);
                 return;
             }
-            // Invoked outside the try block, so failures in response processing are not reported as request failures
             requestDescriptor.getResponseConsumer().accept(result);
         }
 

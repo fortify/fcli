@@ -22,21 +22,11 @@ import com.fortify.cli.common.exception.FcliTechnicalException;
 
 import lombok.RequiredArgsConstructor;
 
-/**
- * Resolves and validates file paths that are specified in action definitions, like the
- * rest.call response.file property. As actions may come from untrusted sources, such paths
- * must by default be located in the working directory (or one of its subdirectories); the
- * user running the action can lift this restriction through a command line option.
- */
 @RequiredArgsConstructor
 public final class ActionFilePathPolicy {
-    /** Real path of the directory against which paths are resolved and validated */
     private final Path rootDir;
     private final boolean allowUnrestrictedPaths;
 
-    /**
-     * Create a policy for the current working directory.
-     */
     public static ActionFilePathPolicy forCurrentDirectory(boolean allowUnrestrictedPaths) {
         try {
             return new ActionFilePathPolicy(Path.of("").toAbsolutePath().toRealPath(), allowUnrestrictedPaths);
@@ -45,13 +35,6 @@ public final class ActionFilePathPolicy {
         }
     }
 
-    /**
-     * Resolve the given path against the working directory.
-     *
-     * @return absolute, normalized path
-     * @throws FcliActionValidationException if the path is located outside the working directory
-     *         and unrestricted paths are not allowed
-     */
     public Path resolve(String path) {
         var result = rootDir.resolve(path).normalize();
         if ( !allowUnrestrictedPaths && !isInsideRootDir(result) ) {
@@ -62,12 +45,6 @@ public final class ActionFilePathPolicy {
         return result;
     }
 
-    /**
-     * Symbolic links anywhere in the path may point outside the working directory, so we compare real
-     * paths: of the file itself if it exists (following a symbolic link at the target, where a dangling
-     * link is rejected as its destination can't be verified), otherwise of its nearest existing ancestor
-     * directory (the file and possibly some parent directories usually don't exist yet).
-     */
     private boolean isInsideRootDir(Path path) {
         try {
             if ( Files.exists(path, LinkOption.NOFOLLOW_LINKS) ) {

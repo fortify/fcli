@@ -32,11 +32,6 @@ import org.junit.jupiter.api.io.TempDir;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 
-/**
- * Tests for {@link UnirestHelper#download(String, String, java.io.File)}, used for tool,
- * tool definition and extension downloads. The Unirest instance used by this method doesn't
- * have the fcli unexpected response interceptor, so error handling must be explicit.
- */
 class UnirestHelperDownloadTest {
     private static final byte[] CONTENT = "tool archive".getBytes(StandardCharsets.UTF_8);
     private static final byte[] OLD_CONTENT = "previous".getBytes(StandardCharsets.UTF_8);

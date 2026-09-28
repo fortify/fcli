@@ -40,13 +40,6 @@ import kong.unirest.HttpResponse;
 import kong.unirest.ProgressMonitor;
 import lombok.extern.slf4j.Slf4j;
 
-/**
- * Helper methods for handling REST response bodies that are not (necessarily) JSON,
- * shared by the rest call commands, the action rest.call step and the fcli download
- * commands. Error responses are never written to a destination file: bodies are first
- * written to a temporary file next to the destination, which is only moved into place
- * after a successful response.
- */
 @Slf4j
 public final class RestResponseBodyHelper {
     private static final String TEMP_FILE_PREFIX = ".fcli-";
@@ -59,31 +52,10 @@ public final class RestResponseBodyHelper {
 
     private RestResponseBodyHelper() {}
 
-    /**
-     * Save the body of a successful response for the given request to the given destination.
-     * The destination is only replaced if the response is successful; on any failure, the
-     * destination is left untouched and no temporary file remains.
-     *
-     * @param request request to execute
-     * @param destination file to write; its parent directory must exist
-     * @param monitor optional download progress monitor, may be null
-     * @return description of the saved file
-     * @throws FcliSimpleException if the parent directory of the destination does not exist
-     * @throws UnexpectedHttpResponseException if the response status is not 2xx
-     * @throws FcliTechnicalException on I/O errors while moving the downloaded file into place
-     */
     public static RestResponseFileRecord saveToFile(HttpRequest<?> request, Path destination, ProgressMonitor monitor) {
         return saveToFile(request, getTarget(destination), monitor, false);
     }
 
-    /**
-     * Like {@link #saveToFile(HttpRequest, Path, ProgressMonitor)}, but repeats the request while the
-     * server responds with 202 Accepted, indicating that the requested file is not available yet.
-     * The destination is only replaced by the first successful response other than 202.
-     *
-     * @param pollInterval time to wait between requests
-     * @param initialDelay time to wait before sending the first request
-     */
     public static RestResponseFileRecord saveToFileWhenReady(HttpRequest<?> request, Path destination, ProgressMonitor monitor, Duration pollInterval, Duration initialDelay) {
         var target = getTarget(destination);
         sleep(initialDelay);
@@ -94,17 +66,11 @@ public final class RestResponseBodyHelper {
         }
     }
 
-    /**
-     * Execute the request once, saving the body of a successful response to the target.
-     * @return description of the saved file, or null if skipAccepted is true and the response
-     *         status is 202 Accepted (in which case the target is left untouched)
-     */
     private static RestResponseFileRecord saveToFile(HttpRequest<?> request, Path target, ProgressMonitor monitor, boolean skipAccepted) {
         Path temp = null;
         try {
             temp = Files.createTempFile(target.getParent(), TEMP_FILE_PREFIX, TEMP_FILE_SUFFIX);
             if ( monitor!=null ) {
-                // Report the destination file name rather than the temporary file name
                 var fileName = target.getFileName().toString();
                 request.downloadMonitor((field, ignored, bytesWritten, totalBytes) -> monitor.accept(field, fileName, bytesWritten, totalBytes));
             }
@@ -121,10 +87,6 @@ public final class RestResponseBodyHelper {
         }
     }
 
-    /**
-     * @return absolute, normalized destination path
-     * @throws FcliSimpleException if the parent directory of the destination doesn't exist
-     */
     private static Path getTarget(Path destination) {
         var target = destination.toAbsolutePath().normalize();
         var parent = target.getParent();
@@ -144,17 +106,6 @@ public final class RestResponseBodyHelper {
         }
     }
 
-    /**
-     * Execute the given request and return the successful response body as text, decoded using
-     * the charset declared in the Content-Type header, or UTF-8 if none is declared.
-     *
-     * @param request request to execute
-     * @param binaryGuidance guidance appended to the error message if the response is binary,
-     *        for example which option to use for saving binary content
-     * @return response body as text
-     * @throws FcliSimpleException if the response body is binary
-     * @throws UnexpectedHttpResponseException if the response status is not 2xx
-     */
     public static String asText(HttpRequest<?> request, String binaryGuidance) {
         var response = request.asBytes();
         if ( !response.isSuccess() ) { throw new UnexpectedHttpResponseException(response); }
@@ -167,19 +118,6 @@ public final class RestResponseBodyHelper {
         return new String(body, charsetOf(contentType));
     }
 
-    /**
-     * Execute the given request and parse the successful response body as JSON, exactly like
-     * {@code asObject(JsonNode.class)} (same object mapper and charset handling; no content
-     * results in null). If the body is not valid JSON, it is returned as a {@link TextNode} if
-     * it is textual, unless the response declares a JSON content type.
-     *
-     * @param request request to execute
-     * @param binaryGuidance guidance appended to the error message if the response is binary
-     * @return parsed JSON, text node for textual non-JSON bodies, or null if there is no content
-     * @throws FcliTechnicalException if a response declared as JSON cannot be parsed
-     * @throws FcliSimpleException if the response is neither JSON nor text
-     * @throws UnexpectedHttpResponseException if the response status is not 2xx
-     */
     public static JsonNode asJsonOrText(HttpRequest<?> request, String binaryGuidance) {
         var response = request.asBytes();
         if ( !response.isSuccess() ) { throw new UnexpectedHttpResponseException(response); }
@@ -200,13 +138,6 @@ public final class RestResponseBodyHelper {
         }
     }
 
-    /**
-     * Determine whether the given body should be treated as text. Bodies with a textual media type
-     * are always considered text; for other media types (or no media type), the body is considered
-     * text only if its first bytes contain no control characters other than those commonly found in
-     * text (tab, line feed, form feed, carriage return, backspace, escape), and the whole body can be
-     * decoded without errors using the declared charset (UTF-8 by default).
-     */
     static boolean isText(String contentType, byte[] body) {
         var mediaType = getMediaType(contentType);
         if ( mediaType!=null && (mediaType.startsWith("text/") || TEXT_MEDIA_TYPES.contains(mediaType)
@@ -227,10 +158,6 @@ public final class RestResponseBodyHelper {
         }
     }
 
-    /**
-     * @return charset declared in the given Content-Type header value, or UTF-8 if no (valid)
-     *         charset is declared
-     */
     static Charset charsetOf(String contentType) {
         if ( contentType!=null ) {
             for ( var parameter : contentType.split(";") ) {
@@ -276,7 +203,6 @@ public final class RestResponseBodyHelper {
             try {
                 Files.deleteIfExists(path);
             } catch ( IOException ignore ) {
-                // Best effort; a leftover temporary file is not worth failing the operation for
             }
         }
     }

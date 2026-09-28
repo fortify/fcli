@@ -18,20 +18,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.json.JsonHelper;
 
-/**
- * Describes a REST response body that was saved to a file.
- *
- * @param file absolute, normalized path of the saved file
- * @param size number of bytes written
- * @param contentType value of the response Content-Type header, or null if absent
- * @param status HTTP status code of the response
- */
 @Reflectable
 public record RestResponseFileRecord(Path file, long size, String contentType, int status) {
-    /**
-     * @return JSON representation with properties file, size, contentType and status,
-     *         as output by commands and stored in action variables
-     */
     public ObjectNode asObjectNode() {
         var result = JsonHelper.getObjectMapper().createObjectNode()
                 .put("file", file.toString())

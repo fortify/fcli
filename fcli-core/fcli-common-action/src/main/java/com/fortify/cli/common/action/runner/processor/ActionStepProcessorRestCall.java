@@ -69,10 +69,6 @@ public class ActionStepProcessorRestCall extends AbstractActionStepProcessor {
         processRequestStepForEach(requestDescriptor);
     }
     
-    /**
-     * Apply product-specific transformations to JSON responses; text and file results
-     * (including text fallback results in auto mode) are not transformed.
-     */
     private final JsonNode transformInput(ActionStepRestCallEntry requestDescriptor, JsonNode rawBody) {
         return requestDescriptor.getResponseType()==ActionStepRestCallResponseType.auto && !(rawBody instanceof TextNode)
                 ? ctx.getRequestHelper(requestDescriptor.getTarget()).transformInput(rawBody)
@@ -186,7 +182,6 @@ public class ActionStepProcessorRestCall extends AbstractActionStepProcessor {
                 try {
                     responseFile = resolveResponseFile(requestDescriptor, vars);
                 } catch ( FcliActionValidationException e ) {
-                    // Report path violations like request failures (allowing on.fail to handle them), without sending the request
                     failureConsumer.accept(requestDescriptor, e);
                     return;
                 }

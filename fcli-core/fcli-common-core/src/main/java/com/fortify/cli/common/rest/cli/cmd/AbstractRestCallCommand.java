@@ -117,10 +117,6 @@ public abstract class AbstractRestCallCommand extends AbstractOutputCommand impl
         return new NonJsonResponseGuidanceProducer(super.getObjectNodeProducer());
     }
     
-    /**
-     * Replace the generic 'Error parsing response' failure for successful responses that are
-     * not JSON (for example file downloads) with an error explaining how to retrieve them.
-     */
     @RequiredArgsConstructor
     private static final class NonJsonResponseGuidanceProducer implements IObjectNodeProducer {
         private final IObjectNodeProducer delegate;
@@ -161,7 +157,6 @@ public abstract class AbstractRestCallCommand extends AbstractOutputCommand impl
     
     @Override
     public final JsonNode transformInput(JsonNode input) {
-        // The file record produced in response file mode must not be subjected to product transformations
         if ( isResponseFileMode() ) { return input; }
         if ( StringUtils.isNotBlank(transform.transformExpression) ) {
             input = JsonHelper.evaluateSpelExpression(input, transform.transformExpression, JsonNode.class);

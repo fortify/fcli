@@ -77,7 +77,6 @@ class AbstractRestCallCommandResponseModesTest {
         server.createContext("/fpr", ex -> respond(ex, "application/octet-stream", ZIP_BYTES));
         server.createContext("/text", ex -> respond(ex, "text/plain; charset=ISO-8859-1", "caf\u00e9\nline 2".getBytes(StandardCharsets.ISO_8859_1)));
         server.createContext("/json", ex -> {
-            // Paging header must be ignored in response file mode
             ex.getResponseHeaders().add("Link", "<"+url("/json?page=2")+">; rel=\"next\"");
             respond(ex, "application/json", JSON_BODY.getBytes(StandardCharsets.UTF_8));
         });
@@ -161,7 +160,6 @@ class AbstractRestCallCommandResponseModesTest {
         args[0] = uri;
         System.arraycopy(options, 0, args, 1, options.length);
         var commandLine = new CommandLine(cmd);
-        // Output writers look up (optional) messages like default table columns
         commandLine.setResourceBundle(new ListResourceBundle() {
             @Override protected Object[][] getContents() { return new Object[0][]; }
         });

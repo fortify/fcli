@@ -188,7 +188,6 @@ class RestResponseBodyHelperTest {
 
     @Test
     void errorResponseBodyIsIncludedInExceptionMessage() {
-        // Bodies retrieved as bytes or files must be shown as text, not as byte[] or temporary file reference
         for ( var mode : List.<Runnable>of(
                 () -> RestResponseBodyHelper.asText(unirest.get(url("/notfound")), "x"),
                 () -> RestResponseBodyHelper.asJsonOrText(unirest.get(url("/notfound")), "x"),
@@ -210,7 +209,6 @@ class RestResponseBodyHelperTest {
         assertEquals(3, requestCount.get());
         assertEquals(200, result.status());
         assertArrayEquals(ZIP_BYTES, Files.readAllBytes(dest));
-        // Destination content as observed by the server while handling each of the 202 responses
         assertEquals(List.of("previous content", "previous content"), destinationContentsWhilePolling);
         assertNoTempFiles();
     }
@@ -348,10 +346,6 @@ class RestResponseBodyHelperTest {
         }
     }
 
-    /**
-     * Respond with 202 Accepted for the given number of requests (recording the destination file
-     * contents at that moment), then with the given final status.
-     */
     private void respondWhenReady(HttpExchange exchange, int acceptedCount, int finalStatus) throws IOException {
         if ( requestCount.get() < acceptedCount ) {
             destinationContentsWhilePolling.add(Files.readString(pollingDestination));
