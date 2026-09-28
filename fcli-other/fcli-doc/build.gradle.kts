@@ -66,7 +66,8 @@ val fcliActionSchemaVersion = project.property("fcliActionSchemaVersion")
 val generateActionSchema = tasks.register<JavaExec>("generateActionSchema") {
     group = "documentation"
     description = "Generate fcli action JSON schema"
-    dependsOn(prepare)
+    // Only compiled classes are required for schema generation; avoid waiting for full build/test.
+    dependsOn("classes")
     inputs.property("projectVersion", project.version)
     inputs.property("schemaVersion", fcliActionSchemaVersion)
     outputs.dir(actionSchemaOutDir)

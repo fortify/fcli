@@ -186,4 +186,6 @@ tasks.register("build") {
     val buildTaskPaths = subprojects.mapNotNull { sp -> sp.tasks.findByName("build")?.path }
     dependsOn(buildTaskPaths)
     dependsOn("collectAppJar")
+    // Ensure action schema version/model mismatches are caught during normal local builds.
+    dependsOn(":fcli-other:fcli-doc:generateActionSchema")
 }
