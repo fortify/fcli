@@ -5,10 +5,6 @@ handoffs:
     agent: fcli-ftest
     prompt: Write functional tests for the changes above.
     send: false
-  - label: Review changes
-    agent: fcli-review
-    prompt: Review the changes above for style and correctness.
-    send: false
   - label: Edit action YAML files
     agent: fcli-action-dev
     prompt: Create or update the action YAML files related to the changes above.
