@@ -36,7 +36,7 @@ All step instructions and their properties — evaluated **during** action execu
 `records.for-each::from`, `records.for-each::breakIf`
 
 ### REST calls
-`rest.target::baseUrl`, `rest.target::headers`, `rest.call::uri`, `rest.call::query`, `rest.call::body`, pagination expressions
+`rest.target::baseUrl`, `rest.target::headers`, `rest.call::uri`, `rest.call::query`, `rest.call::body`, `rest.call::response.file`, pagination expressions
 
 ### Writers
 `out.write::to`, `out.write::type`, `out.write::type-args`, `out.write::style`
@@ -156,6 +156,26 @@ cli.options:
           - var.set:
               results..: {fmt: results}
 ```
+
+### REST response types (non-JSON responses)
+```yaml
+- rest.call:
+    fpr:                                  # Save binary response to a file
+      target: fod
+      uri: /api/v3/scans/${cli.scanId}/fpr
+      query: { scanType: Static }
+      response.type: file                 # auto (default) | text | file
+      response.file: out/scan-${cli.scanId}.fpr   # Must be in working dir unless --allow-unrestricted-file-paths
+      on.success:
+        - log.info: "Saved ${fpr.size} bytes to ${fpr.file}"   # ${fpr}: file, size, contentType, status
+    status:                               # Keep plain-text response as a string
+      target: my-service
+      uri: /status
+      response.type: text
+- if: ${!status.contains('OK')}
+  throw: "Unexpected status: ${status}"
+```
+With the default `auto`, textual non-JSON responses are stored as strings too; binary responses fail with an error suggesting `response.type: file`. `text`/`file` can't be combined with paging or `records.for-each`.
 
 ### Variable accumulation
 ```yaml
