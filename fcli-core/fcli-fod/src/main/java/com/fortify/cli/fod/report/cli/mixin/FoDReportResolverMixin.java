@@ -47,8 +47,8 @@ public class FoDReportResolverMixin {
             return Stream.of(getReportDescriptors(unirest)).map(FoDReportDescriptor::asJsonNode).collect(Collectors.toList());
         }
 
-        public Integer[] getReportIds(UnirestInstance unirest) {
-            return Stream.of(getReportDescriptors(unirest)).map(FoDReportDescriptor::getReportId).toArray(Integer[]::new);
+        public Long[] getReportIds(UnirestInstance unirest) {
+            return Stream.of(getReportDescriptors(unirest)).map(FoDReportDescriptor::getReportId).toArray(Long[]::new);
         }
     }
 

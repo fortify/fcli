@@ -23,5 +23,5 @@ import lombok.ToString;
 @Reflectable @NoArgsConstructor @AllArgsConstructor
 @Getter @ToString @Builder
 public class FoDUserAppAccessRequest {
-    private Integer applicationId;
+    private Long applicationId;
 }

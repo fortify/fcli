@@ -65,7 +65,7 @@ public class FoDIssueHelper {
                 .releaseNames(Set.of(releaseName))
                 .releaseIds(Set.of(releaseId))
                 .ids(Set.of(id))
-                .vulnIds(Set.of(vulnId))
+                .vulnIds(vulnId!=null ? Set.of(vulnId) : Collections.emptySet())
                 .build();
         }
 
@@ -92,7 +92,7 @@ public class FoDIssueHelper {
         }
 
         public String getIdsString() {
-        return asString(ids);
+            return asString(ids);
         }
 
         private String asString(Set<String> values) {
@@ -128,6 +128,7 @@ public class FoDIssueHelper {
         ObjectNode body = JsonHelper.getObjectMapper().valueToTree(issueUpdateRequest);
         var result = unirest.post(FoDUrls.VULNERABILITIES + "/bulk-edit")
             .routeParam("relId", releaseId)
+            .queryString("excludeFilters", "true") // fcli never consumes the top-level 'filters' object; excluding it improves FoD-side performance
             .body(body).asObject(JsonNode.class).getBody();
         return getResponse(result);
     }
@@ -162,7 +163,7 @@ public class FoDIssueHelper {
         sortedRecords.sort(
                 Comparator.comparingInt((ObjectNode n) -> n.get("severity").asInt()).reversed()
                         .thenComparing(n -> n.get("category").asText())
-                        .thenComparing(n -> n.get("releaseId").asInt())
+                        .thenComparing(n -> n.get("releaseId").asLong())
         );
 
         ArrayNode result = JsonHelper.getObjectMapper().createArrayNode();
@@ -246,6 +247,7 @@ public class FoDIssueHelper {
         try {
             var request = unirest.get(FoDUrls.VULNERABILITIES)
                     .routeParam("relId", releaseId)
+                    .queryString("excludeFilters", "true") // fcli never consumes the top-level 'filters' object; excluding it improves FoD-side performance
                     .queryString("fields", "id,vulnId")
                     .queryString("includeFixed", "true")
                     .queryString("includeSuppressed", "true");
@@ -290,6 +292,7 @@ public class FoDIssueHelper {
         try {
             var request = unirest.get(FoDUrls.VULNERABILITIES)
                     .routeParam("relId", releaseId)
+                    .queryString("excludeFilters", "true") // fcli never consumes the top-level 'filters' object; excluding it improves FoD-side performance
                     .queryString("fields", "id")
                     .queryString("includeFixed", "true")
                     .queryString("includeSuppressed", "true");

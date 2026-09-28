@@ -72,7 +72,7 @@ public class AviatorTokenRevokeCommand extends AbstractAviatorAdminSessionOutput
         ObjectMapper objectMapper = new ObjectMapper();
         ObjectNode revokeTokenNode = objectMapper.createObjectNode();
         revokeTokenNode.put("message", "Token successfully revoked");
-        LOG.info("Token '{}' revoked successfully for email: {}", tokenToRevoke, email);
+        LOG.info("Token revoked successfully for email: {}", email);
         return revokeTokenNode;
     }
 

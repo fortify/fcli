@@ -77,7 +77,7 @@ public class AviatorSSCDownloadRemediationsCacheCommand extends AbstractSSCJsonN
                 cacheWriter.addSscFpr(artifact.getId(), artifact.getUploadDate(), entryPath ->
                         downloadArtifact(unirest, artifact, entryPath, logger, progressWriter));
             }
-            // close() writes manifest and publishes; capture entry count before close.
+            cacheWriter.commit();
             RemediationsCacheManifest manifest = cacheWriter.getManifest();
             return buildResultNode(destination, manifest);
         }

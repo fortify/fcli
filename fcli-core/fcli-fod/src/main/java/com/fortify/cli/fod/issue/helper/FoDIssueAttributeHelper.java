@@ -102,7 +102,7 @@ public class FoDIssueAttributeHelper {
                 }
             }
             try {
-                int providedId = Integer.parseInt(candidate);
+                long providedId = Long.parseLong(candidate);
                 for (var pv : picklist) {
                     if (Objects.equals(pv.getId(), providedId)) {
                         return pv.getName();

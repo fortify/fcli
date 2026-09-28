@@ -146,7 +146,7 @@ public class FoDReleaseCreateCommand extends AbstractFoDJsonNodeOutputCommand im
         String simpleReleaseName = releaseNameResolver.getSimpleReleaseName();
 
         var requestBuilder = FoDReleaseCreateRequest.builder()
-                .applicationId(Integer.valueOf(appDescriptor.getApplicationId()))
+                .applicationId(Long.valueOf(appDescriptor.getApplicationId()))
                 .releaseName(simpleReleaseName)
                 .releaseDescription(description)
                 .sdlcStatusType(sdlcStatus.getSdlcStatusType().name())

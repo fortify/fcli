@@ -48,10 +48,10 @@ public class FoDReleaseDescriptor extends JsonNodeHolder {
     private Boolean isPassed;
     private String passFailReasonType;
     private String sdlcStatusType;
-    private Integer ownerId;
-    private Integer currentStaticScanId;
-    private Integer currentDynamicScanId;
-    private Integer currentMobileScanId;
+    private Long ownerId;
+    private Long currentStaticScanId;
+    private Long currentDynamicScanId;
+    private Long currentMobileScanId;
     private String staticAnalysisStatusType;
     private String dynamicAnalysisStatusType;
     private String mobileAnalysisStatusType;
@@ -72,8 +72,8 @@ public class FoDReleaseDescriptor extends JsonNodeHolder {
         return applicationName+delimiter+msQualifierPrefix;
     }
 
-    public Map<Integer, String> attributesAsMap() {
-        Map<Integer, String> attrMap = new HashMap<>();
+    public Map<Long, String> attributesAsMap() {
+        Map<Long, String> attrMap = new HashMap<>();
         for (FoDAttributeValueDescriptor attr : attributes) {
             attrMap.put(attr.getId(), attr.getValue());
         }

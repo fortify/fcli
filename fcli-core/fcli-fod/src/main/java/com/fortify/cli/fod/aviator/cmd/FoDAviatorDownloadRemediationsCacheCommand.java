@@ -74,7 +74,7 @@ public class FoDAviatorDownloadRemediationsCacheCommand extends AbstractFoDJsonN
             cacheWriter.addFodFpr(releaseDescriptor.getReleaseId(), entryPath ->
                     FoDRemediationsFprDownloadHelper.downloadStaticRemediationsFpr(unirest, releaseDescriptor, entryPath));
             logger.progress("Status: Writing remediations cache to " + destination);
-            // close() writes manifest and publishes.
+            cacheWriter.commit();
             RemediationsCacheManifest manifest = cacheWriter.getManifest();
             return buildResultNode(destination, releaseDescriptor, manifest);
         }

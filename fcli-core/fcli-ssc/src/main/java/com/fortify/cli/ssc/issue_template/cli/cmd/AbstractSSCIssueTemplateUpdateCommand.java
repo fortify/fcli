@@ -16,7 +16,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.IntNode;
+import com.fasterxml.jackson.databind.node.LongNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
@@ -63,7 +63,7 @@ public abstract class AbstractSSCIssueTemplateUpdateCommand extends AbstractSSCJ
                 currentTags,
                 addTagsMixin.getTagSpecs(),
                 rmTagsMixin.getTagSpecs()
-        ).map(tag -> new IntNode(Integer.valueOf(tag.getId()))).collect(JsonHelper.arrayNodeCollector());
+        ).map(tag -> new LongNode(Long.valueOf(tag.getId()))).collect(JsonHelper.arrayNodeCollector());
     }
     
     @Override

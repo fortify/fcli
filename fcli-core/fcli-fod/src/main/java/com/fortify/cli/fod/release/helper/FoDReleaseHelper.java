@@ -52,14 +52,14 @@ public class FoDReleaseHelper {
 
     public static final FoDReleaseDescriptor getReleaseDescriptor(UnirestInstance unirest, String qualifiedReleaseNameOrId, String delimiter, boolean failIfNotFound, String... fields) {
         try {
-            int relId = Integer.parseInt(qualifiedReleaseNameOrId);
+            long relId = Long.parseLong(qualifiedReleaseNameOrId);
             return getReleaseDescriptorFromId(unirest, relId, failIfNotFound, fields);
         } catch (NumberFormatException nfe) {
             return getReleaseDescriptorFromQualifiedName(unirest, FoDQualifiedReleaseNameDescriptor.fromQualifiedReleaseName(qualifiedReleaseNameOrId, delimiter), failIfNotFound, fields);
         }
     }
 
-    public static final FoDReleaseDescriptor getReleaseDescriptorFromId(UnirestInstance unirest, int relId, boolean failIfNotFound, String... fields) {
+    public static final FoDReleaseDescriptor getReleaseDescriptorFromId(UnirestInstance unirest, long relId, boolean failIfNotFound, String... fields) {
         GetRequest request = addFieldsParam(unirest.get(FoDUrls.RELEASES), fields);
         return getDescriptor(request, String.valueOf(relId), failIfNotFound, String.format("releaseId:%d", relId));
     }
@@ -78,7 +78,7 @@ public class FoDReleaseHelper {
     public static final FoDReleaseDescriptor createRelease(UnirestInstance unirest, FoDReleaseCreateRequest relCreateRequest) {
         ObjectNode body = objectMapper.valueToTree(relCreateRequest);
         var releaseId = unirest.post(FoDUrls.RELEASES)
-                .body(body).asObject(JsonNode.class).getBody().get("releaseId").asInt();
+                .body(body).asObject(JsonNode.class).getBody().get("releaseId").asLong();
         return getReleaseDescriptorFromId(unirest, releaseId, true);
     }
 

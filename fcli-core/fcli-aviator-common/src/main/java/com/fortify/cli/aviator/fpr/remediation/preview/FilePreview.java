@@ -10,7 +10,7 @@
  * herein. The information contained herein is subject to change
  * without notice.
  */
-package com.fortify.cli.aviator.fpr.processor.preview;
+package com.fortify.cli.aviator.fpr.remediation.preview;
 
 import java.util.Collections;
 import java.util.List;
@@ -19,21 +19,9 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.aviator._common.exception.AviatorBugException;
 
-/**
- * Preview information for a single file in a remediation.
- * Contains metadata about the file and all code changes that would be applied.
- * 
- * @param path The relative file path as stored in FVDL (e.g., "src/Example.java") - kept relative for security (does not expose absolute filesystem paths)
- * @param encoding The character encoding used to read/write the file (from FVDL metadata)
- * @param changes List of individual code changes within this file
- */
 @Reflectable
 @JsonPropertyOrder({"path", "encoding", "changes"})
-public record FilePreview(
-        String path,
-        String encoding,
-        List<FileChange> changes) {
-
+public record FilePreview(String path, String encoding, List<PreviewFileChange> changes) {
     public FilePreview {
         if (path == null || path.isBlank()) {
             throw new AviatorBugException("FilePreview path is required");

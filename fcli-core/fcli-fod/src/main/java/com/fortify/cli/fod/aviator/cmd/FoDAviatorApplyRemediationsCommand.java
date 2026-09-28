@@ -69,11 +69,12 @@ public class FoDAviatorApplyRemediationsCommand extends AbstractAviatorApplyReme
 
     private JsonNode buildCacheResultNode(ApplyResult result, Set<String> issueIdFilter) {
         return AviatorFoDApplyRemediationsHelper.buildCacheResultNode(
-                applyOptions.getFromCache(), result, issueIdFilter);
+                applyOptions.getFromCache(), result, issueIdFilter, applyOptions.executionMode());
     }
 
     private JsonNode buildOnlineResultNode(IRemediationsFprSource fprSource, ApplyResult result) {
         FoDReleaseDescriptor releaseDescriptor = ((FoDOnlineRemediationsFprSource) fprSource).getReleaseDescriptor();
-        return AviatorFoDApplyRemediationsHelper.buildOnlineResultNode(releaseDescriptor, result);
+        return AviatorFoDApplyRemediationsHelper.buildOnlineResultNode(
+                releaseDescriptor, result, applyOptions.executionMode());
     }
 }

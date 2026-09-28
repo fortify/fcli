@@ -26,7 +26,7 @@ import lombok.NoArgsConstructor;
 public class FoDScanConfigSastSetupRequest {
     private Integer assessmentTypeId;
     private String entitlementFrequencyType;
-    private Integer entitlementId;
+    private Long entitlementId;
     private Integer technologyStackId;
     private Integer languageLevelId;
     private Boolean performOpenSourceAnalysis;
@@ -35,4 +35,5 @@ public class FoDScanConfigSastSetupRequest {
     private Boolean useSourceControl;
     private Boolean scanBinary;
     private Boolean includeFortifyAviator;
+    private String scanPolicy;
 }

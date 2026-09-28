@@ -13,17 +13,21 @@
 package com.fortify.cli.aviator.fpr.utils;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fortify.cli.aviator.audit.model.AuditResponse.AuditSkipReason;
 import com.fortify.cli.aviator.audit.model.File;
 import com.fortify.cli.aviator.audit.model.StackTraceElement;
+import com.fortify.cli.aviator.fpr.model.FVDLMetadata;
 import com.fortify.cli.aviator.util.FprHandle;
 import com.fortify.cli.aviator.util.StringUtil;
 
@@ -39,24 +43,17 @@ import com.fortify.cli.aviator.util.StringUtil;
 public class SourceCodeEnricher {
     private static final Logger logger = LoggerFactory.getLogger(SourceCodeEnricher.class);
 
-    /*private final Path extractedPath;
-    private final Map<String, String> sourceFileMap;*/
     private final FprHandle fprHandle;
     private final FileUtils fileUtils;
+    private final Map<String, CachedSourceResult> sourceFileCache = new ConcurrentHashMap<>();
 
-    /**
-     * Creates a new SourceCodeEnricher with the required dependencies.
-     * @param fprHandle      Utility for file operations (line numbering, line counting)
-     */
-    /*public SourceCodeEnricher(Path extractedPath, Map<String, String> sourceFileMap, FileUtils fileUtils) {
-        this.extractedPath = extractedPath;
-        this.sourceFileMap = sourceFileMap;
-        this.fileUtils = fileUtils;
-    }*/
+    public SourceCodeEnricher(FprHandle fprHandle) {
+        this(fprHandle, SourceDecoders.defaults(), null);
+    }
 
-    public SourceCodeEnricher(FprHandle fprHandle){
+    public SourceCodeEnricher(FprHandle fprHandle, ISourceDecoder sourceDecoder, FVDLMetadata fvdlMetadata) {
         this.fprHandle = fprHandle;
-        this.fileUtils = new FileUtils();
+        this.fileUtils = new FileUtils(Objects.requireNonNull(sourceDecoder, "sourceDecoder"), fvdlMetadata);
     }
 
     /**
@@ -74,36 +71,41 @@ public class SourceCodeEnricher {
      * @return Map of filename → File objects with content loaded
      */
     public Map<String, File> enrichWithSourceCode(List<List<StackTraceElement>> stackTraces) {
-        Map<String, File> uniqueFiles = new HashMap<>();
+        return new HashMap<>(enrichWithSourceCodeDetailed(stackTraces).files());
+    }
+
+    public EnrichmentResult enrichWithSourceCodeDetailed(List<List<StackTraceElement>> stackTraces) {
+        Map<String, File> uniqueFiles = new LinkedHashMap<>();
+        Map<String, SourceFileFailure> failuresByFilename = new LinkedHashMap<>();
 
         if (stackTraces == null || stackTraces.isEmpty()) {
             logger.debug("No stack traces to enrich");
-            return uniqueFiles;
+            return new EnrichmentResult(uniqueFiles, List.of());
         }
 
-        processStackTraces(stackTraces, uniqueFiles);
+        processStackTraces(stackTraces, uniqueFiles, failuresByFilename);
 
         logger.debug("Enriched {} unique source files from {} stack traces",
                     uniqueFiles.size(), stackTraces.size());
 
-        return uniqueFiles;
+        return new EnrichmentResult(uniqueFiles, new ArrayList<>(failuresByFilename.values()));
     }
 
     /**
      * Processes all stack traces to extract and load unique source files.
      * Replicates FVDLProcessor.processStackTraceElements() logic.
      */
-    private void processStackTraces(List<List<StackTraceElement>> stackTraces, Map<String, File> uniqueFiles) {
+    private void processStackTraces(List<List<StackTraceElement>> stackTraces, Map<String, File> uniqueFiles,
+                                    Map<String, SourceFileFailure> failuresByFilename) {
         for (List<StackTraceElement> stackTrace : stackTraces) {
             if (stackTrace == null) continue;
 
             for (StackTraceElement element : stackTrace) {
-                processFileForElement(element, uniqueFiles);
+                processFileForElement(element, uniqueFiles, failuresByFilename);
 
-                // Process inner stack traces recursively
                 if (element.getInnerStackTrace() != null) {
                     for (StackTraceElement innerElement : element.getInnerStackTrace()) {
-                        processFileForElement(innerElement, uniqueFiles);
+                        processFileForElement(innerElement, uniqueFiles, failuresByFilename);
                     }
                 }
             }
@@ -117,40 +119,63 @@ public class SourceCodeEnricher {
      * @param element     The stack trace element to process
      * @param uniqueFiles Map to store loaded files (deduplicated by filename)
      */
-    private void processFileForElement(StackTraceElement element, Map<String, File> uniqueFiles) {
+    private void processFileForElement(StackTraceElement element, Map<String, File> uniqueFiles,
+                                       Map<String, SourceFileFailure> failuresByFilename) {
         if (element == null) return;
 
         String filename = element.getFilename();
-        if (!StringUtil.isEmpty(filename) && fprHandle.getSourceFileMap().containsKey(filename) && !uniqueFiles.containsKey(filename)) {
-            String internalPath = fprHandle.getSourceFileMap().get(filename);
-            if (internalPath == null) { return; } // Should not happen due to containsKey check, but safe.
+        if (!StringUtil.isEmpty(filename) && fprHandle.getSourceFileMap().containsKey(filename)
+                && !uniqueFiles.containsKey(filename) && !failuresByFilename.containsKey(filename)) {
+            CachedSourceResult result = sourceFileCache.computeIfAbsent(filename, this::loadSourceFile);
+            if (result.failure() != null) {
+                failuresByFilename.put(filename, result.failure());
+            } else {
+                uniqueFiles.put(filename, result.sourceFile().toFile(filename));
+            }
+        }
+    }
 
-            Path actualSourcePath = fprHandle.getPath("/" + internalPath);
+    private CachedSourceResult loadSourceFile(String filename) {
+        try {
+            String content = fileUtils.readSourceFileContentStrict(fprHandle, filename);
+            CachedSourceFile sourceFile = new CachedSourceFile(
+                    fileUtils.appendLineNumbers(content, filename, 0), content.split("\\R", -1).length);
+            return new CachedSourceResult(sourceFile, null);
+        } catch (ISourceDecoder.SourceDecodeException e) {
+            return failedSourceFile(filename, e, AuditSkipReason.SOURCE_FILE_DECODE_FAILED);
+        } catch (IOException e) {
+            return failedSourceFile(filename, e, AuditSkipReason.SOURCE_FILE_READ_FAILED);
+        }
+    }
 
+    private CachedSourceResult failedSourceFile(String filename, Exception exception, AuditSkipReason reason) {
+        logger.warn("Could not read source file content for path {}: {}", filename, exception.getMessage());
+        return new CachedSourceResult(null, new SourceFileFailure(filename, exception.getMessage(), reason));
+    }
+
+    private record CachedSourceFile(String content, int endLine) {
+        private File toFile(String filename) {
             File file = new File();
             file.setName(filename);
             file.setSegment(false);
             file.setStartLine(1);
+            file.setContent(content);
+            file.setEndLine(endLine);
+            return file;
+        }
+    }
 
-            try {
-                if (Files.exists(actualSourcePath)) {
-                    byte[] encodedBytes = Files.readAllBytes(actualSourcePath);
-                    String content = new String(encodedBytes);
-                    // Keep line markers in prompt file content; downstream gRPC/template rendering is pass-through.
-                    file.setContent(fileUtils.appendLineNumbers(content, filename, 0));
-                    file.setEndLine(fileUtils.countLines(actualSourcePath));
-                } else {
-                    // This warning is now more accurate.
-                    logger.warn("Source file not found at internal path: {}. This may indicate a corrupt FPR.", actualSourcePath);
-                    file.setContent("");
-                    file.setEndLine(0);
-                }
-            } catch (IOException e) {
-                logger.warn("Error processing file: {}", filename, e);
-                file.setContent("");
-                file.setEndLine(0);
-            }
-            uniqueFiles.put(filename, file);
+    private record CachedSourceResult(CachedSourceFile sourceFile, SourceFileFailure failure) {}
+
+    public record EnrichmentResult(Map<String, File> files, List<SourceFileFailure> failures) {
+        public boolean hasFailures() {
+            return !failures.isEmpty();
+        }
+    }
+
+    public record SourceFileFailure(String filename, String message, AuditSkipReason reason) {
+        public SourceFileFailure {
+            Objects.requireNonNull(reason, "reason");
         }
     }
 }

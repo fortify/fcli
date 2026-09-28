@@ -30,6 +30,7 @@ public class AuditIssue {
     private boolean suppressed;
     private int revision;
     @Builder.Default private Map<String, String> tags = new HashMap<>();
+    @Builder.Default private Map<String, String> lastTagUsernames = new HashMap<>();
     @Builder.Default private List<Comment> threadedComments = new ArrayList<>();
 
     public void addTag(String tagId, String tagValue) {

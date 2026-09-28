@@ -22,7 +22,7 @@ import lombok.NoArgsConstructor;
 @Reflectable @NoArgsConstructor
 @Data @EqualsAndHashCode(callSuper = true)
 public class FoDUserGroupDescriptor extends JsonNodeHolder {
-    private Integer id;
+    private Long id;
     private String name;
     private Integer assignedUsersCount;
     private Integer assignedApplicationsCount;

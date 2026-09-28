@@ -24,6 +24,6 @@ import lombok.NoArgsConstructor;
 @Reflectable @NoArgsConstructor
 @Data @EqualsAndHashCode(callSuper=false)
 public class FoDStartScanResponse extends JsonNodeHolder {
-    Integer scanId;
+    Long scanId;
     ArrayList<String> messages;
 }

@@ -28,7 +28,7 @@ public class FoDScanDastLegacyStartRequest {
 
     private String startDate;
     private Integer assessmentTypeId;
-    private Integer entitlementId;
+    private Long entitlementId;
     private String entitlementFrequencyType;
     private Boolean isRemediationScan;
     //private Boolean isBundledAssessment;

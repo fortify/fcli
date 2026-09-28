@@ -22,7 +22,7 @@ import lombok.NoArgsConstructor;
 @Reflectable @NoArgsConstructor
 @Data @EqualsAndHashCode(callSuper = true)
 public class FoDScanSastDescriptor extends JsonNodeHolder {
-    private Integer scanId;
+    private Long scanId;
     private String scanType;
 
 }

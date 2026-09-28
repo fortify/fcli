@@ -27,7 +27,7 @@ import lombok.ToString;
 @Getter @ToString @Builder
 @JsonInclude(Include.NON_NULL)
 public class FoDReleaseCreateRequest {
-    private Integer applicationId;
+    private Long applicationId;
     private String releaseName;
     private String releaseDescription;
     @Builder.Default

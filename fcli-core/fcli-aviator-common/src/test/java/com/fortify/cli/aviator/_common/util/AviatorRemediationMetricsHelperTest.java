@@ -23,23 +23,21 @@ import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 
-import com.fortify.cli.aviator.fpr.processor.RemediationProcessor.RemediationMetric;
-import com.fortify.cli.aviator.fpr.processor.RemediationProcessor.RemediationMetric.Mode;
+import com.fortify.cli.aviator.fpr.remediation.RemediationExecutionMode;
+import com.fortify.cli.aviator.fpr.remediation.model.RemediationMetric;
+import com.fortify.cli.aviator.fpr.remediation.preview.PreviewDetail;
 
 class AviatorRemediationMetricsHelperTest {
 
     @Test
     void aggregateFilteredMetricsDeduplicatesIssueIdsAcrossEntries() {
-        RemediationMetric metricOne = RemediationMetric.filtered(
-                Set.of("ISSUE-1", "ISSUE-2"), Set.of("ISSUE-1"), Set.of("A.java"));
-        RemediationMetric metricTwo = RemediationMetric.filtered(
-                Set.of("ISSUE-1", "ISSUE-2"), Set.of("ISSUE-2"), Set.of("B.java"));
+        RemediationMetric metricOne = filteredMetric(Set.of("ISSUE-1", "ISSUE-2"), Set.of("ISSUE-1"), Set.of("A.java"));
+        RemediationMetric metricTwo = filteredMetric(Set.of("ISSUE-1", "ISSUE-2"), Set.of("ISSUE-2"), Set.of("B.java"));
 
         RemediationMetric aggregated = AviatorRemediationMetricsHelper.aggregateMetrics(
                 Set.of("ISSUE-1", "ISSUE-2"), List.of(metricOne, metricTwo));
 
         assertTrue(aggregated.isFiltered());
-        assertEquals(Mode.FILTERED, aggregated.mode());
         assertEquals(2, aggregated.totalRemediations());
         assertEquals(2, aggregated.appliedRemediations());
         assertEquals(0, aggregated.skippedRemediations());
@@ -54,14 +52,13 @@ class AviatorRemediationMetricsHelperTest {
         Map<String, Integer> reasonsTwo = new LinkedHashMap<>();
         reasonsTwo.put("Source file missing", 1);
         reasonsTwo.put("No file changes found", 1);
-        RemediationMetric metricOne = RemediationMetric.unfiltered(2, 1, Set.of("A.java"), reasonsOne);
-        RemediationMetric metricTwo = RemediationMetric.unfiltered(1, 0, Set.of(), reasonsTwo);
+        RemediationMetric metricOne = unfilteredMetric(2, 1, Set.of("A.java"), reasonsOne);
+        RemediationMetric metricTwo = unfilteredMetric(1, 0, Set.of(), reasonsTwo);
 
         RemediationMetric aggregated = AviatorRemediationMetricsHelper.aggregateMetrics(
                 null, List.of(metricOne, metricTwo));
 
         assertFalse(aggregated.isFiltered());
-        assertEquals(Mode.UNFILTERED, aggregated.mode());
         assertEquals(3, aggregated.totalRemediations());
         assertEquals(1, aggregated.appliedRemediations());
         assertEquals(2, aggregated.skippedRemediations());
@@ -73,8 +70,7 @@ class AviatorRemediationMetricsHelperTest {
 
     @Test
     void remainingIssueIdsDropsAlreadyApplied() {
-        RemediationMetric metric = RemediationMetric.filtered(
-                Set.of("ISSUE-1", "ISSUE-2"), Set.of("ISSUE-1"), Set.of("A.java"));
+                RemediationMetric metric = filteredMetric(Set.of("ISSUE-1", "ISSUE-2"), Set.of("ISSUE-1"), Set.of("A.java"));
 
         assertEquals(
                 Set.of("ISSUE-2"),
@@ -83,25 +79,72 @@ class AviatorRemediationMetricsHelperTest {
 
     @Test
     void aggregatingAnyPreviewMetricYieldsPreviewResultWithMergedDetails() {
-        RemediationMetric applied = RemediationMetric.unfiltered(1, 1, Set.of("A.java"));
-        RemediationMetric preview = RemediationMetric.previewUnfiltered(1, 0, Set.of(), Map.of(),
-                List.of(com.fortify.cli.aviator.fpr.processor.preview.PreviewDetail.skipped("ISSUE-2", null, "Source file missing")));
+        RemediationMetric applied = unfilteredMetric(1, 1, Set.of("A.java"), Map.of());
+        RemediationMetric preview = RemediationMetric.builder()
+                .totalRemediations(1)
+                .skippedRemediations(1)
+                .executionMode(RemediationExecutionMode.PREVIEW)
+                .previewDetails(List.of(PreviewDetail.skipped("ISSUE-2", null)))
+                .build();
 
         RemediationMetric aggregated = AviatorRemediationMetricsHelper.aggregateMetrics(
                 null, List.of(applied, preview));
 
-        assertTrue(aggregated instanceof RemediationMetric.Preview);
-        assertEquals(1, ((RemediationMetric.Preview) aggregated).previewDetails().size());
+        assertTrue(aggregated.isPreview());
+        assertEquals(1, aggregated.previewDetails().size());
     }
 
     @Test
-    void aggregatingOnlyAppliedMetricsYieldsAppliedResult() {
-        RemediationMetric metricOne = RemediationMetric.unfiltered(1, 1, Set.of("A.java"));
-        RemediationMetric metricTwo = RemediationMetric.unfiltered(1, 0, Set.of());
+    void skippedPreviewRunWithNoMetricsStaysPreview() {
+        RemediationMetric aggregated = AviatorRemediationMetricsHelper.aggregateMetrics(
+                null, List.of(), RemediationExecutionMode.PREVIEW);
+
+        assertTrue(aggregated.isPreview());
+        assertEquals(0, aggregated.appliedRemediations());
+        assertEquals("No-Remediation-Previewed", AviatorRemediationMetricsHelper.actionLabel(aggregated));
+    }
+
+    @Test
+    void skippedApplyRunWithNoMetricsStaysApply() {
+        RemediationMetric aggregated = AviatorRemediationMetricsHelper.aggregateMetrics(
+                null, List.of(), RemediationExecutionMode.APPLY);
+
+        assertFalse(aggregated.isPreview());
+        assertEquals("No-Remediation-Applied", AviatorRemediationMetricsHelper.actionLabel(aggregated));
+    }
+
+    @Test
+        void aggregatingOnlyAppliedMetricsYieldsApplyResult() {
+                RemediationMetric metricOne = unfilteredMetric(1, 1, Set.of("A.java"), Map.of());
+                RemediationMetric metricTwo = unfilteredMetric(1, 0, Set.of(), Map.of());
 
         RemediationMetric aggregated = AviatorRemediationMetricsHelper.aggregateMetrics(
                 null, List.of(metricOne, metricTwo));
 
-        assertTrue(aggregated instanceof RemediationMetric.Applied);
+                assertFalse(aggregated.isPreview());
+        }
+
+        private RemediationMetric filteredMetric(Set<String> requestedIds, Set<String> appliedIds, Set<String> modifiedFiles) {
+                return RemediationMetric.builder()
+                                .totalRemediations(requestedIds.size())
+                                .appliedRemediations(appliedIds.size())
+                                .skippedRemediations(requestedIds.size() - appliedIds.size())
+                                .requestedIssueIds(requestedIds)
+                                .seenIssueIds(appliedIds)
+                                .satisfiedIssueIds(appliedIds)
+                                .appliedIssueIds(appliedIds)
+                                .modifiedFiles(modifiedFiles)
+                                .build();
+        }
+
+        private RemediationMetric unfilteredMetric(int total, int applied, Set<String> modifiedFiles,
+                        Map<String, Integer> skippedByReason) {
+                return RemediationMetric.builder()
+                                .totalRemediations(total)
+                                .appliedRemediations(applied)
+                                .skippedRemediations(total - applied)
+                                .modifiedFiles(modifiedFiles)
+                                .skippedByReason(skippedByReason)
+                                .build();
     }
 }

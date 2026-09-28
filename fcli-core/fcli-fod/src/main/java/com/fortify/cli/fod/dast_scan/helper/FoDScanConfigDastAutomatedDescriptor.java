@@ -25,7 +25,7 @@ import lombok.ToString;
 @EqualsAndHashCode(callSuper=false)
 public class FoDScanConfigDastAutomatedDescriptor extends JsonNodeHolder {
     private Integer assessmentTypeId;
-    private Integer entitlementId;
+    private Long entitlementId;
     private String entitlementFrequencyType;
     private String scanType;
 }

@@ -21,6 +21,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.Comparator;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 import java.util.zip.ZipInputStream;
@@ -29,6 +30,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fortify.cli.common.exception.FcliTechnicalException;
+
 
 public final class FileUtil {
 
@@ -130,4 +132,55 @@ public final class FileUtil {
             throw new FcliTechnicalException("Error writing to file " + absolutePath, e);
         }
     }
+
+    /**
+     * Canonical form for file hashing. Normalises line endings to LF and strips a single
+     * trailing newline. Both the audit side (writing the hash into remediations.xml) and the
+     * apply side (verifying it) must call this before hashing so the two sides agree
+     * byte-for-byte regardless of the OS that ran the audit or whether the file had a
+     * trailing newline on disk. Callers hash the UTF-8 bytes of the returned string.
+     */
+    public static String canonicalizeForHash(String content) {
+        if (content == null) return "";
+        String normalized = content.replace("\r\n", "\n").replace('\r', '\n');
+        if (normalized.endsWith("\n")) {
+            normalized = normalized.substring(0, normalized.length() - 1);
+        }
+        return normalized;
+    }
+
+    public static String stripSyntheticLineMarkers(String content, String fileName) {
+        return stripSyntheticLineMarkers(content, fileName, "\n");
+    }
+
+    /** Same as {@link #stripSyntheticLineMarkers(String, String)}, but joins with a caller-chosen line separator. */
+    public static String stripSyntheticLineMarkers(String content, String fileName, String lineSeparator) {
+        if (content == null || content.isEmpty()) {
+            return content;
+        }
+        String language = FileTypeLanguageMapperUtil.getProgrammingLanguage(getFileExtension(fileName));
+        String commentSymbol = LanguageCommentMapperUtil.getProgrammingLanguageComment(language);
+        String stripped = content;
+        if (!"Unknown".equals(commentSymbol)) {
+            String closingToken = commentSymbol.equals("<!--") ? "-->"
+                : commentSymbol.equals("<%--") ? "--%>"
+                : null;
+            Pattern markerPattern = Pattern.compile(
+                "[ \\t]*" + Pattern.quote(commentSymbol) + " L\\d+"
+                    + (closingToken != null ? "[ \\t]*" + Pattern.quote(closingToken) : "")
+                    + "[ \\t]*$");
+            String[] lines = content.split("\\R", -1);
+            StringBuilder result = new StringBuilder();
+            for (int i = 0; i < lines.length; i++) {
+                Matcher matcher = markerPattern.matcher(lines[i]);
+                result.append(matcher.find() ? lines[i].substring(0, matcher.start()) : lines[i]);
+                if (i < lines.length - 1) {
+                    result.append(lineSeparator);
+                }
+            }
+            stripped = result.toString();
+        }
+        return stripped;
+    }
+
 }

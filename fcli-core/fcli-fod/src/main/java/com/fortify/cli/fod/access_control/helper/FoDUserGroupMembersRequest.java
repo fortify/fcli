@@ -24,6 +24,6 @@ import lombok.NoArgsConstructor;
 @Reflectable @NoArgsConstructor @AllArgsConstructor
 @Data @Builder
 public class FoDUserGroupMembersRequest {
-    private ArrayList<Integer> removeUsers;
-    private ArrayList<Integer> addUsers;
+    private ArrayList<Long> removeUsers;
+    private ArrayList<Long> addUsers;
 }

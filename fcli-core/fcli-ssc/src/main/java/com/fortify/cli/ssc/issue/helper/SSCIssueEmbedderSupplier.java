@@ -39,49 +39,61 @@ public enum SSCIssueEmbedderSupplier implements ISSCEntityEmbedderSupplier {
     }
     
     private static abstract class AbstractSSCIssueEmbedder implements ISSCEntityEmbedder {
-        @Override
-        public void addEmbedRequests(SSCBulkRequestBuilder builder, UnirestInstance unirest, JsonNode record) {
-            var id = record.get("id").asText();
-            builder.request(getBaseRequest(unirest)
-                    .routeParam("id", id)
-                    .queryString("limit", "-1"), 
-                response->process((ObjectNode)record, SSCInputTransformer.getDataOrSelf(response)));
-        }
-
         protected abstract HttpRequest<?> getBaseRequest(UnirestInstance unirest);
+
         protected abstract void process(ObjectNode record, JsonNode response);
+
+        // Whether the embedder's endpoint supports the 'limit' parameter to retrieve all records
+        protected boolean supportsLimit() { return true; }
+
+        @Override
+        public final void addEmbedRequests(SSCBulkRequestBuilder builder, UnirestInstance unirest, JsonNode record) {
+            var id = record.get("id").asText();
+            HttpRequest<?> request = getBaseRequest(unirest).routeParam("id", id);
+            if ( supportsLimit() ) { request = request.queryString("limit", "-1"); }
+            builder.request(
+                request,
+                response -> process((ObjectNode) record, SSCInputTransformer.getDataOrSelf(response))
+            );
+        }
     }
-    
+
     private static final class SSCIssueDetailsEmbedder extends AbstractSSCIssueEmbedder {
+        @Override
+        protected boolean supportsLimit() { return false; }
+
         @Override
         protected HttpRequest<?> getBaseRequest(UnirestInstance unirest) {
             return unirest.get("/api/v1/issueDetails/{id}");
         }
+
         @Override
         protected void process(ObjectNode record, JsonNode response) {
-            record.set("details", response); 
+            record.set("details", response);
         }
     }
-    
+
     private static final class SSCIssueAuditHistoryEmbedder extends AbstractSSCIssueEmbedder {
         @Override
         protected HttpRequest<?> getBaseRequest(UnirestInstance unirest) {
-            return unirest.get("/api/v1/issues/{id}/auditHistory?limit=-1");
+            return unirest.get("/api/v1/issues/{id}/auditHistory");
         }
+
         @Override
         protected void process(ObjectNode record, JsonNode response) {
-            record.set("auditHistory", response); 
+            record.set("auditHistory", response);
         }
     }
-    
+
     private static final class SSCIssueCommentsEmbedder extends AbstractSSCIssueEmbedder {
         @Override
         protected HttpRequest<?> getBaseRequest(UnirestInstance unirest) {
-            return unirest.get("/api/v1/issues/{id}/comments?limit=-1");
+            return unirest.get("/api/v1/issues/{id}/comments");
         }
+
         @Override
         protected void process(ObjectNode record, JsonNode response) {
-            record.set("comments", response); 
+            record.set("comments", response);
         }
     }
 }

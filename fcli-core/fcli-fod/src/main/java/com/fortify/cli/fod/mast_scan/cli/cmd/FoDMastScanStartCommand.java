@@ -57,7 +57,7 @@ public class FoDMastScanStartCommand extends AbstractFoDScanStartCommand {
     @Option(names = {"--assessment-type"}, required = true)
     private String mobileAssessmentType;
     @Option(names = {"--entitlement-id"})
-    private Integer entitlementId;
+    private Long entitlementId;
     private enum MobileFrameworks { iOS, Android }
     @Option(names = {"--framework"})
     private MobileFrameworks mobileFramework;
@@ -138,7 +138,7 @@ public class FoDMastScanStartCommand extends AbstractFoDScanStartCommand {
         }
     }
 
-    private void validateEntitlement(FoDScanConfigMobileDescriptor currentSetup, Integer entitlementIdToUse, String relId, FoDReleaseAssessmentTypeDescriptor atd) {
+    private void validateEntitlement(FoDScanConfigMobileDescriptor currentSetup, Long entitlementIdToUse, String relId, FoDReleaseAssessmentTypeDescriptor atd) {
         // validate entitlement specified or currently in use against assessment type found
         if (entitlementId != null && entitlementId > 0) {
             // check if "entitlement id" explicitly matches what has been found

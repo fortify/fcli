@@ -88,7 +88,7 @@ public class FoDUserGroupHelper {
         return FoDUserGroupHelper.getUserGroupDescriptor(unirest, groupId, true);
     }
 
-    public static final FoDUserGroupDescriptor updateUserGroup(UnirestInstance unirest, Integer groupId, FoDUserGroupUpdateRequest userGroupUpdateRequest) {
+    public static final FoDUserGroupDescriptor updateUserGroup(UnirestInstance unirest, Long groupId, FoDUserGroupUpdateRequest userGroupUpdateRequest) {
         ObjectNode body = objectMapper.valueToTree(userGroupUpdateRequest);
         unirest.put(FoDUrls.USER_GROUP)
                 .routeParam("groupId", String.valueOf(groupId))
@@ -128,7 +128,7 @@ public class FoDUserGroupHelper {
                                                                         FoDEnums.UserGroupMembershipAction action) {
         FoDUserDescriptor userDescriptor = FoDUserHelper.getUserDescriptor(unirest, userNameOrId, true);
         FoDUserGroupDescriptor userGroupDescriptor = FoDUserGroupHelper.getUserGroupDescriptor(unirest, userGroupNameOrId, true);
-        ArrayList<Integer> userIds = new ArrayList<>();
+        ArrayList<Long> userIds = new ArrayList<>();
         userIds.add(userDescriptor.getUserId());
         FoDUserGroupMembersRequest userGroupMembersRequest = FoDUserGroupMembersRequest.builder().build();
         if (action.equals(FoDEnums.UserGroupMembershipAction.Add)) {
@@ -152,7 +152,7 @@ public class FoDUserGroupHelper {
         FoDAppDescriptor appDescriptor = FoDAppHelper.getAppDescriptor(unirest, appNameOrId, true);
         if (action.equals(FoDEnums.UserGroupApplicationAccessAction.Add)) {
             FoDUserGroupAppAccessRequest appAccessRequest = FoDUserGroupAppAccessRequest.builder()
-                    .applicationId(Integer.valueOf(appDescriptor.getApplicationId())).build();
+                    .applicationId(Long.valueOf(appDescriptor.getApplicationId())).build();
             ObjectNode body = objectMapper.valueToTree(appAccessRequest);
             unirest.post(FoDUrls.USER_GROUP_APPLICATION_ACCESS).routeParam("userGroupId", String.valueOf(userGroupDescriptor.getId()))
                     .body(body).asString().getBody();
