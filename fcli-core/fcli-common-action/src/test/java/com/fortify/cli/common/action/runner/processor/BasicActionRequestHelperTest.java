@@ -16,6 +16,7 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -32,9 +33,11 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.TextNode;
 import com.fortify.cli.common.action.model.ActionStepRestCallEntry.ActionStepRestCallResponseType;
 import com.fortify.cli.common.action.runner.processor.IActionRequestHelper.ActionRequestDescriptor;
 import com.fortify.cli.common.action.runner.processor.IActionRequestHelper.BasicActionRequestHelper;
+import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.rest.unirest.UnexpectedHttpResponseException;
 import com.fortify.cli.common.rest.unirest.UnirestHelper;
 import com.fortify.cli.common.rest.unirest.config.UnirestUnexpectedHttpResponseConfigurer;
@@ -59,6 +62,10 @@ class BasicActionRequestHelperTest {
         server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
         server.createContext("/fpr", ex -> respond(ex, 200, "application/octet-stream", ZIP_BYTES));
         server.createContext("/error", ex -> respond(ex, 500, "application/json", "{}".getBytes(StandardCharsets.UTF_8)));
+        server.createContext("/latin1", ex -> respond(ex, 200, "text/plain; charset=ISO-8859-1", "caf\u00e9".getBytes(StandardCharsets.ISO_8859_1)));
+        server.createContext("/json", ex -> respond(ex, 200, "application/json", "{\"id\": 1}".getBytes(StandardCharsets.UTF_8)));
+        server.createContext("/csv", ex -> respond(ex, 200, "text/csv", "a,b\n1,2\n".getBytes(StandardCharsets.UTF_8)));
+        server.createContext("/empty", ex -> respond(ex, 200, "text/plain", new byte[0]));
         server.start();
         unirest = UnirestHelper.createUnirestInstance();
         UnirestUnexpectedHttpResponseConfigurer.configure(unirest);
@@ -95,6 +102,58 @@ class BasicActionRequestHelperTest {
         assertNull(response.get());
         assertInstanceOf(UnexpectedHttpResponseException.class, failure.get());
         assertArrayEquals(OLD_CONTENT, Files.readAllBytes(dest));
+    }
+
+    @Test
+    void textResponseDecodesDeclaredCharset() {
+        execute("/latin1", ActionStepRestCallResponseType.text);
+        assertEquals(new TextNode("caf\u00e9"), response.get());
+    }
+
+    @Test
+    void textResponseKeepsJsonAsRawText() {
+        execute("/json", ActionStepRestCallResponseType.text);
+        assertEquals(new TextNode("{\"id\": 1}"), response.get());
+    }
+
+    @Test
+    void textResponseReturnsEmptyStringForEmptyBody() {
+        execute("/empty", ActionStepRestCallResponseType.text);
+        assertEquals(new TextNode(""), response.get());
+    }
+
+    @Test
+    void textResponseRejectsBinaryBody() {
+        execute("/fpr", ActionStepRestCallResponseType.text);
+        assertNull(response.get());
+        assertInstanceOf(FcliSimpleException.class, failure.get());
+        assertTrue(failure.get().getMessage().contains("use response.type: file"), failure.get().getMessage());
+    }
+
+    @Test
+    void autoResponseParsesJson() {
+        execute("/json", ActionStepRestCallResponseType.auto);
+        assertNull(failure.get());
+        assertEquals(1, response.get().get("id").asInt());
+    }
+
+    @Test
+    void autoResponseFallsBackToTextForTextualBody() {
+        execute("/csv", ActionStepRestCallResponseType.auto);
+        assertNull(failure.get());
+        assertEquals(new TextNode("a,b\n1,2\n"), response.get());
+    }
+
+    @Test
+    void autoResponseRejectsBinaryBody() {
+        execute("/fpr", ActionStepRestCallResponseType.auto);
+        assertNull(response.get());
+        assertInstanceOf(FcliSimpleException.class, failure.get());
+        assertTrue(failure.get().getMessage().contains("use response.type: file"), failure.get().getMessage());
+    }
+
+    private void execute(String uri, ActionStepRestCallResponseType responseType) {
+        helper.executeSimpleRequests(List.of(descriptor(uri, responseType, null)));
     }
 
     private ActionRequestDescriptor descriptor(String uri, ActionStepRestCallResponseType responseType, Path responseFile) {

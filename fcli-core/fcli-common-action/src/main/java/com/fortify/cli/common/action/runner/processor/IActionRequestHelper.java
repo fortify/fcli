@@ -18,6 +18,7 @@ import java.util.Map;
 import java.util.function.Consumer;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.TextNode;
 import com.fortify.cli.common.action.model.ActionStepRestCallEntry.ActionStepRestCallResponseType;
 import com.fortify.cli.common.exception.FcliBugException;
 import com.fortify.cli.common.output.product.IProductHelper;
@@ -73,6 +74,7 @@ public interface IActionRequestHelper extends AutoCloseable {
     
     @RequiredArgsConstructor
     public static class BasicActionRequestHelper implements IActionRequestHelper {
+        private static final String BINARY_GUIDANCE = "use response.type: file";
         private final IUnirestInstanceSupplier unirestInstanceSupplier;
         private final IProductHelper productHelper;
         private UnirestInstance unirestInstance;
@@ -132,10 +134,18 @@ public interface IActionRequestHelper extends AutoCloseable {
         }
         
         private void executeJsonRequest(UnirestInstance unirest, ActionRequestDescriptor requestDescriptor) {
+            JsonNode result;
             try {
-                createRequest(unirest, requestDescriptor)
-                    .asObject(JsonNode.class)
-                    .ifSuccess(r->requestDescriptor.getResponseConsumer().accept(r.getBody()));
+                result = RestResponseBodyHelper.asJsonOrText(createRequest(unirest, requestDescriptor), BINARY_GUIDANCE);
+            } catch ( RuntimeException e ) {
+                // Besides UnirestException, this includes fcli exceptions for binary or malformed responses
+                requestDescriptor.getFailureConsumer().accept(e);
+                return;
+            }
+            // As before, request failures in nested steps (like nested rest.call steps in on.success blocks)
+            // are reported as failures of this request
+            try {
+                requestDescriptor.getResponseConsumer().accept(result);
             } catch ( UnirestException e ) {
                 requestDescriptor.getFailureConsumer().accept(e);
             }
@@ -147,7 +157,8 @@ public interface IActionRequestHelper extends AutoCloseable {
                 var request = createRequest(unirest, requestDescriptor);
                 result = switch (requestDescriptor.getResponseType()) {
                     case file -> RestResponseBodyHelper.saveToFile(request, requestDescriptor.getResponseFile(), null).asObjectNode();
-                    default -> throw new FcliBugException("Unsupported response type: "+requestDescriptor.getResponseType());
+                    case text -> new TextNode(RestResponseBodyHelper.asText(request, BINARY_GUIDANCE));
+                    case auto -> throw new FcliBugException("JSON requests must be handled by executeJsonRequest");
                 };
             } catch ( RuntimeException e ) {
                 // Besides UnirestException, this includes fcli exceptions like a missing destination directory

@@ -27,12 +27,17 @@ import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.TextNode;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.exception.FcliTechnicalException;
+import com.fortify.cli.common.json.JsonHelper;
 
 import kong.unirest.HttpRequest;
 import kong.unirest.HttpResponse;
 import kong.unirest.ProgressMonitor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Helper methods for handling REST response bodies that are not (necessarily) JSON,
@@ -41,6 +46,7 @@ import kong.unirest.ProgressMonitor;
  * written to a temporary file next to the destination, which is only moved into place
  * after a successful response.
  */
+@Slf4j
 public final class RestResponseBodyHelper {
     private static final String TEMP_FILE_PREFIX = ".fcli-";
     private static final String TEMP_FILE_SUFFIX = ".part";
@@ -110,10 +116,44 @@ public final class RestResponseBodyHelper {
     }
 
     /**
+     * Execute the given request and parse the successful response body as JSON, exactly like
+     * {@code asObject(JsonNode.class)} (same object mapper and charset handling; no content
+     * results in null). If the body is not valid JSON, it is returned as a {@link TextNode} if
+     * it is textual, unless the response declares a JSON content type.
+     *
+     * @param request request to execute
+     * @param binaryGuidance guidance appended to the error message if the response is binary
+     * @return parsed JSON, text node for textual non-JSON bodies, or null if there is no content
+     * @throws FcliTechnicalException if a response declared as JSON cannot be parsed
+     * @throws FcliSimpleException if the response is neither JSON nor text
+     * @throws UnexpectedHttpResponseException if the response status is not 2xx
+     */
+    public static JsonNode asJsonOrText(HttpRequest<?> request, String binaryGuidance) {
+        var response = request.asBytes();
+        if ( !response.isSuccess() ) { throw new UnexpectedHttpResponseException(response); }
+        var body = response.getBody();
+        if ( body==null || body.length==0 ) { return null; }
+        var contentType = getContentType(response);
+        try {
+            return JsonHelper.getObjectMapper().readTree(new String(body, charsetOf(contentType)));
+        } catch ( JsonProcessingException e ) {
+            if ( isJsonMediaType(getMediaType(contentType)) ) {
+                throw new FcliTechnicalException("Response declared as JSON could not be parsed", e);
+            } else if ( !isText(contentType, body) ) {
+                throw new FcliSimpleException(String.format("Response is binary (content type: %s); %s",
+                        contentType==null ? "unknown" : contentType, binaryGuidance));
+            }
+            log.debug("Response is not JSON; using text (content type: {})", contentType);
+            return new TextNode(new String(body, charsetOf(contentType)));
+        }
+    }
+
+    /**
      * Determine whether the given body should be treated as text. Bodies with a textual media type
      * are always considered text; for other media types (or no media type), the body is considered
-     * text only if its first bytes contain no NUL byte and the whole body can be decoded without
-     * errors using the declared charset (UTF-8 by default).
+     * text only if its first bytes contain no control characters other than those commonly found in
+     * text (tab, line feed, form feed, carriage return, backspace, escape), and the whole body can be
+     * decoded without errors using the declared charset (UTF-8 by default).
      */
     static boolean isText(String contentType, byte[] body) {
         var mediaType = getMediaType(contentType);
@@ -122,7 +162,7 @@ public final class RestResponseBodyHelper {
             return true;
         }
         for ( int i = 0; i < Math.min(body.length, BINARY_SNIFF_LENGTH); i++ ) {
-            if ( body[i]==0 ) { return false; }
+            if ( isBinaryControlCharacter(body[i]) ) { return false; }
         }
         try {
             charsetOf(contentType).newDecoder()
@@ -153,6 +193,14 @@ public final class RestResponseBodyHelper {
             }
         }
         return StandardCharsets.UTF_8;
+    }
+
+    private static boolean isBinaryControlCharacter(byte b) {
+        return b>=0 && b<0x20 && b!='\t' && b!='\n' && b!='\f' && b!='\r' && b!='\b' && b!=0x1b;
+    }
+
+    private static boolean isJsonMediaType(String mediaType) {
+        return mediaType!=null && (mediaType.equals("application/json") || mediaType.endsWith("+json"));
     }
 
     private static String getMediaType(String contentType) {
