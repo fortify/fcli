@@ -229,20 +229,20 @@ public class DescriptionProcessor {
     private static class ParagraphElement extends FancyElement {
         private final List<Stringable> altChildren = new ArrayList<>();
 
-        ParagraphElement(String content) {
+        ParagraphElement(String content, int depth) {
             String altParagraphTag = "<AltParagraph>";
             int altStart = content.indexOf(altParagraphTag);
             if (altStart != -1) {
                 String mainContent = content.substring(0, altStart);
-                this.children.addAll(FvdlParser.parse(mainContent));
+                this.children.addAll(FvdlParser.parse(mainContent, depth));
 
                 int altEnd = content.indexOf("</AltParagraph>", altStart);
                 if (altEnd != -1) {
                     String altContent = content.substring(altStart + altParagraphTag.length(), altEnd);
-                    this.altChildren.addAll(FvdlParser.parse(altContent));
+                    this.altChildren.addAll(FvdlParser.parse(altContent, depth));
                 }
             } else {
-                this.children.addAll(FvdlParser.parse(content));
+                this.children.addAll(FvdlParser.parse(content, depth));
             }
         }
 
@@ -269,9 +269,9 @@ public class DescriptionProcessor {
     private static class IfDefElement extends FancyElement {
         private final String var;
 
-        IfDefElement(String attributes, String content) {
+        IfDefElement(String attributes, String content, int depth) {
             this.var = FvdlParser.parseAttribute("var", attributes);
-            this.children.addAll(FvdlParser.parse(content));
+            this.children.addAll(FvdlParser.parse(content, depth));
         }
 
         @Override
@@ -289,9 +289,9 @@ public class DescriptionProcessor {
     private static class IfNotDefElement extends FancyElement {
         private final String var;
 
-        IfNotDefElement(String attributes, String content) {
+        IfNotDefElement(String attributes, String content, int depth) {
             this.var = FvdlParser.parseAttribute("var", attributes);
-            this.children.addAll(FvdlParser.parse(content));
+            this.children.addAll(FvdlParser.parse(content, depth));
         }
 
         @Override
@@ -309,9 +309,9 @@ public class DescriptionProcessor {
     private static class ConditionalTextElement extends FancyElement {
         private final String condition;
 
-        ConditionalTextElement(String attributes, String content) {
+        ConditionalTextElement(String attributes, String content, int depth) {
             this.condition = FvdlParser.parseAttribute("condition", attributes);
-            this.children.addAll(FvdlParser.parse(content));
+            this.children.addAll(FvdlParser.parse(content, depth));
         }
 
         @Override
@@ -340,6 +340,9 @@ public class DescriptionProcessor {
         private static final String REPLACE_TAG = "Replace ";
         private static final String REPLACE_END_TAG = "/>";
 
+        // Guards against StackOverflowError on deeply nested tags in untrusted FPR input
+        private static final int MAX_NESTING_DEPTH = 100;
+
 
         public static String parseAndRender(String text, Vulnerability vuln, ReplacementData data) {
             if (text == null || text.isEmpty()) {
@@ -359,7 +362,16 @@ public class DescriptionProcessor {
         }
 
         public static List<Stringable> parse(String text) {
+            return parse(text, 0);
+        }
+
+        public static List<Stringable> parse(String text, int depth) {
             List<Stringable> elements = new ArrayList<>();
+            if (depth >= MAX_NESTING_DEPTH) {
+                logger.warn("Maximum description nesting depth of {} exceeded; rendering remaining content as plain text", MAX_NESTING_DEPTH);
+                elements.add(new TextElement(text));
+                return elements;
+            }
             int cursor = 0;
 
             while (cursor < text.length()) {
@@ -413,7 +425,7 @@ public class DescriptionProcessor {
                                 String fullAttributes = text.substring(contentStart-1, closingTagStart);
                                 String content = text.substring(closingTagStart + 1, contentEnd);
 
-                                elements.add(createStructuredElement(startTag, fullAttributes, content));
+                                elements.add(createStructuredElement(startTag, fullAttributes, content, depth + 1));
 
                                 cursor = contentEnd + endTag.length();
                                 tagFound = true;
@@ -433,16 +445,16 @@ public class DescriptionProcessor {
             return elements;
         }
 
-        private static Stringable createStructuredElement(String tag, String attributes, String content) {
+        private static Stringable createStructuredElement(String tag, String attributes, String content, int depth) {
             switch (tag) {
                 case "Paragraph>":
-                    return new ParagraphElement(content);
+                    return new ParagraphElement(content, depth);
                 case "IfDef ":
-                    return new IfDefElement(attributes, content);
+                    return new IfDefElement(attributes, content, depth);
                 case "IfNotDef ":
-                    return new IfNotDefElement(attributes, content);
+                    return new IfNotDefElement(attributes, content, depth);
                 case "ConditionalText ":
-                    return new ConditionalTextElement(attributes, content);
+                    return new ConditionalTextElement(attributes, content, depth);
                 default:
                     logger.warn("Unknown structured tag type: {}", tag);
                     return new TextElement(""); // Should not happen

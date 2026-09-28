@@ -105,6 +105,11 @@ public final class RecordWriterStyle {
         return getOrDefault(RecordWriterStyleElementGroup.ENVELOPE)==RecordWriterStyleElement.envelope;
     }
     
+    /** Indicates whether CSV values that spreadsheet applications could interpret as formulas should be escaped. Defaults to csv-escape. */
+    public final boolean isCsvEscape() {
+        return getOrDefault(RecordWriterStyleElementGroup.CSV_ESCAPE)==RecordWriterStyleElement.csv_escape;
+    }
+    
     private final RecordWriterStyleElement getOrDefault(RecordWriterStyleElementGroup group) {
         return styleElementsByGroup.getOrDefault(group, group.defaultStyle());
     }
@@ -119,7 +124,8 @@ public final class RecordWriterStyle {
         md_border(RecordWriterStyleElementGroup.BORDER),
         wrap(RecordWriterStyleElementGroup.WRAP), no_wrap(RecordWriterStyleElementGroup.WRAP),
         fast_output(RecordWriterStyleElementGroup.FAST_OUTPUT), no_fast_output(RecordWriterStyleElementGroup.FAST_OUTPUT),
-        envelope(RecordWriterStyleElementGroup.ENVELOPE), no_envelope(RecordWriterStyleElementGroup.ENVELOPE)
+        envelope(RecordWriterStyleElementGroup.ENVELOPE), no_envelope(RecordWriterStyleElementGroup.ENVELOPE),
+        csv_escape(RecordWriterStyleElementGroup.CSV_ESCAPE), no_csv_escape(RecordWriterStyleElementGroup.CSV_ESCAPE)
         ;
         
         @Getter private final RecordWriterStyleElementGroup group;
@@ -142,7 +148,8 @@ public final class RecordWriterStyle {
         BORDER("no-border"),
         WRAP("wrap"),
         FAST_OUTPUT("fast-output"),
-        ENVELOPE("no-envelope");
+        ENVELOPE("no-envelope"),
+        CSV_ESCAPE("csv-escape");
         
         private final String defaultStyleElementName;
         
