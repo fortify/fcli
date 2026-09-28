@@ -43,20 +43,24 @@ public final class UnexpectedHttpResponseException extends UnirestException {
     private static final ObjectMapper yamlObjectMapper = createYamlObjectMapper();
     private static final int MAX_ERROR_FILE_BYTES = 64 * 1024;
     @Getter private final int status;
+    /** Content-Type of the failure response, or null if not available */
+    @Getter private final String contentType;
+    /** True if the response had a successful status code, but its body couldn't be parsed */
+    @Getter private final boolean parsingFailure;
 
     public UnexpectedHttpResponseException(HttpResponse<?> failureResponse) {
-        super(getMessage(failureResponse, null, null), getCause(failureResponse));
-        this.status = failureResponse.getStatus();
+        this(failureResponse, null, null);
     }
 
     public UnexpectedHttpResponseException(HttpResponse<?> failureResponse, HttpRequestSummary requestSummary) {
-        super(getMessage(failureResponse, requestSummary, null), getCause(failureResponse));
-        this.status = failureResponse.getStatus();
+        this(failureResponse, requestSummary, null);
     }
     
     public UnexpectedHttpResponseException(HttpResponse<?> failureResponse, HttpRequestSummary requestSummary, String guidance) {
         super(getMessage(failureResponse, requestSummary, guidance), getCause(failureResponse));
         this.status = failureResponse.getStatus();
+        this.contentType = StringUtils.trimToNull(failureResponse.getHeaders().getFirst(HttpHeader.CONTENT_TYPE));
+        this.parsingFailure = !isHttpFailure(failureResponse) && failureResponse.getParsingError().isPresent();
     }
 
     private static final String getMessage(HttpResponse<?> failureResponse, HttpRequestSummary requestSummary, String guidance) {

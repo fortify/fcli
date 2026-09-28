@@ -15,6 +15,7 @@ package com.fortify.cli.common.rest.cli.cmd;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -38,11 +39,13 @@ import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.cli.mixin.ICommandAware;
 import com.fortify.cli.common.cli.util.FcliCommandSpecHelper;
+import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.product.IProductHelper;
 import com.fortify.cli.common.output.product.NoOpProductHelper;
 import com.fortify.cli.common.rest.unirest.IUnirestInstanceSupplier;
+import com.fortify.cli.common.rest.unirest.UnexpectedHttpResponseException;
 import com.fortify.cli.common.rest.unirest.UnirestHelper;
 import com.fortify.cli.common.rest.unirest.config.UnirestUnexpectedHttpResponseConfigurer;
 import com.sun.net.httpserver.HttpExchange;
@@ -57,7 +60,7 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.ParameterException;
 
-class AbstractRestCallCommandResponseFileTest {
+class AbstractRestCallCommandResponseModesTest {
     private static final byte[] ZIP_BYTES = {'P', 'K', 3, 4, 20, 0, 0, 0, 8, 0};
     private static final String JSON_BODY = "{\"items\":[{\"id\":1}]}";
 
@@ -72,6 +75,7 @@ class AbstractRestCallCommandResponseFileTest {
         ((Logger)LoggerFactory.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME)).setLevel(Level.WARN);
         server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
         server.createContext("/fpr", ex -> respond(ex, "application/octet-stream", ZIP_BYTES));
+        server.createContext("/text", ex -> respond(ex, "text/plain; charset=ISO-8859-1", "caf\u00e9\nline 2".getBytes(StandardCharsets.ISO_8859_1)));
         server.createContext("/json", ex -> {
             // Paging header must be ignored in response file mode
             ex.getResponseHeaders().add("Link", "<"+url("/json?page=2")+">; rel=\"next\"");
@@ -137,7 +141,21 @@ class AbstractRestCallCommandResponseFileTest {
         assertEquals(1, requestCount.get());
     }
 
+    @Test
+    void jsonModeReportsNonJsonResponseWithGuidance() {
+        var e = assertThrows(FcliSimpleException.class, () -> run("/text", "--no-paging"));
+        assertTrue(e.getMessage().contains("text/plain"), e.getMessage());
+        assertTrue(e.getMessage().contains("--response-file"), e.getMessage());
+        assertInstanceOf(UnexpectedHttpResponseException.class, e.getCause());
+    }
+
     private String run(String uri, String... options) throws Exception {
+        var captured = new ByteArrayOutputStream();
+        run(captured, uri, options);
+        return captured.toString(StandardCharsets.UTF_8);
+    }
+
+    private void run(ByteArrayOutputStream captured, String uri, String... options) throws Exception {
         var cmd = new TestRestCallCommand(unirest);
         var args = new String[options.length+1];
         args[0] = uri;
@@ -154,14 +172,12 @@ class AbstractRestCallCommandResponseFileTest {
             .filter(ICommandAware.class::isInstance)
             .forEach(o -> ((ICommandAware)o).setCommandSpec(spec));
         var originalOut = System.out;
-        var captured = new ByteArrayOutputStream();
         System.setOut(new PrintStream(captured, true, StandardCharsets.UTF_8));
         try {
             cmd.call();
         } finally {
             System.setOut(originalOut);
         }
-        return captured.toString(StandardCharsets.UTF_8);
     }
 
     private void respond(HttpExchange exchange, String contentType, byte[] body) throws IOException {

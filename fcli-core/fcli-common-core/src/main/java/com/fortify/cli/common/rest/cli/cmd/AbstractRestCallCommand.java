@@ -19,6 +19,7 @@ import java.util.function.Function;
 import org.apache.commons.lang3.StringUtils;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.cli.util.EnvSuffix;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonHelper;
@@ -34,6 +35,7 @@ import com.fortify.cli.common.rest.paging.INextPageUrlProducerSupplier;
 import com.fortify.cli.common.rest.paging.IPagingSuppressor;
 import com.fortify.cli.common.rest.unirest.IUnirestInstanceSupplier;
 import com.fortify.cli.common.rest.unirest.RestResponseBodyHelper;
+import com.fortify.cli.common.rest.unirest.UnexpectedHttpResponseException;
 import com.fortify.cli.common.util.DisableTest;
 import com.fortify.cli.common.util.DisableTest.TestType;
 import com.fortify.cli.common.util.JavaHelper;
@@ -42,6 +44,7 @@ import kong.unirest.HttpRequest;
 import kong.unirest.HttpRequestWithBody;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Option;
@@ -111,7 +114,38 @@ public abstract class AbstractRestCallCommand extends AbstractOutputCommand impl
             return simpleObjectNodeProducerBuilder(ObjectNodeProducerApplyFrom.SPEC)
                     .source(record.asObjectNode()).build();
         }
-        return super.getObjectNodeProducer();
+        return new NonJsonResponseGuidanceProducer(super.getObjectNodeProducer());
+    }
+    
+    /**
+     * Replace the generic 'Error parsing response' failure for successful responses that are
+     * not JSON (for example file downloads) with an error explaining how to retrieve them.
+     */
+    @RequiredArgsConstructor
+    private static final class NonJsonResponseGuidanceProducer implements IObjectNodeProducer {
+        private final IObjectNodeProducer delegate;
+        
+        @Override
+        public void forEach(IObjectNodeConsumer consumer) {
+            try {
+                delegate.forEach(consumer);
+            } catch ( UnexpectedHttpResponseException e ) {
+                if ( !e.isParsingFailure() ) { throw e; }
+                throw new FcliSimpleException(String.format(
+                        "Response is not valid JSON (content type: %s); use --response-file to save the response to a file",
+                        e.getContentType()==null ? "unknown" : e.getContentType()), e);
+            }
+        }
+        
+        @Override
+        public ObjectNode getResponseMetadata() {
+            return delegate.getResponseMetadata();
+        }
+        
+        @Override
+        public int getExitCode() {
+            return delegate.getExitCode();
+        }
     }
     
     private boolean isResponseFileMode() {
