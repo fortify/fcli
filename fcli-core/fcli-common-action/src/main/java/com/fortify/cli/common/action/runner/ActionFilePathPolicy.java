@@ -14,6 +14,7 @@ package com.fortify.cli.common.action.runner;
 
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.LinkOption;
 import java.nio.file.Path;
 
 import com.fortify.cli.common.action.model.FcliActionValidationException;
@@ -62,17 +63,23 @@ public final class ActionFilePathPolicy {
     }
 
     /**
-     * Symbolic links may point outside the working directory, so we need to compare the real path
-     * of the parent directory (the file itself usually doesn't exist yet).
+     * Symbolic links anywhere in the path may point outside the working directory, so we compare real
+     * paths: of the file itself if it exists (following a symbolic link at the target, where a dangling
+     * link is rejected as its destination can't be verified), otherwise of its nearest existing ancestor
+     * directory (the file and possibly some parent directories usually don't exist yet).
      */
     private boolean isInsideRootDir(Path path) {
-        var parent = path.getParent();
-        if ( parent==null ) { return false; }
         try {
-            var realParent = Files.exists(parent) ? parent.toRealPath() : parent;
-            return realParent.startsWith(rootDir);
+            if ( Files.exists(path, LinkOption.NOFOLLOW_LINKS) ) {
+                return Files.exists(path) && path.toRealPath().startsWith(rootDir);
+            }
+            var existingAncestor = path.getParent();
+            while ( existingAncestor!=null && !Files.exists(existingAncestor) ) {
+                existingAncestor = existingAncestor.getParent();
+            }
+            return existingAncestor!=null && existingAncestor.toRealPath().startsWith(rootDir);
         } catch ( IOException e ) {
-            throw new FcliTechnicalException("Unable to resolve directory "+parent, e);
+            throw new FcliTechnicalException("Unable to resolve path "+path, e);
         }
     }
 }

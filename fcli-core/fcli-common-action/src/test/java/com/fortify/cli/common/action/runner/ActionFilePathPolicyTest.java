@@ -69,13 +69,47 @@ class ActionFilePathPolicyTest {
 
     @Test
     void rejectsSymbolicLinkPointingOutsideRoot() throws IOException {
-        var link = root.resolve("link");
+        createSymbolicLink(root.resolve("link"), outside);
+        assertRejected("link/scan.fpr");
+    }
+
+    @Test
+    void rejectsExistingTargetSymbolicLinkPointingOutsideRoot() throws IOException {
+        var victim = Files.writeString(outside.resolve("victim"), "original");
+        createSymbolicLink(root.resolve("scan.fpr"), victim);
+        assertRejected("scan.fpr");
+    }
+
+    @Test
+    void rejectsDanglingTargetSymbolicLink() throws IOException {
+        createSymbolicLink(root.resolve("scan.fpr"), outside.resolve("does-not-exist"));
+        assertRejected("scan.fpr");
+    }
+
+    @Test
+    void acceptsExistingTargetSymbolicLinkPointingInsideRoot() throws IOException {
+        var target = Files.writeString(root.resolve("sub/target.fpr"), "content");
+        createSymbolicLink(root.resolve("scan.fpr"), target);
+        assertEquals(root.resolve("scan.fpr"), restricted().resolve("scan.fpr"));
+    }
+
+    @Test
+    void rejectsMissingDirectoryBelowSymbolicLinkPointingOutsideRoot() throws IOException {
+        createSymbolicLink(root.resolve("link"), outside);
+        assertRejected("link/missing/scan.fpr");
+    }
+
+    @Test
+    void acceptsMissingDirectoryInsideRoot() {
+        assertEquals(root.resolve("sub/missing/scan.fpr"), restricted().resolve("sub/missing/scan.fpr"));
+    }
+
+    private static void createSymbolicLink(Path link, Path target) {
         try {
-            Files.createSymbolicLink(link, outside);
+            Files.createSymbolicLink(link, target);
         } catch ( UnsupportedOperationException | IOException e ) {
             Assumptions.abort("Symbolic links not supported: "+e.getMessage());
         }
-        assertRejected("link/scan.fpr");
     }
 
     @Test
