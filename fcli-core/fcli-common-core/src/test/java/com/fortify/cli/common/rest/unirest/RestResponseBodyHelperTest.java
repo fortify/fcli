@@ -26,8 +26,10 @@ import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
@@ -62,6 +64,9 @@ class RestResponseBodyHelperTest {
     private UnirestInstance unirest;
     private final AtomicInteger requestCount = new AtomicInteger();
     private volatile String jsonBody;
+    private static final Duration POLL_INTERVAL = Duration.ofMillis(50);
+    private volatile Path pollingDestination;
+    private final List<String> destinationContentsWhilePolling = new CopyOnWriteArrayList<>();
 
     @BeforeEach
     void setUp() throws IOException {
@@ -75,6 +80,8 @@ class RestResponseBodyHelperTest {
         server.createContext("/json-body", ex -> respond(ex, 200, "application/json", readJsonBody(ex)));
         server.createContext("/octet-text", ex -> respond(ex, 200, "application/octet-stream", "plain text".getBytes(StandardCharsets.UTF_8)));
         server.createContext("/partial", this::respondPartial);
+        server.createContext("/ready-after-2", ex -> respondWhenReady(ex, 2, 200));
+        server.createContext("/fail-after-1", ex -> respondWhenReady(ex, 1, 404));
         server.createContext("/large", this::respondLarge);
         server.start();
         unirest = UnirestHelper.createUnirestInstance();
@@ -102,6 +109,15 @@ class RestResponseBodyHelperTest {
         assertEquals(ZIP_BYTES.length, node.get("size").asLong());
         assertEquals(200, node.get("status").asInt());
         assertNoTempFiles();
+    }
+
+    @Test
+    void saveToFileReportsDestinationFileNameToProgressMonitor() {
+        var reportedFileNames = new CopyOnWriteArrayList<String>();
+        RestResponseBodyHelper.saveToFile(unirest.get(url("/fpr")), tempDir.resolve("scan.fpr"),
+                (field, fileName, bytesWritten, totalBytes) -> reportedFileNames.add(fileName));
+        assertFalse(reportedFileNames.isEmpty());
+        assertTrue(reportedFileNames.stream().allMatch("scan.fpr"::equals), reportedFileNames.toString());
     }
 
     @Test
@@ -182,6 +198,43 @@ class RestResponseBodyHelperTest {
             assertFalse(e.getMessage().contains("[B@"), e.getMessage());
             assertFalse(e.getMessage().contains(".part"), e.getMessage());
         }
+    }
+
+    @Test
+    void saveToFileWhenReadyKeepsDestinationWhilePolling() throws Exception {
+        var dest = tempDir.resolve("scan.fpr");
+        Files.write(dest, OLD_CONTENT);
+        pollingDestination = dest;
+        var result = RestResponseBodyHelper.saveToFileWhenReady(unirest.get(url("/ready-after-2")), dest, null, POLL_INTERVAL, Duration.ZERO);
+
+        assertEquals(3, requestCount.get());
+        assertEquals(200, result.status());
+        assertArrayEquals(ZIP_BYTES, Files.readAllBytes(dest));
+        // Destination content as observed by the server while handling each of the 202 responses
+        assertEquals(List.of("previous content", "previous content"), destinationContentsWhilePolling);
+        assertNoTempFiles();
+    }
+
+    @Test
+    void saveToFileWhenReadyKeepsDestinationOnErrorAfterPolling() throws Exception {
+        var dest = tempDir.resolve("scan.fpr");
+        Files.write(dest, OLD_CONTENT);
+        pollingDestination = dest;
+        assertThrows(UnexpectedHttpResponseException.class,
+                () -> RestResponseBodyHelper.saveToFileWhenReady(unirest.get(url("/fail-after-1")), dest, null, POLL_INTERVAL, Duration.ZERO));
+
+        assertEquals(2, requestCount.get());
+        assertArrayEquals(OLD_CONTENT, Files.readAllBytes(dest));
+        assertNoTempFiles();
+    }
+
+    @Test
+    void saveToFileWhenReadyHonorsInitialDelay() {
+        var dest = tempDir.resolve("scan.fpr");
+        var start = System.nanoTime();
+        RestResponseBodyHelper.saveToFileWhenReady(unirest.get(url("/fpr")), dest, null, POLL_INTERVAL, Duration.ofMillis(300));
+        assertTrue(Duration.ofNanos(System.nanoTime()-start).toMillis() >= 300);
+        assertEquals(1, requestCount.get());
     }
 
     @Test
@@ -292,6 +345,21 @@ class RestResponseBodyHelperTest {
         exchange.sendResponseHeaders(status, body.length==0 ? -1 : body.length);
         try ( OutputStream os = exchange.getResponseBody() ) {
             os.write(body);
+        }
+    }
+
+    /**
+     * Respond with 202 Accepted for the given number of requests (recording the destination file
+     * contents at that moment), then with the given final status.
+     */
+    private void respondWhenReady(HttpExchange exchange, int acceptedCount, int finalStatus) throws IOException {
+        if ( requestCount.get() < acceptedCount ) {
+            destinationContentsWhilePolling.add(Files.readString(pollingDestination));
+            respond(exchange, 202, "application/json", new byte[0]);
+        } else if ( finalStatus==200 ) {
+            respond(exchange, 200, "application/octet-stream", ZIP_BYTES);
+        } else {
+            respond(exchange, finalStatus, "application/json", "{\"error\":\"failed\"}".getBytes(StandardCharsets.UTF_8));
         }
     }
 

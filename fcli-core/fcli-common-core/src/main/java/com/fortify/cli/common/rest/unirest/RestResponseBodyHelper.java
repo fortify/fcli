@@ -22,6 +22,7 @@ import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.time.Duration;
 import java.util.Locale;
 import java.util.Set;
 
@@ -51,6 +52,7 @@ public final class RestResponseBodyHelper {
     private static final String TEMP_FILE_PREFIX = ".fcli-";
     private static final String TEMP_FILE_SUFFIX = ".part";
     private static final int BINARY_SNIFF_LENGTH = 8192;
+    private static final int HTTP_ACCEPTED = 202;
     private static final Set<String> TEXT_MEDIA_TYPES = Set.of(
             "application/xml", "application/json", "application/csv",
             "application/yaml", "application/x-yaml", "application/javascript");
@@ -71,24 +73,74 @@ public final class RestResponseBodyHelper {
      * @throws FcliTechnicalException on I/O errors while moving the downloaded file into place
      */
     public static RestResponseFileRecord saveToFile(HttpRequest<?> request, Path destination, ProgressMonitor monitor) {
-        var target = destination.toAbsolutePath().normalize();
-        var parent = target.getParent();
-        if ( parent==null || !Files.isDirectory(parent) ) {
-            throw new FcliSimpleException("Directory does not exist: "+parent);
+        return saveToFile(request, getTarget(destination), monitor, false);
+    }
+
+    /**
+     * Like {@link #saveToFile(HttpRequest, Path, ProgressMonitor)}, but repeats the request while the
+     * server responds with 202 Accepted, indicating that the requested file is not available yet.
+     * The destination is only replaced by the first successful response other than 202.
+     *
+     * @param pollInterval time to wait between requests
+     * @param initialDelay time to wait before sending the first request
+     */
+    public static RestResponseFileRecord saveToFileWhenReady(HttpRequest<?> request, Path destination, ProgressMonitor monitor, Duration pollInterval, Duration initialDelay) {
+        var target = getTarget(destination);
+        sleep(initialDelay);
+        while ( true ) {
+            var result = saveToFile(request, target, monitor, true);
+            if ( result!=null ) { return result; }
+            sleep(pollInterval);
         }
+    }
+
+    /**
+     * Execute the request once, saving the body of a successful response to the target.
+     * @return description of the saved file, or null if skipAccepted is true and the response
+     *         status is 202 Accepted (in which case the target is left untouched)
+     */
+    private static RestResponseFileRecord saveToFile(HttpRequest<?> request, Path target, ProgressMonitor monitor, boolean skipAccepted) {
         Path temp = null;
         try {
-            temp = Files.createTempFile(parent, TEMP_FILE_PREFIX, TEMP_FILE_SUFFIX);
-            if ( monitor!=null ) { request.downloadMonitor(monitor); }
+            temp = Files.createTempFile(target.getParent(), TEMP_FILE_PREFIX, TEMP_FILE_SUFFIX);
+            if ( monitor!=null ) {
+                // Report the destination file name rather than the temporary file name
+                var fileName = target.getFileName().toString();
+                request.downloadMonitor((field, ignored, bytesWritten, totalBytes) -> monitor.accept(field, fileName, bytesWritten, totalBytes));
+            }
             var response = request.asFile(temp.toString(), StandardCopyOption.REPLACE_EXISTING);
             // Instances without the fcli unexpected response interceptor don't throw on error statuses
             if ( !response.isSuccess() ) { throw new UnexpectedHttpResponseException(response); }
+            if ( skipAccepted && response.getStatus()==HTTP_ACCEPTED ) { return null; }
             moveIntoPlace(temp, target);
             return new RestResponseFileRecord(target, Files.size(target), getContentType(response), response.getStatus());
         } catch ( IOException e ) {
             throw new FcliTechnicalException("Error saving response to "+target, e);
         } finally {
             deleteQuietly(temp);
+        }
+    }
+
+    /**
+     * @return absolute, normalized destination path
+     * @throws FcliSimpleException if the parent directory of the destination doesn't exist
+     */
+    private static Path getTarget(Path destination) {
+        var target = destination.toAbsolutePath().normalize();
+        var parent = target.getParent();
+        if ( parent==null || !Files.isDirectory(parent) ) {
+            throw new FcliSimpleException("Directory does not exist: "+parent);
+        }
+        return target;
+    }
+
+    private static void sleep(Duration duration) {
+        if ( duration==null || duration.isZero() || duration.isNegative() ) { return; }
+        try {
+            Thread.sleep(duration.toMillis());
+        } catch ( InterruptedException e ) {
+            Thread.currentThread().interrupt();
+            throw new FcliTechnicalException("Interrupted while waiting for file to become available", e);
         }
     }
 

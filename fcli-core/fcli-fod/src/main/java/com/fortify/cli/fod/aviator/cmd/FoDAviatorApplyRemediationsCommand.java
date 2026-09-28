@@ -14,7 +14,7 @@ package com.fortify.cli.fod.aviator.cmd;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
+import java.time.Duration;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,6 +31,7 @@ import com.fortify.cli.common.output.transform.IRecordTransformer;
 import com.fortify.cli.common.progress.cli.mixin.ProgressWriterFactoryMixin;
 import com.fortify.cli.common.progress.helper.IProgressWriter;
 import com.fortify.cli.common.rest.unirest.HttpHeader;
+import com.fortify.cli.common.rest.unirest.RestResponseBodyHelper;
 import com.fortify.cli.fod._common.cli.mixin.FoDDelimiterMixin;
 import com.fortify.cli.fod._common.output.cli.cmd.AbstractFoDJsonNodeOutputCommand;
 import com.fortify.cli.fod._common.scan.helper.FoDScanDescriptor;
@@ -110,13 +111,7 @@ public class FoDAviatorApplyRemediationsCommand extends AbstractFoDJsonNodeOutpu
         FoDScanHelper.validateScanDate(scanDescriptor, FoDScanHelper.MAX_RETENTION_PERIOD);
         var file = fprPath.toString();
         GetRequest request = getDownloadRequest(unirest, releaseDescriptor, scanDescriptor);
-        int status = 202;
-        while ( status==202 ) {
-            status = request
-                    .asFile(file, StandardCopyOption.REPLACE_EXISTING)
-                    .getStatus();
-            if ( status==202 ) { Thread.sleep(30000L); }
-        }
+        RestResponseBodyHelper.saveToFileWhenReady(request, Path.of(file), null, Duration.ofSeconds(30), Duration.ZERO);
         return fprPath;
     }
 
