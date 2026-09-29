@@ -12,6 +12,7 @@
  */
 package com.fortify.cli.aviator.ssc.helper;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -19,6 +20,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -39,8 +41,9 @@ import com.sun.net.httpserver.HttpServer;
 import kong.unirest.UnirestInstance;
 
 /**
- * Pre-upload custom-tag warnings: assigned tags stay the check for older SSC,
- * and {@code includeall=true} accepts built-in {@code customTagType AVIATOR} tags.
+ * Pre-upload checks for Aviator prediction, Aviator status, and Analysis values.
+ * Assigned tags pass. Built-in Aviator tags returned with {@code includeall=true} pass.
+ * A missing tag uses the internal catalog to choose enable-Aviator or prepare guidance.
  */
 class AviatorSSCTagValidatorTest {
 
@@ -116,7 +119,7 @@ class AviatorSSCTagValidatorTest {
     @DisplayName("SSC 26.2+ missing Aviator tags say to enable Aviator")
     void ssc26MissingAviatorTagsSayEnableAviator() throws IOException {
         server = new TestSscServer()
-            .ssc26OrLater()
+            .withBuiltInAviatorCatalog()
             .withAssigned(customTag(ANALYSIS_GUID, "Analysis"))
             .withIncludeAll(customTag(ANALYSIS_GUID, "Analysis"));
         unirest = newUnirest(server);
@@ -130,6 +133,23 @@ class AviatorSSCTagValidatorTest {
     }
 
     @Test
+    @DisplayName("internal catalog without Aviator tags keeps the prepare warning")
+    void internalCatalogWithoutAviatorTagsKeepsPrepare() throws IOException {
+        server = new TestSscServer()
+            .withInternalCatalog(customTag(ANALYSIS_GUID, "Analysis"))
+            .withAssigned(customTag(ANALYSIS_GUID, "Analysis"))
+            .withIncludeAll(customTag(ANALYSIS_GUID, "Analysis"));
+        unirest = newUnirest(server);
+
+        List<String> warnings = validate();
+
+        assertTrue(warnings.stream().anyMatch(w -> w.contains("Aviator prediction")));
+        assertTrue(warnings.stream().anyMatch(w -> w.contains("Aviator status")));
+        assertTrue(warnings.stream().allMatch(w -> w.contains("fcli aviator ssc prepare")));
+        assertFalse(warnings.stream().anyMatch(w -> w.contains("Enable Aviator")));
+    }
+
+    @Test
     @DisplayName("Analysis stays on the assigned list when includeall contains it")
     void analysisTagUsesAssignedList() throws IOException {
         server = new TestSscServer()
@@ -140,8 +160,7 @@ class AviatorSSCTagValidatorTest {
                 aviatorTag(AviatorSSCTagDefs.AVIATOR_STATUS_TAG.getGuid(), "Aviator status"));
         unirest = newUnirest(server);
 
-        List<String> warnings = AviatorSSCTagValidator.validatePreUpload(
-            unirest, VERSION_ID, ANALYSIS_GUID, Set.of("Not an Issue"), new CollectingLogger());
+        List<String> warnings = validate(ANALYSIS_GUID, Set.of("Not an Issue"));
 
         assertTrue(warnings.stream().anyMatch(w -> w.contains("Analysis tag")));
         assertFalse(warnings.stream().anyMatch(w -> w.contains("Aviator prediction")));
@@ -166,8 +185,15 @@ class AviatorSSCTagValidatorTest {
     }
 
     private List<String> validate() {
+        return validate(null, Set.of());
+    }
+
+    private List<String> validate(String analysisTagId, Set<String> analysisTagValues) {
         CollectingLogger logger = new CollectingLogger();
-        return AviatorSSCTagValidator.validatePreUpload(unirest, VERSION_ID, null, Set.of(), logger);
+        List<String> warnings = AviatorSSCTagValidator.validatePreUpload(
+            unirest, VERSION_ID, analysisTagId, analysisTagValues, logger);
+        assertEquals(warnings, logger.warnings);
+        return warnings;
     }
 
     private static UnirestInstance newUnirest(TestSscServer server) {
@@ -194,9 +220,13 @@ class AviatorSSCTagValidatorTest {
     }
 
     private static final class CollectingLogger implements IAviatorLogger {
+        private final List<String> warnings = new ArrayList<>();
+
         @Override public void progress(String format, Object... args) {}
         @Override public void info(String format, Object... args) {}
-        @Override public void warn(String format, Object... args) {}
+        @Override public void warn(String format, Object... args) {
+            warnings.add(String.format(format, args));
+        }
         @Override public void error(String format, Object... args) {}
     }
 
@@ -204,8 +234,9 @@ class AviatorSSCTagValidatorTest {
         private final HttpServer server;
         private final ArrayNode assigned = JsonHelper.getObjectMapper().createArrayNode();
         private final ArrayNode includeAll = JsonHelper.getObjectMapper().createArrayNode();
+        private final ArrayNode internalCatalog = JsonHelper.getObjectMapper().createArrayNode();
         private boolean failIncludeAll;
-        private boolean ssc26OrLater;
+        private boolean internalCatalogPresent;
         private int assignedRequests;
         private int includeAllRequests;
 
@@ -216,8 +247,18 @@ class AviatorSSCTagValidatorTest {
             server.start();
         }
 
-        private TestSscServer ssc26OrLater() {
-            this.ssc26OrLater = true;
+        private TestSscServer withBuiltInAviatorCatalog() {
+            return withInternalCatalog(
+                aviatorTag(AviatorSSCTagDefs.AVIATOR_PREDICTION_TAG.getGuid(), "Aviator prediction"),
+                aviatorTag(AviatorSSCTagDefs.AVIATOR_STATUS_TAG.getGuid(), "Aviator status"));
+        }
+
+        private TestSscServer withInternalCatalog(ObjectNode... tags) {
+            this.internalCatalogPresent = true;
+            internalCatalog.removeAll();
+            for (ObjectNode tag : tags) {
+                internalCatalog.add(tag);
+            }
             return this;
         }
 
@@ -247,7 +288,7 @@ class AviatorSSCTagValidatorTest {
         }
 
         private void handleInternalCustomTags(HttpExchange exchange) throws IOException {
-            if (!ssc26OrLater) {
+            if (!internalCatalogPresent) {
                 byte[] body = "{}".getBytes(StandardCharsets.UTF_8);
                 exchange.sendResponseHeaders(404, body.length);
                 try (OutputStream outputStream = exchange.getResponseBody()) {
@@ -255,10 +296,7 @@ class AviatorSSCTagValidatorTest {
                 }
                 return;
             }
-            ArrayNode data = JsonHelper.getObjectMapper().createArrayNode();
-            data.add(aviatorTag(AviatorSSCTagDefs.AVIATOR_PREDICTION_TAG.getGuid(), "Aviator prediction"));
-            data.add(aviatorTag(AviatorSSCTagDefs.AVIATOR_STATUS_TAG.getGuid(), "Aviator status"));
-            writeJson(exchange, data);
+            writeJson(exchange, internalCatalog);
         }
 
         private void handleCustomTags(HttpExchange exchange) throws IOException {
