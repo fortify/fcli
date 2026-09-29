@@ -121,7 +121,9 @@ public final class ActionStepRestCallEntry extends AbstractActionStepElement imp
         save the response body unchanged to the file \
         specified through 'response.file'; the variable for this REST call will contain an object with \
         file, size, contentType and status properties. The 'text' and 'file' values cannot be combined \
-        with paged requests or 'records.for-each'.
+        with paged requests or 'records.for-each'. For SSC and ScanCentral targets, the requests in a single \
+        rest.call instruction are only combined into a bulk request if they all use 'json'; use separate \
+        rest.call instructions for 'text' or 'file' requests to keep JSON requests bulked.
         """)
     @JsonProperty(value = "response.type", required = false, defaultValue = "json") private ActionStepRestCallResponseType responseType = ActionStepRestCallResponseType.json;
     

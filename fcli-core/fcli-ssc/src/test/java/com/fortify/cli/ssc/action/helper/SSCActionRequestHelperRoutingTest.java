@@ -94,16 +94,17 @@ class SSCActionRequestHelperRoutingTest {
     }
 
     @Test
-    void fileRequestIsNotIncludedInBulk() throws Exception {
+    void mixedRequestsAreExecutedIndividuallyInDeclarationOrder() throws Exception {
         var file = tempDir.resolve("1.bin");
-        var responses = new CopyOnWriteArrayList<String>();
+        var processed = new CopyOnWriteArrayList<String>();
         helper.executeSimpleRequests(List.of(
-                descriptor("/download/1", ActionStepRestCallResponseType.file, file),
-                new ActionRequestDescriptor("GET", "/api/v1/a", null, null, ActionStepRestCallResponseType.json, null, r->responses.add(r.toString()), e->{throw e;})));
+                new ActionRequestDescriptor("GET", "/api/v1/a", null, null, ActionStepRestCallResponseType.json, null, r->processed.add("a"), e->{throw e;}),
+                new ActionRequestDescriptor("GET", "/download/1", null, null, ActionStepRestCallResponseType.file, file, r->processed.add("file"), e->{throw e;}),
+                new ActionRequestDescriptor("GET", "/api/v1/b", null, null, ActionStepRestCallResponseType.json, null, r->processed.add("b"), e->{throw e;})));
 
-        assertEquals(List.of("/download/1", "/api/v1/a"), requestedPaths);
+        assertEquals(List.of("/api/v1/a", "/download/1", "/api/v1/b"), requestedPaths);
+        assertEquals(List.of("a", "file", "b"), processed);
         assertTrue(Files.exists(file));
-        assertEquals(1, responses.size());
     }
 
     private ActionRequestDescriptor descriptor(String uri, ActionStepRestCallResponseType responseType, Path file) {

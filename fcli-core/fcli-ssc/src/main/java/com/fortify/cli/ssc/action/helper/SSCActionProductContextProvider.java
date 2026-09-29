@@ -12,7 +12,6 @@
  */
 package com.fortify.cli.ssc.action.helper;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import com.fortify.cli.common.action.model.ActionStepRestCallEntry.ActionStepRestCallResponseType;
@@ -87,20 +86,14 @@ public class SSCActionProductContextProvider implements IActionProductContextPro
 
         @Override
         public void executeSimpleRequests(List<ActionRequestDescriptor> requestDescriptors) {
-            // Bulk responses are JSON-only, so text and file requests are always executed individually
-            var bulkableRequests = new ArrayList<ActionRequestDescriptor>();
-            for ( var rd : requestDescriptors ) {
-                if ( rd.getResponseType()==ActionStepRestCallResponseType.json ) {
-                    bulkableRequests.add(rd);
-                } else {
-                    executeSingleRequest(getUnirestInstance(), rd);
-                }
-            }
-            if (bulkableRequests.size() == 1) {
-                executeSingleRequest(getUnirestInstance(), bulkableRequests.get(0));
-            } else if ( !bulkableRequests.isEmpty() ) {
+            // Bulk responses are JSON-only; if any request uses a different response type, all requests are
+            // executed individually to preserve declaration order
+            var allJson = requestDescriptors.stream().allMatch(rd -> rd.getResponseType()==ActionStepRestCallResponseType.json);
+            if ( !allJson || requestDescriptors.size() == 1 ) {
+                requestDescriptors.forEach(rd -> executeSingleRequest(getUnirestInstance(), rd));
+            } else {
                 var bulkRequestBuilder = new SSCBulkRequestBuilder();
-                bulkableRequests.forEach(r -> bulkRequestBuilder.request(createRequest(getUnirestInstance(), r), r.getResponseConsumer()));
+                requestDescriptors.forEach(r -> bulkRequestBuilder.request(createRequest(getUnirestInstance(), r), r.getResponseConsumer()));
                 bulkRequestBuilder.execute(getUnirestInstance());
             }
         }

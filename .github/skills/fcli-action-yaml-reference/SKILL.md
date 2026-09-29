@@ -175,7 +175,7 @@ cli.options:
 - if: ${!status.contains('OK')}
   throw: "Unexpected status: ${status}"
 ```
-With the default `json`, a response that isn't valid JSON fails; use `text` or `file` for such responses. `text`/`file` can't be combined with paging or `records.for-each`.
+With the default `json`, a response that isn't valid JSON fails; use `text` or `file` for such responses. `text`/`file` can't be combined with paging or `records.for-each`. For SSC/ScanCentral targets, a `rest.call` instruction is only executed as a bulk request if all its entries use `json`; mixing in `text`/`file` entries executes all entries individually (in declaration order), so use a separate `rest.call` for those to keep JSON requests bulked.
 
 ### Variable accumulation
 ```yaml
