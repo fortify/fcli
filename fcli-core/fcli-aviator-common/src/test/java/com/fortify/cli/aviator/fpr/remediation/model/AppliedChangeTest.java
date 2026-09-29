@@ -35,7 +35,6 @@ class AppliedChangeTest {
                 .originalLineTo(3)
                 .deltaLines(0)
                 .comparisonCode("W1W2W3")
-                .lineNormalizedContent(new String[] {"W1", "W2", "W3"})
                 .build()
                 .contentCovers(null, 2, 2),
             "a candidate whose content could not be computed has not been proven covered");
@@ -46,7 +45,6 @@ class AppliedChangeTest {
                 .originalLineTo(3)
                 .deltaLines(0)
                 .comparisonCode(null)
-                .lineNormalizedContent(null)
                 .build()
                 .contentCovers("M2", 2, 2),
             "an applied change whose content is unknown cannot prove it covers anything");
