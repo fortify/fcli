@@ -28,19 +28,13 @@ import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.TextNode;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.exception.FcliTechnicalException;
-import com.fortify.cli.common.json.JsonHelper;
 
 import kong.unirest.HttpRequest;
 import kong.unirest.HttpResponse;
 import kong.unirest.ProgressMonitor;
-import lombok.extern.slf4j.Slf4j;
 
-@Slf4j
 public final class RestResponseBodyHelper {
     private static final String TEMP_FILE_PREFIX = ".fcli-";
     private static final String TEMP_FILE_SUFFIX = ".part";
@@ -118,26 +112,6 @@ public final class RestResponseBodyHelper {
         return new String(body, charsetOf(contentType));
     }
 
-    public static JsonNode asJsonOrText(HttpRequest<?> request, String binaryGuidance) {
-        var response = request.asBytes();
-        if ( !response.isSuccess() ) { throw new UnexpectedHttpResponseException(response); }
-        var body = response.getBody();
-        if ( body==null || body.length==0 ) { return null; }
-        var contentType = getContentType(response);
-        try {
-            return JsonHelper.getObjectMapper().readTree(new String(body, charsetOf(contentType)));
-        } catch ( JsonProcessingException e ) {
-            if ( isJsonMediaType(getMediaType(contentType)) ) {
-                throw new FcliTechnicalException("Response declared as JSON could not be parsed", e);
-            } else if ( !isText(contentType, body) ) {
-                throw new FcliSimpleException(String.format("Response is binary (content type: %s); %s",
-                        contentType==null ? "unknown" : contentType, binaryGuidance));
-            }
-            log.debug("Response is not JSON; using text (content type: {})", contentType);
-            return new TextNode(new String(body, charsetOf(contentType)));
-        }
-    }
-
     static boolean isText(String contentType, byte[] body) {
         var mediaType = getMediaType(contentType);
         if ( mediaType!=null && (mediaType.startsWith("text/") || TEXT_MEDIA_TYPES.contains(mediaType)
@@ -176,10 +150,6 @@ public final class RestResponseBodyHelper {
 
     private static boolean isBinaryControlCharacter(byte b) {
         return b>=0 && b<0x20 && b!='\t' && b!='\n' && b!='\f' && b!='\r' && b!='\b' && b!=0x1b;
-    }
-
-    private static boolean isJsonMediaType(String mediaType) {
-        return mediaType!=null && (mediaType.equals("application/json") || mediaType.endsWith("+json"));
     }
 
     private static String getMediaType(String contentType) {

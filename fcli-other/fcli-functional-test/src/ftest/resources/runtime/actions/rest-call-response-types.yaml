@@ -3,7 +3,7 @@
 author: ftest
 usage:
   header: Ftest rest.call response types (FoD)
-  description: Tests the rest.call response.type values file, text and auto against FoD
+  description: Tests the rest.call response.type values file, text and json (default) against FoD
 
 cli.options:
   file:
@@ -29,4 +29,4 @@ steps:
       tenantsJson:
         target: fod
         uri: /api/v3/tenants
-  - log.info: "AUTO-OK ${tenantsJson.tenantName!=null ? 'json' : 'unexpected'}"
+  - log.info: "JSON-OK ${tenantsJson.tenantName!=null ? 'json' : 'unexpected'}"

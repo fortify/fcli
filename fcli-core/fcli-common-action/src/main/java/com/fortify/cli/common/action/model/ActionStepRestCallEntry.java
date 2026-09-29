@@ -66,7 +66,7 @@ import lombok.NoArgsConstructor;
                 uri: /api/v3/scans/${cli.scanId}/fpr
                 query:
                   scanType: Static
-                response.type: file           # auto (default), text or file
+                response.type: file           # json (default), text or file
                 response.file: ${cli.outDir}/scan-${cli.scanId}.fpr
                 on.success:
                   - log.info: "Saved ${fpr.size} bytes to ${fpr.file}"
@@ -116,14 +116,14 @@ public final class ActionStepRestCallEntry extends AbstractActionStepElement imp
     @JsonProperty(value = "type", required = false, defaultValue = "simple") private ActionStepRestCallEntry.ActionStepRequestType type = ActionStepRequestType.simple;
 
     @JsonPropertyDescription("""
-        Optional enum value: How to handle the response body. 'auto' (default): parse the response as JSON; \
-        if the response is not JSON, store it as text if it is textual, or fail if it is binary. 'text': \
-        always store the response body as a string. 'file': save the response body unchanged to the file \
+        Optional enum value: How to handle the response body. 'json' (default): parse the response as JSON, \
+        failing if the response is not valid JSON. 'text': store the response body as a string. 'file': \
+        save the response body unchanged to the file \
         specified through 'response.file'; the variable for this REST call will contain an object with \
         file, size, contentType and status properties. The 'text' and 'file' values cannot be combined \
         with paged requests or 'records.for-each'.
         """)
-    @JsonProperty(value = "response.type", required = false, defaultValue = "auto") private ActionStepRestCallResponseType responseType = ActionStepRestCallResponseType.auto;
+    @JsonProperty(value = "response.type", required = false, defaultValue = "json") private ActionStepRestCallResponseType responseType = ActionStepRestCallResponseType.json;
     
     @JsonPropertyDescription("""
         Required SpEL template expression if 'response.type' is 'file', not allowed otherwise: File to which \
@@ -165,7 +165,7 @@ public final class ActionStepRestCallEntry extends AbstractActionStepElement imp
                 ()->"response.file is required when response.type is file");
         Action.throwIf(!isFileResponse && responseFile!=null, this, 
                 ()->"response.file is only allowed when response.type is file");
-        if ( responseType!=ActionStepRestCallResponseType.auto ) {
+        if ( responseType!=ActionStepRestCallResponseType.json ) {
             Action.throwIf(type==ActionStepRequestType.paged, this, 
                     ()->String.format("response.type %s cannot be used with paged requests", responseType));
             Action.throwIf(forEach!=null, this, 
@@ -215,7 +215,7 @@ public final class ActionStepRestCallEntry extends AbstractActionStepElement imp
     
     @Reflectable
     public static enum ActionStepRestCallResponseType {
-        auto, text, file
+        json, text, file
     }
     
     @Reflectable @NoArgsConstructor

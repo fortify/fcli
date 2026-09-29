@@ -28,7 +28,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.IntNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fasterxml.jackson.databind.node.TextNode;
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.action.model.ActionStepRestCallEntry;
 import com.fortify.cli.common.action.model.ActionStepRestCallEntry.ActionStepRequestForEachResponseRecord;
@@ -70,7 +69,7 @@ public class ActionStepProcessorRestCall extends AbstractActionStepProcessor {
     }
     
     private final JsonNode transformInput(ActionStepRestCallEntry requestDescriptor, JsonNode rawBody) {
-        return requestDescriptor.getResponseType()==ActionStepRestCallResponseType.auto && !(rawBody instanceof TextNode)
+        return requestDescriptor.getResponseType()==ActionStepRestCallResponseType.json
                 ? ctx.getRequestHelper(requestDescriptor.getTarget()).transformInput(rawBody)
                 : rawBody;
     }

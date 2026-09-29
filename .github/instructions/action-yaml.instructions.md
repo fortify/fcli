@@ -45,7 +45,7 @@ In `on.fail` blocks: `lastException.type`, `lastException.message`, `lastExcepti
 
 ## REST Response Handling (`rest.call`)
 
-- `response.type: auto` (default): JSON as before; non-JSON textual bodies become a string, binary bodies fail
+- `response.type: json` (default): parse as JSON; fails if the response isn't valid JSON
 - `response.type: text`: body as string in `${name}` (charset from `Content-Type`, UTF-8 default)
 - `response.type: file` + `response.file: <expr>`: body saved to file; `${name}` = `{file, size, contentType, status}`
 - `text`/`file` cannot be combined with `type: paged`, `log.progress` or `records.for-each`

@@ -121,7 +121,7 @@ public interface IActionRequestHelper extends AutoCloseable {
         }
         
         protected final void executeSingleRequest(UnirestInstance unirest, ActionRequestDescriptor requestDescriptor) {
-            if ( requestDescriptor.getResponseType()==ActionStepRestCallResponseType.auto ) {
+            if ( requestDescriptor.getResponseType()==ActionStepRestCallResponseType.json ) {
                 executeJsonRequest(unirest, requestDescriptor);
             } else {
                 executeNonJsonRequest(unirest, requestDescriptor);
@@ -129,17 +129,10 @@ public interface IActionRequestHelper extends AutoCloseable {
         }
         
         private void executeJsonRequest(UnirestInstance unirest, ActionRequestDescriptor requestDescriptor) {
-            JsonNode result;
             try {
-                result = RestResponseBodyHelper.asJsonOrText(createRequest(unirest, requestDescriptor), BINARY_GUIDANCE);
-            } catch ( RuntimeException e ) {
-                requestDescriptor.getFailureConsumer().accept(e);
-                return;
-            }
-            // As before, request failures in nested steps (like nested rest.call steps in on.success blocks)
-            // are reported as failures of this request
-            try {
-                requestDescriptor.getResponseConsumer().accept(result);
+                createRequest(unirest, requestDescriptor)
+                    .asObject(JsonNode.class)
+                    .ifSuccess(r->requestDescriptor.getResponseConsumer().accept(r.getBody()));
             } catch ( UnirestException e ) {
                 requestDescriptor.getFailureConsumer().accept(e);
             }
@@ -152,7 +145,7 @@ public interface IActionRequestHelper extends AutoCloseable {
                 result = switch (requestDescriptor.getResponseType()) {
                     case file -> RestResponseBodyHelper.saveToFile(request, requestDescriptor.getResponseFile(), null).asObjectNode();
                     case text -> new TextNode(RestResponseBodyHelper.asText(request, BINARY_GUIDANCE));
-                    case auto -> throw new FcliBugException("JSON requests must be handled by executeJsonRequest");
+                    case json -> throw new FcliBugException("JSON requests must be handled by executeJsonRequest");
                 };
             } catch ( RuntimeException e ) {
                 requestDescriptor.getFailureConsumer().accept(e);

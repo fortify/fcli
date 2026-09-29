@@ -29,9 +29,9 @@ class ActionStepRestCallEntryResponseTest {
     private static final ObjectMapper YAML_MAPPER = TemplateExpressionKeyDeserializer.registerOn(new ObjectMapper(new YAMLFactory()));
 
     @Test
-    void responseTypeDefaultsToAuto() throws Exception {
+    void responseTypeDefaultsToJson() throws Exception {
         var entry = loadRestCallEntry("");
-        assertEquals(ActionStepRestCallResponseType.auto, entry.getResponseType());
+        assertEquals(ActionStepRestCallResponseType.json, entry.getResponseType());
     }
 
     @Test

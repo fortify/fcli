@@ -131,25 +131,17 @@ class BasicActionRequestHelperTest {
     }
 
     @Test
-    void autoResponseParsesJson() {
-        execute("/json", ActionStepRestCallResponseType.auto);
+    void jsonResponseParsesJson() {
+        execute("/json", ActionStepRestCallResponseType.json);
         assertNull(failure.get());
         assertEquals(1, response.get().get("id").asInt());
     }
 
     @Test
-    void autoResponseFallsBackToTextForTextualBody() {
-        execute("/csv", ActionStepRestCallResponseType.auto);
-        assertNull(failure.get());
-        assertEquals(new TextNode("a,b\n1,2\n"), response.get());
-    }
-
-    @Test
-    void autoResponseRejectsBinaryBody() {
-        execute("/fpr", ActionStepRestCallResponseType.auto);
+    void jsonResponseRejectsNonJsonBody() {
+        execute("/csv", ActionStepRestCallResponseType.json);
         assertNull(response.get());
-        assertInstanceOf(FcliSimpleException.class, failure.get());
-        assertTrue(failure.get().getMessage().contains("use response.type: file"), failure.get().getMessage());
+        assertInstanceOf(UnexpectedHttpResponseException.class, failure.get());
     }
 
     private void execute(String uri, ActionStepRestCallResponseType responseType) {

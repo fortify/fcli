@@ -164,7 +164,7 @@ cli.options:
       target: fod
       uri: /api/v3/scans/${cli.scanId}/fpr
       query: { scanType: Static }
-      response.type: file                 # auto (default) | text | file
+      response.type: file                 # json (default) | text | file
       response.file: out/scan-${cli.scanId}.fpr   # Parent directory must exist
       on.success:
         - log.info: "Saved ${fpr.size} bytes to ${fpr.file}"   # ${fpr}: file, size, contentType, status
@@ -175,7 +175,7 @@ cli.options:
 - if: ${!status.contains('OK')}
   throw: "Unexpected status: ${status}"
 ```
-With the default `auto`, textual non-JSON responses are stored as strings too; binary responses fail with an error suggesting `response.type: file`. `text`/`file` can't be combined with paging or `records.for-each`.
+With the default `json`, a response that isn't valid JSON fails; use `text` or `file` for such responses. `text`/`file` can't be combined with paging or `records.for-each`.
 
 ### Variable accumulation
 ```yaml

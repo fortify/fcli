@@ -61,7 +61,7 @@ class FoDRestSpec extends FcliBaseSpec {
             verifyAll(result.stdout) {
                 it.any { it.startsWith("FILE-OK status=200") }
                 it.any { it == "TEXT-OK nonempty" }
-                it.any { it == "AUTO-OK json" }
+                it.any { it == "JSON-OK json" }
             }
             file.exists()
             new ObjectMapper().readTree(file).has("tenantName")

@@ -90,7 +90,7 @@ public class SSCActionProductContextProvider implements IActionProductContextPro
             // Bulk responses are JSON-only, so text and file requests are always executed individually
             var bulkableRequests = new ArrayList<ActionRequestDescriptor>();
             for ( var rd : requestDescriptors ) {
-                if ( rd.getResponseType()==ActionStepRestCallResponseType.auto ) {
+                if ( rd.getResponseType()==ActionStepRestCallResponseType.json ) {
                     bulkableRequests.add(rd);
                 } else {
                     executeSingleRequest(getUnirestInstance(), rd);

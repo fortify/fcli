@@ -86,8 +86,8 @@ class SSCActionRequestHelperRoutingTest {
     void multipleJsonRequestsAreStillBulked() {
         var responses = new CopyOnWriteArrayList<String>();
         helper.executeSimpleRequests(List.of(
-                new ActionRequestDescriptor("GET", "/api/v1/a", null, null, ActionStepRestCallResponseType.auto, null, r->responses.add(r.toString()), e->{throw e;}),
-                new ActionRequestDescriptor("GET", "/api/v1/b", null, null, ActionStepRestCallResponseType.auto, null, r->responses.add(r.toString()), e->{throw e;})));
+                new ActionRequestDescriptor("GET", "/api/v1/a", null, null, ActionStepRestCallResponseType.json, null, r->responses.add(r.toString()), e->{throw e;}),
+                new ActionRequestDescriptor("GET", "/api/v1/b", null, null, ActionStepRestCallResponseType.json, null, r->responses.add(r.toString()), e->{throw e;})));
 
         assertEquals(List.of("/api/v1/bulk"), requestedPaths);
         assertEquals(2, responses.size());
@@ -99,7 +99,7 @@ class SSCActionRequestHelperRoutingTest {
         var responses = new CopyOnWriteArrayList<String>();
         helper.executeSimpleRequests(List.of(
                 descriptor("/download/1", ActionStepRestCallResponseType.file, file),
-                new ActionRequestDescriptor("GET", "/api/v1/a", null, null, ActionStepRestCallResponseType.auto, null, r->responses.add(r.toString()), e->{throw e;})));
+                new ActionRequestDescriptor("GET", "/api/v1/a", null, null, ActionStepRestCallResponseType.json, null, r->responses.add(r.toString()), e->{throw e;})));
 
         assertEquals(List.of("/download/1", "/api/v1/a"), requestedPaths);
         assertTrue(Files.exists(file));

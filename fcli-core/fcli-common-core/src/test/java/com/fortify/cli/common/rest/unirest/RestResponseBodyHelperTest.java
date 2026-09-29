@@ -15,7 +15,6 @@ package com.fortify.cli.common.rest.unirest;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -40,13 +39,8 @@ import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.junit.jupiter.params.provider.ValueSource;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.TextNode;
 import com.fortify.cli.common.exception.FcliSimpleException;
-import com.fortify.cli.common.exception.FcliTechnicalException;
 import com.fortify.cli.common.rest.unirest.config.UnirestUnexpectedHttpResponseConfigurer;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
@@ -63,7 +57,6 @@ class RestResponseBodyHelperTest {
     private HttpServer server;
     private UnirestInstance unirest;
     private final AtomicInteger requestCount = new AtomicInteger();
-    private volatile String jsonBody;
     private static final Duration POLL_INTERVAL = Duration.ofMillis(50);
     private volatile Path pollingDestination;
     private final List<String> destinationContentsWhilePolling = new CopyOnWriteArrayList<>();
@@ -75,10 +68,6 @@ class RestResponseBodyHelperTest {
         server.createContext("/notfound", ex -> respond(ex, 404, "application/json", "{\"error\":\"not found\"}".getBytes(StandardCharsets.UTF_8)));
         server.createContext("/text", ex -> respond(ex, 200, "text/plain; charset=ISO-8859-1", "café".getBytes(StandardCharsets.ISO_8859_1)));
         server.createContext("/empty", ex -> respond(ex, 200, "text/plain", new byte[0]));
-        server.createContext("/json-empty", ex -> respond(ex, 200, "application/json", new byte[0]));
-        server.createContext("/json-malformed", ex -> respond(ex, 200, "application/json", "not json".getBytes(StandardCharsets.UTF_8)));
-        server.createContext("/json-body", ex -> respond(ex, 200, "application/json", readJsonBody(ex)));
-        server.createContext("/octet-text", ex -> respond(ex, 200, "application/octet-stream", "plain text".getBytes(StandardCharsets.UTF_8)));
         server.createContext("/partial", this::respondPartial);
         server.createContext("/ready-after-2", ex -> respondWhenReady(ex, 2, 200));
         server.createContext("/fail-after-1", ex -> respondWhenReady(ex, 1, 404));
@@ -187,7 +176,6 @@ class RestResponseBodyHelperTest {
     void errorResponseBodyIsIncludedInExceptionMessage() {
         for ( var mode : List.<Runnable>of(
                 () -> RestResponseBodyHelper.asText(unirest.get(url("/notfound")), "x"),
-                () -> RestResponseBodyHelper.asJsonOrText(unirest.get(url("/notfound")), "x"),
                 () -> RestResponseBodyHelper.saveToFile(unirest.get(url("/notfound")), tempDir.resolve("x"), null)) ) {
             var e = assertThrows(UnexpectedHttpResponseException.class, mode::run);
             assertTrue(e.getMessage().contains("not found"), e.getMessage());
@@ -251,49 +239,6 @@ class RestResponseBodyHelperTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {
-        "{\"a\":1,\"b\":[1,2,{\"c\":null}]}",
-        "[1,2,3]",
-        "{\"unicode\":\"caf\u00e9 \u6f22\u5b57 \ud83d\ude00\"}",
-        "{\"big\":123456789012345678901234567890,\"dec\":1.00000000000000000001}",
-        "\"just a string\"",
-        "42"})
-    void asJsonOrTextMatchesExistingJsonParsing(String json) {
-        jsonBody = json;
-        var expected = unirest.get(url("/json-body")).asObject(JsonNode.class).getBody();
-        var actual = RestResponseBodyHelper.asJsonOrText(unirest.get(url("/json-body")), "use file mode");
-        assertEquals(expected, actual);
-    }
-
-    @Test
-    void asJsonOrTextReturnsNullForEmptyBody() {
-        // Deliberate difference: asObject(JsonNode.class) fails on an empty 200 body, while
-        // asJsonOrText treats it like a response without content
-        assertThrows(UnexpectedHttpResponseException.class, () -> unirest.get(url("/json-empty")).asObject(JsonNode.class));
-        assertNull(RestResponseBodyHelper.asJsonOrText(unirest.get(url("/json-empty")), "use file mode"));
-    }
-
-    @Test
-    void asJsonOrTextFallsBackToTextForTextualBody() {
-        assertEquals(new TextNode("caf\u00e9"), RestResponseBodyHelper.asJsonOrText(unirest.get(url("/text")), "use file mode"));
-        assertEquals(new TextNode("plain text"), RestResponseBodyHelper.asJsonOrText(unirest.get(url("/octet-text")), "use file mode"));
-    }
-
-    @Test
-    void asJsonOrTextRejectsMalformedBodyDeclaredAsJson() {
-        var e = assertThrows(FcliTechnicalException.class,
-                () -> RestResponseBodyHelper.asJsonOrText(unirest.get(url("/json-malformed")), "use file mode"));
-        assertInstanceOf(JsonProcessingException.class, e.getCause());
-    }
-
-    @Test
-    void asJsonOrTextRejectsBinaryBody() {
-        var e = assertThrows(FcliSimpleException.class,
-                () -> RestResponseBodyHelper.asJsonOrText(unirest.get(url("/fpr")), "use file mode"));
-        assertTrue(e.getMessage().contains("use file mode"), e.getMessage());
-    }
-
-    @ParameterizedTest
     @MethodSource("isTextCases")
     void isTextClassifiesBodies(String contentType, byte[] body, boolean expected) {
         assertEquals(expected, RestResponseBodyHelper.isText(contentType, body));
@@ -352,10 +297,6 @@ class RestResponseBodyHelperTest {
         } else {
             respond(exchange, finalStatus, "application/json", "{\"error\":\"failed\"}".getBytes(StandardCharsets.UTF_8));
         }
-    }
-
-    private byte[] readJsonBody(HttpExchange exchange) {
-        return jsonBody.getBytes(StandardCharsets.UTF_8);
     }
 
     private void respondPartial(HttpExchange exchange) throws IOException {
