@@ -18,6 +18,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.cli.util.CommandGroup;
+import com.fortify.cli.common.log.LogSensitivityLevel;
+import com.fortify.cli.common.log.MaskValue;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.ssc._common.output.cli.cmd.AbstractSSCJsonNodeOutputCommand;
 import com.fortify.cli.ssc._common.rest.ssc.SSCUrls;
@@ -38,7 +40,8 @@ public class SSCUserCreateLocalCommand extends AbstractSSCJsonNodeOutputCommand 
 
     @Option(names = {"--username"}, required = true)
     private String username;
-    @Option(names = {"--password"}, required = true)
+    @Option(names = {"--password"}, required = true, interactive = true, echo = false, arity = "0..1")
+    @MaskValue(sensitivity = LogSensitivityLevel.high, description = "PASSWORD")
     private String password;
     @Option(names = {"--firstname"})
     private String firstName;

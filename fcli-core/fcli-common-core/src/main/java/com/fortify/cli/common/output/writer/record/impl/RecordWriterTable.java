@@ -100,7 +100,6 @@ public class RecordWriterTable extends AbstractRecordWriter<RecordWriterTable.Ta
             }
             return node.asText();
         }
-
         @Override
         public void close() throws IOException {
             if ( columnWidths==null && !rows.isEmpty() ) { // no-fast-output or trailing partial batch
