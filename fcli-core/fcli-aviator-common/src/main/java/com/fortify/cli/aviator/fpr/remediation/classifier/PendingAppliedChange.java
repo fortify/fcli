@@ -10,10 +10,21 @@
  * herein. The information contained herein is subject to change
  * without notice.
  */
+
 package com.fortify.cli.aviator.fpr.remediation.classifier;
 
 import java.nio.file.Path;
 
-public record PendingAppliedChange(Path filePath, int lineFrom, int lineTo, int declaredLineFrom, int declaredLineTo,
-                                   int deltaLines, String comparisonCode, String lineNormalizedCode) {
+import lombok.Builder;
+
+@Builder
+public record PendingAppliedChange(
+    Path filePath,
+    int lineFrom,
+    int lineTo,
+    int declaredLineFrom,
+    int declaredLineTo,
+    int deltaLines,
+    String comparisonCode,
+    String lineNormalizedCode) {
 }

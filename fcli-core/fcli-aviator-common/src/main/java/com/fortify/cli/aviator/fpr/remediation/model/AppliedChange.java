@@ -23,6 +23,7 @@ import lombok.Builder;
  * {@code classifyRange} are logic that reads these fields and belongs on the object that owns
  * them, not as free functions in the caller.
  */
+@Builder
 public final class AppliedChange {
     private final int originalLineFrom;
     private final int originalLineTo;
@@ -32,14 +33,8 @@ public final class AppliedChange {
     private final String comparisonCode;
     private final String[] lineNormalizedContent;
 
-    public AppliedChange(int originalLineFrom, int originalLineTo, int deltaLines, String comparisonCode) {
-        this(originalLineFrom, originalLineTo, originalLineFrom, originalLineTo, deltaLines, comparisonCode, null);
-
-    }
-
-    @Builder
-    public AppliedChange(int originalLineFrom, int originalLineTo, int declaredLineFrom, int declaredLineTo, int deltaLines, String comparisonCode, String lineNormalizedCode)
-    {
+    public AppliedChange(int originalLineFrom, int originalLineTo, int declaredLineFrom, int declaredLineTo,
+                         int deltaLines, String comparisonCode, String lineNormalizedCode) {
         this.originalLineFrom = originalLineFrom;
         this.originalLineTo = originalLineTo;
         this.declaredLineFrom = declaredLineFrom;
@@ -74,7 +69,6 @@ public final class AppliedChange {
         return overlaps && !coversFully(lineFrom, lineTo) && !candidateContainsThis;
     }
 
-
     /** True if this change's declared range fully contains [lineFrom, lineTo]. */
     public boolean coversDeclaredRange(int lineFrom, int lineTo) {
         return declaredLineFrom <= lineFrom && lineTo <= declaredLineTo;
@@ -86,7 +80,6 @@ public final class AppliedChange {
         boolean candidateContainsThis = lineFrom <= declaredLineFrom && declaredLineTo <= lineTo;
         return overlaps && !coversDeclaredRange(lineFrom, lineTo) && !candidateContainsThis;
     }
-
 
     /**
      * Below this length a normalized comparison code (e.g. {@code "return;"}) is too short and
