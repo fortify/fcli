@@ -2,7 +2,7 @@
 description: 'Scaffold a functional test spec for fcli'
 ---
 
-# Add Functional Test
+# Add Functional fcli Test
 
 Create a new Spock functional test for an fcli command.
 

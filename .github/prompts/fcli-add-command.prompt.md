@@ -2,7 +2,7 @@
 description: 'Scaffold a new picocli command in fcli'
 ---
 
-# Add New Command
+# Add New fcli Command
 
 Create a new fcli picocli command following established patterns.
 

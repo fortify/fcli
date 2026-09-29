@@ -4,7 +4,23 @@ run-name: "Fortify on Demand Scan (${{ github.event_name }})"
 on:
   workflow_dispatch:
   push:
+    paths-ignore:
+      - '**/*.md'
+      - 'doc-resources/**'
+      - '.github/copilot-instructions.md'
+      - '.github/instructions/**'
+      - '.github/prompts/**'
+      - '.github/skills/**'
+      - '.github/agents/**'
   pull_request:
+    paths-ignore:
+      - '**/*.md'
+      - 'doc-resources/**'
+      - '.github/copilot-instructions.md'
+      - '.github/instructions/**'
+      - '.github/prompts/**'
+      - '.github/skills/**'
+      - '.github/agents/**'
   schedule:
     - cron: '16 0 * * 5'
 
@@ -15,12 +31,12 @@ permissions:
 
 jobs:
   check-duplicate-run:
-    uses: fortify/.github/.github/workflows/check-duplicate-run.yml@main
+    uses: fortify/shared-github/.github/workflows/reusable-check-duplicate-run.yml@5ad1afec0f56a21b03f0887eea35505cb6a66554
 
   FoD-Scan:
     needs: check-duplicate-run
     if: needs.check-duplicate-run.outputs.should_skip != 'true'
-    uses: fortify/.github/.github/workflows/fortify-analysis.yml@main
+    uses: fortify/shared-github/.github/workflows/reusable-fortify-analysis.yml@5ad1afec0f56a21b03f0887eea35505cb6a66554
     with:
       java-version: '17'
     secrets: inherit

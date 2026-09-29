@@ -35,4 +35,5 @@ public class FoDScanConfigSastSetupRequest {
     private Boolean useSourceControl;
     private Boolean scanBinary;
     private Boolean includeFortifyAviator;
+    private String scanPolicy;
 }

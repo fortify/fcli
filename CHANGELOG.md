@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.26.1](https://github.com/fortify/fcli/compare/v3.26.0...v3.26.1) (2026-09-22)
+
+
+### Bug Fixes
+
+* Skip unused FoD vulnerability filters for large-tenant performance ([80c6b1b](https://github.com/fortify/fcli/commit/80c6b1bd24de0c51ee6a9bfe4f919f6af9b83f2d))
+
 ## [3.26.0](https://github.com/fortify/fcli/compare/v3.25.0...v3.26.0) (2026-09-18)
 
 

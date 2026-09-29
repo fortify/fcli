@@ -181,7 +181,7 @@ public class ToolInstallationDescriptor {
             throw new FcliSimpleException("Invalid version string: " + version + ". Version must contain only alphanumeric characters, dots, hyphens, underscores, or plus signs.");
         }
     }
-
+    
     private static final Path getInstallDescriptorPath(String toolName, String version) {
         validateVersionString(version);
         return getInstallDescriptorsDirPath(toolName).resolve(version);

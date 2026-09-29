@@ -7,9 +7,12 @@ on:
   push:
     branches:
       - dev/v3.x
+    paths:
+      - 'doc-resources/**'
       
 jobs:
   update-repo-docs:
     permissions:
       contents: write
-    uses: fortify/shared-doc-resources/.github/workflows/update-repo-docs.yml@main
+      pull-requests: write
+    uses: fortify/shared-github/.github/workflows/reusable-update-repo-docs.yml@5ad1afec0f56a21b03f0887eea35505cb6a66554
