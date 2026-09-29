@@ -255,7 +255,10 @@ class AviatorSSCTagValidatorTest {
                 }
                 return;
             }
-            writeJson(exchange, JsonHelper.getObjectMapper().createArrayNode());
+            ArrayNode data = JsonHelper.getObjectMapper().createArrayNode();
+            data.add(aviatorTag(AviatorSSCTagDefs.AVIATOR_PREDICTION_TAG.getGuid(), "Aviator prediction"));
+            data.add(aviatorTag(AviatorSSCTagDefs.AVIATOR_STATUS_TAG.getGuid(), "Aviator status"));
+            writeJson(exchange, data);
         }
 
         private void handleCustomTags(HttpExchange exchange) throws IOException {

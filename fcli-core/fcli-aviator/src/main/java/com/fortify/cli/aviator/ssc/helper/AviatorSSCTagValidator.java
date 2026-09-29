@@ -90,7 +90,7 @@ public final class AviatorSSCTagValidator {
                 LOG.info("Pre-upload tag validation passed — all required tags and values are present on this app version.");
                 logger.progress("Status: SSC custom tag validation passed.");
             } else {
-                LOG.warn("Pre-upload tag validation found {} issue(s).", warnings.size());
+                LOG.debug("Pre-upload tag validation found {} issue(s).", warnings.size());
                 emitWarnings(warnings, logger);
             }
         } catch (Exception e) {
@@ -167,7 +167,8 @@ public final class AviatorSSCTagValidator {
      * returns it with {@code customTagType AVIATOR}: those built-in tags are not
      * version associations. A {@code CUSTOM} tag that appears only via
      * {@code includeall} is still reported missing, so an unassigned tag on
-     * older SSC keeps the prepare warning. On SSC 26.2 and later the same
+     * older SSC keeps the prepare warning. If {@code /internalCustomTags}
+     * contains the Aviator GUIDs with {@code customTagType AVIATOR}, the same
      * missing tag tells the user to enable Aviator instead, because prepare
      * does not create those built-in tags.
      */
@@ -194,12 +195,12 @@ public final class AviatorSSCTagValidator {
             return;
         }
 
-        boolean ssc26OrLater = isSsc26OrLater(unirest);
+        boolean hasBuiltInAviatorTags = hasBuiltInAviatorTags(unirest);
         if (!predictionOk) {
-            warnings.add(missingAviatorTagWarning(AviatorSSCTagDefs.AVIATOR_PREDICTION_TAG, ssc26OrLater));
+            warnings.add(missingAviatorTagWarning(AviatorSSCTagDefs.AVIATOR_PREDICTION_TAG, hasBuiltInAviatorTags));
         }
         if (!statusOk) {
-            warnings.add(missingAviatorTagWarning(AviatorSSCTagDefs.AVIATOR_STATUS_TAG, ssc26OrLater));
+            warnings.add(missingAviatorTagWarning(AviatorSSCTagDefs.AVIATOR_STATUS_TAG, hasBuiltInAviatorTags));
         }
     }
 
@@ -213,34 +214,51 @@ public final class AviatorSSCTagValidator {
     }
 
     /**
-     * SSC 26.2 added {@code /internalCustomTags} for built-in Aviator tags.
-     * A data array means this server is 26.2 or later even when Aviator is
-     * disabled and the tags themselves are absent. Older SSC does not have
-     * the endpoint. A failed call stays on the prepare warning.
+     * Built-in Aviator tags live in {@code /internalCustomTags} with
+     * {@code customTagType AVIATOR}. That catalog also exists on older SSC
+     * (Audit Assistant / Priority Override only), so a {@code data} array is
+     * not a version signal. Presence of the Aviator prediction/status GUIDs
+     * means this instance has Aviator built-ins: missing version tags then
+     * tell the user to enable Aviator. Absence keeps the prepare warning.
+     * A failed call stays on the prepare warning.
      */
-    private static boolean isSsc26OrLater(UnirestInstance unirest) {
+    private static boolean hasBuiltInAviatorTags(UnirestInstance unirest) {
         try {
-            LOG.debug("Checking /internalCustomTags to distinguish SSC 26.2+ from older SSC");
-            JsonNode body = unirest.get(SSCUrls.INTERNAL_CUSTOM_TAGS).asObject(JsonNode.class).getBody();
+            LOG.debug("Checking /internalCustomTags for built-in Aviator tags");
+            JsonNode body = unirest.get(SSCUrls.INTERNAL_CUSTOM_TAGS)
+                .asObject(JsonNode.class).getBody();
             JsonNode data = body == null ? null : body.get("data");
-            boolean present = data != null && data.isArray();
-            LOG.debug("SSC /internalCustomTags present={}", present);
+            if (data == null || !data.isArray()) {
+                LOG.debug("SSC /internalCustomTags has no data array");
+                return false;
+            }
+            boolean present = JsonHelper.stream((ArrayNode) data)
+                .anyMatch(AviatorSSCTagValidator::isAviatorBuiltIn);
+            LOG.debug("SSC /internalCustomTags has built-in Aviator tags={}", present);
             return present;
         } catch (Exception e) {
-            LOG.debug("Could not query /internalCustomTags (treating as older than SSC 26.2): {}", e.getMessage());
+            LOG.debug("Could not query /internalCustomTags (treating as older SSC): {}", e.getMessage());
             return false;
         }
     }
 
-    private static String missingAviatorTagWarning(AviatorSSCTagDefs.TagDefinition tagDef, boolean ssc26OrLater) {
-        String resolution = ssc26OrLater
+    private static boolean isAviatorBuiltIn(JsonNode tag) {
+        if (!"AVIATOR".equalsIgnoreCase(tag.path("customTagType").asText())) {
+            return false;
+        }
+        String guid = tag.path("guid").asText();
+        return AviatorSSCTagDefs.AVIATOR_PREDICTION_TAG.getGuid().equalsIgnoreCase(guid)
+            || AviatorSSCTagDefs.AVIATOR_STATUS_TAG.getGuid().equalsIgnoreCase(guid);
+    }
+
+    private static String missingAviatorTagWarning(AviatorSSCTagDefs.TagDefinition tagDef, boolean hasBuiltInAviatorTags) {
+        String resolution = hasBuiltInAviatorTags
             ? "Enable Aviator in SSC under Administration -> Configuration -> AI Assistant -> Aviator."
             : "Run 'fcli aviator ssc prepare' to resolve this.";
         String msg = String.format(
             "WARN: Custom tag '%s' (GUID: %s) is not associated with this application version. "
                 + "Audit results for this tag will not be visible in SSC. %s",
             tagDef.getName(), tagDef.getGuid(), resolution);
-        LOG.warn(msg);
         return msg;
     }
 
@@ -250,17 +268,19 @@ public final class AviatorSSCTagValidator {
     }
 
     private static boolean containsGuid(ArrayNode tags, String guid) {
+        if (tags == null || guid == null) {
+            return false;
+        }
         return JsonHelper.stream(tags)
-            .anyMatch(tag -> guid.equals(tag.path("guid").asText()));
+            .anyMatch(tag -> guid.equalsIgnoreCase(tag.path("guid").asText()));
     }
 
-    /** Built-in SSC Aviator tags are returned by {@code includeall=true} with this type. */
     private static boolean isBuiltInAviatorTag(ArrayNode includeAllTags, AviatorSSCTagDefs.TagDefinition tagDef) {
         if (includeAllTags == null) {
             return false;
         }
         return JsonHelper.stream(includeAllTags)
-            .anyMatch(tag -> tagDef.getGuid().equals(tag.path("guid").asText())
+            .anyMatch(tag -> tagDef.getGuid().equalsIgnoreCase(tag.path("guid").asText())
                 && "AVIATOR".equalsIgnoreCase(tag.path("customTagType").asText()));
     }
 
