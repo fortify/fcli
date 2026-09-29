@@ -29,9 +29,24 @@ class AppliedChangeTest {
      */
     @Test
     void unavailableComparisonCodeIsNotTreatedAsProvenCoverage() {
-        assertFalse(new AppliedChange(1, 3, 0, "W1W2W3").contentCovers(null, 2, 2),
+        assertFalse(
+            AppliedChange.builder()
+                .originalLineFrom(1)
+                .originalLineTo(3)
+                .deltaLines(0)
+                .comparisonCode("W1W2W3")
+                .build()
+                .contentCovers(null, 2, 2),
             "a candidate whose content could not be computed has not been proven covered");
-        assertFalse(new AppliedChange(1, 3, 0, null).contentCovers("M2", 2, 2),
+
+        assertFalse(
+            AppliedChange.builder()
+                .originalLineFrom(1)
+                .originalLineTo(3)
+                .deltaLines(0)
+                .comparisonCode(null)
+                .build()
+                .contentCovers("M2", 2, 2),
             "an applied change whose content is unknown cannot prove it covers anything");
     }
 }
