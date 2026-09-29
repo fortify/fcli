@@ -33,20 +33,23 @@ public final class AppliedChange {
     private final String comparisonCode;
     private final String[] lineNormalizedContent;
 
-    public AppliedChange(int originalLineFrom, int originalLineTo, int declaredLineFrom, int declaredLineTo,
-                         int deltaLines, String comparisonCode, String lineNormalizedCode) {
+    public AppliedChange(
+        int originalLineFrom,
+        int originalLineTo,
+        int declaredLineFrom,
+        int declaredLineTo,
+        int deltaLines,
+        String comparisonCode,
+        String[] lineNormalizedContent) {
         this.originalLineFrom = originalLineFrom;
         this.originalLineTo = originalLineTo;
         this.declaredLineFrom = declaredLineFrom;
         this.declaredLineTo = declaredLineTo;
         this.deltaLines = deltaLines;
         this.comparisonCode = comparisonCode;
-        // Store line-by-line normalized content for offset-anchored comparison (newlines preserved, each line normalized)
-        if (lineNormalizedCode != null && !lineNormalizedCode.isEmpty()) {
-            this.lineNormalizedContent = lineNormalizedCode.split("\n", -1);
-        } else {
-            this.lineNormalizedContent = null;
-        }
+        // Store line-by-line normalized content for offset-anchored comparison
+        // (newlines preserved, each line normalized)
+        this.lineNormalizedContent = lineNormalizedContent;
     }
 
     public int originalLineTo() {
