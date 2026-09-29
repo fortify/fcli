@@ -87,7 +87,7 @@ public final class ToolDefinitionsHelper {
     public static final List<ToolDefinitionsOutputDescriptor> updateToolDefinitions(String source, boolean forceUpdate,
             String maxAge) {
         String normalizedSource = normalizeSource(source);
-        boolean shouldUpdate = shouldUpdateToolDefinitions(forceUpdate, maxAge);
+        boolean shouldUpdate = shouldUpdateToolDefinitions(normalizedSource, forceUpdate, maxAge);
         if (shouldUpdate) {
             createDefinitionsStateDir(ToolDefinitionsHelper.DEFINITIONS_STATE_DIR);
             var zip = ToolDefinitionsHelper.DEFINITIONS_STATE_ZIP;
@@ -682,11 +682,30 @@ public final class ToolDefinitionsHelper {
      * @return true if definitions should be updated, false otherwise
      * @throws IOException if unable to determine file modification time
      */
-    private static boolean shouldUpdateToolDefinitions(boolean forceUpdate, String maxAge) throws IOException {
+    private static boolean shouldUpdateToolDefinitions(
+        String source, boolean forceUpdate, String maxAge) throws IOException {
+
         if (forceUpdate) {
             return true;
         }
         if (!Files.exists(DEFINITIONS_STATE_ZIP)) {
+            return true;
+        }
+
+        // Custom local file should always be allowed
+        try{
+            new URL(source);
+        } catch (MalformedURLException e) {
+            return true;
+        }
+
+        // If source changed from previously downloaded source, allow update
+        var stateDescriptor = FcliDataHelper.readFile(
+                DESCRIPTOR_PATH,
+                ToolDefinitionsStateDescriptor.class,
+                false);
+
+        if (stateDescriptor == null || !StringUtils.equals(stateDescriptor.getSource(), source)) {
             return true;
         }
 
