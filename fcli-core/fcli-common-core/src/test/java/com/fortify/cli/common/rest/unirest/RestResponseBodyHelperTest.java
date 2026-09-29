@@ -15,7 +15,6 @@ package com.fortify.cli.common.rest.unirest;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -28,6 +27,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
@@ -89,7 +89,7 @@ class RestResponseBodyHelperTest {
         var result = RestResponseBodyHelper.saveToFile(unirest.get(url("/fpr")), dest, null);
 
         assertArrayEquals(ZIP_BYTES, Files.readAllBytes(dest));
-        assertEquals(dest.toAbsolutePath().normalize(), result.file());
+        assertEquals(dest.toAbsolutePath().normalize().toString(), result.file());
         assertEquals(ZIP_BYTES.length, result.size());
         assertEquals("application/octet-stream", result.contentType());
         assertEquals(200, result.status());
@@ -273,10 +273,14 @@ class RestResponseBodyHelperTest {
     }
 
     @Test
-    void recordUsesJsonNullForMissingContentType() {
-        var node = new RestResponseFileRecord(tempDir.resolve("x"), 1, null, 200).asObjectNode();
+    void recordSerializesPlainPathAndNullContentType() {
+        var file = tempDir.resolve("x").toString();
+        var node = RestResponseFileRecord.builder().file(file).size(1).status(200).build().asObjectNode();
+        assertEquals(List.of("file", "size", "contentType", "status"), node.properties().stream().map(Map.Entry::getKey).toList());
+        assertEquals(file, node.get("file").asText());
+        assertEquals(1, node.get("size").asLong());
         assertTrue(node.get("contentType").isNull());
-        assertNull(new RestResponseFileRecord(tempDir.resolve("x"), 1, null, 200).contentType());
+        assertEquals(200, node.get("status").asInt());
     }
 
     private void respond(HttpExchange exchange, int status, String contentType, byte[] body) throws IOException {

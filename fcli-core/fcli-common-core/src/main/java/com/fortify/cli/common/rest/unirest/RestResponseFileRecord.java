@@ -12,23 +12,15 @@
  */
 package com.fortify.cli.common.rest.unirest;
 
-import java.nio.file.Path;
-
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.json.JsonHelper;
 
-@Reflectable
-public record RestResponseFileRecord(Path file, long size, String contentType, int status) {
+import lombok.Builder;
+
+@Reflectable @Builder
+public record RestResponseFileRecord(String file, long size, String contentType, int status) {
     public ObjectNode asObjectNode() {
-        var result = JsonHelper.getObjectMapper().createObjectNode()
-                .put("file", file.toString())
-                .put("size", size);
-        if ( contentType==null ) {
-            result.putNull("contentType");
-        } else {
-            result.put("contentType", contentType);
-        }
-        return result.put("status", status);
+        return JsonHelper.getObjectMapper().valueToTree(this);
     }
 }

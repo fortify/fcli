@@ -73,7 +73,12 @@ public final class RestResponseBodyHelper {
             if ( !response.isSuccess() ) { throw new UnexpectedHttpResponseException(response); }
             if ( skipAccepted && response.getStatus()==HTTP_ACCEPTED ) { return null; }
             moveIntoPlace(temp, target);
-            return new RestResponseFileRecord(target, Files.size(target), getContentType(response), response.getStatus());
+            return RestResponseFileRecord.builder()
+                    .file(target.toString())
+                    .size(Files.size(target))
+                    .contentType(getContentType(response))
+                    .status(response.getStatus())
+                    .build();
         } catch ( IOException e ) {
             throw new FcliTechnicalException("Error saving response to "+target, e);
         } finally {
