@@ -102,7 +102,7 @@ public abstract class AbstractRestCallCommand extends AbstractOutputCommand impl
 
     @Override
     public boolean isSingular() {
-        return isResponseFileMode();
+        return false;
     }
     
     @Override

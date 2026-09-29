@@ -98,8 +98,9 @@ class AbstractRestCallCommandResponseModesTest {
         var output = run("/fpr", "--response-file="+dest, "-o", "json");
 
         assertArrayEquals(ZIP_BYTES, Files.readAllBytes(dest));
-        var record = JsonHelper.getObjectMapper().readTree(output);
-        if ( record.isArray() ) { record = record.get(0); }
+        var records = JsonHelper.getObjectMapper().readTree(output);
+        assertTrue(records.isArray() && records.size()==1, output);
+        var record = records.get(0);
         assertEquals(dest.toAbsolutePath().normalize().toString(), record.get("file").asText());
         assertEquals(ZIP_BYTES.length, record.get("size").asLong());
         assertEquals("application/octet-stream", record.get("contentType").asText());
