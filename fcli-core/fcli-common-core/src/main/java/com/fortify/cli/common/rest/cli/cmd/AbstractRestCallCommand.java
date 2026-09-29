@@ -48,7 +48,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Option;
-import picocli.CommandLine.ParameterException;
 import picocli.CommandLine.Parameters;
 
 /**
@@ -70,17 +69,14 @@ public abstract class AbstractRestCallCommand extends AbstractOutputCommand impl
     @Option(names="--no-paging", negatable = false, defaultValue = "false") 
     private boolean noPaging;
     
-    @ArgGroup(exclusive = true) private TransformArgGroup transform = new TransformArgGroup();
-    private static class TransformArgGroup {
+    @ArgGroup(exclusive = true) private ResponseHandlingArgGroup responseHandling = new ResponseHandlingArgGroup();
+    private static class ResponseHandlingArgGroup {
         @Option(names="--no-transform", negatable = false, defaultValue = "false") 
         private boolean noTransform;
     
         @Option(names={"-t", "--transform"}, paramLabel = "<expr>") 
         private String transformExpression;
-    }
-    
-    @ArgGroup(exclusive = true) private ResponseArgGroup response = new ResponseArgGroup();
-    private static class ResponseArgGroup {
+        
         @Option(names="--response-file", paramLabel = "<file>")
         private Path responseFile;
     }
@@ -108,9 +104,7 @@ public abstract class AbstractRestCallCommand extends AbstractOutputCommand impl
     @Override
     protected IObjectNodeProducer getObjectNodeProducer() {
         if ( isResponseFileMode() ) {
-            checkNotCombined("--response-file", "--transform", StringUtils.isNotBlank(transform.transformExpression));
-            checkNotCombined("--response-file", "--no-transform", transform.noTransform);
-            var record = RestResponseBodyHelper.saveToFile(prepareRequest(getUnirestInstance()), response.responseFile, null);
+            var record = RestResponseBodyHelper.saveToFile(prepareRequest(getUnirestInstance()), responseHandling.responseFile, null);
             return simpleObjectNodeProducerBuilder(ObjectNodeProducerApplyFrom.SPEC)
                     .source(record.asObjectNode()).build();
         }
@@ -145,22 +139,15 @@ public abstract class AbstractRestCallCommand extends AbstractOutputCommand impl
     }
     
     private boolean isResponseFileMode() {
-        return response.responseFile!=null;
-    }
-    
-    private void checkNotCombined(String modeOption, String otherOption, boolean otherOptionSpecified) {
-        if ( otherOptionSpecified ) {
-            throw new ParameterException(getCommandHelper().getCommandSpec().commandLine(),
-                    String.format("Option '%s' cannot be combined with '%s'", otherOption, modeOption));
-        }
+        return responseHandling.responseFile!=null;
     }
     
     @Override
     public final JsonNode transformInput(JsonNode input) {
         if ( isResponseFileMode() ) { return input; }
-        if ( StringUtils.isNotBlank(transform.transformExpression) ) {
-            input = JsonHelper.evaluateSpelExpression(input, transform.transformExpression, JsonNode.class);
-        } else if ( !transform.noTransform ) {
+        if ( StringUtils.isNotBlank(responseHandling.transformExpression) ) {
+            input = JsonHelper.evaluateSpelExpression(input, responseHandling.transformExpression, JsonNode.class);
+        } else if ( !responseHandling.noTransform ) {
             input = _transformInput(input);
         }
         return input;
@@ -168,7 +155,7 @@ public abstract class AbstractRestCallCommand extends AbstractOutputCommand impl
 
     @Override
     public final JsonNode transformRecord(JsonNode input) {
-        if ( !isResponseFileMode() && !transform.noTransform ) {
+        if ( !isResponseFileMode() && !responseHandling.noTransform ) {
             input = _transformRecord(input);
         }
         return input;

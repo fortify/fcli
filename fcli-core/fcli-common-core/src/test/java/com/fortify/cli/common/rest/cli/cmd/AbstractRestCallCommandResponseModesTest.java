@@ -120,7 +120,8 @@ class AbstractRestCallCommandResponseModesTest {
     void responseFileRejectsTransform() {
         var dest = tempDir.resolve("x");
         var e = assertThrows(ParameterException.class, () -> run("/fpr", "--response-file="+dest, "--transform=items"));
-        assertTrue(e.getMessage().contains("--transform") && e.getMessage().contains("--response-file"), e.getMessage());
+        assertTrue(e.getMessage().contains("--transform") && e.getMessage().contains("--response-file")
+                && e.getMessage().contains("mutually exclusive"), e.getMessage());
         assertEquals(0, requestCount.get());
         assertFalse(Files.exists(dest));
     }
@@ -129,7 +130,7 @@ class AbstractRestCallCommandResponseModesTest {
     void responseFileRejectsNoTransform() {
         var dest = tempDir.resolve("x");
         var e = assertThrows(ParameterException.class, () -> run("/fpr", "--response-file="+dest, "--no-transform"));
-        assertTrue(e.getMessage().contains("--no-transform"), e.getMessage());
+        assertTrue(e.getMessage().contains("--no-transform") && e.getMessage().contains("mutually exclusive"), e.getMessage());
         assertEquals(0, requestCount.get());
     }
 
