@@ -30,7 +30,8 @@ public enum Tool {
     BUGTRACKER_UTILITY(new ToolHelperBugTrackerUtility(), "bugtracker-utility", "fbtu"),
     VULN_EXPORTER(new ToolHelperVulnExporter(), "vuln-exporter", "fve"),
     DEBRICKED_CLI(new ToolHelperDebrickedCli(), "debricked-cli", "dcli"),
-    SOURCE_ANALYZER(new ToolHelperSourceAnalyzer(), "sourceanalyzer");
+    SOURCE_ANALYZER(new ToolHelperSourceAnalyzer(), "sourceanalyzer"), 
+    FORTIFY_AGENTIC_ANALYZER(new ToolHelperFortifyAgenticAnalyzer(), "fortifyaa", "faa");
     
     private static final Map<String, Tool> TOOL_NAME_MAP = new HashMap<>();
     private static final Map<String, Tool> TOOL_ALIAS_MAP = new HashMap<>();
@@ -264,6 +265,33 @@ public enum Tool {
         @Override
         public String getDefaultEnvPrefix() {
             return "SOURCEANALYZER";
+        }
+
+        @Override
+        public boolean requiresToolDefinitions() {
+            return false;
+        }
+    }
+
+    /**
+     * Helper implementation for fortify agentic analyzer (faa) tool.
+     */
+    private static final class ToolHelperFortifyAgenticAnalyzer implements IToolHelper {
+        private static final String TOOL_NAME = "fortify-agentic-analyzer";
+        
+        @Override
+        public String getToolName() {
+            return TOOL_NAME;
+        }
+        
+        @Override
+        public String getDefaultBinaryName() {
+            return PlatformHelper.isWindows() ? "fortifyaa.exe" : "fortifyaa";
+        }
+        
+        @Override
+        public String getDefaultEnvPrefix() {
+            return "FORTIFY_AGENTIC_ANALYZER";
         }
 
         @Override
