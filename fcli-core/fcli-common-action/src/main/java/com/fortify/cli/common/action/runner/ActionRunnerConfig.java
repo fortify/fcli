@@ -45,8 +45,6 @@ public class ActionRunnerConfig {
     @NonNull private final IProgressWriterI18n progressWriter;
     /** Action to run */
     @NonNull private final Action action;
-    private final boolean allowUnrestrictedFilePaths;
-    @Getter(lazy = true) private final ActionFilePathPolicy filePathPolicy = ActionFilePathPolicy.forCurrentDirectory(allowUnrestrictedFilePaths);
     /** Callback to handle validation errors */
     @NonNull private final Function<OptionsParseResult, RuntimeException> onValidationErrors;
     /** Action context configurers. Main purpose is to register request helpers on the context. */

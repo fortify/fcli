@@ -165,7 +165,7 @@ cli.options:
       uri: /api/v3/scans/${cli.scanId}/fpr
       query: { scanType: Static }
       response.type: file                 # auto (default) | text | file
-      response.file: out/scan-${cli.scanId}.fpr   # Must be in working dir unless --allow-unrestricted-file-paths
+      response.file: out/scan-${cli.scanId}.fpr   # Parent directory must exist
       on.success:
         - log.info: "Saved ${fpr.size} bytes to ${fpr.file}"   # ${fpr}: file, size, contentType, status
     status:                               # Keep plain-text response as a string

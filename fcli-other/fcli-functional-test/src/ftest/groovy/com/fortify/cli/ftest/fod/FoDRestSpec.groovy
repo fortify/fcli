@@ -54,7 +54,7 @@ class FoDRestSpec extends FcliBaseSpec {
     
     def "action.rest-call.response-types"() {
         def file = new File(tempDir, "tenants-action.json")
-        def args = "fod action run ${responseTypesActionPath} --progress=none --on-unsigned=ignore --on-invalid-version=ignore --allow-unrestricted-file-paths --file ${file.absolutePath}"
+        def args = "fod action run ${responseTypesActionPath} --progress=none --on-unsigned=ignore --on-invalid-version=ignore --file ${file.absolutePath}"
         when:
             def result = Fcli.run(args)
         then:

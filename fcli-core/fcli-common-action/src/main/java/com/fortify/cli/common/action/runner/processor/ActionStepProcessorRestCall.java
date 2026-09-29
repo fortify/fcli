@@ -201,7 +201,7 @@ public class ActionStepProcessorRestCall extends AbstractActionStepProcessor {
             if ( StringUtils.isBlank(responseFile) ) {
                 throw new FcliActionValidationException("response.file evaluates to an empty value", requestDescriptor);
             }
-            return ctx.getConfig().getFilePathPolicy().resolve(responseFile);
+            return Path.of(".").resolve(responseFile).toAbsolutePath().normalize();
         }
 
         private void checkUri(String uriString) {

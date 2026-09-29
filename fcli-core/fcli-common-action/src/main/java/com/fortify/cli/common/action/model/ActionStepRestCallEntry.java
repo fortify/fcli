@@ -127,9 +127,8 @@ public final class ActionStepRestCallEntry extends AbstractActionStepElement imp
     
     @JsonPropertyDescription("""
         Required SpEL template expression if 'response.type' is 'file', not allowed otherwise: File to which \
-        the response body is saved. The file must be located in the current working directory or one of its \
-        subdirectories, unless the action is run with the --allow-unrestricted-file-paths option. The parent \
-        directory must exist; an existing file is only replaced if the request succeeds.
+        the response body is saved. The parent directory must exist; an existing file is only replaced if the \
+        request succeeds.
         """)
     @JsonProperty(value = "response.file", required = false) private TemplateExpression responseFile;
     
