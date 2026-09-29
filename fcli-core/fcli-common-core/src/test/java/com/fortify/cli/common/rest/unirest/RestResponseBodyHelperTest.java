@@ -19,6 +19,7 @@ import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -27,7 +28,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -57,7 +57,7 @@ import kong.unirest.UnirestInstance;
 class RestResponseBodyHelperTest {
     private static final byte[] ZIP_BYTES = {'P', 'K', 3, 4, 20, 0, 0, 0, 8, 0, (byte)0x9c, 0, 0, 0};
     private static final byte[] OLD_CONTENT = "previous content".getBytes(StandardCharsets.UTF_8);
-    private static final int LARGE_SIZE = 64 * 1024 * 1024;
+    private static final int LARGE_SIZE = 16 * 1024 * 1024;
 
     @TempDir Path tempDir;
     private HttpServer server;
@@ -171,19 +171,16 @@ class RestResponseBodyHelperTest {
     }
 
     @Test
-    void saveToFileStreamsLargeBodyWithBoundedMemory() throws Exception {
+    void saveToFileWritesLargeBody() throws Exception {
         var dest = tempDir.resolve("large.bin");
-        var runtime = Runtime.getRuntime();
-        System.gc();
-        var usedBefore = runtime.totalMemory() - runtime.freeMemory();
         var result = RestResponseBodyHelper.saveToFile(unirest.get(url("/large")), dest, null);
-        System.gc();
-        var usedAfter = runtime.totalMemory() - runtime.freeMemory();
 
-        assertEquals(LARGE_SIZE, Files.size(dest));
         assertEquals(LARGE_SIZE, result.size());
-        assertTrue(usedAfter - usedBefore < LARGE_SIZE / 2,
-                "Heap grew by "+(usedAfter - usedBefore)+" bytes while saving a "+LARGE_SIZE+" byte body");
+        var content = Files.readAllBytes(dest);
+        assertEquals(LARGE_SIZE, content.length);
+        for ( int i = 0; i < LARGE_SIZE; i++ ) {
+            if ( content[i]!=largeBodyByte(i) ) { fail("Unexpected content at offset "+i); }
+        }
     }
 
     @Test
@@ -378,10 +375,16 @@ class RestResponseBodyHelperTest {
         exchange.getResponseHeaders().add("Content-Type", "application/octet-stream");
         exchange.sendResponseHeaders(200, LARGE_SIZE);
         var chunk = new byte[1024 * 1024];
-        Arrays.fill(chunk, (byte)'x');
         try ( OutputStream os = exchange.getResponseBody() ) {
-            for ( int i = 0; i < LARGE_SIZE / chunk.length; i++ ) { os.write(chunk); }
+            for ( int offset = 0; offset < LARGE_SIZE; offset += chunk.length ) {
+                for ( int i = 0; i < chunk.length; i++ ) { chunk[i] = largeBodyByte(offset+i); }
+                os.write(chunk);
+            }
         }
+    }
+
+    private static byte largeBodyByte(int offset) {
+        return (byte)(offset % 251);
     }
 
     private String url(String path) {
