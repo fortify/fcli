@@ -26,6 +26,7 @@ import com.fortify.cli.aviator.config.IAviatorLogger;
 import com.fortify.cli.aviator.ssc.helper.AviatorSSCTagDefs.TagDefinition;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.ssc._common.rest.ssc.SSCUrls;
+import com.fortify.cli.ssc.appversion.helper.SSCAppVersionHelper;
 
 import kong.unirest.GetRequest;
 import kong.unirest.UnirestInstance;
@@ -72,7 +73,7 @@ public final class AviatorSSCTagValidator {
         logger.progress("Status: Validating SSC custom tags for app version before uploading audited FPR...");
         List<String> warnings = new ArrayList<>();
         try {
-            ArrayNode assignedTags = fetchAssignedTags(unirest, versionId);
+            ArrayNode assignedTags = fetchCustomTags(unirest, versionId, false);
             if (assignedTags == null) {
                 warnings.add("WARN: Could not retrieve custom tags for this application version from SSC. "
                     + "Tag validation skipped — audit results may be silently dropped if 'fcli aviator ssc prepare' has not been run.");
@@ -112,38 +113,15 @@ public final class AviatorSSCTagValidator {
     }
 
     /**
-     * Returns the custom tags assigned to the application version.
+     * Returns custom tags for the application version.
+     * Uses {@link SSCAppVersionHelper#getCustomTagsRequest}. {@code includeAll} also
+     * returns built-in tags that are not assigned to the version.
      *
-     * @return the tag array, or {@code null} when SSC does not return one
-     */
-    private static ArrayNode fetchAssignedTags(UnirestInstance unirest, String versionId) {
-        return fetchCustomTags(unirest, versionId, false);
-    }
-
-    /**
-     * Returns assigned tags together with built-in tags that are not assigned to the version.
-     * A failed request returns {@code null} and leaves the assigned-tag result unchanged.
-     */
-    private static ArrayNode fetchIncludeAllTags(UnirestInstance unirest, String versionId) {
-        try {
-            return fetchCustomTags(unirest, versionId, true);
-        } catch (Exception e) {
-            LOG.debug("Could not retrieve custom tags with includeall=true for app version id={}: {}",
-                versionId, e.getMessage());
-            return null;
-        }
-    }
-
-    /**
-     * Loads custom tags for the application version.
-     *
-     * @param includeAll {@code true} to include built-in tags that are not assigned to the version
      * @return the tag array, or {@code null} when the response has no data array
      */
     private static ArrayNode fetchCustomTags(UnirestInstance unirest, String versionId, boolean includeAll) {
-        String url = SSCUrls.PROJECT_VERSION_CUSTOM_TAGS(versionId);
-        LOG.debug("Fetching custom tags for app version from SSC via {} includeall={}", url, includeAll);
-        GetRequest request = unirest.get(url).queryString("limit", "-1");
+        LOG.debug("Fetching custom tags for app version id={} includeall={}", versionId, includeAll);
+        GetRequest request = SSCAppVersionHelper.getCustomTagsRequest(unirest, versionId);
         if (includeAll) {
             request = request.queryString("includeall", "true");
         }
@@ -159,6 +137,8 @@ public final class AviatorSSCTagValidator {
     /**
      * Adds a warning for each Aviator tag that is neither assigned nor built-in.
      * The include-all list is read only after the assigned list is missing a tag.
+     * A failed include-all request leaves those tags unresolved. The assigned-tag
+     * request is not optional: its failure stops validation.
      * A tag that is still missing tells the user to enable Aviator when SSC already
      * publishes it as built-in, and to run prepare otherwise.
      */
@@ -177,7 +157,14 @@ public final class AviatorSSCTagValidator {
             return;
         }
 
-        ArrayNode includeAllTags = fetchIncludeAllTags(unirest, versionId);
+        ArrayNode includeAllTags;
+        try {
+            includeAllTags = fetchCustomTags(unirest, versionId, true);
+        } catch (Exception e) {
+            LOG.debug("Could not retrieve custom tags with includeall=true for app version id={}: {}",
+                versionId, e.getMessage());
+            includeAllTags = null;
+        }
         List<TagDefinition> unresolved = new ArrayList<>();
         for (TagDefinition tag : missing) {
             if (containsBuiltInTag(includeAllTags, tag)) {
