@@ -125,7 +125,19 @@ class FoDScanSpec extends FcliBaseSpec {
         then:
             def e = thrown(UnexpectedFcliResultException)
             e.result.stderr.any { it.contains("the entitlement has expired") }
-            e.result.stdout.first().replace(" ", "").equals("AssessmenttypeidEntitlementidEntitlementfrequencytypeReleaseidTechnologystackidTechnologystackLanguagelevelidLanguagelevelOSSAnalysisAuditpreferencetypeIncludethirdpartylibrariesUsesourcecontrolScanbinaryBsitokenApplicationReleaseMicroserviceAction")
+            verifyAll(e.result.stdout.first().replace(" ", "")) {
+                it.contains("Assessmenttypeid")
+                it.contains("Scanpolicy")
+                it.contains("ApplicationReleaseMicroserviceAction")
+            }
+    }
+
+    def "setup.sast-scan-help-shows-scan-policy"() {
+        def args = "fod sast-scan setup --help"
+        when:
+            def result = Fcli.run(args)
+        then:
+            result.stdout.any { it.contains("--scan-policy") }
     }
     
     def "get-config.sast-scan"() {
@@ -345,6 +357,7 @@ class FoDScanSpec extends FcliBaseSpec {
             verifyAll(result.stdout) {
                 it.any { it.contains("--in-progress-action") }
                 it.any { it.contains("--entitlement-preference") }
+                it.any { it.contains("--scan-policy") }
                 it.any { it.contains("DoNotStartScan") }
                 it.any { it.contains("CancelScanInProgress") }
                 it.any { it.contains("Queue") }

@@ -72,7 +72,7 @@ public class AviatorTokenDeleteCommand extends AbstractAviatorAdminSessionOutput
         ObjectMapper objectMapper = new ObjectMapper();
         ObjectNode deleteTokenNode = objectMapper.createObjectNode();
         deleteTokenNode.put("message", "Token deleted successfully");
-        LOG.info("Token '{}' deleted successfully for email: {}", tokenToDelete, email);
+        LOG.info("Token deleted successfully for email: {}", email);
         return deleteTokenNode;
     }
 

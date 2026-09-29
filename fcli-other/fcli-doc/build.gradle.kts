@@ -66,7 +66,8 @@ val fcliActionSchemaVersion = project.property("fcliActionSchemaVersion")
 val generateActionSchema = tasks.register<JavaExec>("generateActionSchema") {
     group = "documentation"
     description = "Generate fcli action JSON schema"
-    dependsOn(prepare)
+    // Only compiled classes are required for schema generation; avoid waiting for full build/test.
+    dependsOn("classes")
     inputs.property("projectVersion", project.version)
     inputs.property("schemaVersion", fcliActionSchemaVersion)
     outputs.dir(actionSchemaOutDir)
@@ -239,6 +240,12 @@ val asciiDoctorVersionedJekyll = registerAsciidoctorTaskHtml(
     "asciiDoctorVersionedJekyll", generateAsciiDocAll, ghPagesVersionedOutDir, true, asciiDocOutDir.get().asFile)
 val asciiDoctorStaticJekyll = registerAsciidoctorTaskHtml(
     "asciiDoctorStaticJekyll", generateActionSchema, ghPagesStaticOutDir, true, staticAsciiDocSrcDir.asFile)
+    .apply {
+        configure {
+            // prepare declares these output directories; keep dependency explicit for Gradle validation.
+            dependsOn(prepare)
+        }
+    }
 
 // CI docs conversions - versioned (not static), changes with each fcli version
 // Published alongside other versioned docs like action-development.html

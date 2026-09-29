@@ -32,4 +32,5 @@ public class FoDScanSastStartRequest {
     private String scanTool;
     private String scanToolVersion;
     private String notes;
+    private String sastScanPolicy;
 }

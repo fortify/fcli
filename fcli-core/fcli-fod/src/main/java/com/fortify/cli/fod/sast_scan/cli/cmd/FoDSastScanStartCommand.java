@@ -46,6 +46,8 @@ public class FoDSastScanStartCommand extends AbstractFoDScanStartCommand {
     private FoDEnums.InProgressScanActionType inProgressScanActionType;
     @Option(names = {"--entitlement-preference"}, descriptionKey = "fcli.fod.scan.entitlement-preference")
     private FoDEnums.EntitlementPreferenceType entitlementPreferenceType;
+    @Option(names = {"--scan-policy"})
+    private String scanPolicy;
     @Mixin private CommonOptionMixins.RequiredFile scanFileMixin;
 
     @Mixin private FoDRemediationScanPreferenceTypeMixins.OptionalOption remediationScanType;
@@ -55,7 +57,11 @@ public class FoDSastScanStartCommand extends AbstractFoDScanStartCommand {
     protected FoDScanDescriptor startScan(UnirestInstance unirest, FoDReleaseDescriptor releaseDescriptor) {
         String relId = releaseDescriptor.getReleaseId();
 
-        validateScanSetup(unirest, relId);
+        FoDScanConfigSastDescriptor currentSetup = validateScanSetup(unirest, relId);
+        String effectiveScanPolicy = FoDScanSastHelper.normalizeStartScanPolicy(scanPolicy);
+        if (effectiveScanPolicy == null) {
+            effectiveScanPolicy = FoDScanSastHelper.normalizeStartScanPolicy(currentSetup.getScanPolicy());
+        }
 
         FoDEnums.RemediationScanPreferenceType remediationPref = remediationScanType != null
                 ? remediationScanType.getRemediationScanPreferenceType() : null;
@@ -66,7 +72,8 @@ public class FoDSastScanStartCommand extends AbstractFoDScanStartCommand {
                 .scanMethodType("Other")
                 .notes(notes != null && !notes.isEmpty() ? notes : "")
                 .scanTool(FcliBuildProperties.INSTANCE.getFcliProjectName())
-                .scanToolVersion(FcliBuildProperties.INSTANCE.getFcliVersion());
+                .scanToolVersion(FcliBuildProperties.INSTANCE.getFcliVersion())
+                .sastScanPolicy(effectiveScanPolicy);
 
         try (IProgressWriter progressWriter = progressWriterFactory.create()) {
             if (useAdvanced) {
@@ -113,7 +120,7 @@ public class FoDSastScanStartCommand extends AbstractFoDScanStartCommand {
         return e instanceof RuntimeException ? (RuntimeException) e : new FcliSimpleException(e);
     }
 
-    private void validateScanSetup(UnirestInstance unirest, String relId) {
+    private FoDScanConfigSastDescriptor validateScanSetup(UnirestInstance unirest, String relId) {
         // get current setup and check if its valid
         FoDScanConfigSastDescriptor currentSetup = FoDScanSastHelper.getSetupDescriptor(unirest, relId);
         if (validateEntitlement) {
@@ -126,6 +133,7 @@ public class FoDSastScanStartCommand extends AbstractFoDScanStartCommand {
             throw new FcliSimpleException("The static scan configuration for release with id '" + relId +
                     "' has not been setup correctly - 'Technology Stack/Language Level' is missing or empty.");
         }
+        return currentSetup;
     }
 
 }
