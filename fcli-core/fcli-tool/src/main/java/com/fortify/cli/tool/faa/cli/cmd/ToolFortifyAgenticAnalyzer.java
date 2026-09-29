@@ -32,7 +32,7 @@ import picocli.CommandLine.Command;
     } 
 )
 public class ToolFortifyAgenticAnalyzer extends AbstractContainerCommand {
-    static final String TOOL_NAME = "fortify-agentic-analyzer";
-    static final String[] TOOL_ENV_VAR_PREFIXES = {"FORTIFY_AGENTIC_ANALYZER"};
+    static final String TOOL_NAME = "fortifyaa";
+    static final String[] TOOL_ENV_VAR_PREFIXES = {"FORTIFYAA"};
 
 }
