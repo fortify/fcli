@@ -20,6 +20,7 @@ import com.fortify.cli.tool.bugtracker_utility.cli.cmd.ToolBugTrackerUtilityComm
 import com.fortify.cli.tool.debricked_cli.cli.cmd.ToolDebrickedCliCommands;
 import com.fortify.cli.tool.definitions.cli.cmd.ToolDefinitionsCommands;
 import com.fortify.cli.tool.env.cli.cmd.ToolEnvCommands;
+import com.fortify.cli.tool.faa.cli.cmd.ToolFortifyAgenticAnalyzer;
 import com.fortify.cli.tool.fcli.cli.cmd.ToolFcliCommands;
 import com.fortify.cli.tool.fod_uploader.cli.cmd.ToolFoDUploaderCommands;
 import com.fortify.cli.tool.sc_client.cli.cmd.ToolSCClientCommands;
@@ -38,9 +39,10 @@ import picocli.CommandLine.Command;
             ToolDebrickedCliCommands.class,
             ToolFcliCommands.class,
             ToolFoDUploaderCommands.class,
+            ToolFortifyAgenticAnalyzer.class,
             ToolSCClientCommands.class,
             ToolSourceAnalyzerCommands.class,
-            ToolVulnExporterCommands.class, 
+            ToolVulnExporterCommands.class,
             ToolDefinitionsCommands.class
         }
 )
