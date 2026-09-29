@@ -107,7 +107,26 @@ class AviatorSSCTagValidatorTest {
 
         assertTrue(warnings.stream().anyMatch(w -> w.contains("Aviator prediction")));
         assertTrue(warnings.stream().anyMatch(w -> w.contains("Aviator status")));
+        assertTrue(warnings.stream().allMatch(w -> w.contains("fcli aviator ssc prepare")));
+        assertFalse(warnings.stream().anyMatch(w -> w.contains("Enable Aviator")));
         assertFalse(warnings.stream().anyMatch(w -> w.contains("customTagType AVIATOR")));
+    }
+
+    @Test
+    @DisplayName("SSC 26.2+ missing Aviator tags say to enable Aviator")
+    void ssc26MissingAviatorTagsSayEnableAviator() throws IOException {
+        server = new TestSscServer()
+            .ssc26OrLater()
+            .withAssigned(customTag(ANALYSIS_GUID, "Analysis"))
+            .withIncludeAll(customTag(ANALYSIS_GUID, "Analysis"));
+        unirest = newUnirest(server);
+
+        List<String> warnings = validate();
+
+        assertTrue(warnings.stream().anyMatch(w -> w.contains("Aviator prediction")));
+        assertTrue(warnings.stream().anyMatch(w -> w.contains("Aviator status")));
+        assertTrue(warnings.stream().allMatch(w -> w.contains("Enable Aviator in SSC")));
+        assertFalse(warnings.stream().anyMatch(w -> w.contains("fcli aviator ssc prepare")));
     }
 
     @Test
@@ -141,6 +160,8 @@ class AviatorSSCTagValidatorTest {
 
         assertTrue(warnings.stream().anyMatch(w -> w.contains("Aviator prediction")));
         assertTrue(warnings.stream().anyMatch(w -> w.contains("Aviator status")));
+        assertTrue(warnings.stream().allMatch(w -> w.contains("fcli aviator ssc prepare")));
+        assertFalse(warnings.stream().anyMatch(w -> w.contains("Enable Aviator")));
         assertFalse(warnings.stream().anyMatch(w -> w.contains("Pre-upload tag validation failed")));
     }
 
@@ -184,13 +205,20 @@ class AviatorSSCTagValidatorTest {
         private final ArrayNode assigned = JsonHelper.getObjectMapper().createArrayNode();
         private final ArrayNode includeAll = JsonHelper.getObjectMapper().createArrayNode();
         private boolean failIncludeAll;
+        private boolean ssc26OrLater;
         private int assignedRequests;
         private int includeAllRequests;
 
         private TestSscServer() throws IOException {
             this.server = HttpServer.create(new InetSocketAddress(0), 0);
             server.createContext("/api/v1/projectVersions/" + VERSION_ID + "/customTags", this::handleCustomTags);
+            server.createContext("/api/v1/internalCustomTags", this::handleInternalCustomTags);
             server.start();
+        }
+
+        private TestSscServer ssc26OrLater() {
+            this.ssc26OrLater = true;
+            return this;
         }
 
         private String getBaseUrl() {
@@ -216,6 +244,18 @@ class AviatorSSCTagValidatorTest {
         private TestSscServer failIncludeAll() {
             this.failIncludeAll = true;
             return this;
+        }
+
+        private void handleInternalCustomTags(HttpExchange exchange) throws IOException {
+            if (!ssc26OrLater) {
+                byte[] body = "{}".getBytes(StandardCharsets.UTF_8);
+                exchange.sendResponseHeaders(404, body.length);
+                try (OutputStream outputStream = exchange.getResponseBody()) {
+                    outputStream.write(body);
+                }
+                return;
+            }
+            writeJson(exchange, JsonHelper.getObjectMapper().createArrayNode());
         }
 
         private void handleCustomTags(HttpExchange exchange) throws IOException {

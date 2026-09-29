@@ -167,7 +167,9 @@ public final class AviatorSSCTagValidator {
      * returns it with {@code customTagType AVIATOR}: those built-in tags are not
      * version associations. A {@code CUSTOM} tag that appears only via
      * {@code includeall} is still reported missing, so an unassigned tag on
-     * older SSC keeps the existing warning.
+     * older SSC keeps the prepare warning. On SSC 26.2 and later the same
+     * missing tag tells the user to enable Aviator instead, because prepare
+     * does not create those built-in tags.
      */
     private static void validateAviatorCustomTags(ArrayNode assignedTags, UnirestInstance unirest,
             String versionId, List<String> warnings) {
@@ -184,28 +186,62 @@ public final class AviatorSSCTagValidator {
         }
 
         ArrayNode includeAllTags = fetchIncludeAllCustomTags(unirest, versionId);
-        if (!predictionAssigned) {
-            acceptBuiltInOrWarn(includeAllTags, AviatorSSCTagDefs.AVIATOR_PREDICTION_TAG, warnings);
+        boolean predictionOk = predictionAssigned
+            || acceptBuiltIn(includeAllTags, AviatorSSCTagDefs.AVIATOR_PREDICTION_TAG);
+        boolean statusOk = statusAssigned
+            || acceptBuiltIn(includeAllTags, AviatorSSCTagDefs.AVIATOR_STATUS_TAG);
+        if (predictionOk && statusOk) {
+            return;
         }
-        if (!statusAssigned) {
-            acceptBuiltInOrWarn(includeAllTags, AviatorSSCTagDefs.AVIATOR_STATUS_TAG, warnings);
+
+        boolean ssc26OrLater = isSsc26OrLater(unirest);
+        if (!predictionOk) {
+            warnings.add(missingAviatorTagWarning(AviatorSSCTagDefs.AVIATOR_PREDICTION_TAG, ssc26OrLater));
+        }
+        if (!statusOk) {
+            warnings.add(missingAviatorTagWarning(AviatorSSCTagDefs.AVIATOR_STATUS_TAG, ssc26OrLater));
         }
     }
 
-    private static void acceptBuiltInOrWarn(ArrayNode includeAllTags, AviatorSSCTagDefs.TagDefinition tagDef,
-            List<String> warnings) {
-        if (isBuiltInAviatorTag(includeAllTags, tagDef)) {
-            LOG.info("Custom tag '{}' (GUID: {}) is a built-in Aviator tag (customTagType AVIATOR) — OK.",
-                tagDef.getName(), tagDef.getGuid());
-            return;
+    private static boolean acceptBuiltIn(ArrayNode includeAllTags, AviatorSSCTagDefs.TagDefinition tagDef) {
+        if (!isBuiltInAviatorTag(includeAllTags, tagDef)) {
+            return false;
         }
+        LOG.info("Custom tag '{}' (GUID: {}) is a built-in Aviator tag (customTagType AVIATOR) — OK.",
+            tagDef.getName(), tagDef.getGuid());
+        return true;
+    }
+
+    /**
+     * SSC 26.2 added {@code /internalCustomTags} for built-in Aviator tags.
+     * A data array means this server is 26.2 or later even when Aviator is
+     * disabled and the tags themselves are absent. Older SSC does not have
+     * the endpoint. A failed call stays on the prepare warning.
+     */
+    private static boolean isSsc26OrLater(UnirestInstance unirest) {
+        try {
+            LOG.debug("Checking /internalCustomTags to distinguish SSC 26.2+ from older SSC");
+            JsonNode body = unirest.get(SSCUrls.INTERNAL_CUSTOM_TAGS).asObject(JsonNode.class).getBody();
+            JsonNode data = body == null ? null : body.get("data");
+            boolean present = data != null && data.isArray();
+            LOG.debug("SSC /internalCustomTags present={}", present);
+            return present;
+        } catch (Exception e) {
+            LOG.debug("Could not query /internalCustomTags (treating as older than SSC 26.2): {}", e.getMessage());
+            return false;
+        }
+    }
+
+    private static String missingAviatorTagWarning(AviatorSSCTagDefs.TagDefinition tagDef, boolean ssc26OrLater) {
+        String resolution = ssc26OrLater
+            ? "Enable Aviator in SSC under Administration -> Configuration -> AI Assistant -> Aviator."
+            : "Run 'fcli aviator ssc prepare' to resolve this.";
         String msg = String.format(
             "WARN: Custom tag '%s' (GUID: %s) is not associated with this application version. "
-                + "Audit results for this tag will not be visible in SSC. "
-                + "Run 'fcli aviator ssc prepare' to resolve this.",
-            tagDef.getName(), tagDef.getGuid());
+                + "Audit results for this tag will not be visible in SSC. %s",
+            tagDef.getName(), tagDef.getGuid(), resolution);
         LOG.warn(msg);
-        warnings.add(msg);
+        return msg;
     }
 
     private static void logTagAssociated(AviatorSSCTagDefs.TagDefinition tagDef) {
