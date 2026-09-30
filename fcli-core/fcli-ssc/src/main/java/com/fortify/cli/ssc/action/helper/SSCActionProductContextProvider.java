@@ -14,7 +14,7 @@ package com.fortify.cli.ssc.action.helper;
 
 import java.util.List;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.common.action.model.ActionStepRestCallEntry.ActionStepRestCallResponseType;
 import com.fortify.cli.common.action.runner.ActionRunnerContextLocal;
 import com.fortify.cli.common.action.runner.IActionProductContextProvider;
 import com.fortify.cli.common.action.runner.processor.IActionRequestHelper.BasicActionRequestHelper;
@@ -30,7 +30,6 @@ import com.fortify.cli.ssc._common.rest.ssc.helper.SSCProductHelper;
 import com.fortify.cli.ssc._common.session.helper.SSCAndScanCentralSessionDescriptor;
 import com.fortify.cli.ssc._common.session.helper.SSCAndScanCentralSessionHelper;
 
-import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
 
 public class SSCActionProductContextProvider implements IActionProductContextProvider {
@@ -79,29 +78,24 @@ public class SSCActionProductContextProvider implements IActionProductContextPro
                 u -> SSCAndScanCentralUnirestHelper.configureScDastControllerUnirestInstance(u, descriptor));
     }
 
-    private static final class SSCActionRequestHelper extends BasicActionRequestHelper {
+    // Package-private for testing
+    static final class SSCActionRequestHelper extends BasicActionRequestHelper {
         public SSCActionRequestHelper(IUnirestInstanceSupplier unirestInstanceSupplier, IProductHelper productHelper) {
             super(unirestInstanceSupplier, productHelper);
         }
 
         @Override
         public void executeSimpleRequests(List<ActionRequestDescriptor> requestDescriptors) {
-            if (requestDescriptors.size() == 1) {
-                var rd = requestDescriptors.get(0);
-                createRequest(rd).asObject(JsonNode.class)
-                        .ifSuccess(r -> rd.getResponseConsumer().accept(r.getBody()));
+            // Bulk responses are JSON-only; if any request uses a different response type, all requests are
+            // executed individually to preserve declaration order
+            var allJson = requestDescriptors.stream().allMatch(rd -> rd.getResponseType()==ActionStepRestCallResponseType.json);
+            if ( !allJson || requestDescriptors.size() == 1 ) {
+                requestDescriptors.forEach(rd -> executeSingleRequest(getUnirestInstance(), rd));
             } else {
                 var bulkRequestBuilder = new SSCBulkRequestBuilder();
-                requestDescriptors.forEach(r -> bulkRequestBuilder.request(createRequest(r), r.getResponseConsumer()));
+                requestDescriptors.forEach(r -> bulkRequestBuilder.request(createRequest(getUnirestInstance(), r), r.getResponseConsumer()));
                 bulkRequestBuilder.execute(getUnirestInstance());
             }
-        }
-
-        private HttpRequest<?> createRequest(ActionRequestDescriptor requestDescriptor) {
-            var request = getUnirestInstance().request(requestDescriptor.getMethod(), requestDescriptor.getUri())
-                    .queryString(requestDescriptor.getQueryParams());
-            var body = requestDescriptor.getBody();
-            return body == null ? request : request.body(body);
         }
     }
 }
