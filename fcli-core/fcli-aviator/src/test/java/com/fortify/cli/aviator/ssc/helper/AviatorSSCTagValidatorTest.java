@@ -42,8 +42,9 @@ import kong.unirest.UnirestInstance;
 
 /**
  * Pre-upload checks for Aviator prediction, Aviator status, and Analysis values.
- * Assigned tags pass. Built-in Aviator tags returned with {@code includeall=true} pass.
- * A missing tag uses the internal catalog to choose enable-Aviator or prepare guidance.
+ * One {@code includeall=true} response supplies assigned {@code CUSTOM} tags and built-in
+ * {@code AVIATOR} tags. A missing tag uses the internal catalog to choose enable-Aviator
+ * or prepare guidance.
  */
 class AviatorSSCTagValidatorTest {
 
@@ -64,26 +65,26 @@ class AviatorSSCTagValidatorTest {
     }
 
     @Test
-    @DisplayName("assigned CUSTOM Aviator tags pass without includeall")
+    @DisplayName("assigned CUSTOM Aviator tags in the includeall response pass")
     void assignedCustomTagsDoNotWarn() throws IOException {
         server = new TestSscServer()
-            .withAssigned(customTag(AviatorSSCTagDefs.AVIATOR_PREDICTION_TAG.getGuid(), "Aviator prediction"),
+            .withTags(customTag(AviatorSSCTagDefs.AVIATOR_PREDICTION_TAG.getGuid(), "Aviator prediction"),
                 customTag(AviatorSSCTagDefs.AVIATOR_STATUS_TAG.getGuid(), "Aviator status"));
         unirest = newUnirest(server);
 
         List<String> warnings = validate();
 
         assertTrue(warnings.isEmpty());
-        assertTrue(server.assignedRequests > 0);
-        assertTrue(server.includeAllRequests == 0);
+        assertTrue(server.includeAllRequests == 1);
+        assertTrue(server.plainRequests == 0);
+        assertTrue(server.internalCatalogRequests == 0);
     }
 
     @Test
-    @DisplayName("built-in AVIATOR tags returned only by includeall do not warn")
-    void builtInAviatorTagsOnIncludeAllDoNotWarn() throws IOException {
+    @DisplayName("built-in AVIATOR tags in the includeall response do not warn")
+    void builtInAviatorTagsDoNotWarn() throws IOException {
         server = new TestSscServer()
-            .withAssigned(customTag(ANALYSIS_GUID, "Analysis"))
-            .withIncludeAll(
+            .withTags(
                 customTag(ANALYSIS_GUID, "Analysis"),
                 aviatorTag(AviatorSSCTagDefs.AVIATOR_PREDICTION_TAG.getGuid(), "Aviator prediction"),
                 aviatorTag(AviatorSSCTagDefs.AVIATOR_STATUS_TAG.getGuid(), "Aviator status"));
@@ -92,27 +93,9 @@ class AviatorSSCTagValidatorTest {
         List<String> warnings = validate();
 
         assertTrue(warnings.isEmpty(), warnings.toString());
-        assertTrue(server.includeAllRequests > 0);
-    }
-
-    @Test
-    @DisplayName("CUSTOM tags visible only through includeall still warn")
-    void unassignedCustomTagsStillWarn() throws IOException {
-        server = new TestSscServer()
-            .withAssigned(customTag(ANALYSIS_GUID, "Analysis"))
-            .withIncludeAll(
-                customTag(ANALYSIS_GUID, "Analysis"),
-                customTag(AviatorSSCTagDefs.AVIATOR_PREDICTION_TAG.getGuid(), "Aviator prediction"),
-                customTag(AviatorSSCTagDefs.AVIATOR_STATUS_TAG.getGuid(), "Aviator status"));
-        unirest = newUnirest(server);
-
-        List<String> warnings = validate();
-
-        assertTrue(warnings.stream().anyMatch(w -> w.contains("Aviator prediction")));
-        assertTrue(warnings.stream().anyMatch(w -> w.contains("Aviator status")));
-        assertTrue(warnings.stream().allMatch(w -> w.contains("fcli aviator ssc prepare")));
-        assertFalse(warnings.stream().anyMatch(w -> w.contains("Enable Aviator")));
-        assertFalse(warnings.stream().anyMatch(w -> w.contains("customTagType AVIATOR")));
+        assertTrue(server.includeAllRequests == 1);
+        assertTrue(server.plainRequests == 0);
+        assertTrue(server.internalCatalogRequests == 0);
     }
 
     @Test
@@ -120,8 +103,7 @@ class AviatorSSCTagValidatorTest {
     void ssc26MissingAviatorTagsSayEnableAviator() throws IOException {
         server = new TestSscServer()
             .withBuiltInAviatorCatalog()
-            .withAssigned(customTag(ANALYSIS_GUID, "Analysis"))
-            .withIncludeAll(customTag(ANALYSIS_GUID, "Analysis"));
+            .withTags(customTag(ANALYSIS_GUID, "Analysis"));
         unirest = newUnirest(server);
 
         List<String> warnings = validate();
@@ -130,6 +112,8 @@ class AviatorSSCTagValidatorTest {
         assertTrue(warnings.stream().anyMatch(w -> w.contains("Aviator status")));
         assertTrue(warnings.stream().allMatch(w -> w.contains("Enable Aviator in SSC")));
         assertFalse(warnings.stream().anyMatch(w -> w.contains("fcli aviator ssc prepare")));
+        assertTrue(server.includeAllRequests == 1);
+        assertTrue(server.plainRequests == 0);
     }
 
     @Test
@@ -137,8 +121,7 @@ class AviatorSSCTagValidatorTest {
     void internalCatalogWithoutAviatorTagsKeepsPrepare() throws IOException {
         server = new TestSscServer()
             .withInternalCatalog(customTag(ANALYSIS_GUID, "Analysis"))
-            .withAssigned(customTag(ANALYSIS_GUID, "Analysis"))
-            .withIncludeAll(customTag(ANALYSIS_GUID, "Analysis"));
+            .withTags(customTag(ANALYSIS_GUID, "Analysis"));
         unirest = newUnirest(server);
 
         List<String> warnings = validate();
@@ -147,15 +130,31 @@ class AviatorSSCTagValidatorTest {
         assertTrue(warnings.stream().anyMatch(w -> w.contains("Aviator status")));
         assertTrue(warnings.stream().allMatch(w -> w.contains("fcli aviator ssc prepare")));
         assertFalse(warnings.stream().anyMatch(w -> w.contains("Enable Aviator")));
+        assertTrue(server.plainRequests == 0);
     }
 
     @Test
-    @DisplayName("Analysis stays on the assigned list when includeall contains it")
-    void analysisTagUsesAssignedList() throws IOException {
+    @DisplayName("Analysis in the includeall response is accepted")
+    void analysisTagInIncludeAllDoesNotWarn() throws IOException {
         server = new TestSscServer()
-            .withAssigned()
-            .withIncludeAll(
+            .withTags(
                 customTag(ANALYSIS_GUID, "Analysis"),
+                aviatorTag(AviatorSSCTagDefs.AVIATOR_PREDICTION_TAG.getGuid(), "Aviator prediction"),
+                aviatorTag(AviatorSSCTagDefs.AVIATOR_STATUS_TAG.getGuid(), "Aviator status"));
+        unirest = newUnirest(server);
+
+        List<String> warnings = validate(ANALYSIS_GUID, Set.of("Not an Issue"));
+
+        assertTrue(warnings.isEmpty(), warnings.toString());
+        assertTrue(server.includeAllRequests == 1);
+        assertTrue(server.plainRequests == 0);
+    }
+
+    @Test
+    @DisplayName("missing Analysis tag warns while built-in Aviator tags pass")
+    void missingAnalysisTagWarns() throws IOException {
+        server = new TestSscServer()
+            .withTags(
                 aviatorTag(AviatorSSCTagDefs.AVIATOR_PREDICTION_TAG.getGuid(), "Aviator prediction"),
                 aviatorTag(AviatorSSCTagDefs.AVIATOR_STATUS_TAG.getGuid(), "Aviator status"));
         unirest = newUnirest(server);
@@ -165,23 +164,22 @@ class AviatorSSCTagValidatorTest {
         assertTrue(warnings.stream().anyMatch(w -> w.contains("Analysis tag")));
         assertFalse(warnings.stream().anyMatch(w -> w.contains("Aviator prediction")));
         assertFalse(warnings.stream().anyMatch(w -> w.contains("Aviator status")));
+        assertTrue(server.plainRequests == 0);
     }
 
     @Test
-    @DisplayName("includeall failure keeps the assigned-tag warning")
-    void includeAllFailureKeepsAssignedWarning() throws IOException {
-        server = new TestSscServer()
-            .withAssigned(customTag(ANALYSIS_GUID, "Analysis"))
-            .failIncludeAll();
+    @DisplayName("includeall failure reports that validation failed")
+    void includeAllFailureReportsValidationFailed() throws IOException {
+        server = new TestSscServer().failIncludeAll();
         unirest = newUnirest(server);
 
         List<String> warnings = validate();
 
-        assertTrue(warnings.stream().anyMatch(w -> w.contains("Aviator prediction")));
-        assertTrue(warnings.stream().anyMatch(w -> w.contains("Aviator status")));
-        assertTrue(warnings.stream().allMatch(w -> w.contains("fcli aviator ssc prepare")));
+        assertTrue(warnings.stream().anyMatch(w -> w.contains("Pre-upload tag validation failed")));
+        assertFalse(warnings.stream().anyMatch(w -> w.contains("fcli aviator ssc prepare")));
         assertFalse(warnings.stream().anyMatch(w -> w.contains("Enable Aviator")));
-        assertFalse(warnings.stream().anyMatch(w -> w.contains("Pre-upload tag validation failed")));
+        assertTrue(server.includeAllRequests == 1);
+        assertTrue(server.plainRequests == 0);
     }
 
     private List<String> validate() {
@@ -232,13 +230,13 @@ class AviatorSSCTagValidatorTest {
 
     private static final class TestSscServer implements AutoCloseable {
         private final HttpServer server;
-        private final ArrayNode assigned = JsonHelper.getObjectMapper().createArrayNode();
-        private final ArrayNode includeAll = JsonHelper.getObjectMapper().createArrayNode();
+        private final ArrayNode tags = JsonHelper.getObjectMapper().createArrayNode();
         private final ArrayNode internalCatalog = JsonHelper.getObjectMapper().createArrayNode();
         private boolean failIncludeAll;
         private boolean internalCatalogPresent;
-        private int assignedRequests;
         private int includeAllRequests;
+        private int plainRequests;
+        private int internalCatalogRequests;
 
         private TestSscServer() throws IOException {
             this.server = HttpServer.create(new InetSocketAddress(0), 0);
@@ -266,18 +264,10 @@ class AviatorSSCTagValidatorTest {
             return "http://127.0.0.1:" + server.getAddress().getPort();
         }
 
-        private TestSscServer withAssigned(ObjectNode... tags) {
-            assigned.removeAll();
-            for (ObjectNode tag : tags) {
-                assigned.add(tag);
-            }
-            return this;
-        }
-
-        private TestSscServer withIncludeAll(ObjectNode... tags) {
-            includeAll.removeAll();
-            for (ObjectNode tag : tags) {
-                includeAll.add(tag);
+        private TestSscServer withTags(ObjectNode... versionTags) {
+            tags.removeAll();
+            for (ObjectNode tag : versionTags) {
+                tags.add(tag);
             }
             return this;
         }
@@ -288,6 +278,7 @@ class AviatorSSCTagValidatorTest {
         }
 
         private void handleInternalCustomTags(HttpExchange exchange) throws IOException {
+            internalCatalogRequests++;
             if (!internalCatalogPresent) {
                 byte[] body = "{}".getBytes(StandardCharsets.UTF_8);
                 exchange.sendResponseHeaders(404, body.length);
@@ -312,11 +303,11 @@ class AviatorSSCTagValidatorTest {
                     }
                     return;
                 }
-                writeJson(exchange, includeAll);
+                writeJson(exchange, tags);
                 return;
             }
-            assignedRequests++;
-            writeJson(exchange, assigned);
+            plainRequests++;
+            writeJson(exchange, JsonHelper.getObjectMapper().createArrayNode());
         }
 
         private void writeJson(HttpExchange exchange, ArrayNode data) throws IOException {

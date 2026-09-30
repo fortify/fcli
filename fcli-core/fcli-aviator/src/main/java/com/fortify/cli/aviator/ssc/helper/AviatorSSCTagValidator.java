@@ -34,10 +34,11 @@ import kong.unirest.UnirestInstance;
 /**
  * Checks SSC custom tags before an audited FPR is uploaded.
  *
- * <p>Aviator prediction and Aviator status are accepted when the application version
- * has them assigned, or when SSC returns them as built-in Aviator tags. The Analysis
- * tag, when the audit writes to it, must be assigned and must already contain the
- * mapped values. Each problem is reported as a warning. Validation does not stop the upload.
+ * <p>One {@code includeall=true} response supplies the tags. An assigned tag has type
+ * {@code CUSTOM}. A built-in Aviator tag has type {@code AVIATOR}. Either one makes
+ * Aviator prediction and Aviator status available. The Analysis tag, when the audit
+ * writes to it, must be in that response and must already contain the mapped values.
+ * Each problem is reported as a warning. Validation does not stop the upload.
  */
 public final class AviatorSSCTagValidator {
 
@@ -73,18 +74,18 @@ public final class AviatorSSCTagValidator {
         logger.progress("Status: Validating SSC custom tags for app version before uploading audited FPR...");
         List<String> warnings = new ArrayList<>();
         try {
-            ArrayNode assignedTags = fetchCustomTags(unirest, versionId, false);
-            if (assignedTags == null) {
+            ArrayNode tags = fetchCustomTags(unirest, versionId);
+            if (tags == null) {
                 warnings.add("WARN: Could not retrieve custom tags for this application version from SSC. "
                     + "Tag validation skipped — audit results may be silently dropped if 'fcli aviator ssc prepare' has not been run.");
                 emitWarnings(warnings, logger);
                 return warnings;
             }
-            LOG.info("Fetched {} custom tags for app version id={} from SSC.", assignedTags.size(), versionId);
-            LOG.debug("Version custom tags: {}", assignedTags);
+            LOG.info("Fetched {} custom tags for app version id={} from SSC.", tags.size(), versionId);
+            LOG.debug("Version custom tags: {}", tags);
 
-            validateAviatorTags(assignedTags, unirest, versionId, warnings);
-            validateAnalysisTag(assignedTags, unirest, analysisTagId, analysisTagValues, warnings);
+            validateAviatorTags(tags, unirest, warnings);
+            validateAnalysisTag(tags, unirest, analysisTagId, analysisTagValues, warnings);
 
             if (warnings.isEmpty()) {
                 LOG.info("Pre-upload tag validation passed — all required tags and values are present on this app version.");
@@ -113,41 +114,36 @@ public final class AviatorSSCTagValidator {
     }
 
     /**
-     * Returns custom tags for the application version.
-     * Uses {@link SSCAppVersionHelper#getCustomTagsRequest}. {@code includeAll} also
-     * returns built-in tags that are not assigned to the version.
+     * Returns the application version's custom tags, including built-in tags.
+     * Uses {@link SSCAppVersionHelper#getCustomTagsRequest} with {@code includeall=true}.
+     * That response contains assigned {@code CUSTOM} tags and internal tags such as Aviator.
      *
      * @return the tag array, or {@code null} when the response has no data array
      */
-    private static ArrayNode fetchCustomTags(UnirestInstance unirest, String versionId, boolean includeAll) {
-        LOG.debug("Fetching custom tags for app version id={} includeall={}", versionId, includeAll);
-        GetRequest request = SSCAppVersionHelper.getCustomTagsRequest(unirest, versionId);
-        if (includeAll) {
-            request = request.queryString("includeall", "true");
-        }
+    private static ArrayNode fetchCustomTags(UnirestInstance unirest, String versionId) {
+        LOG.debug("Fetching custom tags for app version id={} includeall=true", versionId);
+        GetRequest request = SSCAppVersionHelper.getCustomTagsRequest(unirest, versionId)
+            .queryString("includeall", "true");
         JsonNode body = request.asObject(JsonNode.class).getBody();
         LOG.debug("SSC version custom tags response body: {}", body);
         ArrayNode tags = dataArray(body);
         if (tags == null) {
-            LOG.debug("SSC version custom tags response has no data array. includeall={}", includeAll);
+            LOG.debug("SSC version custom tags response has no data array.");
         }
         return tags;
     }
 
     /**
-     * Adds a warning for each Aviator tag that is neither assigned nor built-in.
-     * The include-all list is read only after the assigned list is missing a tag.
-     * A failed include-all request leaves those tags unresolved. The assigned-tag
-     * request is not optional: its failure stops validation.
-     * A tag that is still missing tells the user to enable Aviator when SSC already
-     * publishes it as built-in, and to run prepare otherwise.
+     * Adds a warning for each Aviator tag missing from {@code tags}.
+     * A {@code CUSTOM} entry is assigned to the version. An {@code AVIATOR} entry is built-in.
+     * Either one is enough. A missing tag tells the user to enable Aviator when SSC publishes
+     * that tag as built-in, and to run prepare otherwise.
      */
-    private static void validateAviatorTags(ArrayNode assignedTags, UnirestInstance unirest,
-            String versionId, List<String> warnings) {
+    private static void validateAviatorTags(ArrayNode tags, UnirestInstance unirest, List<String> warnings) {
         List<TagDefinition> missing = new ArrayList<>();
         for (TagDefinition tag : AVIATOR_TAGS) {
-            if (containsGuid(assignedTags, tag.getGuid())) {
-                LOG.info("Custom tag '{}' (GUID: {}) is associated with this app version — OK.",
+            if (containsGuid(tags, tag.getGuid())) {
+                LOG.info("Custom tag '{}' (GUID: {}) is available on this app version — OK.",
                     tag.getName(), tag.getGuid());
             } else {
                 missing.add(tag);
@@ -156,30 +152,8 @@ public final class AviatorSSCTagValidator {
         if (missing.isEmpty()) {
             return;
         }
-
-        ArrayNode includeAllTags;
-        try {
-            includeAllTags = fetchCustomTags(unirest, versionId, true);
-        } catch (Exception e) {
-            LOG.debug("Could not retrieve custom tags with includeall=true for app version id={}: {}",
-                versionId, e.getMessage());
-            includeAllTags = null;
-        }
-        List<TagDefinition> unresolved = new ArrayList<>();
-        for (TagDefinition tag : missing) {
-            if (containsBuiltInTag(includeAllTags, tag)) {
-                LOG.info("Custom tag '{}' (GUID: {}) is a built-in Aviator tag (customTagType AVIATOR) — OK.",
-                    tag.getName(), tag.getGuid());
-            } else {
-                unresolved.add(tag);
-            }
-        }
-        if (unresolved.isEmpty()) {
-            return;
-        }
-
         String resolution = publishesBuiltInAviatorTags(unirest) ? ENABLE_AVIATOR : RUN_PREPARE;
-        for (TagDefinition tag : unresolved) {
+        for (TagDefinition tag : missing) {
             warnings.add(missingTagWarning(tag, resolution));
         }
     }
@@ -201,13 +175,6 @@ public final class AviatorSSCTagValidator {
             LOG.debug("Could not query /internalCustomTags: {}", e.getMessage());
             return false;
         }
-    }
-
-    /**
-     * Returns whether {@code tags} contains {@code tagDef} with custom tag type {@code AVIATOR}.
-     */
-    private static boolean containsBuiltInTag(ArrayNode tags, TagDefinition tagDef) {
-        return tags != null && JsonHelper.stream(tags).anyMatch(tag -> isBuiltInTag(tag, tagDef));
     }
 
     /**
@@ -240,9 +207,9 @@ public final class AviatorSSCTagValidator {
     /**
      * Adds a warning when the Analysis tag is missing, or when a list-valued Analysis tag
      * does not contain the values the audit will write. Does nothing when no Analysis tag
-     * or values were requested. Only tags assigned to the version are considered.
+     * or values were requested. An Analysis tag in {@code tags} is assigned to the version.
      */
-    private static void validateAnalysisTag(ArrayNode assignedTags, UnirestInstance unirest,
+    private static void validateAnalysisTag(ArrayNode tags, UnirestInstance unirest,
             String analysisTagId, Set<String> requiredValues, List<String> warnings) {
         LOG.debug("Validating Analysis tag values. analysisTagId='{}', requiredValues={}", analysisTagId, requiredValues);
         if (analysisTagId == null || analysisTagId.isBlank() || requiredValues == null || requiredValues.isEmpty()) {
@@ -250,10 +217,10 @@ public final class AviatorSSCTagValidator {
             return;
         }
 
-        JsonNode analysisTag = findByGuid(assignedTags, analysisTagId);
+        JsonNode analysisTag = findByGuid(tags, analysisTagId);
         if (analysisTag == null) {
             LOG.debug("Analysis tag with GUID '{}' not found in app version custom tags. Available GUIDs: {}",
-                analysisTagId, JsonHelper.stream(assignedTags).map(tag -> tag.path("guid").asText()).toList());
+                analysisTagId, JsonHelper.stream(tags).map(tag -> tag.path("guid").asText()).toList());
             warnings.add(String.format(
                 "WARN: Analysis tag (GUID: %s) is not associated with this application version. "
                     + "Audit results written to this tag will not be visible in SSC.",
