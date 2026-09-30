@@ -1,6 +1,6 @@
 ---
 title: 'Fcli Action Development Guide'
-fcli_version: 0.20260930.101353-dev_v3.x
+fcli_version: 0.20260930.124130-dev_v3.x
 ---
 
 <!DOCTYPE html>
@@ -17,13 +17,13 @@ fcli_version: 0.20260930.101353-dev_v3.x
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260930.101353-dev_v3.x" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260930.124130-dev_v3.x" %}
 
 
 <div id="header">
 <h1>Fcli Action Development Guide</h1>
 <div class="details">
-<span id="revnumber">version 0.20260930.101353-dev_v3.x</span>
+<span id="revnumber">version 0.20260930.124130-dev_v3.x</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -235,7 +235,7 @@ fcli_version: 0.20260930.101353-dev_v3.x
 </thead>
 <tbody>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0.20260930.101353-dev_v3.x</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.20260930.124130-dev_v3.x</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">2.10.0</p></td>
 </tr>
 </tbody>
@@ -357,7 +357,7 @@ your action YAML file, your IDE or YAML editor may automatically provide support
 YAML files. If not, try closing and re-opening the YAML file, or consult the documentation of your IDE or YAML editor.</p>
 </div>
 <div class="paragraph">
-<p>As shown in the sample schema statements above, the current fcli version 0.20260930.101353-dev_v3.x supports
+<p>As shown in the sample schema statements above, the current fcli version 0.20260930.124130-dev_v3.x supports
 schema version <a href="https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.10.0.json">2.10.0</a>. Other
 fcli versions may support different schema versions. In general, fcli provides backward compatibility for earlier schema
 versions with the same schema major version range, and forward compatibility for later schema patch versions within the
@@ -982,7 +982,7 @@ by later steps or other map entries within the same 'rest.call' step. If you wis
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
-<p><strong>Sample snippet</strong></p>
+<p><strong>Sample snippets</strong></p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -1002,6 +1002,21 @@ by later steps or other map entries within the same 'rest.call' step. If you wis
               uri: /api/v1/projectVersions/${pv.id}/artifacts
           do:
             - ...                     # Steps to execute for each response record</code></pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-yaml" data-lang="yaml">steps:
+  - rest.call:
+      fpr:                            # Name for this REST call for later reference
+        target: fod
+        uri: /api/v3/scans/${cli.scanId}/fpr
+        query:
+          scanType: Static
+        response.type: file           # json (default), text or file
+        response.file: ${cli.outDir}/scan-${cli.scanId}.fpr
+        on.success:
+          - log.info: "Saved ${fpr.size} bytes to ${fpr.file}"</code></pre>
 </div>
 </div></div></td>
 </tr>
@@ -2111,7 +2126,7 @@ For named elements, '&lt;name&gt;_exception' is also available with the same pro
 <p>Define a REST call, like request method, URI, &#8230;&#8203;</p>
 </div>
 <div class="paragraph">
-<p><strong>Sample snippet</strong></p>
+<p><strong>Sample snippets</strong></p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -2131,6 +2146,21 @@ For named elements, '&lt;name&gt;_exception' is also available with the same pro
               uri: /api/v1/projectVersions/${pv.id}/artifacts
           do:
             - ...                     # Steps to execute for each response record</code></pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-yaml" data-lang="yaml">steps:
+  - rest.call:
+      fpr:                            # Name for this REST call for later reference
+        target: fod
+        uri: /api/v3/scans/${cli.scanId}/fpr
+        query:
+          scanType: Static
+        response.type: file           # json (default), text or file
+        response.file: ${cli.outDir}/scan-${cli.scanId}.fpr
+        on.success:
+          - log.info: "Saved ${fpr.size} bytes to ${fpr.file}"</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -2179,6 +2209,16 @@ For named elements, '&lt;name&gt;_exception' is also available with the same pro
 <td class="tableblock halign-left valign-top"><p class="tableblock">type</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">enum</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Optional enum value: Flag to indicate whether this is a 'paged' or 'simple' request. If set to 'paged' (for now only supported for built-in request targets like 'fod' or 'ssc'), the request will be repeated with the appropriate paging request parameters to load and process all available pages. Defaults value: simple.<br></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">response.type</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">enum</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Optional enum value: How to handle the response body. 'json' (default): parse the response as JSON, failing if the response is not valid JSON. 'text': store the response body as a string. 'file': save the response body unchanged to the file specified through 'response.file'; the variable for this REST call will contain an object with file, size, contentType and status properties. The 'text' and 'file' values cannot be combined with paged requests or 'records.for-each'. For SSC and ScanCentral targets, the requests in a single rest.call instruction are only combined into a bulk request if they all use 'json'; use separate rest.call instructions for 'text' or 'file' requests to keep JSON requests bulked.<br></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">response.file</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#expression">expression</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Required SpEL template expression if 'response.type' is 'file', not allowed otherwise: File to which the response body is saved. The parent directory must exist; an existing file is only replaced if the request succeeds.<br></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">log.progress</p></td>
@@ -6343,8 +6383,8 @@ This method does NOT process other references - call render() first if needed.</
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20260930.101353-dev_v3.x<br>
-Last updated 2026-09-30 10:17:06 UTC
+Version 0.20260930.124130-dev_v3.x<br>
+Last updated 2026-09-30 12:44:15 UTC
 </div>
 </div>
 </body>
