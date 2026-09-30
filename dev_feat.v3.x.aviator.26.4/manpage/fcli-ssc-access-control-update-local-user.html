@@ -17,7 +17,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260929.102730-dev_feat.v3.x.aviator.26.4" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260930.043718-dev_feat.v3.x.aviator.26.4" %}
 
 
 <div id="header">
@@ -46,8 +46,8 @@ fcli_version:
 <div class="sectionbody">
 <div class="paragraph">
 <p><strong>fcli ssc access-control update-local-user</strong> [<strong>--pne</strong>] [<strong>--rpc</strong>] [<strong>--suspend</strong>]
-[<strong>--email</strong>=<em>&lt;email&gt;</em>] [<strong>--firstname</strong>=<em>&lt;firstName&gt;</em>] [<strong>--lastname</strong>=<em>&lt;lastName&gt;</em>]
-[<strong>--password</strong>=<em>&lt;password&gt;</em>] [<strong>--add-roles</strong>=<em>&lt;addRoles&gt;</em>[,<em>&lt;addRoles&gt;</em>&#8230;&#8203;]]&#8230;&#8203;
+[<strong>--password</strong>[=<em>&lt;password&gt;</em>]] [<strong>--email</strong>=<em>&lt;email&gt;</em>] [<strong>--firstname</strong>=<em>&lt;firstName&gt;</em>]
+[<strong>--lastname</strong>=<em>&lt;lastName&gt;</em>] [<strong>--add-roles</strong>=<em>&lt;addRoles&gt;</em>[,<em>&lt;addRoles&gt;</em>&#8230;&#8203;]]&#8230;&#8203;
 [<strong>--rm-roles</strong>=<em>&lt;rmRoles&gt;</em>[,<em>&lt;rmRoles&gt;</em>&#8230;&#8203;]]&#8230;&#8203; [<strong>--roles</strong>=<em>&lt;roles&gt;</em>[,<em>&lt;roles&gt;</em>&#8230;&#8203;]]&#8230;&#8203;
 [[<strong>-h</strong>] [<strong>--env-prefix</strong>=<em>&lt;prefix&gt;</em>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>] [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]
 [<strong>--log-mask</strong>=<em>&lt;level&gt;</em>] [<strong>--debug</strong>]] [[<strong>--ssc-session</strong>=<em>&lt;sessionName&gt;</em>]]
@@ -83,7 +83,7 @@ fcli_version:
 <dd>
 <p>New last name for the user.</p>
 </dd>
-<dt class="hdlist1"><strong>--password</strong>=<em>&lt;password&gt;</em></dt>
+<dt class="hdlist1"><strong>--password</strong>[=<em>&lt;password&gt;</em>]</dt>
 <dd>
 <p>New password for the user.</p>
 </dd>
@@ -139,7 +139,7 @@ fcli_version:
 </dd>
 <dt class="hdlist1">*--style*<em>=&lt;style&gt;,&#8230;&#8203;</em></dt>
 <dd>
-<p>Select output style: header, no-header, pretty, no-pretty, flat, no-flat, array, single, border, no-border, md-border, wrap, no-wrap, fast-output, no-fast-output, envelope, no-envelope.</p>
+<p>Select output style: header, no-header, pretty, no-pretty, flat, no-flat, array, single, border, no-border, md-border, wrap, no-wrap, fast-output, no-fast-output, envelope, no-envelope, csv-escape, no-csv-escape.</p>
 </dd>
 <dt class="hdlist1"><strong>--to-file</strong>=<em>&lt;outputFile&gt;</em></dt>
 <dd>
@@ -200,7 +200,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2026-09-29 10:30:05 UTC
+Last updated 2026-09-30 04:40:34 UTC
 </div>
 </div>
 </body>
