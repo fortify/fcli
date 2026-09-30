@@ -4,7 +4,23 @@ run-name: "Fortify on Demand Scan (${{ github.event_name }})"
 on:
   workflow_dispatch:
   push:
+    paths-ignore:
+      - '**/*.md'
+      - 'doc-resources/**'
+      - '.github/copilot-instructions.md'
+      - '.github/instructions/**'
+      - '.github/prompts/**'
+      - '.github/skills/**'
+      - '.github/agents/**'
   pull_request:
+    paths-ignore:
+      - '**/*.md'
+      - 'doc-resources/**'
+      - '.github/copilot-instructions.md'
+      - '.github/instructions/**'
+      - '.github/prompts/**'
+      - '.github/skills/**'
+      - '.github/agents/**'
   schedule:
     - cron: '16 0 * * 5'
 

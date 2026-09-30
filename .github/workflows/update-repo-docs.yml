@@ -7,6 +7,8 @@ on:
   push:
     branches:
       - dev/v3.x
+    paths:
+      - 'doc-resources/**'
       
 jobs:
   update-repo-docs:

@@ -7,6 +7,14 @@ on:
       - 'dev/v3.x'
       - 'rel/v3.x'
       - 'feat/v3.x/aviator/*'
+    paths-ignore:
+      - '**/*.md'
+      - 'doc-resources/**'
+      - '.github/copilot-instructions.md'
+      - '.github/instructions/**'
+      - '.github/prompts/**'
+      - '.github/skills/**'
+      - '.github/agents/**'
   push:
     branches:
       - 'dev/v3.x'
@@ -14,6 +22,14 @@ on:
       - 'feat/**'
       - 'fix/**'
       - 'poc/**'
+    paths-ignore:
+      - '**/*.md'
+      - 'doc-resources/**'
+      - '.github/copilot-instructions.md'
+      - '.github/instructions/**'
+      - '.github/prompts/**'
+      - '.github/skills/**'
+      - '.github/agents/**'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}

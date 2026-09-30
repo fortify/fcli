@@ -181,7 +181,19 @@ public final class MCPToolArgHandlerQuery implements IMCPToolArgHandler {
     }
 
     private final void addQuery(ArrayList<String> queries, String schemaPropertyName, String value) {
+        // Get mapped field name if available, otherwise use schema property name (allows extensibility for unmapped fields)
         var fieldName = fieldsBySchemaPropertyName.getOrDefault(schemaPropertyName, schemaPropertyName);
-        queries.add(String.format("%s matches '%s'", fieldName, value));
+
+        // Validate field name to prevent SpEL injection - allow alphanumeric, dots, underscores, and hyphens
+        if ( !fieldName.matches("[a-zA-Z0-9._\\-]+") ) {
+            throw new FcliSimpleException("Invalid query field name '%s'; must contain only alphanumeric characters, dots, underscores, and hyphens", fieldName);
+        }
+
+        // Escape backslashes first, then single quotes to prevent SpEL string literal breakout
+        // (value goes inside single quotes in SpEL expression, so double quotes don't need escaping)
+        var escapedValue = value.replace("\\", "\\\\")
+                                 .replace("'", "\\'");
+
+        queries.add(String.format("%s matches '%s'", fieldName, escapedValue));
     }
 }
