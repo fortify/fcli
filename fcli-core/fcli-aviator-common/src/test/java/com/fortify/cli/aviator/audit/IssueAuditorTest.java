@@ -230,6 +230,24 @@ class IssueAuditorTest {
     }
 
     @Test
+    void forceReauditIncludesLegacyAnalysisTagWrittenByAviatorWithoutStatusTag() throws Exception {
+        IssueAuditor auditor = createIssueAuditor(true, false,
+                Map.of(Constants.ANALYSIS_TAG_ID, Constants.EXPLOITABLE),
+                Map.of(Constants.ANALYSIS_TAG_ID, Constants.USER_NAME_LEGACY_FORTIFY_AVIATOR));
+
+        assertEquals(List.of(TEST_ISSUE_ID), prepareIssueIds(auditor));
+    }
+
+    @Test
+    void forceReauditSkipsLegacyAnalysisTagWrittenByHumanWithoutStatusTag() throws Exception {
+        IssueAuditor auditor = createIssueAuditor(true, false,
+                Map.of(Constants.ANALYSIS_TAG_ID, Constants.EXPLOITABLE),
+                Map.of(Constants.ANALYSIS_TAG_ID, "analyst.user"));
+
+        assertTrue(prepareIssueIds(auditor).isEmpty());
+    }
+
+    @Test
     void forceReauditIncludesMappedTagWrittenByAviatorWithoutStatusTag() throws Exception {
         Path mappingFile = writeMappedTagFile();
         try {

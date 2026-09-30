@@ -148,7 +148,7 @@ steps:
               cmd: ${#fcliCmd('DAST_SCAN', 'sc-dast scan start')} --settings "${#env('DAST_SETTINGS')}" --name "${dast.scanName}" --store sc_dast_scan
               skip.if-reason:
                 - ${dast.skipReason} # Skip if DAST scan is skipped
-            
+
             DEBRICKED_SCAN_ACTION:
               # --extra-scan-opts is passed through global.debrickedScan.extraOpts variable defined above
               cmd: >

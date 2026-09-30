@@ -19,10 +19,12 @@ import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.transform.OutputKeys;
@@ -104,13 +106,12 @@ public class DastFprCorrelationEnricher {
             List<CorrelatedPair> pairs = pairsByDastId.get(issueId);
             if (pairs == null || pairs.isEmpty()) continue;
 
-            // Remove any existing ExternalFindings to avoid duplicates on re-run
-            removeExistingExternalFindings(issue);
-
-            Element externalFindings = doc.createElement("ExternalFindings");
+            Element externalFindings = getOrCreateExternalFindings(doc, issue);
+            Set<String> existingSastIds = getExistingSastIds(externalFindings);
             String timestamp = OffsetDateTime.now().format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
 
             for (CorrelatedPair pair : pairs) {
+                if (!existingSastIds.add(pair.sastInstanceId())) continue;
                 Element ef = doc.createElement("ExternalFinding");
                 ef.setAttribute("Origin", "SCA");
 
@@ -120,26 +121,34 @@ public class DastFprCorrelationEnricher {
 
                 externalFindings.appendChild(ef);
             }
-
-            issue.appendChild(externalFindings);
             injectedCount++;
         }
 
         return injectedCount;
     }
 
-    private void removeExistingExternalFindings(Element issue) {
+    private Element getOrCreateExternalFindings(Document doc, Element issue) {
         NodeList existing = issue.getElementsByTagName("ExternalFindings");
-        // Collect first, then remove (to avoid ConcurrentModificationException)
-        List<org.w3c.dom.Node> toRemove = new ArrayList<>();
         for (int i = 0; i < existing.getLength(); i++) {
-            if (existing.item(i).getParentNode() == issue) {
-                toRemove.add(existing.item(i));
+            if (existing.item(i).getParentNode() == issue && existing.item(i) instanceof Element element) {
+                return element;
             }
         }
-        for (org.w3c.dom.Node node : toRemove) {
-            issue.removeChild(node);
+        Element externalFindings = doc.createElement("ExternalFindings");
+        issue.appendChild(externalFindings);
+        return externalFindings;
+    }
+
+    private Set<String> getExistingSastIds(Element externalFindings) {
+        Set<String> result = new HashSet<>();
+        NodeList originFindingIds = externalFindings.getElementsByTagName("OriginFindingID");
+        for (int i = 0; i < originFindingIds.getLength(); i++) {
+            String sastId = originFindingIds.item(i).getTextContent();
+            if (sastId != null && !sastId.isBlank()) {
+                result.add(sastId.trim());
+            }
         }
+        return result;
     }
 
     private void appendChildElement(Document doc, Element parent, String name, String value) {

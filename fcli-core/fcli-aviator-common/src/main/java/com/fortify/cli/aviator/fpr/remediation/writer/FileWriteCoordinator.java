@@ -74,6 +74,10 @@ public final class FileWriteCoordinator {
         return new PreparedFileChanges(pendingWrites, appliedKeys);
     }
 
+    public Charset encodingFor(Path filePath, String filename, FVDLMetadata fvdlMetadata) {
+        return readSourceFile(filePath, filename, fvdlMetadata).charset();
+    }
+
     private void processFileChanges(Remediation remediation, FileChange fileChange, Path sourceBasePath, FVDLMetadata fvdlMetadata,
             Map<Path, PendingFileWrite> pendingWrites, Set<RemediationKey> keysToApply, Set<RemediationKey> appliedKeysOut,
             AppliedChangeLedger ledger) {
@@ -130,7 +134,16 @@ public final class FileWriteCoordinator {
             int linesAfterChange = updatedContent.split("\n", -1).length;
             int delta = linesAfterChange - linesBeforeChange;
             String lineNormalizedCode = hunk.lineNormalizedCode(filename);
-            ledger.stage(new PendingAppliedChange(filePath, actualLineFrom, actualLineTo, delta, comparisonCode, lineNormalizedCode));
+            ledger.stage(PendingAppliedChange.builder()
+                .filePath(filePath)
+                .lineFrom(actualLineFrom)
+                .lineTo(actualLineTo)
+                .declaredLineFrom(declaredLineFrom)
+                .declaredLineTo(declaredLineTo)
+                .deltaLines(delta)
+                .comparisonCode(comparisonCode)
+                .lineNormalizedCode(lineNormalizedCode)
+                .build());
             appliedKeysOut.add(key);
             appliedInThisFile++;
         }

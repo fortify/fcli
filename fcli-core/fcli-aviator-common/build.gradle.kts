@@ -1,6 +1,7 @@
 plugins {
     id("fcli.module-conventions")
     id("java-library")
+    id("java-test-fixtures")
     id("com.google.protobuf")
 }
 
@@ -13,6 +14,7 @@ tasks.withType<JavaCompile>().configureEach { dependsOn("generateProto") }
 
 dependencies {
     implementation(project(":fcli-core:fcli-common-core"))
+    testFixturesImplementation(project(":fcli-core:fcli-common-core"))
     implementation("org.yaml:snakeyaml:2.3")
 
     // JAXB for XML object marshalling (used in FVDLProcessor legacy parser)

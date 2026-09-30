@@ -26,18 +26,24 @@ import lombok.Builder;
 public final class AppliedChange {
     private final int originalLineFrom;
     private final int originalLineTo;
+    private final int declaredLineFrom;
+    private final int declaredLineTo;
     private final int deltaLines;
     private final String comparisonCode;
     private final String[] lineNormalizedContent;
 
     public AppliedChange(int originalLineFrom, int originalLineTo, int deltaLines, String comparisonCode) {
-        this(originalLineFrom, originalLineTo, deltaLines, comparisonCode, null);
+        this(originalLineFrom, originalLineTo, originalLineFrom, originalLineTo, deltaLines, comparisonCode, null);
+
     }
 
     @Builder
-    public AppliedChange(int originalLineFrom, int originalLineTo, int deltaLines, String comparisonCode, String lineNormalizedCode) {
+    public AppliedChange(int originalLineFrom, int originalLineTo, int declaredLineFrom, int declaredLineTo, int deltaLines, String comparisonCode, String lineNormalizedCode)
+    {
         this.originalLineFrom = originalLineFrom;
         this.originalLineTo = originalLineTo;
+        this.declaredLineFrom = declaredLineFrom;
+        this.declaredLineTo = declaredLineTo;
         this.deltaLines = deltaLines;
         this.comparisonCode = comparisonCode;
         // Store line-by-line normalized content for offset-anchored comparison (newlines preserved, each line normalized)
@@ -63,9 +69,24 @@ public final class AppliedChange {
 
     /** True if [lineFrom, lineTo] overlaps this change's original range without either side fully containing the other. */
     public boolean overlapsPartially(int lineFrom, int lineTo) {
-        boolean disjoint = lineTo < originalLineFrom || lineFrom > originalLineTo;
-        return !disjoint;
+        boolean overlaps = lineFrom <= originalLineTo && originalLineFrom <= lineTo;
+        boolean candidateContainsThis = lineFrom <= originalLineFrom && originalLineTo <= lineTo;
+        return overlaps && !coversFully(lineFrom, lineTo) && !candidateContainsThis;
     }
+
+
+    /** True if this change's declared range fully contains [lineFrom, lineTo]. */
+    public boolean coversDeclaredRange(int lineFrom, int lineTo) {
+        return declaredLineFrom <= lineFrom && lineTo <= declaredLineTo;
+    }
+
+    /** True if [lineFrom, lineTo] overlaps this change's declared range without either side fully containing the other. */
+    public boolean overlapsDeclaredRangePartially(int lineFrom, int lineTo) {
+        boolean overlaps = lineFrom <= declaredLineTo && declaredLineFrom <= lineTo;
+        boolean candidateContainsThis = lineFrom <= declaredLineFrom && declaredLineTo <= lineTo;
+        return overlaps && !coversDeclaredRange(lineFrom, lineTo) && !candidateContainsThis;
+    }
+
 
     /**
      * Below this length a normalized comparison code (e.g. {@code "return;"}) is too short and

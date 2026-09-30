@@ -33,12 +33,17 @@ import java.util.zip.ZipOutputStream;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fortify.cli.aviator._common.cli.mixin.SourceEncodingsMixin;
+import com.fortify.cli.aviator._common.remediations_cache.IApplyRemediationsOptions;
+import com.fortify.cli.aviator._common.remediations_cache.RemediationsApplyHelper;
+import com.fortify.cli.aviator._common.util.AviatorRemediationMetricsHelper;
+import com.fortify.cli.aviator.config.AviatorLoggerImpl;
+import com.fortify.cli.aviator.fpr.utils.ISourceDecoder;
 import com.fortify.cli.aviator.fpr.utils.SourceDecoders;
-import com.fortify.cli.aviator.ssc.cli.mixin.AviatorSSCApplyRemediationsArtifactSelectorMixin;
+import com.fortify.cli.aviator.ssc.cli.mixin.AviatorSSCRemediationsSelectorArgGroups.OnlineModeArgGroup;
+import com.fortify.cli.aviator.ssc.cli.mixin.AviatorSSCRemediationsSelectorArgGroups.OnlineSelectionArgGroup;
+import com.fortify.cli.aviator.ssc.helper.SSCOnlineRemediationsFprSource;
 import com.fortify.cli.aviator.util.FileUtil;
 import com.fortify.cli.common.cli.mixin.CommandHelperMixin;
 import com.fortify.cli.common.json.JsonHelper;
@@ -54,25 +59,13 @@ import picocli.CommandLine;
 import picocli.CommandLine.Model.CommandSpec;
 
 /**
- * The order in which {@code apply-remediations --all} walks an application version's artifacts is a
- * yield decision, and the current order is the losing one.
+ * {@code --all} walks newest upload first for both download-remediations-cache and online apply.
  *
- * <p>{@code SSCArtifactHelper.getAllAviatorArtifacts} fetches {@code uploadDate DESC} and then
- * reverses the list "to maintain ascending order contract", so
- * {@code AviatorSSCApplyRemediationsCommand} applies the OLDEST scan first. The oldest scan is the
- * one whose line numbers are the most stale relative to the customer's current checkout: letting it
- * go first rewrites the file and destroys the newest scan's chance of a clean hash match, after
- * which the newest scan has to fall back on fuzzy anchoring and can lose its hunk to an ambiguous
- * match. Newest-first applies the best-matching artifact while the file is still pristine, and the
- * older artifacts then simply fail their own anchor checks, which is the correct outcome.
- *
- * <p>This is NOT a correctness test. Whatever gets written is written in the right place in either
- * order - that is guaranteed by anchor verification, not by ordering. What the order costs us is
- * fixes we could have landed. {@code getAllAviatorArtifacts} has exactly one caller, this command,
- * so the fix can be a local reverse in the {@code --all} loop or a change to the helper's ordering
- * contract; this test only cares that the newest artifact is applied first.
- *
- * <p>Currently: red, {@code appliedRemediation} is 1. Turns green when the order is reversed.
+ * <p>SSC returns {@code uploadDate DESC}. {@code getAllAviatorArtifacts} reverses that to oldest-first.
+ * The shared selector reverses again, so the latest artifact is processed first. That newer hunk matches
+ * the pristine file. The older hunk is then applied at its own lines, which the newer edit did not move,
+ * so both fixes land. Oldest-first applies the stale scan first, shifts the file, and the newer hunk then
+ * misses its hash and loses an ambiguous fuzzy match.
  */
 class AviatorSSCApplyRemediationsCommandOrderTest {
     private static final String APP_VERSION_ID = "42";
@@ -102,14 +95,24 @@ class AviatorSSCApplyRemediationsCommandOrderTest {
 
         try (TestSscServer server = new TestSscServer(Map.of("1", olderFpr, "2", newerFpr));
                 UnirestInstance unirest = newUnirest(server)) {
-            JsonNode result = newAllOpenIssuesCommand().getJsonNode(unirest);
+            var resolved = allArtifactsSelector().resolveArtifacts(unirest, null);
+            assertEquals(List.of("2", "1"), resolved.artifacts().stream().map(artifact -> artifact.getId()).toList());
 
-            assertEquals(2, result.path("artifactsProcessed").asInt());
-            assertEquals(2, result.path("appliedRemediation").asInt(),
-                "newest-first lands both fixes; oldest-first loses the newer artifact's hunk to an "
-                    + "ambiguous fuzzy match after the older artifact has shifted the file");
-            assertEquals("head\nOLD1\nOLD2\nctx\nDUP\nctx2\nfiller\nctx\nNEWFIX\nctx2\ntail\n",
-                Files.readString(sourceFile));
+            var progressWriterFactory = silentProgressWriterFactory();
+            try (var progressWriter = progressWriterFactory.create();
+                    var source = new SSCOnlineRemediationsFprSource(
+                        unirest, new AviatorLoggerImpl(progressWriter), progressWriter, resolved)) {
+                var applyResult = RemediationsApplyHelper.apply(
+                    source, applyOptions(), null, new AviatorLoggerImpl(progressWriter));
+                var result = AviatorRemediationMetricsHelper.aggregateMetrics(null, applyResult.metrics());
+
+                assertEquals(2, applyResult.metrics().size());
+                assertEquals(2, result.appliedRemediations(),
+                    "newest-first lands both fixes; oldest-first loses the newer artifact's hunk to an "
+                        + "ambiguous fuzzy match after the older artifact has shifted the file");
+                assertEquals("head\nOLD1\nOLD2\nctx\nDUP\nctx2\nfiller\nctx\nNEWFIX\nctx2\ntail\n",
+                    Files.readString(sourceFile));
+            }
         }
     }
 
@@ -118,31 +121,24 @@ class AviatorSSCApplyRemediationsCommandOrderTest {
     // the command's fields are picocli mixins that are otherwise only populated by a real parse.
     // ------------------------------------------------------------------------------------------
 
-    private AviatorSSCApplyRemediationsCommand newAllOpenIssuesCommand() throws Exception {
-        AviatorSSCApplyRemediationsCommand command = new AviatorSSCApplyRemediationsCommand();
-        set(command, "sourceCodeDirectory", tempDir.toString());
-        set(command, "artifactSelector", allOpenIssuesSelector());
-        set(command, "progressWriterFactoryMixin", silentProgressWriterFactory());
-        set(command, "sourceEncodingsMixin", defaultSourceEncodings());
-        return command;
-    }
-
-    private static AviatorSSCApplyRemediationsArtifactSelectorMixin allOpenIssuesSelector() throws Exception {
-        var selector = new AviatorSSCApplyRemediationsArtifactSelectorMixin();
-        var argGroup = AviatorSSCApplyRemediationsArtifactSelectorMixin.ArtifactSelectionArgGroup.class
-            .getDeclaredConstructor().newInstance();
-        set(argGroup, "allOpenIssues", true);
-        set(selector, "artifactSelection", argGroup);
+    private static OnlineSelectionArgGroup allArtifactsSelector() throws Exception {
+        var selector = new OnlineSelectionArgGroup();
+        var mode = new OnlineModeArgGroup();
+        set(mode, "all", true);
+        set(selector, "mode", mode);
         set(selector, "appVersionNameOrId", APP_VERSION_ID);
         set(selector, "delimiter", ":");
         return selector;
     }
 
-    /** picocli normally applies the --source-encodings default; set it explicitly here. */
-    private static SourceEncodingsMixin defaultSourceEncodings() throws Exception {
-        var mixin = new SourceEncodingsMixin();
-        set(mixin, "sourceDecoders", List.of(SourceDecoders.defaults()));
-        return mixin;
+    private IApplyRemediationsOptions applyOptions() {
+        return new IApplyRemediationsOptions() {
+            @Override public String getSourceCodeDirectory() { return tempDir.toString(); }
+            @Override public List<String> getIssueIds() { return List.of(); }
+            @Override public ISourceDecoder getSourceDecoder() { return SourceDecoders.defaults(); }
+            @Override public boolean isPreviewMode() { return false; }
+            @Override public void validate() {}
+        };
     }
 
     private static ProgressWriterFactoryMixin silentProgressWriterFactory() throws Exception {
