@@ -175,8 +175,10 @@ public final class SSCActionSpelFunctions {
         
         private final void processAuditFvdl(InputStream is, Function<JsonNode, Boolean> consumer) throws XMLStreamException {
             var factory = XMLInputFactory.newInstance();
-            // Disable DTD processing and external entity resolution to prevent XXE attacks
-            factory.setProperty(XMLInputFactory.SUPPORT_DTD, false);
+            // Allow DTD processing (FVDL rule descriptions may declare internal-only entities,
+            // e.g. &reg;/&trade;), but block resolution of external entities/DTDs to prevent XXE (CWE-611).
+            factory.setProperty(XMLInputFactory.SUPPORT_DTD, true);
+            factory.setProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, false);
             factory.setProperty(XMLConstants.ACCESS_EXTERNAL_DTD, "");
             var reader = factory.createXMLStreamReader(is);
             while(reader.hasNext()) {
