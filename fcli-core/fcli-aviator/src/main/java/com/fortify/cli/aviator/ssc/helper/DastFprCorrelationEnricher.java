@@ -12,6 +12,7 @@
  */
 package com.fortify.cli.aviator.ssc.helper;
 
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -26,6 +27,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
+import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.transform.OutputKeys;
 import javax.xml.transform.TransformerFactory;
@@ -168,24 +170,28 @@ public class DastFprCorrelationEnricher {
     @SneakyThrows
     private Document parseXml(Path path) {
         var factory = DocumentBuilderFactory.newInstance();
-        // Disable DOCTYPE declarations and external entity processing to prevent XXE attacks
-        try {
-            factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
-            factory.setFeature("http://xml.org/sax/features/external-general-entities", false);
-            factory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
-            factory.setXIncludeAware(false);
-            factory.setExpandEntityReferences(false);
-        } catch (Exception e) {
-            LOG.warn("Could not configure XXE protection for DocumentBuilderFactory; some protections may be unavailable: {}",
-                e.getMessage());
-        }
+        factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
+        factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+        factory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
+        factory.setFeature("http://xml.org/sax/features/external-general-entities", false);
+        factory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+        factory.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
+        factory.setAttribute(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "");
+        factory.setXIncludeAware(false);
+        factory.setExpandEntityReferences(false);
         factory.setNamespaceAware(false);
-        return factory.newDocumentBuilder().parse(Files.newInputStream(path));
+        try (InputStream input = Files.newInputStream(path)) {
+            return factory.newDocumentBuilder().parse(input);
+        }
     }
 
     @SneakyThrows
     private void writeXml(Document doc, Path path) {
-        var transformer = TransformerFactory.newInstance().newTransformer();
+        var factory = TransformerFactory.newInstance();
+        factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
+        factory.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
+        factory.setAttribute(XMLConstants.ACCESS_EXTERNAL_STYLESHEET, "");
+        var transformer = factory.newTransformer();
         transformer.setOutputProperty(OutputKeys.INDENT, "yes");
         transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
         transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");

@@ -27,6 +27,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import com.fortify.cli.aviator.grpc.CorrelatedPair;
+import com.fortify.cli.aviator.util.FprHandle;
 
 class SastFprCorrelationRecorderTest {
 
@@ -181,7 +182,66 @@ class SastFprCorrelationRecorderTest {
         assertTrue(keys.isEmpty());
     }
 
+    @Test
+    void testReadTriedPairKeys_doesNotResolveExternalEntity() throws Exception {
+        Path secret = tempDir.resolve("secret.txt");
+        Files.writeString(secret, "PRIVATE-SENTINEL");
+        Path fprPath = createFprWithAuditXml("""
+            <?xml version="1.0" encoding="UTF-8"?>
+            <!DOCTYPE Audit [<!ENTITY xxe SYSTEM "%s">]>
+            <Audit xmlns="xmlns://www.fortify.com/schema/audit">
+              <IssueList><Issue instanceId="SAST-1"><Tag id="%s"><Value>CORRELATED::&xxe;</Value></Tag></Issue></IssueList>
+            </Audit>
+            """.formatted(secret.toUri(), SastFprCorrelationRecorder.DAST_CORRELATION_TAG_ID));
+
+        assertTrue(SastFprCorrelationRecorder.readTriedPairKeys(fprPath).isEmpty());
+        SastFprCorrelationRecorder.writeCorrelationTags(fprPath,
+            List.of(new CorrelatedPair("SAST-1", "DAST-A", SCAN_GUID, "HIGH", "match")), List.of());
+        try (FileSystem zipFs = FileSystems.newFileSystem(fprPath)) {
+            String output = Files.readString(zipFs.getPath("/audit.xml"));
+            assertTrue(output.contains("CORRELATED::DAST-A"));
+            assertTrue(!output.contains("PRIVATE-SENTINEL"));
+        }
+    }
+
+    @Test
+    void testReadTriedPairKeys_allowsHarmlessDoctype() throws Exception {
+        Path fprPath = createFprWithAuditXml("""
+            <?xml version="1.0" encoding="UTF-8"?>
+            <!DOCTYPE Audit SYSTEM "http://example.invalid/audit.dtd">
+            <Audit xmlns="xmlns://www.fortify.com/schema/audit">
+              <IssueList><Issue instanceId="SAST-1"><Tag id="%s"><Value>CORRELATED::DAST-A</Value></Tag></Issue></IssueList>
+            </Audit>
+            """.formatted(SastFprCorrelationRecorder.DAST_CORRELATION_TAG_ID));
+
+        try (FprHandle handle = new FprHandle(fprPath)) {
+            Files.createDirectories(handle.getPath("/src-archive"));
+            Files.writeString(handle.getPath("/src-archive/index.xml"), """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+                <properties><entry key="Test.java">src-archive/Test.java</entry></properties>
+                """);
+            Files.writeString(handle.getPath("/src-archive/Test.java"), "class Test {}");
+            assertEquals("src-archive/Test.java", handle.getSourceFileMap().get("Test.java"));
+        }
+
+        SastFprCorrelationRecorder.writeCorrelationTags(fprPath,
+            List.of(new CorrelatedPair("SAST-1", "DAST-B", SCAN_GUID, "HIGH", "match")), List.of());
+        assertEquals(Set.of("SAST-1::DAST-A", "SAST-1::DAST-B"), SastFprCorrelationRecorder.readTriedPairKeys(fprPath));
+        try (FprHandle handle = new FprHandle(fprPath)) {
+            assertEquals("src-archive/Test.java", handle.getSourceFileMap().get("Test.java"));
+        }
+    }
+
     // ── helpers ──────────────────────────────────────────────────────────
+
+    private Path createFprWithAuditXml(String auditXml) throws Exception {
+        Path fprPath = tempDir.resolve("custom-audit.fpr");
+        try (FileSystem zipFs = FileSystems.newFileSystem(fprPath, Map.of("create", "true"))) {
+            Files.writeString(zipFs.getPath("/audit.xml"), auditXml);
+        }
+        return fprPath;
+    }
 
     private Path createMinimalSastFpr() throws Exception {
         Path fprPath = tempDir.resolve("test-sast.fpr");
