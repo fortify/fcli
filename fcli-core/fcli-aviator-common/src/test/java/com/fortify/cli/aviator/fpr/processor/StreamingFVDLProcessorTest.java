@@ -13,15 +13,21 @@
 package com.fortify.cli.aviator.fpr.processor;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
+
+import javax.xml.stream.XMLStreamException;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -73,6 +79,27 @@ class StreamingFVDLProcessorTest {
         }
 
         assertEquals("PTA", processor.getFvdlMetadata().getAnalysisType());
+    }
+
+    @Test
+    void testParseDoesNotResolveExternalEntity() throws Exception {
+      Path secret = Files.createTempFile("fvdl-xxe-sentinel", ".txt");
+      try {
+        Files.writeString(secret, "PRIVATE-SENTINEL");
+        createTestFpr("""
+          <!DOCTYPE FVDL [<!ENTITY xxe SYSTEM "%s">]>
+          <FVDL><Run><EngineName>&xxe;</EngineName></Run><Vulnerabilities/></FVDL>
+          """.formatted(secret.toUri()));
+
+        StreamingFVDLProcessor processor = new StreamingFVDLProcessor(fprHandle);
+        try (ZipFile zipFile = new ZipFile(tempFprFile.toFile())) {
+                IOException exception = assertThrows(IOException.class, () -> processor.parse(zipFile, "audit.fvdl"));
+                assertInstanceOf(XMLStreamException.class, exception.getCause());
+          assertTrue(!exception.getMessage().contains("PRIVATE-SENTINEL"));
+        }
+      } finally {
+        Files.deleteIfExists(secret);
+      }
     }
 
     @Test

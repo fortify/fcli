@@ -25,6 +25,7 @@ import java.util.zip.ZipOutputStream;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.xml.sax.SAXParseException;
 
 import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
 import com.fortify.cli.aviator.util.FprHandle;
@@ -44,6 +45,22 @@ class FilterTemplateParserTest {
             AviatorTechnicalException exception = assertThrows(AviatorTechnicalException.class, parser::parseFilterTemplate);
 
             assertTrue(exception.getMessage().contains("filtertemplate.xml"));
+        }
+    }
+
+    @Test
+    void rejectsExternalEntityInFilterTemplate() throws Exception {
+        Path secret = tempDir.resolve("secret.txt");
+        Files.writeString(secret, "PRIVATE-SENTINEL");
+        Path fprPath = createFpr("""
+            <!DOCTYPE FilterTemplate [<!ENTITY xxe SYSTEM "%s">]>
+            <FilterTemplate><Name>&xxe;</Name></FilterTemplate>
+            """.formatted(secret.toUri()));
+
+        try (FprHandle fprHandle = new FprHandle(fprPath)) {
+            FilterTemplateParser parser = new FilterTemplateParser(fprHandle, new AuditProcessor(fprHandle));
+            AviatorTechnicalException exception = assertThrows(AviatorTechnicalException.class, parser::parseFilterTemplate);
+            assertTrue(exception.getCause() instanceof SAXParseException);
         }
     }
 
