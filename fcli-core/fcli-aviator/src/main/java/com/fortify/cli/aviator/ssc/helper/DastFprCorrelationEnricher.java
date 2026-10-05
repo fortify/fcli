@@ -12,6 +12,7 @@
  */
 package com.fortify.cli.aviator.ssc.helper;
 
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -19,12 +20,14 @@ import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
-import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.XMLConstants;
 import javax.xml.transform.OutputKeys;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
@@ -38,6 +41,7 @@ import org.w3c.dom.NodeList;
 
 import com.fortify.cli.aviator.grpc.CorrelatedPair;
 import com.fortify.cli.aviator.util.FprHandle;
+import com.fortify.cli.common.util.SecureXmlParserFactory;
 
 import lombok.SneakyThrows;
 
@@ -104,13 +108,12 @@ public class DastFprCorrelationEnricher {
             List<CorrelatedPair> pairs = pairsByDastId.get(issueId);
             if (pairs == null || pairs.isEmpty()) continue;
 
-            // Remove any existing ExternalFindings to avoid duplicates on re-run
-            removeExistingExternalFindings(issue);
-
-            Element externalFindings = doc.createElement("ExternalFindings");
+            Element externalFindings = getOrCreateExternalFindings(doc, issue);
+            Set<String> existingSastIds = getExistingSastIds(externalFindings);
             String timestamp = OffsetDateTime.now().format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
 
             for (CorrelatedPair pair : pairs) {
+                if (!existingSastIds.add(pair.sastInstanceId())) continue;
                 Element ef = doc.createElement("ExternalFinding");
                 ef.setAttribute("Origin", "SCA");
 
@@ -120,26 +123,34 @@ public class DastFprCorrelationEnricher {
 
                 externalFindings.appendChild(ef);
             }
-
-            issue.appendChild(externalFindings);
             injectedCount++;
         }
 
         return injectedCount;
     }
 
-    private void removeExistingExternalFindings(Element issue) {
+    private Element getOrCreateExternalFindings(Document doc, Element issue) {
         NodeList existing = issue.getElementsByTagName("ExternalFindings");
-        // Collect first, then remove (to avoid ConcurrentModificationException)
-        List<org.w3c.dom.Node> toRemove = new ArrayList<>();
         for (int i = 0; i < existing.getLength(); i++) {
-            if (existing.item(i).getParentNode() == issue) {
-                toRemove.add(existing.item(i));
+            if (existing.item(i).getParentNode() == issue && existing.item(i) instanceof Element element) {
+                return element;
             }
         }
-        for (org.w3c.dom.Node node : toRemove) {
-            issue.removeChild(node);
+        Element externalFindings = doc.createElement("ExternalFindings");
+        issue.appendChild(externalFindings);
+        return externalFindings;
+    }
+
+    private Set<String> getExistingSastIds(Element externalFindings) {
+        Set<String> result = new HashSet<>();
+        NodeList originFindingIds = externalFindings.getElementsByTagName("OriginFindingID");
+        for (int i = 0; i < originFindingIds.getLength(); i++) {
+            String sastId = originFindingIds.item(i).getTextContent();
+            if (sastId != null && !sastId.isBlank()) {
+                result.add(sastId.trim());
+            }
         }
+        return result;
     }
 
     private void appendChildElement(Document doc, Element parent, String name, String value) {
@@ -158,25 +169,19 @@ public class DastFprCorrelationEnricher {
 
     @SneakyThrows
     private Document parseXml(Path path) {
-        var factory = DocumentBuilderFactory.newInstance();
-        // Disable DOCTYPE declarations and external entity processing to prevent XXE attacks
-        try {
-            factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
-            factory.setFeature("http://xml.org/sax/features/external-general-entities", false);
-            factory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
-            factory.setXIncludeAware(false);
-            factory.setExpandEntityReferences(false);
-        } catch (Exception e) {
-            LOG.warn("Could not configure XXE protection for DocumentBuilderFactory; some protections may be unavailable: {}",
-                e.getMessage());
+        var factory = SecureXmlParserFactory.newDocumentBuilderFactory(false);
+        try (InputStream input = Files.newInputStream(path)) {
+            return factory.newDocumentBuilder().parse(input);
         }
-        factory.setNamespaceAware(false);
-        return factory.newDocumentBuilder().parse(Files.newInputStream(path));
     }
 
     @SneakyThrows
     private void writeXml(Document doc, Path path) {
-        var transformer = TransformerFactory.newInstance().newTransformer();
+        var factory = TransformerFactory.newInstance();
+        factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
+        factory.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
+        factory.setAttribute(XMLConstants.ACCESS_EXTERNAL_STYLESHEET, "");
+        var transformer = factory.newTransformer();
         transformer.setOutputProperty(OutputKeys.INDENT, "yes");
         transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
         transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");

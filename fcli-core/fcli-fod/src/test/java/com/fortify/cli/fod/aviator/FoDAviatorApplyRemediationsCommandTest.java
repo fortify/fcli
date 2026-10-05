@@ -12,56 +12,86 @@
  */
 package com.fortify.cli.fod.aviator;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.lang.reflect.Field;
+import java.nio.file.Path;
 
 import org.junit.jupiter.api.Test;
 
 import com.fortify.cli.common.exception.FcliSimpleException;
+import com.fortify.cli.fod.aviator.cli.mixin.FoDAviatorApplyRemediationsOptionsMixin;
 import com.fortify.cli.fod.aviator.cmd.FoDAviatorApplyRemediationsCommand;
 
+import picocli.CommandLine;
+
+/**
+ * CLI wiring and product rules for FoD apply-remediations (not default-field or util tests).
+ */
 class FoDAviatorApplyRemediationsCommandTest {
+
     @Test
-    void testSourceCodeDirectoryHasDefaultValue() throws Exception {
-        FoDAviatorApplyRemediationsCommand command = new FoDAviatorApplyRemediationsCommand();
-
-        Field field = FoDAviatorApplyRemediationsCommand.class.getDeclaredField("sourceCodeDirectory");
-        field.setAccessible(true);
-        String fieldValue = (String) field.get(command);
-
-        assertNotNull(fieldValue,
-            "sourceCodeDirectory must have default value to prevent NPE when --source-dir not specified");
-
-        assertEquals(System.getProperty("user.dir"), fieldValue,
-            "sourceCodeDirectory default should be current working directory");
+    void fromCacheParsesPath() throws Exception {
+        FoDAviatorApplyRemediationsCommand command = parse("--from-cache", "remediations.zip");
+        FoDAviatorApplyRemediationsOptionsMixin applyOptions = getApplyOptions(command);
+        assertEquals(Path.of("remediations.zip"), applyOptions.getFromCache());
+        assertTrue(applyOptions.isFromCacheSelected());
     }
 
     @Test
-    void testSourceCodeDirectoryCanBeOverridden() throws Exception {
-        FoDAviatorApplyRemediationsCommand command = new FoDAviatorApplyRemediationsCommand();
-
-        Field field = FoDAviatorApplyRemediationsCommand.class.getDeclaredField("sourceCodeDirectory");
-        field.setAccessible(true);
-
-        String customPath = "/custom/source/directory";
-        field.set(command, customPath);
-
-        String fieldValue = (String) field.get(command);
-
-        assertEquals(customPath, fieldValue,
-            "sourceCodeDirectory should be overridable when --source-dir option is provided");
+    void releaseAndFromCacheAreExclusive() {
+        assertThrows(CommandLine.ParameterException.class,
+                () -> parse("--release", "1", "--from-cache", "local.zip"));
     }
 
     @Test
-    void testBlankSourceCodeDirectoryThrowsException() throws Exception {
+    void issueIdsRequireFromCache() {
+        FoDAviatorApplyRemediationsCommand command = parse("--release", "1", "--issue-ids", "ISSUE-1");
+        assertThrows(FcliSimpleException.class, command::getJsonNode);
+    }
+
+    @Test
+    void blankSourceDirIsRejected() throws Exception {
+        FoDAviatorApplyRemediationsCommand command = parse("--from-cache", "cache.zip");
+        FoDAviatorApplyRemediationsOptionsMixin applyOptions = getApplyOptions(command);
+        Field sourceDirField = FoDAviatorApplyRemediationsOptionsMixin.class
+                .getSuperclass().getDeclaredField("sourceCodeDirectory");
+        sourceDirField.setAccessible(true);
+        sourceDirField.set(applyOptions, "");
+        assertThrows(FcliSimpleException.class, command::getJsonNode);
+    }
+
+    @Test
+    void previewFlagParsedCorrectly() throws Exception {
+        FoDAviatorApplyRemediationsCommand command = parse("--from-cache", "remediations.zip", "--preview");
+        assertTrue(getApplyOptions(command).isPreviewMode());
+    }
+
+    @Test
+    void previewWorksWithIssueIds() throws Exception {
+        FoDAviatorApplyRemediationsCommand command = parse("--from-cache", "cache.zip", "--preview", "--issue-ids", "ISSUE-1,ISSUE-2");
+        assertTrue(getApplyOptions(command).isPreviewMode());
+        assertEquals(2, getApplyOptions(command).getIssueIds().size());
+    }
+
+    @Test
+    void previewWorksWithOnlineSelection() throws Exception {
+        FoDAviatorApplyRemediationsCommand command = parse("--release", "123", "--preview");
+        assertTrue(getApplyOptions(command).isPreviewMode());
+    }
+
+    private static FoDAviatorApplyRemediationsCommand parse(String... args) {
         FoDAviatorApplyRemediationsCommand command = new FoDAviatorApplyRemediationsCommand();
+        new CommandLine(command).parseArgs(args);
+        return command;
+    }
 
-        Field field = FoDAviatorApplyRemediationsCommand.class.getDeclaredField("sourceCodeDirectory");
+    private static FoDAviatorApplyRemediationsOptionsMixin getApplyOptions(FoDAviatorApplyRemediationsCommand command)
+            throws Exception {
+        Field field = FoDAviatorApplyRemediationsCommand.class.getDeclaredField("applyOptions");
         field.setAccessible(true);
-        field.set(command, "");
-
-        assertThrows(FcliSimpleException.class, () -> command.getJsonNode(null),
-            "Blank sourceCodeDirectory should throw FcliSimpleException");
+        return (FoDAviatorApplyRemediationsOptionsMixin) field.get(command);
     }
 }

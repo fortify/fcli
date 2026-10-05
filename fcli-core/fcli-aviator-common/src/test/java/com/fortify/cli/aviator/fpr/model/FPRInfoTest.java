@@ -12,6 +12,8 @@
  */
 package com.fortify.cli.aviator.fpr.model;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -21,6 +23,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
+
+import javax.xml.stream.XMLStreamException;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -43,6 +47,38 @@ class FPRInfoTest {
             AviatorTechnicalException exception = assertThrows(AviatorTechnicalException.class, () -> new FPRInfo(fprHandle));
 
             assertTrue(exception.getMessage().contains("audit.fvdl"));
+        }
+    }
+
+    @Test
+    void allowsHarmlessDoctypeInAuditFvdl() throws Exception {
+        Path fprPath = createFpr("""
+            <!DOCTYPE FVDL SYSTEM "http://example.invalid/audit.dtd">
+            <FVDL><UUID>safe-uuid</UUID><Build><BuildID>safe-build</BuildID>
+            <NumberFiles>7</NumberFiles><ScanTime>12</ScanTime></Build></FVDL>
+            """);
+
+        try (FprHandle fprHandle = new FprHandle(fprPath)) {
+            var metadata = new FPRInfo(fprHandle);
+            assertEquals("safe-uuid", metadata.getUuid());
+            assertEquals("safe-build", metadata.getBuildId());
+            assertEquals(7, metadata.getNumberOfFiles());
+            assertEquals(12, metadata.getScanTime());
+        }
+    }
+
+    @Test
+    void doesNotResolveExternalEntityInAuditFvdl() throws Exception {
+        Path secret = tempDir.resolve("secret.txt");
+        Files.writeString(secret, "PRIVATE-SENTINEL");
+        Path fprPath = createFpr("""
+            <!DOCTYPE FVDL [<!ENTITY xxe SYSTEM "%s">]>
+            <FVDL><UUID>&xxe;</UUID></FVDL>
+            """.formatted(secret.toUri()));
+
+        try (FprHandle fprHandle = new FprHandle(fprPath)) {
+            AviatorTechnicalException exception = assertThrows(AviatorTechnicalException.class, () -> new FPRInfo(fprHandle));
+            assertInstanceOf(XMLStreamException.class, exception.getCause());
         }
     }
 

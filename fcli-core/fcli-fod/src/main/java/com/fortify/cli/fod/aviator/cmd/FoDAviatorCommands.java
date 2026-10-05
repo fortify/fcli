@@ -19,7 +19,8 @@ import picocli.CommandLine;
 @CommandLine.Command(
         name = "aviator",
         subcommands = {
-                FoDAviatorApplyRemediationsCommand.class
+                FoDAviatorApplyRemediationsCommand.class,
+                FoDAviatorDownloadRemediationsCacheCommand.class
         }
 )
 
