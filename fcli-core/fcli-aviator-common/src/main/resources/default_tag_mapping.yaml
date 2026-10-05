@@ -10,6 +10,15 @@ tag_id: "87f2364f-dcd4-49e6-861d-f8d3f351686b"
 # suppression_exclusions:
 #   - categories:
 #       - "Privacy Violation"
+# Optional sast and dast sections may override tag_id, mapping, or
+# suppression_exclusions for each product. Existing flat files remain valid.
+# sast:
+#   suppression_exclusions:
+#     - categories:
+#         - "Privacy Violation"
+# dast:
+#   tag_id: "dast-specific-tag-id"
+#   mapping: ...
 mapping:
   tier_1:
     fp:

@@ -13,27 +13,26 @@
 package com.fortify.cli.aviator.ssc.helper;
 
 /**
- * Attribute definitions used by the SAST-DAST correlation feature.
+ * SSC application-version attribute definitions used by Aviator workflows.
  *
  * <p>These are SSC application-version attributes (not per-issue custom tags).
  * The definition is created by the {@code aviator ssc prepare} command and
- * the value is written by {@code aviator ssc correlate-sast-dast}.
+ * the values are written by {@code aviator ssc correlate-sast-dast} and
+ * {@code aviator ssc audit-dast}.
  */
-public final class AviatorSSCCorrelationAttributeDefs {
+public final class AviatorSSCAttributeDefinitions {
 
-    private AviatorSSCCorrelationAttributeDefs() {}
+    private AviatorSSCAttributeDefinitions() {}
 
     /**
      * Descriptor for a custom SSC attribute definition managed by the Aviator module.
      *
-     * @param guid        Fixed GUID — must never change once deployed to an SSC instance.
      * @param name        Attribute name as it appears in SSC (used for lookup and write).
      * @param category    SSC attribute category (e.g. {@code "TECHNICAL"}).
      * @param type        SSC attribute type string (e.g. {@code "TEXT"}, {@code "DATE"}).
      * @param description Human-readable description stored in SSC.
      */
     public record AttributeDefinition(
-        String guid,
         String name,
         String category,
         String type,
@@ -53,10 +52,29 @@ public final class AviatorSSCCorrelationAttributeDefs {
      * comparison with artifact {@code lastScanDate} values.
      */
     public static final AttributeDefinition LAST_CORRELATION_ATTR = new AttributeDefinition(
-        "B2C3D4E5-F6A7-8901-BCDE-F12345678901",
         "last_correlation",
         "TECHNICAL",
         "TEXT",
         "Timestamp of the last successful SAST-DAST correlation run (ISO-8601 UTC). Written by fcli aviator ssc correlate-sast-dast."
+    );
+
+    /**
+     * Free-text attribute written after a DAST audit evaluation completes successfully,
+     * including a run that finds no eligible findings.
+     *
+     * <p>Value is an ISO-8601 UTC timestamp produced by {@code Instant.now().toString()},
+     * the same kind of value written to {@code last_correlation}. Bulk DAST audit reads
+     * it and selects a version only when the newest processed WebInspect scan date is
+     * later than this timestamp.
+     *
+     * <p>TEXT type is used rather than DATE because SSC's DATE type only accepts
+     * {@code yyyy-MM-dd}, which loses the time-of-day precision required for reliable
+     * comparison with artifact {@code lastScanDate} values.
+     */
+    public static final AttributeDefinition LAST_DAST_AUDIT_ATTR = new AttributeDefinition(
+        "last_dast_audit",
+        "TECHNICAL",
+        "TEXT",
+        "Timestamp of the last successful DAST audit evaluation (ISO-8601 UTC). Written by fcli aviator ssc audit-dast."
     );
 }

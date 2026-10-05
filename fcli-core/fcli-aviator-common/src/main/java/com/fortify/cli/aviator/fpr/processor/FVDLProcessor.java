@@ -45,6 +45,7 @@ import com.fortify.cli.aviator.fpr.utils.FileUtils;
 import com.fortify.cli.aviator.fpr.utils.XmlUtils;
 import com.fortify.cli.aviator.util.FprHandle;
 import com.fortify.cli.aviator.util.StringUtil;
+import com.fortify.cli.common.util.SecureXmlParserFactory;
 
 import jakarta.xml.bind.JAXBContext;
 import jakarta.xml.bind.JAXBException;
@@ -129,9 +130,7 @@ public class FVDLProcessor {
         try (InputStream fis = Files.newInputStream(fvdlFilePath)) {
             JAXBContext jaxbContext = JAXBContext.newInstance(FVDL.class);
             Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
-            javax.xml.stream.XMLInputFactory xmlInputFactory = javax.xml.stream.XMLInputFactory.newInstance();
-            xmlInputFactory.setProperty(javax.xml.stream.XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, false);
-            xmlInputFactory.setProperty(javax.xml.stream.XMLInputFactory.SUPPORT_DTD, false);
+            var xmlInputFactory = SecureXmlParserFactory.newXmlInputFactory();
             javax.xml.stream.XMLStreamReader xmlStreamReader = xmlInputFactory.createXMLStreamReader(fis);
             return (FVDL) unmarshaller.unmarshal(xmlStreamReader);
         } catch (javax.xml.stream.XMLStreamException e) {

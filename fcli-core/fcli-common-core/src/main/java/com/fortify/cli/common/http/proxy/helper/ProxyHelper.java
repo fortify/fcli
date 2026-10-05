@@ -26,6 +26,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fortify.cli.common.exception.FcliSimpleException;
+import com.fortify.cli.common.http.UrlSchemes;
 import com.fortify.cli.common.util.FcliDataHelper;
 
 import kong.unirest.UnirestInstance;
@@ -75,14 +76,10 @@ public final class ProxyHelper {
 
     private static String normalizeTargetUrl(String targetUrlString) {
         var trimmed = StringUtils.trimToEmpty(targetUrlString);
-        if ( !hasScheme(trimmed) ) {
+        if ( !UrlSchemes.hasScheme(trimmed) ) {
             return "https://"+trimmed;
         }
         return trimmed;
-    }
-
-    private static boolean hasScheme(String url) {
-        return url.matches("^[a-zA-Z][a-zA-Z0-9+\\-.]*://.*$");
     }
 
     static Optional<String> getProxyEnvVarName(String targetScheme, Map<String, String> env) {
@@ -108,7 +105,7 @@ public final class ProxyHelper {
 
     private static String normalizeProxyUri(String envVarName, String proxyString) {
         var trimmed = StringUtils.trimToEmpty(proxyString);
-        if ( hasScheme(trimmed) ) {
+        if ( UrlSchemes.hasScheme(trimmed) ) {
             return trimmed;
         }
         if ( envVarName.toLowerCase(Locale.ROOT).startsWith("https_") ) {

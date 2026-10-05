@@ -18,6 +18,7 @@ import static com.fortify.cli.common.cli.util.FcliModules.SSC;
 import com.fortify.cli.aviator._common.config.admin.cli.cmd.AviatorAdminConfigCommands;
 import com.fortify.cli.aviator._common.session.user.cli.cmd.AviatorUserSessionCommands;
 import com.fortify.cli.aviator.app.cli.cmd.AviatorAppCommands;
+import com.fortify.cli.aviator.connection.cli.cmd.AviatorConnectionCommands;
 import com.fortify.cli.aviator.entitlement.cli.cmd.AviatorEntitlementCommands;
 import com.fortify.cli.aviator.ssc.cli.cmd.AviatorSSCCommands;
 import com.fortify.cli.aviator.token.cli.cmd.AviatorTokenCommands;
@@ -44,6 +45,7 @@ import picocli.CommandLine.Command;
                 AviatorAdminConfigCommands.class,
                 AviatorUserSessionCommands.class,
                 AviatorAppCommands.class,
+                AviatorConnectionCommands.class,
                 AviatorEntitlementCommands.class,
                 AviatorSSCCommands.class,
                 AviatorTokenCommands.class,

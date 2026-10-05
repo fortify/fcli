@@ -12,137 +12,69 @@
  */
 package com.fortify.cli.fod.aviator.cmd;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.time.Duration;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.util.Set;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.aviator._common.cli.mixin.SourceEncodingsMixin;
-import com.fortify.cli.aviator.applyRemediation.ApplyAutoRemediationOnSource;
+import com.fortify.cli.aviator._common.output.cli.cmd.AbstractAviatorApplyRemediationsCommand;
+import com.fortify.cli.aviator._common.remediations_cache.CacheRemediationsFprSource;
+import com.fortify.cli.aviator._common.remediations_cache.IRemediationsFprSource;
+import com.fortify.cli.aviator._common.remediations_cache.RemediationsApplyHelper.ApplyResult;
+import com.fortify.cli.aviator._common.remediations_cache.RemediationsCacheConstants;
 import com.fortify.cli.aviator.config.AviatorLoggerImpl;
-import com.fortify.cli.aviator.util.FprHandle;
-import com.fortify.cli.common.exception.FcliSimpleException;
-import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
-import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
-import com.fortify.cli.common.output.transform.IRecordTransformer;
-import com.fortify.cli.common.progress.cli.mixin.ProgressWriterFactoryMixin;
 import com.fortify.cli.common.progress.helper.IProgressWriter;
-import com.fortify.cli.common.rest.unirest.HttpHeader;
-import com.fortify.cli.common.rest.unirest.RestResponseBodyHelper;
 import com.fortify.cli.fod._common.cli.mixin.FoDDelimiterMixin;
-import com.fortify.cli.fod._common.output.cli.cmd.AbstractFoDJsonNodeOutputCommand;
-import com.fortify.cli.fod._common.scan.helper.FoDScanDescriptor;
-import com.fortify.cli.fod._common.scan.helper.FoDScanHelper;
-import com.fortify.cli.fod._common.scan.helper.FoDScanType;
+import com.fortify.cli.fod._common.session.cli.mixin.FoDUnirestInstanceSupplierMixin;
+import com.fortify.cli.fod.aviator.cli.mixin.FoDAviatorApplyRemediationsOptionsMixin;
 import com.fortify.cli.fod.aviator.helper.AviatorFoDApplyRemediationsHelper;
-import com.fortify.cli.fod.release.cli.mixin.FoDReleaseByQualifiedNameOrIdResolverMixin;
+import com.fortify.cli.fod.aviator.helper.FoDOnlineRemediationsFprSource;
 import com.fortify.cli.fod.release.helper.FoDReleaseDescriptor;
 
-import kong.unirest.GetRequest;
 import kong.unirest.UnirestInstance;
+import lombok.AccessLevel;
 import lombok.Getter;
-import lombok.SneakyThrows;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
-import picocli.CommandLine.Option;
 
 @Command(name = "apply-remediations")
-public class FoDAviatorApplyRemediationsCommand extends AbstractFoDJsonNodeOutputCommand
-    implements IRecordTransformer, IActionCommandResultSupplier {
-    @Getter @Mixin private OutputHelperMixins.DetailsNoQuery outputHelper;
-    @Mixin private ProgressWriterFactoryMixin progressWriterFactoryMixin;
-    @Mixin private FoDDelimiterMixin delimiterMixin; // Is automatically injected in resolver mixins
-    @Mixin private FoDReleaseByQualifiedNameOrIdResolverMixin.RequiredOption releaseResolver;
-    private static final Logger LOG = LoggerFactory.getLogger(FoDAviatorApplyRemediationsCommand.class);
-    @Option(names = {"--source-dir"}) private String sourceCodeDirectory = System.getProperty("user.dir");
-    @Mixin private SourceEncodingsMixin sourceEncodingsMixin;
+public class FoDAviatorApplyRemediationsCommand extends AbstractAviatorApplyRemediationsCommand {
+    @Mixin private FoDDelimiterMixin delimiterMixin; // Injected into applyOptions
+    @Getter(AccessLevel.PROTECTED) @Mixin private FoDAviatorApplyRemediationsOptionsMixin applyOptions;
+    @Mixin private FoDUnirestInstanceSupplierMixin unirestInstanceSupplier;
 
-    @Override @SneakyThrows
-    public JsonNode getJsonNode(UnirestInstance unirest) {
-        validateSourceCodeDirectory();
-        try (IProgressWriter progressWriter = progressWriterFactoryMixin.create()) {
-            AviatorLoggerImpl logger = new AviatorLoggerImpl(progressWriter);
-            FoDReleaseDescriptor rd = releaseResolver.getReleaseDescriptor(unirest);
-            return processFprRemediations(unirest, rd, logger);
-        }
-    }
-
-    private void validateSourceCodeDirectory() {
-        if (sourceCodeDirectory == null || sourceCodeDirectory.isBlank()) {
-            throw new FcliSimpleException("--source-dir must specify a valid directory path");
-        }
-    }
-
-    @SneakyThrows
-    private JsonNode processFprRemediations(UnirestInstance unirest, FoDReleaseDescriptor rd, AviatorLoggerImpl logger) {
-        Path downloadedFprPath = null;
-        try {
-            logger.progress("Status: Downloading Audited FPR from FOD");
-            downloadedFprPath = downloadFprFromFod(unirest, rd);
-
-            logger.progress("Status: Processing FPR with Aviator for Applying Auto Remediations");
-            try (FprHandle fprHandle = new FprHandle(downloadedFprPath)) {
-                var remediationMetric = ApplyAutoRemediationOnSource.applyRemediations(fprHandle, sourceCodeDirectory,
-                    sourceEncodingsMixin.getSourceDecoder());
-                LOG.info("Applied remediation {}", remediationMetric.appliedRemediations());
-                LOG.info("Total remediation {}", remediationMetric.totalRemediations());
-                String status = remediationMetric.appliedRemediations() > 0 ? "Remediation-Applied" : "No-Remediation-Applied";
-                return AviatorFoDApplyRemediationsHelper.buildResultNode(rd, remediationMetric, status);
-            }
-        } finally {
-            if (downloadedFprPath != null) {
-                try {
-                    Files.deleteIfExists(downloadedFprPath);
-                } catch (IndexOutOfBoundsException e) {
-                    LOG.warn("WARN: Failed to delete temporary downloaded FPR file: {}", downloadedFprPath, e);
-                }
-            }
-        }
-    }
-
-    @SneakyThrows
-    private Path  downloadFprFromFod(UnirestInstance unirest, FoDReleaseDescriptor releaseDescriptor) {
-        Path fprPath = Files.createTempFile("aviator_" + releaseDescriptor.getReleaseId() + "_", ".fpr");
-        FoDScanDescriptor scanDescriptor = FoDScanHelper.getLatestScanDescriptor(unirest, releaseDescriptor.getReleaseId(),
-                getScanType(), false);
-        FoDScanHelper.validateScanDate(scanDescriptor, FoDScanHelper.MAX_RETENTION_PERIOD);
-        var file = fprPath.toString();
-        GetRequest request = getDownloadRequest(unirest, releaseDescriptor, scanDescriptor);
-        RestResponseBodyHelper.saveToFileWhenReady(request, Path.of(file), null, Duration.ofSeconds(30), Duration.ZERO);
-        return fprPath;
-    }
-
-
-
-    protected FoDScanType getScanType() {
-        return FoDScanType.Static;
-    }
-
-        protected GetRequest getDownloadRequest(UnirestInstance unirest, FoDReleaseDescriptor releaseDescriptor,
-            FoDScanDescriptor scanDescriptor) {
-        return unirest.get("/api/v3/releases/{releaseId}/fpr")
-                .routeParam("releaseId", releaseDescriptor.getReleaseId())
-                // Use headerReplace to replace rather than add the Accept header (avoid duplicates with defaults)
-                .headerReplace(HttpHeader.ACCEPT, "application/octet-stream")
-                .queryString("scanType", scanDescriptor.getScanType());
+    @Override
+    protected IRemediationsFprSource openFprSource(AviatorLoggerImpl logger, IProgressWriter progressWriter) {
+        return applyOptions.isFromCacheSelected()
+                ? openCacheFprSource()
+                : openOnlineFprSource(logger);
     }
 
     @Override
-    public boolean isSingular() {
-        return true;
+    protected JsonNode buildResultNode(IRemediationsFprSource fprSource, ApplyResult result, Set<String> issueIdFilter) {
+        return applyOptions.isFromCacheSelected()
+                ? buildCacheResultNode(result, issueIdFilter)
+                : buildOnlineResultNode(fprSource, result);
     }
 
-
-    @Override
-    public String getActionCommandResult() {
-        return "Remediation-Applied";
+    private IRemediationsFprSource openCacheFprSource() {
+        return CacheRemediationsFprSource.open(
+                applyOptions.getFromCache(),
+                RemediationsCacheConstants.PRODUCT_FOD);
     }
 
-    @Override
-    public JsonNode transformRecord(JsonNode record) {
-        return record;
+    private IRemediationsFprSource openOnlineFprSource(AviatorLoggerImpl logger) {
+        UnirestInstance unirest = unirestInstanceSupplier.getUnirestInstance();
+        FoDReleaseDescriptor releaseDescriptor = applyOptions.getReleaseDescriptor(unirest);
+        return new FoDOnlineRemediationsFprSource(unirest, logger, releaseDescriptor);
+    }
+
+    private JsonNode buildCacheResultNode(ApplyResult result, Set<String> issueIdFilter) {
+        return AviatorFoDApplyRemediationsHelper.buildCacheResultNode(
+                applyOptions.getFromCache(), result, issueIdFilter, applyOptions.executionMode());
+    }
+
+    private JsonNode buildOnlineResultNode(IRemediationsFprSource fprSource, ApplyResult result) {
+        FoDReleaseDescriptor releaseDescriptor = ((FoDOnlineRemediationsFprSource) fprSource).getReleaseDescriptor();
+        return AviatorFoDApplyRemediationsHelper.buildOnlineResultNode(
+                releaseDescriptor, result, applyOptions.executionMode());
     }
 }

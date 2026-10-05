@@ -108,8 +108,7 @@ public class AuditFPR {
             tagMappingConfig = AviatorConfigManager.getInstance().getDefaultTagMappingConfig();
         }
 
-        tagMappingConfig.validate();
-        return tagMappingConfig;
+        return tagMappingConfig.resolveForSast();
     }
 
     private static Map<String, String> buildIssueCategoryLookup(List<Vulnerability> vulnerabilities) {
