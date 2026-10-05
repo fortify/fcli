@@ -78,28 +78,18 @@ steps:
         ${
             #extraOpts('DEBRICKED_SCAN')
         }
-      # Aviator configuration for backward compatibility and new options
-      # DO_AVIATOR_AUDIT (deprecated): enables both SAST and DAST audits if scans were run
-      # DO_AVIATOR_SAST_AUDIT (new): enables SAST audit only
-      # DO_AVIATOR_DAST_AUDIT (new): enables DAST audit only
+      # Aviator configuration: separate SAST and DAST audits
+      # DO_AVIATOR_SAST_AUDIT: enables SAST audit only
+      # DO_AVIATOR_DAST_AUDIT: enables DAST audit only
       aviator.sast.skipReason: >
         ${
             #fcliCmdSkipFromEnvReason('AVIATOR_SAST_AUDIT', false)
-            ?:#fcliCmdSkipFromEnvReason('AVIATOR_AUDIT', false)
             ?:#skipBlankEnvReason('AVIATOR_TOKEN')
             ?:#skipBlankEnvReason('AVIATOR_URL')
         }
       aviator.dast.skipReason: >
         ${
             #fcliCmdSkipFromEnvReason('AVIATOR_DAST_AUDIT', false)
-            ?:#fcliCmdSkipFromEnvReason('AVIATOR_AUDIT', false)
-            ?:#skipBlankEnvReason('AVIATOR_TOKEN')
-            ?:#skipBlankEnvReason('AVIATOR_URL')
-        }
-      # Legacy skip reason for backward compatibility
-      aviator.skipReason: >
-        ${
-            #fcliCmdSkipFromEnvReason('AVIATOR_AUDIT', false)
             ?:#skipBlankEnvReason('AVIATOR_TOKEN')
             ?:#skipBlankEnvReason('AVIATOR_URL')
         }
@@ -225,7 +215,7 @@ steps:
                 - ${#isDebugEnabled()?'':'--debug flag not specified'}   # Skip if debugging is disabled
               
             AVIATOR_SAST_AUDIT:
-              cmd: ${#fcliCmd('AVIATOR_SAST_AUDIT', 'aviator ssc audit')} --aviator-session ${sessionName} --av "${global.ci.av}" --app "${aviator.app}" --store aviator_sast_audit
+              cmd: ${#fcliCmd('AVIATOR_SAST_AUDIT', 'aviator ssc audit-sast')} --aviator-session ${sessionName} --av "${global.ci.av}" --app "${aviator.app}" --store aviator_sast_audit
               skip.if-reason:
                 - ${postScan.skipReason}                               # Skip if no scans were run
                 - ${SAST_WAIT.dependencySkipReason}                    # Skip if SAST_WAIT was skipped or failed
@@ -254,7 +244,7 @@ steps:
                 - var.set: { postScan.skipReason: } # Reset postScan.skipReason to allow post-scan tasks to run
 
             AVIATOR_DAST_AUDIT:
-              cmd: ${#fcliCmd('AVIATOR_DAST_AUDIT', 'aviator ssc audit')} --aviator-session ${sessionName} --av "${global.ci.av}" --app "${aviator.app}" --store aviator_dast_audit
+              cmd: ${#fcliCmd('AVIATOR_DAST_AUDIT', 'aviator ssc audit-dast')} --aviator-session ${sessionName} --av "${global.ci.av}" --app "${aviator.app}" --store aviator_dast_audit
               skip.if-reason:
                 - ${postScan.skipReason}                               # Skip if no scans were run
                 - ${DAST_WAIT.dependencySkipReason}                    # Skip if DAST_WAIT was skipped or failed
