@@ -37,6 +37,7 @@ import com.fortify.cli.aviator.fpr.utils.SourceDecoders;
 import com.fortify.cli.aviator.fpr.utils.XmlUtils;
 import com.fortify.cli.aviator.util.FprHandle;
 import com.fortify.cli.aviator.util.StringUtil;
+import com.fortify.cli.common.util.SecureXmlParserFactory;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -84,10 +85,7 @@ public class StreamingFVDLProcessor {
         this.vulnFinalizer = new VulnFinalizer();
         this.fprHandle = fprHandle;
         this.sourceFileMap = fprHandle.getSourceFileMap();
-        this.xmlInputFactory = XMLInputFactory.newInstance();
-        // Security: Disable external entity processing
-        xmlInputFactory.setProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, false);
-        xmlInputFactory.setProperty(XMLInputFactory.SUPPORT_DTD, false);
+        this.xmlInputFactory = SecureXmlParserFactory.newXmlInputFactory();
         this.fvdlMetadata = new FVDLMetadata();
         // Same metadata instance FileUtils will see once encodings are registered during parse.
         this.fileUtils = new FileUtils(

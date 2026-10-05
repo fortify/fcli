@@ -13,6 +13,8 @@
 package com.fortify.cli.aviator.ssc.helper;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystem;
@@ -26,6 +28,8 @@ import javax.xml.parsers.DocumentBuilderFactory;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import com.fortify.cli.aviator.grpc.CorrelatedPair;
 import com.fortify.cli.aviator.util.FprHandle;
@@ -33,9 +37,17 @@ import com.fortify.cli.aviator.util.FprHandle;
 class DastFprCorrelationEnricherTest {
     @TempDir Path tempDir;
 
-    @Test
-    void preservesExistingExternalFindingsAndAvoidsDuplicates() throws Exception {
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    void preservesExistingExternalFindingsAndAvoidsDuplicates(boolean withDoctype) throws Exception {
         Path fprPath = createFpr();
+      if (withDoctype) {
+        try (FprHandle fprHandle = new FprHandle(fprPath)) {
+          Path xmlPath = fprHandle.getPath("/webinspect.xml");
+          Files.writeString(xmlPath, "<!DOCTYPE ScanResults SYSTEM 'http://example.invalid/webinspect.dtd'>"
+              + Files.readString(xmlPath));
+        }
+      }
         var pairs = List.of(
             new CorrelatedPair("SAST-1", "DAST-1", "scan-1", "HIGH", "existing"),
             new CorrelatedPair("SAST-2", "DAST-1", "scan-2", "HIGH", "new")
@@ -53,6 +65,35 @@ class DastFprCorrelationEnricherTest {
             assertEquals("SAST-2", originFindingIds.item(1).getTextContent());
           }
         }
+    }
+
+    @Test
+    void doesNotDiscloseExternalEntityInWebInspectXml() throws Exception {
+      Path secret = tempDir.resolve("secret.txt");
+      Files.writeString(secret, "PRIVATE-SENTINEL");
+      Path fprPath = createFpr();
+      String maliciousXml = """
+        <!DOCTYPE ScanResults [<!ENTITY xxe SYSTEM "%s">]>
+        <ScanResults><Session><Issues><Issue id="DAST-1"><OriginFindingID>&xxe;</OriginFindingID></Issue></Issues></Session></ScanResults>
+        """.formatted(secret.toUri());
+      try (FprHandle fprHandle = new FprHandle(fprPath)) {
+        Files.writeString(fprHandle.getPath("/webinspect.xml"), maliciousXml);
+      }
+
+      new DastFprCorrelationEnricher().injectAndRepackage(fprPath,
+        List.of(new CorrelatedPair("SAST-1", "DAST-1", "scan-1", "HIGH", "match")));
+      try (FprHandle fprHandle = new FprHandle(fprPath)) {
+        String output = Files.readString(fprHandle.getPath("/webinspect.xml"));
+        assertFalse(output.contains("PRIVATE-SENTINEL"));
+        try (var input = Files.newInputStream(fprHandle.getPath("/webinspect.xml"))) {
+            var document = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(input);
+            var originFindingIds = document.getElementsByTagName("OriginFindingID");
+            assertEquals(2, originFindingIds.getLength());
+            assertEquals("", originFindingIds.item(0).getTextContent());
+            assertEquals("SAST-1", originFindingIds.item(1).getTextContent());
+            assertTrue(output.contains("AI_CORRELATION_METADATA"));
+        }
+      }
     }
 
     private Path createFpr() throws Exception {

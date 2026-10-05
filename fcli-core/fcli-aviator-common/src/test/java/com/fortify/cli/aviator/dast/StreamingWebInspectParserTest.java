@@ -13,6 +13,9 @@
 package com.fortify.cli.aviator.dast;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystem;
@@ -22,9 +25,12 @@ import java.nio.file.Path;
 import java.util.Base64;
 import java.util.Map;
 
+import javax.xml.stream.XMLStreamException;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
 import com.fortify.cli.aviator.util.FprHandle;
 
 class StreamingWebInspectParserTest {
@@ -55,6 +61,25 @@ class StreamingWebInspectParserTest {
             assertEquals("username=test%27", issue.getReproSteps().get(1).getPostParams());
             assertEquals(issue.getReproSteps().stream().map(DastReproStep::getUrl).toList(), issue.getReproStepUrls());
         }
+    }
+
+    @Test
+    void domAndStreamingParsersDoNotResolveExternalEntities() throws Exception {
+      Path secret = tempDir.resolve("secret.txt");
+      Files.writeString(secret, "PRIVATE-SENTINEL");
+      Path fpr = createFpr();
+
+      try (FprHandle handle = new FprHandle(fpr)) {
+        String maliciousXml = webInspectXml()
+          .replace("<WebInspectScan>", "<!DOCTYPE WebInspectScan [<!ENTITY xxe SYSTEM \"" + secret.toUri() + "\">]><WebInspectScan>")
+          .replace("<URL>https://example.test/login</URL>", "<URL>&xxe;</URL>");
+        Files.writeString(handle.getPath("/webinspect.xml"), maliciousXml);
+
+        assertNotEquals("PRIVATE-SENTINEL", new WebInspectParser(handle).parseSessions().get(0).getUrl());
+        AviatorTechnicalException exception = assertThrows(AviatorTechnicalException.class,
+            () -> new StreamingWebInspectParser(handle).parseSessions());
+        assertInstanceOf(XMLStreamException.class, exception.getCause());
+      }
     }
 
     private Path createFpr() throws Exception {

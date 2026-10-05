@@ -12,6 +12,7 @@
  */
 package com.fortify.cli.aviator.fpr.processor;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -44,6 +45,41 @@ class FilterTemplateParserTest {
             AviatorTechnicalException exception = assertThrows(AviatorTechnicalException.class, parser::parseFilterTemplate);
 
             assertTrue(exception.getMessage().contains("filtertemplate.xml"));
+        }
+    }
+
+    @Test
+    void allowsHarmlessDoctypeWithoutLoadingExternalDtd() throws Exception {
+        String xml = """
+            <!DOCTYPE FilterTemplate SYSTEM "http://example.invalid/filtertemplate.dtd">
+            <FilterTemplate xmlns="urn:test" version="1" id="template"><Name>Safe template</Name></FilterTemplate>
+            """;
+        Path fprPath = createFpr(xml);
+        try (FprHandle fprHandle = new FprHandle(fprPath)) {
+            var parser = new FilterTemplateParser(fprHandle, new AuditProcessor(fprHandle));
+            var template = parser.parseFilterTemplate().orElseThrow();
+            assertEquals("Safe template", template.getName());
+            assertEquals("template", template.getId());
+            assertTrue(!template.getTagDefinitions().isEmpty());
+            assertEquals(xml, Files.readString(fprHandle.getPath("/filtertemplate.xml")));
+        }
+    }
+
+    @Test
+    void doesNotDiscloseExternalEntityInFilterTemplate() throws Exception {
+        Path secret = tempDir.resolve("secret.txt");
+        Files.writeString(secret, "PRIVATE-SENTINEL");
+        String xml = """
+            <!DOCTYPE FilterTemplate [<!ENTITY xxe SYSTEM "%s">]>
+            <FilterTemplate><Name>&xxe;</Name></FilterTemplate>
+            """.formatted(secret.toUri());
+        Path fprPath = createFpr(xml);
+
+        try (FprHandle fprHandle = new FprHandle(fprPath)) {
+            FilterTemplateParser parser = new FilterTemplateParser(fprHandle, new AuditProcessor(fprHandle));
+            var template = parser.parseFilterTemplate().orElseThrow();
+            assertEquals("", template.getName());
+            assertEquals(xml, Files.readString(fprHandle.getPath("/filtertemplate.xml")));
         }
     }
 
