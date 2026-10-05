@@ -13,13 +13,13 @@
 package com.fortify.cli.sc_sast.scan.cli.cmd;
 
 import java.io.File;
-import java.nio.file.StandardCopyOption;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.cli.mixin.CommonOptionMixins;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
+import com.fortify.cli.common.rest.unirest.RestResponseBodyHelper;
 import com.fortify.cli.sc_sast._common.output.cli.cmd.AbstractSCSastJsonNodeOutputCommand;
 import com.fortify.cli.sc_sast.scan.cli.mixin.SCSastScanJobResolverMixin;
 import com.fortify.cli.sc_sast.scan.helper.SCSastScanJobDescriptor;
@@ -47,11 +47,10 @@ public class SCSastScanDownloadCommand extends AbstractSCSastJsonNodeOutputComma
         if ( outputFile.exists() ) {
             requireConfirmationMixin.checkConfirmed(outputFile.toString());
         }
-        unirest.get("/rest/v2/job/{jobToken}/{type}")
+        var request = unirest.get("/rest/v2/job/{jobToken}/{type}")
             .routeParam("jobToken", jobToken)
-            .routeParam("type", type.name())
-            .asFile(outputFile.getAbsolutePath(), StandardCopyOption.REPLACE_EXISTING)
-            .getBody();
+            .routeParam("type", type.name());
+        RestResponseBodyHelper.saveToFile(request, outputFile.toPath(), null);
         return JsonHelper.getObjectMapper().createObjectNode()
                 .put("jobToken", jobToken)
                 .put("type", type.toString())

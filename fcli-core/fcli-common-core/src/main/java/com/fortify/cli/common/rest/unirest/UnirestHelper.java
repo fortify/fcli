@@ -13,7 +13,6 @@
 package com.fortify.cli.common.rest.unirest;
 
 import java.io.File;
-import java.nio.file.StandardCopyOption;
 import java.util.function.Consumer;
 
 import javax.net.ssl.SSLContext;
@@ -38,7 +37,7 @@ public class UnirestHelper {
             ProxyHelper.configureProxy(unirest, fcliModule, parsedUrl.getRequestUrl());
             var request = unirest.get(parsedUrl.getRequestUrl());
             parsedUrl.getHeaders().forEach(request::headerReplace);
-            request.asFile(dest.getAbsolutePath(), StandardCopyOption.REPLACE_EXISTING).getBody();
+            RestResponseBodyHelper.saveToFile(request, dest.toPath(), null);
             return dest;
         }
     }

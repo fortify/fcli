@@ -43,6 +43,15 @@ In `on.fail` blocks: `lastException.type`, `lastException.message`, `lastExcepti
 `throw` accepts: simple string, `{msg: "...", cause: ${exception}}`, or `{cause: ${exception}}` (rethrow).
 `log.*` accepts: simple string or `{msg: "...", cause: ${exception}}`.
 
+## REST Response Handling (`rest.call`)
+
+- `response.type: json` (default): parse as JSON; fails if the response isn't valid JSON
+- `response.type: text`: body as string in `${name}` (charset from `Content-Type`, UTF-8 default)
+- `response.type: file` + `response.file: <expr>`: body saved to file; `${name}` = `{file, size, contentType, status}`
+- `text`/`file` cannot be combined with `type: paged`, `log.progress` or `records.for-each`
+- SSC/ScanCentral targets bulk the requests of a `rest.call` instruction only if all use `json`; put `text`/`file` requests in a separate `rest.call` to keep JSON requests bulked
+- For SSC `/download/...` endpoints (file tokens), use `run.fcli` with the dedicated `download` commands instead
+
 ## Validation
 
 1. `get_errors` tool for IDE validation

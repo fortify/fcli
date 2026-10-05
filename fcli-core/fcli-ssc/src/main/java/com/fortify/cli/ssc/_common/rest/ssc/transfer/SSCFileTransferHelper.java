@@ -34,6 +34,7 @@ import com.fortify.cli.common.exception.FcliTechnicalException;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.progress.helper.IProgressWriter;
 import com.fortify.cli.common.rest.unirest.HttpHeader;
+import com.fortify.cli.common.rest.unirest.RestResponseBodyHelper;
 
 import kong.unirest.GetRequest;
 import kong.unirest.HttpRequest;
@@ -54,10 +55,9 @@ public class SSCFileTransferHelper {
     public static final File download(UnirestInstance unirest, String endpoint, File downloadPath, SSCFileTransferTokenType tokenType, ISSCAddDownloadTokenFunction addTokenFunction, IProgressWriter progressWriter) {
         try ( SSCFileTransferTokenSupplier tokenSupplier = new SSCFileTransferTokenSupplier(unirest, tokenType); ) {
             try ( SSCProgressMonitor downloadMonitor = new SSCProgressMonitor(progressWriter, "Download") ) {
-                return addTokenFunction.apply(tokenSupplier.get(), unirest.get(endpoint))
-                    .downloadMonitor(downloadMonitor)
-                    .asFile(downloadPath.getAbsolutePath(), StandardCopyOption.REPLACE_EXISTING)
-                    .getBody();
+                RestResponseBodyHelper.saveToFile(addTokenFunction.apply(tokenSupplier.get(), unirest.get(endpoint)),
+                        downloadPath.toPath(), downloadMonitor);
+                return downloadPath.getAbsoluteFile();
             }
         }
     }
