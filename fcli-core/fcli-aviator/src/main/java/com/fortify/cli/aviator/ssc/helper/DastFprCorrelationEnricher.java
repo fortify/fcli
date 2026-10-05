@@ -28,7 +28,6 @@ import java.util.Map;
 import java.util.Set;
 
 import javax.xml.XMLConstants;
-import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.transform.OutputKeys;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
@@ -42,6 +41,7 @@ import org.w3c.dom.NodeList;
 
 import com.fortify.cli.aviator.grpc.CorrelatedPair;
 import com.fortify.cli.aviator.util.FprHandle;
+import com.fortify.cli.common.util.SecureXmlParserFactory;
 
 import lombok.SneakyThrows;
 
@@ -169,17 +169,7 @@ public class DastFprCorrelationEnricher {
 
     @SneakyThrows
     private Document parseXml(Path path) {
-        var factory = DocumentBuilderFactory.newInstance();
-        factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
-        factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
-        factory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
-        factory.setFeature("http://xml.org/sax/features/external-general-entities", false);
-        factory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
-        factory.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
-        factory.setAttribute(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "");
-        factory.setXIncludeAware(false);
-        factory.setExpandEntityReferences(false);
-        factory.setNamespaceAware(false);
+        var factory = SecureXmlParserFactory.newDocumentBuilderFactory(false);
         try (InputStream input = Files.newInputStream(path)) {
             return factory.newDocumentBuilder().parse(input);
         }

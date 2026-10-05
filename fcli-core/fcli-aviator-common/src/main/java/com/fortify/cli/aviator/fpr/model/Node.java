@@ -21,9 +21,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.regex.Pattern;
 
-import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -33,6 +31,7 @@ import com.fortify.cli.aviator.fpr.filter.FilterSet;
 import com.fortify.cli.aviator.fpr.filter.FilterTemplate;
 import com.fortify.cli.aviator.fpr.utils.Searchable;
 import com.fortify.cli.aviator.util.StringUtil;
+import com.fortify.cli.common.util.SecureXmlParserFactory;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -320,13 +319,7 @@ public class Node implements Searchable {
                 throw new IllegalStateException("audit.fvdl not found in " + extractedPath);
             }
 
-            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-            factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
-            factory.setFeature("http://xml.org/sax/features/external-general-entities", false);
-            factory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
-            factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
-            factory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
-            factory.setFeature("http://xml.org/sax/features/validation", false);
+            var factory = SecureXmlParserFactory.newDocumentBuilderFactory(false);
             DocumentBuilder builder = factory.newDocumentBuilder();
             Document auditDoc = builder.parse(auditPath.toFile());
 
@@ -365,10 +358,7 @@ public class Node implements Searchable {
                 throw new IllegalStateException("audit.fvdl not found in " + extractedPath);
             }
 
-            javax.xml.stream.XMLInputFactory factory = javax.xml.stream.XMLInputFactory.newInstance();
-            // Security: Disable external entity processing
-            factory.setProperty(javax.xml.stream.XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, false);
-            factory.setProperty(javax.xml.stream.XMLInputFactory.SUPPORT_DTD, false);
+            var factory = SecureXmlParserFactory.newXmlInputFactory();
 
             try (java.io.InputStream inputStream = Files.newInputStream(auditPath)) {
                 javax.xml.stream.XMLStreamReader reader = factory.createXMLStreamReader(inputStream);

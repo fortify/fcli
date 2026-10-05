@@ -12,6 +12,7 @@
  */
 package com.fortify.cli.aviator.fpr.model;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -46,6 +47,23 @@ class FPRInfoTest {
             AviatorTechnicalException exception = assertThrows(AviatorTechnicalException.class, () -> new FPRInfo(fprHandle));
 
             assertTrue(exception.getMessage().contains("audit.fvdl"));
+        }
+    }
+
+    @Test
+    void allowsHarmlessDoctypeInAuditFvdl() throws Exception {
+        Path fprPath = createFpr("""
+            <!DOCTYPE FVDL SYSTEM "http://example.invalid/audit.dtd">
+            <FVDL><UUID>safe-uuid</UUID><Build><BuildID>safe-build</BuildID>
+            <NumberFiles>7</NumberFiles><ScanTime>12</ScanTime></Build></FVDL>
+            """);
+
+        try (FprHandle fprHandle = new FprHandle(fprPath)) {
+            var metadata = new FPRInfo(fprHandle);
+            assertEquals("safe-uuid", metadata.getUuid());
+            assertEquals("safe-build", metadata.getBuildId());
+            assertEquals(7, metadata.getNumberOfFiles());
+            assertEquals(12, metadata.getScanTime());
         }
     }
 

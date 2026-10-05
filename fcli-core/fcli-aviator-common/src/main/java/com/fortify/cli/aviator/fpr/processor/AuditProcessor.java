@@ -37,7 +37,6 @@ import java.util.stream.Collectors;
 
 import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Transformer;
@@ -69,6 +68,7 @@ import com.fortify.cli.aviator.fpr.utils.SourceDecoders;
 import com.fortify.cli.aviator.util.Constants;
 import com.fortify.cli.aviator.util.FileUtil;
 import com.fortify.cli.aviator.util.FprHandle;
+import com.fortify.cli.common.util.SecureXmlParserFactory;
 
 import lombok.Setter;
 
@@ -149,14 +149,7 @@ public class AuditProcessor {
                 logger.debug("audit.xml not found. Creating a default audit.xml.");
                 auditDoc = createDefaultAuditXml();
             } else {
-                DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-                factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
-                factory.setFeature("http://xml.org/sax/features/external-general-entities", false);
-                factory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
-                factory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
-                factory.setXIncludeAware(false);
-                factory.setExpandEntityReferences(false);
-                factory.setNamespaceAware(true);
+                var factory = SecureXmlParserFactory.newDocumentBuilderFactory(true);
                 DocumentBuilder builder = factory.newDocumentBuilder();
 
                 try (InputStream auditStream = Files.newInputStream(auditPath)) {
@@ -184,14 +177,7 @@ public class AuditProcessor {
 
     private Document createDefaultAuditXml() throws AviatorTechnicalException {
         try {
-            DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
-            docFactory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
-            docFactory.setFeature("http://xml.org/sax/features/external-general-entities", false);
-            docFactory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
-            docFactory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
-            docFactory.setXIncludeAware(false);
-            docFactory.setExpandEntityReferences(false);
-            docFactory.setNamespaceAware(true);
+            var docFactory = SecureXmlParserFactory.newDocumentBuilderFactory(true);
 
             DocumentBuilder docBuilder = docFactory.newDocumentBuilder();
             Document doc = docBuilder.newDocument();
@@ -925,14 +911,7 @@ public class AuditProcessor {
                                             FPRInfo fprInfo, FVDLMetadata fvdlMetadata,
                                             Map<String, Integer> skippedByReason) throws AviatorTechnicalException {
         try {
-            DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
-            docFactory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
-            docFactory.setFeature("http://xml.org/sax/features/external-general-entities", false);
-            docFactory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
-            docFactory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
-            docFactory.setXIncludeAware(false);
-            docFactory.setExpandEntityReferences(false);
-            docFactory.setNamespaceAware(true);
+            var docFactory = SecureXmlParserFactory.newDocumentBuilderFactory(true);
             DocumentBuilder docBuilder = docFactory.newDocumentBuilder();
 
             Document finalDoc = docBuilder.newDocument();
@@ -1176,14 +1155,7 @@ public class AuditProcessor {
     private boolean isRemediationElementValid(Element remediationElement, FPRInfo fprInfo) {
         String instanceId = remediationElement.getAttribute("instanceId");
         try {
-            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-            factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
-            factory.setFeature("http://xml.org/sax/features/external-general-entities", false);
-            factory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
-            factory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
-            factory.setXIncludeAware(false);
-            factory.setExpandEntityReferences(false);
-            factory.setNamespaceAware(true);
+            var factory = SecureXmlParserFactory.newDocumentBuilderFactory(true);
             DocumentBuilder builder = factory.newDocumentBuilder();
             Document tempDoc = builder.newDocument();
 

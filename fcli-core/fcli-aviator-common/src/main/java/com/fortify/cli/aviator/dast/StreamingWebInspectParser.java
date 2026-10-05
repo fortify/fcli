@@ -34,6 +34,7 @@ import org.slf4j.LoggerFactory;
 
 import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
 import com.fortify.cli.aviator.util.FprHandle;
+import com.fortify.cli.common.util.SecureXmlParserFactory;
 
 /**
  * Streaming (StAX-based) parser for WebInspect XML files contained in DAST FPR files.
@@ -48,9 +49,7 @@ public class StreamingWebInspectParser {
 
     public StreamingWebInspectParser(FprHandle fprHandle) {
         this.fprHandle = fprHandle;
-        this.xmlInputFactory = XMLInputFactory.newInstance();
-        xmlInputFactory.setProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, false);
-        xmlInputFactory.setProperty(XMLInputFactory.SUPPORT_DTD, false);
+        this.xmlInputFactory = SecureXmlParserFactory.newXmlInputFactory();
     }
 
     /**
