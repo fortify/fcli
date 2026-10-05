@@ -17,7 +17,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20261002.155533-dev_v3.x" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20261005.151800-dev_v3.x" %}
 
 
 <div id="header">
@@ -45,10 +45,11 @@ fcli_version:
 <h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli aviator ssc correlate-sast-dast</strong> [<strong>--app</strong>=<em>&lt;appName&gt;</em>]
+<p><strong>fcli aviator ssc correlate-sast-dast</strong> [<strong>--[no-]refresh</strong>] [<strong>--app</strong>=<em>&lt;appName&gt;</em>]
                                      <strong>--av</strong>=<em>&lt;appVersionNameOrId&gt;</em>
                                      [<strong>--delim</strong>=<em>&lt;delimiter&gt;</em>] [<strong>--progress</strong>=<em>&lt;type&gt;</em>]
-                                     [[<strong>-h</strong>] [<strong>--env-prefix</strong>=<em>&lt;prefix&gt;</em>]
+                                     [<strong>--refresh-timeout</strong>=<em>&lt;timeoutPeriod&gt;</em>] [[<strong>-h</strong>]
+                                     [<strong>--env-prefix</strong>=<em>&lt;prefix&gt;</em>]
                                      [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
                                      [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]
                                      [<strong>--log-mask</strong>=<em>&lt;level&gt;</em>] [<strong>--debug</strong>]]
@@ -88,6 +89,14 @@ fcli_version:
 <dt class="hdlist1"><strong>--progress</strong>=<em>&lt;type&gt;</em></dt>
 <dd>
 <p>Configure progress output. Allowed values: auto, none, simple, stderr, single-line, ansi. Default value: auto. Proper output of single-line and ansi depends on console capabilities.</p>
+</dd>
+<dt class="hdlist1"><strong>--[no-]refresh</strong></dt>
+<dd>
+<p>Refresh out-of-date application version metrics before downloading the FPR. Note that for large applications this can lead to an error if the timeout expires.</p>
+</dd>
+<dt class="hdlist1"><strong>--refresh-timeout</strong>=<em>&lt;timeoutPeriod&gt;</em></dt>
+<dd>
+<p>Time-out for refreshing application version metrics, for example 30s (30 seconds), 5m (5 minutes), 1h (1 hour). Default value: 60s</p>
 </dd>
 </dl>
 </div>
@@ -182,7 +191,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2026-10-02 15:58:38 UTC
+Last updated 2026-10-05 15:21:12 UTC
 </div>
 </div>
 </body>
