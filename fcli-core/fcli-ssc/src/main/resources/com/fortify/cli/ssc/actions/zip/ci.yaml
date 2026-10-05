@@ -78,7 +78,26 @@ steps:
         ${
             #extraOpts('DEBRICKED_SCAN')
         }
-      aviator.skipReason: > # Enabled if AVIATOR_TOKEN & AVIATOR_URL specified, unless explicitly disabled
+      # Aviator configuration for backward compatibility and new options
+      # DO_AVIATOR_AUDIT (deprecated): enables both SAST and DAST audits if scans were run
+      # DO_AVIATOR_SAST_AUDIT (new): enables SAST audit only
+      # DO_AVIATOR_DAST_AUDIT (new): enables DAST audit only
+      aviator.sast.skipReason: >
+        ${
+            #fcliCmdSkipFromEnvReason('AVIATOR_SAST_AUDIT', false)
+            ?:#fcliCmdSkipFromEnvReason('AVIATOR_AUDIT', false)
+            ?:#skipBlankEnvReason('AVIATOR_TOKEN')
+            ?:#skipBlankEnvReason('AVIATOR_URL')
+        }
+      aviator.dast.skipReason: >
+        ${
+            #fcliCmdSkipFromEnvReason('AVIATOR_DAST_AUDIT', false)
+            ?:#fcliCmdSkipFromEnvReason('AVIATOR_AUDIT', false)
+            ?:#skipBlankEnvReason('AVIATOR_TOKEN')
+            ?:#skipBlankEnvReason('AVIATOR_URL')
+        }
+      # Legacy skip reason for backward compatibility
+      aviator.skipReason: >
         ${
             #fcliCmdSkipFromEnvReason('AVIATOR_AUDIT', false)
             ?:#skipBlankEnvReason('AVIATOR_TOKEN')
@@ -205,31 +224,23 @@ steps:
                 - ${SAST_WAIT.dependencySkipReason}                      # Skip if SAST_WAIT was skipped or failed
                 - ${#isDebugEnabled()?'':'--debug flag not specified'}   # Skip if debugging is disabled
               
-            AVIATOR_AUDIT:
-              cmd: ${#fcliCmd('AVIATOR_AUDIT', 'aviator ssc audit')} --aviator-session ${sessionName} --av "${global.ci.av}" --app "${aviator.app}" --store aviator_audit
+            AVIATOR_SAST_AUDIT:
+              cmd: ${#fcliCmd('AVIATOR_SAST_AUDIT', 'aviator ssc audit')} --aviator-session ${sessionName} --av "${global.ci.av}" --app "${aviator.app}" --store aviator_sast_audit
               skip.if-reason:
                 - ${postScan.skipReason}                               # Skip if no scans were run
-                - ${aviator.skipReason}                                # Skip if Aviator audit is to be skipped
+                - ${SAST_WAIT.dependencySkipReason}                    # Skip if SAST_WAIT was skipped or failed
+                - ${aviator.sast.skipReason}                           # Skip if SAST Aviator audit is to be skipped
               on.success:
                 - var.set:
-                    aviator.artifactId: "${#var('aviator_audit').hasNonNull('artifactId') ? #var('aviator_audit').get('artifactId').asText() : ''}"
+                    aviator.sast.artifactId: "${#var('aviator_sast_audit').hasNonNull('artifactId') ? #var('aviator_sast_audit').get('artifactId').asText() : ''}"
 
-            AVIATOR_WAIT:
-              cmd: "${#fcliCmd('AVIATOR_WAIT', 'ssc artifact wait-for')} ${aviator.artifactId}"
+            AVIATOR_SAST_WAIT:
+              cmd: "${#fcliCmd('AVIATOR_SAST_WAIT', 'ssc artifact wait-for')} ${aviator.sast.artifactId}"
               skip.if-reason:
                 - ${postScan.skipReason}                               # Skip if no scans were run
-                - ${aviator.skipReason}                                # Skip if Aviator audit is to be skipped
-                - ${AVIATOR_AUDIT.dependencySkipReason}                # Skip if AVIATOR_AUDIT was skipped or failed
-                - "${#isBlank(aviator.artifactId) ? 'No artifact produced by Aviator audit, nothing to wait for' : ''}"
-                        
-            AVIATOR_REMEDIATIONS:
-              cmd: ${#actionCmd('AVIATOR_REMEDIATIONS', 'ssc', global.ci.ssc_aviatorRemediationsAction)} "--source-dir=${global.ci.sourceDir}" "--artifact-id=${aviator.artifactId}" "--progress=none"
-              skip.if-reason:
-                - ${#actionCmdSkipFromEnvReason('AVIATOR_REMEDIATIONS', true)} # Skip unless DO_AVIATOR_REMEDIATIONS==true or AVIATOR_REMEDIATIONS_ACTION/EXTRA_OPTS defined
-                - ${#actionCmdSkipNoActionReason('AVIATOR_REMEDIATIONS', 'ssc', global.ci.ssc_aviatorRemediationsAction)}
-                - ${postScan.skipReason}                               # Skip if no scans were run
-                - ${aviator.skipReason}                                # Skip if Aviator is not configured
-                - ${AVIATOR_WAIT.dependencySkipReason}                 # Skip if AVIATOR_WAIT was skipped or failed (no remediations available)
+                - ${aviator.sast.skipReason}                           # Skip if SAST Aviator audit is to be skipped
+                - ${AVIATOR_SAST_AUDIT.dependencySkipReason}           # Skip if AVIATOR_SAST_AUDIT was skipped or failed
+                - "${#isBlank(aviator.sast.artifactId) ? 'No artifact produced by SAST Aviator audit, nothing to wait for' : ''}"
 
             # Placed after SAST-only post-scan steps so those can run while the DAST scan is still going.
             # DAST can be slow; disabled by default, enable with DO_DAST_WAIT=true. Use DAST_WAIT_EXTRA_OPTS to pass --timeout
@@ -241,6 +252,37 @@ steps:
                 - ${DAST_SCAN.dependencySkipReason}                  # Skip if DAST_SCAN was skipped or failed
               on.success:
                 - var.set: { postScan.skipReason: } # Reset postScan.skipReason to allow post-scan tasks to run
+
+            AVIATOR_DAST_AUDIT:
+              cmd: ${#fcliCmd('AVIATOR_DAST_AUDIT', 'aviator ssc audit')} --aviator-session ${sessionName} --av "${global.ci.av}" --app "${aviator.app}" --store aviator_dast_audit
+              skip.if-reason:
+                - ${postScan.skipReason}                               # Skip if no scans were run
+                - ${DAST_WAIT.dependencySkipReason}                    # Skip if DAST_WAIT was skipped or failed
+                - ${aviator.dast.skipReason}                           # Skip if DAST Aviator audit is to be skipped
+              on.success:
+                - var.set:
+                    aviator.dast.artifactId: "${#var('aviator_dast_audit').hasNonNull('artifactId') ? #var('aviator_dast_audit').get('artifactId').asText() : ''}"
+
+            AVIATOR_DAST_WAIT:
+              cmd: "${#fcliCmd('AVIATOR_DAST_WAIT', 'ssc artifact wait-for')} ${aviator.dast.artifactId}"
+              skip.if-reason:
+                - ${postScan.skipReason}                               # Skip if no scans were run
+                - ${aviator.dast.skipReason}                           # Skip if DAST Aviator audit is to be skipped
+                - ${AVIATOR_DAST_AUDIT.dependencySkipReason}           # Skip if AVIATOR_DAST_AUDIT was skipped or failed
+                - "${#isBlank(aviator.dast.artifactId) ? 'No artifact produced by DAST Aviator audit, nothing to wait for' : ''}"
+
+            AVIATOR_REMEDIATIONS:
+              cmd: >
+                ${#actionCmd('AVIATOR_REMEDIATIONS', 'ssc', global.ci.ssc_aviatorRemediationsAction)}
+                "--source-dir=${global.ci.sourceDir}"
+                "--artifact-id=${#isNotBlank(aviator.sast.artifactId)?aviator.sast.artifactId:aviator.dast.artifactId}"
+                "--progress=none"
+              skip.if-reason:
+                - ${#actionCmdSkipFromEnvReason('AVIATOR_REMEDIATIONS', true)} # Skip unless DO_AVIATOR_REMEDIATIONS==true or AVIATOR_REMEDIATIONS_ACTION/EXTRA_OPTS defined
+                - ${#actionCmdSkipNoActionReason('AVIATOR_REMEDIATIONS', 'ssc', global.ci.ssc_aviatorRemediationsAction)}
+                - ${postScan.skipReason}                               # Skip if no scans were run
+                - "${#isBlank(aviator.sast.artifactId)&&#isBlank(aviator.dast.artifactId) ? 'No artifacts produced by Aviator audits' : ''}" # Skip if neither SAST nor DAST audit produced an artifact
+                - ${AVIATOR_SAST_WAIT.dependencySkipReason?:AVIATOR_DAST_WAIT.dependencySkipReason}  # Skip if both waits were skipped or failed
 
             CHECK_POLICY:
               cmd: ${#actionCmd('CHECK_POLICY', 'ssc', 'check-policy')} "--av=${global.ci.av}" "--progress=none"
