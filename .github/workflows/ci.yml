@@ -500,8 +500,12 @@ jobs:
     if: needs.build.outputs.do_release
     needs: [build]
     runs-on: ubuntu-latest
+    concurrency:
+      group: ${{ github.workflow }}-gh-pages
+      cancel-in-progress: false
     permissions:
       contents: write
+      pages: write
     steps:
       - name: Check-out existing docs from gh-pages branch
         uses: fortify/shared-github/actions/3rdparty/actions/checkout/v6@5ad1afec0f56a21b03f0887eea35505cb6a66554
@@ -559,4 +563,28 @@ jobs:
           git add .
           git commit -m "Update documentation for ${RELEASE_TAG}"
           git push
+
+      # Pushes by GITHUB_TOKEN don't reliably trigger legacy Pages builds, and build failures
+      # wouldn't fail this workflow, so explicitly request a build and wait for its result.
+      - name: Build and verify GitHub Pages
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          sha=$(git rev-parse HEAD)
+          gh api -X POST "repos/${GITHUB_REPOSITORY}/pages/builds" > /dev/null
+          for i in $(seq 1 60); do
+            sleep 15
+            read -r status commit < <(gh api "repos/${GITHUB_REPOSITORY}/pages/builds/latest" --jq '"\(.status) \(.commit)"')
+            echo "Latest Pages build: ${status} (${commit})"
+            if [[ "${commit}" == "${sha}" ]]; then
+              case "${status}" in
+                built) exit 0 ;;
+                errored)
+                  echo "::error::GitHub Pages build failed: $(gh api "repos/${GITHUB_REPOSITORY}/pages/builds/latest" --jq '.error.message')"
+                  exit 1 ;;
+              esac
+            fi
+          done
+          echo "::error::Timed out waiting for GitHub Pages build of ${sha}"
+          exit 1
           
