@@ -564,15 +564,14 @@ jobs:
           git commit -m "Update documentation for ${RELEASE_TAG}"
           git push
 
-      # Pushes by GITHUB_TOKEN don't reliably trigger legacy Pages builds, and build failures
-      # wouldn't fail this workflow, so explicitly request a build and wait for its result.
+      # Legacy Pages builds fail silently (e.g., if GitHub-owned actions are disallowed), so verify explicitly.
       - name: Build and verify GitHub Pages
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           sha=$(git rev-parse HEAD)
           gh api -X POST "repos/${GITHUB_REPOSITORY}/pages/builds" > /dev/null
-          for i in $(seq 1 60); do
+          for i in $(seq 1 120); do
             sleep 15
             read -r status commit < <(gh api "repos/${GITHUB_REPOSITORY}/pages/builds/latest" --jq '"\(.status) \(.commit)"')
             echo "Latest Pages build: ${status} (${commit})"
