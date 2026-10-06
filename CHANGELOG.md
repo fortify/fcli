@@ -1,5 +1,39 @@
 # Changelog
 
+## [3.28.0](https://github.com/fortify/fcli/compare/v3.27.0...v3.28.0) (2026-10-05)
+
+
+### Features
+
+* `fcli aviator connection diagnose`: New command for diagnosing Aviator connectivity and credentials ([bc1dbaf](https://github.com/fortify/fcli/commit/bc1dbafee482b5fccb3501348e31dfeeb83923ce))
+* `fcli aviator ssc apply-remediations`: Add `--from-cache` to apply cached remediations offline ([bc1dbaf](https://github.com/fortify/fcli/commit/bc1dbafee482b5fccb3501348e31dfeeb83923ce))
+* `fcli aviator ssc apply-remediations`: Add `--issue-ids` filtering for `--from-cache` ([bc1dbaf](https://github.com/fortify/fcli/commit/bc1dbafee482b5fccb3501348e31dfeeb83923ce))
+* `fcli aviator ssc apply-remediations`: Add `--preview` to show proposed changes without modifying files ([bc1dbaf](https://github.com/fortify/fcli/commit/bc1dbafee482b5fccb3501348e31dfeeb83923ce))
+* `fcli aviator ssc audit-dast`: New command for auditing DAST findings in SSC ([bc1dbaf](https://github.com/fortify/fcli/commit/bc1dbafee482b5fccb3501348e31dfeeb83923ce))
+* `fcli aviator ssc audit-sast`: New command for auditing SAST findings in SSC ([bc1dbaf](https://github.com/fortify/fcli/commit/bc1dbafee482b5fccb3501348e31dfeeb83923ce))
+* `fcli aviator ssc audit`: Deprecated; use `fcli aviator ssc audit-sast` instead ([bc1dbaf](https://github.com/fortify/fcli/commit/bc1dbafee482b5fccb3501348e31dfeeb83923ce))
+* `fcli aviator ssc download-remediations-cache`: New command for caching Aviator-audited FPRs from SSC ([bc1dbaf](https://github.com/fortify/fcli/commit/bc1dbafee482b5fccb3501348e31dfeeb83923ce))
+* `fcli aviator ssc prepare`: Add `last_dast_audit` attribute for bulk audit selection ([bc1dbaf](https://github.com/fortify/fcli/commit/bc1dbafee482b5fccb3501348e31dfeeb83923ce))
+* `fcli fod aviator apply-remediations`: Add `--from-cache` to apply cached remediations offline ([bc1dbaf](https://github.com/fortify/fcli/commit/bc1dbafee482b5fccb3501348e31dfeeb83923ce))
+* `fcli fod aviator apply-remediations`: Add `--issue-ids` filtering for `--from-cache` ([bc1dbaf](https://github.com/fortify/fcli/commit/bc1dbafee482b5fccb3501348e31dfeeb83923ce))
+* `fcli fod aviator apply-remediations`: Add `--preview` to show proposed changes without modifying files ([bc1dbaf](https://github.com/fortify/fcli/commit/bc1dbafee482b5fccb3501348e31dfeeb83923ce))
+* `fcli fod aviator download-remediations-cache`: New command for caching the latest static audited FPR ([bc1dbaf](https://github.com/fortify/fcli/commit/bc1dbafee482b5fccb3501348e31dfeeb83923ce))
+* SSC `bulkaudit-dast` action: New preview action for bulk DAST auditing ([bc1dbaf](https://github.com/fortify/fcli/commit/bc1dbafee482b5fccb3501348e31dfeeb83923ce))
+* SSC `bulkaudit-sast` action: New action for bulk SAST auditing ([bc1dbaf](https://github.com/fortify/fcli/commit/bc1dbafee482b5fccb3501348e31dfeeb83923ce))
+* SSC `bulkaudit` action: Deprecated; use `bulkaudit-sast` instead ([bc1dbaf](https://github.com/fortify/fcli/commit/bc1dbafee482b5fccb3501348e31dfeeb83923ce))
+
+
+### Bug Fixes
+
+* `fcli aviator ssc apply-remediations`: Fix overlap detection for nested remediations ([bc1dbaf](https://github.com/fortify/fcli/commit/bc1dbafee482b5fccb3501348e31dfeeb83923ce))
+* `fcli aviator ssc audit-dast`: Skip ineligible findings and honor server-provided audit tiers ([bc1dbaf](https://github.com/fortify/fcli/commit/bc1dbafee482b5fccb3501348e31dfeeb83923ce))
+* `fcli aviator ssc correlate-sast-dast`: Correct result counts and report skip reasons ([bc1dbaf](https://github.com/fortify/fcli/commit/bc1dbafee482b5fccb3501348e31dfeeb83923ce))
+* `fcli aviator ssc correlate-sast-dast`: Preserve correlation state and skip previously tried pairs ([bc1dbaf](https://github.com/fortify/fcli/commit/bc1dbafee482b5fccb3501348e31dfeeb83923ce))
+* `fcli aviator`: Fix incorrect and duplicate warnings for built-in SSC Aviator tags ([bc1dbaf](https://github.com/fortify/fcli/commit/bc1dbafee482b5fccb3501348e31dfeeb83923ce))
+* `fcli aviator`: Harden FPR XML processing against external entities ([bc1dbaf](https://github.com/fortify/fcli/commit/bc1dbafee482b5fccb3501348e31dfeeb83923ce))
+* `fcli fod aviator apply-remediations`: Fix overlap detection for nested remediations ([bc1dbaf](https://github.com/fortify/fcli/commit/bc1dbafee482b5fccb3501348e31dfeeb83923ce))
+* SSC `bulkcorrelate` action: Resolve `last_correlation` from SSC attribute definitions ([bc1dbaf](https://github.com/fortify/fcli/commit/bc1dbafee482b5fccb3501348e31dfeeb83923ce))
+
 ## [3.27.0](https://github.com/fortify/fcli/compare/v3.26.1...v3.27.0) (2026-10-02)
 
 
