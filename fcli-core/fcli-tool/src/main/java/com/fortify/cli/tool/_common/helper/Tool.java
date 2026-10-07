@@ -277,7 +277,7 @@ public enum Tool {
      * Helper implementation for fortify agentic analyzer (faa) tool.
      */
     private static final class ToolHelperFortifyAgenticAnalyzer implements IToolHelper {
-        private static final String TOOL_NAME = "fortify-agentic-analyzer";
+        private static final String TOOL_NAME = "fortifyaa";
         
         @Override
         public String getToolName() {
