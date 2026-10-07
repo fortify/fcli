@@ -77,7 +77,9 @@ public final class PublicKeyTrustStore {
     }
     
     public final Stream<PublicKeyDescriptor> stream() {
-        return FcliDataHelper.listFilesInDir(publicKeysPath(), true)
+        var files = FcliDataHelper.listFilesInDir(publicKeysPath(), false);
+        if ( files==null ) { return Stream.empty(); }
+        return files
                 .map(path->load(path.toFile().getName(), false))
                 .filter(Objects::nonNull);
     }

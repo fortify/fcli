@@ -12,6 +12,7 @@
  */
 package com.fortify.cli.aviator.ssc.helper;
 
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -23,7 +24,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.XMLConstants;
 import javax.xml.transform.OutputKeys;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
@@ -37,6 +38,7 @@ import org.w3c.dom.NodeList;
 
 import com.fortify.cli.aviator.grpc.CorrelatedPair;
 import com.fortify.cli.aviator.util.FprHandle;
+import com.fortify.cli.common.util.SecureXmlParserFactory;
 
 import lombok.SneakyThrows;
 
@@ -369,14 +371,19 @@ public final class SastFprCorrelationRecorder {
 
     @SneakyThrows
     private static Document parseXml(Path path) {
-        var factory = DocumentBuilderFactory.newInstance();
-        factory.setNamespaceAware(true);   // must be true to find ns0:Issue / ns0:Tag by local name
-        return factory.newDocumentBuilder().parse(Files.newInputStream(path));
+        var factory = SecureXmlParserFactory.newDocumentBuilderFactory(true);
+        try (InputStream input = Files.newInputStream(path)) {
+            return factory.newDocumentBuilder().parse(input);
+        }
     }
 
     @SneakyThrows
     private static void writeXml(Document doc, Path path) {
-        var transformer = TransformerFactory.newInstance().newTransformer();
+        var factory = TransformerFactory.newInstance();
+        factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
+        factory.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
+        factory.setAttribute(XMLConstants.ACCESS_EXTERNAL_STYLESHEET, "");
+        var transformer = factory.newTransformer();
         transformer.setOutputProperty(OutputKeys.INDENT, "yes");
         transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
         transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");

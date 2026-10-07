@@ -12,13 +12,15 @@
  */
 package com.fortify.cli.fod.report.cli.cmd;
 
-import java.nio.file.StandardCopyOption;
+import java.nio.file.Path;
+import java.time.Duration;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.cli.mixin.CommonOptionMixins;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.rest.unirest.HttpHeader;
+import com.fortify.cli.common.rest.unirest.RestResponseBodyHelper;
 import com.fortify.cli.fod._common.output.cli.cmd.AbstractFoDJsonNodeOutputCommand;
 import com.fortify.cli.fod._common.rest.FoDUrls;
 import com.fortify.cli.fod.report.cli.mixin.FoDReportResolverMixin;
@@ -47,13 +49,7 @@ public class FoDReportDownloadCommand extends AbstractFoDJsonNodeOutputCommand i
                 .routeParam("reportId", reportResolver.getReportId())
                 // Use headerReplace to replace rather than add the Accept header (avoid duplicates with defaults)
                 .headerReplace(HttpHeader.ACCEPT, "application/octet-stream");
-        int status = 202;
-        while ( status==202 ) {
-            status = request
-                    .asFile(file, StandardCopyOption.REPLACE_EXISTING)
-                    .getStatus();
-            if ( status==202 ) { Thread.sleep(30000L); }
-        }
+        RestResponseBodyHelper.saveToFileWhenReady(request, Path.of(file), null, Duration.ofSeconds(30), Duration.ZERO);
         return reportDescriptor.asObjectNode().put("file", file);
     }
 

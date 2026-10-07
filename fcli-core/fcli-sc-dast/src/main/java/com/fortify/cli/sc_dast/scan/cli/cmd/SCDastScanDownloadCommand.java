@@ -13,7 +13,6 @@
 package com.fortify.cli.sc_dast.scan.cli.cmd;
 
 import java.io.File;
-import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.stream.Stream;
@@ -25,6 +24,7 @@ import com.fortify.cli.common.cli.mixin.CommonOptionMixins;
 import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
+import com.fortify.cli.common.rest.unirest.RestResponseBodyHelper;
 import com.fortify.cli.sc_dast._common.output.cli.cmd.AbstractSCDastOutputCommand;
 import com.fortify.cli.sc_dast.scan.cli.mixin.SCDastScanResolverMixin;
 import com.fortify.cli.sc_dast.scan.helper.SCDastScanDescriptor;
@@ -55,12 +55,10 @@ public class SCDastScanDownloadCommand extends AbstractSCDastOutputCommand imple
                     : descriptor.getName().replaceAll("\\s", "-");
             downloadPath = new File(String.format("scdast-%s-%s.%s", identifier, type.formattedName(), type.getExtension()));
         }
-        unirest.get("/api/v2/scans/{id}/{endpoint}")
+        var request = unirest.get("/api/v2/scans/{id}/{endpoint}")
             .routeParam("id", scanResolver.getScanId())
-            .routeParam("endpoint", type.getEndpoint())
-            //.downloadMonitor(new SSCProgressMonitor("Download"))
-            .asFile(downloadPath.getAbsolutePath(), StandardCopyOption.REPLACE_EXISTING)
-            .getBody();
+            .routeParam("endpoint", type.getEndpoint());
+        RestResponseBodyHelper.saveToFile(request, downloadPath.toPath(), null);
         return descriptor.asJsonNode();
     }
     

@@ -32,7 +32,9 @@ import javax.xml.stream.XMLStreamReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
 import com.fortify.cli.aviator.util.FprHandle;
+import com.fortify.cli.common.util.SecureXmlParserFactory;
 
 /**
  * Streaming (StAX-based) parser for WebInspect XML files contained in DAST FPR files.
@@ -47,9 +49,7 @@ public class StreamingWebInspectParser {
 
     public StreamingWebInspectParser(FprHandle fprHandle) {
         this.fprHandle = fprHandle;
-        this.xmlInputFactory = XMLInputFactory.newInstance();
-        xmlInputFactory.setProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, false);
-        xmlInputFactory.setProperty(XMLInputFactory.SUPPORT_DTD, false);
+        this.xmlInputFactory = SecureXmlParserFactory.newXmlInputFactory();
     }
 
     /**
@@ -64,7 +64,7 @@ public class StreamingWebInspectParser {
         Path webInspectPath = fprHandle.getPath("/webinspect.xml");
 
         if (!Files.exists(webInspectPath)) {
-            throw new RuntimeException("webinspect.xml not found in DAST FPR");
+            throw new AviatorTechnicalException("webinspect.xml not found in DAST FPR");
         }
 
         try (InputStream inputStream = Files.newInputStream(webInspectPath)) {
@@ -86,9 +86,9 @@ public class StreamingWebInspectParser {
             logger.info("Parsed {} DAST issues from webinspect.xml (streaming)", issues.size());
 
         } catch (XMLStreamException e) {
-            throw new RuntimeException("Failed to parse webinspect.xml: " + e.getMessage(), e);
+            throw new AviatorTechnicalException("Failed to parse webinspect.xml", e);
         } catch (IOException e) {
-            throw new RuntimeException("Failed to read webinspect.xml: " + e.getMessage(), e);
+            throw new AviatorTechnicalException("Failed to read webinspect.xml", e);
         }
 
         return issues;
@@ -106,7 +106,7 @@ public class StreamingWebInspectParser {
         Path webInspectPath = fprHandle.getPath("/webinspect.xml");
 
         if (!Files.exists(webInspectPath)) {
-            throw new RuntimeException("webinspect.xml not found in DAST FPR");
+            throw new AviatorTechnicalException("webinspect.xml not found in DAST FPR");
         }
 
         try (InputStream inputStream = Files.newInputStream(webInspectPath)) {
@@ -133,9 +133,9 @@ public class StreamingWebInspectParser {
                     sessions.size(), totalIssues);
 
         } catch (XMLStreamException e) {
-            throw new RuntimeException("Failed to parse webinspect.xml: " + e.getMessage(), e);
+            throw new AviatorTechnicalException("Failed to parse webinspect.xml", e);
         } catch (IOException e) {
-            throw new RuntimeException("Failed to read webinspect.xml: " + e.getMessage(), e);
+            throw new AviatorTechnicalException("Failed to read webinspect.xml", e);
         }
 
         return sessions;
@@ -429,18 +429,37 @@ public class StreamingWebInspectParser {
         while (reader.hasNext()) {
             int event = reader.next();
 
-            if (event == XMLStreamConstants.START_ELEMENT) {
-                if ("Url".equals(reader.getLocalName())) {
-                    String url = readElementText(reader);
-                    if (url != null && !url.isEmpty()) {
-                        issue.getReproStepUrls().add(url);
-                    }
+            if (event == XMLStreamConstants.START_ELEMENT
+                    && "ReproStep".equals(reader.getLocalName())) {
+                DastReproStep step = parseReproStep(reader);
+                if (step.getUrl() != null && !step.getUrl().isEmpty()) {
+                    issue.getReproStepUrls().add(step.getUrl());
+                    issue.getReproSteps().add(step);
                 }
             } else if (event == XMLStreamConstants.END_ELEMENT
                     && "ReproSteps".equals(reader.getLocalName())) {
                 return;
             }
         }
+    }
+
+    private DastReproStep parseReproStep(XMLStreamReader reader) throws XMLStreamException {
+        var step = new DastReproStep();
+        while (reader.hasNext()) {
+            int event = reader.next();
+            if (event == XMLStreamConstants.START_ELEMENT) {
+                switch (reader.getLocalName()) {
+                    case "Source" -> step.setSource(readElementText(reader));
+                    case "Url" -> step.setUrl(readElementText(reader));
+                    case "PostParams" -> step.setPostParams(readElementText(reader));
+                    default -> { }
+                }
+            } else if (event == XMLStreamConstants.END_ELEMENT
+                    && "ReproStep".equals(reader.getLocalName())) {
+                return step;
+            }
+        }
+        return step;
     }
 
     // =========================================================================

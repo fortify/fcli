@@ -56,6 +56,20 @@ public class FcliSimpleException extends AbstractFcliException {
     public FcliSimpleException(String message, Throwable cause) {
         super(message, cause);
     }
+
+    /**
+     * Throws a new {@link FcliSimpleException} when {@code condition} is {@code true}.
+     * Useful for compact validation guards.
+     *
+     * @param condition when true, an exception is thrown
+     * @param fmt {@link String#format(String, Object...)} message pattern
+     * @param args format arguments
+     */
+    public static void throwIf(boolean condition, String fmt, Object... args) {
+        if (condition) {
+            throw new FcliSimpleException(fmt, args);
+        }
+    }
     
     public String getStackTraceString() {
         return String.format("%s%s", getSummary(this), getCauseAsString());

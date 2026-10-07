@@ -13,7 +13,7 @@
 package com.fortify.cli.common.debricked;
 
 import java.io.File;
-import java.nio.file.StandardCopyOption;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -31,6 +31,7 @@ import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.http.proxy.helper.ProxyHelper;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.rest.unirest.HttpHeader;
+import com.fortify.cli.common.rest.unirest.RestResponseBodyHelper;
 import com.fortify.cli.common.rest.unirest.config.UnirestJsonHeaderConfigurer;
 import com.fortify.cli.common.rest.unirest.config.UnirestUnexpectedHttpResponseConfigurer;
 import com.fortify.cli.common.rest.unirest.config.UnirestUrlConfigConfigurer;
@@ -141,13 +142,8 @@ public final class DebrickedHelper  {
 
     @SneakyThrows
     public final void waitSbomGeneration(UnirestInstance debrickedUnirest, String reportUuid, File outputFile) {
-        int status = 202;
-        while ( status==202 ) {
-            Thread.sleep(5000L);
-            status = debrickedUnirest.get("/api/1.0/open/sbom/download-generated-cyclonedx-sbom")
-                .queryString("reportUuid", reportUuid)
-                .asFile(outputFile.getAbsolutePath(), StandardCopyOption.REPLACE_EXISTING)
-                .getStatus();
-        }
+        var request = debrickedUnirest.get("/api/1.0/open/sbom/download-generated-cyclonedx-sbom")
+                .queryString("reportUuid", reportUuid);
+        RestResponseBodyHelper.saveToFileWhenReady(request, outputFile.toPath(), null, Duration.ofSeconds(5), Duration.ofSeconds(5));
     }
 }

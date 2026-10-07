@@ -39,6 +39,8 @@ class CorrelationStreamState {
     final AtomicInteger sentCorrelations = new AtomicInteger(0);
     final AtomicInteger receivedCorrelations = new AtomicInteger(0);
     final AtomicInteger successfulCorrelations = new AtomicInteger(0);
+    final AtomicInteger skippedCorrelations = new AtomicInteger(0);
+    final AtomicInteger failedCorrelations = new AtomicInteger(0);
 
     // Validation phase counters
     int totalValidationRequests;

@@ -90,6 +90,25 @@ class AuditProcessorAuditIsolationTest {
     }
 
     @Test
+    void doesNotResolveExternalEntityInAuditXml() throws Exception {
+        Path secret = Files.createTempFile("audit-xxe-sentinel", ".txt");
+        try {
+            Files.writeString(secret, "PRIVATE-SENTINEL");
+            createTestFpr("""
+                <!DOCTYPE Audit [<!ENTITY xxe SYSTEM "%s">]>
+                <Audit xmlns="xmlns://www.fortify.com/schema/audit">
+                                    <IssueList><Issue instanceId="issue-1"><Comment><Content>&xxe;</Content></Comment></Issue></IssueList>
+                </Audit>
+                """.formatted(secret.toUri()));
+
+                        var issue = new AuditProcessor(fprHandle).processAuditXML().get("issue-1");
+                        assertEquals("", issue.getThreadedComments().get(0).getContent());
+        } finally {
+            Files.deleteIfExists(secret);
+        }
+    }
+
+    @Test
     void testPartialSuccessRetainsOnlySuccessfulIssue() throws Exception {
         createTestFpr(multiIssueAuditXml("instance-A", "instance-D"));
         AuditProcessor auditProcessor = new AuditProcessor(fprHandle);

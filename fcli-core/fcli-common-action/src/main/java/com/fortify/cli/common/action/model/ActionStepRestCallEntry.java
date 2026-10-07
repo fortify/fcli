@@ -41,7 +41,7 @@ import lombok.NoArgsConstructor;
 @JsonInclude(Include.NON_NULL)
 @JsonTypeName("rest.call")
 @JsonClassDescription("Define a REST call, like request method, URI, ...")
-@SampleYamlSnippets("""
+@SampleYamlSnippets({"""
         steps:
           - rest.call:
               pvs:                            # Name for this REST call for later reference
@@ -58,7 +58,19 @@ import lombok.NoArgsConstructor;
                       uri: /api/v1/projectVersions/${pv.id}/artifacts
                   do:
                     - ...                     # Steps to execute for each response record
-        """)
+        ""","""
+        steps:
+          - rest.call:
+              fpr:                            # Name for this REST call for later reference
+                target: fod
+                uri: /api/v3/scans/${cli.scanId}/fpr
+                query:
+                  scanType: Static
+                response.type: file           # json (default), text or file
+                response.file: ${cli.outDir}/scan-${cli.scanId}.fpr
+                on.success:
+                  - log.info: "Saved ${fpr.size} bytes to ${fpr.file}"
+        """})
 public final class ActionStepRestCallEntry extends AbstractActionStepElement implements IMapKeyAware<String> {
     @JsonIgnore private String key;
     
@@ -104,6 +116,25 @@ public final class ActionStepRestCallEntry extends AbstractActionStepElement imp
     @JsonProperty(value = "type", required = false, defaultValue = "simple") private ActionStepRestCallEntry.ActionStepRequestType type = ActionStepRequestType.simple;
 
     @JsonPropertyDescription("""
+        Optional enum value: How to handle the response body. 'json' (default): parse the response as JSON, \
+        failing if the response is not valid JSON. 'text': store the response body as a string. 'file': \
+        save the response body unchanged to the file \
+        specified through 'response.file'; the variable for this REST call will contain an object with \
+        file, size, contentType and status properties. The 'text' and 'file' values cannot be combined \
+        with paged requests or 'records.for-each'. For SSC and ScanCentral targets, the requests in a single \
+        rest.call instruction are only combined into a bulk request if they all use 'json'; use separate \
+        rest.call instructions for 'text' or 'file' requests to keep JSON requests bulked.
+        """)
+    @JsonProperty(value = "response.type", required = false, defaultValue = "json") private ActionStepRestCallResponseType responseType = ActionStepRestCallResponseType.json;
+    
+    @JsonPropertyDescription("""
+        Required SpEL template expression if 'response.type' is 'file', not allowed otherwise: File to which \
+        the response body is saved. The parent directory must exist; an existing file is only replaced if the \
+        request succeeds.
+        """)
+    @JsonProperty(value = "response.file", required = false) private TemplateExpression responseFile;
+    
+    @JsonPropertyDescription("""
         Optional object: Log progress messages during the various stages of request/response processing.
         """)
     @JsonProperty(value = "log.progress", required = false) private ActionStepRestCallEntry.ActionStepRestCallLogProgressDescriptor logProgress;
@@ -126,6 +157,21 @@ public final class ActionStepRestCallEntry extends AbstractActionStepElement imp
         Action.checkNotBlank("request target", target, this);
         if ( logProgress!=null ) {
             type = ActionStepRequestType.paged;
+        }
+        checkResponseSettings();
+    }
+    
+    private void checkResponseSettings() {
+        var isFileResponse = responseType==ActionStepRestCallResponseType.file;
+        Action.throwIf(isFileResponse && responseFile==null, this, 
+                ()->"response.file is required when response.type is file");
+        Action.throwIf(!isFileResponse && responseFile!=null, this, 
+                ()->"response.file is only allowed when response.type is file");
+        if ( responseType!=ActionStepRestCallResponseType.json ) {
+            Action.throwIf(type==ActionStepRequestType.paged, this, 
+                    ()->String.format("response.type %s cannot be used with paged requests", responseType));
+            Action.throwIf(forEach!=null, this, 
+                    ()->String.format("records.for-each requires a JSON array response; not supported with response.type %s", responseType));
         }
     }
     
@@ -167,6 +213,11 @@ public final class ActionStepRestCallEntry extends AbstractActionStepElement imp
     @Reflectable
     public static enum ActionStepRequestType {
         simple, paged
+    }
+    
+    @Reflectable
+    public static enum ActionStepRestCallResponseType {
+        json, text, file
     }
     
     @Reflectable @NoArgsConstructor

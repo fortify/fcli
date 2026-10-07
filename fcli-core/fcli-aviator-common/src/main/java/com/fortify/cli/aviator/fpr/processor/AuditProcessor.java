@@ -37,7 +37,6 @@ import java.util.stream.Collectors;
 
 import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Transformer;
@@ -58,6 +57,7 @@ import org.xml.sax.SAXException;
 
 import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
 import com.fortify.cli.aviator.audit.model.AuditResponse;
+import com.fortify.cli.aviator.audit.model.AuditTier;
 import com.fortify.cli.aviator.config.TagMappingConfig;
 import com.fortify.cli.aviator.fpr.model.AuditIssue;
 import com.fortify.cli.aviator.fpr.model.FPRInfo;
@@ -68,6 +68,7 @@ import com.fortify.cli.aviator.fpr.utils.SourceDecoders;
 import com.fortify.cli.aviator.util.Constants;
 import com.fortify.cli.aviator.util.FileUtil;
 import com.fortify.cli.aviator.util.FprHandle;
+import com.fortify.cli.common.util.SecureXmlParserFactory;
 
 import lombok.Setter;
 
@@ -148,14 +149,7 @@ public class AuditProcessor {
                 logger.debug("audit.xml not found. Creating a default audit.xml.");
                 auditDoc = createDefaultAuditXml();
             } else {
-                DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-                factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
-                factory.setFeature("http://xml.org/sax/features/external-general-entities", false);
-                factory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
-                factory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
-                factory.setXIncludeAware(false);
-                factory.setExpandEntityReferences(false);
-                factory.setNamespaceAware(true);
+                var factory = SecureXmlParserFactory.newDocumentBuilderFactory(true);
                 DocumentBuilder builder = factory.newDocumentBuilder();
 
                 try (InputStream auditStream = Files.newInputStream(auditPath)) {
@@ -183,14 +177,7 @@ public class AuditProcessor {
 
     private Document createDefaultAuditXml() throws AviatorTechnicalException {
         try {
-            DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
-            docFactory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
-            docFactory.setFeature("http://xml.org/sax/features/external-general-entities", false);
-            docFactory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
-            docFactory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
-            docFactory.setXIncludeAware(false);
-            docFactory.setExpandEntityReferences(false);
-            docFactory.setNamespaceAware(true);
+            var docFactory = SecureXmlParserFactory.newDocumentBuilderFactory(true);
 
             DocumentBuilder docBuilder = docFactory.newDocumentBuilder();
             Document doc = docBuilder.newDocument();
@@ -829,19 +816,102 @@ public class AuditProcessor {
         return fprHandle.getFprPath().toFile();
     }
 
+    /**
+     * Applies DAST audit decisions to audit.xml without creating SAST remediation artifacts.
+     */
+    public File updateAndSaveDastAuditXml(Map<String, AuditResponse> auditResponses,
+            TagMappingConfig tagMappingConfig) {
+        Set<String> writtenInstanceIds = new HashSet<>();
+        for (Map.Entry<String, AuditResponse> entry : auditResponses.entrySet()) {
+            AuditResponse response = entry.getValue();
+            if (response == null || !"SUCCESS".equalsIgnoreCase(response.getStatus())
+                    || response.getAuditResult() == null) {
+                continue;
+            }
+            Element issueElement = findIssueElement(entry.getKey());
+            if (issueElement == null) {
+                issueElement = createDastIssueElement(entry.getKey());
+            } else {
+                int revision = Optional.ofNullable(issueElement.getAttribute("revision"))
+                    .filter(value -> !value.isBlank())
+                    .map(value -> {
+                        try { return Integer.parseInt(value); } catch (NumberFormatException e) { return 0; }
+                    })
+                    .orElse(0);
+                issueElement.setAttribute("revision", String.valueOf(revision + 1));
+            }
+            applyDastAuditResponse(issueElement, response, tagMappingConfig);
+            writtenInstanceIds.add(entry.getKey());
+        }
+
+        AuditXmlIssuePruner.retainOnly(auditDoc, writtenInstanceIds);
+
+        try (OutputStream os = Files.newOutputStream(fprHandle.getPath("/audit.xml"))) {
+            transformDomToStream(auditDoc, os);
+        } catch (Exception e) {
+            throw new AviatorTechnicalException("Failed to write DAST audit data back into the FPR file", e);
+        }
+        return fprHandle.getFprPath().toFile();
+    }
+
+    private Element createDastIssueElement(String instanceId) {
+        Element issueList = (Element) auditDoc.getElementsByTagNameNS(AUDIT_NAMESPACE_URI, "IssueList").item(0);
+        if (issueList == null) {
+            issueList = auditDoc.createElementNS(AUDIT_NAMESPACE_URI, "IssueList");
+            auditDoc.getDocumentElement().appendChild(issueList);
+        }
+        Element issueElement = auditDoc.createElementNS(AUDIT_NAMESPACE_URI, "Issue");
+        issueElement.setAttribute("instanceId", instanceId);
+        issueElement.setAttribute("revision", "0");
+        issueElement.setAttribute("suppressed", "false");
+        issueList.appendChild(issueElement);
+        return issueElement;
+    }
+
+    private void applyDastAuditResponse(Element issueElement, AuditResponse response,
+            TagMappingConfig tagMappingConfig) {
+        String prediction = response.getAviatorPredictionTag();
+        updateOrAddTag(issueElement, Constants.AVIATOR_PREDICTION_TAG_ID, prediction);
+        TagMappingConfig.Result resultConfig = getDastResultConfig(response, tagMappingConfig);
+        if (resultConfig.getValue() != null && !resultConfig.getValue().isBlank()) {
+            updateOrAddTag(issueElement, tagMappingConfig.getTag_id(), resultConfig.getValue());
+        }
+        Boolean suppressedHistoryValue = updateSuppressedState(
+            issueElement, Boolean.TRUE.equals(resultConfig.getSuppress()));
+        updateOrAddTag(issueElement, Constants.AVIATOR_STATUS_TAG_ID, Constants.PROCESSED_BY_AVIATOR);
+        if (response.getAuditResult().getComment() != null) {
+            updateOrAddComment(issueElement, response.getAuditResult().getComment());
+        }
+        Element clientAuditTrail = getClientAuditTrailElement(issueElement);
+        addTagHistory(clientAuditTrail, Constants.AVIATOR_PREDICTION_TAG_ID, prediction);
+        if (resultConfig.getValue() != null && !resultConfig.getValue().isBlank()) {
+            addTagHistory(clientAuditTrail, tagMappingConfig.getTag_id(), resultConfig.getValue());
+        }
+        addTagHistory(clientAuditTrail, Constants.AVIATOR_STATUS_TAG_ID, Constants.PROCESSED_BY_AVIATOR);
+        if (suppressedHistoryValue != null) {
+            addTagHistory(clientAuditTrail, Constants.SUPPRESSED_TAG_ID, suppressedHistoryValue.toString());
+        }
+    }
+
+    private TagMappingConfig.Result getDastResultConfig(AuditResponse response,
+            TagMappingConfig tagMappingConfig) {
+        boolean tierOne = AuditTier.fromServerValue(response.getTier()) == AuditTier.GOLD;
+        String tagValue = response.getAuditResult().getTagValue();
+        if (Constants.NOT_AN_ISSUE.equalsIgnoreCase(tagValue)) {
+            return tagMappingConfig.getResult(tierOne, TagMappingConfig.ResultType.FP);
+        }
+        if (Constants.EXPLOITABLE.equalsIgnoreCase(tagValue)) {
+            return tagMappingConfig.getResult(tierOne, TagMappingConfig.ResultType.TP);
+        }
+        return tagMappingConfig.getResult(tierOne, TagMappingConfig.ResultType.UNSURE);
+    }
+
     private Document generateRemediationsXml(Map<String, AuditResponse> auditResponses,
                                             Map<String, String> remediationCommentTimestamps,
                                             FPRInfo fprInfo, FVDLMetadata fvdlMetadata,
                                             Map<String, Integer> skippedByReason) throws AviatorTechnicalException {
         try {
-            DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
-            docFactory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
-            docFactory.setFeature("http://xml.org/sax/features/external-general-entities", false);
-            docFactory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
-            docFactory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
-            docFactory.setXIncludeAware(false);
-            docFactory.setExpandEntityReferences(false);
-            docFactory.setNamespaceAware(true);
+            var docFactory = SecureXmlParserFactory.newDocumentBuilderFactory(true);
             DocumentBuilder docBuilder = docFactory.newDocumentBuilder();
 
             Document finalDoc = docBuilder.newDocument();
@@ -1085,14 +1155,7 @@ public class AuditProcessor {
     private boolean isRemediationElementValid(Element remediationElement, FPRInfo fprInfo) {
         String instanceId = remediationElement.getAttribute("instanceId");
         try {
-            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-            factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
-            factory.setFeature("http://xml.org/sax/features/external-general-entities", false);
-            factory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
-            factory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
-            factory.setXIncludeAware(false);
-            factory.setExpandEntityReferences(false);
-            factory.setNamespaceAware(true);
+            var factory = SecureXmlParserFactory.newDocumentBuilderFactory(true);
             DocumentBuilder builder = factory.newDocumentBuilder();
             Document tempDoc = builder.newDocument();
 

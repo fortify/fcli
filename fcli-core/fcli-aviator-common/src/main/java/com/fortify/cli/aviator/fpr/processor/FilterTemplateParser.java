@@ -25,7 +25,6 @@ import java.util.stream.Collectors;
 
 import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerFactory;
@@ -49,6 +48,7 @@ import com.fortify.cli.aviator.fpr.filter.TagDefinition;
 import com.fortify.cli.aviator.fpr.filter.TagValue;
 import com.fortify.cli.aviator.util.Constants;
 import com.fortify.cli.aviator.util.FprHandle;
+import com.fortify.cli.common.util.SecureXmlParserFactory;
 
 public class FilterTemplateParser {
 
@@ -72,14 +72,7 @@ public class FilterTemplateParser {
                 return Optional.empty();
             }
 
-            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-            factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
-            factory.setFeature("http://xml.org/sax/features/external-general-entities", false);
-            factory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
-            factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
-            factory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
-            factory.setValidating(false);
-            factory.setNamespaceAware(true);
+            var factory = SecureXmlParserFactory.newDocumentBuilderFactory(true);
 
             DocumentBuilder builder = factory.newDocumentBuilder();
 

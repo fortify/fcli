@@ -55,6 +55,10 @@ public final class Hunk {
         return RequiredFields.requireText(contextTextRaw, "Context");
     }
 
+    public String contextTextOrEmpty() {
+        return contextTextRaw == null ? "" : contextTextRaw;
+    }
+
     public int contextBefore() {
         return RequiredFields.requireContextAttribute(contextBeforeRaw, "before");
     }
@@ -63,12 +67,31 @@ public final class Hunk {
         return RequiredFields.requireContextAttribute(contextAfterRaw, "after");
     }
 
+    public int contextBeforeOrZero() {
+        return parseContextAttributeOrZero(contextBeforeRaw);
+    }
+
+    public int contextAfterOrZero() {
+        return parseContextAttributeOrZero(contextAfterRaw);
+    }
+
     public String requiredOriginalCode() {
         return RequiredFields.requireText(originalCodeRaw, "OriginalCode");
     }
 
     public String requiredNewCode() {
         return RequiredFields.requireText(newCodeRaw, "NewCode");
+    }
+
+    private static int parseContextAttributeOrZero(String value) {
+        if (value == null || value.isBlank()) {
+            return 0;
+        }
+        try {
+            return Integer.parseInt(value);
+        } catch (NumberFormatException e) {
+            return 0;
+        }
     }
 
 

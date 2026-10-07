@@ -21,9 +21,7 @@ import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 
-import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
 import org.slf4j.Logger;
@@ -34,6 +32,7 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
 import com.fortify.cli.aviator.util.FprHandle;
+import com.fortify.cli.common.util.SecureXmlParserFactory;
 
 /**
  * Parser for WebInspect XML files contained in DAST FPR files.
@@ -62,7 +61,7 @@ public class WebInspectParser {
         }
 
         try (InputStream inputStream = Files.newInputStream(webInspectPath)) {
-            DocumentBuilderFactory factory = createSecureDocumentBuilderFactory();
+            var factory = SecureXmlParserFactory.newDocumentBuilderFactory(false);
             DocumentBuilder builder = factory.newDocumentBuilder();
             Document document = builder.parse(inputStream);
 
@@ -114,7 +113,7 @@ public class WebInspectParser {
         }
 
         try (InputStream inputStream = Files.newInputStream(webInspectPath)) {
-            DocumentBuilderFactory factory = createSecureDocumentBuilderFactory();
+            var factory = SecureXmlParserFactory.newDocumentBuilderFactory(false);
             DocumentBuilder builder = factory.newDocumentBuilder();
             Document document = builder.parse(inputStream);
 
@@ -432,14 +431,4 @@ public class WebInspectParser {
                    .trim();
     }
 
-    private DocumentBuilderFactory createSecureDocumentBuilderFactory() throws ParserConfigurationException {
-        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-        factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
-        factory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
-        factory.setFeature("http://xml.org/sax/features/external-general-entities", false);
-        factory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
-        factory.setXIncludeAware(false);
-        factory.setExpandEntityReferences(false);
-        return factory;
-    }
 }

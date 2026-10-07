@@ -23,6 +23,7 @@ class SSCArtifactUploadSpec extends FcliBaseSpec {
     @Shared String uploadVariableName = versionSupplier.version.fcliVariableName+"_artifact"
     @Shared String uploadVariableRef = "::$uploadVariableName::"
     @Shared @TempFile("artifactUploadSpec/download.fpr") String downloadedFpr;
+    @Shared @TempFile("artifactUploadSpec/state.fpr") String downloadedStateFpr;
     
     def "upload"() {
         def args = "ssc artifact upload -f $fpr --appversion "+ 
@@ -136,6 +137,21 @@ class SSCArtifactUploadSpec extends FcliBaseSpec {
             verifyAll(result.stdout) {
                 it.last().contains("ARTIFACT_DOWNLOADED");
             }
+    }
+    
+    def "download-state"() {
+        def args = "ssc appversion download-state ${versionSupplier.version.variableRef} -f ${downloadedStateFpr} --no-include-sources"
+        when:
+            def result = Fcli.run(args)
+        then:
+            noExceptionThrown()
+            verifyAll(result.stdout) {
+                it.last().contains("STATE_DOWNLOADED");
+            }
+            def file = new File(downloadedStateFpr)
+            file.length() > 0
+            // FPR files are zip archives
+            file.withInputStream { is -> is.readNBytes(2) } == "PK".bytes
     }
     
     def "getIssueCount"() {

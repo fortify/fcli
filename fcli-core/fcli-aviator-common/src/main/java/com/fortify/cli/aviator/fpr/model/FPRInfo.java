@@ -19,7 +19,6 @@ import java.nio.file.Path;
 import java.util.Optional;
 
 import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
@@ -36,6 +35,7 @@ import com.fortify.cli.aviator.fpr.filter.FilterSet;
 import com.fortify.cli.aviator.fpr.filter.FilterTemplate;
 import com.fortify.cli.aviator.util.FprHandle;
 import com.fortify.cli.aviator.util.StringUtil;
+import com.fortify.cli.common.util.SecureXmlParserFactory;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -80,10 +80,7 @@ public class FPRInfo {
             throw new AviatorTechnicalException("audit.fvdl not found in FPR: " + fprHandle.getFprPath());
         }
 
-        XMLInputFactory factory = XMLInputFactory.newInstance();
-        // Security: Disable external entity processing
-        factory.setProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, false);
-        factory.setProperty(XMLInputFactory.SUPPORT_DTD, false);
+        XMLInputFactory factory = SecureXmlParserFactory.newXmlInputFactory();
 
         try (InputStream inputStream = Files.newInputStream(auditPath)) {
             XMLStreamReader reader = factory.createXMLStreamReader(inputStream);
@@ -187,13 +184,7 @@ public class FPRInfo {
             throw new AviatorTechnicalException("audit.fvdl not found in FPR: " + fprHandle.getFprPath());
         }
 
-        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-        factory.setFeature("http://xml.org/sax/features/external-general-entities", false);
-        factory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
-        factory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
-        factory.setXIncludeAware(false);
-        factory.setExpandEntityReferences(false);
-        factory.setValidating(false);
+        var factory = SecureXmlParserFactory.newDocumentBuilderFactory(false);
         DocumentBuilder builder = factory.newDocumentBuilder();
 
         Document auditDoc;

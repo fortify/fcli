@@ -21,6 +21,7 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Map;
+import java.util.ResourceBundle;
 
 import org.junit.jupiter.api.Test;
 
@@ -32,6 +33,36 @@ import com.fortify.cli.common.json.JsonHelper;
 import picocli.CommandLine;
 
 class AviatorSSCAuditCommandTest {
+    @Test
+    void registersCanonicalAndDeprecatedCommandNames() {
+        assertEquals("audit-sast", new CommandLine(new AviatorSSCSastAuditCommand()).getCommandName());
+        assertEquals("audit", new CommandLine(new AviatorSSCAuditCommand()).getCommandName());
+    }
+
+    @Test
+    void canonicalAndDeprecatedCommandsShareUnannotatedBase() {
+        assertEquals(AbstractAviatorSSCSastAuditCommand.class, AviatorSSCSastAuditCommand.class.getSuperclass());
+        assertEquals(AbstractAviatorSSCSastAuditCommand.class, AviatorSSCAuditCommand.class.getSuperclass());
+        assertFalse(AbstractAviatorSSCSastAuditCommand.class.isAnnotationPresent(CommandLine.Command.class));
+    }
+
+    @Test
+    void deprecatedCommandHelpPointsToCanonicalCommand() {
+        var messages = ResourceBundle.getBundle("com.fortify.cli.aviator.i18n.AviatorMessages");
+        String header = messages.getString("fcli.aviator.ssc.audit.usage.header");
+        String description = messages.getString("fcli.aviator.ssc.audit.usage.description");
+
+        assertTrue(header.contains("(DEPRECATED)"));
+        assertTrue(description.contains("fcli aviator ssc audit-sast"));
+    }
+
+    @Test
+    void canonicalCommandAllowsFilterOptions() {
+        var cmd = parseCanonical("--filterset", "Security Auditor View", "--no-filterset");
+        assertEquals("Security Auditor View", cmd.getFilterSetTitleOrId());
+        assertTrue(cmd.isNoFilterSet());
+    }
+
     @Test
     void testAllowsCombinedFilterOptions() {
         var cmd = parse("--filterset", "Security Auditor View", "--no-filterset");
@@ -56,9 +87,15 @@ class AviatorSSCAuditCommandTest {
     @Test
     void testAllowsForceReauditOption() throws Exception {
         var cmd = parse("--force-reaudit");
-        Field field = AviatorSSCAuditCommand.class.getDeclaredField("forceReaudit");
+        Field field = AbstractAviatorSSCSastAuditCommand.class.getDeclaredField("forceReaudit");
         field.setAccessible(true);
         assertTrue((boolean) field.get(cmd));
+    }
+
+    @Test
+    void canonicalAndDeprecatedCommandsAllowSourceEncodings() {
+        parse("--source-encodings", "UTF-8");
+        parseCanonical("--source-encodings", "UTF-8");
     }
 
     @Test
@@ -105,10 +142,20 @@ class AviatorSSCAuditCommandTest {
 
     private static AviatorSSCAuditCommand parse(String... args) {
         var cmd = new AviatorSSCAuditCommand();
+        parse(cmd, args);
+        return cmd;
+    }
+
+    private static AviatorSSCSastAuditCommand parseCanonical(String... args) {
+        var cmd = new AviatorSSCSastAuditCommand();
+        parse(cmd, args);
+        return cmd;
+    }
+
+    private static void parse(AbstractAviatorSSCSastAuditCommand cmd, String... args) {
         var fullArgs = new ArrayList<String>();
         Collections.addAll(fullArgs, "--av", "test:1.0");
         Collections.addAll(fullArgs, args);
         new CommandLine(cmd).parseArgs(fullArgs.toArray(String[]::new));
-        return cmd;
     }
 }

@@ -7,4 +7,5 @@ dependencies {
     implementation(project(aviatorCommonRef))
     implementation(project(sscRef))
     implementation(project(fodRef))
+    testImplementation(testFixtures(project(aviatorCommonRef)))
 }

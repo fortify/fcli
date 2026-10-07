@@ -1,0 +1,122 @@
+/*
+ * Copyright 2021-2026 Open Text.
+ *
+ * The only warranties for products and services of Open Text
+ * and its affiliates and licensors ("Open Text") are as may
+ * be set forth in the express warranty statements accompanying
+ * such products and services. Nothing herein should be construed
+ * as constituting an additional warranty. Open Text shall not be
+ * liable for technical or editorial errors or omissions contained
+ * herein. The information contained herein is subject to change
+ * without notice.
+ */
+package com.fortify.cli.aviator.ssc.helper;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.nio.charset.StandardCharsets;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.Map;
+
+import javax.xml.parsers.DocumentBuilderFactory;
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
+
+import com.fortify.cli.aviator.grpc.CorrelatedPair;
+import com.fortify.cli.aviator.util.FprHandle;
+
+class DastFprCorrelationEnricherTest {
+    @TempDir Path tempDir;
+
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    void preservesExistingExternalFindingsAndAvoidsDuplicates(boolean withDoctype) throws Exception {
+        Path fprPath = createFpr();
+      if (withDoctype) {
+        try (FprHandle fprHandle = new FprHandle(fprPath)) {
+          Path xmlPath = fprHandle.getPath("/webinspect.xml");
+          Files.writeString(xmlPath, "<!DOCTYPE ScanResults SYSTEM 'http://example.invalid/webinspect.dtd'>"
+              + Files.readString(xmlPath));
+        }
+      }
+        var pairs = List.of(
+            new CorrelatedPair("SAST-1", "DAST-1", "scan-1", "HIGH", "existing"),
+            new CorrelatedPair("SAST-2", "DAST-1", "scan-2", "HIGH", "new")
+        );
+
+        new DastFprCorrelationEnricher().injectAndRepackage(fprPath, pairs);
+
+        try (FprHandle fprHandle = new FprHandle(fprPath)) {
+            var factory = DocumentBuilderFactory.newInstance();
+          try (var inputStream = Files.newInputStream(fprHandle.getPath("/webinspect.xml"))) {
+            var document = factory.newDocumentBuilder().parse(inputStream);
+            var originFindingIds = document.getElementsByTagName("OriginFindingID");
+            assertEquals(2, originFindingIds.getLength());
+            assertEquals("SAST-1", originFindingIds.item(0).getTextContent());
+            assertEquals("SAST-2", originFindingIds.item(1).getTextContent());
+          }
+        }
+    }
+
+    @Test
+    void doesNotDiscloseExternalEntityInWebInspectXml() throws Exception {
+      Path secret = tempDir.resolve("secret.txt");
+      Files.writeString(secret, "PRIVATE-SENTINEL");
+      Path fprPath = createFpr();
+      String maliciousXml = """
+        <!DOCTYPE ScanResults [<!ENTITY xxe SYSTEM "%s">]>
+        <ScanResults><Session><Issues><Issue id="DAST-1"><OriginFindingID>&xxe;</OriginFindingID></Issue></Issues></Session></ScanResults>
+        """.formatted(secret.toUri());
+      try (FprHandle fprHandle = new FprHandle(fprPath)) {
+        Files.writeString(fprHandle.getPath("/webinspect.xml"), maliciousXml);
+      }
+
+      new DastFprCorrelationEnricher().injectAndRepackage(fprPath,
+        List.of(new CorrelatedPair("SAST-1", "DAST-1", "scan-1", "HIGH", "match")));
+      try (FprHandle fprHandle = new FprHandle(fprPath)) {
+        String output = Files.readString(fprHandle.getPath("/webinspect.xml"));
+        assertFalse(output.contains("PRIVATE-SENTINEL"));
+        try (var input = Files.newInputStream(fprHandle.getPath("/webinspect.xml"))) {
+            var document = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(input);
+            var originFindingIds = document.getElementsByTagName("OriginFindingID");
+            assertEquals(2, originFindingIds.getLength());
+            assertEquals("", originFindingIds.item(0).getTextContent());
+            assertEquals("SAST-1", originFindingIds.item(1).getTextContent());
+            assertTrue(output.contains("AI_CORRELATION_METADATA"));
+        }
+      }
+    }
+
+    private Path createFpr() throws Exception {
+        Path fprPath = tempDir.resolve("merged.fpr");
+        try (FileSystem zipFs = FileSystems.newFileSystem(fprPath, Map.of("create", "true"))) {
+            Files.writeString(zipFs.getPath("/webinspect.xml"), """
+                <ScanResults>
+                  <Session requestId="REQ-1">
+                    <Issues>
+                      <Issue id="DAST-1">
+                        <ExternalFindings>
+                          <ExternalFinding Origin="SCA">
+                            <OriginID>scan-1</OriginID>
+                            <OriginFindingID>SAST-1</OriginFindingID>
+                            <OriginDateTime>2026-01-01T00:00:00Z</OriginDateTime>
+                          </ExternalFinding>
+                        </ExternalFindings>
+                      </Issue>
+                    </Issues>
+                  </Session>
+                </ScanResults>
+                """, StandardCharsets.UTF_8);
+        }
+        return fprPath;
+    }
+}

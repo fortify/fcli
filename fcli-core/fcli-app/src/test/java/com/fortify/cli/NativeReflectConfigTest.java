@@ -38,6 +38,7 @@ class NativeReflectConfigTest {
     private static final List<String> TAG_MAPPING_NESTED_CLASSES = List.of(
             "com.fortify.cli.aviator.config.TagMappingConfig$SuppressionExclusion",
             "com.fortify.cli.aviator.config.TagMappingConfig$Mapping",
+            "com.fortify.cli.aviator.config.TagMappingConfig$ProductMapping",
             "com.fortify.cli.aviator.config.TagMappingConfig$Tier",
             "com.fortify.cli.aviator.config.TagMappingConfig$Result");
 

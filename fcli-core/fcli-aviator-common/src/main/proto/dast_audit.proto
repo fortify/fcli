@@ -1,0 +1,136 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "com.fortify.aviator.dastaudit";
+
+package dastaudit;
+
+service DastAuditService {
+  rpc ProcessDastAuditStream(stream DastAuditClientMessage) returns (stream DastAuditServerMessage);
+}
+
+message DastAuditStreamInitRequest {
+  string token = 1;
+  string applicationName = 2;
+  string streamId = 3;
+  string requestId = 4;
+  int32 totalReportedIssues = 5;
+  int32 totalIssuesToAudit = 6;
+  optional string fprBuildId = 7;
+  optional string sscApplicationName = 8;
+  optional string sscApplicationVersion = 9;
+}
+
+message DastAuditClientMessage {
+  oneof request_type {
+    DastAuditStreamInitRequest init = 1;
+    DastAuditRequest audit = 2;
+    DastAuditPingRequest ping = 3;
+  }
+}
+
+message DastAuditServerMessage {
+  oneof response_type {
+    DastAuditInitResponse init = 1;
+    DastAuditResponse audit = 2;
+    DastAuditErrorResponse error = 3;
+    DastAuditPongResponse pong = 4;
+  }
+}
+
+message DastAuditInitResponse {
+  string requestId = 1;
+  string clientStreamId = 2;
+  string serverStreamId = 3;
+  string status = 4;
+  string statusMessage = 5;
+  int32 reservedQuota = 6;
+  int32 exceededCount = 7;
+  bool unlimitedQuota = 8;
+  optional string quotaLastUpdated = 9;
+  optional string nextQuotaUpdateMessage = 10;
+  optional string reassignedEntitlementId = 11;
+}
+
+message DastAuditRequest {
+  string requestId = 1;
+  string streamId = 2;
+  DastFindingContext finding = 3;
+}
+
+message DastFindingContext {
+  string issueId = 1;
+  string checkTypeId = 2;
+  string engineType = 3;
+  string vulnerabilityId = 4;
+  int32 severity = 5;
+  string name = 6;
+  string category = 7;
+  string cweId = 8;
+  string cweDescription = 9;
+  string sessionUrl = 10;
+  repeated string reproStepUrls = 11;
+  string summary = 12;
+  string implication = 13;
+  string execution = 14;
+  string fix = 15;
+  string referenceInfo = 16;
+  repeated DastClassification classifications = 17;
+  string requestId = 18;
+  string scheme = 19;
+  string host = 20;
+  int32 port = 21;
+  string attackParamDescriptor = 22;
+  string rawRequest = 23;
+  string rawResponse = 24;
+  repeated DastReproStep reproSteps = 25;
+}
+
+message DastClassification {
+  string kind = 1;
+  string value = 2;
+}
+
+message DastReproStep {
+  string source = 1;
+  string url = 2;
+  string postParams = 3;
+}
+
+message DastAuditResponse {
+  string requestId = 1;
+  string streamId = 2;
+  string dastIssueId = 3;
+  string status = 4;
+  string statusMessage = 5;
+  DastAuditDecision decision = 6;
+}
+
+message DastAuditDecision {
+  bool truePositive = 1;
+  string confidence = 2;
+  string reasoning = 3;
+  string remediationAdvice = 4;
+  string finalComment = 5;
+  string tagValue = 6;
+  string tier = 7;
+}
+
+message DastAuditErrorResponse {
+  string requestId = 1;
+  string clientStreamId = 2;
+  string serverStreamId = 3;
+  string status = 4;
+  string statusMessage = 5;
+}
+
+message DastAuditPingRequest {
+  string streamId = 1;
+  int64 timestamp = 2;
+}
+
+message DastAuditPongResponse {
+  string streamId = 1;
+  int64 serverTimestamp = 2;
+  int64 clientTimestamp = 3;
+}

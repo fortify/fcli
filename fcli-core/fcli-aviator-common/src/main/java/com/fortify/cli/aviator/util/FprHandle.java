@@ -24,9 +24,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
-import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
 import org.slf4j.Logger;
@@ -38,6 +36,7 @@ import org.xml.sax.SAXException;
 
 import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
 import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
+import com.fortify.cli.common.util.SecureXmlParserFactory;
 
 import lombok.Getter;
 
@@ -195,17 +194,7 @@ public final class FprHandle implements AutoCloseable {
 
     private void loadEntryXmlFormat(byte[] indexBytes, Map<String, String> map)
             throws ParserConfigurationException, IOException, SAXException {
-            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-            factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
-            factory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
-            factory.setFeature("http://xml.org/sax/features/validation", false);
-            factory.setFeature("http://xml.org/sax/features/external-general-entities", false);
-            factory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
-            factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
-            factory.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
-            factory.setAttribute(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "");
-            factory.setXIncludeAware(false);
-            factory.setExpandEntityReferences(false);
+            var factory = SecureXmlParserFactory.newDocumentBuilderFactoryWithoutDoctype(false);
             DocumentBuilder builder = factory.newDocumentBuilder();
             Document indexDoc = builder.parse(new ByteArrayInputStream(indexBytes));
 

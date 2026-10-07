@@ -91,4 +91,8 @@ public class AviatorConfigManager {
         }
         return defaultTagMappingConfig;
     }
+
+    public TagMappingConfig getDefaultDastTagMappingConfig() {
+        return getDefaultTagMappingConfig();
+    }
 }

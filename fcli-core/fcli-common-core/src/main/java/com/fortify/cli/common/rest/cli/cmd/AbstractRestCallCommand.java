@@ -19,9 +19,12 @@ import java.util.function.Function;
 import org.apache.commons.lang3.StringUtils;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.cli.util.EnvSuffix;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonHelper;
+import com.fortify.cli.common.json.producer.IObjectNodeProducer;
+import com.fortify.cli.common.json.producer.ObjectNodeProducerApplyFrom;
 import com.fortify.cli.common.output.cli.cmd.AbstractOutputCommand;
 import com.fortify.cli.common.output.cli.cmd.IBaseRequestSupplier;
 import com.fortify.cli.common.output.product.IProductHelper;
@@ -31,6 +34,8 @@ import com.fortify.cli.common.rest.paging.INextPageUrlProducer;
 import com.fortify.cli.common.rest.paging.INextPageUrlProducerSupplier;
 import com.fortify.cli.common.rest.paging.IPagingSuppressor;
 import com.fortify.cli.common.rest.unirest.IUnirestInstanceSupplier;
+import com.fortify.cli.common.rest.unirest.RestResponseBodyHelper;
+import com.fortify.cli.common.rest.unirest.UnexpectedHttpResponseException;
 import com.fortify.cli.common.util.DisableTest;
 import com.fortify.cli.common.util.DisableTest.TestType;
 import com.fortify.cli.common.util.JavaHelper;
@@ -39,6 +44,7 @@ import kong.unirest.HttpRequest;
 import kong.unirest.HttpRequestWithBody;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Option;
@@ -63,13 +69,16 @@ public abstract class AbstractRestCallCommand extends AbstractOutputCommand impl
     @Option(names="--no-paging", negatable = false, defaultValue = "false") 
     private boolean noPaging;
     
-    @ArgGroup(exclusive = true) private TransformArgGroup transform = new TransformArgGroup();
-    private static class TransformArgGroup {
+    @ArgGroup(exclusive = true) private ResponseHandlingArgGroup responseHandling = new ResponseHandlingArgGroup();
+    private static class ResponseHandlingArgGroup {
         @Option(names="--no-transform", negatable = false, defaultValue = "false") 
         private boolean noTransform;
     
         @Option(names={"-t", "--transform"}, paramLabel = "<expr>") 
         private String transformExpression;
+        
+        @Option(names="--response-file", paramLabel = "<file>")
+        private Path responseFile;
     }
     
     // TODO Add options for content-type, arbitrary headers, ...?
@@ -93,10 +102,52 @@ public abstract class AbstractRestCallCommand extends AbstractOutputCommand impl
     }
     
     @Override
+    protected IObjectNodeProducer getObjectNodeProducer() {
+        if ( isResponseFileMode() ) {
+            var record = RestResponseBodyHelper.saveToFile(prepareRequest(getUnirestInstance()), responseHandling.responseFile, null);
+            return simpleObjectNodeProducerBuilder(ObjectNodeProducerApplyFrom.SPEC)
+                    .source(record.asObjectNode()).build();
+        }
+        return new NonJsonResponseGuidanceProducer(super.getObjectNodeProducer());
+    }
+    
+    @RequiredArgsConstructor
+    private static final class NonJsonResponseGuidanceProducer implements IObjectNodeProducer {
+        private final IObjectNodeProducer delegate;
+        
+        @Override
+        public void forEach(IObjectNodeConsumer consumer) {
+            try {
+                delegate.forEach(consumer);
+            } catch ( UnexpectedHttpResponseException e ) {
+                if ( !e.isParsingFailure() ) { throw e; }
+                throw new FcliSimpleException(String.format(
+                        "Response is not valid JSON (content type: %s); use --response-file to save the response to a file",
+                        e.getContentType()==null ? "unknown" : e.getContentType()), e);
+            }
+        }
+        
+        @Override
+        public ObjectNode getResponseMetadata() {
+            return delegate.getResponseMetadata();
+        }
+        
+        @Override
+        public int getExitCode() {
+            return delegate.getExitCode();
+        }
+    }
+    
+    private boolean isResponseFileMode() {
+        return responseHandling.responseFile!=null;
+    }
+    
+    @Override
     public final JsonNode transformInput(JsonNode input) {
-        if ( StringUtils.isNotBlank(transform.transformExpression) ) {
-            input = JsonHelper.evaluateSpelExpression(input, transform.transformExpression, JsonNode.class);
-        } else if ( !transform.noTransform ) {
+        if ( isResponseFileMode() ) { return input; }
+        if ( StringUtils.isNotBlank(responseHandling.transformExpression) ) {
+            input = JsonHelper.evaluateSpelExpression(input, responseHandling.transformExpression, JsonNode.class);
+        } else if ( !responseHandling.noTransform ) {
             input = _transformInput(input);
         }
         return input;
@@ -104,7 +155,7 @@ public abstract class AbstractRestCallCommand extends AbstractOutputCommand impl
 
     @Override
     public final JsonNode transformRecord(JsonNode input) {
-        if ( !transform.noTransform ) {
+        if ( !isResponseFileMode() && !responseHandling.noTransform ) {
             input = _transformRecord(input);
         }
         return input;
@@ -112,7 +163,7 @@ public abstract class AbstractRestCallCommand extends AbstractOutputCommand impl
 
     @Override
     public boolean isPagingSuppressed() {
-        return noPaging;
+        return noPaging || isResponseFileMode();
     }
 
     @Override

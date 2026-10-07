@@ -13,13 +13,21 @@
 package com.fortify.cli.aviator.fpr.processor;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.io.IOException;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.util.Base64;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -31,8 +39,12 @@ import org.junit.jupiter.api.condition.EnabledOnOs;
 import org.junit.jupiter.api.condition.OS;
 import org.junit.jupiter.api.io.TempDir;
 
+import com.fortify.cli.aviator.applyRemediation.ApplyAutoRemediationOnSource;
+import com.fortify.cli.aviator.fpr.remediation.RemediationExecutionMode;
+import com.fortify.cli.aviator.fpr.remediation.RemediationProcessingOptions;
 import com.fortify.cli.aviator.fpr.remediation.RemediationProcessor;
-import com.fortify.cli.aviator.fpr.remediation.model.*;
+import com.fortify.cli.aviator.fpr.remediation.model.RemediationMetric;
+import com.fortify.cli.aviator.fpr.utils.SourceDecoders;
 import com.fortify.cli.aviator.util.FileUtil;
 import com.fortify.cli.aviator.util.FprHandle;
 
@@ -41,6 +53,207 @@ class RemediationProcessorTest {
 
     @TempDir
     Path tempDir;
+
+    @Test
+    void testIssueIdFilterAppliesOnlyRequestedRemediations() throws Exception {
+        Path sourceDir = Files.createDirectory(tempDir.resolve("src"));
+        Path sourceFile = sourceDir.resolve("Example.java");
+        String originalContent = String.join("\n",
+                "class Example {",
+                "    void run() {",
+                "        oldOne();",
+                "        oldTwo();",
+                "    }",
+                "}",
+                "");
+        Files.writeString(sourceFile, originalContent, StandardCharsets.UTF_8);
+
+        String hash = TestHashUtil.sha256Base64Unix(originalContent);
+        Path fprPath = createFpr(remediationsXml(hash));
+
+        try (FprHandle fprHandle = new FprHandle(fprPath)) {
+                var processor = new RemediationProcessor(fprHandle, sourceDir.toString(),
+                    options(Set.of("ISSUE-2", "ISSUE-404"), RemediationExecutionMode.APPLY));
+            var metric = processor.processRemediationXML();
+
+            assertTrue(metric.isFiltered());
+                assertEquals(RemediationExecutionMode.APPLY, metric.executionMode());
+            assertEquals(2, metric.totalRemediations());
+            assertEquals(1, metric.appliedRemediations());
+            assertEquals(1, metric.skippedRemediations());
+            assertEquals(Set.of("ISSUE-2"), metric.appliedIssueIds());
+            assertEquals(Set.of("Example.java"), metric.modifiedFiles());
+            assertEquals(1, metric.skippedByReason().get("Requested issue not found in remediations"));
+            String updatedContent = Files.readString(sourceFile, StandardCharsets.UTF_8).replace("\r\n", "\n");
+            assertTrue(updatedContent.contains("        oldOne();"));
+            assertTrue(updatedContent.contains("        newTwo();"));
+            assertFalse(updatedContent.contains("        newOne();"));
+        }
+    }
+
+    @Test
+    void testIssueIdFilterWithNoMatchesCountsRequestedIdsAsSkipped() throws Exception {
+        Path sourceDir = Files.createDirectory(tempDir.resolve("src-no-match"));
+        Path sourceFile = sourceDir.resolve("Example.java");
+        String originalContent = String.join("\n",
+                "class Example {",
+                "    void run() {",
+                "        oldOne();",
+                "    }",
+                "}",
+                "");
+        Files.writeString(sourceFile, originalContent, StandardCharsets.UTF_8);
+
+        String hash = TestHashUtil.sha256Base64Unix(originalContent);
+        Path fprPath = createFpr(singleRemediationXml(hash));
+
+        try (FprHandle fprHandle = new FprHandle(fprPath)) {
+                var processor = new RemediationProcessor(fprHandle, sourceDir.toString(),
+                    options(new LinkedHashSet<>(Set.of("ISSUE-404", "ISSUE-405")), RemediationExecutionMode.APPLY));
+            var metric = processor.processRemediationXML();
+
+            assertTrue(metric.isFiltered());
+            assertEquals(2, metric.totalRemediations());
+            assertEquals(0, metric.appliedRemediations());
+            assertEquals(2, metric.skippedRemediations());
+            assertEquals(Set.of(), metric.appliedIssueIds());
+            assertEquals(Set.of(), metric.modifiedFiles());
+            assertEquals(2, metric.skippedByReason().get("Requested issue not found in remediations"));
+            assertEquals(originalContent, Files.readString(sourceFile, StandardCharsets.UTF_8));
+        }
+    }
+
+    @Test
+    void testUnfilteredPathTraversalCandidateIsSkippedWithoutAborting() throws Exception {
+        Path sourceDir = Files.createDirectory(tempDir.resolve("src-path-traversal"));
+        Path sourceFile = sourceDir.resolve("Example.java");
+        String originalContent = String.join("\n",
+                "class Example {",
+                "    void run() {",
+                "        oldOne();",
+                "    }",
+                "}",
+                "");
+        Files.writeString(sourceFile, originalContent, StandardCharsets.UTF_8);
+
+        String hash = TestHashUtil.sha256Base64Unix(originalContent);
+        Path fprPath = createFpr(pathTraversalAndValidRemediationsXml(hash));
+
+        try (FprHandle fprHandle = new FprHandle(fprPath)) {
+            var processor = new RemediationProcessor(fprHandle, sourceDir.toString());
+            var metric = processor.processRemediationXML();
+
+            assertFalse(metric.isFiltered());
+            assertEquals(RemediationExecutionMode.APPLY, metric.executionMode());
+            assertEquals(2, metric.totalRemediations());
+            assertEquals(1, metric.appliedRemediations());
+            assertEquals(1, metric.skippedRemediations());
+            assertEquals(1, metric.skippedByReason().get("Source file outside source directory"));
+            String updatedContent = Files.readString(sourceFile, StandardCharsets.UTF_8).replace("\r\n", "\n");
+            assertTrue(updatedContent.contains("        newOne();"));
+        }
+    }
+
+    @Test
+    void testLoadsFvdlMetadataFromZipBackedFprPath() throws Exception {
+        Path sourceDir = Files.createDirectory(tempDir.resolve("src-zip-backed"));
+        Path sourceFile = sourceDir.resolve("Example.java");
+        String originalContent = String.join("\n",
+                "class Example {",
+                "    void run() {",
+                "        oldOne();",
+                "    }",
+                "}",
+                "");
+        Files.writeString(sourceFile, originalContent, StandardCharsets.UTF_8);
+
+        Path fprPath = createFpr(singleRemediationXml(TestHashUtil.sha256Base64Unix(originalContent)));
+        Path cachePath = tempDir.resolve("remediations-cache.zip");
+        try (ZipOutputStream zipOutputStream = new ZipOutputStream(Files.newOutputStream(cachePath))) {
+            zipOutputStream.putNextEntry(new ZipEntry("fprs/001.fpr"));
+            Files.copy(fprPath, zipOutputStream);
+            zipOutputStream.closeEntry();
+        }
+
+        try (FileSystem cacheFileSystem = FileSystems.newFileSystem(cachePath, (ClassLoader) null);
+                FprHandle fprHandle = new FprHandle(cacheFileSystem.getPath("/fprs/001.fpr"))) {
+            var metric = new RemediationProcessor(fprHandle, sourceDir.toString()).processRemediationXML();
+
+            assertEquals(1, metric.appliedRemediations());
+            assertEquals(Set.of("Example.java"), metric.modifiedFiles());
+            assertTrue(Files.readString(sourceFile, StandardCharsets.UTF_8).contains("        newOne();"));
+        }
+    }
+
+    @Test
+    void testLoadsDeclaredEncodingFromZipBackedFprPath() throws Exception {
+        Charset sourceCharset = Charset.forName("windows-1252");
+        String originalLine = "String price = \"€100\";";
+        String replacementLine = "String price = \"EUR100\";";
+        String originalContent = originalLine + "\n";
+        Path sourceDir = Files.createDirectory(tempDir.resolve("src-zip-encoding"));
+        Path sourceFile = sourceDir.resolve("Example.java");
+        Files.write(sourceFile, originalContent.getBytes(sourceCharset));
+
+        String remediationsXml = """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <Remediations xmlns="xmlns://www.fortify.com/schema/remediations">
+                    <Remediation instanceId="ISSUE-ENCODING">
+                        <FileChanges>
+                            <Filename>Example.java</Filename>
+                            <Hash>%s</Hash>
+                            <Change>
+                                <LineFrom>1</LineFrom>
+                                <LineTo>1</LineTo>
+                                <Context before="0" after="0">%s</Context>
+                                <OriginalCode>%s</OriginalCode>
+                                <NewCode>%s</NewCode>
+                            </Change>
+                        </FileChanges>
+                    </Remediation>
+                </Remediations>
+                """.formatted(TestHashUtil.sha256Base64Unix(originalContent), originalLine, originalLine, replacementLine);
+        Path fprPath = createFpr(remediationsXml, sourceCharset.name());
+        Path cachePath = tempDir.resolve("remediations-encoding-cache.zip");
+        try (ZipOutputStream zipOutputStream = new ZipOutputStream(Files.newOutputStream(cachePath))) {
+            zipOutputStream.putNextEntry(new ZipEntry("fprs/001.fpr"));
+            Files.copy(fprPath, zipOutputStream);
+            zipOutputStream.closeEntry();
+        }
+
+        try (FileSystem cacheFileSystem = FileSystems.newFileSystem(cachePath, (ClassLoader) null);
+                FprHandle fprHandle = new FprHandle(cacheFileSystem.getPath("/fprs/001.fpr"))) {
+            var metric = new RemediationProcessor(fprHandle, sourceDir.toString()).processRemediationXML();
+
+            assertEquals(1, metric.appliedRemediations());
+            assertEquals(replacementLine + "\n", new String(Files.readAllBytes(sourceFile), sourceCharset));
+        }
+    }
+
+    private Path createFpr(String remediationsXml) throws IOException {
+        return createFpr(remediationsXml, "UTF-8");
+    }
+
+    private Path createFpr(String remediationsXml, String sourceEncoding) throws IOException {
+        Path fprPath = tempDir.resolve("test.fpr");
+        try (ZipOutputStream zipOutputStream = new ZipOutputStream(Files.newOutputStream(fprPath))) {
+            // Encoding metadata is required by RemediationProcessor (FVDL Build/SourceFiles).
+            writeEntry(zipOutputStream, "audit.fvdl", """
+                    <?xml version="1.0" encoding="UTF-8"?>
+                    <FVDL>
+                      <Build>
+                        <SourceFiles>
+                          <File type="JAVA" encoding="%s">
+                            <Name>Example.java</Name>
+                          </File>
+                        </SourceFiles>
+                      </Build>
+                    </FVDL>
+                    """.formatted(sourceEncoding));
+            writeEntry(zipOutputStream, "remediations.xml", remediationsXml);
+        }
+        return fprPath;
+    }
 
     /**
      * Fix #2 (exact-line disambiguation): two identical context blocks are ambiguous on their
@@ -340,6 +553,33 @@ class RemediationProcessorTest {
         assertEquals(0, metric.skippedRemediations());
         assertEquals(Map.of(), metric.skippedByReason());
         assertEquals("before\nREPLACED\nafter\n", Files.readString(sourceFile));
+    }
+
+    /**
+     * A nested multi-line candidate whose NewCode matches the wide fix still does not prove
+     * SUPERSEDED: the classifier passes {@code comparisonCode} (all whitespace removed), and
+     * {@code contentCovers} equals that against a newline-preserving slice. The narrow hunk is
+     * POSSIBLY_REMEDIATED and is not re-applied.
+     */
+    @Test
+    void multilineNestedMatchingContentIsPossiblyRemediatedNotReapplied() throws Exception {
+        Path sourceFile = writeSourceFile("before\nline2\nline3\nafter\n");
+        Path fprPath = createRemediationFpr(List.of(
+            new RemediationSpec("wide-fix", 1, 4, 0, 0, "before\nline2\nline3\nafter",
+                "before\nline2\nline3\nafter", "before\nREPLACED2\nREPLACED3\nafter"),
+            new RemediationSpec("narrow-fix", 2, 3, 1, 1, "before\nline2\nline3\nafter",
+                "line2\nline3", "REPLACED2\nREPLACED3")));
+
+        RemediationMetric metric;
+        try (FprHandle fprHandle = new FprHandle(fprPath)) {
+            metric = new RemediationProcessor(fprHandle, tempDir.toString()).processRemediationXML();
+        }
+
+        assertEquals(2, metric.totalRemediations());
+        assertEquals(1, metric.appliedRemediations());
+        assertEquals(0, metric.supersededRemediations());
+        assertEquals(1, metric.possiblyRemediatedRemediations());
+        assertEquals("before\nREPLACED2\nREPLACED3\nafter\n", Files.readString(sourceFile));
     }
 
     /**
@@ -809,6 +1049,42 @@ class RemediationProcessorTest {
         assertEquals(1, second.skippedRemediations());
         assertEquals(afterFirst, Files.readString(sourceFile), "the second FPR must leave the file untouched");
     }
+    /**
+     * Regression test for coordinate-space mismatch bug: HunkClassifier must compare declared
+     * (pristine-file) line numbers against declared ranges, not actual (post-shift) ranges, when
+     * pre-classifying narrower hunks nested inside a broader fix that shifted them. The broader
+     * fix (wide-deletes) declares lines 1-5 and deletes them, replacing with 2 lines (delta -3).
+     * The narrower fix (narrow-inside) declares line 3, which sits inside 1-5's declared range.
+     * Before the fix, classifyRange would compare declared-3 against the broader hunk's ACTUAL
+     * range (which is now at a shifted position), missing the nesting; after the fix, it compares
+     * declared-against-declared and correctly classifies as POSSIBLY_REMEDIATED.
+     */
+    @Test
+    void narrowerRemediationInsideBroaderDeleteIsClassifiedAsPossiblyRemediated() throws Exception {
+        String originalSource = "line1\nline2\nline3\nline4\nline5\nline6\n";
+        writeSourceFile("Example.java", originalSource);
+        Path fprPath = buildFpr(List.of(
+            new MultiHunkRemediationSpec("wide-deletes", List.of(new FileSpec("Example.java", List.of(
+                new HunkSpec(1, 5, 0, 0,
+                    "line1\nline2\nline3\nline4\nline5",
+                    "line1\nline2\nline3\nline4\nline5",
+                    "replacement1\nreplacement2"))))),
+            new MultiHunkRemediationSpec("narrow-inside", List.of(new FileSpec("Example.java", List.of(
+                new HunkSpec(3, 3, 1, 1, "line2\nline3\nline4",
+                    "line3", "line3-modified")))))));
+
+        RemediationMetric metric = apply(fprPath);
+
+        assertEquals(2, metric.totalRemediations());
+        assertEquals(1, metric.appliedRemediations(), "the broader fix must be applied");
+        assertEquals(1, metric.possiblyRemediatedRemediations(),
+            "the narrower fix's declared line 3 sits inside the broader fix's declared 1-5, so it must be "
+                + "pre-classified as POSSIBLY_REMEDIATED even though its actual position shifted");
+        assertEquals(0, metric.skippedRemediations(),
+            "no remediation should be skipped; the narrower one must not fail with ANCHOR_DOES_NOT_MATCH");
+    }
+
+
 
     private record HunkSpec(int lineFrom, int lineTo, int contextBefore, int contextAfter,
             String context, String originalCode, String newCode) {}
@@ -877,6 +1153,370 @@ class RemediationProcessorTest {
         return fprPath;
     }
 
+    private void writeEntry(ZipOutputStream zipOutputStream, String entryName, String content) throws IOException {
+        zipOutputStream.putNextEntry(new ZipEntry(entryName));
+        zipOutputStream.write(content.getBytes(StandardCharsets.UTF_8));
+        zipOutputStream.closeEntry();
+    }
+
+    private String remediationsXml(String hash) {
+        return """
+                <?xml version=\"1.0\" encoding=\"UTF-8\"?>
+                <Remediations xmlns=\"xmlns://www.fortify.com/schema/remediations\">
+                    <Remediation instanceId=\"ISSUE-1\">
+                        <FileChanges>
+                            <Filename>Example.java</Filename>
+                            <Hash>%s</Hash>
+                            <Change>
+                                <LineFrom>3</LineFrom>
+                                <LineTo>3</LineTo>
+                                <Context>    void run() {\n        oldOne();\n        oldTwo();</Context>
+                                <OriginalCode>        oldOne();</OriginalCode>
+                                <NewCode>        newOne();</NewCode>
+                            </Change>
+                        </FileChanges>
+                    </Remediation>
+                    <Remediation instanceId=\"ISSUE-2\">
+                        <FileChanges>
+                            <Filename>Example.java</Filename>
+                            <Hash>%s</Hash>
+                            <Change>
+                                <LineFrom>4</LineFrom>
+                                <LineTo>4</LineTo>
+                                <Context>        oldOne();\n        oldTwo();\n    }</Context>
+                                <OriginalCode>        oldTwo();</OriginalCode>
+                                <NewCode>        newTwo();</NewCode>
+                            </Change>
+                        </FileChanges>
+                    </Remediation>
+                </Remediations>
+                """.formatted(hash, hash);
+    }
+
+    private String singleRemediationXml(String hash) {
+        return """
+                <?xml version=\"1.0\" encoding=\"UTF-8\"?>
+                <Remediations xmlns=\"xmlns://www.fortify.com/schema/remediations\">
+                    <Remediation instanceId=\"ISSUE-1\">
+                        <FileChanges>
+                            <Filename>Example.java</Filename>
+                            <Hash>%s</Hash>
+                            <Change>
+                                <LineFrom>3</LineFrom>
+                                <LineTo>3</LineTo>
+                                <Context>    void run() {\n        oldOne();\n    }</Context>
+                                <OriginalCode>        oldOne();</OriginalCode>
+                                <NewCode>        newOne();</NewCode>
+                            </Change>
+                        </FileChanges>
+                    </Remediation>
+                </Remediations>
+                """.formatted(hash);
+    }
+
+    private String pathTraversalAndValidRemediationsXml(String hash) {
+        return """
+                <?xml version=\"1.0\" encoding=\"UTF-8\"?>
+                <Remediations xmlns=\"xmlns://www.fortify.com/schema/remediations\">
+                    <Remediation instanceId=\"ISSUE-TRAVERSAL\">
+                        <FileChanges>
+                            <Filename>../outside.java</Filename>
+                            <Hash>%s</Hash>
+                            <Change>
+                                <LineFrom>3</LineFrom>
+                                <LineTo>3</LineTo>
+                                <Context>    void run() {\n        oldOne();\n    }</Context>
+                                <OriginalCode>        oldOne();</OriginalCode>
+                                <NewCode>        ignored();</NewCode>
+                            </Change>
+                        </FileChanges>
+                    </Remediation>
+                    <Remediation instanceId=\"ISSUE-1\">
+                        <FileChanges>
+                            <Filename>Example.java</Filename>
+                            <Hash>%s</Hash>
+                            <Change>
+                                <LineFrom>3</LineFrom>
+                                <LineTo>3</LineTo>
+                                <Context>    void run() {\n        oldOne();\n    }</Context>
+                                <OriginalCode>        oldOne();</OriginalCode>
+                                <NewCode>        newOne();</NewCode>
+                            </Change>
+                        </FileChanges>
+                    </Remediation>
+                </Remediations>
+                """.formatted(hash, hash);
+    }
+
+    @Test
+    void previewModeDoesNotModifySourceFiles() throws Exception {
+        Path sourceDir = Files.createDirectory(tempDir.resolve("src-preview-unchanged"));
+        Path sourceFile = sourceDir.resolve("Example.java");
+        String originalContent = String.join("\n",
+                "class Example {",
+                "    void run() {",
+                "        oldOne();",
+                "        oldTwo();",
+                "    }",
+                "}",
+                "");
+        Files.writeString(sourceFile, originalContent, StandardCharsets.UTF_8);
+
+        String hash = TestHashUtil.sha256Base64Unix(originalContent);
+        Path fprPath = createFpr(remediationsXml(hash));
+
+        try (FprHandle fprHandle = new FprHandle(fprPath)) {
+            var processor = new RemediationProcessor(fprHandle, sourceDir.toString(),
+                options(Set.of(), RemediationExecutionMode.PREVIEW));
+            var metric = processor.processRemediationXML();
+
+            assertEquals(2, metric.totalRemediations());
+            assertEquals(2, metric.appliedRemediations());
+            assertTrue(metric.isPreview());
+
+            String actualContent = Files.readString(sourceFile, StandardCharsets.UTF_8).replace("\r\n", "\n");
+            assertEquals(originalContent, actualContent);
+            assertTrue(actualContent.contains("        oldOne();"));
+            assertTrue(actualContent.contains("        oldTwo();"));
+            assertFalse(actualContent.contains("newOne"));
+            assertFalse(actualContent.contains("newTwo"));
+        }
+    }
+
+    @Test
+    void publicPreviewAdapterDoesNotModifySourceFiles() throws Exception {
+        Path sourceDir = Files.createDirectory(tempDir.resolve("src-preview-adapter"));
+        Path sourceFile = sourceDir.resolve("Example.java");
+        Files.writeString(sourceFile, "before\nTARGET\nafter\n", StandardCharsets.UTF_8);
+        String originalContent = Files.readString(sourceFile, StandardCharsets.UTF_8);
+        Path fprPath = createRemediationFpr(2, 2, 1, 1, "before\nTARGET\nafter", "TARGET", "REPLACED");
+
+        try (FprHandle fprHandle = new FprHandle(fprPath)) {
+            RemediationMetric metric = ApplyAutoRemediationOnSource.applyRemediations(
+                fprHandle, sourceDir.toString(), null, Set.of(), true);
+
+            assertTrue(metric.isPreview());
+            assertEquals(1, metric.appliedRemediations());
+        }
+
+        assertEquals(originalContent, Files.readString(sourceFile, StandardCharsets.UTF_8));
+    }
+
+    @Test
+    void previewModePopulatesPreviewDetailsWithChanges() throws Exception {
+        Path sourceDir = Files.createDirectory(tempDir.resolve("src-preview-details"));
+        Path sourceFile = sourceDir.resolve("Example.java");
+        String originalContent = String.join("\n",
+                "class Example {",
+                "    void run() {",
+                "        oldOne();",
+                "    }",
+                "}",
+                "");
+        Files.writeString(sourceFile, originalContent, StandardCharsets.UTF_8);
+
+        String hash = TestHashUtil.sha256Base64Unix(originalContent);
+        Path fprPath = createFpr(singleRemediationXml(hash));
+
+        try (FprHandle fprHandle = new FprHandle(fprPath)) {
+            var processor = new RemediationProcessor(fprHandle, sourceDir.toString(),
+                options(Set.of(), RemediationExecutionMode.PREVIEW));
+            var metric = processor.processRemediationXML();
+
+            assertTrue(metric.isPreview());
+            assertEquals(1, metric.previewDetails().size());
+
+            var detail = metric.previewDetails().get(0);
+            assertEquals("ISSUE-1", detail.issueId());
+            assertEquals("available", detail.status());
+            assertNotNull(detail.files());
+            assertEquals(1, detail.files().size());
+
+            var filePreview = detail.files().get("Example.java");
+            assertNotNull(filePreview);
+            assertEquals("UTF-8", filePreview.encoding());
+            assertEquals(1, filePreview.changes().size());
+
+            var change = filePreview.changes().get(0);
+            assertEquals(1, change.changeIndex());
+            assertEquals(3, change.lineFrom());
+            assertEquals(3, change.lineTo());
+            assertTrue(change.originalCode().contains("oldOne"));
+            assertTrue(change.newCode().contains("newOne"));
+        }
+    }
+
+    @Test
+    void previewShowsDeclaredXmlFieldsWhenSourceHashDoesNotMatch() throws Exception {
+        Path sourceDir = Files.createDirectory(tempDir.resolve("src-preview-xml-only"));
+        Path sourceFile = sourceDir.resolve("Example.java");
+        Files.writeString(sourceFile, "class Example {\n    void run() {\n        drifted();\n    }\n}\n",
+            StandardCharsets.UTF_8);
+
+        String xmlHash = TestHashUtil.sha256Base64Unix("class Example {\n    void run() {\n        oldOne();\n    }\n}\n");
+        Path fprPath = createFpr(singleRemediationXml(xmlHash));
+
+        try (FprHandle fprHandle = new FprHandle(fprPath)) {
+            var metric = new RemediationProcessor(fprHandle, sourceDir.toString(),
+                options(Set.of(), RemediationExecutionMode.PREVIEW)).processRemediationXML();
+
+            assertTrue(metric.isPreview());
+            assertEquals(1, metric.appliedRemediations());
+            var change = metric.previewDetails().get(0).files().get("Example.java").changes().get(0);
+            assertEquals(3, change.lineFrom());
+            assertEquals(3, change.lineTo());
+            assertTrue(change.originalCode().contains("oldOne"));
+            assertTrue(change.newCode().contains("newOne"));
+        }
+        assertTrue(Files.readString(sourceFile, StandardCharsets.UTF_8).contains("drifted();"));
+    }
+
+    @Test
+    void previewModeCapturesSkipReasonsInPreviewDetails() throws Exception {
+        Path sourceDir = Files.createDirectory(tempDir.resolve("src-preview-skip"));
+        // Create file for one remediation, but not the other
+        Path validFile = sourceDir.resolve("Valid.java");
+        Files.writeString(validFile, "class Valid { void run() { old(); } }", StandardCharsets.UTF_8);
+
+        String validHash = TestHashUtil.sha256Base64Unix("class Valid { void run() { old(); } }");
+        String missingHash = "dGVzdGhhc2g="; // arbitrary hash for missing file
+
+        String xml = """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <Remediations xmlns="xmlns://www.fortify.com/schema/remediations">
+                    <Remediation instanceId="ISSUE-VALID">
+                        <FileChanges>
+                            <Filename>Valid.java</Filename>
+                            <Hash>%s</Hash>
+                            <Change>
+                                <LineFrom>1</LineFrom>
+                                <LineTo>1</LineTo>
+                                <Context>class Valid { void run() { old(); } }</Context>
+                                <OriginalCode>old();</OriginalCode>
+                                <NewCode>new();</NewCode>
+                            </Change>
+                        </FileChanges>
+                    </Remediation>
+                    <Remediation instanceId="ISSUE-MISSING">
+                        <FileChanges>
+                            <Filename>Missing.java</Filename>
+                            <Hash>%s</Hash>
+                            <Change>
+                                <LineFrom>1</LineFrom>
+                                <LineTo>1</LineTo>
+                                <Context>ignored</Context>
+                                <OriginalCode>ignored</OriginalCode>
+                                <NewCode>ignored</NewCode>
+                            </Change>
+                        </FileChanges>
+                    </Remediation>
+                </Remediations>
+                """.formatted(validHash, missingHash);
+
+        Path fprPath = tempDir.resolve("test-skip.fpr");
+        try (ZipOutputStream zipOutputStream = new ZipOutputStream(Files.newOutputStream(fprPath))) {
+            writeEntry(zipOutputStream, "audit.fvdl", """
+                    <?xml version="1.0" encoding="UTF-8"?>
+                    <FVDL>
+                      <Build>
+                        <SourceFiles>
+                          <File type="JAVA" encoding="UTF-8">
+                            <Name>Valid.java</Name>
+                          </File>
+                          <File type="JAVA" encoding="UTF-8">
+                            <Name>Missing.java</Name>
+                          </File>
+                        </SourceFiles>
+                      </Build>
+                    </FVDL>
+                    """);
+            writeEntry(zipOutputStream, "remediations.xml", xml);
+        }
+
+        try (FprHandle fprHandle = new FprHandle(fprPath)) {
+            var processor = new RemediationProcessor(fprHandle, sourceDir.toString(),
+                options(Set.of(), RemediationExecutionMode.PREVIEW));
+            var metric = processor.processRemediationXML();
+
+            assertEquals(2, metric.totalRemediations());
+            assertEquals(1, metric.appliedRemediations());
+            assertEquals(1, metric.skippedRemediations());
+
+            assertTrue(metric.isPreview());
+            assertEquals(2, metric.previewDetails().size());
+
+            var available = metric.previewDetails().stream()
+                    .filter(d -> "available".equals(d.status()))
+                    .findFirst().orElseThrow();
+            assertEquals("ISSUE-VALID", available.issueId());
+            assertNotNull(available.files().get("Valid.java"));
+
+            var skipped = metric.previewDetails().stream()
+                    .filter(d -> "skipped".equals(d.status()))
+                    .findFirst().orElseThrow();
+            assertEquals("ISSUE-MISSING", skipped.issueId());
+            assertTrue(skipped.files().isEmpty());
+        }
+    }
+
+    @Test
+    void previewModeWithEmptyRemediationsXmlReturnsEmptyList() throws Exception {
+        Path sourceDir = Files.createDirectory(tempDir.resolve("src-preview-empty"));
+        Path sourceFile = sourceDir.resolve("Example.java");
+        Files.writeString(sourceFile, "class Example { }", StandardCharsets.UTF_8);
+
+        String emptyXml = """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <Remediations xmlns="xmlns://www.fortify.com/schema/remediations">
+                </Remediations>
+                """;
+
+        Path fprPath = tempDir.resolve("test-empty.fpr");
+        try (ZipOutputStream zipOutputStream = new ZipOutputStream(Files.newOutputStream(fprPath))) {
+            writeEntry(zipOutputStream, "audit.fvdl", """
+                    <?xml version="1.0" encoding="UTF-8"?>
+                    <FVDL>
+                      <Build>
+                        <SourceFiles>
+                          <File type="JAVA" encoding="UTF-8">
+                            <Name>Example.java</Name>
+                          </File>
+                        </SourceFiles>
+                      </Build>
+                    </FVDL>
+                    """);
+            writeEntry(zipOutputStream, "remediations.xml", emptyXml);
+        }
+
+        try (FprHandle fprHandle = new FprHandle(fprPath)) {
+            var processor = new RemediationProcessor(fprHandle, sourceDir.toString(),
+                    options(Set.of(), RemediationExecutionMode.PREVIEW));
+            var metric = processor.processRemediationXML();
+
+            assertEquals(0, metric.totalRemediations());
+            assertEquals(0, metric.appliedRemediations());
+
+            assertTrue(metric.isPreview());
+            assertEquals(List.of(), metric.previewDetails());
+        }
+    }
+
+    private RemediationProcessingOptions options(Set<String> issueIds, RemediationExecutionMode executionMode) {
+        return new RemediationProcessingOptions(issueIds, executionMode, SourceDecoders.defaults());
+    }
+
+    private static final class TestHashUtil {
+        private static String sha256Base64Unix(String content) {
+            try {
+                java.security.MessageDigest md = java.security.MessageDigest.getInstance("SHA-256");
+                byte[] digest = md.digest(content.replace("\r\n", "\n").getBytes(StandardCharsets.UTF_8));
+                return java.util.Base64.getEncoder().encodeToString(digest);
+            } catch (java.security.NoSuchAlgorithmException e) {
+                throw new IllegalStateException(e);
+            }
+        }
+    }
+
     private static String sha256Base64(byte[] bytes) throws Exception {
         MessageDigest digest = MessageDigest.getInstance("SHA-256");
         return Base64.getEncoder().encodeToString(digest.digest(bytes));
@@ -890,10 +1530,6 @@ class RemediationProcessorTest {
         Path sourceFile = tempDir.resolve(filename);
         Files.writeString(sourceFile, content, StandardCharsets.UTF_8);
         return sourceFile;
-    }
-
-    private Path createRemediationFpr(String context, String originalCode, String newCode) throws Exception {
-        return createRemediationFpr(2, 2, 1, 1, context, originalCode, newCode);
     }
 
     private record RemediationSpec(String instanceId, int lineFrom, int lineTo, int contextBefore, int contextAfter,

@@ -36,7 +36,7 @@ All step instructions and their properties — evaluated **during** action execu
 `records.for-each::from`, `records.for-each::breakIf`
 
 ### REST calls
-`rest.target::baseUrl`, `rest.target::headers`, `rest.call::uri`, `rest.call::query`, `rest.call::body`, pagination expressions
+`rest.target::baseUrl`, `rest.target::headers`, `rest.call::uri`, `rest.call::query`, `rest.call::body`, `rest.call::response.file`, pagination expressions
 
 ### Writers
 `out.write::to`, `out.write::type`, `out.write::type-args`, `out.write::style`
@@ -156,6 +156,26 @@ cli.options:
           - var.set:
               results..: {fmt: results}
 ```
+
+### REST response types (non-JSON responses)
+```yaml
+- rest.call:
+    fpr:                                  # Save binary response to a file
+      target: fod
+      uri: /api/v3/scans/${cli.scanId}/fpr
+      query: { scanType: Static }
+      response.type: file                 # json (default) | text | file
+      response.file: out/scan-${cli.scanId}.fpr   # Parent directory must exist
+      on.success:
+        - log.info: "Saved ${fpr.size} bytes to ${fpr.file}"   # ${fpr}: file, size, contentType, status
+    status:                               # Keep plain-text response as a string
+      target: my-service
+      uri: /status
+      response.type: text
+- if: ${!status.contains('OK')}
+  throw: "Unexpected status: ${status}"
+```
+With the default `json`, a response that isn't valid JSON fails; use `text` or `file` for such responses. `text`/`file` can't be combined with paging or `records.for-each`. For SSC/ScanCentral targets, a `rest.call` instruction is only executed as a bulk request if all its entries use `json`; mixing in `text`/`file` entries executes all entries individually (in declaration order), so use a separate `rest.call` for those to keep JSON requests bulked.
 
 ### Variable accumulation
 ```yaml

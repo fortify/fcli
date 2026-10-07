@@ -1,0 +1,32 @@
+# yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-dev-2.x.json
+
+author: ftest
+usage:
+  header: Ftest rest.call response types (FoD)
+  description: Tests the rest.call response.type values file, text and json (default) against FoD
+
+cli.options:
+  file:
+    names: --file
+    description: File to save the tenants response to
+    required: true
+
+steps:
+  - rest.call:
+      tenantsFile:
+        target: fod
+        uri: /api/v3/tenants
+        response.type: file
+        response.file: ${cli.file}
+  - log.info: "FILE-OK status=${tenantsFile.status} size=${tenantsFile.size} file=${tenantsFile.file}"
+  - rest.call:
+      tenantsText:
+        target: fod
+        uri: /api/v3/tenants
+        response.type: text
+  - log.info: "TEXT-OK ${#isBlank(tenantsText) ? 'empty' : 'nonempty'}"
+  - rest.call:
+      tenantsJson:
+        target: fod
+        uri: /api/v3/tenants
+  - log.info: "JSON-OK ${tenantsJson.tenantName!=null ? 'json' : 'unexpected'}"

@@ -1,5 +1,71 @@
 # Changelog
 
+## [3.28.0](https://github.com/fortify/fcli/compare/v3.27.0...v3.28.0) (2026-10-05)
+
+
+### Features
+
+* `fcli aviator connection diagnose`: New command for diagnosing Aviator connectivity and credentials ([bc1dbaf](https://github.com/fortify/fcli/commit/bc1dbafee482b5fccb3501348e31dfeeb83923ce))
+* `fcli aviator ssc apply-remediations`: Add `--from-cache` to apply cached remediations offline ([bc1dbaf](https://github.com/fortify/fcli/commit/bc1dbafee482b5fccb3501348e31dfeeb83923ce))
+* `fcli aviator ssc apply-remediations`: Add `--issue-ids` filtering for `--from-cache` ([bc1dbaf](https://github.com/fortify/fcli/commit/bc1dbafee482b5fccb3501348e31dfeeb83923ce))
+* `fcli aviator ssc apply-remediations`: Add `--preview` to show proposed changes without modifying files ([bc1dbaf](https://github.com/fortify/fcli/commit/bc1dbafee482b5fccb3501348e31dfeeb83923ce))
+* `fcli aviator ssc audit-dast`: New command for auditing DAST findings in SSC ([bc1dbaf](https://github.com/fortify/fcli/commit/bc1dbafee482b5fccb3501348e31dfeeb83923ce))
+* `fcli aviator ssc audit-sast`: New command for auditing SAST findings in SSC ([bc1dbaf](https://github.com/fortify/fcli/commit/bc1dbafee482b5fccb3501348e31dfeeb83923ce))
+* `fcli aviator ssc audit`: Deprecated; use `fcli aviator ssc audit-sast` instead ([bc1dbaf](https://github.com/fortify/fcli/commit/bc1dbafee482b5fccb3501348e31dfeeb83923ce))
+* `fcli aviator ssc download-remediations-cache`: New command for caching Aviator-audited FPRs from SSC ([bc1dbaf](https://github.com/fortify/fcli/commit/bc1dbafee482b5fccb3501348e31dfeeb83923ce))
+* `fcli aviator ssc prepare`: Add `last_dast_audit` attribute for bulk audit selection ([bc1dbaf](https://github.com/fortify/fcli/commit/bc1dbafee482b5fccb3501348e31dfeeb83923ce))
+* `fcli fod aviator apply-remediations`: Add `--from-cache` to apply cached remediations offline ([bc1dbaf](https://github.com/fortify/fcli/commit/bc1dbafee482b5fccb3501348e31dfeeb83923ce))
+* `fcli fod aviator apply-remediations`: Add `--issue-ids` filtering for `--from-cache` ([bc1dbaf](https://github.com/fortify/fcli/commit/bc1dbafee482b5fccb3501348e31dfeeb83923ce))
+* `fcli fod aviator apply-remediations`: Add `--preview` to show proposed changes without modifying files ([bc1dbaf](https://github.com/fortify/fcli/commit/bc1dbafee482b5fccb3501348e31dfeeb83923ce))
+* `fcli fod aviator download-remediations-cache`: New command for caching the latest static audited FPR ([bc1dbaf](https://github.com/fortify/fcli/commit/bc1dbafee482b5fccb3501348e31dfeeb83923ce))
+* SSC `bulkaudit-dast` action: New preview action for bulk DAST auditing ([bc1dbaf](https://github.com/fortify/fcli/commit/bc1dbafee482b5fccb3501348e31dfeeb83923ce))
+* SSC `bulkaudit-sast` action: New action for bulk SAST auditing ([bc1dbaf](https://github.com/fortify/fcli/commit/bc1dbafee482b5fccb3501348e31dfeeb83923ce))
+* SSC `bulkaudit` action: Deprecated; use `bulkaudit-sast` instead ([bc1dbaf](https://github.com/fortify/fcli/commit/bc1dbafee482b5fccb3501348e31dfeeb83923ce))
+
+
+### Bug Fixes
+
+* `fcli aviator ssc apply-remediations`: Fix overlap detection for nested remediations ([bc1dbaf](https://github.com/fortify/fcli/commit/bc1dbafee482b5fccb3501348e31dfeeb83923ce))
+* `fcli aviator ssc audit-dast`: Skip ineligible findings and honor server-provided audit tiers ([bc1dbaf](https://github.com/fortify/fcli/commit/bc1dbafee482b5fccb3501348e31dfeeb83923ce))
+* `fcli aviator ssc correlate-sast-dast`: Correct result counts and report skip reasons ([bc1dbaf](https://github.com/fortify/fcli/commit/bc1dbafee482b5fccb3501348e31dfeeb83923ce))
+* `fcli aviator ssc correlate-sast-dast`: Preserve correlation state and skip previously tried pairs ([bc1dbaf](https://github.com/fortify/fcli/commit/bc1dbafee482b5fccb3501348e31dfeeb83923ce))
+* `fcli aviator`: Fix incorrect and duplicate warnings for built-in SSC Aviator tags ([bc1dbaf](https://github.com/fortify/fcli/commit/bc1dbafee482b5fccb3501348e31dfeeb83923ce))
+* `fcli aviator`: Harden FPR XML processing against external entities ([bc1dbaf](https://github.com/fortify/fcli/commit/bc1dbafee482b5fccb3501348e31dfeeb83923ce))
+* `fcli fod aviator apply-remediations`: Fix overlap detection for nested remediations ([bc1dbaf](https://github.com/fortify/fcli/commit/bc1dbafee482b5fccb3501348e31dfeeb83923ce))
+* SSC `bulkcorrelate` action: Resolve `last_correlation` from SSC attribute definitions ([bc1dbaf](https://github.com/fortify/fcli/commit/bc1dbafee482b5fccb3501348e31dfeeb83923ce))
+
+## [3.27.0](https://github.com/fortify/fcli/compare/v3.26.1...v3.27.0) (2026-10-02)
+
+
+### Features
+
+* `fcli * rest call`: Add `--response-file` option to save non-JSON responses to a file ([e4e0d1f](https://github.com/fortify/fcli/commit/e4e0d1f6951809529d05bcd0274a0918fc6f339d))
+* `fcli tool faa`: New commands for registering and running Fortify Agentic Analyzer through fcli ([7a1254c](https://github.com/fortify/fcli/commit/7a1254cee2124c36d69a6400f22dfc29b855134f))
+* `fod sast-scan start`: Add `--scan-policy` option to allow for specifying scan policy ([fd69bae](https://github.com/fortify/fcli/commit/fd69bae8ef9f5b8e475ab1fb836e5bbd50a6fdc6))
+* fcli `--style` option: Add `[no-]csv-escape` styles to control escaping of cells that start with a formula trigger character like `=` or `@`; such cells are now escaped bhy default unless the `no-csv-escape` style is used ([6939022](https://github.com/fortify/fcli/commit/6939022571b7710435dda8c7010dea5a49d009c1))
+* fcli actions framework: `rest.call`: Add `response.type` and `response.file` properties to save responses to a file ([e4e0d1f](https://github.com/fortify/fcli/commit/e4e0d1f6951809529d05bcd0274a0918fc6f339d))
+* fcli actions framework: `rest.call`: Add support for text/non-JSON responses ([e4e0d1f](https://github.com/fortify/fcli/commit/e4e0d1f6951809529d05bcd0274a0918fc6f339d))
+
+
+### Bug Fixes
+
+* `fcli * rest call`: Show clear error message for non-JSON responses, suggesting `--response-file` ([e4e0d1f](https://github.com/fortify/fcli/commit/e4e0d1f6951809529d05bcd0274a0918fc6f339d))
+* `fcli ai-assist mcp`: Validate query field names ([93ed367](https://github.com/fortify/fcli/commit/93ed3677255de0d9cc9c309dc20756b2b889feb6))
+* `fcli aviator`: Add maximum recursion depth when parsing FPR files ([6939022](https://github.com/fortify/fcli/commit/6939022571b7710435dda8c7010dea5a49d009c1))
+* `fcli aviator`: Improve log masking ([be4d2aa](https://github.com/fortify/fcli/commit/be4d2aa9c574c30662db84b87582c493d56a4667))
+* `fcli license`: Don't follow symbolic links when recursively cleaning report directory ([6939022](https://github.com/fortify/fcli/commit/6939022571b7710435dda8c7010dea5a49d009c1))
+* `fcli ssc access-control create-local-user`: Improve log masking of sensitive values ([93ed367](https://github.com/fortify/fcli/commit/93ed3677255de0d9cc9c309dc20756b2b889feb6))
+* `fcli ssc access-control update-local-user`: Improve log masking of sensitive values ([93ed367](https://github.com/fortify/fcli/commit/93ed3677255de0d9cc9c309dc20756b2b889feb6))
+* `fcli ssc action run`: Disable DTD processing & external entities when processing FPR files ([93ed367](https://github.com/fortify/fcli/commit/93ed3677255de0d9cc9c309dc20756b2b889feb6))
+* `fcli tool definitions update`: Skip up-to-date check for local update file or different source ([a484363](https://github.com/fortify/fcli/commit/a4843636c242b6f4c3b991e0c18e78f0647c1449))
+* `fcli tool`: Fail on HTTP errors when downloading tools, tool definitions or extensions, instead of saving the error page as the downloaded file ([e4e0d1f](https://github.com/fortify/fcli/commit/e4e0d1f6951809529d05bcd0274a0918fc6f339d))
+* `fcli tool`: Validate version strings ([be4d2aa](https://github.com/fortify/fcli/commit/be4d2aa9c574c30662db84b87582c493d56a4667))
+* `fod sast-scan start`: Don't override existing scan policy if `--scan-policy` is not supplied (fixes [#1095](https://github.com/fortify/fcli/issues/1095)) ([fd69bae](https://github.com/fortify/fcli/commit/fd69bae8ef9f5b8e475ab1fb836e5bbd50a6fdc6))
+* Download commands: Don't overwrite existing files if download fails or file is not ready yet ([e4e0d1f](https://github.com/fortify/fcli/commit/e4e0d1f6951809529d05bcd0274a0918fc6f339d))
+* fcli actions framework: `rest.call`: Consistently invoke `on.fail` handlers for failing single SSC requests, like for other targets ([e4e0d1f](https://github.com/fortify/fcli/commit/e4e0d1f6951809529d05bcd0274a0918fc6f339d))
+* fcli actions: Don't fail custom signature verification if public-keys directory doesn't exist (fixes [#1121](https://github.com/fortify/fcli/issues/1121)) ([500c7ae](https://github.com/fortify/fcli/commit/500c7aee323f3e09e8cf7e23b584b4492bc12d64))
+* Show error response bodies retrieved as bytes or files as text in HTTP error messages, instead of object references like `[B@54d116d5` ([e4e0d1f](https://github.com/fortify/fcli/commit/e4e0d1f6951809529d05bcd0274a0918fc6f339d))
+
 ## [3.26.1](https://github.com/fortify/fcli/compare/v3.26.0...v3.26.1) (2026-09-22)
 
 

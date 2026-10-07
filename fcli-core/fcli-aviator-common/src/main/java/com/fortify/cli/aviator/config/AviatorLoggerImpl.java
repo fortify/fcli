@@ -37,11 +37,17 @@ public class AviatorLoggerImpl implements IAviatorLogger {
         logger.info(format, args);
     }
 
+    /**
+     * Writes one warning for the user.
+     * The progress writer prints the line. It is recorded at debug level rather than warning
+     * level, because the JAR also prints warning-level log output to standard error and the
+     * same line would appear twice.
+     */
     @Override
     public void warn(String format, Object... args) {
         String message = String.format(format, args);
-        progressWriter.writeWarning(message); // Console (stderr)
-        logger.warn(message);
+        progressWriter.writeWarning(message);
+        logger.debug(message);
     }
 
     @Override
