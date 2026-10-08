@@ -30,6 +30,7 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
+import com.fortify.cli.aviator._common.config.AviatorConfigManager;
 import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
 import com.fortify.cli.aviator.fpr.model.FVDLMetadata;
 import com.fortify.cli.aviator.fpr.processor.StreamingFVDLProcessor;
@@ -103,6 +104,9 @@ public class RemediationProcessor {
         this.options = Objects.requireNonNull(options, "options");
         this.sourceDecoder = options.sourceDecoder();
         this.fileWriteCoordinator = new FileWriteCoordinator(sourceDecoder, remediationApplier);
+        // Ensures FileTypeLanguageMapperUtil (used by Hunk during classification) is initialized
+        // up front instead of falling through its implicit-init warning path on first use.
+        AviatorConfigManager.getInstance();
     }
 
     public RemediationMetric processRemediationXML() {
