@@ -189,6 +189,7 @@ public final class AviatorRemediationMetricsHelper {
         int skipped = metric == null ? 0 : metric.skippedRemediations();
         String appliedFieldName = metric != null && metric.isPreview() ? "availableRemediation" : "appliedRemediation";
         Map<String, Integer> skippedByReason = metric == null ? Map.of() : metric.skippedByReason();
+        Map<String, String> issueSkipReasons = metric == null ? Map.of() : metric.issueSkipReasons();
         Set<String> modifiedFiles = metric == null ? Set.of() : metric.modifiedFiles();
 
         result.put("totalRemediation", total);
@@ -198,7 +199,7 @@ public final class AviatorRemediationMetricsHelper {
         result.put("possiblyRemediatedRemediation", metric == null ? 0 : metric.possiblyRemediatedRemediations());
         result.put("skippedRemediation", skipped);
         result.put("skippedReasons", formatSkippedReasons(skippedByReason));
-        result.set("skippedByReason", toObjectNode(skippedByReason));
+        result.set("skippedByReason", toSkippedByReasonNode(skippedByReason, issueSkipReasons));
         result.set("modifiedFiles", toArrayNode(modifiedFiles));
     }
 
@@ -232,11 +233,28 @@ public final class AviatorRemediationMetricsHelper {
         result.set(idArrayField, toStringArrayNode(ids));
     }
 
-    public static ObjectNode toObjectNode(Map<String, Integer> skippedByReason) {
-        ObjectNode object = JsonHelper.getObjectMapper().createObjectNode();
-        if (skippedByReason != null) {
-            skippedByReason.forEach(object::put);
+    /** Inverts an issueId-to-reason map into reason-to-issueIds, preserving encounter order. */
+    public static Map<String, List<String>> groupIssueIdsByReason(Map<String, String> issueSkipReasons) {
+        Map<String, List<String>> issueIdsByReason = new LinkedHashMap<>();
+        if (issueSkipReasons != null) {
+            issueSkipReasons.forEach((issueId, reason) ->
+                issueIdsByReason.computeIfAbsent(reason, r -> new ArrayList<>()).add(issueId));
         }
+        return issueIdsByReason;
+    }
+
+    /** Per-reason {@code {count, issueIds}} object, so troubleshooting a reason doesn't require cross-referencing a separate list. */
+    public static ObjectNode toSkippedByReasonNode(Map<String, Integer> skippedByReason, Map<String, String> issueSkipReasons) {
+        ObjectNode object = JsonHelper.getObjectMapper().createObjectNode();
+        if (skippedByReason == null) {
+            return object;
+        }
+        Map<String, List<String>> issueIdsByReason = groupIssueIdsByReason(issueSkipReasons);
+        skippedByReason.forEach((reason, count) -> {
+            ObjectNode reasonNode = object.putObject(reason);
+            reasonNode.put("count", count);
+            reasonNode.set("issueIds", toStringArrayNode(issueIdsByReason.getOrDefault(reason, List.of())));
+        });
         return object;
     }
 

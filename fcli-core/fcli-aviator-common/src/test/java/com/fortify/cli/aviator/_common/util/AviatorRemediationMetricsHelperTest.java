@@ -23,6 +23,7 @@ import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.aviator.fpr.remediation.RemediationExecutionMode;
 import com.fortify.cli.aviator.fpr.remediation.model.RemediationMetric;
 import com.fortify.cli.aviator.fpr.remediation.preview.PreviewDetail;
@@ -66,6 +67,36 @@ class AviatorRemediationMetricsHelperTest {
         assertEquals(1, aggregated.skippedByReason().get("No file changes found"));
         assertEquals("Source file missing=2, No file changes found=1",
                 AviatorRemediationMetricsHelper.formatSkippedReasons(aggregated.skippedByReason()));
+    }
+
+    @Test
+    void groupIssueIdsByReasonInvertsIssueIdToReasonMap() {
+        Map<String, String> issueSkipReasons = new LinkedHashMap<>();
+        issueSkipReasons.put("ISSUE-1", "Source file missing");
+        issueSkipReasons.put("ISSUE-2", "Source file missing");
+        issueSkipReasons.put("ISSUE-3", "No file changes found");
+
+        Map<String, List<String>> grouped = AviatorRemediationMetricsHelper.groupIssueIdsByReason(issueSkipReasons);
+
+        assertEquals(List.of("ISSUE-1", "ISSUE-2"), grouped.get("Source file missing"));
+        assertEquals(List.of("ISSUE-3"), grouped.get("No file changes found"));
+    }
+
+    @Test
+    void skippedByReasonNodeIncludesCountAndIssueIdsPerReason() {
+        Map<String, Integer> skippedByReason = new LinkedHashMap<>();
+        skippedByReason.put("Source file missing", 2);
+        Map<String, String> issueSkipReasons = new LinkedHashMap<>();
+        issueSkipReasons.put("ISSUE-1", "Source file missing");
+        issueSkipReasons.put("ISSUE-2", "Source file missing");
+
+        ObjectNode node = AviatorRemediationMetricsHelper.toSkippedByReasonNode(skippedByReason, issueSkipReasons);
+
+        ObjectNode reasonNode = (ObjectNode) node.get("Source file missing");
+        assertEquals(2, reasonNode.get("count").asInt());
+        assertEquals(2, reasonNode.get("issueIds").size());
+        assertEquals("ISSUE-1", reasonNode.get("issueIds").get(0).asText());
+        assertEquals("ISSUE-2", reasonNode.get("issueIds").get(1).asText());
     }
 
     @Test
