@@ -17,7 +17,7 @@ import com.fortify.cli.common.cli.cmd.AbstractContainerCommand;
 import picocli.CommandLine.Command;
 
 /**
- * Container command for all 'fcli tool fortify-agentic-analyzer' subcommands.
+ * Container command for all 'fcli tool fortifyaa' subcommands.
  * 
  * @author Sangamesh Vijaykumar
 */

@@ -11,8 +11,13 @@
  * without notice.
  */
 package com.fortify.cli.tool.faa.cli.cmd;
+
+import java.util.List;
+
+import com.fortify.cli.common.util.PlatformHelper;
 import com.fortify.cli.tool._common.cli.cmd.AbstractToolRunCommand;
 import com.fortify.cli.tool._common.helper.Tool;
+import com.fortify.cli.tool._common.helper.ToolInstallationDescriptor;
 
 import picocli.CommandLine.Command;
 
@@ -27,6 +32,12 @@ public class ToolFortifyAgenticAnalyzerRunCommand extends AbstractToolRunCommand
     @Override
     protected Tool getTool() {
         return Tool.FORTIFY_AGENTIC_ANALYZER;
+    }
+
+    @Override
+    protected List<String> getBaseCommand(ToolInstallationDescriptor descriptor) {
+        var baseCmd = PlatformHelper.isWindows() ? "fortifyaa.exe" : "fortifyaa";
+        return List.of(descriptor.getBinPath().resolve(baseCmd).toString());
     }
 
 }
