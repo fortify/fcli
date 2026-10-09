@@ -12,6 +12,8 @@
  */
 package com.fortify.cli.aviator.fpr.processor;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 import org.slf4j.Logger;
@@ -36,7 +38,11 @@ final class AuditXmlIssuePruner {
      * Removes every {@code <Issue>} whose {@code instanceId} is absent from {@code retainIds}.
      * Issues with a blank {@code instanceId} are always removed.
      * <p>
-     * Performance: one reverse pass over the live {@link NodeList} with O(1) set lookups.
+     * Performance: the {@link NodeList} from {@code getElementsByTagNameNS} is live and backed by
+     * a forward-caching traversal (e.g. Xerces' {@code DeepNodeListImpl}), so indexed access is
+     * only cheap when walked in increasing order; a decreasing-index pass re-walks the tree from
+     * the start on every call and turns into O(n^2). Snapshot into a plain list with one forward
+     * pass first, then remove from that snapshot (order no longer matters once it's not live).
      *
      * @param auditDoc   in-memory audit.xml document (mutated in place); no-op if null
      * @param retainIds  instance IDs written in the current save; treated as empty if null
@@ -50,12 +56,15 @@ final class AuditXmlIssuePruner {
         Set<String> safeRetainIds = retainIds == null ? Set.of() : retainIds;
         NodeList issueNodes = auditDoc.getElementsByTagNameNS(AUDIT_NAMESPACE_URI, "Issue");
         int beforeCount = issueNodes.getLength();
-        int removedCount = 0;
-
-        for (int i = beforeCount - 1; i >= 0; i--) {
-            if (!(issueNodes.item(i) instanceof Element issueElement)) {
-                continue;
+        List<Element> issueElements = new ArrayList<>(beforeCount);
+        for (int i = 0; i < beforeCount; i++) {
+            if (issueNodes.item(i) instanceof Element issueElement) {
+                issueElements.add(issueElement);
             }
+        }
+
+        int removedCount = 0;
+        for (Element issueElement : issueElements) {
             String instanceId = issueElement.getAttribute("instanceId");
             if (instanceId == null || instanceId.isBlank() || !safeRetainIds.contains(instanceId)) {
                 Node parent = issueElement.getParentNode();
