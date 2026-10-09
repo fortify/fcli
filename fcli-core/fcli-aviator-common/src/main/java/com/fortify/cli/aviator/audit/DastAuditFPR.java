@@ -113,6 +113,7 @@ public final class DastAuditFPR {
             TagMappingConfig tagMappingConfig,
             StreamRunner streamRunner) {
         tagMappingConfig.validateForDast();
+        fprHandle.validateDast();
         var auditProcessor = new AuditProcessor(fprHandle);
         Map<String, AuditIssue> auditIssues = auditProcessor.processAuditXML();
         var sessions = new StreamingWebInspectParser(fprHandle).parseSessions();

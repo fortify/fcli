@@ -56,6 +56,27 @@ class AviatorSSCDastAuditCommandTest {
     }
 
     @Test
+    void failedOutputIsStructured() {
+        var appVersion = new SSCAppVersionDescriptor();
+        appVersion.setVersionId("42");
+        appVersion.setApplicationName("WebGoat");
+        appVersion.setVersionName("1.0");
+
+        var result = AviatorSSCDastAuditCommand.buildFailedOutput(appVersion, "not a DAST FPR");
+
+        assertEquals("FAILED", result.path("__action__").asText());
+        assertEquals("DAST audit failed: not a DAST FPR", result.path("operation").path("audit").path("message").asText());
+        assertFalse(result.has("state"));
+    }
+
+    @Test
+    void failedOutputHandlesNullMessage() {
+        var result = AviatorSSCDastAuditCommand.buildFailedOutput(new SSCAppVersionDescriptor(), null);
+
+        assertEquals("DAST audit failed: unknown error", result.path("operation").path("audit").path("message").asText());
+    }
+
+    @Test
     void dastAuditStatsUseSastAuditOutputEnvelope() {
         var appVersion = new SSCAppVersionDescriptor();
         appVersion.setVersionId("42");

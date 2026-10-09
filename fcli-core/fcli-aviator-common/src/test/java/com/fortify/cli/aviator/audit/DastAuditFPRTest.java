@@ -30,6 +30,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import com.fortify.cli.aviator._common.config.AviatorConfigManager;
+import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
 import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
 import com.fortify.cli.aviator.audit.model.AuditTier;
 import com.fortify.cli.aviator.config.TagMappingConfig;
@@ -218,6 +219,24 @@ class DastAuditFPRTest {
                     (ignoredConfig, items, total) -> CompletableFuture.completedFuture(null)));
 
             assertEquals("DAST audit stream completed without a result", exception.getMessage());
+        }
+    }
+
+    @Test
+    void sastFprIsRejectedWithValidationErrorBeforeStreaming() throws Exception {
+        Path fpr = tempDir.resolve("sast.fpr");
+        try (FileSystem zip = FileSystems.newFileSystem(fpr, Map.of("create", "true"))) {
+            Files.writeString(zip.getPath("/audit.fvdl"), "<FVDL/>");
+        }
+        boolean[] streamStarted = {false};
+
+        try (FprHandle handle = new FprHandle(fpr)) {
+            var exception = assertThrows(AviatorSimpleException.class,
+                () -> DastAuditFPR.audit(handle, streamConfig(), defaultTagMapping(),
+                    (ignoredConfig, items, total) -> { streamStarted[0] = true; return null; }));
+
+            assertTrue(exception.getMessage().contains("SAST scan result"));
+            assertFalse(streamStarted[0]);
         }
     }
 
