@@ -110,6 +110,19 @@ public final class FprHandle implements AutoCloseable {
         LOG.info("FPR validation successful for: {}", this.fprPath);
     }
 
+    /**
+     * Validates that the opened FPR contains DAST (WebInspect) scan results.
+     * @throws AviatorSimpleException if the FPR does not contain webinspect.xml.
+     */
+    public void validateDast() {
+        if (!Files.exists(getPath("/webinspect.xml"))) {
+            if (Files.exists(getPath("/audit.fvdl"))) {
+                throw new AviatorSimpleException("Invalid FPR: The provided file is a SAST scan result. This operation requires an FPR from a DAST (WebInspect) scan.");
+            }
+            throw new AviatorSimpleException("Invalid FPR: The file does not contain 'webinspect.xml' and does not appear to be a valid DAST (WebInspect) scan result.");
+        }
+    }
+
     public boolean hasSource() {
         Path srcArchiveDir = getPath("/src-archive");
 

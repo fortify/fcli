@@ -43,6 +43,7 @@ import com.fortify.cli.aviator.ssc.helper.AviatorSSCRefreshHelper;
 import com.fortify.cli.aviator.ssc.helper.AviatorSSCTagValidator;
 import com.fortify.cli.aviator.util.FprHandle;
 import com.fortify.cli.aviator.util.ResourceUtil;
+import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.exception.FcliTechnicalException;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
@@ -88,8 +89,16 @@ public class AviatorSSCDastAuditCommand extends AbstractSSCJsonNodeOutputCommand
             downloadedFpr = AviatorSSCFprTransferHelper.downloadCurrentStateFpr(
                 unirest, appVersion, logger, progressWriter);
 
-            DastAuditFprResult result = auditFpr(
-                downloadedFpr, appVersion, session, logger, tagMappingConfig);
+            DastAuditFprResult result;
+            try {
+                result = auditFpr(downloadedFpr, appVersion, session, logger, tagMappingConfig);
+            } catch (FcliSimpleException e) {
+                LOG.error("DAST audit failed for {}:{}: {}",
+                    appVersion.getApplicationName(), appVersion.getVersionName(), e.getMessage());
+                LOG.debug("DAST audit failure details", e);
+                actionResult = "FAILED";
+                return buildFailedOutput(appVersion, e.getMessage());
+            }
             actionResult = result.status().name();
             String artifactId = null;
             if (result.updatedFile() != null && result.succeeded() > 0) {
@@ -154,6 +163,13 @@ public class AviatorSSCDastAuditCommand extends AbstractSSCJsonNodeOutputCommand
             String artifactId) {
         ObjectNode result = AviatorSSCAuditHelper.buildResultNode(appVersion, artifactId, audit.status().name());
         AviatorSSCAuditHelper.setDastAuditStats(result, audit);
+        return result;
+    }
+
+    static ObjectNode buildFailedOutput(SSCAppVersionDescriptor appVersion, String message) {
+        ObjectNode result = AviatorSSCAuditHelper.buildResultNode(appVersion, null, "FAILED");
+        AviatorSSCAuditHelper.setOperationMessage(result, "DAST audit failed: " + (message == null ? "unknown error" : message));
+        result.remove("state");
         return result;
     }
 

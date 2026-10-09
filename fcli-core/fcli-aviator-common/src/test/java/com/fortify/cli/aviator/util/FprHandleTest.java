@@ -28,6 +28,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.xml.sax.SAXException;
 
+import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
 import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
 
 @DisplayName("FprHandle")
@@ -191,6 +192,42 @@ class FprHandleTest {
         }
     }
     //03358915/OCTCR11A2429097 fix for audit issue
+
+    @Test
+    @DisplayName("validateDast rejects SAST-only FPR with a user-friendly message")
+    void validateDastRejectsSastOnlyFpr() throws Exception {
+        Path fprPath = createFpr("<index />");
+
+        try (FprHandle handle = new FprHandle(fprPath)) {
+            AviatorSimpleException exception = assertThrows(AviatorSimpleException.class, handle::validateDast);
+
+            assertTrue(exception.getMessage().contains("SAST scan result"));
+        }
+    }
+
+    @Test
+    @DisplayName("validateDast rejects FPR containing neither webinspect.xml nor audit.fvdl")
+    void validateDastRejectsUnknownFpr() throws Exception {
+        Path fprPath = createFprWithoutSourceIndex();
+
+        try (FprHandle handle = new FprHandle(fprPath)) {
+            AviatorSimpleException exception = assertThrows(AviatorSimpleException.class, handle::validateDast);
+
+            assertTrue(exception.getMessage().contains("webinspect.xml"));
+        }
+    }
+
+    @Test
+    @DisplayName("validateDast accepts DAST-only and merged SAST+DAST FPRs")
+    void validateDastAcceptsDastFprs() throws Exception {
+        try (FprHandle handle = new FprHandle(createFprWithWebInspect(false))) {
+            handle.validateDast();
+        }
+        Files.delete(tempDir.resolve("webinspect.fpr"));
+        try (FprHandle handle = new FprHandle(createFprWithWebInspect(true))) {
+            handle.validateDast();
+        }
+    }
 
     private Path createFprWithWebInspect(boolean includeAuditFvdl) throws IOException {
         Path fprPath = tempDir.resolve("webinspect.fpr");

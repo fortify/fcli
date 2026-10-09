@@ -16,6 +16,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystem;
@@ -28,8 +29,10 @@ import java.util.Map;
 import javax.xml.stream.XMLStreamException;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.function.Executable;
 import org.junit.jupiter.api.io.TempDir;
 
+import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
 import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
 import com.fortify.cli.aviator.util.FprHandle;
 
@@ -80,6 +83,25 @@ class StreamingWebInspectParserTest {
             () -> new StreamingWebInspectParser(handle).parseSessions());
         assertInstanceOf(XMLStreamException.class, exception.getCause());
       }
+    }
+
+    @Test
+    void parsersRejectSastFprWithFriendlyError() throws Exception {
+        Path fpr = tempDir.resolve("sast.fpr");
+        try (FileSystem zip = FileSystems.newFileSystem(fpr, Map.of("create", "true"))) {
+            Files.writeString(zip.getPath("/audit.fvdl"), "<FVDL/>", StandardCharsets.UTF_8);
+        }
+
+        try (FprHandle handle = new FprHandle(fpr)) {
+            for (Executable call : new Executable[] {
+                () -> new StreamingWebInspectParser(handle).parse(),
+                () -> new StreamingWebInspectParser(handle).parseSessions(),
+                () -> new WebInspectParser(handle).parse(),
+                () -> new WebInspectParser(handle).parseSessions() }) {
+                var ex = assertThrows(AviatorSimpleException.class, call);
+                assertTrue(ex.getMessage().contains("SAST scan result"));
+            }
+        }
     }
 
     private Path createFpr() throws Exception {
