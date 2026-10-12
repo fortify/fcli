@@ -43,33 +43,13 @@ public class TraceParser {
     }
 
     /**
-     * Parse trace for UnifiedTracePool - returns StreamedTrace.
+     * Parse a pool or Reason trace. NodeRefs keep only their id, because the referenced node
+     * can come later in the file; {@link StackTraceConverter} resolves them after pass 1.
      */
     public StreamedTrace parseStreamedTrace(XMLStreamReader reader, String traceId) throws XMLStreamException {
-        StreamedVulnerability.Trace trace = parseTrace(reader);
-
-        if (trace == null || trace.getNodes() == null) {
-            logger.warn("parseTrace returned null or empty trace for traceId: {}", traceId);
-            return null;
-        }
-
-        List<StreamedTrace.Primary.Entry> entries = new ArrayList<>();
-
-        for (Node node : trace.getNodes()) {
-            StreamedTrace.Primary.Entry entry =
-                StreamedTrace.Primary.Entry.builder()
-                    .nodeId(node.getId())
-                    .node(node)
-                    .isDefault(node.isDetailsOnly())
-                    .build();
-            entries.add(entry);
-        }
-
-        StreamedTrace.Primary primary =
-            StreamedTrace.Primary.builder()
-                .entries(entries)
-                .build();
-
+        StreamedTrace.Primary primary = StreamedTrace.Primary.builder()
+            .entries(parseEntries(reader))
+            .build();
         return StreamedTrace.builder()
             .id(traceId)
             .primary(primary)
@@ -77,10 +57,30 @@ public class TraceParser {
     }
 
     /**
-     * Parse inline trace from Vulnerability.
+     * Parse a vulnerability trace. Called in pass 2, so NodeRefs resolve from the complete node pool.
      */
     public StreamedVulnerability.Trace parseTrace(XMLStreamReader reader) throws XMLStreamException {
-        List<Node> nodes = new ArrayList<>();
+        List<StreamedTrace.Primary.Entry> entries = parseEntries(reader);
+        List<Node> nodes = new ArrayList<>(entries.size());
+        for (StreamedTrace.Primary.Entry entry : entries) {
+            nodes.add(entry.hasNode() ? entry.getNode() : resolveNodeRef(entry.getNodeId()));
+        }
+        return StreamedVulnerability.Trace.builder()
+            .nodes(nodes)
+            .build();
+    }
+
+    private Node resolveNodeRef(String nodeRefId) {
+        Node node = nodePool.get(nodeRefId);
+        if (node == null) {
+            logger.debug("NodeRef {} not found in NodePool, using placeholder", nodeRefId);
+            return nodeParser.createPlaceholderNode(nodeRefId);
+        }
+        return node;
+    }
+
+    private List<StreamedTrace.Primary.Entry> parseEntries(XMLStreamReader reader) throws XMLStreamException {
+        List<StreamedTrace.Primary.Entry> entries = new ArrayList<>();
         boolean inPrimary = false;
 
         while (reader.hasNext()) {
@@ -93,7 +93,10 @@ public class TraceParser {
                     inPrimary = true;
 
                 } else if (inPrimary && "Entry".equals(elementName)) {
-                    parseTraceEntry(reader, nodes);
+                    StreamedTrace.Primary.Entry entry = parseTraceEntry(reader);
+                    if (entry != null) {
+                        entries.add(entry);
+                    }
                 }
 
             } else if (event == XMLStreamConstants.END_ELEMENT) {
@@ -103,23 +106,19 @@ public class TraceParser {
                     inPrimary = false;
 
                 } else if ("Trace".equals(elementName)) {
-                    return StreamedVulnerability.Trace.builder()
-                        .nodes(nodes)
-                        .build();
+                    return entries;
                 }
             }
         }
 
-        logger.warn("Trace ended without a closing Trace element - parsed {} nodes", nodes.size());
-        return StreamedVulnerability.Trace.builder()
-            .nodes(nodes)
-            .build();
+        logger.warn("Trace ended without a closing Trace element - parsed {} entries", entries.size());
+        return entries;
     }
 
     /**
-     * Parse a single Entry element and add Node to the list.
+     * Parse a single Entry element into either a NodeRef id or an inline Node.
      */
-    private void parseTraceEntry(XMLStreamReader reader, List<Node> nodes) throws XMLStreamException {
+    private StreamedTrace.Primary.Entry parseTraceEntry(XMLStreamReader reader) throws XMLStreamException {
         String nodeRefId = null;
         Node inlineNode = null;
 
@@ -145,18 +144,15 @@ public class TraceParser {
         }
 
         if (nodeRefId != null) {
-            Node node = nodePool.get(nodeRefId);
-            if (node != null) {
-                nodes.add(node);
-            } else {
-                logger.trace("NodeRef {} - Forward reference, creating placeholder", nodeRefId);
-                Node placeholder = nodeParser.createPlaceholderNode(nodeRefId);
-                nodes.add(placeholder);
-            }
-        } else if (inlineNode != null) {
-            nodes.add(inlineNode);
-        } else {
-            logger.warn("[parseTraceEntry] Entry has neither NodeRef nor inline Node - skipping");
+            return StreamedTrace.Primary.Entry.builder().nodeId(nodeRefId).build();
         }
+        if (inlineNode != null) {
+            return StreamedTrace.Primary.Entry.builder()
+                .node(inlineNode)
+                .isDefault(inlineNode.isDetailsOnly())
+                .build();
+        }
+        logger.warn("[parseTraceEntry] Entry has neither NodeRef nor inline Node - skipping");
+        return null;
     }
 }

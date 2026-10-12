@@ -681,6 +681,71 @@ class StreamingFVDLProcessorTest {
         assertTrue(reasonElement.getInnerStackTrace().isEmpty());
     }
 
+    @Test
+    void testParseResolvesReasonNodeRefToNodeDeclaredLaterInNodePool() throws Exception {
+        String xml = """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <FVDL>
+                  <Vulnerabilities>
+                    <Vulnerability>
+                      <ClassInfo>
+                        <ClassID>RULE-1</ClassID>
+                        <Type>SQL Injection</Type>
+                        <AnalyzerName>Dataflow</AnalyzerName>
+                        <DefaultSeverity>3.0</DefaultSeverity>
+                      </ClassInfo>
+                      <InstanceInfo>
+                        <InstanceID>instance-1</InstanceID>
+                        <InstanceSeverity>3.0</InstanceSeverity>
+                        <Confidence>4.0</Confidence>
+                      </InstanceInfo>
+                      <AnalysisInfo>
+                        <Unified>
+                          <Trace>
+                            <Primary>
+                              <Entry><NodeRef id="0"/></Entry>
+                            </Primary>
+                          </Trace>
+                        </Unified>
+                      </AnalysisInfo>
+                    </Vulnerability>
+                  </Vulnerabilities>
+                  <UnifiedNodePool>
+                    <Node id="0">
+                      <SourceLocation path="src/Caller.java" line="10" lineEnd="10" colStart="0" colEnd="0"/>
+                      <Action type="Call">call()</Action>
+                      <Reason>
+                        <Trace>
+                          <Primary>
+                            <Entry><NodeRef id="1"/></Entry>
+                          </Primary>
+                        </Trace>
+                      </Reason>
+                    </Node>
+                    <Node id="1">
+                      <SourceLocation path="src/Callee.java" line="20" lineEnd="20" colStart="0" colEnd="0"/>
+                      <Action type="Return">callee()</Action>
+                    </Node>
+                  </UnifiedNodePool>
+                </FVDL>
+                """;
+
+        createTestFpr(xml);
+
+        StreamingFVDLProcessor processor = new StreamingFVDLProcessor(fprHandle);
+        try (ZipFile zipFile = new ZipFile(tempFprFile.toFile())) {
+            processor.parse(zipFile, "audit.fvdl");
+        }
+
+        StackTraceElement element = processor.getVulnerabilities().get(0).getStackTrace().get(0).get(0);
+        assertEquals("src/Caller.java", element.getFilename());
+        assertEquals(1, element.getInnerStackTrace().size());
+        StackTraceElement reasonElement = element.getInnerStackTrace().get(0);
+        assertEquals("src/Callee.java", reasonElement.getFilename());
+        assertEquals(20, reasonElement.getLine());
+        assertEquals("Return", reasonElement.getNodeType());
+    }
+
     private void createTestFpr(String auditFvdlXml) throws Exception {
         tempFprFile = Files.createTempFile("streaming-fvdl", ".fpr");
         try (ZipOutputStream zipOutputStream = new ZipOutputStream(Files.newOutputStream(tempFprFile))) {

@@ -134,7 +134,7 @@ final class StackTraceConverter {
         }
     }
 
-    /** Prefers the entry's own node so inline nodes without an id are kept. */
+    /** Inline entries carry their node; NodeRef entries resolve from the complete node pool. */
     private Node resolveEntryNode(StreamedTrace.Primary.Entry entry) {
         if (entry.getNode() != null) {
             return entry.getNode();
