@@ -616,6 +616,71 @@ class StreamingFVDLProcessorTest {
         assertTrue(processor.getFvdlMetadata().getNodePool().isEmpty());
     }
 
+    @Test
+    void testParseHandlesSelfReferencingReasonAndMissingTraceRef() throws Exception {
+        String xml = """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <FVDL>
+                  <Vulnerabilities>
+                    <Vulnerability>
+                      <ClassInfo>
+                        <ClassID>RULE-1</ClassID>
+                        <Type>SQL Injection</Type>
+                        <AnalyzerName>Dataflow</AnalyzerName>
+                        <DefaultSeverity>3.0</DefaultSeverity>
+                      </ClassInfo>
+                      <InstanceInfo>
+                        <InstanceID>instance-1</InstanceID>
+                        <InstanceSeverity>3.0</InstanceSeverity>
+                        <Confidence>4.0</Confidence>
+                      </InstanceInfo>
+                      <AnalysisInfo>
+                        <Unified>
+                          <Trace>
+                            <Primary>
+                              <Entry><NodeRef id="0"/></Entry>
+                            </Primary>
+                          </Trace>
+                        </Unified>
+                      </AnalysisInfo>
+                    </Vulnerability>
+                  </Vulnerabilities>
+                  <UnifiedNodePool>
+                    <Node id="0">
+                      <SourceLocation path="src/Loop.java" line="5" lineEnd="5" colStart="0" colEnd="0"/>
+                      <Action type="Call">loop(0)</Action>
+                      <Reason>
+                        <TraceRef id="self-trace"/>
+                        <TraceRef id="missing-trace"/>
+                      </Reason>
+                    </Node>
+                  </UnifiedNodePool>
+                  <UnifiedTracePool>
+                    <Trace id="self-trace">
+                      <Primary>
+                        <Entry><NodeRef id="0"/></Entry>
+                      </Primary>
+                    </Trace>
+                  </UnifiedTracePool>
+                </FVDL>
+                """;
+
+        createTestFpr(xml);
+
+        StreamingFVDLProcessor processor = new StreamingFVDLProcessor(fprHandle);
+        try (ZipFile zipFile = new ZipFile(tempFprFile.toFile())) {
+            processor.parse(zipFile, "audit.fvdl");
+        }
+
+        StackTraceElement element = processor.getVulnerabilities().get(0).getStackTrace().get(0).get(0);
+        assertEquals("src/Loop.java", element.getFilename());
+        assertEquals(1, element.getInnerStackTrace().size());
+        StackTraceElement reasonElement = element.getInnerStackTrace().get(0);
+        assertNotSame(element, reasonElement);
+        assertEquals("src/Loop.java", reasonElement.getFilename());
+        assertTrue(reasonElement.getInnerStackTrace().isEmpty());
+    }
+
     private void createTestFpr(String auditFvdlXml) throws Exception {
         tempFprFile = Files.createTempFile("streaming-fvdl", ".fpr");
         try (ZipOutputStream zipOutputStream = new ZipOutputStream(Files.newOutputStream(tempFprFile))) {
