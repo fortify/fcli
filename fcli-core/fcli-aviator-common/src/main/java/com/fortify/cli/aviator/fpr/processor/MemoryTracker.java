@@ -33,7 +33,7 @@ final class MemoryTracker {
         }
     }
 
-    void logPhase(String phase, FVDLMetadata fvdlMetadata, int rawVulnerabilityCount, int vulnerabilityCount) {
+    void logPhase(String phase, FVDLMetadata fvdlMetadata, int vulnerabilityCount) {
         if (!logger.isTraceEnabled()) {
             return;
         }
@@ -41,11 +41,11 @@ final class MemoryTracker {
         long used = usedBytes();
         long peak = Math.max(sampledPeakBytes, used);
         logger.trace("Memory after {}: used={} MB, sampledPeak={} MB, committed={} MB, max={} MB; "
-                + "nodePool={}, tracePool={}, descriptions={}, rules={}, rawVulnerabilities={}, vulnerabilities={}",
+                + "nodePool={}, tracePool={}, descriptions={}, rules={}, vulnerabilities={}",
             phase, used / MB, peak / MB, runtime.totalMemory() / MB, runtime.maxMemory() / MB,
             fvdlMetadata.getNodePool().size(), fvdlMetadata.getTracePool().size(),
             fvdlMetadata.getDescriptionCache().size(), fvdlMetadata.getRuleMetadata().size(),
-            rawVulnerabilityCount, vulnerabilityCount);
+            vulnerabilityCount);
         sampledPeakBytes = 0;
     }
 

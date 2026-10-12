@@ -550,6 +550,72 @@ class StreamingFVDLProcessorTest {
         assertTrue(reasonElement.getInnerStackTrace().isEmpty());
     }
 
+    @Test
+    void testParseConvertsVulnerabilitiesInDocumentOrderUsingMetadataDeclaredAfterThem() throws Exception {
+        String vulnerabilityTemplate = """
+                    <Vulnerability>
+                      <ClassInfo>
+                        <ClassID>RULE-1</ClassID>
+                        <Type>SQL Injection</Type>
+                        <AnalyzerName>Dataflow</AnalyzerName>
+                        <DefaultSeverity>3.0</DefaultSeverity>
+                      </ClassInfo>
+                      <InstanceInfo>
+                        <InstanceID>%s</InstanceID>
+                        <InstanceSeverity>3.0</InstanceSeverity>
+                        <Confidence>4.0</Confidence>
+                      </InstanceInfo>
+                      <AnalysisInfo>
+                        <Unified>
+                          <ReplacementDefinitions>
+                            <Def key="Source" value="%s"/>
+                          </ReplacementDefinitions>
+                        </Unified>
+                      </AnalysisInfo>
+                    </Vulnerability>
+                """;
+        String xml = """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <FVDL>
+                  <Vulnerabilities>
+                %s%s%s
+                  </Vulnerabilities>
+                  <Description classID="RULE-1">
+                    <Abstract>Input from &lt;Replace key="Source"/&gt; reaches a query.</Abstract>
+                    <Explanation>Explanation text.</Explanation>
+                  </Description>
+                  <EngineData>
+                    <RuleInfo>
+                      <Rule id="RULE-1">
+                        <MetaInfo><Group name="CWE">89</Group></MetaInfo>
+                      </Rule>
+                    </RuleInfo>
+                  </EngineData>
+                </FVDL>
+                """.formatted(
+                    vulnerabilityTemplate.formatted("instance-a", "getParameter"),
+                    vulnerabilityTemplate.formatted("instance-b", "getHeader"),
+                    vulnerabilityTemplate.formatted("instance-c", "getCookies"));
+
+        createTestFpr(xml);
+
+        StreamingFVDLProcessor processor = new StreamingFVDLProcessor(fprHandle);
+        try (ZipFile zipFile = new ZipFile(tempFprFile.toFile())) {
+            processor.parse(zipFile, "audit.fvdl");
+        }
+
+        List<Vulnerability> vulnerabilities = processor.getVulnerabilities();
+        assertEquals(List.of("instance-a", "instance-b", "instance-c"),
+            vulnerabilities.stream().map(Vulnerability::getInstanceID).toList());
+        assertEquals("Input from getParameter reaches a query.", vulnerabilities.get(0).getShortDescription());
+        assertEquals("Input from getHeader reaches a query.", vulnerabilities.get(1).getShortDescription());
+        assertEquals("Input from getCookies reaches a query.", vulnerabilities.get(2).getShortDescription());
+        assertEquals("Explanation text.", vulnerabilities.get(2).getExplanation());
+        vulnerabilities.forEach(v -> assertEquals("89", v.getKnowledge().get("CWE")));
+        assertTrue(processor.getFvdlMetadata().getDescriptionCache().isEmpty());
+        assertTrue(processor.getFvdlMetadata().getNodePool().isEmpty());
+    }
+
     private void createTestFpr(String auditFvdlXml) throws Exception {
         tempFprFile = Files.createTempFile("streaming-fvdl", ".fpr");
         try (ZipOutputStream zipOutputStream = new ZipOutputStream(Files.newOutputStream(tempFprFile))) {

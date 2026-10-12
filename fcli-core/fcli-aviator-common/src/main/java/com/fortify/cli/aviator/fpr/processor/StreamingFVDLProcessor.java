@@ -54,7 +54,6 @@ public class StreamingFVDLProcessor {
     private final DescriptionProcessor descriptionProcessor;
     @Getter
     private final Map<String, String> sourceFileMap;
-    private final List<StreamedVulnerability> rawVulnerabilities;
     @Getter
     private final List<Vulnerability> vulnerabilities;
     private final FprHandle fprHandle;
@@ -87,7 +86,6 @@ public class StreamingFVDLProcessor {
         this.fileUtils = new FileUtils(
                 Objects.requireNonNull(sourceDecoder, "sourceDecoder"), this.fvdlMetadata);
         this.stackTraceConverter = new StackTraceConverter(fileUtils, fprHandle, fvdlMetadata);
-        this.rawVulnerabilities = new ArrayList<>();
         this.vulnerabilities = new ArrayList<>();
         this.descriptionProcessor = new DescriptionProcessor();
 
@@ -107,7 +105,8 @@ public class StreamingFVDLProcessor {
      * TWO-PASS PARSING STRATEGY:
     * Pass 1: Parse metadata and pools (NodePool, TracePool, ContextPool, Descriptions, EngineData)
      *         This populates the reference pools needed for vulnerability parsing.
-     * Pass 2: Parse Vulnerabilities with fully populated pools
+     * Pass 2: Parse Vulnerabilities with fully populated pools and convert each one as soon as it is parsed,
+     *         so raw parse results never accumulate in memory.
      *         NodeRef lookups now succeed because NodePool is populated.
      *
      * @param zipFile zipFile for FPR file
@@ -139,9 +138,9 @@ public class StreamingFVDLProcessor {
             logMemory("PASS 1");
 
             // ========================================
-            // PASS 2: Parse Vulnerabilities
+            // PASS 2: Parse and Convert Vulnerabilities
             // ========================================
-            logger.info(">>> PASS 2: Parsing vulnerabilities (with populated pools)");
+            logger.info(">>> PASS 2: Parsing and converting vulnerabilities (with populated pools)");
             long pass2Start = System.currentTimeMillis();
 
             try (InputStream is2 = zipFile.getInputStream(fvdlEntry)) {
@@ -150,35 +149,14 @@ public class StreamingFVDLProcessor {
 
             long pass2Time = System.currentTimeMillis() - pass2Start;
             logger.info("<<< PASS 2 Complete - Time: {}ms", pass2Time);
-            logger.info("    - Vulnerabilities parsed: {}", rawVulnerabilities.size());
+            logger.info("    - Vulnerabilities processed: {}", vulnerabilities.size());
             logMemory("PASS 2");
-
-            // ========================================
-            // Post-Processing: Enrich Vulnerabilities
-            // ========================================
-            logger.info(">>> Post-Processing: Enriching vulnerabilities");
-            long processStart = System.currentTimeMillis();
-
-            int totalVulns = rawVulnerabilities.size();
-            for (int i = 0; i < totalVulns; i++) {
-                vulnerabilities.add(processVulnerability(rawVulnerabilities.get(i), vulnFinalizer));
-                // Release each raw vulnerability as soon as it is converted.
-                rawVulnerabilities.set(i, null);
-                if (i % MEMORY_SAMPLE_INTERVAL == 0) {
-                    memoryTracker.sample();
-                }
-            }
-
-            long processTime = System.currentTimeMillis() - processStart;
-            logger.info("<<< Post-Processing Complete - Time: {}ms", processTime);
-            logger.info("    - Processed {} vulnerabilities", totalVulns);
-            logMemory("Post-Processing");
 
             releaseParsingState();
             logMemory("Releasing Parsing State");
 
-            logger.info("=== Two-Pass Parsing Complete - Total Time: {}ms (Pass1: {}ms, Pass2: {}ms, Process: {}ms) ===",
-                pass1Time + pass2Time + processTime, pass1Time, pass2Time, processTime);
+            logger.info("=== Two-Pass Parsing Complete - Total Time: {}ms (Pass1: {}ms, Pass2: {}ms) ===",
+                pass1Time + pass2Time, pass1Time, pass2Time);
 
         } catch (XMLStreamException e) {
             throw new IOException("Failed to parse FVDL: " + e.getMessage(), e);
@@ -187,7 +165,7 @@ public class StreamingFVDLProcessor {
     }
 
     private void logMemory(String phase) {
-        memoryTracker.logPhase(phase, fvdlMetadata, rawVulnerabilities.size(), vulnerabilities.size());
+        memoryTracker.logPhase(phase, fvdlMetadata, vulnerabilities.size());
     }
 
     /** Releases pools and caches that are only needed while converting vulnerabilities. */
@@ -198,7 +176,6 @@ public class StreamingFVDLProcessor {
         fvdlMetadata.getDescriptionCache().clear();
         descriptionProcessor.clearCompiledTemplates();
         fvdlMetadata.getRuleMetadata().clear();
-        rawVulnerabilities.clear();
         fvdlMetadata.getNodePool().clear();
         fvdlMetadata.getTracePool().clear();
         stackTraceConverter.clear();
@@ -567,8 +544,10 @@ public class StreamingFVDLProcessor {
             int event = reader.next();
             if (event == XMLStreamConstants.START_ELEMENT) {
                 if ("Vulnerability".equals(reader.getLocalName())) {
-                    StreamedVulnerability vuln = parseVulnerability(reader);
-                    rawVulnerabilities.add(vuln);
+                    vulnerabilities.add(processVulnerability(parseVulnerability(reader), vulnFinalizer));
+                    if (vulnerabilities.size() % MEMORY_SAMPLE_INTERVAL == 0) {
+                        memoryTracker.sample();
+                    }
                 }
             } else if (event == XMLStreamConstants.END_ELEMENT) {
                 if ("Vulnerabilities".equals(reader.getLocalName())) {
