@@ -157,14 +157,15 @@ final class StackTraceConverter {
             FRAGMENT_LINES_BEFORE, FRAGMENT_LINES_AFTER);
         String codeLine = fileUtils.getLineFromFile(fprHandle, node.getFilePath(), node.getLine());
 
-        StackTraceElement element = new StackTraceElement(
-            node.getFilePath(),
-            node.getLine(),
-            codeLine,
-            node.getActionType() != null ? node.getActionType() : "",
-            fragment,
-            node.getAdditionalInfo() != null ? node.getAdditionalInfo() : "",
-            taintFlags);
+        StackTraceElement element = StackTraceElement.builder()
+            .filename(node.getFilePath())
+            .line(node.getLine())
+            .code(codeLine)
+            .nodeType(node.getActionType() != null ? node.getActionType() : "")
+            .fragment(fragment)
+            .additionalInfo(node.getAdditionalInfo() != null ? node.getAdditionalInfo() : "")
+            .taintflags(taintFlags)
+            .build();
         if (node.getLabel() != null && !node.getLabel().isEmpty()) {
             element.setReason(node.getLabel());
         }

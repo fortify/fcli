@@ -33,6 +33,7 @@ import com.fortify.cli.aviator.fpr.utils.Searchable;
 import com.fortify.cli.aviator.util.StringUtil;
 import com.fortify.cli.common.util.SecureXmlParserFactory;
 
+import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -42,8 +43,7 @@ import lombok.Setter;
  * Enhanced with taintFlags, knowledge, secondary location, detailsOnly, label, and reasonText for full coverage.
  * Implements Searchable for description conditionals.
  *
- * Note: Uses manual constructors instead of @AllArgsConstructor for constructor overloading
- * to support both DOM parser (22 params) and Streaming parser (24 params) use cases.
+ * Use {@link #builder()} to create instances.
  */
 @Getter
 @Setter
@@ -166,58 +166,10 @@ public class Node implements Searchable {
     }
 
     /**
-     * Constructor for DOM parser - maintains backward compatibility.
-     * 22 parameters (original signature).
-     *
-     * Reason trace data is not needed as DOM parser uses rawNodePool (JAXB objects)
-     * to access Reason elements for building innerStackTrace.
-     *
-     * @param id Node ID
-     * @param filePath Source file path
-     * @param line Start line number
-     * @param lineEnd End line number
-     * @param colStart Start column
-     * @param colEnd End column
-     * @param contextId Context identifier
-     * @param snippet Code snippet
-     * @param actionType Action type
-     * @param additionalInfo Additional information
-     * @param associatedRuleId Associated rule ID
-     * @param taintFlags List of taint flags
-     * @param knowledge Knowledge map
-     * @param secondaryPath Secondary location path
-     * @param secondaryLine Secondary line number
-     * @param secondaryLineEnd Secondary end line
-     * @param secondaryColStart Secondary start column
-     * @param secondaryColEnd Secondary end column
-     * @param secondaryContextId Secondary context ID
-     * @param detailsOnly Details only flag
-     * @param label Node label
-     * @param reasonText Reason text summary
-     */
-    public Node(
-        String id, String filePath, int line, int lineEnd, int colStart, int colEnd,
-        String contextId, String snippet, String actionType, String additionalInfo,
-        String associatedRuleId, List<String> taintFlags, Map<String, String> knowledge,
-        String secondaryPath, int secondaryLine, int secondaryLineEnd,
-        int secondaryColStart, int secondaryColEnd, String secondaryContextId,
-        boolean detailsOnly, String label, String reasonText
-    ) {
-        // Call extended constructor with empty lists for Reason trace data
-        this(id, filePath, line, lineEnd, colStart, colEnd, contextId, snippet,
-            actionType, additionalInfo, associatedRuleId, taintFlags, knowledge,
-            secondaryPath, secondaryLine, secondaryLineEnd, secondaryColStart,
-            secondaryColEnd, secondaryContextId, detailsOnly, label, reasonText,
-            new ArrayList<>(), new ArrayList<>());
-    }
-
-    /**
-     * Extended constructor for Streaming parser - includes Reason trace data.
-     * 24 parameters (includes reasonTraceRefs and reasonInlineTraces).
-     *
-     * Enables innerStackTrace building from parsed Reason elements.
-     * Streaming parser must store Reason trace data in Node fields since it doesn't
-     * have JAXB objects like DOM parser.
+     * All-fields constructor, used through {@link #builder()}.
+     * Null collections become empty collections.
+     * The DOM parser does not set the Reason trace data, because it uses
+     * rawNodePool (JAXB objects) to build innerStackTrace.
      *
      * @param id Node ID
      * @param filePath Source file path
@@ -244,6 +196,7 @@ public class Node implements Searchable {
      * @param reasonTraceRefs List of TraceRef IDs from Reason element
      * @param reasonInlineTraces List of inline Traces from Reason element
      */
+    @Builder
     public Node(
         String id, String filePath, int line, int lineEnd, int colStart, int colEnd,
         String contextId, String snippet, String actionType, String additionalInfo,

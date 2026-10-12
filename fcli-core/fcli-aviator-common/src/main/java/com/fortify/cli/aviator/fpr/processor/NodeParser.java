@@ -150,13 +150,32 @@ public class NodeParser {
             }
         }
 
-        return new Node(
-            nodeId, filePath, line, lineEnd, colStart, colEnd, contextId, snippet,
-            actionType, additionalInfo, ruleId, taintFlags, knowledge,
-            secondaryPath, secondaryLine, secondaryLineEnd, secondaryColStart,
-            secondaryColEnd, secondaryContextId, detailsOnly, label,
-            reasonTextBuilder.toString().trim(), reasonTraceRefs, reasonInlineTraces
-        );
+        return Node.builder()
+            .id(nodeId)
+            .filePath(filePath)
+            .line(line)
+            .lineEnd(lineEnd)
+            .colStart(colStart)
+            .colEnd(colEnd)
+            .contextId(contextId)
+            .snippet(snippet)
+            .actionType(actionType)
+            .additionalInfo(additionalInfo)
+            .associatedRuleId(ruleId)
+            .taintFlags(taintFlags)
+            .knowledge(knowledge)
+            .secondaryPath(secondaryPath)
+            .secondaryLine(secondaryLine)
+            .secondaryLineEnd(secondaryLineEnd)
+            .secondaryColStart(secondaryColStart)
+            .secondaryColEnd(secondaryColEnd)
+            .secondaryContextId(secondaryContextId)
+            .detailsOnly(detailsOnly)
+            .label(label)
+            .reasonText(reasonTextBuilder.toString().trim())
+            .reasonTraceRefs(reasonTraceRefs)
+            .reasonInlineTraces(reasonInlineTraces)
+            .build();
     }
 
     /**
@@ -217,11 +236,20 @@ public class NodeParser {
      * Create a placeholder Node for forward references.
      */
     public Node createPlaceholderNode(String nodeId) {
-        return new Node(
-            nodeId, "", 0, 0, 0, 0, "", "", "", "", "",
-            new ArrayList<>(), new HashMap<>(), "", 0, 0, 0, 0, "",
-            false, "", "", new ArrayList<>(), new ArrayList<>()
-        );
+        // Collections default to empty in the Node constructor.
+        return Node.builder()
+            .id(nodeId)
+            .filePath("")
+            .contextId("")
+            .snippet("")
+            .actionType("")
+            .additionalInfo("")
+            .associatedRuleId("")
+            .secondaryPath("")
+            .secondaryContextId("")
+            .label("")
+            .reasonText("")
+            .build();
     }
 
     private String getAttributeOrDefault(XMLStreamReader reader, String attrName, String defaultValue) {
