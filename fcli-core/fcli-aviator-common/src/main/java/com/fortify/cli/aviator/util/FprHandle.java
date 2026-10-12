@@ -99,15 +99,28 @@ public final class FprHandle implements AutoCloseable {
     public void validate() {
         if (!Files.exists(getPath("/audit.fvdl"))) {
             if (Files.exists(getPath("/webinspect.xml"))) {
-                throw new AviatorSimpleException("Invalid FPR: The provided file is a DAST (WebInspect) scan result. Fortify Remediation Aviator requires an FPR from a SAST scan.");
+                throw new AviatorSimpleException("Invalid FPR:                 The scan results are from a DAST (WebInspect) scan, but this operation requires SAST scan results.");
             }
-            throw new AviatorSimpleException("Invalid FPR: The file does not contain 'audit.fvdl' and does not appear to be a valid SAST scan result.");
+                            throw new AviatorSimpleException("Invalid FPR: The scan results do not contain 'audit.fvdl' and do not appear to be valid SAST scan results.");
         }
         if (!hasSource()) {
             throw new AviatorSimpleException("Invalid FPR: Source code is missing or incomplete. The 'src-archive' directory must contain 'index.xml' and at least one source file.");
         }
         getSourceFileMap();
         LOG.info("FPR validation successful for: {}", this.fprPath);
+    }
+
+    /**
+     * Validates that the opened FPR contains DAST (WebInspect) scan results.
+     * @throws AviatorSimpleException if the FPR does not contain webinspect.xml.
+     */
+    public void validateDast() {
+        if (!Files.exists(getPath("/webinspect.xml"))) {
+            if (Files.exists(getPath("/audit.fvdl"))) {
+                throw new AviatorSimpleException("Invalid FPR:                 The scan results are from a SAST scan, but this operation requires DAST (WebInspect) scan results.");
+            }
+                            throw new AviatorSimpleException("Invalid FPR: The scan results do not contain 'webinspect.xml' and do not appear to be valid DAST (WebInspect) scan results.");
+        }
     }
 
     public boolean hasSource() {

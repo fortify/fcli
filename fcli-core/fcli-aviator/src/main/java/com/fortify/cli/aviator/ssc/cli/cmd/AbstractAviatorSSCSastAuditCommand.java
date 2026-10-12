@@ -286,11 +286,6 @@ abstract class AbstractAviatorSSCSastAuditCommand extends AbstractSSCJsonNodeOut
                     .forceReaudit(forceReaudit)
                     .sourceDecoder(sourceEncodingsMixin.getSourceDecoder())
                     .build());
-        } catch (Exception e) {
-            LOG.error("FPR audit failed for {}:{}: {}", av.getApplicationName(), av.getVersionName(), e.getMessage(), e);
-            ObjectNode result = AviatorSSCAuditHelper.buildResultNode(av, null, "FAILED");
-            AviatorSSCAuditHelper.setOperationMessage(result, "Audit failed: " + e.getMessage());
-            return result;
         }
 
         String action = auditResult.getStatus();

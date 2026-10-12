@@ -62,10 +62,7 @@ public class StreamingWebInspectParser {
     public List<DastIssue> parse() {
         List<DastIssue> issues = new ArrayList<>();
         Path webInspectPath = fprHandle.getPath("/webinspect.xml");
-
-        if (!Files.exists(webInspectPath)) {
-            throw new AviatorTechnicalException("webinspect.xml not found in DAST FPR");
-        }
+        fprHandle.validateDast();
 
         try (InputStream inputStream = Files.newInputStream(webInspectPath)) {
             XMLStreamReader reader = xmlInputFactory.createXMLStreamReader(inputStream);
@@ -104,10 +101,7 @@ public class StreamingWebInspectParser {
     public List<DastSession> parseSessions() {
         List<DastSession> sessions = new ArrayList<>();
         Path webInspectPath = fprHandle.getPath("/webinspect.xml");
-
-        if (!Files.exists(webInspectPath)) {
-            throw new AviatorTechnicalException("webinspect.xml not found in DAST FPR");
-        }
+        fprHandle.validateDast();
 
         try (InputStream inputStream = Files.newInputStream(webInspectPath)) {
             XMLStreamReader reader = xmlInputFactory.createXMLStreamReader(inputStream);

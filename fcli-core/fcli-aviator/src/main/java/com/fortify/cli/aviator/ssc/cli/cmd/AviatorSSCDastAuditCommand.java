@@ -88,8 +88,7 @@ public class AviatorSSCDastAuditCommand extends AbstractSSCJsonNodeOutputCommand
             downloadedFpr = AviatorSSCFprTransferHelper.downloadCurrentStateFpr(
                 unirest, appVersion, logger, progressWriter);
 
-            DastAuditFprResult result = auditFpr(
-                downloadedFpr, appVersion, session, logger, tagMappingConfig);
+            DastAuditFprResult result = auditFpr(downloadedFpr, appVersion, session, logger, tagMappingConfig);
             actionResult = result.status().name();
             String artifactId = null;
             if (result.updatedFile() != null && result.succeeded() > 0) {

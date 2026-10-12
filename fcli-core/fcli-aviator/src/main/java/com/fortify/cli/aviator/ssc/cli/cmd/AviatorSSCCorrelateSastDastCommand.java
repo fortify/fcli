@@ -21,7 +21,9 @@ import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -88,6 +90,20 @@ public class AviatorSSCCorrelateSastDastCommand extends AbstractSSCJsonNodeOutpu
             var processor = new CorrelationProcessor(unirest, logger, progressWriter, av, sessionDescriptor);
             return processor.run();
         }
+    }
+
+    /**
+     * Unwraps the {@link ExecutionException} produced by the correlation stream future
+     * so that the server-provided message is shown instead of the wrapper's.
+     */
+    static FcliSimpleException toCorrelationException(ExecutionException e) {
+        Throwable cause = e.getCause() != null ? e.getCause() : e;
+        if (cause instanceof FcliSimpleException simple) {
+            return simple;
+        }
+        // Cause intentionally not attached: FcliSimpleException appends the full stack trace of non-simple causes
+        LOG.debug("Correlation stream failure details", cause);
+        return new FcliSimpleException(cause.getMessage());
     }
 
     /**
@@ -327,8 +343,10 @@ public class AviatorSSCCorrelateSastDastCommand extends AbstractSSCJsonNodeOutpu
                 long timeoutSeconds = Math.max(grpcClient.getDefaultTimeoutSeconds(), 300);
                 return processor.processCorrelation(config, bucketData, scanGuid, alreadyTriedKeys)
                     .get(timeoutSeconds, TimeUnit.SECONDS);
-            } catch (java.util.concurrent.TimeoutException e) {
+            } catch (TimeoutException e) {
                 throw new FcliSimpleException("Correlation stream timed out waiting for server responses", e);
+            } catch (ExecutionException e) {
+                throw toCorrelationException(e);
             } catch (Exception e) {
                 throw new FcliSimpleException("Correlation stream failed: " + e.getMessage(), e);
             }
