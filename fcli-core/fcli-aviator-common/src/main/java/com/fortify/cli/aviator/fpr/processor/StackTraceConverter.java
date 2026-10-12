@@ -48,7 +48,7 @@ final class StackTraceConverter {
     // Identity keys: node ids are not unique (forward-reference placeholders, inline nodes).
     // Two caches so an element never receives a Reason trace containing itself.
     private final Map<Node, StackTraceElement> traceElements = new IdentityHashMap<>();
-    private final Map<Node, StackTraceElement> reasonElements = new IdentityHashMap<>();
+    private final Map<Node, StackTraceElement> plainElements = new IdentityHashMap<>();
 
     StackTraceConverter(FileUtils fileUtils, FprHandle fprHandle, FVDLMetadata fvdlMetadata) {
         this.fileUtils = fileUtils;
@@ -79,7 +79,7 @@ final class StackTraceConverter {
     /** Releases cache references; elements already handed out stay valid. */
     void clear() {
         traceElements.clear();
-        reasonElements.clear();
+        plainElements.clear();
     }
 
     /** Element for a primary trace node, with the node's Reason traces as its inner stack trace. */
@@ -87,15 +87,15 @@ final class StackTraceConverter {
         return traceElements.computeIfAbsent(node, this::createTraceElement);
     }
 
-    /** Element for a node inside a Reason trace; never has an inner stack trace. */
-    private StackTraceElement reasonElement(Node node) {
-        return reasonElements.computeIfAbsent(node, this::createElement);
+    /** Element without an inner stack trace; used for Reason trace nodes and nodes without Reason traces. */
+    private StackTraceElement plainElement(Node node) {
+        return plainElements.computeIfAbsent(node, this::createElement);
     }
 
     private StackTraceElement createTraceElement(Node node) {
         List<StackTraceElement> reasonStackTrace = buildReasonStackTrace(node);
         if (reasonStackTrace.isEmpty()) {
-            return reasonElement(node);
+            return plainElement(node);
         }
         StackTraceElement element = createElement(node);
         element.setInnerStackTrace(reasonStackTrace);
@@ -129,7 +129,7 @@ final class StackTraceConverter {
         for (StreamedTrace.Primary.Entry entry : trace.getPrimary().getEntries()) {
             Node node = resolveEntryNode(entry);
             if (node != null) {
-                target.add(reasonElement(node));
+                target.add(plainElement(node));
             }
         }
     }

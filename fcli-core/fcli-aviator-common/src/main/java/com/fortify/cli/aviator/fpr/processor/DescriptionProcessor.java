@@ -70,14 +70,7 @@ public class DescriptionProcessor {
             logger.debug("No description found for classID: {}", classId);
             return new String[]{"", ""};
         }
-
-        String abstractText = desc.getAbstract() != null ? desc.getAbstract() : "";
-        String explanationText = desc.getExplanation() != null ? desc.getExplanation() : "";
-
-        String shortDesc = render(abstractText, vuln, replacementData);
-        String explanation = render(explanationText, vuln, replacementData);
-
-        return new String[]{shortDesc, explanation};
+        return renderDescription(desc.getAbstract(), desc.getExplanation(), vuln, replacementData);
     }
 
     /**
@@ -96,19 +89,20 @@ public class DescriptionProcessor {
             logger.debug("No description found for classID: {}", classId);
             return new String[]{"", ""};
         }
-
-        String abstractText = desc.getAbstract() != null ? desc.getAbstract() : "";
-        String explanationText = desc.getExplanation() != null ? desc.getExplanation() : "";
-
-        String shortDesc = render(abstractText, vuln, replacementData);
-        String explanation = render(explanationText, vuln, replacementData);
-
-        return new String[]{shortDesc, explanation};
+        return renderDescription(desc.getAbstract(), desc.getExplanation(), vuln, replacementData);
     }
 
     /** Releases compiled templates once no more vulnerabilities will be processed. */
     public void clearCompiledTemplates() {
         compiledTemplates.clear();
+    }
+
+    private String[] renderDescription(String abstractText, String explanationText,
+            Vulnerability vuln, ReplacementData replacementData) {
+        return new String[]{
+            render(abstractText, vuln, replacementData),
+            render(explanationText, vuln, replacementData)
+        };
     }
 
     private String render(String template, Vulnerability vuln, ReplacementData replacementData) {

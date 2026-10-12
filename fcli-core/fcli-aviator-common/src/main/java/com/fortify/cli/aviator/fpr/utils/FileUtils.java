@@ -50,10 +50,10 @@ public class FileUtils {
     private final Map<LineKey, String> lineCache = new ConcurrentHashMap<>();
     private final Set<String> languagesWithoutCommentSymbol = ConcurrentHashMap.newKeySet();
     private final ISourceDecoder sourceDecoder;
+    private final FVDLMetadata fvdlMetadata;
 
     private record LineKey(String relativePath, int lineNumber) {}
     private record FragmentKey(String relativePath, int lineNumber, int linesBefore, int linesAfter) {}
-    private final FVDLMetadata fvdlMetadata;
 
     public FileUtils() {
         this(SourceDecoders.defaults(), null);
