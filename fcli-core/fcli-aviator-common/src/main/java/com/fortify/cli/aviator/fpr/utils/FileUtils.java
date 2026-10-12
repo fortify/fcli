@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.slf4j.Logger;
@@ -47,6 +48,7 @@ public class FileUtils {
     // Many trace nodes share the same file/line; share the immutable results instead of copying text per node.
     private final Map<FragmentKey, Fragment> fragmentCache = new ConcurrentHashMap<>();
     private final Map<LineKey, String> lineCache = new ConcurrentHashMap<>();
+    private final Set<String> languagesWithoutCommentSymbol = ConcurrentHashMap.newKeySet();
     private final ISourceDecoder sourceDecoder;
 
     private record LineKey(String relativePath, int lineNumber) {}
@@ -124,7 +126,7 @@ public class FileUtils {
         if (lineNumber > 0 && lines.size() >= lineNumber) {
             return appendLineNumbers(lines.get(lineNumber - 1), relativePath, lineNumber - 1);
         }
-        logger.info("Could not get line {} from file {} (total lines: {})", lineNumber, fullSourcePath, lines.size());
+        logger.debug("Could not get line {} from file {} (total lines: {})", lineNumber, fullSourcePath, lines.size());
         return "";
     }
 
@@ -166,7 +168,7 @@ public class FileUtils {
     private Path resolveFullPath(FprHandle fprHandle, String relativePath) {
         String internalPath = fprHandle.getSourceFileMap().get(relativePath);
         if (internalPath == null) {
-            logger.debug("Source file key not found in sourceFileMap: {}", relativePath);
+            logger.trace("Source file key not found in sourceFileMap: {}", relativePath);
             return null;
         }
         // Gets the Path from the virtual file system
@@ -209,7 +211,9 @@ public class FileUtils {
                 : resolvedLanguage;
         String commentSymbol = LanguageCommentMapperUtil.getProgrammingLanguageComment(language);
         if(commentSymbol.equals("Unknown")) {
-            logger.warn("No Comment symbol is there so line numbers not appended");
+            if (languagesWithoutCommentSymbol.add(String.valueOf(language))) {
+                logger.warn("No comment symbol for language {}; line numbers not appended", language);
+            }
             return content;
         }
         StringBuilder result = new StringBuilder();

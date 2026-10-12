@@ -445,23 +445,16 @@ public class StreamingFVDLProcessor {
      * Delegates node parsing to NodeParser.
      */
     private void parseNodePool(XMLStreamReader reader) throws XMLStreamException {
-        logger.debug("Start parse UnifiedNodePool");
-
         while (reader.hasNext()) {
             int event = reader.next();
 
             if (event == XMLStreamConstants.START_ELEMENT) {
                 if ("Node".equals(reader.getLocalName())) {
-                    String nodeId = reader.getAttributeValue(null, "id");
-                    logger.debug("Found Node with ID: {}", nodeId);
-
-                    // Delegate to NodeParser
                     Node node = nodeParser.parseNode(reader, null);
 
                     if (node != null) {
                         fvdlMetadata.getNodePool().put(node.getId(), node);
                         fvdlMetadata.setTotalNodes(fvdlMetadata.getTotalNodes() + 1);
-                        logger.debug("Successfully added node {} to pool. Total nodes: {}", node.getId(), fvdlMetadata.getNodePool().size());
                     }
                 }
             } else if (event == XMLStreamConstants.END_ELEMENT) {
@@ -478,27 +471,18 @@ public class StreamingFVDLProcessor {
      * Delegates to TraceParser.
      */
     private void parseTracePool(XMLStreamReader reader) throws XMLStreamException {
-        logger.debug("start Unified Trace pool");
-
         while (reader.hasNext()) {
             int event = reader.next();
-
-            if((event == XMLStreamConstants.START_ELEMENT || event == XMLStreamConstants.END_ELEMENT))
-                logger.debug("[parseTracePool] Event: {}, LocalName: {}", getEventTypeName(event), reader.getLocalName());
 
             if (event == XMLStreamConstants.START_ELEMENT) {
                 if ("Trace".equals(reader.getLocalName())) {
                     String traceId = reader.getAttributeValue(null, "id");
-                    logger.debug("Trace Id {} ", traceId);
                     if (traceId != null && !traceId.isEmpty()) {
-                        logger.debug("TraceId not empty and not null {} ", traceId );
-                        // Delegate to TraceParser
                         StreamedTrace trace =
                             traceParser.parseStreamedTrace(reader, traceId);
                         if (trace != null) {
                             fvdlMetadata.getTracePool().put(traceId, trace);
                             fvdlMetadata.setTotalTraces(fvdlMetadata.getTotalTraces() + 1);
-                            logger.debug("Successfully added trace {} to pool. Total traces: {}", traceId, fvdlMetadata.getTracePool().size());
                         }
                     } else {
                         logger.warn("Trace missing or invalid ID, skipping");
@@ -506,20 +490,17 @@ public class StreamingFVDLProcessor {
                 }
             } else if (event == XMLStreamConstants.END_ELEMENT) {
                 if ("UnifiedTracePool".equals(reader.getLocalName())) {
-                    logger.debug("Reached end of UnifiedTracePool, exiting loop");
                     break;
                 }
             }
         }
-        logger.debug("Trace processed are {} ", fvdlMetadata.getTracePool().size());
+        logger.debug("Traces processed: {}", fvdlMetadata.getTracePool().size());
     }
 
     /**
      * Parse ContextPool section.
      */
     private void parseContextPool(XMLStreamReader reader) throws XMLStreamException {
-        logger.debug("Start parse ContextPool");
-
         while (reader.hasNext()) {
             int event = reader.next();
 
@@ -581,8 +562,6 @@ public class StreamingFVDLProcessor {
     }
 
     private void parseVulnerabilities(XMLStreamReader reader) throws XMLStreamException {
-        logger.info("Start parse Vulnerabilities");
-
         while (reader.hasNext()) {
             int event = reader.next();
             if (event == XMLStreamConstants.START_ELEMENT) {
@@ -599,7 +578,6 @@ public class StreamingFVDLProcessor {
     }
 
     private StreamedVulnerability parseVulnerability(XMLStreamReader reader) throws XMLStreamException {
-        logger.debug("=== START parseVulnerability ===");
         StreamedVulnerability.StreamedVulnerabilityBuilder builder = StreamedVulnerability.builder();
         List<StreamedVulnerability.Trace> traces = new ArrayList<>();
         List<Map<String, String>> auxiliaryDataList = new ArrayList<>();
@@ -607,7 +585,6 @@ public class StreamingFVDLProcessor {
         Map<String, String> externalIdsMap = new HashMap<>();
 
         String currentSection = null;
-        logger.debug("[parseVulnerability] Initialized traces list: {}", traces.size());
 
         // Process until we hit the CLOSING </Vulnerability> tag
         while (reader.hasNext()) {
@@ -615,10 +592,8 @@ public class StreamingFVDLProcessor {
 
             if (event == XMLStreamConstants.START_ELEMENT) {
                 String localName = reader.getLocalName();
-                logger.debug("[parseVulnerability] START_ELEMENT: {}", localName);
 
                 switch (localName) {
-                    // ...existing code...
                     case "ClassInfo":
                         currentSection = "ClassInfo";
                         break;
@@ -663,12 +638,9 @@ public class StreamingFVDLProcessor {
                         builder.confidence(parseDoubleSafe(readElementText(reader)));
                         break;
                     case "Trace":
-                        logger.debug("[parseVulnerability] Found Trace element. Current traces count: {}", traces.size());
                         StreamedVulnerability.Trace trace = parseTrace(reader);
                         if (trace != null) {
                             traces.add(trace);
-                            logger.debug("[parseVulnerability] Added trace with {} nodes. Total traces: {}",
-                                trace.getNodes().size(), traces.size());
                         }
                         break;
                     case "ReplacementDefinitions":
@@ -710,26 +682,11 @@ public class StreamingFVDLProcessor {
             }
         }
 
-        int totalNodes = traces.stream().mapToInt(t -> t.getNodes() != null ? t.getNodes().size() : 0).sum();
-        logger.debug("[parseVulnerability] Building vulnerability - traces: {}, total nodes: {}", traces.size(), totalNodes);
         builder.traces(traces);
         builder.auxiliaryData(auxiliaryDataList);
         builder.externalEntries(externalEntriesList);
         builder.externalIds(externalIdsMap);
-
-        StreamedVulnerability vuln = builder.build();
-        int vulnTotalNodes = vuln.getTraces() != null ?
-            vuln.getTraces().stream().mapToInt(t -> t.getNodes() != null ? t.getNodes().size() : 0).sum() : 0;
-        logger.debug("[parseVulnerability] Built vulnerability - traces: {}, total nodes: {}",
-            vuln.getTraces() != null ? vuln.getTraces().size() : "NULL", vulnTotalNodes);
-
-        // Check which fields are populated
-        // VulnerabilityLoggingUtils.logPopulatedFields(vuln);
-
-        //System.out.println("Traces count: " + vuln.getTraces().size());
-        //populateFilesForVulnerability(vuln, fprPath, sourceFileMap, fileUtils);
-        //return builder.build();
-        return vuln;
+        return builder.build();
     }
 
 
@@ -779,7 +736,7 @@ public class StreamingFVDLProcessor {
         // Store the parsed metadata in the builder
         if (!instanceMetadata.isEmpty()) {
             builder.metadata(instanceMetadata);
-            logger.debug("Parsed {} MetaInfo groups", instanceMetadata.size());
+            logger.trace("Parsed {} MetaInfo groups", instanceMetadata.size());
         }
     }
 
@@ -1102,7 +1059,7 @@ public class StreamingFVDLProcessor {
                     // Add replacement to data object
                     if (key != null) {
                         replacementData.addReplacement(key, value, path, line, colStart, colEnd);
-                        logger.debug("Parsed Def: key={}, value={}, path={}", key, value, path);
+                        logger.trace("Parsed Def: key={}, value={}, path={}", key, value, path);
                     }
                     continue; // Skip depth increment since we consumed the element
 
@@ -1122,7 +1079,7 @@ public class StreamingFVDLProcessor {
                         attrs.put("colEnd", colEnd != null ? colEnd : "0");
 
                         replacementData.addLocationReplacement(key, attrs);
-                        logger.debug("Parsed LocationDef: key={}, path={}", key, path);
+                        logger.trace("Parsed LocationDef: key={}, path={}", key, path);
                     }
                 }
                 depth++;
@@ -1132,7 +1089,7 @@ public class StreamingFVDLProcessor {
             }
         }
 
-        logger.debug("Parsed ReplacementDefinitions: {} replacements, {} location replacements",
+        logger.trace("Parsed ReplacementDefinitions: {} replacements, {} location replacements",
             replacementData.getReplacements().size(),
             replacementData.getLocationReplacements().size());
 
