@@ -57,6 +57,7 @@ public class StreamingFVDLProcessor {
     @Getter
     private final List<Vulnerability> vulnerabilities;
     private final FprHandle fprHandle;
+    private final StackTraceConverter stackTraceConverter;
     /*private final Path extractedPath;
     private final IndexXMLProcessor indexXMLProcessor;*/
 
@@ -90,6 +91,7 @@ public class StreamingFVDLProcessor {
         // Same metadata instance FileUtils will see once encodings are registered during parse.
         this.fileUtils = new FileUtils(
                 Objects.requireNonNull(sourceDecoder, "sourceDecoder"), this.fvdlMetadata);
+        this.stackTraceConverter = new StackTraceConverter(fileUtils, fprHandle, fvdlMetadata);
         this.rawVulnerabilities = new ArrayList<>();
         this.vulnerabilities = new ArrayList<>();
         this.descriptionProcessor = new DescriptionProcessor();
@@ -252,6 +254,7 @@ public class StreamingFVDLProcessor {
             long tracePoolMemoryEstimate = memoryTracker.estimateTracePoolMemory(fvdlMetadata);
             fvdlMetadata.getNodePool().clear();
             fvdlMetadata.getTracePool().clear();
+            stackTraceConverter.clear();
             logger.info("    - Cleared NodePool ({} nodes, ~{} MB) and TracePool ({} traces, ~{} MB)",
                 nodePoolSize, String.format("%.2f", nodePoolMemoryEstimate / (1024.0 * 1024.0)),
                 tracePoolSize, String.format("%.2f", tracePoolMemoryEstimate / (1024.0 * 1024.0)));
@@ -1307,19 +1310,8 @@ public class StreamingFVDLProcessor {
         vulnCustom.setAudience(audience);
         vulnCustom.setFiletype(finalMetadata.getOrDefault("DefaultFile", ""));
 
-        // Convert StreamedVulnerability Traces to StackTraces (hierarchical structure maintained)
-        List<List<com.fortify.cli.aviator.audit.model.StackTraceElement>> stackTraces = new ArrayList<>();
-
-        if (streamedVuln.getTraces() != null && !streamedVuln.getTraces().isEmpty()) {
-            int totalNodes = streamedVuln.getTraces().stream()
-                .mapToInt(t -> t.getNodes() != null ? t.getNodes().size() : 0)
-                .sum();
-            //logger.info("Traces count: {}, Total nodes: {}", streamedVuln.getTraces().size(), totalNodes);
-
-            // Convert traces to stackTraces - already returns List<List<StackTraceElement>>
-            stackTraces = convertTracesToStackTraces(streamedVuln.getTraces());
-        }
-
+        List<List<com.fortify.cli.aviator.audit.model.StackTraceElement>> stackTraces =
+            stackTraceConverter.toStackTraces(streamedVuln.getTraces());
         vulnCustom.setStackTrace(stackTraces);
 
         if (!stackTraces.isEmpty()) {
@@ -1653,233 +1645,6 @@ public class StreamingFVDLProcessor {
         }
     }
 
-    /**
-     * Convert TraceNodes from StreamedVulnerability to StackTraceElements.
-     * Looks up taintFlags and knowledge from the Node pool using nodeId.
-     */
-    /**
-     * Convert hierarchical Trace structure to StackTrace format.
-     * Each Trace becomes a List<StackTraceElement>, maintaining the trace boundaries.
-     *
-     * @param traces List of Trace objects from StreamedVulnerability
-     * @return List of StackTrace lists (List<List<StackTraceElement>>)
-     */
-    private List<List<com.fortify.cli.aviator.audit.model.StackTraceElement>> convertTracesToStackTraces(
-        List<StreamedVulnerability.Trace> traces) {
-        logger.debug("[StreamingFVDLParser][convertTracesToStackTraces] Converting {} traces",
-            traces != null ? traces.size() : 0);
-
-        List<List<com.fortify.cli.aviator.audit.model.StackTraceElement>> allStackTraces = new ArrayList<>();
-
-        if (traces == null || traces.isEmpty()) {
-            return allStackTraces;
-        }
-
-        // Process each trace separately to maintain boundaries
-        for (StreamedVulnerability.Trace trace : traces) {
-            List<com.fortify.cli.aviator.audit.model.StackTraceElement> stackTrace = new ArrayList<>();
-
-            if (trace.getNodes() == null || trace.getNodes().isEmpty()) {
-                logger.warn("Trace has no nodes, skipping");
-                continue;
-            }
-
-            logger.debug("Processing trace with {} nodes", trace.getNodes().size());
-
-            // Convert each Node in the trace to a StackTraceElement
-            for (Node node : trace.getNodes()) {
-                // Convert node using extracted helper method (ensures consistency)
-                com.fortify.cli.aviator.audit.model.StackTraceElement element =
-                    nodeToStackTraceElement(node);
-
-                // NEW: Build innerStackTrace from Reason data
-                List<com.fortify.cli.aviator.audit.model.StackTraceElement> innerStackTrace =
-                    buildInnerStackTrace(node);
-                if (!innerStackTrace.isEmpty()) {
-                    element.setInnerStackTrace(innerStackTrace);
-                    logger.debug("Set innerStackTrace with {} elements for node {}",
-                        innerStackTrace.size(), node.getId());
-                }
-
-                stackTrace.add(element);
-            }
-
-            // Add this trace's stack trace to the collection
-            allStackTraces.add(stackTrace);
-            logger.debug("Converted trace to stackTrace with {} elements", stackTrace.size());
-        }
-
-        logger.debug("Converted {} traces to {} stackTraces", traces.size(), allStackTraces.size());
-        return allStackTraces;
-    }
-
-    /**
-     * Build innerStackTrace for a node based on its Reason element data.
-     *
-     * The Reason element can contain:
-     * - Inline Traces: Parsed during node parsing and stored in reasonInlineTraces
-     * - TraceRefs: References to TracePool traces, stored as IDs in reasonTraceRefs
-     *
-     * Both types are converted to StackTraceElements and combined into innerStackTrace.
-     *
-     * @param node Node with reasonTraceRefs and reasonInlineTraces from Reason parsing
-     * @return List of StackTraceElements for innerStackTrace (empty if no Reason data)
-     */
-    private List<com.fortify.cli.aviator.audit.model.StackTraceElement> buildInnerStackTrace(
-        Node node) {
-
-        List<com.fortify.cli.aviator.audit.model.StackTraceElement> innerTrace = new ArrayList<>();
-
-        if (node == null) {
-            return innerTrace;
-        }
-
-        // Process inline traces from Reason element
-        if (node.getReasonInlineTraces() != null && !node.getReasonInlineTraces().isEmpty()) {
-            logger.debug("Building innerStackTrace from {} inline traces", node.getReasonInlineTraces().size());
-
-            for (com.fortify.cli.aviator.fpr.model.StreamedTrace inlineTrace :
-                node.getReasonInlineTraces()) {
-                List<com.fortify.cli.aviator.audit.model.StackTraceElement> traceElements =
-                    convertStreamedTraceToStackTrace(inlineTrace);
-                innerTrace.addAll(traceElements);
-            }
-        }
-
-        // Process trace references from Reason element (resolve from TracePool)
-        if (node.getReasonTraceRefs() != null && !node.getReasonTraceRefs().isEmpty()) {
-            logger.debug("Building innerStackTrace from {} trace refs", node.getReasonTraceRefs().size());
-
-            for (String traceRefId : node.getReasonTraceRefs()) {
-                com.fortify.cli.aviator.fpr.model.StreamedTrace referencedTrace =
-                    fvdlMetadata.getTracePool().get(traceRefId);
-
-                if (referencedTrace != null) {
-                    List<com.fortify.cli.aviator.audit.model.StackTraceElement> traceElements =
-                        convertStreamedTraceToStackTrace(referencedTrace);
-                    innerTrace.addAll(traceElements);
-                } else {
-                    logger.warn("TraceRef {} not found in TracePool for node {}", traceRefId, node.getId());
-                }
-            }
-        }
-
-        if (!innerTrace.isEmpty()) {
-            logger.debug("Built innerStackTrace with {} elements for node {}", innerTrace.size(), node.getId());
-        }
-
-        return innerTrace;
-    }
-
-    /**
-     * Convert a StreamedTrace to StackTraceElements.
-     *
-     * This is similar to the main trace conversion logic but specifically for
-     * Reason traces (used in innerStackTrace building).
-     *
-     * @param trace StreamedTrace from TracePool or inline from Reason element
-     * @return List of StackTraceElements
-     */
-    private List<com.fortify.cli.aviator.audit.model.StackTraceElement> convertStreamedTraceToStackTrace(
-        com.fortify.cli.aviator.fpr.model.StreamedTrace trace) {
-
-        List<com.fortify.cli.aviator.audit.model.StackTraceElement> elements = new ArrayList<>();
-
-        if (trace == null || trace.getPrimary() == null || trace.getPrimary().getEntries() == null) {
-            return elements;
-        }
-
-        logger.debug("Converting StreamedTrace with {} entries", trace.getPrimary().getEntries().size());
-
-        for (com.fortify.cli.aviator.fpr.model.StreamedTrace.Primary.Entry entry :
-            trace.getPrimary().getEntries()) {
-
-            // CHANGED: Use Node object directly from Entry instead of NodePool lookup
-            // This preserves inline nodes (without IDs) that weren't added to NodePool
-            Node node = entry.getNode();
-
-            if (node != null) {
-                // Convert node to StackTraceElement using extracted helper
-                com.fortify.cli.aviator.audit.model.StackTraceElement element =
-                    nodeToStackTraceElement(node);
-                elements.add(element);
-            } else {
-                // Fallback: Try NodePool lookup if Entry doesn't have node object (shouldn't happen)
-                String nodeId = entry.getNodeId();
-                if (nodeId != null) {
-                    node = fvdlMetadata.getNodePool().get(nodeId);
-                    if (node != null) {
-                        com.fortify.cli.aviator.audit.model.StackTraceElement element =
-                            nodeToStackTraceElement(node);
-                        elements.add(element);
-                    } else {
-                        logger.warn("Node {} referenced in trace not found (Entry has no node, NodePool lookup failed)", nodeId);
-                    }
-                } else {
-                    logger.warn("Entry has null node and null nodeId - skipping");
-                }
-            }
-        }
-
-        logger.debug("Converted StreamedTrace to {} StackTraceElements", elements.size());
-        return elements;
-    }
-
-    /**
-     * Convert a Node to a StackTraceElement.
-     *
-     * Extracted from convertTracesToStackTraces() for reuse in innerStackTrace building.
-     * This ensures consistent conversion logic for both main traces and inner traces.
-     *
-     * @param node Node to convert
-     * @return StackTraceElement
-     */
-    private com.fortify.cli.aviator.audit.model.StackTraceElement nodeToStackTraceElement(
-        Node node) {
-
-        // Get taintFlags as comma-separated string
-        String taintFlagsStr = "";
-        if (node.getTaintFlags() != null && !node.getTaintFlags().isEmpty()) {
-            taintFlagsStr = String.join(", ", node.getTaintFlags());
-        }
-
-        com.fortify.cli.aviator.audit.model.Fragment fragment =
-            fileUtils.getFragmentFromFile(
-                this.fprHandle,
-                node.getFilePath(),
-                node.getLine(),
-                5,  // contextBefore - 5 lines before target line
-                2   // contextAfter - 2 lines after target line
-            );
-
-        // Get code line from file
-        String codeLine = fileUtils.getLineFromFile(this.fprHandle,
-            node.getFilePath(), node.getLine());
-
-        // StackTraceElement constructor: (filename, line, code, nodeType, fragment, additionalInfo, taintflags)
-        com.fortify.cli.aviator.audit.model.StackTraceElement element =
-            new com.fortify.cli.aviator.audit.model.StackTraceElement(
-                node.getFilePath(),
-                node.getLine(),
-                codeLine,
-                node.getActionType() != null ? node.getActionType() : "",
-                fragment,
-                node.getAdditionalInfo() != null ? node.getAdditionalInfo() : "",
-                taintFlagsStr
-            );
-
-        // Set additional fields available via setters
-        if (node.getLabel() != null && !node.getLabel().isEmpty()) {
-            element.setReason(node.getLabel());
-        }
-
-        // Set knowledge map from Node
-        if (node.getKnowledge() != null) {
-            element.setKnowledge(node.getKnowledge());
-        }
-
-        return element;
-    }
     /**
      * Find the longest stack trace.
      */

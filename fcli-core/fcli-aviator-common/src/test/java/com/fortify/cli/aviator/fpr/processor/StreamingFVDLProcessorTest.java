@@ -15,7 +15,9 @@ package com.fortify.cli.aviator.fpr.processor;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -23,6 +25,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
@@ -32,6 +35,7 @@ import javax.xml.stream.XMLStreamException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
+import com.fortify.cli.aviator.audit.model.StackTraceElement;
 import com.fortify.cli.aviator.fpr.Vulnerability;
 import com.fortify.cli.aviator.fpr.filter.VulnerabilityFilterer;
 import com.fortify.cli.aviator.fpr.model.FVDLMetadata;
@@ -468,6 +472,82 @@ class StreamingFVDLProcessorTest {
         Vulnerability vulnerability = processor.getVulnerabilities().get(0);
         assertEquals("ABC123", vulnerability.getAttributeValue("requestid"));
         assertEquals(1, VulnerabilityFilterer.filter(processor.getVulnerabilities(), "[request id]:ABC123").size());
+    }
+
+    @Test
+    void testParseSharesStackTraceElementsPerNodeAcrossVulnerabilities() throws Exception {
+        String vulnerabilityTemplate = """
+                    <Vulnerability>
+                      <ClassInfo>
+                        <ClassID>RULE-1</ClassID>
+                        <Kingdom>Dataflow</Kingdom>
+                        <Type>SQL Injection</Type>
+                        <AnalyzerName>Dataflow</AnalyzerName>
+                        <DefaultSeverity>3.0</DefaultSeverity>
+                      </ClassInfo>
+                      <InstanceInfo>
+                        <InstanceID>%s</InstanceID>
+                        <InstanceSeverity>3.0</InstanceSeverity>
+                        <Confidence>4.0</Confidence>
+                      </InstanceInfo>
+                      <AnalysisInfo>
+                        <Unified>
+                          <Trace>
+                            <Primary>
+                              <Entry><NodeRef id="0"/></Entry>
+                              <Entry><NodeRef id="1"/></Entry>
+                            </Primary>
+                          </Trace>
+                        </Unified>
+                      </AnalysisInfo>
+                    </Vulnerability>
+                """;
+        String xml = """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <FVDL>
+                  <Vulnerabilities>
+                %s%s
+                  </Vulnerabilities>
+                  <UnifiedNodePool>
+                    <Node id="0">
+                      <SourceLocation path="src/Source.java" line="10" lineEnd="10" colStart="0" colEnd="0"/>
+                      <Action type="Assign">input</Action>
+                    </Node>
+                    <Node id="1">
+                      <SourceLocation path="src/Sink.java" line="20" lineEnd="20" colStart="0" colEnd="0"/>
+                      <Action type="InCall">execute(0)</Action>
+                      <Reason>
+                        <Trace>
+                          <Primary>
+                            <Entry><NodeRef id="0"/></Entry>
+                          </Primary>
+                        </Trace>
+                      </Reason>
+                    </Node>
+                  </UnifiedNodePool>
+                </FVDL>
+                """.formatted(vulnerabilityTemplate.formatted("instance-1"), vulnerabilityTemplate.formatted("instance-2"));
+
+        createTestFpr(xml);
+
+        StreamingFVDLProcessor processor = new StreamingFVDLProcessor(fprHandle);
+        try (ZipFile zipFile = new ZipFile(tempFprFile.toFile())) {
+            processor.parse(zipFile, "audit.fvdl");
+        }
+
+        assertEquals(2, processor.getVulnerabilities().size());
+        List<StackTraceElement> first = processor.getVulnerabilities().get(0).getStackTrace().get(0);
+        List<StackTraceElement> second = processor.getVulnerabilities().get(1).getStackTrace().get(0);
+        assertNotSame(first, second);
+        assertSame(first.get(0), second.get(0));
+        assertSame(first.get(1), second.get(1));
+
+        StackTraceElement sink = first.get(1);
+        assertEquals("src/Sink.java", sink.getFilename());
+        assertEquals(1, sink.getInnerStackTrace().size());
+        StackTraceElement reasonElement = sink.getInnerStackTrace().get(0);
+        assertEquals("src/Source.java", reasonElement.getFilename());
+        assertTrue(reasonElement.getInnerStackTrace().isEmpty());
     }
 
     private void createTestFpr(String auditFvdlXml) throws Exception {
