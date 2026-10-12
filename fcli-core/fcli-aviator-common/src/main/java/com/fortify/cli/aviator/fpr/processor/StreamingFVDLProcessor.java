@@ -45,6 +45,7 @@ import lombok.Getter;
 @AllArgsConstructor
 public class StreamingFVDLProcessor {
     private static final Logger logger = LoggerFactory.getLogger(StreamingFVDLProcessor.class);
+    private static final int MEMORY_SAMPLE_INTERVAL = 10_000;
     private final XMLInputFactory xmlInputFactory;
     @Getter
     private final FVDLMetadata fvdlMetadata;
@@ -67,12 +68,6 @@ public class StreamingFVDLProcessor {
     private final TraceParser traceParser;
     private final DescriptionParser descriptionParser;
     private final MetadataParser metadataParser;
-
-    // Peak memory tracking
-    private long peakMemoryBeforeParsing = 0;
-    private long peakMemoryPass1 = 0;
-    private long peakMemoryPass2 = 0;
-    private long peakMemoryPostProcessing = 0;
 
     public StreamingFVDLProcessor(FprHandle fprHandle) {
         this(fprHandle, SourceDecoders.defaults());
@@ -121,17 +116,7 @@ public class StreamingFVDLProcessor {
      */
     public void parse(ZipFile zipFile, String entryName) throws Exception {
         logger.info("=== Two-Pass Streaming Parsing Started for FVDL file ===");
-
-        // Initialize memory tracking
-        memoryTracker.initializeBaseline();
-        memoryTracker.logMemoryConsumption("Before Parsing (Baseline)");
-
-        /*logger.info("Loading source file map");
-        //indexXMLProcessor.loadSourceFileMap();*/
-
-        // Update peak after loading source file map
-        memoryTracker.updatePass1Peak();
-
+        logMemory("Before Parsing");
 
         ZipEntry fvdlEntry = zipFile.getEntry(entryName);
         if (fvdlEntry == null) {
@@ -144,136 +129,78 @@ public class StreamingFVDLProcessor {
             // ========================================
             logger.info(">>> PASS 1: Parsing metadata and pools (NodePool, TracePool, ContextPool, Descriptions, EngineData)");
             long pass1Start = System.currentTimeMillis();
-            memoryTracker.initializePass1Peak();
 
             try (InputStream is1 = zipFile.getInputStream(fvdlEntry)) {
                 parseMetadataAndPools(is1);
-                memoryTracker.updatePass1Peak();
             }
 
             long pass1Time = System.currentTimeMillis() - pass1Start;
             logger.info("<<< PASS 1 Complete - Time: {}ms", pass1Time);
-
-            memoryTracker.logMemoryConsumptionWithPeak("After PASS 1", memoryTracker.getPeakMemoryPass1(),
-                fvdlMetadata, rawVulnerabilities, vulnerabilities);
+            logMemory("PASS 1");
 
             // ========================================
             // PASS 2: Parse Vulnerabilities
             // ========================================
             logger.info(">>> PASS 2: Parsing vulnerabilities (with populated pools)");
             long pass2Start = System.currentTimeMillis();
-            memoryTracker.initializePass2Peak();
 
             try (InputStream is2 = zipFile.getInputStream(fvdlEntry)) {
                 parseVulnerabilitiesOnly(is2);
-                memoryTracker.updatePass2Peak();
             }
 
             long pass2Time = System.currentTimeMillis() - pass2Start;
             logger.info("<<< PASS 2 Complete - Time: {}ms", pass2Time);
             logger.info("    - Vulnerabilities parsed: {}", rawVulnerabilities.size());
-            memoryTracker.logMemoryConsumptionWithPeak("After PASS 2", memoryTracker.getPeakMemoryPass2(),
-                fvdlMetadata, rawVulnerabilities, vulnerabilities);
+            logMemory("PASS 2");
 
             // ========================================
-            // Post-Processing: Enrich Vulnerabilities (Batch Processing)
+            // Post-Processing: Enrich Vulnerabilities
             // ========================================
-            logger.info(">>> Post-Processing: Enriching vulnerabilities in batches");
+            logger.info(">>> Post-Processing: Enriching vulnerabilities");
             long processStart = System.currentTimeMillis();
-            memoryTracker.initializePostProcessingPeak();
 
-            int batchSize = 1000;
             int totalVulns = rawVulnerabilities.size();
-            int totalBatches = (int) Math.ceil((double) totalVulns / batchSize);
-
-            for (int batchNum = 0; batchNum < totalBatches; batchNum++) {
-                int start = batchNum * batchSize;
-                int end = Math.min(start + batchSize, totalVulns);
-                // Process current batch
-                for (int i = start; i < end; i++) {
-                    StreamedVulnerability rawVuln = rawVulnerabilities.get(i);
-                    Vulnerability enrichedVuln = processVulnerability(rawVuln, vulnFinalizer);
-                    vulnerabilities.add(enrichedVuln);
-
-                    // Null out processed raw vulnerability to enable GC
-                    rawVulnerabilities.set(i, null);
-                }
-
-                // Track peak memory every 10 batches
-                if (batchNum % 10 == 0) {
-                    memoryTracker.updatePostProcessingPeak();
+            for (int i = 0; i < totalVulns; i++) {
+                vulnerabilities.add(processVulnerability(rawVulnerabilities.get(i), vulnFinalizer));
+                // Release each raw vulnerability as soon as it is converted.
+                rawVulnerabilities.set(i, null);
+                if (i % MEMORY_SAMPLE_INTERVAL == 0) {
+                    memoryTracker.sample();
                 }
             }
 
-            // Final peak check
-            memoryTracker.updatePostProcessingPeak();
-
             long processTime = System.currentTimeMillis() - processStart;
             logger.info("<<< Post-Processing Complete - Time: {}ms", processTime);
-            logger.info("    - Processed {} vulnerabilities in {} batches", totalVulns, totalBatches);
-            memoryTracker.logMemoryConsumptionWithPeak("After Post-Processing",
-                memoryTracker.getPeakMemoryPostProcessing(), fvdlMetadata, rawVulnerabilities, vulnerabilities);
+            logger.info("    - Processed {} vulnerabilities", totalVulns);
+            logMemory("Post-Processing");
 
-            // ========================================
-            // Memory Optimization: Clear DescriptionCache and RuleMetadata
-            // ========================================
-            logger.info(">>> Memory Optimization: Clearing DescriptionCache and RuleMetadata");
+            releaseParsingState();
+            logMemory("Releasing Parsing State");
 
-            long descCount = fvdlMetadata.getDescriptionCache().size();
-            long descMemoryEstimate = memoryTracker.estimateDescriptionCacheMemory(fvdlMetadata);
-            fvdlMetadata.getDescriptionCache().clear();
-            logger.info("    - Cleared {} descriptions (~{} MB)",
-                descCount, String.format("%.2f", descMemoryEstimate / (1024.0 * 1024.0)));
-
-            long ruleCount = fvdlMetadata.getRuleMetadata().size();
-            long ruleMemoryEstimate = memoryTracker.estimateRuleMetadataMemory(fvdlMetadata);
-            fvdlMetadata.getRuleMetadata().clear();
-            logger.info("    - Cleared {} rule metadata entries (~{} KB)",
-                ruleCount, String.format("%.2f", ruleMemoryEstimate / 1024.0));
-
-            memoryTracker.logMemoryConsumption("After Clearing Metadata Caches");
-
-            // ========================================
-            // Memory Optimization: Clear Raw Vulnerabilities
-            // ========================================
-            logger.info(">>> Memory Optimization: Clearing raw vulnerabilities list");
-            long rawVulnCount = rawVulnerabilities.size();
-            long rawVulnMemoryEstimate = memoryTracker.estimateVulnerabilitiesMemory(rawVulnerabilities);
-            rawVulnerabilities.clear();
-            logger.info("    - Cleared {} raw vulnerabilities (~{} MB)",
-                rawVulnCount, String.format("%.2f", rawVulnMemoryEstimate / (1024.0 * 1024.0)));
-            memoryTracker.logMemoryConsumption("After Clearing Raw Vulnerabilities");
-
-            // ========================================
-            // OPTIONAL: Clear NodePool and TracePool
-            // ========================================
-            logger.info(">>> Memory Optimization: Clearing NodePool and TracePool");
-            long nodePoolSize = fvdlMetadata.getNodePool().size();
-            long tracePoolSize = fvdlMetadata.getTracePool().size();
-            long nodePoolMemoryEstimate = memoryTracker.estimateNodePoolMemory(fvdlMetadata);
-            long tracePoolMemoryEstimate = memoryTracker.estimateTracePoolMemory(fvdlMetadata);
-            fvdlMetadata.getNodePool().clear();
-            fvdlMetadata.getTracePool().clear();
-            stackTraceConverter.clear();
-            logger.info("    - Cleared NodePool ({} nodes, ~{} MB) and TracePool ({} traces, ~{} MB)",
-                nodePoolSize, String.format("%.2f", nodePoolMemoryEstimate / (1024.0 * 1024.0)),
-                tracePoolSize, String.format("%.2f", tracePoolMemoryEstimate / (1024.0 * 1024.0)));
-            memoryTracker.logMemoryConsumption("After Clearing Pools");
-
-            // ========================================
-            // Summary
-            // ========================================
-            long totalTime = pass1Time + pass2Time + processTime;
-            logger.info("=== Two-Pass Parsing Complete ===");
-            logger.info("    Total Time: {}ms (Pass1: {}ms, Pass2: {}ms, Process: {}ms)",
-                totalTime, pass1Time, pass2Time, processTime);
-            logger.info("    Overhead: ~{:.1f}% compared to single-pass estimate",
-                ((pass1Time + pass2Time) / (double)(pass1Time + pass2Time) * 100) - 100);
+            logger.info("=== Two-Pass Parsing Complete - Total Time: {}ms (Pass1: {}ms, Pass2: {}ms, Process: {}ms) ===",
+                pass1Time + pass2Time + processTime, pass1Time, pass2Time, processTime);
 
         } catch (XMLStreamException e) {
             throw new IOException("Failed to parse FVDL: " + e.getMessage(), e);
         }
 
+    }
+
+    private void logMemory(String phase) {
+        memoryTracker.logPhase(phase, fvdlMetadata, rawVulnerabilities.size(), vulnerabilities.size());
+    }
+
+    /** Releases pools and caches that are only needed while converting vulnerabilities. */
+    private void releaseParsingState() {
+        logger.debug("Releasing parsing state: descriptions={}, rules={}, nodes={}, traces={}",
+            fvdlMetadata.getDescriptionCache().size(), fvdlMetadata.getRuleMetadata().size(),
+            fvdlMetadata.getNodePool().size(), fvdlMetadata.getTracePool().size());
+        fvdlMetadata.getDescriptionCache().clear();
+        fvdlMetadata.getRuleMetadata().clear();
+        rawVulnerabilities.clear();
+        fvdlMetadata.getNodePool().clear();
+        fvdlMetadata.getTracePool().clear();
+        stackTraceConverter.clear();
     }
 
 
