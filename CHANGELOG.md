@@ -1,5 +1,14 @@
 # Changelog
 
+## [3.28.1](https://github.com/fortify/fcli/compare/v3.28.0...v3.28.1) (2026-10-09)
+
+
+### Bug Fixes
+
+* `fcli aviator ssc apply-remediations`: Add issue instance id's for skipped issues to output ([5b9f905](https://github.com/fortify/fcli/commit/5b9f905e3a685f2f0b039b7efb75953a65c78596))
+* `fcli fod aviator apply-remediations`: Add issue instance id's for skipped issues to output ([5b9f905](https://github.com/fortify/fcli/commit/5b9f905e3a685f2f0b039b7efb75953a65c78596))
+* `fcli tool fortifyaa`: Various fixes (consistent help output, allow use through `fcli tool env init`, ...) ([779c911](https://github.com/fortify/fcli/commit/779c91130ebabffa2baa480e7382c5a722cc6f2e))
+
 ## [3.28.0](https://github.com/fortify/fcli/compare/v3.27.0...v3.28.0) (2026-10-05)
 
 

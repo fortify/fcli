@@ -71,7 +71,29 @@ public final class RemediationsApplyHelper {
             }
             return true;
         });
-        return acc.toResult();
+        ApplyResult result = acc.toResult();
+        logFinalSkippedSummary(result, issueIdFilter, options.isPreviewMode(), logger);
+        return result;
+    }
+
+    /**
+     * Logs a final, aggregated summary of every skipped instance ID grouped by skip reason, so
+     * troubleshooting which source context/file is missing doesn't require scraping per-FPR log lines.
+     */
+    private static void logFinalSkippedSummary(
+            ApplyResult result, Set<String> issueIdFilter, boolean previewMode, IAviatorLogger logger) {
+        if (result.metrics().isEmpty()) {
+            return;
+        }
+        RemediationExecutionMode mode = previewMode ? RemediationExecutionMode.PREVIEW : RemediationExecutionMode.APPLY;
+        RemediationMetric aggregated = AviatorRemediationMetricsHelper.aggregateMetrics(issueIdFilter, result.metrics(), mode);
+        if (aggregated.skippedByReason().isEmpty()) {
+            return;
+        }
+        logger.info("Skipped remediation summary: {}",
+                AviatorRemediationMetricsHelper.formatSkippedReasons(aggregated.skippedByReason()));
+        AviatorRemediationMetricsHelper.groupIssueIdsByReason(aggregated.issueSkipReasons())
+                .forEach((reason, issueIds) -> logger.info("  {} ({}): {}", reason, issueIds.size(), issueIds));
     }
 
     /** @see AviatorRemediationMetricsHelper#actionLabel(RemediationMetric) */
