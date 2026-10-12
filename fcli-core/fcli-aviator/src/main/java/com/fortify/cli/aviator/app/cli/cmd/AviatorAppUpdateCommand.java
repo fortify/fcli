@@ -28,6 +28,7 @@ import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
 import com.fortify.cli.aviator._common.output.cli.cmd.AbstractAviatorAdminSessionOutputCommand;
 import com.fortify.cli.aviator._common.util.AviatorGrpcUtils;
 import com.fortify.cli.aviator._common.util.AviatorSignatureUtils;
+import com.fortify.cli.aviator.app.cli.mixin.AviatorAppResolverMixin;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClient;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClientHelper;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
@@ -37,12 +38,11 @@ import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
-import picocli.CommandLine.Parameters;
 
 @Command(name = OutputHelperMixins.Update.CMD_NAME)
 public class AviatorAppUpdateCommand extends AbstractAviatorAdminSessionOutputCommand implements IActionCommandResultSupplier {
     @Getter @Mixin private OutputHelperMixins.Update outputHelper;
-    @Parameters(index = "0", description = "Application ID") private String applicationId;
+    @Mixin private AviatorAppResolverMixin appResolver;
     @Option(names = {"-n", "--name"}, required = true) private String newName;
     private static final Logger LOG = LoggerFactory.getLogger(AviatorAppUpdateCommand.class);
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm");
@@ -50,15 +50,16 @@ public class AviatorAppUpdateCommand extends AbstractAviatorAdminSessionOutputCo
     @Override
     protected JsonNode getJsonNode(AviatorAdminConfigDescriptor configDescriptor) throws AviatorSimpleException, AviatorTechnicalException {
         try (AviatorGrpcClient client = AviatorGrpcClientHelper.createClient(configDescriptor.getAviatorUrl())) {
-            String[] messageAndSignature = createMessageAndSignature(configDescriptor);
-            Application updatedApplication = updateApplication(client, configDescriptor, messageAndSignature);
+            String applicationId = appResolver.getApplicationId(client, configDescriptor);
+            String[] messageAndSignature = createMessageAndSignature(configDescriptor, applicationId);
+            Application updatedApplication = updateApplication(client, configDescriptor, messageAndSignature, applicationId);
             JsonNode response = processUpdateApplicationResponse(AviatorGrpcUtils.grpcToJsonNode(updatedApplication));
             LOG.info("Application '{}' updated to name '{}' for tenant: {}", applicationId, newName, configDescriptor.getTenant());
             return response;
         }
     }
 
-    private String[] createMessageAndSignature(AviatorAdminConfigDescriptor configDescriptor) {
+    private String[] createMessageAndSignature(AviatorAdminConfigDescriptor configDescriptor, String applicationId) {
         return AviatorSignatureUtils.createMessageAndSignature(configDescriptor, configDescriptor.getTenant(), applicationId, newName);
     }
 
@@ -73,7 +74,7 @@ public class AviatorAppUpdateCommand extends AbstractAviatorAdminSessionOutputCo
         return jsonNode;
     }
 
-    private Application updateApplication(AviatorGrpcClient client, AviatorAdminConfigDescriptor configDescriptor, String[] messageAndSignature) {
+    private Application updateApplication(AviatorGrpcClient client, AviatorAdminConfigDescriptor configDescriptor, String[] messageAndSignature, String applicationId) {
         String message = messageAndSignature[0];
         String signature = messageAndSignature[1];
         return client.updateApplication(applicationId, newName, signature, message, configDescriptor.getTenant());
