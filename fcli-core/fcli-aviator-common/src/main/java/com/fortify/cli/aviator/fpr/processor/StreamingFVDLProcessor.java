@@ -196,6 +196,7 @@ public class StreamingFVDLProcessor {
             fvdlMetadata.getDescriptionCache().size(), fvdlMetadata.getRuleMetadata().size(),
             fvdlMetadata.getNodePool().size(), fvdlMetadata.getTracePool().size());
         fvdlMetadata.getDescriptionCache().clear();
+        descriptionProcessor.clearCompiledTemplates();
         fvdlMetadata.getRuleMetadata().clear();
         rawVulnerabilities.clear();
         fvdlMetadata.getNodePool().clear();
