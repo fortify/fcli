@@ -21,6 +21,7 @@ import picocli.CommandLine;
         subcommands = {
                 AviatorAppCreateCommand.class,
                 AviatorAppAddEntitlementCommand.class,
+                AviatorAppReduceEntitlementCommand.class,
                 AviatorAppDeleteCommand.class,
                 AviatorAppGetCommand.class,
                 AviatorAppListCommand.class,
