@@ -1323,18 +1323,17 @@ public class StreamingFVDLProcessor {
     private List<com.fortify.cli.aviator.fpr.model.Entry> convertExternalEntries(
         List<StreamedVulnerability.ExternalEntry> streamedEntries) {
 
-        List<com.fortify.cli.aviator.fpr.model.Entry> result = new ArrayList<>();
-
         if (streamedEntries == null) {
-            return result;
+            return new ArrayList<>();
         }
 
+        List<com.fortify.cli.aviator.fpr.model.Entry> result = new ArrayList<>(streamedEntries.size());
         for (StreamedVulnerability.ExternalEntry streamedEntry : streamedEntries) {
             com.fortify.cli.aviator.fpr.model.Entry entry = new com.fortify.cli.aviator.fpr.model.Entry();
             entry.setUrl(streamedEntry.getUrl());
 
             // Convert fields
-            List<com.fortify.cli.aviator.fpr.model.Entry.Field> fields = new ArrayList<>();
+            List<com.fortify.cli.aviator.fpr.model.Entry.Field> fields = entry.getFields();
             if (streamedEntry.getFields() != null) {
                 for (StreamedVulnerability.EntryField streamedField : streamedEntry.getFields()) {
                     com.fortify.cli.aviator.fpr.model.Entry.Field field =
@@ -1346,7 +1345,6 @@ public class StreamingFVDLProcessor {
                     fields.add(field);
                 }
             }
-            entry.setFields(fields);
 
             // Note: Function and SourceLocation objects are not fully converted here
             // If needed, create JAXB objects from the streamed data
