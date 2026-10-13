@@ -15,6 +15,7 @@ package com.fortify.cli.aviator.fpr.processor;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiConsumer;
 
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
@@ -47,8 +48,12 @@ public class TraceParser {
      * can come later in the file; {@link StackTraceConverter} resolves them after pass 1.
      */
     public StreamedTrace parseStreamedTrace(XMLStreamReader reader, String traceId) throws XMLStreamException {
+        List<StreamedTrace.Primary.Entry> entries = new ArrayList<>();
+        parseEntries(reader, (nodeRefId, inlineNode) -> entries.add(nodeRefId != null
+            ? StreamedTrace.Primary.Entry.builder().nodeId(nodeRefId).build()
+            : StreamedTrace.Primary.Entry.builder().node(inlineNode).isDefault(inlineNode.isDetailsOnly()).build()));
         StreamedTrace.Primary primary = StreamedTrace.Primary.builder()
-            .entries(parseEntries(reader))
+            .entries(entries)
             .build();
         return StreamedTrace.builder()
             .id(traceId)
@@ -60,11 +65,8 @@ public class TraceParser {
      * Parse a vulnerability trace. Called in pass 2, so NodeRefs resolve from the complete node pool.
      */
     public StreamedVulnerability.Trace parseTrace(XMLStreamReader reader) throws XMLStreamException {
-        List<StreamedTrace.Primary.Entry> entries = parseEntries(reader);
-        List<Node> nodes = new ArrayList<>(entries.size());
-        for (StreamedTrace.Primary.Entry entry : entries) {
-            nodes.add(entry.hasNode() ? entry.getNode() : resolveNodeRef(entry.getNodeId()));
-        }
+        List<Node> nodes = new ArrayList<>();
+        parseEntries(reader, (nodeRefId, inlineNode) -> nodes.add(nodeRefId != null ? resolveNodeRef(nodeRefId) : inlineNode));
         return StreamedVulnerability.Trace.builder()
             .nodes(nodes)
             .build();
@@ -79,8 +81,11 @@ public class TraceParser {
         return node;
     }
 
-    private List<StreamedTrace.Primary.Entry> parseEntries(XMLStreamReader reader) throws XMLStreamException {
-        List<StreamedTrace.Primary.Entry> entries = new ArrayList<>();
+    /**
+     * Calls {@code entryHandler} with (nodeRefId, null) or (null, inlineNode) for each Primary Entry.
+     */
+    private void parseEntries(XMLStreamReader reader, BiConsumer<String, Node> entryHandler) throws XMLStreamException {
+        int entryCount = 0;
         boolean inPrimary = false;
 
         while (reader.hasNext()) {
@@ -93,9 +98,8 @@ public class TraceParser {
                     inPrimary = true;
 
                 } else if (inPrimary && "Entry".equals(elementName)) {
-                    StreamedTrace.Primary.Entry entry = parseTraceEntry(reader);
-                    if (entry != null) {
-                        entries.add(entry);
+                    if (parseTraceEntry(reader, entryHandler)) {
+                        entryCount++;
                     }
                 }
 
@@ -106,19 +110,19 @@ public class TraceParser {
                     inPrimary = false;
 
                 } else if ("Trace".equals(elementName)) {
-                    return entries;
+                    return;
                 }
             }
         }
 
-        logger.warn("Trace ended without a closing Trace element - parsed {} entries", entries.size());
-        return entries;
+        logger.warn("Trace ended without a closing Trace element - parsed {} entries", entryCount);
     }
 
     /**
      * Parse a single Entry element into either a NodeRef id or an inline Node.
+     * @return false if the Entry has neither and was skipped
      */
-    private StreamedTrace.Primary.Entry parseTraceEntry(XMLStreamReader reader) throws XMLStreamException {
+    private boolean parseTraceEntry(XMLStreamReader reader, BiConsumer<String, Node> entryHandler) throws XMLStreamException {
         String nodeRefId = null;
         Node inlineNode = null;
 
@@ -144,15 +148,14 @@ public class TraceParser {
         }
 
         if (nodeRefId != null) {
-            return StreamedTrace.Primary.Entry.builder().nodeId(nodeRefId).build();
+            entryHandler.accept(nodeRefId, null);
+            return true;
         }
         if (inlineNode != null) {
-            return StreamedTrace.Primary.Entry.builder()
-                .node(inlineNode)
-                .isDefault(inlineNode.isDetailsOnly())
-                .build();
+            entryHandler.accept(null, inlineNode);
+            return true;
         }
         logger.warn("[parseTraceEntry] Entry has neither NodeRef nor inline Node - skipping");
-        return null;
+        return false;
     }
 }
