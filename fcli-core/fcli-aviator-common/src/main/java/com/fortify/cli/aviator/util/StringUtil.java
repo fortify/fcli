@@ -45,33 +45,36 @@ public class StringUtil {
         if (description == null) {
             return "";
         }
+        if (description.indexOf('<') < 0) {
+            return description.trim();
+        }
 
-        description = description.replaceAll("<pre>", "<code>");
-        description = description.replaceAll("</pre>", "</code>");
-        description = description.replaceAll("<p>", "");
-        description = description.replaceAll("</p>", "\n");
-        description = description.replaceAll("<table>", "");
-        description = description.replaceAll("</table>", "");
-        description = description.replaceAll("<tr>", "");
-        description = description.replaceAll("</tr>", "");
-        description = description.replaceAll("<td>", "\t");
-        description = description.replaceAll("</td>", "");
-        description = description.replaceAll("<th>", "<b>\t");
-        description = description.replaceAll("</th>", "</b>");
-        description = description.replaceAll("<li>", "-");
-        description = description.replaceAll("</li>", "");
-        description = description.replaceAll("<blockquote>", "");
-        description = description.replaceAll("</blockquote>", "");
-        description = description.replaceAll(" ", " ");
+        // Literal replace: replaceAll would compile a regex on every call.
+        description = description.replace("<pre>", "<code>");
+        description = description.replace("</pre>", "</code>");
+        description = description.replace("<p>", "");
+        description = description.replace("</p>", "\n");
+        description = description.replace("<table>", "");
+        description = description.replace("</table>", "");
+        description = description.replace("<tr>", "");
+        description = description.replace("</tr>", "");
+        description = description.replace("<td>", "\t");
+        description = description.replace("</td>", "");
+        description = description.replace("<th>", "<b>\t");
+        description = description.replace("</th>", "</b>");
+        description = description.replace("<li>", "-");
+        description = description.replace("</li>", "");
+        description = description.replace("<blockquote>", "");
+        description = description.replace("</blockquote>", "");
         if (stripMarkupTags) {
-            description = description.replaceAll("<b>", "");
-            description = description.replaceAll("</b>", "");
-            description = description.replaceAll("<code>", "");
-            description = description.replaceAll("</code>", "");
-            description = description.replaceAll("<h1>", "");
-            description = description.replaceAll("</h1>", "");
-            description = description.replaceAll("<ul>", "");
-            description = description.replaceAll("</ul>", "");
+            description = description.replace("<b>", "");
+            description = description.replace("</b>", "");
+            description = description.replace("<code>", "");
+            description = description.replace("</code>", "");
+            description = description.replace("<h1>", "");
+            description = description.replace("</h1>", "");
+            description = description.replace("<ul>", "");
+            description = description.replace("</ul>", "");
         }
         return description.trim();
     }
