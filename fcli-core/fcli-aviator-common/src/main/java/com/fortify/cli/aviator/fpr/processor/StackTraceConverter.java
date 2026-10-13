@@ -13,6 +13,7 @@
 package com.fortify.cli.aviator.fpr.processor;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
@@ -49,6 +50,8 @@ final class StackTraceConverter {
     // Two caches so an element never receives a Reason trace containing itself.
     private final Map<Node, StackTraceElement> traceElements = new IdentityHashMap<>();
     private final Map<Node, StackTraceElement> plainElements = new IdentityHashMap<>();
+    // Inline nodes repeat the same paths and calls; keep one copy of each string.
+    private final Map<String, String> sharedStrings = new HashMap<>();
 
     StackTraceConverter(FileUtils fileUtils, FprHandle fprHandle, FVDLMetadata fvdlMetadata) {
         this.fileUtils = fileUtils;
@@ -69,7 +72,7 @@ final class StackTraceConverter {
             }
             List<StackTraceElement> stackTrace = new ArrayList<>(trace.getNodes().size());
             for (Node node : trace.getNodes()) {
-                stackTrace.add(traceElement(node));
+                stackTrace.add(isPoolNode(node) ? traceElement(node) : uncachedTraceElement(node));
             }
             stackTraces.add(stackTrace);
         }
@@ -80,6 +83,21 @@ final class StackTraceConverter {
     void clear() {
         traceElements.clear();
         plainElements.clear();
+        sharedStrings.clear();
+    }
+
+    private boolean isPoolNode(Node node) {
+        return fvdlMetadata.getNodePool().get(node.getId()) == node;
+    }
+
+    /** Inline vulnerability nodes occur once, so caching them would only keep them alive until the parse ends. */
+    private StackTraceElement uncachedTraceElement(Node node) {
+        StackTraceElement element = createElement(node);
+        List<StackTraceElement> reasonStackTrace = buildReasonStackTrace(node);
+        if (!reasonStackTrace.isEmpty()) {
+            element.setInnerStackTrace(reasonStackTrace);
+        }
+        return element;
     }
 
     /** Element for a primary trace node, with the node's Reason traces as its inner stack trace. */
@@ -158,20 +176,24 @@ final class StackTraceConverter {
         String codeLine = fileUtils.getLineFromFile(fprHandle, node.getFilePath(), node.getLine());
 
         StackTraceElement element = StackTraceElement.builder()
-            .filename(node.getFilePath())
+            .filename(share(node.getFilePath()))
             .line(node.getLine())
             .code(codeLine)
-            .nodeType(node.getActionType() != null ? node.getActionType() : "")
+            .nodeType(share(node.getActionType() != null ? node.getActionType() : ""))
             .fragment(fragment)
-            .additionalInfo(node.getAdditionalInfo() != null ? node.getAdditionalInfo() : "")
-            .taintflags(taintFlags)
+            .additionalInfo(share(node.getAdditionalInfo() != null ? node.getAdditionalInfo() : ""))
+            .taintflags(share(taintFlags))
             .build();
         if (node.getLabel() != null && !node.getLabel().isEmpty()) {
-            element.setReason(node.getLabel());
+            element.setReason(share(node.getLabel()));
         }
         if (node.getKnowledge() != null) {
             element.setKnowledge(node.getKnowledge());
         }
         return element;
+    }
+
+    private String share(String value) {
+        return value == null ? null : sharedStrings.computeIfAbsent(value, v -> v);
     }
 }
