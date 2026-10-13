@@ -159,6 +159,145 @@ class StreamingFVDLProcessorTest {
     }
 
     @Test
+    void testParseConvertsExternalEntriesInOrderWithIndependentFieldLists() throws Exception {
+        String xml = """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <FVDL>
+                  <Vulnerabilities>
+                    <Vulnerability>
+                      <ClassInfo>
+                        <ClassID>RULE-1</ClassID>
+                        <AnalyzerName>Dataflow</AnalyzerName>
+                        <DefaultSeverity>3.0</DefaultSeverity>
+                      </ClassInfo>
+                      <InstanceInfo>
+                        <InstanceID>instance-1</InstanceID>
+                        <InstanceSeverity>3.0</InstanceSeverity>
+                        <Confidence>4.0</Confidence>
+                      </InstanceInfo>
+                      <ExternalEntries>
+                        <Entry name="req" type="HTTP">
+                          <URL>http://example.com/request</URL>
+                          <Fields>
+                            <Field name="RequestMethod" value="POST" type="text" vulnTag="tag-1"/>
+                            <Field name="RequestBody" value="a=1"/>
+                          </Fields>
+                          <Function name="doPost" namespace="com.example"/>
+                          <SourceLocation path="src/Example.java" line="10" colStart="1" colEnd="5"/>
+                        </Entry>
+                        <Entry>
+                          <URL>http://example.com/other</URL>
+                        </Entry>
+                      </ExternalEntries>
+                    </Vulnerability>
+                    <Vulnerability>
+                      <ClassInfo>
+                        <ClassID>RULE-2</ClassID>
+                        <AnalyzerName>Dataflow</AnalyzerName>
+                        <DefaultSeverity>3.0</DefaultSeverity>
+                      </ClassInfo>
+                      <InstanceInfo>
+                        <InstanceID>instance-2</InstanceID>
+                        <InstanceSeverity>3.0</InstanceSeverity>
+                        <Confidence>4.0</Confidence>
+                      </InstanceInfo>
+                    </Vulnerability>
+                  </Vulnerabilities>
+                </FVDL>
+                """;
+
+        createTestFpr(xml);
+
+        StreamingFVDLProcessor processor = new StreamingFVDLProcessor(fprHandle);
+        try (ZipFile zipFile = new ZipFile(tempFprFile.toFile())) {
+            processor.parse(zipFile, "audit.fvdl");
+        }
+
+        // The parser must stop at </ExternalEntries> so the next vulnerability stays separate.
+        assertEquals(2, processor.getVulnerabilities().size());
+        Vulnerability vulnerability = processor.getVulnerabilities().get(0);
+        Vulnerability next = processor.getVulnerabilities().get(1);
+        assertEquals("instance-1", vulnerability.getInstanceID());
+        assertEquals("instance-2", next.getInstanceID());
+        assertTrue(next.getExternalEntries().isEmpty());
+
+        List<com.fortify.cli.aviator.fpr.model.Entry> entries = vulnerability.getExternalEntries();
+        assertEquals(2, entries.size());
+
+        com.fortify.cli.aviator.fpr.model.Entry first = entries.get(0);
+        assertEquals("http://example.com/request", first.getUrl());
+        assertEquals(List.of("RequestMethod", "RequestBody"),
+                first.getFields().stream().map(com.fortify.cli.aviator.fpr.model.Entry.Field::getName).toList());
+        assertEquals("POST", first.getFields().get(0).getValue());
+        assertEquals("text", first.getFields().get(0).getType());
+        assertEquals("tag-1", first.getFields().get(0).getVulnTag());
+        assertEquals("a=1", first.getFields().get(1).getValue());
+
+        com.fortify.cli.aviator.fpr.model.Entry second = entries.get(1);
+        assertEquals("http://example.com/other", second.getUrl());
+        assertTrue(second.getFields().isEmpty());
+        assertNotSame(first.getFields(), second.getFields());
+        second.getFields().add(new com.fortify.cli.aviator.fpr.model.Entry.Field());
+        assertEquals(2, first.getFields().size());
+
+        assertEquals("POST", vulnerability.getRequestMethod());
+        assertEquals("a=1", vulnerability.getRequestBody());
+    }
+
+    @Test
+    void testParseDefaultsMissingExternalEntryFieldAttributesAndIgnoresNonRequestUrls() throws Exception {
+        String xml = """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <FVDL>
+                  <Vulnerabilities>
+                    <Vulnerability>
+                      <ClassInfo>
+                        <ClassID>RULE-1</ClassID>
+                        <AnalyzerName>Dataflow</AnalyzerName>
+                        <DefaultSeverity>3.0</DefaultSeverity>
+                      </ClassInfo>
+                      <InstanceInfo>
+                        <InstanceID>instance-1</InstanceID>
+                        <InstanceSeverity>3.0</InstanceSeverity>
+                        <Confidence>4.0</Confidence>
+                      </InstanceInfo>
+                      <ExternalEntries>
+                        <Entry>
+                          <URL>http://example.com/request</URL>
+                          <Fields>
+                            <Field/>
+                          </Fields>
+                        </Entry>
+                        <Entry>
+                          <URL>http://example.com/page</URL>
+                          <Fields>
+                            <Field name="RequestMethod" value="GET"/>
+                          </Fields>
+                        </Entry>
+                      </ExternalEntries>
+                    </Vulnerability>
+                  </Vulnerabilities>
+                </FVDL>
+                """;
+
+        createTestFpr(xml);
+
+        StreamingFVDLProcessor processor = new StreamingFVDLProcessor(fprHandle);
+        try (ZipFile zipFile = new ZipFile(tempFprFile.toFile())) {
+            processor.parse(zipFile, "audit.fvdl");
+        }
+
+        Vulnerability vulnerability = processor.getVulnerabilities().get(0);
+        com.fortify.cli.aviator.fpr.model.Entry.Field empty = vulnerability.getExternalEntries().get(0).getFields().get(0);
+        assertEquals("", empty.getName());
+        assertEquals("", empty.getValue());
+        assertEquals("", empty.getType());
+        assertEquals("", empty.getVulnTag());
+        assertEquals("RequestMethod", vulnerability.getExternalEntries().get(1).getFields().get(0).getName());
+        assertNull(vulnerability.getRequestMethod());
+    }
+
+    @Test
     void testParseExposesMinVirtualCallConfidenceForFiltering() throws Exception {
         String xml = """
                 <?xml version="1.0" encoding="UTF-8"?>

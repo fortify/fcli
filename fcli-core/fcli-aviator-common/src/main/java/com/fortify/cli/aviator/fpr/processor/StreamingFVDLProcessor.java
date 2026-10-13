@@ -817,20 +817,13 @@ public class StreamingFVDLProcessor {
     private void parseExternalEntries(XMLStreamReader reader, List<StreamedVulnerability.ExternalEntry> externalEntriesList)
         throws XMLStreamException {
 
-        int depth = 1;
-        while (reader.hasNext() && depth > 0) {
+        while (reader.hasNext()) {
             int event = reader.next();
 
-            if (event == XMLStreamConstants.START_ELEMENT) {
-                if ("Entry".equals(reader.getLocalName())) {
-                    StreamedVulnerability.ExternalEntry entry = parseExternalEntry(reader);
-                    if (entry != null) {
-                        externalEntriesList.add(entry);
-                    }
-                }
-                depth++;
-            } else if (event == XMLStreamConstants.END_ELEMENT) {
-                depth--;
+            if (event == XMLStreamConstants.START_ELEMENT && "Entry".equals(reader.getLocalName())) {
+                externalEntriesList.add(parseExternalEntry(reader));
+            } else if (event == XMLStreamConstants.END_ELEMENT && "ExternalEntries".equals(reader.getLocalName())) {
+                return;
             }
         }
     }
@@ -839,7 +832,7 @@ public class StreamingFVDLProcessor {
      * Parse a single Entry element within ExternalEntries.
      *
      * @param reader XMLStreamReader positioned at Entry start element
-     * @return Parsed ExternalEntry or null
+     * @return Parsed ExternalEntry
      */
     private StreamedVulnerability.ExternalEntry parseExternalEntry(XMLStreamReader reader) throws XMLStreamException {
         StreamedVulnerability.ExternalEntry.ExternalEntryBuilder builder =
@@ -847,17 +840,14 @@ public class StreamingFVDLProcessor {
 
         List<StreamedVulnerability.EntryField> fields = new ArrayList<>();
 
-        int depth = 1;
-        while (reader.hasNext() && depth > 0) {
+        while (reader.hasNext()) {
             int event = reader.next();
 
             if (event == XMLStreamConstants.START_ELEMENT) {
-                String localName = reader.getLocalName();
-
-                switch (localName) {
+                switch (reader.getLocalName()) {
                     case "URL":
-                        builder.url(readElementText(reader));
-                        continue;
+                        builder.url(reader.getElementText());
+                        break;
                     case "Function":
                         // Parse Function element attributes
                         String funcName = reader.getAttributeValue(null, "name");
@@ -878,14 +868,12 @@ public class StreamingFVDLProcessor {
                         break;
                     case "Fields":
                         parseEntryFields(reader, fields);
-                        continue;
+                        break;
+                    default:
+                        break;
                 }
-                depth++;
-            } else if (event == XMLStreamConstants.END_ELEMENT) {
-                depth--;
-                if ("Entry".equals(reader.getLocalName())) {
-                    break;
-                }
+            } else if (event == XMLStreamConstants.END_ELEMENT && "Entry".equals(reader.getLocalName())) {
+                break;
             }
         }
 
@@ -902,65 +890,36 @@ public class StreamingFVDLProcessor {
     private void parseEntryFields(XMLStreamReader reader, List<StreamedVulnerability.EntryField> fields)
         throws XMLStreamException {
 
-        int depth = 1;
-        while (reader.hasNext() && depth > 0) {
+        while (reader.hasNext()) {
             int event = reader.next();
 
-            if (event == XMLStreamConstants.START_ELEMENT) {
-                if ("Field".equals(reader.getLocalName())) {
-                    StreamedVulnerability.EntryField field = parseEntryField(reader);
-                    if (field != null) {
-                        fields.add(field);
-                    }
-                }
-                depth++;
-            } else if (event == XMLStreamConstants.END_ELEMENT) {
-                depth--;
+            if (event == XMLStreamConstants.START_ELEMENT && "Field".equals(reader.getLocalName())) {
+                fields.add(parseEntryField(reader));
+            } else if (event == XMLStreamConstants.END_ELEMENT && "Fields".equals(reader.getLocalName())) {
+                return;
             }
         }
     }
 
     /**
-     * Parse a single Field element within Fields.
+     * Parse a single Field element. Per the FVDL schema all values are attributes;
+     * missing values default to "" to match AuxiliaryProcessor.
      *
      * @param reader XMLStreamReader positioned at Field start element
-     * @return Parsed EntryField or null
+     * @return Parsed EntryField
      */
-    private StreamedVulnerability.EntryField parseEntryField(XMLStreamReader reader) throws XMLStreamException {
-        StreamedVulnerability.EntryField.EntryFieldBuilder builder =
-            StreamedVulnerability.EntryField.builder();
+    private StreamedVulnerability.EntryField parseEntryField(XMLStreamReader reader) {
+        return StreamedVulnerability.EntryField.builder()
+            .name(attributeOrEmpty(reader, "name"))
+            .value(attributeOrEmpty(reader, "value"))
+            .type(attributeOrEmpty(reader, "type"))
+            .vulnTag(attributeOrEmpty(reader, "vulnTag"))
+            .build();
+    }
 
-        // Get Field attributes
-        String type = reader.getAttributeValue(null, "type");
-        String vulnTag = reader.getAttributeValue(null, "vulnTag");
-        builder.type(type);
-        builder.vulnTag(vulnTag);
-
-        int depth = 1;
-        while (reader.hasNext() && depth > 0) {
-            int event = reader.next();
-
-            if (event == XMLStreamConstants.START_ELEMENT) {
-                String localName = reader.getLocalName();
-
-                switch (localName) {
-                    case "Name":
-                        builder.name(readElementText(reader));
-                        continue;
-                    case "Value":
-                        builder.value(readElementText(reader));
-                        continue;
-                }
-                depth++;
-            } else if (event == XMLStreamConstants.END_ELEMENT) {
-                depth--;
-                if ("Field".equals(reader.getLocalName())) {
-                    break;
-                }
-            }
-        }
-
-        return builder.build();
+    private static String attributeOrEmpty(XMLStreamReader reader, String name) {
+        String value = reader.getAttributeValue(null, name);
+        return value != null ? value : "";
     }
 
     /**
