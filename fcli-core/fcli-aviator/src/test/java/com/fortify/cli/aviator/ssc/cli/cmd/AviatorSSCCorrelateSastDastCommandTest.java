@@ -14,8 +14,13 @@ package com.fortify.cli.aviator.ssc.cli.cmd;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertSame;
+
+import java.util.concurrent.ExecutionException;
 
 import org.junit.jupiter.api.Test;
+
+import com.fortify.cli.common.exception.FcliSimpleException;
 
 import picocli.CommandLine;
 
@@ -29,5 +34,20 @@ class AviatorSSCCorrelateSastDastCommandTest {
 
         assertFalse(parseResult.matchedOptionValue("--refresh", true));
         assertEquals("2m", parseResult.matchedOptionValue("--refresh-timeout", null));
+    }
+
+    @Test
+    void unwrapsSimpleExceptionFromExecutionException() {
+        var cause = new FcliSimpleException("server busy");
+        var ex = AviatorSSCCorrelateSastDastCommand.toCorrelationException(new ExecutionException(cause));
+        assertSame(cause, ex);
+    }
+
+    @Test
+    void wrapsOtherCausesAsSimpleException() {
+        var ex = AviatorSSCCorrelateSastDastCommand.toCorrelationException(
+            new ExecutionException(new IllegalStateException("boom")));
+        assertEquals("boom", ex.getMessage());
+        assertFalse(ex.getStackTraceString().contains("IllegalStateException"));
     }
 }

@@ -55,10 +55,7 @@ public class WebInspectParser {
     public List<DastIssue> parse() {
         List<DastIssue> issues = new ArrayList<>();
         Path webInspectPath = fprHandle.getPath("/webinspect.xml");
-
-        if (!Files.exists(webInspectPath)) {
-            throw new RuntimeException("webinspect.xml not found in DAST FPR");
-        }
+        fprHandle.validateDast();
 
         try (InputStream inputStream = Files.newInputStream(webInspectPath)) {
             var factory = SecureXmlParserFactory.newDocumentBuilderFactory(false);
@@ -107,10 +104,7 @@ public class WebInspectParser {
     public List<DastSession> parseSessions() {
         List<DastSession> sessions = new ArrayList<>();
         Path webInspectPath = fprHandle.getPath("/webinspect.xml");
-
-        if (!Files.exists(webInspectPath)) {
-            throw new RuntimeException("webinspect.xml not found in DAST FPR");
-        }
+        fprHandle.validateDast();
 
         try (InputStream inputStream = Files.newInputStream(webInspectPath)) {
             var factory = SecureXmlParserFactory.newDocumentBuilderFactory(false);
