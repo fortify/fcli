@@ -821,6 +821,112 @@ class StreamingFVDLProcessorTest {
     }
 
     @Test
+    void testParseConvertsInlineTraceNodesWithReasonsAndSharesRepeatedText() throws Exception {
+        String vulnerabilityTemplate = """
+                    <Vulnerability>
+                      <ClassInfo>
+                        <ClassID>RULE-1</ClassID>
+                        <Type>SQL Injection</Type>
+                        <AnalyzerName>Dataflow</AnalyzerName>
+                        <DefaultSeverity>3.0</DefaultSeverity>
+                      </ClassInfo>
+                      <InstanceInfo>
+                        <InstanceID>%s</InstanceID>
+                        <InstanceSeverity>3.0</InstanceSeverity>
+                        <Confidence>4.0</Confidence>
+                      </InstanceInfo>
+                      <AnalysisInfo>
+                        <Unified>
+                          <Trace>
+                            <Primary>
+                              <Entry>
+                                <Node label="sink">
+                                  <SourceLocation path="src/Inline.java" line="7" lineEnd="7" colStart="0" colEnd="0"/>
+                                  <Action type="InCall">run(0)</Action>
+                                  <Reason><TraceRef id="pool-trace"/></Reason>
+                                  <Knowledge><Fact primary="false" type="TaintFlags">WEB</Fact></Knowledge>
+                                </Node>
+                              </Entry>
+                              <Entry>
+                                <Node>
+                                  <SourceLocation path="src/Plain.java" line="9" lineEnd="9" colStart="0" colEnd="0"/>
+                                  <Action type="Return">done</Action>
+                                </Node>
+                              </Entry>
+                            </Primary>
+                          </Trace>
+                        </Unified>
+                      </AnalysisInfo>
+                    </Vulnerability>
+                """;
+        String xml = """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <FVDL>
+                  <Vulnerabilities>
+                %s%s
+                  </Vulnerabilities>
+                  <UnifiedNodePool>
+                    <Node id="0">
+                      <SourceLocation path="src/Source.java" line="3" lineEnd="3" colStart="0" colEnd="0"/>
+                      <Action type="Assign">input</Action>
+                    </Node>
+                  </UnifiedNodePool>
+                  <UnifiedTracePool>
+                    <Trace id="pool-trace">
+                      <Primary>
+                        <Entry><NodeRef id="0"/></Entry>
+                      </Primary>
+                    </Trace>
+                  </UnifiedTracePool>
+                  <Description classID="RULE-1">
+                    <Abstract>Abstract text.</Abstract>
+                    <Explanation>Explanation text.</Explanation>
+                  </Description>
+                </FVDL>
+                """.formatted(vulnerabilityTemplate.formatted("instance-1"), vulnerabilityTemplate.formatted("instance-2"));
+
+        createTestFpr(xml);
+
+        StreamingFVDLProcessor processor = new StreamingFVDLProcessor(fprHandle);
+        try (ZipFile zipFile = new ZipFile(tempFprFile.toFile())) {
+            processor.parse(zipFile, "audit.fvdl");
+        }
+
+        Vulnerability first = processor.getVulnerabilities().get(0);
+        Vulnerability second = processor.getVulnerabilities().get(1);
+        List<StackTraceElement> firstTrace = first.getStackTrace().get(0);
+        List<StackTraceElement> secondTrace = second.getStackTrace().get(0);
+        assertEquals(2, firstTrace.size());
+
+        StackTraceElement sink = firstTrace.get(0);
+        assertEquals("src/Inline.java", sink.getFilename());
+        assertEquals(7, sink.getLine());
+        assertEquals("InCall", sink.getNodeType());
+        assertEquals("run(0)", sink.getAdditionalInfo());
+        assertEquals("WEB", sink.getTaintflags());
+        assertEquals("sink", sink.getReason());
+        assertEquals(1, sink.getInnerStackTrace().size());
+        assertEquals("src/Source.java", sink.getInnerStackTrace().get(0).getFilename());
+        assertSame(sink.getInnerStackTrace().get(0), secondTrace.get(0).getInnerStackTrace().get(0));
+
+        StackTraceElement plain = firstTrace.get(1);
+        assertEquals("src/Plain.java", plain.getFilename());
+        assertEquals("Return", plain.getNodeType());
+        assertTrue(plain.getInnerStackTrace().isEmpty());
+
+        assertNotSame(sink, secondTrace.get(0));
+        assertEquals(sink, secondTrace.get(0));
+        assertSame(sink.getFilename(), secondTrace.get(0).getFilename());
+        assertSame(sink.getAdditionalInfo(), secondTrace.get(0).getAdditionalInfo());
+        assertEquals("Explanation text.", first.getExplanation());
+        assertSame(first.getExplanation(), second.getExplanation());
+        assertSame(first.getShortDescription(), second.getShortDescription());
+        assertEquals(List.of("WEB"), first.getTaintFlags());
+        assertSame(first.getKnowledge(), second.getKnowledge());
+        assertThrows(UnsupportedOperationException.class, () -> first.getKnowledge().put("key", "value"));
+    }
+
+    @Test
     void testParseResolvesReasonNodeRefToNodeDeclaredLaterInNodePool() throws Exception {
         String xml = """
                 <?xml version="1.0" encoding="UTF-8"?>

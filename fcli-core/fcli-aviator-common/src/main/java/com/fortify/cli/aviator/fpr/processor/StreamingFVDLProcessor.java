@@ -58,6 +58,10 @@ public class StreamingFVDLProcessor {
     private final List<Vulnerability> vulnerabilities;
     private final FprHandle fprHandle;
     private final StackTraceConverter stackTraceConverter;
+    // Many vulnerabilities render the same description text; keep one copy of each.
+    private final Map<String, String> renderedDescriptions = new HashMap<>();
+    // Vulnerabilities of the same rule usually have equal knowledge; share one read-only map.
+    private final Map<Map<String, String>, Map<String, String>> sharedKnowledgeMaps = new HashMap<>();
     /*private final Path extractedPath;
     private final IndexXMLProcessor indexXMLProcessor;*/
 
@@ -179,6 +183,8 @@ public class StreamingFVDLProcessor {
         fvdlMetadata.getNodePool().clear();
         fvdlMetadata.getTracePool().clear();
         stackTraceConverter.clear();
+        renderedDescriptions.clear();
+        sharedKnowledgeMaps.clear();
     }
 
 
@@ -1157,8 +1163,8 @@ public class StreamingFVDLProcessor {
         // Process descriptions from streaming-parsed descriptionCache in FVDLMetadata
         ReplacementData replacementData = streamedVuln.getReplacementData();
         String[] descs = descriptionProcessor.processForVuln(vulnCustom, vulnCustom.getClassID(), replacementData, fvdlMetadata);
-        vulnCustom.setShortDescription(StringUtil.stripTags(descs[0], true));
-        vulnCustom.setExplanation(StringUtil.stripTags(descs[1], true));
+        vulnCustom.setShortDescription(sharedDescription(StringUtil.stripTags(descs[0], true)));
+        vulnCustom.setExplanation(sharedDescription(StringUtil.stripTags(descs[1], true)));
 
         // Set package name from the first file path when the FVDL doesn't provide namespace data.
         if ((vulnCustom.getPackageName() == null || vulnCustom.getPackageName().isEmpty())
@@ -1172,8 +1178,13 @@ public class StreamingFVDLProcessor {
 
         // Finalize to calculate derived fields
         vulnFinalizer.finalize(vulnCustom);
+        vulnCustom.setKnowledge(sharedKnowledgeMaps.computeIfAbsent(vulnCustom.getKnowledge(), Collections::unmodifiableMap));
 
         return vulnCustom;
+    }
+
+    private String sharedDescription(String description) {
+        return renderedDescriptions.computeIfAbsent(description, d -> d);
     }
 
     private void applyContextAttributes(Vulnerability vulnerability, StreamedVulnerability streamedVulnerability) {
