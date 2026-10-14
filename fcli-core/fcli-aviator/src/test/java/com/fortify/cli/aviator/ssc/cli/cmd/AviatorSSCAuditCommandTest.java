@@ -14,21 +14,36 @@ package com.fortify.cli.aviator.ssc.cli.cmd;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.lang.reflect.Field;
+import java.net.InetSocketAddress;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Map;
 import java.util.ResourceBundle;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fortify.cli.aviator._common.session.user.helper.AviatorUserSessionDescriptor;
 import com.fortify.cli.aviator.audit.model.FPRAuditResult;
+import com.fortify.cli.aviator.config.AviatorLoggerImpl;
 import com.fortify.cli.aviator.ssc.helper.AviatorSSCAuditHelper;
 import com.fortify.cli.common.json.JsonHelper;
+import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
+import com.fortify.cli.common.progress.helper.IProgressWriter;
+import com.fortify.cli.common.rest.unirest.UnirestHelper;
+import com.fortify.cli.common.rest.unirest.config.UnirestJsonHeaderConfigurer;
+import com.fortify.cli.ssc.appversion.helper.SSCAppVersionDescriptor;
+import com.sun.net.httpserver.HttpServer;
 
 import picocli.CommandLine;
 
@@ -138,6 +153,125 @@ class AviatorSSCAuditCommandTest {
         assertEquals(3, audit.get("submitted").asInt());
         assertEquals(2, audit.get("succeeded").asInt());
         assertEquals(2, audit.get("skipped").asInt());
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+        "true, default, -1, 1", "false, default, -1, 1",
+        "true, force, -1, 1", "false, force, -1, 1",
+        "true, priority, -1, 1", "false, priority, -1, 1",
+        "true, skip, 2, 2", "false, skip, 2, 2",
+        "true, test, 2, 2", "false, test, 2, 2"
+    })
+    void preflightOnlyCountsAllPagesWhenQuotaOptionsRequireIt(boolean canonical, String mode, long expectedCount,
+            int expectedRequests) throws Exception {
+        var requests = new AtomicInteger();
+        var server = HttpServer.create(new InetSocketAddress(0), 0);
+        server.createContext("/api/v1/projectVersions/42/issues", exchange -> {
+            requests.incrementAndGet();
+            ObjectNode issue = JsonHelper.getObjectMapper().createObjectNode().put("audited", false);
+            issue.putObject("_embed").putArray("auditValues");
+            // Return one row per page to ensure exact counting follows SSC's page size.
+            byte[] response = JsonHelper.getObjectMapper().createObjectNode().put("count", 2)
+                    .set("data", JsonHelper.getObjectMapper().createArrayNode().add(issue))
+                    .toString().getBytes(StandardCharsets.UTF_8);
+            exchange.getResponseHeaders().set("Content-Type", "application/json");
+            exchange.sendResponseHeaders(200, response.length);
+            try (var output = exchange.getResponseBody()) {
+                output.write(response);
+            }
+        });
+        server.start();
+        try (var unirest = UnirestHelper.createUnirestInstance(instance -> {
+            UnirestJsonHeaderConfigurer.configure(instance);
+            instance.config().defaultBaseUrl("http://localhost:" + server.getAddress().getPort());
+        })) {
+            var args = new ArrayList<String>();
+            args.add("--no-filterset");
+            switch (mode) {
+                case "force" -> args.add("--force-reaudit");
+                case "skip" -> args.add("--skip-if-exceeding-quota");
+                case "test" -> args.add("--test-exceeding-quota");
+                case "priority" -> Collections.addAll(args, "--folder-priority-order", "High,Low");
+                default -> {}
+            }
+            AbstractAviatorSSCSastAuditCommand cmd = canonical
+                    ? parseCanonical(args.toArray(String[]::new)) : parse(args.toArray(String[]::new));
+            var av = new SSCAppVersionDescriptor();
+            av.setVersionId("42");
+
+            assertEquals(expectedCount, cmd.getPreflightIssueCount(unirest, av, new AviatorLoggerImpl(new NoOpProgressWriter())));
+            assertEquals(expectedRequests, requests.get());
+        } finally {
+            server.stop(0);
+        }
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+        "true, test, QUOTA_UNKNOWN", "false, test, QUOTA_UNKNOWN",
+        "true, skip, SKIPPED", "false, skip, SKIPPED",
+        "true, both, SKIPPED", "false, both, SKIPPED"
+    })
+    void unknownCountReturnsReportWithoutProceedingWithAudit(boolean canonical, String mode, String expectedAction)
+            throws Exception {
+        var args = new ArrayList<String>();
+        args.add("--no-filterset");
+        if (!"skip".equals(mode)) {
+            args.add("--test-exceeding-quota");
+        }
+        if (!"test".equals(mode)) {
+            args.add("--skip-if-exceeding-quota");
+        }
+        AbstractAviatorSSCSastAuditCommand cmd = canonical
+                ? parseCanonical(args.toArray(String[]::new)) : parse(args.toArray(String[]::new));
+        var av = new SSCAppVersionDescriptor();
+        av.setVersionId("42");
+        av.setApplicationName("TestApp");
+        av.setVersionName("1.0");
+        var server = HttpServer.create(new InetSocketAddress(0), 0);
+        server.createContext("/api/v1/projectVersions/42/issues", exchange -> {
+            // An empty page before the reported count is reached makes the total unknown.
+            byte[] response = "{\"count\":1,\"data\":[]}".getBytes(StandardCharsets.UTF_8);
+            exchange.getResponseHeaders().set("Content-Type", "application/json");
+            exchange.sendResponseHeaders(200, response.length);
+            try (var output = exchange.getResponseBody()) {
+                output.write(response);
+            }
+        });
+        server.start();
+        try (var unirest = UnirestHelper.createUnirestInstance(instance -> {
+            UnirestJsonHeaderConfigurer.configure(instance);
+            instance.config().defaultBaseUrl("http://localhost:" + server.getAddress().getPort());
+        })) {
+            var logger = new AviatorLoggerImpl(new NoOpProgressWriter());
+            long count = cmd.getPreflightIssueCount(unirest, av, logger);
+            assertEquals(-1L, count);
+            // No Aviator URL: quota retrieval fails locally before opening any channel.
+            var session = new AviatorUserSessionDescriptor();
+            var check = AbstractAviatorSSCSastAuditCommand.class.getDeclaredMethod("checkQuota",
+                    kong.unirest.UnirestInstance.class, SSCAppVersionDescriptor.class, AviatorUserSessionDescriptor.class,
+                    long.class, AviatorLoggerImpl.class);
+            check.setAccessible(true);
+            var result = (JsonNode) check.invoke(cmd, unirest, av, session, count, logger);
+            assertNotNull(result, "An unknown count must return a report instead of allowing an audit");
+            assertEquals(expectedAction, result.path(IActionCommandResultSupplier.actionFieldName).asText());
+            assertTrue(result.path("operation").path("audit").path("message").asText().contains("Cannot determine issue count"));
+        } finally {
+            server.stop(0);
+        }
+    }
+
+    private static final class NoOpProgressWriter implements IProgressWriter {
+        @Override public boolean isMultiLineSupported() { return false; }
+        @Override public void writeProgress(String message, Object... args) {}
+        @Override public void writeInfo(String message, Object... args) {}
+        @Override public void writeInfoWithException(String message, Throwable cause, Object... args) {}
+        @Override public void writeWarning(String message, Object... args) {}
+        @Override public void writeWarningWithException(String message, Throwable cause, Object... args) {}
+        @Override public void clearProgress() {}
+        @Override public void close() {}
+        @Override public String type() { return "test"; }
     }
 
     private static AviatorSSCAuditCommand parse(String... args) {
