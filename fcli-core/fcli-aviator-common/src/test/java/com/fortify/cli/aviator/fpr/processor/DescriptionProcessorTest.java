@@ -13,6 +13,9 @@
 package com.fortify.cli.aviator.fpr.processor;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 
@@ -23,6 +26,72 @@ import com.fortify.cli.aviator.fpr.model.StreamedDescription;
 
 class DescriptionProcessorTest {
     private static final String CLASS_ID = "class-1";
+
+    @Test
+    void testPrivateFallbackSignalDoesNotCaptureStackTrace() throws Exception {
+        // Verify the allocation optimization without exposing this implementation detail in production APIs.
+        var type = Class.forName(DescriptionProcessor.class.getName() + "$MissingReplacementException");
+        var constructor = type.getDeclaredConstructor();
+        constructor.setAccessible(true);
+        RuntimeException signal = (RuntimeException) constructor.newInstance();
+        assertEquals(0, signal.getStackTrace().length);
+        signal.fillInStackTrace();
+        assertEquals(0, signal.getStackTrace().length);
+    }
+
+    @Test
+    void testMissingReplacementDiscardsPartialParagraphAndRendersAlternative() {
+        FVDLMetadata metadata = metadataWith(
+            "before<Paragraph>discard <Replace key=\"Source\"/> then <Replace key=\"Missing\"/>"
+                + "<AltParagraph>fallback <Replace key=\"Source\"/>:<Replace key=\"Missing\"/></AltParagraph>"
+                + "</Paragraph>after", "");
+        DescriptionProcessor processor = new DescriptionProcessor();
+        assertArrayEquals(new String[] {"beforefallback value:after", ""},
+            processor.processForVuln(vulnerability(), CLASS_ID, replacements("Source", "value"), metadata));
+        assertArrayEquals(new String[] {"beforefallback :after", ""},
+            processor.processForVuln(vulnerability(), CLASS_ID, null, metadata));
+    }
+
+    @Test
+    void testMissingReplacementWithoutAlternativeKeepsSurroundingText() {
+        FVDLMetadata metadata = metadataWith(
+            "before<Paragraph>discard <Replace key=\"Missing\"/></Paragraph>after",
+            "outside:<Replace key=\"Missing\"/>!");
+        assertArrayEquals(new String[] {"beforeafter", "outside:!"},
+            new DescriptionProcessor().processForVuln(vulnerability(), CLASS_ID, new ReplacementData(), metadata));
+    }
+
+    @Test
+    void testDefaultsAndPresentEmptyOrNullValuesDoNotSelectAlternative() {
+        FVDLMetadata metadata = metadataWith(
+            "<Paragraph>[<Replace key=\"Source\" default=\"default\"/>]"
+                + "<AltParagraph>fallback</AltParagraph></Paragraph>",
+            "<Paragraph>[<Replace key=\"Source\"/>]<AltParagraph>fallback</AltParagraph></Paragraph>");
+        DescriptionProcessor processor = new DescriptionProcessor();
+        assertArrayEquals(new String[] {"[default]", "fallback"},
+            processor.processForVuln(vulnerability(), CLASS_ID, null, metadata));
+        assertArrayEquals(new String[] {"[]", "[]"},
+            processor.processForVuln(vulnerability(), CLASS_ID, replacements("Source", ""), metadata));
+        assertArrayEquals(new String[] {"[default]", "[]"},
+            processor.processForVuln(vulnerability(), CLASS_ID, replacements("Source", null), metadata));
+    }
+
+    @Test
+    void testLocationReplacementAndConditionalMissingReplacementKeepFallbackSemantics() {
+        FVDLMetadata metadata = metadataWith(
+            "<Paragraph><Replace key=\"Source\" link=\"true\"/><AltParagraph>fallback</AltParagraph></Paragraph>",
+            "<Paragraph>prefix<IfDef var=\"PrimaryLocation\"><Replace key=\"Missing\"/></IfDef>suffix"
+                + "<AltParagraph>fallback</AltParagraph></Paragraph>");
+        ReplacementData data = new ReplacementData();
+        data.addLocationReplacement("Source", Map.of("path", "src/App.java", "line", "42"));
+        DescriptionProcessor processor = new DescriptionProcessor();
+        assertArrayEquals(new String[] {"src/App.java (at line 42)", "prefixsuffix"},
+            processor.processForVuln(vulnerability(), CLASS_ID, data, metadata));
+        Vulnerability withCondition = vulnerability();
+        withCondition.getKnowledge().put("PrimaryLocation", "x");
+        assertArrayEquals(new String[] {"src/App.java (at line 42)", "fallback"},
+            processor.processForVuln(withCondition, CLASS_ID, data, metadata));
+    }
 
     @Test
     void testCompiledTemplateRendersReplacementsPerVulnerability() {

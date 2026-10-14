@@ -118,6 +118,10 @@ public class DescriptionProcessor {
      * This is used by ParagraphElement to fall back to AltParagraph.
      */
     private static class MissingReplacementException extends RuntimeException {
+        private MissingReplacementException() {
+            // Internal fallback signal, caught by ParagraphElement; no diagnostic stack is consumed.
+            super(null, null, true, false);
+        }
     }
 
     /**
