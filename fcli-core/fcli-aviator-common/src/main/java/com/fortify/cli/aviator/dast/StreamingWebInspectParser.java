@@ -38,7 +38,6 @@ import com.fortify.cli.common.util.SecureXmlParserFactory;
 
 /**
  * Streaming (StAX-based) parser for WebInspect XML files contained in DAST FPR files.
- * This is the memory-efficient alternative to the DOM-based {@link WebInspectParser}.
  * Uses the same streaming pattern as {@link com.fortify.cli.aviator.fpr.processor.StreamingFVDLProcessor}.
  */
 public class StreamingWebInspectParser {
@@ -54,8 +53,7 @@ public class StreamingWebInspectParser {
 
     /**
      * Parses the webinspect.xml file and returns all DAST issues.
-     * Equivalent to {@link WebInspectParser#parse()} but uses streaming (StAX) parsing
-     * for lower memory consumption on large scan results.
+     * Uses streaming (StAX) parsing for low memory consumption on large scan results.
      *
      * @return List of DastIssue objects
      */
@@ -97,7 +95,6 @@ public class StreamingWebInspectParser {
     /**
      * Parses the webinspect.xml file and returns all DAST sessions with their issues.
      * Includes Base64-decoded raw request/response data for audit purposes.
-     * Equivalent to {@link WebInspectParser#parseSessions()} but uses streaming parsing.
      *
      * @return List of DastSession objects with issues
      */
