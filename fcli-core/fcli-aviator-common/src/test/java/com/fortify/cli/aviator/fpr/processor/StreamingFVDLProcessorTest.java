@@ -45,6 +45,50 @@ class StreamingFVDLProcessorTest {
     private Path tempFprFile;
     private FprHandle fprHandle;
 
+    @Test
+    void testDescriptionCleanupKeepsPerVulnerabilityReplacementsAndSharedOutput() throws Exception {
+        String vulnerabilityTemplate = """
+                <Vulnerability>
+                  <ClassInfo>
+                    <ClassID>RULE-1</ClassID><Type>SQL Injection</Type><AnalyzerName>Dataflow</AnalyzerName>
+                    <DefaultSeverity>3.0</DefaultSeverity>
+                  </ClassInfo>
+                  <InstanceInfo>
+                    <InstanceID>%s</InstanceID><InstanceSeverity>3.0</InstanceSeverity><Confidence>4.0</Confidence>
+                  </InstanceInfo>
+                  <AnalysisInfo><Unified><ReplacementDefinitions>%s</ReplacementDefinitions></Unified></AnalysisInfo>
+                </Vulnerability>
+                """;
+        String xml = """
+                <FVDL>
+                  <Vulnerabilities>%s%s%s%s%s</Vulnerabilities>
+                  <Description classID="RULE-1">
+                    <Abstract><![CDATA[<b>Source <Replace key="Source" default="unknown"/>.</b>]]></Abstract>
+                    <Explanation><![CDATA[<Paragraph>Source <Replace key="Source"/>.<AltParagraph>Unknown.</AltParagraph>
+                    </Paragraph>]]></Explanation>
+                  </Description>
+                </FVDL>
+                """.formatted(
+                    vulnerabilityTemplate.formatted("first", "<Def key=\"Source\" value=\"first\"/>"),
+                    vulnerabilityTemplate.formatted("second", "<Def key=\"Source\" value=\"second\"/>"),
+                    vulnerabilityTemplate.formatted("repeat", "<Def key=\"Source\" value=\"first\"/>"),
+                    vulnerabilityTemplate.formatted("markup", "<Def key=\"Source\" value=\"&lt;b&gt;first&lt;/b&gt;\"/>"),
+                    vulnerabilityTemplate.formatted("missing", ""));
+        createTestFpr(xml);
+        StreamingFVDLProcessor processor = new StreamingFVDLProcessor(fprHandle);
+        try (ZipFile zipFile = new ZipFile(tempFprFile.toFile())) {
+            processor.parse(zipFile, "audit.fvdl");
+        }
+        List<Vulnerability> vulnerabilities = processor.getVulnerabilities();
+        assertEquals(List.of("Source first.", "Source second.", "Source first.", "Source first.", "Source unknown."),
+            vulnerabilities.stream().map(Vulnerability::getShortDescription).toList());
+        assertEquals(List.of("Source first.", "Source second.", "Source first.", "Source first.", "Unknown."),
+            vulnerabilities.stream().map(Vulnerability::getExplanation).toList());
+        assertSame(vulnerabilities.get(0).getShortDescription(), vulnerabilities.get(2).getShortDescription());
+        assertSame(vulnerabilities.get(0).getShortDescription(), vulnerabilities.get(3).getShortDescription());
+        assertSame(vulnerabilities.get(0).getExplanation(), vulnerabilities.get(3).getExplanation());
+    }
+
     @AfterEach
     void tearDown() throws Exception {
         if (fprHandle != null) {

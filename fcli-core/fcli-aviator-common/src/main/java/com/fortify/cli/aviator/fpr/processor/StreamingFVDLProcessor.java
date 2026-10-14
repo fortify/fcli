@@ -60,6 +60,7 @@ public class StreamingFVDLProcessor {
     private final StackTraceConverter stackTraceConverter;
     // Many vulnerabilities render the same description text; keep one copy of each.
     private final Map<String, String> renderedDescriptions = new HashMap<>();
+    private final DescriptionCleanupCache descriptionCleanupCache = new DescriptionCleanupCache();
     // Vulnerabilities of the same rule usually have equal knowledge; share one read-only map.
     private final Map<Map<String, String>, Map<String, String>> sharedKnowledgeMaps = new HashMap<>();
     /*private final Path extractedPath;
@@ -184,6 +185,7 @@ public class StreamingFVDLProcessor {
         fvdlMetadata.getTracePool().clear();
         stackTraceConverter.clear();
         renderedDescriptions.clear();
+        descriptionCleanupCache.clear();
         sharedKnowledgeMaps.clear();
     }
 
@@ -1163,8 +1165,8 @@ public class StreamingFVDLProcessor {
         // Process descriptions from streaming-parsed descriptionCache in FVDLMetadata
         ReplacementData replacementData = streamedVuln.getReplacementData();
         String[] descs = descriptionProcessor.processForVuln(vulnCustom, vulnCustom.getClassID(), replacementData, fvdlMetadata);
-        vulnCustom.setShortDescription(sharedDescription(StringUtil.stripTags(descs[0], true)));
-        vulnCustom.setExplanation(sharedDescription(StringUtil.stripTags(descs[1], true)));
+        vulnCustom.setShortDescription(sharedDescription(descriptionCleanupCache.clean(descs[0])));
+        vulnCustom.setExplanation(sharedDescription(descriptionCleanupCache.clean(descs[1])));
 
         // Set package name from the first file path when the FVDL doesn't provide namespace data.
         if ((vulnCustom.getPackageName() == null || vulnCustom.getPackageName().isEmpty())
