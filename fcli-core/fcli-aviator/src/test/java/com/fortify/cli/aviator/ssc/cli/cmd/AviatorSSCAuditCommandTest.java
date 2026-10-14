@@ -23,6 +23,7 @@ import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -45,6 +46,7 @@ import com.fortify.cli.common.rest.unirest.config.UnirestJsonHeaderConfigurer;
 import com.fortify.cli.ssc.appversion.helper.SSCAppVersionDescriptor;
 import com.sun.net.httpserver.HttpServer;
 
+import kong.unirest.UnirestInstance;
 import picocli.CommandLine;
 
 class AviatorSSCAuditCommandTest {
@@ -200,7 +202,7 @@ class AviatorSSCAuditCommandTest {
             var av = new SSCAppVersionDescriptor();
             av.setVersionId("42");
 
-            assertEquals(expectedCount, cmd.getPreflightIssueCount(unirest, av, new AviatorLoggerImpl(new NoOpProgressWriter())));
+            assertEquals(expectedCount, cmd.getPreflightIssueCount(unirest, av, new AviatorLoggerImpl(new RecordingProgressWriter())));
             assertEquals(expectedRequests, requests.get());
         } finally {
             server.stop(0);
@@ -244,27 +246,34 @@ class AviatorSSCAuditCommandTest {
             UnirestJsonHeaderConfigurer.configure(instance);
             instance.config().defaultBaseUrl("http://localhost:" + server.getAddress().getPort());
         })) {
-            var logger = new AviatorLoggerImpl(new NoOpProgressWriter());
+            var progress = new RecordingProgressWriter();
+            var logger = new AviatorLoggerImpl(progress);
             long count = cmd.getPreflightIssueCount(unirest, av, logger);
             assertEquals(-1L, count);
             // No Aviator URL: quota retrieval fails locally before opening any channel.
             var session = new AviatorUserSessionDescriptor();
             var check = AbstractAviatorSSCSastAuditCommand.class.getDeclaredMethod("checkQuota",
-                    kong.unirest.UnirestInstance.class, SSCAppVersionDescriptor.class, AviatorUserSessionDescriptor.class,
+                    UnirestInstance.class, SSCAppVersionDescriptor.class, AviatorUserSessionDescriptor.class,
                     long.class, AviatorLoggerImpl.class);
             check.setAccessible(true);
             var result = (JsonNode) check.invoke(cmd, unirest, av, session, count, logger);
             assertNotNull(result, "An unknown count must return a report instead of allowing an audit");
             assertEquals(expectedAction, result.path(IActionCommandResultSupplier.actionFieldName).asText());
             assertTrue(result.path("operation").path("audit").path("message").asText().contains("Cannot determine issue count"));
+            assertTrue(progress.messages.stream().anyMatch(message -> message.contains("issue count unavailable")));
+            String actionMessage = "SKIPPED".equals(expectedAction) ? "Audit skipped" : "returning QUOTA_UNKNOWN";
+            assertTrue(progress.messages.stream().anyMatch(message -> message.contains(actionMessage)));
+            assertFalse(progress.messages.stream().anyMatch(message -> message.contains("Proceeding")
+                    || message.contains("Downloading") || message.contains("FPR download")));
         } finally {
             server.stop(0);
         }
     }
 
-    private static final class NoOpProgressWriter implements IProgressWriter {
+    private static final class RecordingProgressWriter implements IProgressWriter {
+        private final List<String> messages = new ArrayList<>();
         @Override public boolean isMultiLineSupported() { return false; }
-        @Override public void writeProgress(String message, Object... args) {}
+        @Override public void writeProgress(String message, Object... args) { messages.add(String.format(message, args)); }
         @Override public void writeInfo(String message, Object... args) {}
         @Override public void writeInfoWithException(String message, Throwable cause, Object... args) {}
         @Override public void writeWarning(String message, Object... args) {}

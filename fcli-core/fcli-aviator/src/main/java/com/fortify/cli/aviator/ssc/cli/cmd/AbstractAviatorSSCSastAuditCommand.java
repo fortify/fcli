@@ -196,6 +196,7 @@ abstract class AbstractAviatorSSCSastAuditCommand extends AbstractSSCJsonNodeOut
                 ObjectNode result = AviatorSSCAuditHelper.buildResultNode(av, null, "SKIPPED");
                 AviatorSSCAuditHelper.setOperationMessage(result,
                     "Cannot determine issue count; audit skipped per --skip-if-exceeding-quota");
+                logger.progress("Audit skipped - issue count unavailable; cannot honor --skip-if-exceeding-quota.");
                 return result;
             }
             LOG.warn("Auditable issue count unknown; cannot evaluate --test-exceeding-quota for {}:{}.",
@@ -203,6 +204,7 @@ abstract class AbstractAviatorSSCSastAuditCommand extends AbstractSSCJsonNodeOut
             ObjectNode result = AviatorSSCAuditHelper.buildResultNode(av, null, "QUOTA_UNKNOWN");
             AviatorSSCAuditHelper.setOperationMessage(result,
                 "Cannot determine issue count; quota check could not be completed");
+            logger.progress("Quota check unavailable - issue count unknown; returning QUOTA_UNKNOWN without auditing.");
             return result;
         }
 
