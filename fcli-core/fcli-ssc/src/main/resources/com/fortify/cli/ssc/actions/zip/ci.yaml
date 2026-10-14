@@ -221,10 +221,7 @@ steps:
                 ${#actionCmd('FAA_SCAN', 'ssc', 'faa-scan')}
                 "--source-dir=${global.ci.sourceDir}"
                 "--app-version=${global.ci.av}"
-                "--faa-path=${#env('FORTIFY_AGENTIC_ANALYZER_HOME')}"
                 ${global.faaScan.fprDownloaded ? ' --fpr=' + global.faaScan.fprFile : ''}
-                ${#isNotBlank(#env('FAA_SCAN_OUTPUT_PATH')) ? '--output=' + #env('FAA_SCAN_OUTPUT_PATH') : ''}
-                "--skip-wait=${#env('FAA_SKIP_WAIT')?:'true'}"
               skip.if-reason:
                 - ${faa.skipReason}   
             

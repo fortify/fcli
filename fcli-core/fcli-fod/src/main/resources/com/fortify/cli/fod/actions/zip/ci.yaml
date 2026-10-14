@@ -159,9 +159,7 @@ steps:
           ${#actionCmd('FAA_SCAN', 'fod', 'faa-scan')}
           "--source-dir=${global.ci.sourceDir}"
           "--release=${global.ci.rel}"
-          "--faa-path=${#env('FORTIFY_AGENTIC_ANALYZER_HOME')}"
           ${global.faaScan.fprDownloaded ? ' --fpr=' + global.faaScan.fprFile : ''}
-          ${#isNotBlank(#env('FAA_SCAN_OUTPUT_PATH')) ? '--output=' + #env('FAA_SCAN_OUTPUT_PATH') : ''}
         skip.if-reason:
           - ${faa.skipReason}                        # Skip if FAA scan is disabled
       

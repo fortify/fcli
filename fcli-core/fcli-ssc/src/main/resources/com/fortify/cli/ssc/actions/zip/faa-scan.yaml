@@ -24,36 +24,41 @@ cli.options:
     names: --source-dir, -d
     description: >-
       Source directory on which to run Fortify Agentic Analyzer scan.
-      Defaults to current working directory if not specified.
-    required: true 
-  fprFile:
+      Defaults to environment variable `SOURCE_DIR` if not specified.
+    default: ${#env('SOURCE_DIR')}
+    required: false 
+  sastFprFile:
     names: --fpr, -f
     description: >-
       Optional path to the FPR file from a prior SAST scan. When provided, FAA uses this
       context to avoid reporting duplicate issues already identified by SAST, resulting in
       enhanced analysis quality. If not provided, FAA will perform a standalone analysis.
     required: false 
+    default: ${#env('FAA_SCAN_FPR_FILE')}
   appVersion:
     names: --app-version, --av
     description: >-
       Optional SSC application version to which the FAA scan results (SARIF) must be uploaded. If not specified, FAA scan will run and write results to the output file, but SARIF will not be uploaded to SSC. Application version must already exist in SSC if specified.
     required: false 
-  output:
+    default: ${#env('APP_VERSION')}
+  faaOutput:
     names: --output, -o
     description: >-
       Output SARIF file path where FAA scan results will be written.
-      Defaults to fortifyaa.sarif in the current working directory.
+      Defaults to the environment variable `FAA_SCAN_OUTPUT_PATH` if not specified.
+      If the environment variable is not set, defaults to fortifyaa.sarif in the current working directory.
     required: false 
-    default: fortifyaa.sarif
+    default: ${#ifBlank(#env('FAA_SCAN_OUTPUT_PATH'), 'fortifyaa.sarif')}
   faaPath:
     names: --faa-path, -p
     description: |
       Path to a pre-installed Fortify Agentic Analyzer (FAA) installation. 
       FAA must be pre-installed on the system before running this action; 
       this action only registers the existing installation with fcli.
-      Defaults to the FORTIFY_AGENTIC_ANALYZER_HOME environment variable.
-      Required: User must have FAA already installed and FORTIFY_AGENTIC_ANALYZER_HOME set.
-    required: true
+      Defaults to the FAA_HOME environment variable.
+      Required: User must have FAA already installed and FAA_HOME set.
+    required: false
+    default: ${#env('FAA_HOME')}
   extraScanOpts:
     names: --extra-scan-opts
     description: >-
@@ -72,18 +77,22 @@ steps:
   - var.set:
       # Used for passing extra options from ci action without bothering about escaping
       extraScanOpts: ${#join(" ", {cli.extraScanOpts, global.faaScan?.extraOpts})}
+      fprArg: >-
+        ${#isNotBlank(cli.sastFprFile) ? '--fpr "' + cli.sastFprFile + '"' : ''}
       global.faaScanUpload.fcliVarName: faa_scan_${#action.runID().replace('-','_')}
       global.faaScanUpload.waitForCmd: 'fcli ssc artifact wait-for ::${global.faaScanUpload.fcliVarName}::'
   
   - run.fcli:
-      SETUP_TOOLS: fcli tool env init "--tools=fortifyaa:${cli.faaPath}"
+      SETUP_TOOLS: 
+        cmd: >-
+          fcli tool env init "--tools=fortifyaa${#isNotBlank(cli.faaPath) ? ':' + cli.faaPath : ''}"
       RUN_FAA_SCAN:
         cmd: >
           fcli tool fortifyaa run --
           -clean
           -scan "${cli.sourceDir}"
-          ${#isNotBlank(cli.fprFile) ? '--fpr "' + cli.fprFile + '"' : ''}
-          -o "${cli.output}"
+          ${fprArg}
+          -o "${cli.faaOutput}"
           ${extraScanOpts}
         stdout: collect
         stderr: collect
@@ -101,7 +110,7 @@ steps:
           fcli ssc artifact upload 
           --av "${cli.appVersion}" 
           --engine-type Fortify_AA 
-          -f "${cli.output}"
+          -f "${cli.faaOutput}"
           --store "${global.faaScanUpload.fcliVarName}"
         status.check: false
   
