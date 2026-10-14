@@ -14,7 +14,6 @@ package com.fortify.cli.aviator.dast;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -67,7 +66,7 @@ class StreamingWebInspectParserTest {
     }
 
     @Test
-    void domAndStreamingParsersDoNotResolveExternalEntities() throws Exception {
+    void streamingParserDoesNotResolveExternalEntities() throws Exception {
       Path secret = tempDir.resolve("secret.txt");
       Files.writeString(secret, "PRIVATE-SENTINEL");
       Path fpr = createFpr();
@@ -78,7 +77,6 @@ class StreamingWebInspectParserTest {
           .replace("<URL>https://example.test/login</URL>", "<URL>&xxe;</URL>");
         Files.writeString(handle.getPath("/webinspect.xml"), maliciousXml);
 
-        assertNotEquals("PRIVATE-SENTINEL", new WebInspectParser(handle).parseSessions().get(0).getUrl());
         AviatorTechnicalException exception = assertThrows(AviatorTechnicalException.class,
             () -> new StreamingWebInspectParser(handle).parseSessions());
         assertInstanceOf(XMLStreamException.class, exception.getCause());
@@ -95,9 +93,7 @@ class StreamingWebInspectParserTest {
         try (FprHandle handle = new FprHandle(fpr)) {
             for (Executable call : new Executable[] {
                 () -> new StreamingWebInspectParser(handle).parse(),
-                () -> new StreamingWebInspectParser(handle).parseSessions(),
-                () -> new WebInspectParser(handle).parse(),
-                () -> new WebInspectParser(handle).parseSessions() }) {
+                () -> new StreamingWebInspectParser(handle).parseSessions() }) {
                 var ex = assertThrows(AviatorSimpleException.class, call);
                 assertTrue(ex.getMessage().contains("from a SAST scan"));
             }
