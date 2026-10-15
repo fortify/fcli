@@ -164,7 +164,8 @@ final class StackTraceConverter {
         }
         Node node = fvdlMetadata.getNodePool().get(nodeId);
         if (node == null) {
-            logger.warn("Node {} referenced in trace not found (Entry has no node, NodePool lookup failed)", nodeId);
+            logger.warn("Node {} referenced in trace not found in NodePool, using placeholder", nodeId);
+            return NodeParser.createPlaceholderNode(nodeId);
         }
         return node;
     }

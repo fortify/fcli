@@ -235,7 +235,7 @@ public class NodeParser {
     /**
      * Create a placeholder Node for forward references.
      */
-    public Node createPlaceholderNode(String nodeId) {
+    public static Node createPlaceholderNode(String nodeId) {
         // Collections default to empty in the Node constructor.
         return Node.builder()
             .id(nodeId)

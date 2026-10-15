@@ -842,6 +842,7 @@ class StreamingFVDLProcessorTest {
                     <Trace id="self-trace">
                       <Primary>
                         <Entry><NodeRef id="0"/></Entry>
+                        <Entry><NodeRef id="missing-node"/></Entry>
                       </Primary>
                     </Trace>
                   </UnifiedTracePool>
@@ -857,11 +858,14 @@ class StreamingFVDLProcessorTest {
 
         StackTraceElement element = processor.getVulnerabilities().get(0).getStackTrace().get(0).get(0);
         assertEquals("src/Loop.java", element.getFilename());
-        assertEquals(1, element.getInnerStackTrace().size());
+        assertEquals(2, element.getInnerStackTrace().size());
         StackTraceElement reasonElement = element.getInnerStackTrace().get(0);
         assertNotSame(element, reasonElement);
         assertEquals("src/Loop.java", reasonElement.getFilename());
         assertTrue(reasonElement.getInnerStackTrace().isEmpty());
+        StackTraceElement placeholder = element.getInnerStackTrace().get(1);
+        assertEquals("", placeholder.getFilename());
+        assertEquals(0, placeholder.getLine());
     }
 
     @Test

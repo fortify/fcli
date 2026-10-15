@@ -76,7 +76,7 @@ public class TraceParser {
         Node node = nodePool.get(nodeRefId);
         if (node == null) {
             logger.debug("NodeRef {} not found in NodePool, using placeholder", nodeRefId);
-            return nodeParser.createPlaceholderNode(nodeRefId);
+            return NodeParser.createPlaceholderNode(nodeRefId);
         }
         return node;
     }
