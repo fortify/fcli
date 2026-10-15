@@ -863,10 +863,9 @@ public class StreamingFVDLProcessor {
 
     /**
      * Parse AuxiliaryData element.
-     * Structure: <AuxiliaryData contentType="..."><AuxField name="..." value="..."><SourceLocation/></AuxField></AuxiliaryData>
-     * Replicates AuxiliaryProcessor logic for streaming parsing.
-     *
-     * @param reader XMLStreamReader positioned at AuxiliaryData start element
+     * Structure: <AuxiliaryData contentType="..."><AuxField name="..." value="..."><SourceLocation/>     </AuxField></AuxiliaryData>
+          *
+          * @param reader XMLStreamReader positioned at AuxiliaryData start element
      * @param auxiliaryDataList List to add parsed auxiliary data map to
      */
     private void parseAuxiliaryData(XMLStreamReader reader, List<Map<String, String>> auxiliaryDataList) throws XMLStreamException {
@@ -941,10 +940,9 @@ public class StreamingFVDLProcessor {
 
     /**
      * Parse ExternalEntries element.
-     * Structure: <ExternalEntries><Entry><URL>...</URL><Function/><SourceLocation/><Fields><Field/></Fields></Entry></ExternalEntries>
-     * Replicates AuxiliaryProcessor ExternalEntries logic.
-     *
-     * @param reader XMLStreamReader positioned at ExternalEntries start element
+     * Structure: <ExternalEntries><Entry><URL>...</URL><Function/><SourceLocation/><Fields><Field/>     </Fields></Entry></ExternalEntries>
+          *
+          * @param reader XMLStreamReader positioned at ExternalEntries start element
      * @param externalEntriesList List to add parsed entries to
      */
     private void parseExternalEntries(XMLStreamReader reader, List<StreamedVulnerability.ExternalEntry> externalEntriesList)
@@ -1119,8 +1117,6 @@ public class StreamingFVDLProcessor {
      *   <Def key="..." value="..."><SourceLocation path="..." line="..." colStart="..." colEnd="..."/></Def>
      *   <LocationDef key="..." path="..." line="..." colStart="..." colEnd="..."/>
      * </ReplacementDefinitions>
-     *
-     * This replicates the logic from ReplacementParser for streaming parsing.
      *
      * @param reader XMLStreamReader positioned at ReplacementDefinitions start element
      * @return Populated ReplacementData object or null if no definitions found
@@ -1545,7 +1541,6 @@ public class StreamingFVDLProcessor {
 
     /**
      * Process request-related fields from auxiliary data and external entries.
-     * This is a helper method that replicates FVDLProcessor.processRequestRelated() logic.
      *
      * To use this, you need to parse and store auxiliaryData and externalEntries during
      * streaming parse phase.

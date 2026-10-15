@@ -17,11 +17,6 @@ dependencies {
     testFixturesImplementation(project(":fcli-core:fcli-common-core"))
     implementation("org.yaml:snakeyaml:2.3")
 
-    // JAXB for XML object marshalling (used in FVDLProcessor legacy parser)
-    implementation("jakarta.xml.bind:jakarta.xml.bind-api:3.0.1")
-    implementation("org.glassfish.jaxb:jaxb-runtime:3.0.2")
-    implementation("com.sun.activation:jakarta.activation:2.0.1")
-
     // Note: StAX (javax.xml.stream) uses Woodstox 7.1.1 via jackson-dataformat-xml
     // from fcli-common (needed for XML output). No explicit dependency required.
 
@@ -29,7 +24,6 @@ dependencies {
     implementation("io.grpc:grpc-netty-shaded:1.76.0")
     implementation("io.grpc:grpc-protobuf:1.76.0")
     api("io.grpc:grpc-stub:1.76.0")
-    runtimeOnly("org.glassfish.jaxb:jaxb-runtime:3.0.2")
     compileOnly("org.apache.tomcat:annotations-api:6.0.53")
     api("com.google.protobuf:protobuf-java:4.28.3")
     api("com.google.protobuf:protobuf-java-util:4.28.3")

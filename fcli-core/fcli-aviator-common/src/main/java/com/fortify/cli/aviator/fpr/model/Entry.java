@@ -15,14 +15,11 @@ package com.fortify.cli.aviator.fpr.model;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.fortify.cli.aviator.fpr.jaxb.Function;
-import com.fortify.cli.aviator.fpr.jaxb.SourceLocationType;
-
 import lombok.Getter;
 import lombok.Setter;
 
 /**
- * Represents an ExternalEntries Entry from FVDL, containing URL, fields, function, and location.
+ * Represents an ExternalEntries Entry from FVDL, containing URL and fields.
  * Used to store external data associated with a vulnerability.
  */
 @Getter
@@ -30,8 +27,6 @@ import lombok.Setter;
 public class Entry {
     private String url; // From <URL>
     private List<Field> fields = new ArrayList<>(); // From <Fields><Field>
-    private Function function; // From <Function>
-    private SourceLocationType location; // From <SourceLocation>
 
     /**
      * Inner class for Field within ExternalEntries Entry.

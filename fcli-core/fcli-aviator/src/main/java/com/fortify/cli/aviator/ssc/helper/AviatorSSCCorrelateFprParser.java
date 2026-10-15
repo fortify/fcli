@@ -21,20 +21,20 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fortify.cli.aviator.audit.model.ParsedFprData;
 import com.fortify.cli.aviator.dast.DastIssue;
 import com.fortify.cli.aviator.dast.StreamingWebInspectParser;
-import com.fortify.cli.aviator.fpr.FPRProcessor;
+import com.fortify.cli.aviator.fpr.SastFprParser;
 import com.fortify.cli.aviator.fpr.Vulnerability;
 import com.fortify.cli.aviator.fpr.model.AuditIssue;
 import com.fortify.cli.aviator.fpr.processor.AuditProcessor;
-import com.fortify.cli.aviator.fpr.processor.StreamingFVDLProcessor;
+import com.fortify.cli.aviator.fpr.utils.SourceDecoders;
 import com.fortify.cli.aviator.util.FprHandle;
 import com.fortify.cli.common.exception.FcliSimpleException;
 
 /**
  * Encapsulates FPR parsing for the correlate-sast-dast command.
- * Handles both SAST (FVDL-based) and DAST (WebInspect-based) FPRs,
- * including parser comparison logging for the streaming WebInspect parser.
+ * Handles both SAST (FVDL-based) and DAST (WebInspect-based) FPRs.
  */
 public final class AviatorSSCCorrelateFprParser {
     private static final Logger LOG = LoggerFactory.getLogger(AviatorSSCCorrelateFprParser.class);
@@ -58,15 +58,12 @@ public final class AviatorSSCCorrelateFprParser {
     public static ParseResult parseSastFpr(Path sastfpr) {
         try (FprHandle fprHandle = new FprHandle(sastfpr)) {
             fprHandle.validate();
-            AuditProcessor auditProcessor = new AuditProcessor(fprHandle);
-            Map<String, AuditIssue> auditIssueMap = auditProcessor.processAuditXML();
-            StreamingFVDLProcessor fvdlProcessor = new StreamingFVDLProcessor(fprHandle);
-            FPRProcessor fprProcessor = new FPRProcessor(fprHandle, auditIssueMap, auditProcessor);
-            List<Vulnerability> vulnerabilities = fprProcessor.process(fvdlProcessor);
+            ParsedFprData parsed = SastFprParser.parse(fprHandle, SourceDecoders.defaults());
+            List<Vulnerability> vulnerabilities = parsed.vulnerabilities;
 
             ParseResult result = new ParseResult();
             result.vulnerabilities = vulnerabilities;
-            result.auditIssueMap = auditIssueMap;
+            result.auditIssueMap = parsed.auditIssueMap;
             if (!vulnerabilities.isEmpty()) {
                 result.scanGuid = vulnerabilities.get(0).getUuid();
                 result.buildId = vulnerabilities.get(0).getBuildId();
@@ -81,7 +78,6 @@ public final class AviatorSSCCorrelateFprParser {
 
     /**
      * Parses a DAST FPR using the streaming WebInspect parser.
-     * Also runs the DOM parser in parallel for comparison logging.
      */
     public static ParseResult parseDastFpr(Path dastfpr) {
         try (FprHandle fprHandle = new FprHandle(dastfpr)) {
