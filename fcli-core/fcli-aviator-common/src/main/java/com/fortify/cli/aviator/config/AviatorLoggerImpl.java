@@ -12,15 +12,12 @@
  */
 package com.fortify.cli.aviator.config;
 
-import java.util.regex.Pattern;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fortify.cli.common.progress.helper.IProgressWriter;
 
 public class AviatorLoggerImpl implements IAviatorLogger {
-    private static final Pattern LINE_BREAK = Pattern.compile("\\R");
     private final IProgressWriter progressWriter;
     private final Logger logger = LoggerFactory.getLogger("com.fortify.cli.aviator");
 
@@ -31,11 +28,7 @@ public class AviatorLoggerImpl implements IAviatorLogger {
     @Override
     public void progress(String format, Object... args) {
         String message = String.format(format, args);
-        // Names and server messages may contain line breaks. Adapt only console
-        // rendering to the writer's capabilities; retain the original in the log.
-        String consoleMessage = progressWriter.isMultiLineSupported()
-                ? message : LINE_BREAK.matcher(message).replaceAll(" ");
-        progressWriter.writeProgress(consoleMessage);
+        progressWriter.writeProgress(message); // Console
         logger.info(message);
     }
 
