@@ -1,5 +1,20 @@
 # Changelog
 
+## [3.28.2](https://github.com/fortify/fcli/compare/v3.28.1...v3.28.2) (2026-10-16)
+
+
+### Bug Fixes
+
+* `fcli aviator ssc audit-dast`: Improve exception output for non-technical errors; for example, report a clear message instead of a stack trace when the FPR is not a DAST FPR ([ff9fff9](https://github.com/fortify/fcli/commit/ff9fff9e8cb4080c1ae22c5c7e3457b1fe133e8c))
+* `fcli aviator ssc audit-sast`: Report unavailable counts and quota decisions accurately ([6587f4f](https://github.com/fortify/fcli/commit/6587f4f2e0ceec5546d85ef852c5ed00b7f5ea5b))
+* `fcli aviator ssc audit-sast`: Stop the presence check after the first eligible issue and validate counts for quota checks ([6587f4f](https://github.com/fortify/fcli/commit/6587f4f2e0ceec5546d85ef852c5ed00b7f5ea5b))
+* `fcli aviator ssc audit-sast`: Throw exception & return non-zero exit code on failure, instead of returning a `FAILED` result with exit code 0                                                                              ([ff9fff9](https://github.com/fortify/fcli/commit/ff9fff9e8cb4080c1ae22c5c7e3457b1fe133e8c))
+* `fcli aviator ssc audit`: Throw exception & return non-zero exit code on failure, instead of returning a `FAILED` result with exit code 0                                                                                   ([ff9fff9](https://github.com/fortify/fcli/commit/ff9fff9e8cb4080c1ae22c5c7e3457b1fe133e8c))
+* `fcli aviator ssc audit`: Use the same preflight and quota checks as `audit-sast` ([6587f4f](https://github.com/fortify/fcli/commit/6587f4f2e0ceec5546d85ef852c5ed00b7f5ea5b))
+* `fcli aviator ssc correlate-sast-dast`: Improve exception output for non-technical errors; for example, show the server error message (such as another operation already running for the application) without a stack trace ([ff9fff9](https://github.com/fortify/fcli/commit/ff9fff9e8cb4080c1ae22c5c7e3457b1fe133e8c))
+* `fcli aviator`: Reduce repeated work and object retention during FPR parsing ([6587f4f](https://github.com/fortify/fcli/commit/6587f4f2e0ceec5546d85ef852c5ed00b7f5ea5b))
+* `fcli aviator`: Resolve forward Reason trace references and parse ExternalEntries fields ([6587f4f](https://github.com/fortify/fcli/commit/6587f4f2e0ceec5546d85ef852c5ed00b7f5ea5b))
+
 ## [3.28.1](https://github.com/fortify/fcli/compare/v3.28.0...v3.28.1) (2026-10-09)
 
 
