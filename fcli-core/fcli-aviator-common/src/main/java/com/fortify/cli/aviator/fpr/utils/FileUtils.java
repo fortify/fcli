@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.slf4j.Logger;
@@ -42,9 +43,17 @@ import com.fortify.cli.aviator.util.StringUtil;
  */
 public class FileUtils {
     private static final Logger logger = LoggerFactory.getLogger(FileUtils.class);
+    private static final Fragment EMPTY_FRAGMENT = new Fragment("", 0, 0);
     private final Map<Path, List<String>> fileContentCache = new ConcurrentHashMap<>();
+    // Many trace nodes share the same file/line; share the immutable results instead of copying text per node.
+    private final Map<FragmentKey, Fragment> fragmentCache = new ConcurrentHashMap<>();
+    private final Map<LineKey, String> lineCache = new ConcurrentHashMap<>();
+    private final Set<String> languagesWithoutCommentSymbol = ConcurrentHashMap.newKeySet();
     private final ISourceDecoder sourceDecoder;
     private final FVDLMetadata fvdlMetadata;
+
+    private record LineKey(String relativePath, int lineNumber) {}
+    private record FragmentKey(String relativePath, int lineNumber, int linesBefore, int linesAfter) {}
 
     public FileUtils() {
         this(SourceDecoders.defaults(), null);
@@ -104,6 +113,12 @@ public class FileUtils {
      * Extracts a single line from a file's content.
      */
     public String getLineFromFile(FprHandle fprHandle, String relativePath, int lineNumber) {
+        if (relativePath == null) return "";
+        return lineCache.computeIfAbsent(new LineKey(relativePath, lineNumber),
+            k -> readLineFromFile(fprHandle, relativePath, lineNumber));
+    }
+
+    private String readLineFromFile(FprHandle fprHandle, String relativePath, int lineNumber) {
         Path fullSourcePath = resolveFullPath(fprHandle, relativePath);
         if (fullSourcePath == null) return "";
 
@@ -111,7 +126,7 @@ public class FileUtils {
         if (lineNumber > 0 && lines.size() >= lineNumber) {
             return appendLineNumbers(lines.get(lineNumber - 1), relativePath, lineNumber - 1);
         }
-        logger.info("Could not get line {} from file {} (total lines: {})", lineNumber, fullSourcePath, lines.size());
+        logger.debug("Could not get line {} from file {} (total lines: {})", lineNumber, fullSourcePath, lines.size());
         return "";
     }
 
@@ -119,18 +134,24 @@ public class FileUtils {
      * Extracts a code fragment (a few lines of code) from a file.
      */
     public Fragment getFragmentFromFile(FprHandle fprHandle, String relativePath, int lineNumber, int linesBefore, int linesAfter) {
+        if (relativePath == null) return EMPTY_FRAGMENT;
+        return fragmentCache.computeIfAbsent(new FragmentKey(relativePath, lineNumber, linesBefore, linesAfter),
+            k -> readFragmentFromFile(fprHandle, relativePath, lineNumber, linesBefore, linesAfter));
+    }
+
+    private Fragment readFragmentFromFile(FprHandle fprHandle, String relativePath, int lineNumber, int linesBefore, int linesAfter) {
         Path fullSourcePath = resolveFullPath(fprHandle, relativePath);
         if (fullSourcePath == null) {
-            return new Fragment("", 0, 0);
+            return EMPTY_FRAGMENT;
         }
 
         List<String> lines = readFileWithFallback(fullSourcePath, relativePath);
         if (lines.isEmpty() || lineNumber <= 0) {
-            return new Fragment("", 0, 0);
+            return EMPTY_FRAGMENT;
         }
 
         int startLine = Math.max(1, lineNumber - linesBefore) + 1;
-        int endLine = Math.min(lines.toArray().length - 1, lineNumber + linesAfter) + 1;
+        int endLine = Math.min(lines.size() - 1, lineNumber + linesAfter) + 1;
 
         StringBuilder sb = new StringBuilder();
         for (int i = startLine - 1; i < endLine; i++) {
@@ -147,7 +168,7 @@ public class FileUtils {
     private Path resolveFullPath(FprHandle fprHandle, String relativePath) {
         String internalPath = fprHandle.getSourceFileMap().get(relativePath);
         if (internalPath == null) {
-            logger.debug("Source file key not found in sourceFileMap: {}", relativePath);
+            logger.trace("Source file key not found in sourceFileMap: {}", relativePath);
             return null;
         }
         // Gets the Path from the virtual file system
@@ -190,7 +211,9 @@ public class FileUtils {
                 : resolvedLanguage;
         String commentSymbol = LanguageCommentMapperUtil.getProgrammingLanguageComment(language);
         if(commentSymbol.equals("Unknown")) {
-            logger.warn("No Comment symbol is there so line numbers not appended");
+            if (languagesWithoutCommentSymbol.add(String.valueOf(language))) {
+                logger.warn("No comment symbol for language {}; line numbers not appended", language);
+            }
             return content;
         }
         StringBuilder result = new StringBuilder();

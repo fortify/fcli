@@ -55,10 +55,8 @@ public class NodeParser {
 
         if (nodeId == null) {
             nodeId = "inline_" + System.nanoTime();
-            logger.debug("Node has no ID attribute - generating temporary ID: {}", nodeId);
+            logger.trace("Node has no ID attribute - generating temporary ID: {}", nodeId);
         }
-
-        logger.debug("Start parseNode for nodeId: {}", nodeId);
 
         String filePath = "";
         int line = 0;
@@ -90,13 +88,8 @@ public class NodeParser {
         List<String> reasonTraceRefs = new ArrayList<>();
         List<StreamedTrace> reasonInlineTraces = new ArrayList<>();
 
-        logger.debug("Node {} - Initial attributes: label={}, detailsOnly={}", nodeId, label, detailsOnly);
-
         while (reader.hasNext()) {
             int event = reader.next();
-
-            if((event == XMLStreamConstants.START_ELEMENT || event == XMLStreamConstants.END_ELEMENT))
-                logger.debug("[parseNode {}] Event: {}, LocalName: {}", nodeId, getEventTypeName(event), reader.getLocalName());
 
             if (event == XMLStreamConstants.START_ELEMENT) {
                 String localName = reader.getLocalName();
@@ -109,7 +102,7 @@ public class NodeParser {
                     colStart = parseIntOrDefault(reader, "colStart", 0);
                     colEnd = parseIntOrDefault(reader, "colEnd", 0);
                     contextId = getAttributeOrDefault(reader, "contextId", "");
-                    logger.debug("Node {} - Parsed SourceLocation: path={}, line={}", nodeId, filePath, line);
+                    logger.trace("Node {} - Parsed SourceLocation: path={}, line={}", nodeId, filePath, line);
 
                 } else if ("SecondaryLocation".equals(localName)) {
                     secondaryPath = getAttributeOrDefault(reader, "path", "");
@@ -118,12 +111,11 @@ public class NodeParser {
                     secondaryColStart = parseIntOrDefault(reader, "colStart", 0);
                     secondaryColEnd = parseIntOrDefault(reader, "colEnd", 0);
                     secondaryContextId = getAttributeOrDefault(reader, "contextId", "");
-                    logger.debug("Node {} - Parsed SecondaryLocation: path={}, line={}", nodeId, secondaryPath, secondaryLine);
+                    logger.trace("Node {} - Parsed SecondaryLocation: path={}, line={}", nodeId, secondaryPath, secondaryLine);
 
                 } else if ("Action".equals(localName)) {
                     actionType = getAttributeOrDefault(reader, "type", "");
                     additionalInfo = readElementText(reader);
-                    logger.debug("Node {} - Parsed Action: type={}", nodeId, actionType);
                     continue;
 
                 } else if ("Fact".equals(localName)) {
@@ -148,25 +140,42 @@ public class NodeParser {
                     }
 
                 } else if ("Reason".equals(localName)) {
-                    logger.debug("Node {} - Parsing Reason element", nodeId);
                     ruleId = parseReasonElement(reader, reasonTraceRefs, reasonInlineTraces,
-                                                reasonTextBuilder, ruleId, nodeId);
+                                                reasonTextBuilder, ruleId);
                 }
             } else if (event == XMLStreamConstants.END_ELEMENT) {
                 if ("Node".equals(reader.getLocalName())) {
-                    logger.debug("Node {} - Parsing complete", nodeId);
                     break;
                 }
             }
         }
 
-        return new Node(
-            nodeId, filePath, line, lineEnd, colStart, colEnd, contextId, snippet,
-            actionType, additionalInfo, ruleId, taintFlags, knowledge,
-            secondaryPath, secondaryLine, secondaryLineEnd, secondaryColStart,
-            secondaryColEnd, secondaryContextId, detailsOnly, label,
-            reasonTextBuilder.toString().trim(), reasonTraceRefs, reasonInlineTraces
-        );
+        return Node.builder()
+            .id(nodeId)
+            .filePath(filePath)
+            .line(line)
+            .lineEnd(lineEnd)
+            .colStart(colStart)
+            .colEnd(colEnd)
+            .contextId(contextId)
+            .snippet(snippet)
+            .actionType(actionType)
+            .additionalInfo(additionalInfo)
+            .associatedRuleId(ruleId)
+            .taintFlags(taintFlags)
+            .knowledge(knowledge)
+            .secondaryPath(secondaryPath)
+            .secondaryLine(secondaryLine)
+            .secondaryLineEnd(secondaryLineEnd)
+            .secondaryColStart(secondaryColStart)
+            .secondaryColEnd(secondaryColEnd)
+            .secondaryContextId(secondaryContextId)
+            .detailsOnly(detailsOnly)
+            .label(label)
+            .reasonText(reasonTextBuilder.toString().trim())
+            .reasonTraceRefs(reasonTraceRefs)
+            .reasonInlineTraces(reasonInlineTraces)
+            .build();
     }
 
     /**
@@ -177,10 +186,8 @@ public class NodeParser {
             List<String> reasonTraceRefs,
             List<StreamedTrace> reasonInlineTraces,
             StringBuilder reasonTextBuilder,
-            String currentRuleId,
-            String parentNodeId) throws XMLStreamException {
+            String currentRuleId) throws XMLStreamException {
 
-        logger.debug("[parseReasonElement] Start parsing Reason for node: {}", parentNodeId);
         String ruleId = currentRuleId;
         int depth = 1;
 
@@ -228,12 +235,21 @@ public class NodeParser {
     /**
      * Create a placeholder Node for forward references.
      */
-    public Node createPlaceholderNode(String nodeId) {
-        return new Node(
-            nodeId, "", 0, 0, 0, 0, "", "", "", "", "",
-            new ArrayList<>(), new HashMap<>(), "", 0, 0, 0, 0, "",
-            false, "", "", new ArrayList<>(), new ArrayList<>()
-        );
+    public static Node createPlaceholderNode(String nodeId) {
+        // Collections default to empty in the Node constructor.
+        return Node.builder()
+            .id(nodeId)
+            .filePath("")
+            .contextId("")
+            .snippet("")
+            .actionType("")
+            .additionalInfo("")
+            .associatedRuleId("")
+            .secondaryPath("")
+            .secondaryContextId("")
+            .label("")
+            .reasonText("")
+            .build();
     }
 
     private String getAttributeOrDefault(XMLStreamReader reader, String attrName, String defaultValue) {

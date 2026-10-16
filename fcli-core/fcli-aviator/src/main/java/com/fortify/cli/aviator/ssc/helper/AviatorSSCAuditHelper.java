@@ -17,6 +17,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -56,6 +57,12 @@ public final class AviatorSSCAuditHelper {
     private static final Logger LOG = LoggerFactory.getLogger(AviatorSSCAuditHelper.class);
     private static final int PAGE_LIMIT = 200;
     private AviatorSSCAuditHelper() {}
+
+    /**
+     * Presence of SSC candidates for an FPR download. UNKNOWN preserves the
+     * existing download fallback when SSC cannot complete the check.
+     */
+    public enum AuditableIssuePresence { NONE, PRESENT, UNKNOWN }
 
     /**
      * Builds the final JSON result node for the command output.
@@ -256,11 +263,210 @@ public final class AviatorSSCAuditHelper {
 
         AuditableIssueCountQuery query = resolveAuditableIssueCountQuery(
                 unirest, av, logger, noFilterSet, filterSetTitleOrId, folderNames, forceReaudit);
-        return countEligibleIssues(query, logger);
+        if (query.folderFilter() == null) {
+            long serverCount = forceReaudit ? countForceIssuesOnServer(query) : countNormalIssuesOnServer(query);
+            if (serverCount >= 0) {
+                logger.progress("Status: Found %d auditable issues.", serverCount);
+                return serverCount;
+            }
+        }
+        return countEligibleIssues(query, logger, false);
+    }
+
+    /**
+     * Checks whether any SSC issue is eligible for the requested audit mode,
+     * stopping at the first candidate. A presence result is never an issue total
+     * and must not be used for quota comparisons.
+     */
+    public static AuditableIssuePresence getAuditableIssuePresence(UnirestInstance unirest, SSCAppVersionDescriptor av,
+            AviatorLoggerImpl logger, boolean noFilterSet, String filterSetTitleOrId, List<String> folderNames,
+            boolean forceReaudit) {
+        logger.progress("Status: Checking for auditable issues...");
+        AuditableIssueCountQuery query = resolveAuditableIssueCountQuery(
+                unirest, av, logger, noFilterSet, filterSetTitleOrId, folderNames, forceReaudit);
+        long count = countEligibleIssues(query, logger, true);
+        return count < 0 ? AuditableIssuePresence.UNKNOWN
+                : count == 0 ? AuditableIssuePresence.NONE : AuditableIssuePresence.PRESENT;
     }
 
     private record AuditableIssueCountQuery(UnirestInstance unirest, SSCAppVersionDescriptor av, boolean noFilterSet,
             String filterSetGuid, String folderFilter, boolean forceReaudit) {}
+
+    private record CustomTagSelectors(String notSetFilter, List<String> setFilters) {}
+
+    /**
+     * If no audited issue lacks Analysis, every issue in this scope is a force
+     * candidate under the existing SSC predicate. This proves an exact count
+     * without an OR expression. Other populations retain the full client check.
+     */
+    private static long countForceIssuesOnServer(AuditableIssueCountQuery query) {
+        try {
+            CustomTagSelectors analysis = resolveCustomTagSelectors(query, Constants.ANALYSIS_TAG_ID);
+            if (analysis == null || !hasVerifiedSuppressionExclusion(query)) {
+                return -1;
+            }
+            long total = fetchServerIssueCount(createServerCountRequest(query, null),
+                    issue -> isEligibleForRequestedAudit(issue, true));
+            if (total <= 0) {
+                return total;
+            }
+            long auditedWithoutAnalysis = fetchServerIssueCount(
+                    createServerCountRequest(query, analysis.notSetFilter()).queryString("q", "audited:true"),
+                    issue -> issue.path("audited").asBoolean(false) && !hasAnalysisTag(issue));
+            return auditedWithoutAnalysis == 0 ? total : -1;
+        } catch (RuntimeException e) {
+            LOG.debug("SSC force count unavailable for version {}; using paginated eligibility check", query.av().getVersionId(), e);
+            return -1;
+        }
+    }
+
+    /**
+     * Single selectors are supported by SSC versions that silently ignore grouped
+     * expressions. Verify that Not Set and every defined value partition the
+     * unaudited population before trusting a server count for quota decisions.
+     */
+    private static long countNormalIssuesOnServer(AuditableIssueCountQuery query) {
+        try {
+            CustomTagSelectors selectors = resolveCustomTagSelectors(query, AviatorSSCTagDefs.AVIATOR_STATUS_TAG.getGuid());
+            if (selectors == null || !hasVerifiedSuppressionExclusion(query)) {
+                return -1;
+            }
+            long total = fetchServerIssueCount(createServerCountRequest(query, null),
+                    issue -> !issue.path("audited").asBoolean(false) && !issue.path("suppressed").asBoolean(false));
+            if (total <= 0) {
+                return total;
+            }
+            long unprocessed = fetchServerIssueCount(createServerCountRequest(query, selectors.notSetFilter()),
+                    issue -> isEligibleForRequestedAudit(issue, false));
+            if (unprocessed < 0 || unprocessed > total) {
+                return -1;
+            }
+            long remaining = total - unprocessed;
+            for (String filter : selectors.setFilters()) {
+                String index = filter.substring(filter.lastIndexOf(':') + 1);
+                long processed = fetchServerIssueCount(createServerCountRequest(query, filter), issue ->
+                        !issue.path("audited").asBoolean(false) && !issue.path("suppressed").asBoolean(false)
+                        && isProcessedByAviator(issue) && JsonHelper.stream((ArrayNode) issue.path("_embed").path("auditValues"))
+                                .anyMatch(tag -> AviatorSSCTagDefs.AVIATOR_STATUS_TAG.getGuid().equals(
+                                        tag.path("customTagGuid").asText()) && index.equals(tag.path("customTagIndex").asText())));
+                if (processed < 0 || processed > remaining) {
+                    return -1;
+                }
+                remaining -= processed;
+            }
+            if (remaining != 0) {
+                LOG.debug("SSC Aviator status counts do not partition the unaudited population for version {}; using pagination",
+                        query.av().getVersionId());
+                return -1;
+            }
+            return unprocessed;
+        } catch (RuntimeException e) {
+            // This optional optimization must not make older or malformed selector
+            // responses fail a count that the existing issue endpoint can perform.
+            LOG.debug("SSC server count unavailable for version {}; using paginated eligibility check", query.av().getVersionId(), e);
+            return -1;
+        }
+    }
+
+    private static CustomTagSelectors resolveCustomTagSelectors(AuditableIssueCountQuery query, String guid) {
+        var filters = new SSCIssueFilterHelper(query.unirest(), query.av().getVersionId()).getFilterNodes();
+        String notSet = null;
+        List<String> setFilters = new ArrayList<>();
+        for (JsonNode filter : filters) {
+            if (!"CUSTOMTAG".equals(filter.path("entityType").asText())
+                    || !guid.equals(filter.path("guid").asText()) || !guid.equals(filter.path("value").asText())) {
+                continue;
+            }
+            if (!"LIST".equals(filter.path("filterSelectorType").asText()) || !filter.path("selector").hasNonNull("value")) {
+                return null;
+            }
+            String value = filter.path("selector").path("value").asText();
+            if (value.isEmpty()) {
+                notSet = filter.path("technicalFilter").asText();
+            } else if (value.matches("[0-9]+")) {
+                setFilters.add(filter.path("technicalFilter").asText());
+            } else {
+                return null;
+            }
+        }
+        return notSet == null || setFilters.isEmpty() ? null
+                : new CustomTagSelectors(notSet, setFilters.stream().distinct().toList());
+    }
+
+    /**
+     * Verify visibility using a positive control in the same AV/filter-set scope.
+     * An empty inclusion result cannot establish support: the flag or query could
+     * have been ignored. Do not cache this observation across scopes or runs.
+     */
+    private static boolean hasVerifiedSuppressionExclusion(AuditableIssueCountQuery query) {
+        long included = fetchServerIssueCount(createSuppressionProbeRequest(query, true),
+                issue -> issue.path("suppressed").asBoolean(false));
+        if (included <= 0) {
+            LOG.debug("No suppressed positive control for version {}; using paginated eligibility check",
+                    query.av().getVersionId());
+            return false;
+        }
+        long excluded = fetchServerIssueCount(createSuppressionProbeRequest(query, false),
+                issue -> issue.path("suppressed").asBoolean(false));
+        if (excluded != 0) {
+            LOG.debug("SSC suppression exclusion could not be verified for version {}; using pagination",
+                    query.av().getVersionId());
+            return false;
+        }
+        return true;
+    }
+
+    private static GetRequest createSuppressionProbeRequest(AuditableIssueCountQuery query, boolean includeSuppressed) {
+        // Start from the scope alone so q=audited:false is not combined with, or
+        // duplicated by, q=suppressed:true in normal-audit mode.
+        return createScopedIssuesRequest(query)
+                .queryString("q", "suppressed:true").queryString("showsuppressed", Boolean.toString(includeSuppressed))
+                .queryString("limit", 1).queryString("start", 0).queryString("embed", "auditValues");
+    }
+
+    private static GetRequest createServerCountRequest(AuditableIssueCountQuery query, String filter) {
+        GetRequest request = createAuditableIssuesRequest(query)
+                .queryString("limit", 1).queryString("start", 0).queryString("embed", "auditValues")
+                // Only the preview is checked client-side; exclude suppressed issues
+                // from the entire server count rather than relying on SSC defaults.
+                .queryString("showsuppressed", "false");
+        if (filter != null) {
+            request.queryString("filter", filter);
+        }
+        return request;
+    }
+
+    private static long fetchServerIssueCount(GetRequest request, Predicate<JsonNode> expectedIssue) {
+        JsonNode response = request.asObject(JsonNode.class).getBody();
+        long count = getReportedIssueCount(response);
+        if (count < 0) {
+            return -1;
+        }
+        ArrayNode issues = (ArrayNode) response.path("data");
+        if (issues.size() != (count == 0 ? 0 : 1)) {
+            return -1;
+        }
+        return JsonHelper.stream(issues).allMatch(issue -> issue.path("_embed").path("auditValues").isArray()
+                && expectedIssue.test(issue)) ? count : -1;
+    }
+
+    private static long getReportedIssueCount(JsonNode response) {
+        if (response == null || !response.path("data").isArray() || response.path("responseCode").asInt(200) != 200) {
+            return -1;
+        }
+        JsonNode count = response.path("count");
+        if (!count.isIntegralNumber() || !count.canConvertToLong() || count.longValue() < 0
+                || response.path("data").size() > count.longValue()) {
+            return -1;
+        }
+        return count.longValue();
+    }
+
+    private static long issueCountUnavailable(AviatorLoggerImpl logger, String reason) {
+        LOG.warn("SSC issue count unavailable: {}.", reason);
+        logger.progress("WARN: SSC issue count unavailable: %s.", reason);
+        return -1;
+    }
 
     private static AuditableIssueCountQuery resolveAuditableIssueCountQuery(UnirestInstance unirest, SSCAppVersionDescriptor av,
             AviatorLoggerImpl logger, boolean noFilterSet, String filterSetTitleOrId, List<String> folderNames,
@@ -306,30 +512,53 @@ public final class AviatorSSCAuditHelper {
         return folderFilter;
     }
 
-    private static long countEligibleIssues(AuditableIssueCountQuery query, AviatorLoggerImpl logger) {
+    private static long countEligibleIssues(AuditableIssueCountQuery query, AviatorLoggerImpl logger, boolean stopAfterFirst) {
         try {
             long totalAuditableCount = 0;
-            int start = 0;
+            long start = 0;
             long totalFromServer = -1;
             do {
                 JsonNode response = fetchAuditableIssuesPage(query, start);
-                if (response == null || !response.has("data")) {
-                    LOG.warn("Invalid response received from issue check; proceeding with FPR download.");
-                    logger.progress("WARN: Invalid response from issue check. Proceeding with FPR download.");
-                    return -1;
+                long reportedCount = getReportedIssueCount(response);
+                if (reportedCount < 0) {
+                    return issueCountUnavailable(logger, "invalid response from the issue check");
                 }
                 if (totalFromServer == -1) {
-                    totalFromServer = response.get("count").asLong(0);
+                    totalFromServer = reportedCount;
                     LOG.debug("SSC reported {} total issues matching the initial auditable count query for version {}",
                             totalFromServer, query.av().getVersionId());
+                } else if (reportedCount != totalFromServer) {
+                    return issueCountUnavailable(logger, "reported count changed during pagination");
                 }
                 ArrayNode issues = (ArrayNode) response.get("data");
-                if (issues == null || issues.isEmpty()) {
+                if (start > totalFromServer || issues.size() > totalFromServer - start) {
+                    return issueCountUnavailable(logger, "page size disagrees with the reported count");
+                }
+                if (issues.isEmpty() && start < totalFromServer) {
+                    return issueCountUnavailable(logger, "pagination ended before the reported count");
+                }
+                if (issues.isEmpty()) {
                     LOG.debug("SSC returned no more issues for version {} at start={}; stopping pagination with cumulativeAuditableCount={} and totalFromServer={}",
                             query.av().getVersionId(), start, totalAuditableCount, totalFromServer);
                     break;
                 }
-                long auditableOnPage = countEligibleOnPage(issues, query.forceReaudit());
+                long auditableOnPage = countEligibleOnPage(issues, query.forceReaudit(), stopAfterFirst);
+                if (stopAfterFirst && auditableOnPage > 0) {
+                    LOG.debug("Found an auditable SSC issue for version {} at pageStart={}; stopping presence check",
+                            query.av().getVersionId(), start);
+                    logger.progress("Status: Found auditable issues.");
+                    return 1;
+                }
+                if (stopAfterFirst && start == 0 && !query.forceReaudit() && query.folderFilter() == null
+                        && issues.size() < totalFromServer) {
+                    // Avoid scanning a large processed population just to prove
+                    // absence. Failed server verification still continues pagination.
+                    long serverCount = countNormalIssuesOnServer(query);
+                    if (serverCount >= 0) {
+                        logger.progress("Status: Found %d auditable issues.", serverCount);
+                        return serverCount;
+                    }
+                }
                 totalAuditableCount += auditableOnPage;
                 LOG.debug("Processed SSC issues page for version {}: pageStart={}, pageSize={}, auditableOnPage={}, cumulativeAuditableCount={}, totalFromServer={}",
                         query.av().getVersionId(), start, issues.size(), auditableOnPage, totalAuditableCount, totalFromServer);
@@ -341,23 +570,33 @@ public final class AviatorSSCAuditHelper {
             logger.progress("Status: Found %d auditable issues.", totalAuditableCount);
             return totalAuditableCount;
         } catch (UnexpectedHttpResponseException e) {
-            LOG.warn("Failed to retrieve auditable issue count from SSC (HTTP {}). This may happen on older SSC versions. Defaulting to downloading the FPR.", e.getStatus(), e);
-            logger.progress("WARN: Failed to retrieve issue count from SSC. Proceeding with FPR download as a fallback.");
-            return -1;
+            LOG.debug("Failed to retrieve SSC issue count (HTTP {})", e.getStatus(), e);
+            return issueCountUnavailable(logger, String.format("HTTP %d from the issue check", e.getStatus()));
         }
     }
 
-    private static JsonNode fetchAuditableIssuesPage(AuditableIssueCountQuery query, int start) {
-        GetRequest request = query.unirest().get(SSCUrls.PROJECT_VERSION_ISSUES(query.av().getVersionId()))
+    private static JsonNode fetchAuditableIssuesPage(AuditableIssueCountQuery query, long start) {
+        LOG.debug("Requesting SSC issues page for version {} with start={} and limit={}",
+                query.av().getVersionId(), start, PAGE_LIMIT);
+        return createAuditableIssuesRequest(query)
                 .queryString("limit", PAGE_LIMIT)
                 .queryString("embed", "auditValues")
-                .queryString("qm", "issues")
-                .queryString("start", start);
+                .queryString("start", start).asObject(JsonNode.class).getBody();
+    }
+
+    private static GetRequest createAuditableIssuesRequest(AuditableIssueCountQuery query) {
+        GetRequest request = createScopedIssuesRequest(query);
         // Normal audit only needs unaudited issues. Force re-audit must also
-        // retrieve Aviator-processed issues, which SSC marks audited after Analysis is set.
+        // retrieve Aviator-processed issues that SSC may already mark audited.
         if (!query.forceReaudit()) {
             request.queryString("q", "audited:false");
         }
+        return request;
+    }
+
+    private static GetRequest createScopedIssuesRequest(AuditableIssueCountQuery query) {
+        GetRequest request = query.unirest().get(SSCUrls.PROJECT_VERSION_ISSUES(query.av().getVersionId()))
+                .queryString("qm", "issues");
         if (query.noFilterSet()) {
             request.queryString("showhidden", "true");
         }
@@ -367,15 +606,12 @@ public final class AviatorSSCAuditHelper {
         if (query.folderFilter() != null) {
             request.queryString("filter", query.folderFilter());
         }
-        LOG.debug("Requesting SSC issues page for version {} with start={} and limit={}",
-                query.av().getVersionId(), start, PAGE_LIMIT);
-        return request.asObject(JsonNode.class).getBody();
+        return request;
     }
 
-    private static long countEligibleOnPage(ArrayNode issues, boolean forceReaudit) {
-        return JsonHelper.stream(issues)
-                .filter(issue -> isEligibleForRequestedAudit(issue, forceReaudit))
-                .count();
+    private static long countEligibleOnPage(ArrayNode issues, boolean forceReaudit, boolean stopAfterFirst) {
+        var eligibleIssues = JsonHelper.stream(issues).filter(issue -> isEligibleForRequestedAudit(issue, forceReaudit));
+        return stopAfterFirst ? (eligibleIssues.findFirst().isPresent() ? 1 : 0) : eligibleIssues.count();
     }
 
     /**
@@ -493,11 +729,11 @@ public final class AviatorSSCAuditHelper {
                 return QUOTA_APP_NOT_FOUND;
             }
             LOG.warn("Failed to retrieve quota for application '{}': {}", appName, e.getMessage());
-            logger.progress("WARN: Could not retrieve Aviator quota for app '%s'. Proceeding without quota check.", appName);
+            logger.progress("WARN: Aviator quota unavailable for app '%s'.", appName);
             return QUOTA_UNKNOWN;
         } catch (Exception e) {
             LOG.warn("Failed to retrieve quota for application '{}': {}", appName, e.getMessage());
-            logger.progress("WARN: Could not retrieve Aviator quota for app '%s'. Proceeding without quota check.", appName);
+            logger.progress("WARN: Aviator quota unavailable for app '%s'.", appName);
             return QUOTA_UNKNOWN;
         }
     }

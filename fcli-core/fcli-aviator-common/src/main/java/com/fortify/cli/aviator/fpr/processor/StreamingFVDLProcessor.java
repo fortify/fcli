@@ -45,6 +45,7 @@ import lombok.Getter;
 @AllArgsConstructor
 public class StreamingFVDLProcessor {
     private static final Logger logger = LoggerFactory.getLogger(StreamingFVDLProcessor.class);
+    private static final int MEMORY_SAMPLE_INTERVAL = 10_000;
     private final XMLInputFactory xmlInputFactory;
     @Getter
     private final FVDLMetadata fvdlMetadata;
@@ -53,10 +54,15 @@ public class StreamingFVDLProcessor {
     private final DescriptionProcessor descriptionProcessor;
     @Getter
     private final Map<String, String> sourceFileMap;
-    private final List<StreamedVulnerability> rawVulnerabilities;
     @Getter
     private final List<Vulnerability> vulnerabilities;
     private final FprHandle fprHandle;
+    private final StackTraceConverter stackTraceConverter;
+    // Many vulnerabilities render the same description text; keep one copy of each.
+    private final Map<String, String> renderedDescriptions = new HashMap<>();
+    private final DescriptionCleanupCache descriptionCleanupCache = new DescriptionCleanupCache();
+    // Vulnerabilities of the same rule usually have equal knowledge; share one read-only map.
+    private final Map<Map<String, String>, Map<String, String>> sharedKnowledgeMaps = new HashMap<>();
     /*private final Path extractedPath;
     private final IndexXMLProcessor indexXMLProcessor;*/
 
@@ -66,12 +72,6 @@ public class StreamingFVDLProcessor {
     private final TraceParser traceParser;
     private final DescriptionParser descriptionParser;
     private final MetadataParser metadataParser;
-
-    // Peak memory tracking
-    private long peakMemoryBeforeParsing = 0;
-    private long peakMemoryPass1 = 0;
-    private long peakMemoryPass2 = 0;
-    private long peakMemoryPostProcessing = 0;
 
     public StreamingFVDLProcessor(FprHandle fprHandle) {
         this(fprHandle, SourceDecoders.defaults());
@@ -90,7 +90,7 @@ public class StreamingFVDLProcessor {
         // Same metadata instance FileUtils will see once encodings are registered during parse.
         this.fileUtils = new FileUtils(
                 Objects.requireNonNull(sourceDecoder, "sourceDecoder"), this.fvdlMetadata);
-        this.rawVulnerabilities = new ArrayList<>();
+        this.stackTraceConverter = new StackTraceConverter(fileUtils, fprHandle, fvdlMetadata);
         this.vulnerabilities = new ArrayList<>();
         this.descriptionProcessor = new DescriptionProcessor();
 
@@ -110,7 +110,8 @@ public class StreamingFVDLProcessor {
      * TWO-PASS PARSING STRATEGY:
     * Pass 1: Parse metadata and pools (NodePool, TracePool, ContextPool, Descriptions, EngineData)
      *         This populates the reference pools needed for vulnerability parsing.
-     * Pass 2: Parse Vulnerabilities with fully populated pools
+     * Pass 2: Parse Vulnerabilities with fully populated pools and convert each one as soon as it is parsed,
+     *         so raw parse results never accumulate in memory.
      *         NodeRef lookups now succeed because NodePool is populated.
      *
      * @param zipFile zipFile for FPR file
@@ -119,17 +120,7 @@ public class StreamingFVDLProcessor {
      */
     public void parse(ZipFile zipFile, String entryName) throws Exception {
         logger.info("=== Two-Pass Streaming Parsing Started for FVDL file ===");
-
-        // Initialize memory tracking
-        memoryTracker.initializeBaseline();
-        memoryTracker.logMemoryConsumption("Before Parsing (Baseline)");
-
-        /*logger.info("Loading source file map");
-        //indexXMLProcessor.loadSourceFileMap();*/
-
-        // Update peak after loading source file map
-        memoryTracker.updatePass1Peak();
-
+        logMemory("Before Parsing");
 
         ZipEntry fvdlEntry = zipFile.getEntry(entryName);
         if (fvdlEntry == null) {
@@ -142,135 +133,60 @@ public class StreamingFVDLProcessor {
             // ========================================
             logger.info(">>> PASS 1: Parsing metadata and pools (NodePool, TracePool, ContextPool, Descriptions, EngineData)");
             long pass1Start = System.currentTimeMillis();
-            memoryTracker.initializePass1Peak();
 
             try (InputStream is1 = zipFile.getInputStream(fvdlEntry)) {
                 parseMetadataAndPools(is1);
-                memoryTracker.updatePass1Peak();
             }
 
             long pass1Time = System.currentTimeMillis() - pass1Start;
             logger.info("<<< PASS 1 Complete - Time: {}ms", pass1Time);
-
-            memoryTracker.logMemoryConsumptionWithPeak("After PASS 1", memoryTracker.getPeakMemoryPass1(),
-                fvdlMetadata, rawVulnerabilities, vulnerabilities);
+            logMemory("PASS 1");
 
             // ========================================
-            // PASS 2: Parse Vulnerabilities
+            // PASS 2: Parse and Convert Vulnerabilities
             // ========================================
-            logger.info(">>> PASS 2: Parsing vulnerabilities (with populated pools)");
+            logger.info(">>> PASS 2: Parsing and converting vulnerabilities (with populated pools)");
             long pass2Start = System.currentTimeMillis();
-            memoryTracker.initializePass2Peak();
 
             try (InputStream is2 = zipFile.getInputStream(fvdlEntry)) {
                 parseVulnerabilitiesOnly(is2);
-                memoryTracker.updatePass2Peak();
             }
 
             long pass2Time = System.currentTimeMillis() - pass2Start;
             logger.info("<<< PASS 2 Complete - Time: {}ms", pass2Time);
-            logger.info("    - Vulnerabilities parsed: {}", rawVulnerabilities.size());
-            memoryTracker.logMemoryConsumptionWithPeak("After PASS 2", memoryTracker.getPeakMemoryPass2(),
-                fvdlMetadata, rawVulnerabilities, vulnerabilities);
+            logger.info("    - Vulnerabilities processed: {}", vulnerabilities.size());
+            logMemory("PASS 2");
 
-            // ========================================
-            // Post-Processing: Enrich Vulnerabilities (Batch Processing)
-            // ========================================
-            logger.info(">>> Post-Processing: Enriching vulnerabilities in batches");
-            long processStart = System.currentTimeMillis();
-            memoryTracker.initializePostProcessingPeak();
+            releaseParsingState();
+            logMemory("Releasing Parsing State");
 
-            int batchSize = 1000;
-            int totalVulns = rawVulnerabilities.size();
-            int totalBatches = (int) Math.ceil((double) totalVulns / batchSize);
-
-            for (int batchNum = 0; batchNum < totalBatches; batchNum++) {
-                int start = batchNum * batchSize;
-                int end = Math.min(start + batchSize, totalVulns);
-                // Process current batch
-                for (int i = start; i < end; i++) {
-                    StreamedVulnerability rawVuln = rawVulnerabilities.get(i);
-                    Vulnerability enrichedVuln = processVulnerability(rawVuln, vulnFinalizer);
-                    vulnerabilities.add(enrichedVuln);
-
-                    // Null out processed raw vulnerability to enable GC
-                    rawVulnerabilities.set(i, null);
-                }
-
-                // Track peak memory every 10 batches
-                if (batchNum % 10 == 0) {
-                    memoryTracker.updatePostProcessingPeak();
-                }
-            }
-
-            // Final peak check
-            memoryTracker.updatePostProcessingPeak();
-
-            long processTime = System.currentTimeMillis() - processStart;
-            logger.info("<<< Post-Processing Complete - Time: {}ms", processTime);
-            logger.info("    - Processed {} vulnerabilities in {} batches", totalVulns, totalBatches);
-            memoryTracker.logMemoryConsumptionWithPeak("After Post-Processing",
-                memoryTracker.getPeakMemoryPostProcessing(), fvdlMetadata, rawVulnerabilities, vulnerabilities);
-
-            // ========================================
-            // Memory Optimization: Clear DescriptionCache and RuleMetadata
-            // ========================================
-            logger.info(">>> Memory Optimization: Clearing DescriptionCache and RuleMetadata");
-
-            long descCount = fvdlMetadata.getDescriptionCache().size();
-            long descMemoryEstimate = memoryTracker.estimateDescriptionCacheMemory(fvdlMetadata);
-            fvdlMetadata.getDescriptionCache().clear();
-            logger.info("    - Cleared {} descriptions (~{} MB)",
-                descCount, String.format("%.2f", descMemoryEstimate / (1024.0 * 1024.0)));
-
-            long ruleCount = fvdlMetadata.getRuleMetadata().size();
-            long ruleMemoryEstimate = memoryTracker.estimateRuleMetadataMemory(fvdlMetadata);
-            fvdlMetadata.getRuleMetadata().clear();
-            logger.info("    - Cleared {} rule metadata entries (~{} KB)",
-                ruleCount, String.format("%.2f", ruleMemoryEstimate / 1024.0));
-
-            memoryTracker.logMemoryConsumption("After Clearing Metadata Caches");
-
-            // ========================================
-            // Memory Optimization: Clear Raw Vulnerabilities
-            // ========================================
-            logger.info(">>> Memory Optimization: Clearing raw vulnerabilities list");
-            long rawVulnCount = rawVulnerabilities.size();
-            long rawVulnMemoryEstimate = memoryTracker.estimateVulnerabilitiesMemory(rawVulnerabilities);
-            rawVulnerabilities.clear();
-            logger.info("    - Cleared {} raw vulnerabilities (~{} MB)",
-                rawVulnCount, String.format("%.2f", rawVulnMemoryEstimate / (1024.0 * 1024.0)));
-            memoryTracker.logMemoryConsumption("After Clearing Raw Vulnerabilities");
-
-            // ========================================
-            // OPTIONAL: Clear NodePool and TracePool
-            // ========================================
-            logger.info(">>> Memory Optimization: Clearing NodePool and TracePool");
-            long nodePoolSize = fvdlMetadata.getNodePool().size();
-            long tracePoolSize = fvdlMetadata.getTracePool().size();
-            long nodePoolMemoryEstimate = memoryTracker.estimateNodePoolMemory(fvdlMetadata);
-            long tracePoolMemoryEstimate = memoryTracker.estimateTracePoolMemory(fvdlMetadata);
-            fvdlMetadata.getNodePool().clear();
-            fvdlMetadata.getTracePool().clear();
-            logger.info("    - Cleared NodePool ({} nodes, ~{} MB) and TracePool ({} traces, ~{} MB)",
-                nodePoolSize, String.format("%.2f", nodePoolMemoryEstimate / (1024.0 * 1024.0)),
-                tracePoolSize, String.format("%.2f", tracePoolMemoryEstimate / (1024.0 * 1024.0)));
-            memoryTracker.logMemoryConsumption("After Clearing Pools");
-
-            // ========================================
-            // Summary
-            // ========================================
-            long totalTime = pass1Time + pass2Time + processTime;
-            logger.info("=== Two-Pass Parsing Complete ===");
-            logger.info("    Total Time: {}ms (Pass1: {}ms, Pass2: {}ms, Process: {}ms)",
-                totalTime, pass1Time, pass2Time, processTime);
-            logger.info("    Overhead: ~{:.1f}% compared to single-pass estimate",
-                ((pass1Time + pass2Time) / (double)(pass1Time + pass2Time) * 100) - 100);
+            logger.info("=== Two-Pass Parsing Complete - Total Time: {}ms (Pass1: {}ms, Pass2: {}ms) ===",
+                pass1Time + pass2Time, pass1Time, pass2Time);
 
         } catch (XMLStreamException e) {
             throw new IOException("Failed to parse FVDL: " + e.getMessage(), e);
         }
 
+    }
+
+    private void logMemory(String phase) {
+        memoryTracker.logPhase(phase, fvdlMetadata, vulnerabilities.size());
+    }
+
+    /** Releases pools and caches that are only needed while converting vulnerabilities. */
+    private void releaseParsingState() {
+        logger.debug("Releasing parsing state: descriptions={}, rules={}, nodes={}, traces={}",
+            fvdlMetadata.getDescriptionCache().size(), fvdlMetadata.getRuleMetadata().size(),
+            fvdlMetadata.getNodePool().size(), fvdlMetadata.getTracePool().size());
+        fvdlMetadata.getDescriptionCache().clear();
+        descriptionProcessor.clearCompiledTemplates();
+        fvdlMetadata.getRuleMetadata().clear();
+        fvdlMetadata.getNodePool().clear();
+        fvdlMetadata.getTracePool().clear();
+        stackTraceConverter.clear();
+        renderedDescriptions.clear();
+        descriptionCleanupCache.clear();
+        sharedKnowledgeMaps.clear();
     }
 
 
@@ -515,23 +431,16 @@ public class StreamingFVDLProcessor {
      * Delegates node parsing to NodeParser.
      */
     private void parseNodePool(XMLStreamReader reader) throws XMLStreamException {
-        logger.debug("Start parse UnifiedNodePool");
-
         while (reader.hasNext()) {
             int event = reader.next();
 
             if (event == XMLStreamConstants.START_ELEMENT) {
                 if ("Node".equals(reader.getLocalName())) {
-                    String nodeId = reader.getAttributeValue(null, "id");
-                    logger.debug("Found Node with ID: {}", nodeId);
-
-                    // Delegate to NodeParser
                     Node node = nodeParser.parseNode(reader, null);
 
                     if (node != null) {
                         fvdlMetadata.getNodePool().put(node.getId(), node);
                         fvdlMetadata.setTotalNodes(fvdlMetadata.getTotalNodes() + 1);
-                        logger.debug("Successfully added node {} to pool. Total nodes: {}", node.getId(), fvdlMetadata.getNodePool().size());
                     }
                 }
             } else if (event == XMLStreamConstants.END_ELEMENT) {
@@ -548,27 +457,18 @@ public class StreamingFVDLProcessor {
      * Delegates to TraceParser.
      */
     private void parseTracePool(XMLStreamReader reader) throws XMLStreamException {
-        logger.debug("start Unified Trace pool");
-
         while (reader.hasNext()) {
             int event = reader.next();
-
-            if((event == XMLStreamConstants.START_ELEMENT || event == XMLStreamConstants.END_ELEMENT))
-                logger.debug("[parseTracePool] Event: {}, LocalName: {}", getEventTypeName(event), reader.getLocalName());
 
             if (event == XMLStreamConstants.START_ELEMENT) {
                 if ("Trace".equals(reader.getLocalName())) {
                     String traceId = reader.getAttributeValue(null, "id");
-                    logger.debug("Trace Id {} ", traceId);
                     if (traceId != null && !traceId.isEmpty()) {
-                        logger.debug("TraceId not empty and not null {} ", traceId );
-                        // Delegate to TraceParser
                         StreamedTrace trace =
                             traceParser.parseStreamedTrace(reader, traceId);
                         if (trace != null) {
                             fvdlMetadata.getTracePool().put(traceId, trace);
                             fvdlMetadata.setTotalTraces(fvdlMetadata.getTotalTraces() + 1);
-                            logger.debug("Successfully added trace {} to pool. Total traces: {}", traceId, fvdlMetadata.getTracePool().size());
                         }
                     } else {
                         logger.warn("Trace missing or invalid ID, skipping");
@@ -576,20 +476,17 @@ public class StreamingFVDLProcessor {
                 }
             } else if (event == XMLStreamConstants.END_ELEMENT) {
                 if ("UnifiedTracePool".equals(reader.getLocalName())) {
-                    logger.debug("Reached end of UnifiedTracePool, exiting loop");
                     break;
                 }
             }
         }
-        logger.debug("Trace processed are {} ", fvdlMetadata.getTracePool().size());
+        logger.debug("Traces processed: {}", fvdlMetadata.getTracePool().size());
     }
 
     /**
      * Parse ContextPool section.
      */
     private void parseContextPool(XMLStreamReader reader) throws XMLStreamException {
-        logger.debug("Start parse ContextPool");
-
         while (reader.hasNext()) {
             int event = reader.next();
 
@@ -651,14 +548,14 @@ public class StreamingFVDLProcessor {
     }
 
     private void parseVulnerabilities(XMLStreamReader reader) throws XMLStreamException {
-        logger.info("Start parse Vulnerabilities");
-
         while (reader.hasNext()) {
             int event = reader.next();
             if (event == XMLStreamConstants.START_ELEMENT) {
                 if ("Vulnerability".equals(reader.getLocalName())) {
-                    StreamedVulnerability vuln = parseVulnerability(reader);
-                    rawVulnerabilities.add(vuln);
+                    vulnerabilities.add(processVulnerability(parseVulnerability(reader), vulnFinalizer));
+                    if (vulnerabilities.size() % MEMORY_SAMPLE_INTERVAL == 0) {
+                        memoryTracker.sample();
+                    }
                 }
             } else if (event == XMLStreamConstants.END_ELEMENT) {
                 if ("Vulnerabilities".equals(reader.getLocalName())) {
@@ -669,7 +566,6 @@ public class StreamingFVDLProcessor {
     }
 
     private StreamedVulnerability parseVulnerability(XMLStreamReader reader) throws XMLStreamException {
-        logger.debug("=== START parseVulnerability ===");
         StreamedVulnerability.StreamedVulnerabilityBuilder builder = StreamedVulnerability.builder();
         List<StreamedVulnerability.Trace> traces = new ArrayList<>();
         List<Map<String, String>> auxiliaryDataList = new ArrayList<>();
@@ -677,7 +573,6 @@ public class StreamingFVDLProcessor {
         Map<String, String> externalIdsMap = new HashMap<>();
 
         String currentSection = null;
-        logger.debug("[parseVulnerability] Initialized traces list: {}", traces.size());
 
         // Process until we hit the CLOSING </Vulnerability> tag
         while (reader.hasNext()) {
@@ -685,10 +580,8 @@ public class StreamingFVDLProcessor {
 
             if (event == XMLStreamConstants.START_ELEMENT) {
                 String localName = reader.getLocalName();
-                logger.debug("[parseVulnerability] START_ELEMENT: {}", localName);
 
                 switch (localName) {
-                    // ...existing code...
                     case "ClassInfo":
                         currentSection = "ClassInfo";
                         break;
@@ -733,12 +626,9 @@ public class StreamingFVDLProcessor {
                         builder.confidence(parseDoubleSafe(readElementText(reader)));
                         break;
                     case "Trace":
-                        logger.debug("[parseVulnerability] Found Trace element. Current traces count: {}", traces.size());
                         StreamedVulnerability.Trace trace = parseTrace(reader);
                         if (trace != null) {
                             traces.add(trace);
-                            logger.debug("[parseVulnerability] Added trace with {} nodes. Total traces: {}",
-                                trace.getNodes().size(), traces.size());
                         }
                         break;
                     case "ReplacementDefinitions":
@@ -780,26 +670,11 @@ public class StreamingFVDLProcessor {
             }
         }
 
-        int totalNodes = traces.stream().mapToInt(t -> t.getNodes() != null ? t.getNodes().size() : 0).sum();
-        logger.debug("[parseVulnerability] Building vulnerability - traces: {}, total nodes: {}", traces.size(), totalNodes);
         builder.traces(traces);
         builder.auxiliaryData(auxiliaryDataList);
         builder.externalEntries(externalEntriesList);
         builder.externalIds(externalIdsMap);
-
-        StreamedVulnerability vuln = builder.build();
-        int vulnTotalNodes = vuln.getTraces() != null ?
-            vuln.getTraces().stream().mapToInt(t -> t.getNodes() != null ? t.getNodes().size() : 0).sum() : 0;
-        logger.debug("[parseVulnerability] Built vulnerability - traces: {}, total nodes: {}",
-            vuln.getTraces() != null ? vuln.getTraces().size() : "NULL", vulnTotalNodes);
-
-        // Check which fields are populated
-        // VulnerabilityLoggingUtils.logPopulatedFields(vuln);
-
-        //System.out.println("Traces count: " + vuln.getTraces().size());
-        //populateFilesForVulnerability(vuln, fprPath, sourceFileMap, fileUtils);
-        //return builder.build();
-        return vuln;
+        return builder.build();
     }
 
 
@@ -849,7 +724,7 @@ public class StreamingFVDLProcessor {
         // Store the parsed metadata in the builder
         if (!instanceMetadata.isEmpty()) {
             builder.metadata(instanceMetadata);
-            logger.debug("Parsed {} MetaInfo groups", instanceMetadata.size());
+            logger.trace("Parsed {} MetaInfo groups", instanceMetadata.size());
         }
     }
 
@@ -950,20 +825,13 @@ public class StreamingFVDLProcessor {
     private void parseExternalEntries(XMLStreamReader reader, List<StreamedVulnerability.ExternalEntry> externalEntriesList)
         throws XMLStreamException {
 
-        int depth = 1;
-        while (reader.hasNext() && depth > 0) {
+        while (reader.hasNext()) {
             int event = reader.next();
 
-            if (event == XMLStreamConstants.START_ELEMENT) {
-                if ("Entry".equals(reader.getLocalName())) {
-                    StreamedVulnerability.ExternalEntry entry = parseExternalEntry(reader);
-                    if (entry != null) {
-                        externalEntriesList.add(entry);
-                    }
-                }
-                depth++;
-            } else if (event == XMLStreamConstants.END_ELEMENT) {
-                depth--;
+            if (event == XMLStreamConstants.START_ELEMENT && "Entry".equals(reader.getLocalName())) {
+                externalEntriesList.add(parseExternalEntry(reader));
+            } else if (event == XMLStreamConstants.END_ELEMENT && "ExternalEntries".equals(reader.getLocalName())) {
+                return;
             }
         }
     }
@@ -972,7 +840,7 @@ public class StreamingFVDLProcessor {
      * Parse a single Entry element within ExternalEntries.
      *
      * @param reader XMLStreamReader positioned at Entry start element
-     * @return Parsed ExternalEntry or null
+     * @return Parsed ExternalEntry
      */
     private StreamedVulnerability.ExternalEntry parseExternalEntry(XMLStreamReader reader) throws XMLStreamException {
         StreamedVulnerability.ExternalEntry.ExternalEntryBuilder builder =
@@ -980,17 +848,14 @@ public class StreamingFVDLProcessor {
 
         List<StreamedVulnerability.EntryField> fields = new ArrayList<>();
 
-        int depth = 1;
-        while (reader.hasNext() && depth > 0) {
+        while (reader.hasNext()) {
             int event = reader.next();
 
             if (event == XMLStreamConstants.START_ELEMENT) {
-                String localName = reader.getLocalName();
-
-                switch (localName) {
+                switch (reader.getLocalName()) {
                     case "URL":
-                        builder.url(readElementText(reader));
-                        continue;
+                        builder.url(reader.getElementText());
+                        break;
                     case "Function":
                         // Parse Function element attributes
                         String funcName = reader.getAttributeValue(null, "name");
@@ -1011,14 +876,12 @@ public class StreamingFVDLProcessor {
                         break;
                     case "Fields":
                         parseEntryFields(reader, fields);
-                        continue;
+                        break;
+                    default:
+                        break;
                 }
-                depth++;
-            } else if (event == XMLStreamConstants.END_ELEMENT) {
-                depth--;
-                if ("Entry".equals(reader.getLocalName())) {
-                    break;
-                }
+            } else if (event == XMLStreamConstants.END_ELEMENT && "Entry".equals(reader.getLocalName())) {
+                break;
             }
         }
 
@@ -1035,65 +898,36 @@ public class StreamingFVDLProcessor {
     private void parseEntryFields(XMLStreamReader reader, List<StreamedVulnerability.EntryField> fields)
         throws XMLStreamException {
 
-        int depth = 1;
-        while (reader.hasNext() && depth > 0) {
+        while (reader.hasNext()) {
             int event = reader.next();
 
-            if (event == XMLStreamConstants.START_ELEMENT) {
-                if ("Field".equals(reader.getLocalName())) {
-                    StreamedVulnerability.EntryField field = parseEntryField(reader);
-                    if (field != null) {
-                        fields.add(field);
-                    }
-                }
-                depth++;
-            } else if (event == XMLStreamConstants.END_ELEMENT) {
-                depth--;
+            if (event == XMLStreamConstants.START_ELEMENT && "Field".equals(reader.getLocalName())) {
+                fields.add(parseEntryField(reader));
+            } else if (event == XMLStreamConstants.END_ELEMENT && "Fields".equals(reader.getLocalName())) {
+                return;
             }
         }
     }
 
     /**
-     * Parse a single Field element within Fields.
+     * Parse a single Field element. Per the FVDL schema all values are attributes;
+     * missing values default to "" to match AuxiliaryProcessor.
      *
      * @param reader XMLStreamReader positioned at Field start element
-     * @return Parsed EntryField or null
+     * @return Parsed EntryField
      */
-    private StreamedVulnerability.EntryField parseEntryField(XMLStreamReader reader) throws XMLStreamException {
-        StreamedVulnerability.EntryField.EntryFieldBuilder builder =
-            StreamedVulnerability.EntryField.builder();
+    private StreamedVulnerability.EntryField parseEntryField(XMLStreamReader reader) {
+        return StreamedVulnerability.EntryField.builder()
+            .name(attributeOrEmpty(reader, "name"))
+            .value(attributeOrEmpty(reader, "value"))
+            .type(attributeOrEmpty(reader, "type"))
+            .vulnTag(attributeOrEmpty(reader, "vulnTag"))
+            .build();
+    }
 
-        // Get Field attributes
-        String type = reader.getAttributeValue(null, "type");
-        String vulnTag = reader.getAttributeValue(null, "vulnTag");
-        builder.type(type);
-        builder.vulnTag(vulnTag);
-
-        int depth = 1;
-        while (reader.hasNext() && depth > 0) {
-            int event = reader.next();
-
-            if (event == XMLStreamConstants.START_ELEMENT) {
-                String localName = reader.getLocalName();
-
-                switch (localName) {
-                    case "Name":
-                        builder.name(readElementText(reader));
-                        continue;
-                    case "Value":
-                        builder.value(readElementText(reader));
-                        continue;
-                }
-                depth++;
-            } else if (event == XMLStreamConstants.END_ELEMENT) {
-                depth--;
-                if ("Field".equals(reader.getLocalName())) {
-                    break;
-                }
-            }
-        }
-
-        return builder.build();
+    private static String attributeOrEmpty(XMLStreamReader reader, String name) {
+        String value = reader.getAttributeValue(null, name);
+        return value != null ? value : "";
     }
 
     /**
@@ -1172,7 +1006,7 @@ public class StreamingFVDLProcessor {
                     // Add replacement to data object
                     if (key != null) {
                         replacementData.addReplacement(key, value, path, line, colStart, colEnd);
-                        logger.debug("Parsed Def: key={}, value={}, path={}", key, value, path);
+                        logger.trace("Parsed Def: key={}, value={}, path={}", key, value, path);
                     }
                     continue; // Skip depth increment since we consumed the element
 
@@ -1192,7 +1026,7 @@ public class StreamingFVDLProcessor {
                         attrs.put("colEnd", colEnd != null ? colEnd : "0");
 
                         replacementData.addLocationReplacement(key, attrs);
-                        logger.debug("Parsed LocationDef: key={}, path={}", key, path);
+                        logger.trace("Parsed LocationDef: key={}, path={}", key, path);
                     }
                 }
                 depth++;
@@ -1202,7 +1036,7 @@ public class StreamingFVDLProcessor {
             }
         }
 
-        logger.debug("Parsed ReplacementDefinitions: {} replacements, {} location replacements",
+        logger.trace("Parsed ReplacementDefinitions: {} replacements, {} location replacements",
             replacementData.getReplacements().size(),
             replacementData.getLocationReplacements().size());
 
@@ -1307,19 +1141,8 @@ public class StreamingFVDLProcessor {
         vulnCustom.setAudience(audience);
         vulnCustom.setFiletype(finalMetadata.getOrDefault("DefaultFile", ""));
 
-        // Convert StreamedVulnerability Traces to StackTraces (hierarchical structure maintained)
-        List<List<com.fortify.cli.aviator.audit.model.StackTraceElement>> stackTraces = new ArrayList<>();
-
-        if (streamedVuln.getTraces() != null && !streamedVuln.getTraces().isEmpty()) {
-            int totalNodes = streamedVuln.getTraces().stream()
-                .mapToInt(t -> t.getNodes() != null ? t.getNodes().size() : 0)
-                .sum();
-            //logger.info("Traces count: {}, Total nodes: {}", streamedVuln.getTraces().size(), totalNodes);
-
-            // Convert traces to stackTraces - already returns List<List<StackTraceElement>>
-            stackTraces = convertTracesToStackTraces(streamedVuln.getTraces());
-        }
-
+        List<List<com.fortify.cli.aviator.audit.model.StackTraceElement>> stackTraces =
+            stackTraceConverter.toStackTraces(streamedVuln.getTraces());
         vulnCustom.setStackTrace(stackTraces);
 
         if (!stackTraces.isEmpty()) {
@@ -1342,8 +1165,8 @@ public class StreamingFVDLProcessor {
         // Process descriptions from streaming-parsed descriptionCache in FVDLMetadata
         ReplacementData replacementData = streamedVuln.getReplacementData();
         String[] descs = descriptionProcessor.processForVuln(vulnCustom, vulnCustom.getClassID(), replacementData, fvdlMetadata);
-        vulnCustom.setShortDescription(StringUtil.stripTags(descs[0], true));
-        vulnCustom.setExplanation(StringUtil.stripTags(descs[1], true));
+        vulnCustom.setShortDescription(sharedDescription(descriptionCleanupCache.clean(descs[0])));
+        vulnCustom.setExplanation(sharedDescription(descriptionCleanupCache.clean(descs[1])));
 
         // Set package name from the first file path when the FVDL doesn't provide namespace data.
         if ((vulnCustom.getPackageName() == null || vulnCustom.getPackageName().isEmpty())
@@ -1357,8 +1180,13 @@ public class StreamingFVDLProcessor {
 
         // Finalize to calculate derived fields
         vulnFinalizer.finalize(vulnCustom);
+        vulnCustom.setKnowledge(sharedKnowledgeMaps.computeIfAbsent(vulnCustom.getKnowledge(), Collections::unmodifiableMap));
 
         return vulnCustom;
+    }
+
+    private String sharedDescription(String description) {
+        return renderedDescriptions.computeIfAbsent(description, d -> d);
     }
 
     private void applyContextAttributes(Vulnerability vulnerability, StreamedVulnerability streamedVulnerability) {
@@ -1508,18 +1336,17 @@ public class StreamingFVDLProcessor {
     private List<com.fortify.cli.aviator.fpr.model.Entry> convertExternalEntries(
         List<StreamedVulnerability.ExternalEntry> streamedEntries) {
 
-        List<com.fortify.cli.aviator.fpr.model.Entry> result = new ArrayList<>();
-
         if (streamedEntries == null) {
-            return result;
+            return new ArrayList<>();
         }
 
+        List<com.fortify.cli.aviator.fpr.model.Entry> result = new ArrayList<>(streamedEntries.size());
         for (StreamedVulnerability.ExternalEntry streamedEntry : streamedEntries) {
             com.fortify.cli.aviator.fpr.model.Entry entry = new com.fortify.cli.aviator.fpr.model.Entry();
             entry.setUrl(streamedEntry.getUrl());
 
             // Convert fields
-            List<com.fortify.cli.aviator.fpr.model.Entry.Field> fields = new ArrayList<>();
+            List<com.fortify.cli.aviator.fpr.model.Entry.Field> fields = entry.getFields();
             if (streamedEntry.getFields() != null) {
                 for (StreamedVulnerability.EntryField streamedField : streamedEntry.getFields()) {
                     com.fortify.cli.aviator.fpr.model.Entry.Field field =
@@ -1531,7 +1358,6 @@ public class StreamingFVDLProcessor {
                     fields.add(field);
                 }
             }
-            entry.setFields(fields);
 
             // Note: Function and SourceLocation objects are not fully converted here
             // If needed, create JAXB objects from the streamed data
@@ -1653,233 +1479,6 @@ public class StreamingFVDLProcessor {
         }
     }
 
-    /**
-     * Convert TraceNodes from StreamedVulnerability to StackTraceElements.
-     * Looks up taintFlags and knowledge from the Node pool using nodeId.
-     */
-    /**
-     * Convert hierarchical Trace structure to StackTrace format.
-     * Each Trace becomes a List<StackTraceElement>, maintaining the trace boundaries.
-     *
-     * @param traces List of Trace objects from StreamedVulnerability
-     * @return List of StackTrace lists (List<List<StackTraceElement>>)
-     */
-    private List<List<com.fortify.cli.aviator.audit.model.StackTraceElement>> convertTracesToStackTraces(
-        List<StreamedVulnerability.Trace> traces) {
-        logger.debug("[StreamingFVDLParser][convertTracesToStackTraces] Converting {} traces",
-            traces != null ? traces.size() : 0);
-
-        List<List<com.fortify.cli.aviator.audit.model.StackTraceElement>> allStackTraces = new ArrayList<>();
-
-        if (traces == null || traces.isEmpty()) {
-            return allStackTraces;
-        }
-
-        // Process each trace separately to maintain boundaries
-        for (StreamedVulnerability.Trace trace : traces) {
-            List<com.fortify.cli.aviator.audit.model.StackTraceElement> stackTrace = new ArrayList<>();
-
-            if (trace.getNodes() == null || trace.getNodes().isEmpty()) {
-                logger.warn("Trace has no nodes, skipping");
-                continue;
-            }
-
-            logger.debug("Processing trace with {} nodes", trace.getNodes().size());
-
-            // Convert each Node in the trace to a StackTraceElement
-            for (Node node : trace.getNodes()) {
-                // Convert node using extracted helper method (ensures consistency)
-                com.fortify.cli.aviator.audit.model.StackTraceElement element =
-                    nodeToStackTraceElement(node);
-
-                // NEW: Build innerStackTrace from Reason data
-                List<com.fortify.cli.aviator.audit.model.StackTraceElement> innerStackTrace =
-                    buildInnerStackTrace(node);
-                if (!innerStackTrace.isEmpty()) {
-                    element.setInnerStackTrace(innerStackTrace);
-                    logger.debug("Set innerStackTrace with {} elements for node {}",
-                        innerStackTrace.size(), node.getId());
-                }
-
-                stackTrace.add(element);
-            }
-
-            // Add this trace's stack trace to the collection
-            allStackTraces.add(stackTrace);
-            logger.debug("Converted trace to stackTrace with {} elements", stackTrace.size());
-        }
-
-        logger.debug("Converted {} traces to {} stackTraces", traces.size(), allStackTraces.size());
-        return allStackTraces;
-    }
-
-    /**
-     * Build innerStackTrace for a node based on its Reason element data.
-     *
-     * The Reason element can contain:
-     * - Inline Traces: Parsed during node parsing and stored in reasonInlineTraces
-     * - TraceRefs: References to TracePool traces, stored as IDs in reasonTraceRefs
-     *
-     * Both types are converted to StackTraceElements and combined into innerStackTrace.
-     *
-     * @param node Node with reasonTraceRefs and reasonInlineTraces from Reason parsing
-     * @return List of StackTraceElements for innerStackTrace (empty if no Reason data)
-     */
-    private List<com.fortify.cli.aviator.audit.model.StackTraceElement> buildInnerStackTrace(
-        Node node) {
-
-        List<com.fortify.cli.aviator.audit.model.StackTraceElement> innerTrace = new ArrayList<>();
-
-        if (node == null) {
-            return innerTrace;
-        }
-
-        // Process inline traces from Reason element
-        if (node.getReasonInlineTraces() != null && !node.getReasonInlineTraces().isEmpty()) {
-            logger.debug("Building innerStackTrace from {} inline traces", node.getReasonInlineTraces().size());
-
-            for (com.fortify.cli.aviator.fpr.model.StreamedTrace inlineTrace :
-                node.getReasonInlineTraces()) {
-                List<com.fortify.cli.aviator.audit.model.StackTraceElement> traceElements =
-                    convertStreamedTraceToStackTrace(inlineTrace);
-                innerTrace.addAll(traceElements);
-            }
-        }
-
-        // Process trace references from Reason element (resolve from TracePool)
-        if (node.getReasonTraceRefs() != null && !node.getReasonTraceRefs().isEmpty()) {
-            logger.debug("Building innerStackTrace from {} trace refs", node.getReasonTraceRefs().size());
-
-            for (String traceRefId : node.getReasonTraceRefs()) {
-                com.fortify.cli.aviator.fpr.model.StreamedTrace referencedTrace =
-                    fvdlMetadata.getTracePool().get(traceRefId);
-
-                if (referencedTrace != null) {
-                    List<com.fortify.cli.aviator.audit.model.StackTraceElement> traceElements =
-                        convertStreamedTraceToStackTrace(referencedTrace);
-                    innerTrace.addAll(traceElements);
-                } else {
-                    logger.warn("TraceRef {} not found in TracePool for node {}", traceRefId, node.getId());
-                }
-            }
-        }
-
-        if (!innerTrace.isEmpty()) {
-            logger.debug("Built innerStackTrace with {} elements for node {}", innerTrace.size(), node.getId());
-        }
-
-        return innerTrace;
-    }
-
-    /**
-     * Convert a StreamedTrace to StackTraceElements.
-     *
-     * This is similar to the main trace conversion logic but specifically for
-     * Reason traces (used in innerStackTrace building).
-     *
-     * @param trace StreamedTrace from TracePool or inline from Reason element
-     * @return List of StackTraceElements
-     */
-    private List<com.fortify.cli.aviator.audit.model.StackTraceElement> convertStreamedTraceToStackTrace(
-        com.fortify.cli.aviator.fpr.model.StreamedTrace trace) {
-
-        List<com.fortify.cli.aviator.audit.model.StackTraceElement> elements = new ArrayList<>();
-
-        if (trace == null || trace.getPrimary() == null || trace.getPrimary().getEntries() == null) {
-            return elements;
-        }
-
-        logger.debug("Converting StreamedTrace with {} entries", trace.getPrimary().getEntries().size());
-
-        for (com.fortify.cli.aviator.fpr.model.StreamedTrace.Primary.Entry entry :
-            trace.getPrimary().getEntries()) {
-
-            // CHANGED: Use Node object directly from Entry instead of NodePool lookup
-            // This preserves inline nodes (without IDs) that weren't added to NodePool
-            Node node = entry.getNode();
-
-            if (node != null) {
-                // Convert node to StackTraceElement using extracted helper
-                com.fortify.cli.aviator.audit.model.StackTraceElement element =
-                    nodeToStackTraceElement(node);
-                elements.add(element);
-            } else {
-                // Fallback: Try NodePool lookup if Entry doesn't have node object (shouldn't happen)
-                String nodeId = entry.getNodeId();
-                if (nodeId != null) {
-                    node = fvdlMetadata.getNodePool().get(nodeId);
-                    if (node != null) {
-                        com.fortify.cli.aviator.audit.model.StackTraceElement element =
-                            nodeToStackTraceElement(node);
-                        elements.add(element);
-                    } else {
-                        logger.warn("Node {} referenced in trace not found (Entry has no node, NodePool lookup failed)", nodeId);
-                    }
-                } else {
-                    logger.warn("Entry has null node and null nodeId - skipping");
-                }
-            }
-        }
-
-        logger.debug("Converted StreamedTrace to {} StackTraceElements", elements.size());
-        return elements;
-    }
-
-    /**
-     * Convert a Node to a StackTraceElement.
-     *
-     * Extracted from convertTracesToStackTraces() for reuse in innerStackTrace building.
-     * This ensures consistent conversion logic for both main traces and inner traces.
-     *
-     * @param node Node to convert
-     * @return StackTraceElement
-     */
-    private com.fortify.cli.aviator.audit.model.StackTraceElement nodeToStackTraceElement(
-        Node node) {
-
-        // Get taintFlags as comma-separated string
-        String taintFlagsStr = "";
-        if (node.getTaintFlags() != null && !node.getTaintFlags().isEmpty()) {
-            taintFlagsStr = String.join(", ", node.getTaintFlags());
-        }
-
-        com.fortify.cli.aviator.audit.model.Fragment fragment =
-            fileUtils.getFragmentFromFile(
-                this.fprHandle,
-                node.getFilePath(),
-                node.getLine(),
-                5,  // contextBefore - 5 lines before target line
-                2   // contextAfter - 2 lines after target line
-            );
-
-        // Get code line from file
-        String codeLine = fileUtils.getLineFromFile(this.fprHandle,
-            node.getFilePath(), node.getLine());
-
-        // StackTraceElement constructor: (filename, line, code, nodeType, fragment, additionalInfo, taintflags)
-        com.fortify.cli.aviator.audit.model.StackTraceElement element =
-            new com.fortify.cli.aviator.audit.model.StackTraceElement(
-                node.getFilePath(),
-                node.getLine(),
-                codeLine,
-                node.getActionType() != null ? node.getActionType() : "",
-                fragment,
-                node.getAdditionalInfo() != null ? node.getAdditionalInfo() : "",
-                taintFlagsStr
-            );
-
-        // Set additional fields available via setters
-        if (node.getLabel() != null && !node.getLabel().isEmpty()) {
-            element.setReason(node.getLabel());
-        }
-
-        // Set knowledge map from Node
-        if (node.getKnowledge() != null) {
-            element.setKnowledge(node.getKnowledge());
-        }
-
-        return element;
-    }
     /**
      * Find the longest stack trace.
      */

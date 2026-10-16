@@ -21,9 +21,6 @@ import lombok.Data;
 /**
  * Streaming representation of a UnifiedTrace from FVDL.
  * Replaces JAXB UnifiedTrace for streaming parsing.
- *
- * IMPORTANT: Entry now stores full Node objects to preserve inline nodes
- * through Post-Processing (required for innerStackTrace building).
  */
 @Data
 @Builder
@@ -41,17 +38,14 @@ public class StreamedTrace {
         private List<Entry> entries = new ArrayList<>();
 
         /**
-         * Single trace entry - can contain inline Node or NodeRef.
-         *
-         * CHANGED: Now stores full Node object instead of just nodeId.
-         * This allows inline nodes (without IDs) to be preserved through Post-Processing.
-         * Previously, inline nodes were lost because NodePool lookup with null ID failed.
+         * Single trace entry: either an inline {@link #node} or a NodeRef {@link #nodeId}.
+         * NodeRefs are resolved after parsing, because the referenced node can come later in the file.
          */
         @Data
         @Builder
         public static class Entry {
-            private String nodeId;      // For backward compatibility and debugging (can be null for inline nodes)
-            private Node node;           // Parsed node data, including inline nodes without IDs
+            private String nodeId;      // NodeRef id; null for inline nodes
+            private Node node;           // Inline node; null for NodeRefs
             private boolean isDefault;
 
             /**

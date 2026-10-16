@@ -34,6 +34,7 @@ import com.fortify.cli.aviator.audit.model.FPRAuditResult;
 import com.fortify.cli.aviator.config.AviatorLoggerImpl;
 import com.fortify.cli.aviator.config.TagMappingConfig;
 import com.fortify.cli.aviator.ssc.helper.AviatorSSCAuditHelper;
+import com.fortify.cli.aviator.ssc.helper.AviatorSSCAuditHelper.AuditableIssuePresence;
 import com.fortify.cli.aviator.ssc.helper.AviatorSSCRefreshHelper;
 import com.fortify.cli.aviator.ssc.helper.AviatorSSCTagValidator;
 import com.fortify.cli.aviator.util.FprHandle;
@@ -98,8 +99,7 @@ abstract class AbstractAviatorSSCSastAuditCommand extends AbstractSSCJsonNodeOut
             AviatorSSCRefreshHelper.refreshMetricsIfNeeded(
                 unirest, av, refreshOptions.isRefresh(), refreshOptions.getRefreshTimeout(), logger);
 
-                long auditableIssueCount = AviatorSSCAuditHelper.getAuditableIssueCount(
-                    unirest, av, logger, isNoFilterSet(), getFilterSetTitleOrId(), folderNames, forceReaudit);
+            long auditableIssueCount = getPreflightIssueCount(unirest, av, logger);
             if (auditableIssueCount == 0) {
                 logger.progress("Audit skipped - no auditable issues found matching the specified filters.");
                 ObjectNode result = AviatorSSCAuditHelper.buildResultNode(av, null, "SKIPPED");
@@ -137,6 +137,21 @@ abstract class AbstractAviatorSSCSastAuditCommand extends AbstractSSCJsonNodeOut
 
     boolean isNoFilterSet() {
         return noFilterSet;
+    }
+
+    /**
+     * Quota modes require the full count. Other audits only need a presence check:
+     * return an exact zero to skip, or -1 when the total is unknown, including when
+     * a candidate was found. This keeps a presence result out of quota comparisons.
+     */
+    long getPreflightIssueCount(UnirestInstance unirest, SSCAppVersionDescriptor av, AviatorLoggerImpl logger) {
+        if (isSkipIfExceedingQuota() || testExceedingQuota) {
+            return AviatorSSCAuditHelper.getAuditableIssueCount(
+                    unirest, av, logger, isNoFilterSet(), getFilterSetTitleOrId(), folderNames, forceReaudit);
+        }
+        AuditableIssuePresence presence = AviatorSSCAuditHelper.getAuditableIssuePresence(
+                unirest, av, logger, isNoFilterSet(), getFilterSetTitleOrId(), folderNames, forceReaudit);
+        return presence == AuditableIssuePresence.NONE ? 0 : -1;
     }
 
     private boolean isSkipIfExceedingQuota() {
@@ -181,11 +196,16 @@ abstract class AbstractAviatorSSCSastAuditCommand extends AbstractSSCJsonNodeOut
                 ObjectNode result = AviatorSSCAuditHelper.buildResultNode(av, null, "SKIPPED");
                 AviatorSSCAuditHelper.setOperationMessage(result,
                     "Cannot determine issue count; audit skipped per --skip-if-exceeding-quota");
+                logger.progress("Audit skipped - issue count unavailable; cannot honor --skip-if-exceeding-quota.");
                 return result;
             }
-            LOG.info("Auditable issue count unknown; skipping quota evaluation for {}:{}.",
+            LOG.warn("Auditable issue count unknown; cannot evaluate --test-exceeding-quota for {}:{}.",
                 av.getApplicationName(), av.getVersionName());
-            return null;
+            ObjectNode result = AviatorSSCAuditHelper.buildResultNode(av, null, "QUOTA_UNKNOWN");
+            AviatorSSCAuditHelper.setOperationMessage(result,
+                "Cannot determine issue count; quota check could not be completed");
+            logger.progress("Quota check unavailable - issue count unknown; returning QUOTA_UNKNOWN without auditing.");
+            return result;
         }
 
         return evaluateQuota(unirest, av, effectiveAppName, auditableIssueCount, availableQuota, logger);

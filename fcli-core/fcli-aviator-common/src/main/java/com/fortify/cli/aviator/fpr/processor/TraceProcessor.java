@@ -205,7 +205,15 @@ public class TraceProcessor {
         String additionalInfo = resolvedNode.getAdditionalInfo();
         String taintFlags = String.join(", ", resolvedNode.getTaintFlags());
 
-        StackTraceElement ste = new StackTraceElement(filename, line, codeLine, nodeType, fragment, additionalInfo, taintFlags);
+        StackTraceElement ste = StackTraceElement.builder()
+            .filename(filename)
+            .line(line)
+            .code(codeLine)
+            .nodeType(nodeType)
+            .fragment(fragment)
+            .additionalInfo(additionalInfo)
+            .taintflags(taintFlags)
+            .build();
         ste.setDefault(resolvedNode.isDetailsOnly());
         ste.setReason(resolvedNode.getReasonText());
         ste.setKnowledge(resolvedNode.getKnowledge());

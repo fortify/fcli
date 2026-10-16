@@ -34,6 +34,8 @@ import com.fortify.cli.aviator.fpr.model.StreamedDescription;
 public class DescriptionProcessor {
     private static final Logger logger = LoggerFactory.getLogger(DescriptionProcessor.class);
     private final Map<String, Description> descriptionCache = new ConcurrentHashMap<>();
+    // Keyed by template text; compiled elements are immutable and rendered per vulnerability.
+    private final Map<String, List<Stringable>> compiledTemplates = new ConcurrentHashMap<>();
 
     /**
      * Processes Descriptions section and caches by classID.
@@ -68,15 +70,7 @@ public class DescriptionProcessor {
             logger.debug("No description found for classID: {}", classId);
             return new String[]{"", ""};
         }
-
-        String abstractText = desc.getAbstract() != null ? desc.getAbstract() : "";
-        String explanationText = desc.getExplanation() != null ? desc.getExplanation() : "";
-
-        // Use the new parser to process the text
-        String shortDesc = FvdlParser.parseAndRender(abstractText, vuln, replacementData);
-        String explanation = FvdlParser.parseAndRender(explanationText, vuln, replacementData);
-
-        return new String[]{shortDesc, explanation};
+        return renderDescription(desc.getAbstract(), desc.getExplanation(), vuln, replacementData);
     }
 
     /**
@@ -95,21 +89,28 @@ public class DescriptionProcessor {
             logger.debug("No description found for classID: {}", classId);
             return new String[]{"", ""};
         }
+        return renderDescription(desc.getAbstract(), desc.getExplanation(), vuln, replacementData);
+    }
 
-        String abstractText = desc.getAbstract() != null ? desc.getAbstract() : "";
-        String explanationText = desc.getExplanation() != null ? desc.getExplanation() : "";
+    /** Releases compiled templates once no more vulnerabilities will be processed. */
+    public void clearCompiledTemplates() {
+        compiledTemplates.clear();
+    }
 
+    private String[] renderDescription(String abstractText, String explanationText,
+            Vulnerability vuln, ReplacementData replacementData) {
+        return new String[]{
+            render(abstractText, vuln, replacementData),
+            render(explanationText, vuln, replacementData)
+        };
+    }
 
-            /*logger.info("For classId {} ", classId);
-            logger.info("Streaming abstractText {} ", abstractText);
-            logger.info("Streaming explanationText {} ", explanationText);*/
-
-
-        // Use the new parser to process the text
-        String shortDesc = FvdlParser.parseAndRender(abstractText, vuln, replacementData);
-        String explanation = FvdlParser.parseAndRender(explanationText, vuln, replacementData);
-
-        return new String[]{shortDesc, explanation};
+    private String render(String template, Vulnerability vuln, ReplacementData replacementData) {
+        if (template == null || template.isEmpty()) {
+            return "";
+        }
+        List<Stringable> elements = compiledTemplates.computeIfAbsent(template, FvdlParser::compile);
+        return FvdlParser.render(elements, vuln, replacementData);
     }
 
     /**
@@ -117,6 +118,10 @@ public class DescriptionProcessor {
      * This is used by ParagraphElement to fall back to AltParagraph.
      */
     private static class MissingReplacementException extends RuntimeException {
+        private MissingReplacementException() {
+            // Internal fallback signal, caught by ParagraphElement; no diagnostic stack is consumed.
+            super(null, null, true, false);
+        }
     }
 
     /**
@@ -344,16 +349,15 @@ public class DescriptionProcessor {
         private static final int MAX_NESTING_DEPTH = 100;
 
 
-        public static String parseAndRender(String text, Vulnerability vuln, ReplacementData data) {
-            if (text == null || text.isEmpty()) {
-                return "";
-            }
+        public static List<Stringable> compile(String text) {
             // The content is often wrapped in <Content>...</Content>, remove it.
             if (text.startsWith("<Content>")) {
                 text = text.substring(9, text.length() - 10);
             }
+            return List.copyOf(parse(text));
+        }
 
-            List<Stringable> elements = parse(text);
+        public static String render(List<Stringable> elements, Vulnerability vuln, ReplacementData data) {
             StringBuilder result = new StringBuilder();
             for (Stringable element : elements) {
                 result.append(element.render(vuln, data, false));

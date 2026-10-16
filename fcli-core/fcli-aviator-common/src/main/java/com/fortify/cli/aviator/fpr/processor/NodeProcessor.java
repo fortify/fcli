@@ -158,7 +158,29 @@ public class NodeProcessor {
             }
         }
 
-        return new Node(id, filePath, line, lineEnd, colStart, colEnd, contextId, snippet, actionType, additionalInfo, ruleId, taintFlags, knowledge,
-                secondaryPath, secondaryLine, secondaryLineEnd, secondaryColStart, secondaryColEnd, secondaryContextId, detailsOnly, label, reasonText);
+        return Node.builder()
+                .id(id)
+                .filePath(filePath)
+                .line(line)
+                .lineEnd(lineEnd)
+                .colStart(colStart)
+                .colEnd(colEnd)
+                .contextId(contextId)
+                .snippet(snippet)
+                .actionType(actionType)
+                .additionalInfo(additionalInfo)
+                .associatedRuleId(ruleId)
+                .taintFlags(taintFlags)
+                .knowledge(knowledge)
+                .secondaryPath(secondaryPath)
+                .secondaryLine(secondaryLine)
+                .secondaryLineEnd(secondaryLineEnd)
+                .secondaryColStart(secondaryColStart)
+                .secondaryColEnd(secondaryColEnd)
+                .secondaryContextId(secondaryContextId)
+                .detailsOnly(detailsOnly)
+                .label(label)
+                .reasonText(reasonText)
+                .build();
     }
 }
