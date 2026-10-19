@@ -34,7 +34,6 @@ cli.options:
       context to avoid reporting duplicate issues already identified by SAST, resulting in
       enhanced analysis quality. If not provided, FAA will perform a standalone analysis.
     required: false 
-    default: ${#env('FAA_SCAN_FPR_FILE')}
   appVersion:
     names: --app-version, --av
     description: >-
@@ -48,7 +47,7 @@ cli.options:
       Defaults to the environment variable `FAA_SCAN_OUTPUT_PATH` if not specified.
       If the environment variable is not set, defaults to fortifyaa.sarif in the current working directory.
     required: false 
-    default: ${#ifBlank(#env('FAA_SCAN_OUTPUT_PATH'), 'fortifyaa.sarif')}
+    default: fortifyaa-scan.sarif
   faaPath:
     names: --faa-path, -p
     description: |

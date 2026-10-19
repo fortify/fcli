@@ -230,15 +230,14 @@ formatters:
               `false` to just kick off any configured scans without waiting for completion. Note that doing so
               will skip any post-scan tasks. The `SAST_WAIT_EXTRA_OPTS` environment variable can be used to pass
               extra options to the fcliCmd:fcli fod sast-scan wait-for: command.
-          - names: DO_FAA_SCAN\nFAA_SCAN_EXTRA_OPTS\nFAA_HOME\nFAA_SCAN_FPR_FILE\nFAA_SCAN_OUTPUT_PATH
+          - names: DO_FAA_SCAN\nFAA_SCAN_EXTRA_OPTS\nFAA_HOME
             desc: >-
               The fcli `ci` action supports running a Fortify Agentic Analyzer (FAA) scan.
-              The `DO_FAA_SCAN` environment variable can be set to `false` to disable the FAA scan.
+              The `DO_FAA_SCAN` environment variable can be set to `true` to enable the FAA scan.
               The `FAA_SCAN_EXTRA_OPTS` environment variable can be used to provide additional options to
               the `fortifyaa -scan` command.
-              The `FAA_HOME` environment variable can be used to specify the path to a pre-installed FAA installation.
-              The `FAA_SCAN_FPR_FILE` environment variable can be used to specify the FPR file from a prior SAST scan.
-              The `FAA_SCAN_OUTPUT_PATH` environment variable can be used to specify the output path for the FAA scan results.
+              If `FAA_HOME` is specified, the pre-installed FAA at that location will be registered and used. If not set, 
+              `fcli tool env init --tools=fortifyaa` will attempt to auto-detect and register any available FAA installation.
       - title: Post-Scan Actions
         overview: >
           Configure post-scan tasks including release summaries, policy checks, pull request comments, and
@@ -387,15 +386,14 @@ formatters:
               to provide additional options to the fcliCmd:fcli sc-dast scan start: command. Note that these
               environment variables only control the submission of the scan request; see the information below
               for details on waiting for the scan to complete. 
-          - names: DO_FAA_SCAN\nFAA_SCAN_EXTRA_OPTS\nFAA_HOME\nFAA_SCAN_FPR_FILE\nFAA_SCAN_OUTPUT_PATH
+          - names: DO_FAA_SCAN\nFAA_SCAN_EXTRA_OPTS\nFAA_HOME
             desc: >-
               The fcli `ci` action supports running a Fortify Agentic Analyzer (FAA) scan.
-              The `DO_FAA_SCAN` environment variable can be set to `false` to disable the FAA scan.
+              The `DO_FAA_SCAN` environment variable can be set to `true` to enable the FAA scan.
               The `FAA_SCAN_EXTRA_OPTS` environment variable can be used to provide additional options to
               the `fortifyaa -scan` command.
-              The `FAA_HOME` environment variable can be used to specify the path to a pre-installed FAA installation.
-              The `FAA_SCAN_FPR_FILE` environment variable can be used to specify the FPR file from a prior SAST scan.
-              The `FAA_SCAN_OUTPUT_PATH` environment variable can be used to specify the output path for the FAA scan results.
+              If `FAA_HOME` is specified, the pre-installed FAA at that location will be registered and used. If not set, 
+              `fcli tool env init --tools=fortifyaa` will attempt to auto-detect and register any available FAA installation.
           - names: DO_DEBRICKED_SCAN\nDEBRICKED_SCAN_EXTRA_OPTS\nDEBRICKED_ACCESS_TOKEN\nDEBRICKED_VERSION\nDEBRICKED_HOME
             desc: >-
               The fcli `ci` action supports running a Debricked Software Composition Analysis (SCA) scan, which
