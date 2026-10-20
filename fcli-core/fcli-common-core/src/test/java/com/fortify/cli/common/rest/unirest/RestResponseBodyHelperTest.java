@@ -71,6 +71,7 @@ class RestResponseBodyHelperTest {
         server.createContext("/partial", this::respondPartial);
         server.createContext("/ready-after-2", ex -> respondWhenReady(ex, 2, 200));
         server.createContext("/fail-after-1", ex -> respondWhenReady(ex, 1, 404));
+        server.createContext("/always-accepted", ex -> respond(ex, 202, "application/json", new byte[0]));
         server.createContext("/large", this::respondLarge);
         server.start();
         unirest = UnirestHelper.createUnirestInstance();
@@ -209,6 +210,41 @@ class RestResponseBodyHelperTest {
         assertEquals(2, requestCount.get());
         assertArrayEquals(OLD_CONTENT, Files.readAllBytes(dest));
         assertNoTempFiles();
+    }
+
+    @Test
+    void saveToFileWhenReadyStopsAfterMaxAttemptsAndKeepsDestination() throws Exception {
+        var dest = tempDir.resolve("scan.fpr");
+        Files.write(dest, OLD_CONTENT);
+        var ex = assertThrows(FcliSimpleException.class, () -> RestResponseBodyHelper.saveToFileWhenReady(
+                unirest.get(url("/always-accepted")), dest, null, POLL_INTERVAL, Duration.ZERO, 3));
+
+        assertTrue(ex.getMessage().contains("3 attempts"), ex.getMessage());
+        assertEquals(3, requestCount.get());
+        assertArrayEquals(OLD_CONTENT, Files.readAllBytes(dest));
+        assertNoTempFiles();
+    }
+
+    @Test
+    void saveToFileWhenReadySucceedsOnLastAllowedAttempt() throws Exception {
+        var dest = tempDir.resolve("scan.fpr");
+        pollingDestination = dest;
+        Files.write(dest, OLD_CONTENT);
+        var result = RestResponseBodyHelper.saveToFileWhenReady(
+                unirest.get(url("/ready-after-2")), dest, null, POLL_INTERVAL, Duration.ZERO, 3);
+
+        assertEquals(200, result.status());
+        assertEquals(3, requestCount.get());
+        assertArrayEquals(ZIP_BYTES, Files.readAllBytes(dest));
+    }
+
+    @Test
+    void saveToFileWhenReadyDoesNotSleepAfterLastAttempt() {
+        var dest = tempDir.resolve("scan.fpr");
+        var start = System.nanoTime();
+        assertThrows(FcliSimpleException.class, () -> RestResponseBodyHelper.saveToFileWhenReady(
+                unirest.get(url("/always-accepted")), dest, null, Duration.ofSeconds(5), Duration.ZERO, 1));
+        assertTrue(Duration.ofNanos(System.nanoTime()-start).toSeconds() < 5);
     }
 
     @Test
