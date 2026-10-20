@@ -202,7 +202,15 @@ public class AviatorGrpcClient implements AutoCloseable {
         return GrpcUtil.executeGrpcCall(blockingStub, ApplicationServiceGrpc.ApplicationServiceBlockingStub::addEntitlement, request, Constants.OP_ADD_APP_ENTITLEMENT);
     }
 
-    public ApplicationResponseMessage deleteApplication(String projectId, String signature, String message, String tenantName) {
+        public com.fortify.aviator.application.ApplicationMultiplierOperationResponse reduceEntitlement(
+            String projectId, String signature, String message, String tenantName) {
+        ApplicationById request = ApplicationById.newBuilder().setId(Long.parseLong(projectId)).setSignature(signature)
+            .setMessage(message).setTenantName(tenantName).build();
+        return GrpcUtil.executeGrpcCall(blockingStub, ApplicationServiceGrpc.ApplicationServiceBlockingStub::reduceEntitlement,
+            request, Constants.OP_REDUCE_APP_ENTITLEMENT);
+        }
+
+        public ApplicationResponseMessage deleteApplication(String projectId, String signature, String message, String tenantName) {
         ApplicationById request = ApplicationById.newBuilder().setId(Long.parseLong(projectId)).setSignature(signature).setMessage(message).setTenantName(tenantName).build();
         return GrpcUtil.executeGrpcCall(blockingStub, ApplicationServiceGrpc.ApplicationServiceBlockingStub::deleteApplication, request, Constants.OP_DELETE_APP);
     }

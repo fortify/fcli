@@ -23,6 +23,29 @@ message Application {
   int64 entitlements_consumed = 11;
   int64 effective_initial_quota = 12;
   int64 effective_monthly_quota = 13;
+  repeated int64 active_entitlement_ids = 14;
+  optional ApplicationMultiplierOutcome multiplier_outcome = 15;
+  optional int64 operation_allocation_quota = 16;
+  optional int64 previous_multiplier = 17;
+  optional string operation_message = 18;
+}
+
+enum ApplicationMultiplierOutcome {
+  MULTIPLIER_OUTCOME_UNSPECIFIED = 0;
+  FRESH_ALLOCATION_CREATED = 1;
+  INACTIVE_ALLOCATION_REACTIVATED = 2;
+  MULTIPLIER_REDUCED = 3;
+  NO_CAPACITY = 4;
+}
+
+message ApplicationMultiplierOperationResponse {
+  int64 application_id = 1;
+  int64 previous_multiplier = 2;
+  int64 new_multiplier = 3;
+  int64 quota = 4;
+  ApplicationMultiplierOutcome outcome = 5;
+  string message = 6;
+  Application application = 7;
 }
 
 message CreateApplicationRequest {
@@ -88,6 +111,7 @@ service ApplicationService {
   rpc GetApplication(ApplicationById) returns (Application) {}
   rpc UpdateApplication(UpdateApplicationRequest) returns (Application) {}
   rpc AddEntitlement(ApplicationById) returns (Application) {}
+  rpc ReduceEntitlement(ApplicationById) returns (ApplicationMultiplierOperationResponse) {}
   rpc DeleteApplication(ApplicationById) returns (ApplicationResponseMessage) {}
   rpc ValidateAdminSession(ValidateAdminSessionRequest) returns (google.protobuf.Empty) {}
   rpc ListApplications(ApplicationByTenantName) returns (ApplicationList) {}

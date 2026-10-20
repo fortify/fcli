@@ -5,6 +5,8 @@ option java_package = "com.fortify.aviator.grpc";
 
 package issue;
 
+import "Entitlement.proto";
+
 service AuditorService {
   rpc ProcessStream (stream UserPromptRequest) returns (stream AuditorResponse);
 }
@@ -125,6 +127,8 @@ message AuditorResponse {
   PongResponse pong = 14;
   optional int64 quota = 15;
   optional string quotaLastUpdated = 16;
+  repeated com.fortify.aviator.EntitlementReassignment entitlementReassignments = 17;
+  optional string reassignedEntitlementId = 18;
 }
 
 message AuditResult {
