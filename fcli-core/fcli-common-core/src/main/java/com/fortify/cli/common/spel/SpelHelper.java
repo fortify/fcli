@@ -15,22 +15,19 @@ package com.fortify.cli.common.spel;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 
-import org.springframework.expression.common.TemplateParserContext;
-import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.expression.spel.support.SimpleEvaluationContext;
 
 import com.fortify.cli.common.spel.wrapper.SimpleExpression;
 import com.fortify.cli.common.spel.wrapper.TemplateExpression;
 
 public final class SpelHelper {
-    private static final SpelExpressionParser parser = new SpelExpressionParser();
-    private static final TemplateParserContext templateContext = new TemplateParserContext("${","}");
+    private static final FcliSpelExpressionParser parser = new FcliSpelExpressionParser();
     
     public static final SimpleExpression parseSimpleExpression(String s) {
-        return new SimpleExpression(s, parser.parseExpression(s));
+        return parser.parseSimpleExpression(s);
     }
     public static final TemplateExpression parseTemplateExpression(String s) {
-        return new TemplateExpression(s, parser.parseExpression(s, templateContext));
+        return parser.parseTemplateExpression(s);
     }
     public static final void registerFunctions(SimpleEvaluationContext context, Class<?> clazz) {
         for ( Method m : clazz.getDeclaredMethods() ) {
