@@ -314,6 +314,107 @@ In fcli, the following needs to be taken into account to avoid reflection issues
 
 If a command runs fine on a regular JVM but not when running as a native image, then quite likely this is caused by missing reflection configuration which may be fixed by adding the `+@Reflectable+` annotation to the appropriate classes.
 
+=== Logging in native images
+
+Logback native-image metadata is maintained under
+`fcli-core/fcli-app/src/main/resources/META-INF/native-image/fcli/fcli-app/logback/`.
+When upgrading Logback, validate a rebuilt native binary as well as JVM execution:
+
+* `DefaultJoranConfigurator` and `BasicConfigurator` need their public no-argument constructors registered for reflection.
+  Logback's https://github.com/qos-ch/logback/blob/v_1.6.5/logback-classic/src/main/java/ch/qos/logback/classic/util/ContextInitializer.java[ContextInitializer]
+  loads these classes by name; missing registrations prevent normal logging configuration.
+* Include `ch/qos/logback/core/logback-core-version.properties` and
+  `ch/qos/logback/classic/logback-classic-version.properties` as native-image resources.
+  Newer Logback versions read these files to check version alignment.
+  Missing resources cause an unknown-version warning and dump initialization diagnostics to stdout, corrupting command output.
+* Run functional tests against the rebuilt binary using `-Dft.fcli=/absolute/path/to/fcli`.
+  JVM-only tests do not validate native-image reflection or resource inclusion.
+
+==== Proposal: Evaluate an alternative logging backend
+
+Logging dependency upgrades have repeatedly caused native-image issues.
+Retain the current Logback metadata fix in the short term, but evaluate a backend with upstream-maintained GraalVM support
+in a separate migration. Keep SLF4J as the application logging API; existing SLF4J calls, `{}` placeholders, and Lombok
+`@Slf4j` annotations should remain unchanged.
+
+[cols="1,3,3",options="header"]
+|===
+|Backend |Native-image considerations |Fit for fcli
+
+|Keep Logback
+|The current metadata fix works, but fcli maintains reflection and resource registrations itself.
+|Lowest immediate risk; does not eliminate ongoing metadata maintenance.
+
+|Log4j 2
+|Since 2.25.0, Log4j Core and official extensions ship GraalVM reachability metadata.
+Custom plugins still require appropriate metadata.
+|Preferred alternative: supports separate console/file appenders, custom layouts, and programmatic configuration.
+
+|JDK logging (JUL)
+|Supported by GraalVM, but some handlers and formatters still require metadata.
+|Fewer external dependencies, but preserving fcli formatting, masking, and level semantics requires more custom code.
+
+|SLF4J Simple
+|Simpler initialization and configuration surface.
+|Not recommended: its single output target and limited formatting/configuration do not match fcli's console/file requirements.
+|===
+
+See https://logging.apache.org/log4j/2.x/graalvm.html[Log4j's native-image documentation] for its support guarantees and
+remaining configuration requirements. Upstream metadata reduces maintenance; it does not guarantee regression-free upgrades.
+
+===== Production Java impact
+
+Backend-specific code is concentrated in six production Java files:
+
+[cols="2,3",options="header"]
+|===
+|File |Required migration work
+
+|`fcli-app/.../FortifyCLIDynamicInitializer.java`
+|Replace Logback context, appender, encoder, level, and converter registration APIs.
+Preserve CLI-controlled file logging, overwrite behavior, and default console thresholds.
+
+|`fcli-common-action/.../RunBuildTimeFcliAction.java`
+|Replace Logback-specific build-time file logging and its layout.
+
+|`fcli-common-core/.../AbstractRunnableCommand.java`
+|Remove Logback `Level` objects from the CLI `LogLevel` enum; map levels in the backend initialization code.
+Keep existing CLI option names and accepted values.
+
+|`fcli-common-core/.../LogMessageType.java`
+|Decouple message classification from Logback's `ILoggingEvent`, retaining logger-name and formatted-message classification.
+
+|`fcli-common-core/.../LogMessageTypeConverter.java`
+|Port category formatting to the replacement backend's layout/converter mechanism.
+
+|`fcli-common-core/.../MaskingLogMessageConverter.java`
+|Port masked-message formatting while retaining the backend-independent `LogMaskHelper` engine and its masking policies.
+|===
+
+Paths above are relative to `fcli-core`; abbreviated package paths identify the existing classes.
+Migration also requires replacing the backend dependency and configuration, updating native-image metadata,
+and adapting the directly Logback-coupled test `AbstractRestCallCommandResponseModesTest`.
+For Log4j 2, use the SLF4J 2 provider `log4j-slf4j2-impl`, remove the Logback provider, and avoid conflicting
+reverse bridges such as `log4j-to-slf4j`.
+
+===== Output compatibility and acceptance criteria
+
+The backend change should preserve the existing output contract, rather than adopting backend defaults:
+
+* stdout contains command results only, including tables, JSON, CSV, and RPC output.
+* Default console logging remains message-only WARN/ERROR output on stderr, including existing logger-specific exclusions.
+* File logging retains timestamps, thread names, levels, message categories, abbreviated logger names, key/value pairs,
+  masked messages, and exception details.
+* `--log-file`, `--log-level`, `--log-mask`, and `--debug` retain their existing behavior.
+
+Masking is the most important migration requirement: port the integration, not just the formatting pattern.
+Compare exception rendering, logger abbreviation, and key/value formatting explicitly; equivalent patterns do not
+guarantee byte-for-byte identical output across backends.
+
+Before accepting a migration, run JVM and rebuilt-native tests covering clean startup, stdout/stderr separation,
+table and structured output, file logging, levels, sensitive-value masking, and exception output.
+Keep this as a separate change from general dependency maintenance so failures can be attributed and reverted independently.
+
 == Gradle Wrapper
 
 It is strongly recommended to build this project using the included Gradle Wrapper scripts; using other Gradle versions may result in build errors and other issues.
