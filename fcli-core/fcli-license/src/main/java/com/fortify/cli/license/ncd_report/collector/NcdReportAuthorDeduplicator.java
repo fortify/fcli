@@ -19,10 +19,10 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentSkipListMap;
 
 import org.springframework.expression.Expression;
-import org.springframework.expression.spel.standard.SpelExpressionParser;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.json.JsonHelper;
+import com.fortify.cli.common.spel.FcliSpelExpressionParser;
 import com.fortify.cli.license.ncd_report.config.NcdReportContributorConfig;
 import com.fortify.cli.license.ncd_report.descriptor.NcdReportProcessedAuthorDescriptor;
 
@@ -63,7 +63,7 @@ final class NcdReportAuthorDeduplicator {
     @Getter private final ConcurrentSkipListMap<NcdReportProcessedAuthorDescriptor, Set<NcdReportProcessedAuthorDescriptor>> deduplicatedAuthors = new ConcurrentSkipListMap<>(this::compareAuthorIndex);
     
     public NcdReportAuthorDeduplicator(Optional<NcdReportContributorConfig> contributorConfig) {
-        var parser = new SpelExpressionParser();
+        var parser = new FcliSpelExpressionParser();
         this.dedupeExpression = contributorConfig
                 .flatMap(NcdReportContributorConfig::getDuplicateExpression)
                 .map(parser::parseExpression);

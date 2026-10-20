@@ -26,7 +26,6 @@ import org.springframework.core.convert.converter.Converter;
 import org.springframework.expression.AccessException;
 import org.springframework.expression.EvaluationContext;
 import org.springframework.expression.Expression;
-import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.expression.spel.support.DataBindingPropertyAccessor;
 import org.springframework.expression.spel.support.SimpleEvaluationContext;
 import org.springframework.format.datetime.standard.DateTimeFormatterRegistrar;
@@ -49,7 +48,7 @@ public enum SpelEvaluator implements ISpelEvaluator {
     JSON_QUERY(SpelEvaluator::createJsonQueryContext);
     
     private static final Logger LOG = LoggerFactory.getLogger(SpelEvaluator.class);
-    private static final SpelExpressionParser SPEL_PARSER = new SpelExpressionParser();
+    private static final FcliSpelExpressionParser SPEL_PARSER = new FcliSpelExpressionParser();
     private EvaluationContext context;
     private final Supplier<SimpleEvaluationContext> contextSupplier;
     

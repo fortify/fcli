@@ -514,6 +514,13 @@ Such errors can be avoided using one of the following approaches:
 * Add null-check (exclude all records for which `prop` is `null`): +
   `+fcli ... list -q 'prop1!=null && prop1 matches "value1|value2"'+`
 
+As a convenience, fcli allows integer literals larger than the 32-bit integer range without SpEL's usual `+L+` suffix,
+for example `+id == 3000000000+` instead of `+id == 3000000000L+`.
+Omitting the suffix incurs a small performance cost while parsing the expression, not while evaluating it for each record.
+This applies to decimal and hexadecimal literals in plain and template expressions; small integers and quoted strings are unchanged.
+Values must fit in a signed 64-bit long literal. To express `+Long.MIN_VALUE+`, use `+(-9223372036854775807 - 1)+`,
+as SpEL parses the minus sign separately.
+
 Fcli provides some utility functions that may be used in expressions. Note that these functions calls are preceded by a `+#+` character.
 
 * `+#date(string)+`: Convert the given date/time in string format to a proper date/time representation, allowing for date/time-based comparison operations. This can be used on property references or literal strings.
