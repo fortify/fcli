@@ -17,8 +17,8 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvFileSource;
 import org.springframework.expression.Expression;
 import org.springframework.expression.spel.SpelParseException;
-import org.springframework.expression.spel.standard.SpelExpressionParser;
 
+import com.fortify.cli.common.spel.FcliSpelExpressionParser;
 import com.fortify.cli.ssc._common.rest.ssc.query.SSCQParamGenerator;
 import com.fortify.cli.ssc._common.rest.ssc.query.SSCQParamValueGenerators;
 
@@ -34,7 +34,7 @@ public class SSCQParamGeneratorTest {
     @CsvFileSource(resources = "/com/fortify/cli/ssc/rest/query/qparam.csv", nullValues = "null")
     public void testQParamGenerator(String expressionString, String expectedQParam) {
         try {
-            Expression expression = new SpelExpressionParser().parseExpression(expressionString);
+            Expression expression = new FcliSpelExpressionParser().parseExpression(expressionString);
             String qParam = generator.getServerSideQueryParamValue(expression);
             System.out.println(String.format("INFO: expr: %s, qParam: %s, expected: %s",expressionString, qParam, expectedQParam));
             Assertions.assertEquals(qParam, expectedQParam);

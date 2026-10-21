@@ -316,25 +316,26 @@ If a command runs fine on a regular JVM but not when running as a native image, 
 
 === Logging in native images
 
-Logback native-image metadata is maintained under
-`fcli-core/fcli-app/src/main/resources/META-INF/native-image/fcli/fcli-app/logback/`.
-When upgrading Logback, validate a rebuilt native binary as well as JVM execution:
+Logback loads `DefaultJoranConfigurator` and `BasicConfigurator` reflectively.
+Their no-argument constructors must be registered in
+`fcli-core/fcli-app/src/main/resources/META-INF/native-image/fcli/fcli-app/logback/reflect-config.json`.
+Without these registrations, console warnings may be silently lost even though explicitly configured file logging works.
+After changing logging dependencies or native-image metadata, run the functional tests against a rebuilt native executable,
+including the unsigned-action warning test in `OutputMaskingSpec`, to verify that warnings reach stderr and not stdout.
 
-* `DefaultJoranConfigurator` and `BasicConfigurator` need their public no-argument constructors registered for reflection.
-  Logback's https://github.com/qos-ch/logback/blob/v_1.6.5/logback-classic/src/main/java/ch/qos/logback/classic/util/ContextInitializer.java[ContextInitializer]
-  loads these classes by name; missing registrations prevent normal logging configuration.
-* Include `ch/qos/logback/core/logback-core-version.properties` and
-  `ch/qos/logback/classic/logback-classic-version.properties` as native-image resources.
-  Newer Logback versions read these files to check version alignment.
-  Missing resources cause an unknown-version warning and dump initialization diagnostics to stdout, corrupting command output.
-* Run functional tests against the rebuilt binary using `-Dft.fcli=/absolute/path/to/fcli`.
-  JVM-only tests do not validate native-image reflection or resource inclusion.
+Logback 1.6.5 also reads `ch/qos/logback/core/logback-core-version.properties` and
+`ch/qos/logback/classic/logback-classic-version.properties` to check version alignment.
+Missing resources can cause an unknown-version warning and dump initialization diagnostics to stdout, corrupting command output.
+These resources must be included through the adjacent `resource-config.json`.
+Run functional tests against the rebuilt executable using `-Dft.fcli=/absolute/path/to/fcli`;
+JVM-only tests cannot validate native-image reflection or resource inclusion.
 
 ==== Proposal: Evaluate an alternative logging backend
 
 Logging dependency upgrades have repeatedly caused native-image issues.
-Retain the current Logback metadata fix in the short term, but evaluate a backend with upstream-maintained GraalVM support
-in a separate migration. Keep SLF4J as the application logging API; existing SLF4J calls, `{}` placeholders, and Lombok
+Retain the Logback metadata fix in the short term, but evaluate a backend with upstream-maintained GraalVM support
+in a separate migration. This is a proposal, not a decision to replace Logback.
+Keep SLF4J as the application logging API; existing SLF4J calls, `{}` placeholders, and Lombok
 `@Slf4j` annotations should remain unchanged.
 
 [cols="1,3,3",options="header"]
@@ -342,13 +343,13 @@ in a separate migration. Keep SLF4J as the application logging API; existing SLF
 |Backend |Native-image considerations |Fit for fcli
 
 |Keep Logback
-|The current metadata fix works, but fcli maintains reflection and resource registrations itself.
+|fcli maintains reflection and resource registrations itself.
 |Lowest immediate risk; does not eliminate ongoing metadata maintenance.
 
 |Log4j 2
 |Since 2.25.0, Log4j Core and official extensions ship GraalVM reachability metadata.
 Custom plugins still require appropriate metadata.
-|Preferred alternative: supports separate console/file appenders, custom layouts, and programmatic configuration.
+|Primary candidate to evaluate: supports separate console/file appenders, custom layouts, and programmatic configuration.
 
 |JDK logging (JUL)
 |Supported by GraalVM, but some handlers and formatters still require metadata.
@@ -360,11 +361,13 @@ Custom plugins still require appropriate metadata.
 |===
 
 See https://logging.apache.org/log4j/2.x/graalvm.html[Log4j's native-image documentation] for its support guarantees and
-remaining configuration requirements. Upstream metadata reduces maintenance; it does not guarantee regression-free upgrades.
+remaining configuration requirements. Upstream metadata reduces maintenance; it does not guarantee regression-free upgrades
+or compatibility with fcli's output and masking behavior.
 
-===== Production Java impact
+===== Main integration points
 
-Backend-specific code is concentrated in six production Java files:
+The following production Java files are the main backend-specific integration points to assess during a migration.
+Recheck this inventory before implementation.
 
 [cols="2,3",options="header"]
 |===
@@ -393,7 +396,7 @@ Keep existing CLI option names and accepted values.
 
 Paths above are relative to `fcli-core`; abbreviated package paths identify the existing classes.
 Migration also requires replacing the backend dependency and configuration, updating native-image metadata,
-and adapting the directly Logback-coupled test `AbstractRestCallCommandResponseModesTest`.
+and adapting backend-coupled tests, including `AbstractRestCallCommandResponseModesTest` and `FcliTrustManagerTest`.
 For Log4j 2, use the SLF4J 2 provider `log4j-slf4j2-impl`, remove the Logback provider, and avoid conflicting
 reverse bridges such as `log4j-to-slf4j`.
 
