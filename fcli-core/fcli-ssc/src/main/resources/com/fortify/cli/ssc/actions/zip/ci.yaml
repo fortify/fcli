@@ -82,8 +82,6 @@ steps:
         ${
             #fcliCmdSkipFromEnvReason('FAA_SCAN', true)
         }
-      global.faaScan.fprFile: faa_input_${#action.runID().replace('-','_')}.fpr
-      global.faaScan.fprDownloaded: false
 
       aviator.skipReason: > # Enabled if AVIATOR_TOKEN & AVIATOR_URL specified, unless explicitly disabled
         ${
@@ -207,21 +205,13 @@ steps:
                 - ${SAST_WAIT.dependencySkipReason}                      # Skip if SAST_WAIT was skipped or failed
                 - ${#isDebugEnabled()?'':'--debug flag not specified'}   # Skip if debugging is disabled
             
-            DOWNLOAD_SAST_FPR:
-              cmd: "${#fcliCmd('DOWNLOAD_SAST_FPR', 'sc-sast scan download -t fpr -f')} ${global.faaScan.fprFile} ::sc_sast_scan::"
-              skip.if-reason:
-                - ${SAST_WAIT.dependencySkipReason}                      # Skip if SAST_WAIT was skipped or failed
-                - ${faa.skipReason}                                       # Skip if FAA scan is disabled
-              on.success:
-                - var.set: { global.faaScan.fprDownloaded: true }
-              status.check: false
-            
+            # Pass SAST job token if SAST scan was started; otherwise, disable SAST FPR download
             FAA_SCAN:
               cmd: >
                 ${#actionCmd('FAA_SCAN', 'ssc', 'faa-scan')}
                 "--source-dir=${global.ci.sourceDir}"
                 "--app-version=${global.ci.av}"
-                ${global.faaScan.fprDownloaded ? ' --fpr=' + global.faaScan.fprFile : ''}
+                ${#isBlank(SAST_SCAN.dependencySkipReason) ? '"--sast-job-token=::sc_sast_scan::"' : '"--skip-sast-download=true"'}
               skip.if-reason:
                 - ${faa.skipReason}   
             
