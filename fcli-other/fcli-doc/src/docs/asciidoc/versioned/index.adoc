@@ -622,6 +622,12 @@ Fcli allows for configuring trust store settings through the `fcli config trusts
 When configuring trust stores through `fcli config truststore set`, use `--no-os-truststore` to persistently disable automatic
 OS trust store certificate merge for that configured trust store.
 
+The macOS Keychain trust store is supported when running the fcli JAR, but not when running the native macOS executable,
+due to a https://github.com/oracle/graal/issues/10387[GraalVM Keychain JNI limitation].
+The native macOS executable skips Keychain loading and continues to validate server certificates using its default CA
+certificates and any explicitly configured trust store or trusted URL certificates.
+If a server's CA is trusted only through Keychain, use the fcli JAR or configure a JKS/PKCS12 trust store explicitly.
+
 === Fcli User Home Folder
 
 By default, fcli will use the home directory of the current user for various operations, like storing fcli state and configuration (see next section) or for tool installations (see `fcli tool` manual pages). These locations can be individually overridden through environment variables or command-line options, but in some cases you may want to just specify an alternative 'user home directory' to have all fcli operations use this alternative directory by default, instead of having to override multiple individual directories.

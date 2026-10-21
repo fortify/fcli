@@ -58,6 +58,10 @@ public final class PlatformHelper {
         return "darwin".equals(getOSString());
     }
 
+    public static boolean isNativeImage() {
+        return "runtime".equals(System.getProperty("org.graalvm.nativeimage.imagecode"));
+    }
+
     /**
      * Detects if the current Linux system uses musl libc (e.g., Alpine Linux) instead of glibc.
      * This is important for selecting compatible JRE distributions, as glibc-based JREs

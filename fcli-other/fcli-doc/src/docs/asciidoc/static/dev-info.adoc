@@ -314,6 +314,111 @@ In fcli, the following needs to be taken into account to avoid reflection issues
 
 If a command runs fine on a regular JVM but not when running as a native image, then quite likely this is caused by missing reflection configuration which may be fixed by adding the `+@Reflectable+` annotation to the appropriate classes.
 
+=== Logging in native images
+
+Logback loads `DefaultJoranConfigurator` and `BasicConfigurator` reflectively.
+Their no-argument constructors must be registered in
+`fcli-core/fcli-app/src/main/resources/META-INF/native-image/fcli/fcli-app/logback/reflect-config.json`.
+Without these registrations, console warnings may be silently lost even though explicitly configured file logging works.
+After changing logging dependencies or native-image metadata, run the functional tests against a rebuilt native executable,
+including the unsigned-action warning test in `OutputMaskingSpec`, to verify that warnings reach stderr and not stdout.
+
+When upgrading Logback, also check for newly required resources.
+For example, Logback 1.6.5 reads `ch/qos/logback/core/logback-core-version.properties` and
+`ch/qos/logback/classic/logback-classic-version.properties` to check version alignment.
+Missing resources can cause an unknown-version warning and dump initialization diagnostics to stdout, corrupting command output.
+These resources are an upgrade consideration, not an additional requirement for the current Logback 1.5.23 configuration.
+Run functional tests against the rebuilt executable using `-Dft.fcli=/absolute/path/to/fcli`;
+JVM-only tests cannot validate native-image reflection or resource inclusion.
+
+==== Proposal: Evaluate an alternative logging backend
+
+Logging dependency upgrades have repeatedly caused native-image issues.
+Retain the Logback metadata fix in the short term, but evaluate a backend with upstream-maintained GraalVM support
+in a separate migration. This is a proposal, not a decision to replace Logback.
+Keep SLF4J as the application logging API; existing SLF4J calls, `{}` placeholders, and Lombok
+`@Slf4j` annotations should remain unchanged.
+
+[cols="1,3,3",options="header"]
+|===
+|Backend |Native-image considerations |Fit for fcli
+
+|Keep Logback
+|fcli maintains reflection and resource registrations itself.
+|Lowest immediate risk; does not eliminate ongoing metadata maintenance.
+
+|Log4j 2
+|Since 2.25.0, Log4j Core and official extensions ship GraalVM reachability metadata.
+Custom plugins still require appropriate metadata.
+|Primary candidate to evaluate: supports separate console/file appenders, custom layouts, and programmatic configuration.
+
+|JDK logging (JUL)
+|Supported by GraalVM, but some handlers and formatters still require metadata.
+|Fewer external dependencies, but preserving fcli formatting, masking, and level semantics requires more custom code.
+
+|SLF4J Simple
+|Simpler initialization and configuration surface.
+|Not recommended: its single output target and limited formatting/configuration do not match fcli's console/file requirements.
+|===
+
+See https://logging.apache.org/log4j/2.x/graalvm.html[Log4j's native-image documentation] for its support guarantees and
+remaining configuration requirements. Upstream metadata reduces maintenance; it does not guarantee regression-free upgrades
+or compatibility with fcli's output and masking behavior.
+
+===== Main integration points
+
+The following production Java files are the main backend-specific integration points to assess during a migration.
+Recheck this inventory before implementation.
+
+[cols="2,3",options="header"]
+|===
+|File |Required migration work
+
+|`fcli-app/.../FortifyCLIDynamicInitializer.java`
+|Replace Logback context, appender, encoder, level, and converter registration APIs.
+Preserve CLI-controlled file logging, overwrite behavior, and default console thresholds.
+
+|`fcli-common-action/.../RunBuildTimeFcliAction.java`
+|Replace Logback-specific build-time file logging and its layout.
+
+|`fcli-common-core/.../AbstractRunnableCommand.java`
+|Remove Logback `Level` objects from the CLI `LogLevel` enum; map levels in the backend initialization code.
+Keep existing CLI option names and accepted values.
+
+|`fcli-common-core/.../LogMessageType.java`
+|Decouple message classification from Logback's `ILoggingEvent`, retaining logger-name and formatted-message classification.
+
+|`fcli-common-core/.../LogMessageTypeConverter.java`
+|Port category formatting to the replacement backend's layout/converter mechanism.
+
+|`fcli-common-core/.../MaskingLogMessageConverter.java`
+|Port masked-message formatting while retaining the backend-independent `LogMaskHelper` engine and its masking policies.
+|===
+
+Paths above are relative to `fcli-core`; abbreviated package paths identify the existing classes.
+Migration also requires replacing the backend dependency and configuration, updating native-image metadata,
+and adapting backend-coupled tests, including `AbstractRestCallCommandResponseModesTest` and `FcliTrustManagerTest`.
+For Log4j 2, use the SLF4J 2 provider `log4j-slf4j2-impl`, remove the Logback provider, and avoid conflicting
+reverse bridges such as `log4j-to-slf4j`.
+
+===== Output compatibility and acceptance criteria
+
+The backend change should preserve the existing output contract, rather than adopting backend defaults:
+
+* stdout contains command results only, including tables, JSON, CSV, and RPC output.
+* Default console logging remains message-only WARN/ERROR output on stderr, including existing logger-specific exclusions.
+* File logging retains timestamps, thread names, levels, message categories, abbreviated logger names, key/value pairs,
+  masked messages, and exception details.
+* `--log-file`, `--log-level`, `--log-mask`, and `--debug` retain their existing behavior.
+
+Masking is the most important migration requirement: port the integration, not just the formatting pattern.
+Compare exception rendering, logger abbreviation, and key/value formatting explicitly; equivalent patterns do not
+guarantee byte-for-byte identical output across backends.
+
+Before accepting a migration, run JVM and rebuilt-native tests covering clean startup, stdout/stderr separation,
+table and structured output, file logging, levels, sensitive-value masking, and exception output.
+Keep this as a separate change from general dependency maintenance so failures can be attributed and reverted independently.
+
 == Gradle Wrapper
 
 It is strongly recommended to build this project using the included Gradle Wrapper scripts; using other Gradle versions may result in build errors and other issues.
