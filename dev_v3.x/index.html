@@ -1,6 +1,6 @@
 ---
 title: 'Fortify CLI (fcli) Installation &amp; Usage'
-fcli_version: 0.20261021.102820-dev_v3.x
+fcli_version: 0.20261021.114932-dev_v3.x
 ---
 
 <!DOCTYPE html>
@@ -17,13 +17,13 @@ fcli_version: 0.20261021.102820-dev_v3.x
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20261021.102820-dev_v3.x" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20261021.114932-dev_v3.x" %}
 
 
 <div id="header">
 <h1>Fortify CLI (fcli) Installation &amp; Usage</h1>
 <div class="details">
-<span id="revnumber">version 0.20261021.102820-dev_v3.x</span>
+<span id="revnumber">version 0.20261021.114932-dev_v3.x</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -1334,6 +1334,13 @@ fcli ssc session logout --user &lt;user&gt; --password &lt;password&gt;</code></
 <p>When configuring trust stores through <code>fcli config truststore set</code>, use <code>--no-os-truststore</code> to persistently disable automatic
 OS trust store certificate merge for that configured trust store.</p>
 </div>
+<div class="paragraph">
+<p>The macOS Keychain trust store is supported when running the fcli JAR, but not when running the native macOS executable,
+due to a <a href="https://github.com/oracle/graal/issues/10387">GraalVM Keychain JNI limitation</a>.
+The native macOS executable skips Keychain loading and continues to validate server certificates using its default CA
+certificates and any explicitly configured trust store or trusted URL certificates.
+If a server&#8217;s CA is trusted only through Keychain, use the fcli JAR or configure a JKS/PKCS12 trust store explicitly.</p>
+</div>
 </div>
 <div class="sect2">
 <h3 id="_fcli_user_home_folder"><a class="anchor" href="#_fcli_user_home_folder"></a>Fcli User Home Folder</h3>
@@ -1843,8 +1850,8 @@ may experience any of the following behavior:</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20261021.102820-dev_v3.x<br>
-Last updated 2026-10-21 10:31:56 UTC
+Version 0.20261021.114932-dev_v3.x<br>
+Last updated 2026-10-21 11:53:33 UTC
 </div>
 </div>
 </body>

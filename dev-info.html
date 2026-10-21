@@ -1,6 +1,6 @@
 ---
 title: 'Fortify CLI (fcli) Developer Information'
-fcli_version: 0.20261021.102820-dev_v3.x
+fcli_version: 0.20261021.114932-dev_v3.x
 ---
 
 <!DOCTYPE html>
@@ -17,13 +17,13 @@ fcli_version: 0.20261021.102820-dev_v3.x
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20261021.102820-dev_v3.x" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20261021.114932-dev_v3.x" %}
 
 
 <div id="header">
 <h1>Fortify CLI (fcli) Developer Information</h1>
 <div class="details">
-<span id="revnumber">version 0.20261021.102820-dev_v3.x</span>
+<span id="revnumber">version 0.20261021.114932-dev_v3.x</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -51,6 +51,7 @@ fcli_version: 0.20261021.102820-dev_v3.x
 <li><a href="#_incremental_compilation_java">Incremental Compilation (Java)</a></li>
 <li><a href="#_incremental_compilation_resources">Incremental Compilation (Resources)</a></li>
 <li><a href="#_reflection">Reflection</a></li>
+<li><a href="#_logging_in_native_images">Logging in native images</a></li>
 </ul>
 </li>
 <li><a href="#_gradle_wrapper">Gradle Wrapper</a></li>
@@ -702,6 +703,165 @@ Caused by: java.lang.NoClassDefFoundError: com/fortify/cli/rest/unirest/Abstract
 <p>If a command runs fine on a regular JVM but not when running as a native image, then quite likely this is caused by missing reflection configuration which may be fixed by adding the <code>@Reflectable</code> annotation to the appropriate classes.</p>
 </div>
 </div>
+<div class="sect2">
+<h3 id="_logging_in_native_images"><a class="anchor" href="#_logging_in_native_images"></a>Logging in native images</h3>
+<div class="paragraph">
+<p>Logback loads <code>DefaultJoranConfigurator</code> and <code>BasicConfigurator</code> reflectively.
+Their no-argument constructors must be registered in
+<code>fcli-core/fcli-app/src/main/resources/META-INF/native-image/fcli/fcli-app/logback/reflect-config.json</code>.
+Without these registrations, console warnings may be silently lost even though explicitly configured file logging works.
+After changing logging dependencies or native-image metadata, run the functional tests against a rebuilt native executable,
+including the unsigned-action warning test in <code>OutputMaskingSpec</code>, to verify that warnings reach stderr and not stdout.</p>
+</div>
+<div class="paragraph">
+<p>When upgrading Logback, also check for newly required resources.
+For example, Logback 1.6.5 reads <code>ch/qos/logback/core/logback-core-version.properties</code> and
+<code>ch/qos/logback/classic/logback-classic-version.properties</code> to check version alignment.
+Missing resources can cause an unknown-version warning and dump initialization diagnostics to stdout, corrupting command output.
+These resources are an upgrade consideration, not an additional requirement for the current Logback 1.5.23 configuration.
+Run functional tests against the rebuilt executable using <code>-Dft.fcli=/absolute/path/to/fcli</code>;
+JVM-only tests cannot validate native-image reflection or resource inclusion.</p>
+</div>
+<div class="sect3">
+<h4 id="_proposal_evaluate_an_alternative_logging_backend"><a class="anchor" href="#_proposal_evaluate_an_alternative_logging_backend"></a>Proposal: Evaluate an alternative logging backend</h4>
+<div class="paragraph">
+<p>Logging dependency upgrades have repeatedly caused native-image issues.
+Retain the Logback metadata fix in the short term, but evaluate a backend with upstream-maintained GraalVM support
+in a separate migration. This is a proposal, not a decision to replace Logback.
+Keep SLF4J as the application logging API; existing SLF4J calls, <code>{}</code> placeholders, and Lombok
+<code>@Slf4j</code> annotations should remain unchanged.</p>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 14.2857%;">
+<col style="width: 42.8571%;">
+<col style="width: 42.8572%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Backend</th>
+<th class="tableblock halign-left valign-top">Native-image considerations</th>
+<th class="tableblock halign-left valign-top">Fit for fcli</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Keep Logback</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">fcli maintains reflection and resource registrations itself.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Lowest immediate risk; does not eliminate ongoing metadata maintenance.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Log4j 2</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Since 2.25.0, Log4j Core and official extensions ship GraalVM reachability metadata.
+Custom plugins still require appropriate metadata.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Primary candidate to evaluate: supports separate console/file appenders, custom layouts, and programmatic configuration.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">JDK logging (JUL)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Supported by GraalVM, but some handlers and formatters still require metadata.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Fewer external dependencies, but preserving fcli formatting, masking, and level semantics requires more custom code.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">SLF4J Simple</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Simpler initialization and configuration surface.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Not recommended: its single output target and limited formatting/configuration do not match fcli&#8217;s console/file requirements.</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p>See <a href="https://logging.apache.org/log4j/2.x/graalvm.html">Log4j&#8217;s native-image documentation</a> for its support guarantees and
+remaining configuration requirements. Upstream metadata reduces maintenance; it does not guarantee regression-free upgrades
+or compatibility with fcli&#8217;s output and masking behavior.</p>
+</div>
+<div class="sect4">
+<h5 id="_main_integration_points"><a class="anchor" href="#_main_integration_points"></a>Main integration points</h5>
+<div class="paragraph">
+<p>The following production Java files are the main backend-specific integration points to assess during a migration.
+Recheck this inventory before implementation.</p>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 40%;">
+<col style="width: 60%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">File</th>
+<th class="tableblock halign-left valign-top">Required migration work</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>fcli-app/&#8230;&#8203;/FortifyCLIDynamicInitializer.java</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Replace Logback context, appender, encoder, level, and converter registration APIs.
+Preserve CLI-controlled file logging, overwrite behavior, and default console thresholds.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>fcli-common-action/&#8230;&#8203;/RunBuildTimeFcliAction.java</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Replace Logback-specific build-time file logging and its layout.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>fcli-common-core/&#8230;&#8203;/AbstractRunnableCommand.java</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Remove Logback <code>Level</code> objects from the CLI <code>LogLevel</code> enum; map levels in the backend initialization code.
+Keep existing CLI option names and accepted values.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>fcli-common-core/&#8230;&#8203;/LogMessageType.java</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Decouple message classification from Logback&#8217;s <code>ILoggingEvent</code>, retaining logger-name and formatted-message classification.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>fcli-common-core/&#8230;&#8203;/LogMessageTypeConverter.java</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Port category formatting to the replacement backend&#8217;s layout/converter mechanism.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>fcli-common-core/&#8230;&#8203;/MaskingLogMessageConverter.java</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Port masked-message formatting while retaining the backend-independent <code>LogMaskHelper</code> engine and its masking policies.</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p>Paths above are relative to <code>fcli-core</code>; abbreviated package paths identify the existing classes.
+Migration also requires replacing the backend dependency and configuration, updating native-image metadata,
+and adapting backend-coupled tests, including <code>AbstractRestCallCommandResponseModesTest</code> and <code>FcliTrustManagerTest</code>.
+For Log4j 2, use the SLF4J 2 provider <code>log4j-slf4j2-impl</code>, remove the Logback provider, and avoid conflicting
+reverse bridges such as <code>log4j-to-slf4j</code>.</p>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_output_compatibility_and_acceptance_criteria"><a class="anchor" href="#_output_compatibility_and_acceptance_criteria"></a>Output compatibility and acceptance criteria</h5>
+<div class="paragraph">
+<p>The backend change should preserve the existing output contract, rather than adopting backend defaults:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>stdout contains command results only, including tables, JSON, CSV, and RPC output.</p>
+</li>
+<li>
+<p>Default console logging remains message-only WARN/ERROR output on stderr, including existing logger-specific exclusions.</p>
+</li>
+<li>
+<p>File logging retains timestamps, thread names, levels, message categories, abbreviated logger names, key/value pairs,
+masked messages, and exception details.</p>
+</li>
+<li>
+<p><code>--log-file</code>, <code>--log-level</code>, <code>--log-mask</code>, and <code>--debug</code> retain their existing behavior.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Masking is the most important migration requirement: port the integration, not just the formatting pattern.
+Compare exception rendering, logger abbreviation, and key/value formatting explicitly; equivalent patterns do not
+guarantee byte-for-byte identical output across backends.</p>
+</div>
+<div class="paragraph">
+<p>Before accepting a migration, run JVM and rebuilt-native tests covering clean startup, stdout/stderr separation,
+table and structured output, file logging, levels, sensitive-value masking, and exception output.
+Keep this as a separate change from general dependency maintenance so failures can be attributed and reverted independently.</p>
+</div>
+</div>
+</div>
+</div>
 </div>
 </div>
 <div class="sect1">
@@ -1163,8 +1323,8 @@ public class &lt;Module&gt;&lt;Entity&gt;&lt;Action&gt;Command extends &lt;Super
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20261021.102820-dev_v3.x<br>
-Last updated 2026-10-21 10:28:19 UTC
+Version 0.20261021.114932-dev_v3.x<br>
+Last updated 2026-10-21 11:49:31 UTC
 </div>
 </div>
 </body>
