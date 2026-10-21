@@ -17,6 +17,7 @@ import com.fortify.cli.aviator._common.config.admin.helper.AviatorAdminConfigDes
 import com.fortify.cli.aviator._common.output.cli.cmd.AbstractAviatorAdminSessionOutputCommand;
 import com.fortify.cli.aviator._common.util.AviatorGrpcUtils;
 import com.fortify.cli.aviator._common.util.AviatorSignatureUtils;
+import com.fortify.cli.aviator.app.cli.mixin.AviatorAppResolverMixin;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClient;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClientHelper;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
@@ -25,20 +26,20 @@ import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
-import picocli.CommandLine.Parameters;
 
 @Command(name = "reduce-entitlement")
 public class AviatorAppReduceEntitlementCommand extends AbstractAviatorAdminSessionOutputCommand
         implements IActionCommandResultSupplier {
     @Getter @Mixin private OutputHelperMixins.TableNoQuery outputHelper;
-    @Parameters(index = "0", paramLabel = "<id>") private Long applicationId;
+    @Mixin private AviatorAppResolverMixin.NameOrIdParameter appResolver;
 
     @Override
     protected JsonNode getJsonNode(AviatorAdminConfigDescriptor configDescriptor) {
         try (AviatorGrpcClient client = AviatorGrpcClientHelper.createClient(configDescriptor.getAviatorUrl())) {
+            String applicationId = appResolver.getApplicationId(client, configDescriptor);
             String[] messageAndSignature = AviatorSignatureUtils.createMessageAndSignature(configDescriptor,
-                    configDescriptor.getTenant(), applicationId.toString(), "reduce-entitlement");
-            return AviatorGrpcUtils.grpcToJsonNode(client.reduceEntitlement(applicationId.toString(), messageAndSignature[1],
+                    configDescriptor.getTenant(), applicationId, "reduce-entitlement");
+            return AviatorGrpcUtils.grpcToJsonNode(client.reduceEntitlement(applicationId, messageAndSignature[1],
                     messageAndSignature[0], configDescriptor.getTenant()));
         }
     }
