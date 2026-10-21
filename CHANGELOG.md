@@ -1,5 +1,14 @@
 # Changelog
 
+## [3.28.3](https://github.com/fortify/fcli/compare/v3.28.2...v3.28.3) (2026-10-21)
+
+
+### Bug Fixes
+
+* Don't attempt to load MacOS platform trust store in native binaries as this is broken (see https://github.com/oracle/graal/issues/10387) ([4aeade1](https://github.com/fortify/fcli/commit/4aeade13c74882e7f4da3a20becb5efeff3539b5))
+* Fix warning messages not appearing on console ([4aeade1](https://github.com/fortify/fcli/commit/4aeade13c74882e7f4da3a20becb5efeff3539b5))
+* SpEL expressions & queries: Automatically convert integer literals that exceed the maximum integer range to long values, to prevent expression parsing errors when the `L` (long) suffix is omitted by the user ([2f8cf43](https://github.com/fortify/fcli/commit/2f8cf43ea815e9f8448c042931c0c8af35b4e879))
+
 ## [3.28.2](https://github.com/fortify/fcli/compare/v3.28.1...v3.28.2) (2026-10-16)
 
 
