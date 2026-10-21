@@ -42,7 +42,7 @@ import picocli.CommandLine.Option;
 @Command(name = OutputHelperMixins.Update.CMD_NAME)
 public class AviatorAppUpdateCommand extends AbstractAviatorAdminSessionOutputCommand implements IActionCommandResultSupplier {
     @Getter @Mixin private OutputHelperMixins.Update outputHelper;
-    @Mixin private AviatorAppResolverMixin appResolver;
+    @Mixin private AviatorAppResolverMixin.NameOrIdParameter appResolver;
     @Option(names = {"-n", "--name"}, required = true) private String newName;
     private static final Logger LOG = LoggerFactory.getLogger(AviatorAppUpdateCommand.class);
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm");

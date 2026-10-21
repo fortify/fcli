@@ -36,7 +36,7 @@ import picocli.CommandLine.Mixin;
 @Command(name = OutputHelperMixins.Delete.CMD_NAME)
 public class AviatorAppDeleteCommand extends AbstractAviatorAdminSessionOutputCommand {
     @Getter @Mixin private OutputHelperMixins.Delete outputHelper;
-    @Mixin private AviatorAppResolverMixin appResolver;
+    @Mixin private AviatorAppResolverMixin.NameOrIdParameter appResolver;
     private static final Logger LOG = LoggerFactory.getLogger(AviatorAppDeleteCommand.class);
 
     @Override

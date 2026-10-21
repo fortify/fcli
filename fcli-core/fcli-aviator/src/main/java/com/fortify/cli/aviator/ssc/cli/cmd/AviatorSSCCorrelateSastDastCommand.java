@@ -30,6 +30,7 @@ import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.aviator._common.session.user.cli.mixin.AviatorUserSessionDescriptorSupplier;
 import com.fortify.cli.aviator._common.session.user.helper.AviatorUserSessionDescriptor;
+import com.fortify.cli.aviator.app.cli.mixin.AviatorAppResolverMixin;
 import com.fortify.cli.aviator.config.AviatorLoggerImpl;
 import com.fortify.cli.aviator.dast.DastIssue;
 import com.fortify.cli.aviator.fpr.Vulnerability;
@@ -64,7 +65,6 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
-import picocli.CommandLine.Option;
 
 @Command(name = "correlate-sast-dast")
 public class AviatorSSCCorrelateSastDastCommand extends AbstractSSCJsonNodeOutputCommand implements IActionCommandResultSupplier {
@@ -73,7 +73,7 @@ public class AviatorSSCCorrelateSastDastCommand extends AbstractSSCJsonNodeOutpu
     @Mixin private SSCAppVersionResolverMixin.RequiredOption appVersionResolver;
     @Mixin private AviatorUserSessionDescriptorSupplier sessionDescriptorSupplier;
     @Mixin private SSCAppVersionRefreshOptions refreshOptions;
-    @Option(names = {"--app"}) private String appName;
+    @Mixin private AviatorAppResolverMixin.NameOnlyOption appResolver;
 
     private static final Logger LOG = LoggerFactory.getLogger(AviatorSSCCorrelateSastDastCommand.class);
     private String actionResult = "CORRELATED";
@@ -258,7 +258,7 @@ public class AviatorSSCCorrelateSastDastCommand extends AbstractSSCJsonNodeOutpu
 
             var config = new CorrelationStreamConfig(
                 sessionDescriptor.getAviatorToken(),
-                appName != null ? appName : "",
+                appResolver.getAppName() != null ? appResolver.getAppName() : "",
                 av.getApplicationName(), av.getVersionName(), sastResult.buildId);
 
             CorrelationResult result;

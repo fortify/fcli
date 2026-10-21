@@ -40,7 +40,7 @@ import picocli.CommandLine.Mixin;
 @Command(name = OutputHelperMixins.Get.CMD_NAME)
 public class AviatorAppGetCommand extends AbstractAviatorAdminSessionOutputCommand {
     @Getter @Mixin private OutputHelperMixins.TableNoQuery outputHelper;
-    @Mixin private AviatorAppResolverMixin appResolver;
+    @Mixin private AviatorAppResolverMixin.NameOrIdParameter appResolver;
     private static final Logger LOG = LoggerFactory.getLogger(AviatorAppGetCommand.class);
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm");
 

@@ -28,6 +28,7 @@ import com.fortify.cli.aviator._common.cli.mixin.SourceEncodingsMixin;
 import com.fortify.cli.aviator._common.config.AviatorConfigManager;
 import com.fortify.cli.aviator._common.session.user.cli.mixin.AviatorUserSessionDescriptorSupplier;
 import com.fortify.cli.aviator._common.session.user.helper.AviatorUserSessionDescriptor;
+import com.fortify.cli.aviator.app.cli.mixin.AviatorAppResolverMixin;
 import com.fortify.cli.aviator.audit.AuditFPR;
 import com.fortify.cli.aviator.audit.model.AuditFprOptions;
 import com.fortify.cli.aviator.audit.model.FPRAuditResult;
@@ -67,7 +68,7 @@ abstract class AbstractAviatorSSCSastAuditCommand extends AbstractSSCJsonNodeOut
     @Mixin private AviatorUserSessionDescriptorSupplier sessionDescriptorSupplier;
     @Mixin private SSCAppVersionRefreshOptions refreshOptions;
     @Mixin private SSCIssueFilterSetOptionMixin filterSetOptions;
-    @Option(names = {"--app"}) private String appName;
+    @Mixin private AviatorAppResolverMixin.NameOnlyOption appResolver;
     @Option(names = {"--tag-mapping"}) private String tagMapping;
     @Option(names = {"--no-filterset"}) private boolean noFilterSet;
     @Option(names = {"--folder"}, split = ",") @DisableTest(DisableTest.TestType.MULTI_OPT_PLURAL_NAME) private List<String> folderNames;
@@ -158,7 +159,7 @@ abstract class AbstractAviatorSSCSastAuditCommand extends AbstractSSCJsonNodeOut
             return null;
         }
 
-        String effectiveAppName = appName != null ? appName : av.getApplicationName();
+        String effectiveAppName = appResolver.getAppName() != null ? appResolver.getAppName() : av.getApplicationName();
         long availableQuota = AviatorSSCAuditHelper.getAvailableQuota(
             sessionDescriptor.getAviatorUrl(), sessionDescriptor.getAviatorToken(),
             effectiveAppName, logger);
@@ -274,7 +275,7 @@ abstract class AbstractAviatorSSCSastAuditCommand extends AbstractSSCJsonNodeOut
         try (FprHandle fprHandle = new FprHandle(downloadedFprPath)) {
             auditResult = AuditFPR.auditFPR(AuditFprOptions.builder()
                     .fprHandle(fprHandle).token(token).url(url)
-                    .appVersion(appName)
+                    .appVersion(appResolver.getAppName())
                     .sscAppName(av.getApplicationName())
                     .sscAppVersion(av.getVersionName())
                     .logger(logger)

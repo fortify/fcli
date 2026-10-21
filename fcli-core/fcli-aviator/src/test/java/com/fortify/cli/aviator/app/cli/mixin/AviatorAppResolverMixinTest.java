@@ -13,6 +13,7 @@
 package com.fortify.cli.aviator.app.cli.mixin;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -30,7 +31,7 @@ class AviatorAppResolverMixinTest {
 
     @Command(name = "test", resourceBundle = MESSAGES)
     private static final class TestCommand {
-        @Mixin private AviatorAppResolverMixin appResolver;
+        @Mixin private AviatorAppResolverMixin.NameOrIdParameter appResolver;
     }
 
     private static CommandLine commandLine() {
@@ -69,5 +70,26 @@ class AviatorAppResolverMixinTest {
     @Test
     void messageBundleDefinesDescriptionKey() {
         assertTrue(ResourceBundle.getBundle(MESSAGES).containsKey("fcli.aviator.app.app-name-or-id"));
+    }
+    @Command(name = "test-option", resourceBundle = MESSAGES)
+    private static final class OptionCommand {
+        @Mixin private AviatorAppResolverMixin.NameOnlyOption appResolver;
+    }
+
+    private static String parseOption(String... args) {
+        var commandLine = new CommandLine(new OptionCommand());
+        commandLine.parseArgs(args);
+        return ((OptionCommand) commandLine.getCommand()).appResolver.getAppName();
+    }
+
+    @Test
+    void appOptionIsNameOnlyAndPassedThroughUnchanged() {
+        assertEquals("MyApp", parseOption("--app", "MyApp"));
+        assertEquals("123", parseOption("--app", "123"));
+    }
+
+    @Test
+    void appOptionIsOptional() {
+        assertNull(parseOption());
     }
 }
