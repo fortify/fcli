@@ -418,6 +418,17 @@ Before accepting a migration, run JVM and rebuilt-native tests covering clean st
 table and structured output, file logging, levels, sensitive-value masking, and exception output.
 Keep this as a separate change from general dependency maintenance so failures can be attributed and reverted independently.
 
+=== Dependency upgrade coordination
+
+Keep `picocli-codegen` aligned with the upstream version on which the picocli fork in `fcli-common-thirdparty` is based.
+Codegen brings its own upstream picocli dependency onto the annotation-processor classpath; upgrading it independently
+can introduce differences between build-time command models and the fork used at runtime.
+
+Coordinate Aviator-specific dependency and protobuf-plugin upgrades with the Aviator maintainers.
+Passing unit tests does not establish compatibility with deployed Aviator servers.
+Shared dependency upgrades can still affect Aviator transitively: inspect Gradle's resolved dependency graph,
+not just the versions declared in the Aviator modules. In particular, Jackson YAML also selects a SnakeYAML version.
+
 == Gradle Wrapper
 
 It is strongly recommended to build this project using the included Gradle Wrapper scripts; using other Gradle versions may result in build errors and other issues.

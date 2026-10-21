@@ -13,7 +13,8 @@ dependencies {
     api(platform("io.modelcontextprotocol.sdk:mcp-bom:1.1.1"))
     constraints {
         api("info.picocli:picocli:4.7.5")
-        api("info.picocli:picocli-codegen:4.7.7")
+        // Keep codegen aligned with the picocli fork in fcli-common-thirdparty.
+        api("info.picocli:picocli-codegen:4.7.5")
         api("com.formkiq:graalvm-annotations:1.2.0")
         api("com.formkiq:graalvm-annotations-processor:1.5.2")
         api("org.fusesource.jansi:jansi:2.4.3")

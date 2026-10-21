@@ -14,7 +14,7 @@ pluginManagement {
         id("com.github.jk1.dependency-license-report") version "2.9"
         id("org.asciidoctor.jvm.convert") version "4.0.4"
         id("de.undercouch.download") version "5.7.0"
-        id("com.google.protobuf") version "0.10.0"
+        id("com.google.protobuf") version "0.9.4"
     }
     includeBuild("build-logic")
 }
