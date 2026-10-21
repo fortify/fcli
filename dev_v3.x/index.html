@@ -1,6 +1,6 @@
 ---
 title: 'Fortify CLI (fcli) Installation &amp; Usage'
-fcli_version: 0.20261019.130838-dev_v3.x
+fcli_version: 0.20261021.102558-dev_v3.x
 ---
 
 <!DOCTYPE html>
@@ -17,13 +17,13 @@ fcli_version: 0.20261019.130838-dev_v3.x
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20261019.130838-dev_v3.x" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20261021.102558-dev_v3.x" %}
 
 
 <div id="header">
 <h1>Fortify CLI (fcli) Installation &amp; Usage</h1>
 <div class="details">
-<span id="revnumber">version 0.20261019.130838-dev_v3.x</span>
+<span id="revnumber">version 0.20261021.102558-dev_v3.x</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -1112,6 +1112,14 @@ All commands that automatically generate server-side queries provide the <code>-
 </ul>
 </div>
 <div class="paragraph">
+<p>As a convenience, fcli allows integer literals larger than the 32-bit integer range without SpEL&#8217;s usual <code>L</code> suffix,
+for example <code>id == 3000000000</code> instead of <code>id == 3000000000L</code>.
+Omitting the suffix incurs a small performance cost while parsing the expression, not while evaluating it for each record.
+This applies to decimal and hexadecimal literals in plain and template expressions; small integers and quoted strings are unchanged.
+Values must fit in a signed 64-bit long literal. To express <code>Long.MIN_VALUE</code>, use <code>(-9223372036854775807 - 1)</code>,
+as SpEL parses the minus sign separately.</p>
+</div>
+<div class="paragraph">
 <p>Fcli provides some utility functions that may be used in expressions. Note that these functions calls are preceded by a <code>#</code> character.</p>
 </div>
 <div class="ulist">
@@ -1835,8 +1843,8 @@ may experience any of the following behavior:</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20261019.130838-dev_v3.x<br>
-Last updated 2026-10-19 13:12:19 UTC
+Version 0.20261021.102558-dev_v3.x<br>
+Last updated 2026-10-21 10:28:33 UTC
 </div>
 </div>
 </body>
