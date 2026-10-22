@@ -392,7 +392,7 @@ formatters:
               \n  * `latest` to use the latest available Debricked CLI version
               \n  * `auto` (default) to use a pre-installed version if available, otherwise installs latest
               \n* If neither `DEBRICKED_VERSION` nor `DEBRICKED_HOME` are set, defaults to `auto` behavior.
-          - names: DO_WAIT\nDO_SAST_WAIT\nSAST_WAIT_EXTRA_OPTS\nDO_DAST_WAIT\nDAST_WAIT_EXTRA_OPTS\nDEBRICKED_WAIT_EXTRA_OPTS
+          - names: DO_WAIT\nDO_SAST_WAIT\nSAST_WAIT_EXTRA_OPTS\nDO_DAST_WAIT\nDAST_WAIT_EXTRA_OPTS\nDAST_PUBLISH_EXTRA_OPTS\nDAST_PUBLISH_WAIT_EXTRA_OPTS\nDAST_ARTIFACTS_WAIT_EXTRA_OPTS\nDEBRICKED_WAIT_EXTRA_OPTS
             desc: >-
               By default, the fcli `ci` action will wait for all started scans to complete; set `DO_WAIT` to
               `false` to just kick off any configured scans without waiting for completion. Note that doing so
@@ -402,9 +402,15 @@ formatters:
               and the `DEBRICKED_WAIT_EXTRA_OPTS` environment variable can be used to pass extra options to the
               fcliCmd:fcli ssc artifact wait-for: command.\n\nUnlike other scan types, waiting for DAST scans is disabled
               by default (as DAST scans are often long-running and only run on demand); set `DO_DAST_WAIT` to `true` to
-              wait for DAST scan completion.\n\nDAST scans can take considerably longer than SAST scans, potentially
-              exceeding CI/CD job time limits (for example on GitHub Actions or GitLab CI); if the default wait timeout
-              doesn't suffice, pass a `--timeout` option through `DAST_WAIT_EXTRA_OPTS`.
+              wait for DAST scan completion. Waiting for the DAST scan is always enabled if the DAST Aviator audit is
+              enabled (see `DO_AVIATOR_DAST_AUDIT` below), as the audit requires the scan results in SSC.\n\nIf the default wait timeout
+              doesn't suffice, pass a `--timeout` option through `DAST_WAIT_EXTRA_OPTS`.\n\nOnce the DAST scan has
+              completed, its results are published to SSC; SC-DAST does this automatically if 'Submit for Triage' is
+              enabled in the scan settings, otherwise the fcli `ci` action runs fcliCmd:fcli sc-dast scan publish: (extra
+              options: `DAST_PUBLISH_EXTRA_OPTS`). The action then waits for publishing to complete (extra options:
+              `DAST_PUBLISH_WAIT_EXTRA_OPTS`) and for SSC to process the published DAST artifacts (extra options:
+              `DAST_ARTIFACTS_WAIT_EXTRA_OPTS`). Results are published to the application version configured in the
+              SC-DAST scan settings; a warning is logged if this differs from the `ci` action's application version.
       - title: Post-Scan Actions
         overview: >
           Configure post-scan tasks including Aviator auditing, application version summaries, policy checks,
@@ -419,15 +425,21 @@ formatters:
               (like the `--token` option on the fcliCmd:fcli aviator session login: command) are not supported. The
               `AVIATOR_LOGIN_EXTRA_OPTS` environment variable can be used to pass additional options to the
               fcliCmd:fcli aviator session login: command.
-          - names: DO_AVIATOR_AUDIT\nAVIATOR_APP\nAVIATOR_AUDIT_EXTRA_OPTS\nAVIATOR_WAIT_EXTRA_OPTS
+          - names: DO_AVIATOR_SAST_AUDIT\nDO_AVIATOR_DAST_AUDIT\nAVIATOR_APP\nAVIATOR_SAST_AUDIT_EXTRA_OPTS\nAVIATOR_DAST_AUDIT_EXTRA_OPTS\nAVIATOR_SAST_WAIT_EXTRA_OPTS
             desc: >-
-              If `DO_AVIATOR_AUDIT` is not set to `false`, and Aviator URL and token have been configured,
-              scan results will be sent to Aviator for AI-driven auditing. The Aviator application name
-              can optionally be configured through `AVIATOR_APP`, which defaults to the SSC application name.
-              The `AVIATOR_AUDIT_EXTRA_OPTS` environment variable can be used to pass extra options to the
-              fcliCmd:fcli aviator ssc audit: command, for example to adjust tag mappings. The `AVIATOR_WAIT_EXTRA_OPTS`
-              environment variable can be used to pass extra options to the fcliCmd:fcli ssc artifact wait-for: command,
-              which will be run to wait for SSC to process the audited results.
+              If `DO_AVIATOR_SAST_AUDIT` is not set to `false`, and Aviator URL and token have been configured,
+              SAST scan results will be sent to Aviator for AI-driven auditing. Similarly, if `DO_AVIATOR_DAST_AUDIT`
+              is not set to `false`, DAST scan results will be sent to Aviator for auditing; this requires a DAST scan
+              to be run and automatically enables waiting for the DAST scan, publishing and artifact processing (see above).
+              The SAST and DAST audits are controlled independently. The Aviator application name
+              can optionally be configured through `AVIATOR_APP`, which defaults to the SSC application name; the
+              Aviator application must already exist. The `AVIATOR_SAST_AUDIT_EXTRA_OPTS` and `AVIATOR_DAST_AUDIT_EXTRA_OPTS`
+              environment variables can be used to pass extra options to the fcliCmd:fcli aviator ssc audit-sast: and
+              fcliCmd:fcli aviator ssc audit-dast: commands respectively, for example to adjust tag mappings.
+              The `AVIATOR_SAST_WAIT_EXTRA_OPTS` environment variable can be used to pass extra options to the
+              fcliCmd:fcli ssc artifact wait-for: command, which will be run to wait for SSC to process the audited SAST
+              results. This wait is performed after the DAST audit has completed, allowing SSC to process the audited SAST
+              results while the DAST steps are running.
           - names: DO_APPVERSION_SUMMARY\nAPPVERSION_SUMMARY_ACTION\nAPPVERSION_SUMMARY_EXTRA_OPTS
             desc: >-
               If `DO_APPVERSION_SUMMARY` is not set to `false`, an application version summary will be generated using the
@@ -471,7 +483,8 @@ formatters:
           - names: DO_AVIATOR_REMEDIATIONS\nAVIATOR_REMEDIATIONS_ACTION\nAVIATOR_REMEDIATIONS_EXTRA_OPTS\nGIT_PUSH_TOKEN
             desc: >-
               (PREVIEW) If `DO_AVIATOR_REMEDIATIONS` is set to true (implied if any of the other two
-              `AVIATOR_REMEDIATIONS_*` variables are set) and Aviator remediations are available, those remediations
+              `AVIATOR_REMEDIATIONS_*` variables are set) and Aviator remediations are available for the audited SAST
+              results (DAST audit results have no remediations), those remediations
               will be applied to the local source code, committed, and pushed to a new branch. On GitHub, a Pull Request
               is created from that branch using the fcli-provided actionRef:_:github-remediations-pr action; on other CI
               systems the fcli-provided actionRef:_:push-remediations action is used to push the branch without creating a
