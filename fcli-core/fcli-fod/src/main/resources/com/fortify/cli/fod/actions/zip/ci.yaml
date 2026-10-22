@@ -65,6 +65,11 @@ steps:
             #fcliCmdSkipFromEnvReason('WAIT', false)
             ?:#fcliCmdSkipFromEnvReason('SAST_WAIT', false) 
         }
+      faa.skipReason: > # Disabled by default; requires DO_FAA_SCAN=true to be enabled
+        ${
+            #fcliCmdSkipFromEnvReason('FAA_SCAN', true)
+        }
+
       # Post-scan tasks will be skipped if wait is skipped or if no scans were completed
       # successfully. Post-scan skip reason will be reset to null once the wait task for
       # any scan completed successfully. 
@@ -134,7 +139,17 @@ steps:
           - ${SAST_SCAN.dependencySkipReason}                  # Skip if SAST_SCAN was skipped or failed
         on.success:
           - var.set: { postScan.skipReason: } # Reset postScan.skipReason to allow post-scan tasks to run
-             
+
+      # Pass SAST scan ID if SAST scan was started; otherwise, disable SAST FPR download
+      FAA_SCAN:
+        cmd: >
+          ${#actionCmd('FAA_SCAN', 'fod', 'faa-scan')}
+          "--source-dir=${global.ci.sourceDir}"
+          "--release=${global.ci.rel}"
+          ${#isBlank(SAST_SCAN.dependencySkipReason) ? '"--sast-scan-id=::fod_sast_scan::"' : '"--skip-sast-download=true"'}
+        skip.if-reason:
+          - ${faa.skipReason}                        # Skip if FAA scan is disabled
+      
       AVIATOR_REMEDIATIONS:
         cmd: ${#actionCmd('AVIATOR_REMEDIATIONS', 'fod', global.ci.fod_aviatorRemediationsAction)} "--rel=${global.ci.rel}" "--source-dir=${global.ci.sourceDir}" "--progress=none"
         skip.if-reason:

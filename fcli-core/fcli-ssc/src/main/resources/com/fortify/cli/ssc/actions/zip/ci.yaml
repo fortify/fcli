@@ -78,13 +78,18 @@ steps:
         ${
             #extraOpts('DEBRICKED_SCAN')
         }
+      faa.skipReason: > # Disabled by default; requires DO_FAA_SCAN=true to be enabled
+        ${
+            #fcliCmdSkipFromEnvReason('FAA_SCAN', true)
+        }
+
       aviator.skipReason: > # Enabled if AVIATOR_TOKEN & AVIATOR_URL specified, unless explicitly disabled
         ${
             #fcliCmdSkipFromEnvReason('AVIATOR_AUDIT', false)
             ?:#skipBlankEnvReason('AVIATOR_TOKEN')
             ?:#skipBlankEnvReason('AVIATOR_URL')
         }
-      aviator.loginOpts: --url=AVIATOR_URL
+      aviator.loginOpts: --url=${#env('AVIATOR_URL')}
       aviator.app: ${#env('AVIATOR_APP')?:'::av::application.name'}
       wait.skipReason: >- # Enabled by default, unless explicitly disabled through DO_WAIT or DO_SAST_WAIT (deprecated)
         ${
@@ -199,12 +204,17 @@ steps:
               skip.if-reason:
                 - ${SAST_WAIT.dependencySkipReason}                      # Skip if SAST_WAIT was skipped or failed
                 - ${#isDebugEnabled()?'':'--debug flag not specified'}   # Skip if debugging is disabled
-            DOWNLOAD_SAST_FPR:
-              cmd: "${#fcliCmd('DOWNLOAD_SAST_FPR', 'sc-sast scan download -t fpr')} ::sc_sast_scan::"
+            
+            # Pass SAST job token if SAST scan was started; otherwise, disable SAST FPR download
+            FAA_SCAN:
+              cmd: >
+                ${#actionCmd('FAA_SCAN', 'ssc', 'faa-scan')}
+                "--source-dir=${global.ci.sourceDir}"
+                "--app-version=${global.ci.av}"
+                ${#isBlank(SAST_SCAN.dependencySkipReason) ? '"--sast-job-token=::sc_sast_scan::"' : '"--skip-sast-download=true"'}
               skip.if-reason:
-                - ${SAST_WAIT.dependencySkipReason}                      # Skip if SAST_WAIT was skipped or failed
-                - ${#isDebugEnabled()?'':'--debug flag not specified'}   # Skip if debugging is disabled
-              
+                - ${faa.skipReason}   
+            
             AVIATOR_AUDIT:
               cmd: ${#fcliCmd('AVIATOR_AUDIT', 'aviator ssc audit')} --aviator-session ${sessionName} --av "${global.ci.av}" --app "${aviator.app}" --store aviator_audit
               skip.if-reason:
