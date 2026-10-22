@@ -14,16 +14,12 @@ package com.fortify.cli.aviator.grpc;
 
 import java.util.Objects;
 
-import io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder;
-import io.grpc.netty.shaded.io.netty.channel.ChannelOption;
 import io.grpc.stub.AbstractBlockingStub;
 
 /** Unary request behavior; audit and diagnostic clients use {@link #WAIT_FOR_READY}. */
 public enum AviatorRequestPolicy {
     FAIL_FAST,
     WAIT_FOR_READY;
-
-    private static final int CONNECT_TIMEOUT_MILLIS = 5_000;
 
     boolean isWaitForReady() {
         return this == WAIT_FOR_READY;
@@ -37,8 +33,4 @@ public enum AviatorRequestPolicy {
         return stub.withOption(AviatorConnectionContext.CALL_OPTION, Objects.requireNonNull(context, "connectionContext"));
     }
 
-    NettyChannelBuilder configureChannel(NettyChannelBuilder builder) {
-        // TCP establishment has a shorter budget than a request to a connected server.
-        return isWaitForReady() ? builder : builder.withOption(ChannelOption.CONNECT_TIMEOUT_MILLIS, CONNECT_TIMEOUT_MILLIS);
-    }
 }

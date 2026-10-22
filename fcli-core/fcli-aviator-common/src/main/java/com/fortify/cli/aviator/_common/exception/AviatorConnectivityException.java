@@ -34,6 +34,11 @@ public final class AviatorConnectivityException extends AviatorSimpleException {
     }
 
     @Override
+    public boolean isCauseSensitive() {
+        return true;
+    }
+
+    @Override
     public String getStackTraceString() {
         return getMessage();
     }

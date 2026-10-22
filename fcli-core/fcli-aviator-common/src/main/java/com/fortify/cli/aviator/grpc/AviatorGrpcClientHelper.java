@@ -71,7 +71,7 @@ public class AviatorGrpcClientHelper {
             LOG.debug("Port specified, using NettyChannelBuilder.forAddress: {}:{}", target.host(), target.port());
         }
 
-        var channel = policy.configureChannel(configureBuilder(builder, proxyDescriptor)).build();
+        var channel = configureBuilder(builder, proxyDescriptor).build();
         return new AviatorGrpcClient(channel, Constants.DEFAULT_TIMEOUT_SECONDS, logger, pingIntervalSeconds,
             policy, AviatorConnectionContext.of(connectionPlan));
     }
@@ -93,8 +93,9 @@ public class AviatorGrpcClientHelper {
         URI uri;
         try {
             uri = URI.create(normalizedUrl);
-        } catch (Exception e) {
-            throw new AviatorSimpleException("Aviator URL format is invalid. Expected 'host:port' or a valid target string. Provided URL: " + safeUrl, e);
+        } catch (IllegalArgumentException e) {
+            // URI parsing errors include the original URL, which may contain credentials.
+            throw new AviatorSimpleException("Invalid Aviator URL; expected a host and optional port: " + safeUrl);
         }
 
         var host = uri.getHost();

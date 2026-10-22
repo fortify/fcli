@@ -26,10 +26,14 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.net.SocketAddress;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -62,13 +66,14 @@ import io.grpc.Channel;
 import io.grpc.ClientCall;
 import io.grpc.ClientInterceptor;
 import io.grpc.ManagedChannel;
+import io.grpc.EquivalentAddressGroup;
+import io.grpc.NameResolver;
 import io.grpc.MethodDescriptor;
 import io.grpc.Server;
 import io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder;
+import io.grpc.netty.shaded.io.grpc.netty.GrpcSslContexts;
 import io.grpc.netty.shaded.io.grpc.netty.NettyServerBuilder;
 import io.grpc.stub.StreamObserver;
-import io.grpc.netty.shaded.io.netty.channel.nio.NioEventLoopGroup;
-import io.grpc.netty.shaded.io.netty.channel.socket.nio.NioSocketChannel;
 
 /**
  * Checks connectivity behavior against real Netty transports on the loopback interface.
@@ -80,12 +85,12 @@ class AviatorGrpcClientConnectivityTest {
 
     private ServerSocket proxyServer;
     private Server grpcServer;
-    private ManagedChannel plaintextChannel;
+    private ManagedChannel testChannel;
 
     @AfterEach
     void tearDown() throws Exception {
         if ( proxyServer!=null ) { proxyServer.close(); }
-        if ( plaintextChannel!=null ) { plaintextChannel.shutdownNow().awaitTermination(5, TimeUnit.SECONDS); }
+        if ( testChannel!=null ) { testChannel.shutdownNow().awaitTermination(5, TimeUnit.SECONDS); }
         if ( grpcServer!=null ) { grpcServer.shutdownNow().awaitTermination(5, TimeUnit.SECONDS); }
     }
 
@@ -128,37 +133,6 @@ class AviatorGrpcClientConnectivityTest {
     }
 
     @Test
-    @Timeout(15)
-    void pendingTcpConnectUsesNettyTimeoutBeforeRequestDeadline() throws Exception {
-        var eventLoop = new NioEventLoopGroup(1);
-        var builder = NettyChannelBuilder.forAddress("127.0.0.1", 443).usePlaintext()
-            .eventLoopGroup(eventLoop).channelFactory(PendingConnectChannel::new);
-        plaintextChannel = AviatorRequestPolicy.FAIL_FAST.configureChannel(builder).build();
-        var context = new AviatorConnectionContext(new AviatorEndpoint("127.0.0.1", 443), null);
-        long started = System.nanoTime();
-        try ( var client = new AviatorGrpcClient(plaintextChannel, 30, null, 30, AviatorRequestPolicy.FAIL_FAST, context) ) {
-            var exception = assertThrows(AviatorConnectivityException.class,
-                () -> client.listApplication("tenant", "signature", "message"));
-            assertEquals("CONNECT_TIMEOUT", exception.getKind());
-            assertTrue(exception.getMessage().contains("timed out"));
-            assertFalse(exception.getMessage().contains("refused"));
-        } finally {
-            eventLoop.shutdownGracefully(0, 5, TimeUnit.SECONDS).sync();
-        }
-        var elapsed = Duration.ofNanos(System.nanoTime() - started);
-        assertTrue(elapsed.compareTo(Duration.ofSeconds(4)) >= 0, "Connect timer fired too early: " + elapsed);
-        assertTrue(elapsed.compareTo(Duration.ofSeconds(10)) < 0, "Connect timer fired too late: " + elapsed);
-    }
-
-    /** Simulates a pending TCP connection; Netty itself schedules and raises the timeout. */
-    private static final class PendingConnectChannel extends NioSocketChannel {
-        @Override
-        protected boolean doConnect(SocketAddress remoteAddress, SocketAddress localAddress) {
-            return false;
-        }
-    }
-
-    @Test
     @Timeout(20)
     void stalledProxyNegotiationEndsBeforeRequestDeadline() throws Exception {
         proxyServer = new ServerSocket(0, 1, InetAddress.getLoopbackAddress());
@@ -196,6 +170,107 @@ class AviatorGrpcClientConnectivityTest {
         }
     }
 
+    @Test
+    @Timeout(20)
+    void healthyTlsConnectionThroughConnectProxySucceeds() throws Exception {
+        startTlsServer();
+        proxyServer = new ServerSocket(0, 1, InetAddress.getByName("127.0.0.1"));
+        var executor = Executors.newFixedThreadPool(2);
+        try {
+            var tunnel = startConnectTunnel(executor);
+            try ( var client = createProxiedTlsClient() ) {
+                assertTrue(client.listApplication("tenant", "signature", "message").isEmpty());
+            }
+            tunnel.get(10, TimeUnit.SECONDS);
+        } finally {
+            proxyServer.close();
+            executor.shutdownNow();
+            assertTrue(executor.awaitTermination(15, TimeUnit.SECONDS));
+        }
+    }
+
+    private void startTlsServer() throws IOException {
+        // Public test fixtures, trusted only by this test client.
+        try ( var certificate = getClass().getResourceAsStream("localhost-cert.pem");
+              var key = getClass().getResourceAsStream("localhost-key.pem") ) {
+            grpcServer = NettyServerBuilder.forAddress(new InetSocketAddress("127.0.0.1", 0))
+                .sslContext(GrpcSslContexts.forServer(certificate, key).build())
+                .addService(new EmptyApplicationService()).build().start();
+        }
+    }
+
+    private AviatorGrpcClient createProxiedTlsClient() throws IOException {
+        var proxy = ProxyDescriptor.builder().proxyHost("127.0.0.1").proxyPort(proxyServer.getLocalPort()).build();
+        try ( var certificate = getClass().getResourceAsStream("localhost-cert.pem") ) {
+            testChannel = NettyChannelBuilder.forAddress("localhost", grpcServer.getPort())
+                .sslContext(GrpcSslContexts.forClient().trustManager(certificate).build())
+                .proxyDetector(address -> AviatorGrpcClientHelper.toProxiedSocketAddress(address, proxy))
+                .build();
+        }
+        var context = new AviatorConnectionContext(new AviatorEndpoint("localhost", grpcServer.getPort()),
+            new AviatorEndpoint("127.0.0.1", proxyServer.getLocalPort()));
+        return new AviatorGrpcClient(testChannel, 30, null, 30, AviatorRequestPolicy.FAIL_FAST, context);
+    }
+
+    private Future<Void> startConnectTunnel(ExecutorService executor) {
+        return executor.submit(() -> {
+            try ( var downstream = proxyServer.accept();
+                  var upstream = new Socket("127.0.0.1", grpcServer.getPort()) ) {
+                downstream.setSoTimeout(10_000);
+                upstream.setSoTimeout(10_000);
+                readRequestHeaders(downstream.getInputStream());
+                downstream.getOutputStream().write("HTTP/1.1 200 Connection Established\r\n\r\n"
+                    .getBytes(StandardCharsets.US_ASCII));
+                downstream.getOutputStream().flush();
+                var response = executor.submit(() -> {
+                    upstream.getInputStream().transferTo(downstream.getOutputStream());
+                    downstream.shutdownOutput();
+                    return null;
+                });
+                downstream.getInputStream().transferTo(upstream.getOutputStream());
+                upstream.shutdownOutput();
+                response.get(10, TimeUnit.SECONDS);
+            }
+            return null;
+        });
+    }
+
+    @Test
+    @Timeout(15)
+    @SuppressWarnings("deprecation") // Per-channel resolver keeps the fixture out of the global registry.
+    void refusedFirstAddressFallsBackToHealthyAddress() throws Exception {
+        grpcServer = NettyServerBuilder.forAddress(new InetSocketAddress("127.0.0.1", 0))
+            .addService(new EmptyApplicationService()).build().start();
+        var refused = new InetSocketAddress("127.0.0.1", unusedPort());
+        var healthy = new InetSocketAddress("127.0.0.1", grpcServer.getPort());
+        testChannel = NettyChannelBuilder.forTarget("fixture:///localhost").usePlaintext()
+            .nameResolverFactory(new NameResolver.Factory() {
+                @Override
+                public String getDefaultScheme() { return "fixture"; }
+
+                @Override
+                public NameResolver newNameResolver(URI targetUri, NameResolver.Args args) {
+                    return new NameResolver() {
+                        @Override
+                        public String getServiceAuthority() { return "localhost"; }
+
+                        @Override
+                        public void start(Listener2 listener) {
+                            listener.onResult(ResolutionResult.newBuilder().setAddresses(List.of(
+                                new EquivalentAddressGroup(refused), new EquivalentAddressGroup(healthy))).build());
+                        }
+
+                        @Override
+                        public void shutdown() {}
+                    };
+                }
+            }).build();
+        var context = new AviatorConnectionContext(new AviatorEndpoint("localhost", grpcServer.getPort()), null);
+        try ( var client = new AviatorGrpcClient(testChannel, 30, null, 30, AviatorRequestPolicy.FAIL_FAST, context) ) {
+            assertTrue(client.listApplication("tenant", "signature", "message").isEmpty());
+        }
+    }
+
     private static void assertCallPolicy(AviatorRequestPolicy policy, CallOptions options) {
         assertEquals(policy.isWaitForReady(), options.isWaitForReady());
         assertEquals(!policy.isWaitForReady(), options.getOption(AviatorConnectionContext.CALL_OPTION) != null);
@@ -230,12 +305,12 @@ class AviatorGrpcClientConnectivityTest {
             .addService(new EmptyDastEntitlementService())
             .build()
             .start();
-        plaintextChannel = NettyChannelBuilder.forAddress(InetAddress.getLoopbackAddress().getHostAddress(), grpcServer.getPort())
+        testChannel = NettyChannelBuilder.forAddress(InetAddress.getLoopbackAddress().getHostAddress(), grpcServer.getPort())
             .usePlaintext()
             .intercept(new CallOptionsCapture(captured))
             .build();
         var context = new AviatorConnectionContext(new AviatorEndpoint("127.0.0.1", grpcServer.getPort()), null);
-        return new AviatorGrpcClient(plaintextChannel, 30, null, 30, policy, context);
+        return new AviatorGrpcClient(testChannel, 30, null, 30, policy, context);
     }
 
     private static void assertDeadlineAtMostDefault(CallOptions callOptions) {

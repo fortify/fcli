@@ -70,7 +70,7 @@ class GrpcUtil {
         if ( context == null ) {
             return Optional.empty();
         }
-        return AviatorConnectivityFailureClassifier.classify(e, context)
+        return AviatorConnectivityFailureKind.classify(e, context)
             .map(kind -> new AviatorConnectivityException(kind.formatMessage(context), kind.name(), e));
     }
 

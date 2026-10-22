@@ -13,6 +13,8 @@
 package com.fortify.cli.aviator.grpc;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.net.ConnectException;
 import java.net.UnknownHostException;
@@ -25,6 +27,7 @@ import javax.net.ssl.SSLHandshakeException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
@@ -33,7 +36,7 @@ import io.grpc.netty.shaded.io.netty.handler.codec.http.DefaultHttpHeaders;
 import io.grpc.netty.shaded.io.netty.handler.proxy.HttpProxyHandler.HttpProxyConnectException;
 import io.grpc.netty.shaded.io.netty.handler.proxy.ProxyConnectException;
 
-class AviatorConnectivityFailureClassifierTest {
+class AviatorConnectivityFailureKindTest {
     private static final AviatorConnectionContext DIRECT =
             new AviatorConnectionContext(new AviatorEndpoint("aviator.example.com", 443), null);
     private static final AviatorConnectionContext PROXIED =
@@ -63,9 +66,10 @@ class AviatorConnectivityFailureClassifierTest {
         assertEquals(Optional.of(AviatorConnectivityFailureKind.PROXY_REFUSED), classify(Status.UNAVAILABLE, cause, PROXIED));
     }
 
-    @Test
-    void classifiesConnectExceptionAsDirectRefusalWhenNotProxied() {
-        var cause = new ConnectException("Connection refused");
+    @ParameterizedTest
+    @ValueSource(strings = {"Connection refused", "Connection refused: getsockopt", "Connection refused: no further information"})
+    void classifiesConnectExceptionAsDirectRefusalWhenNotProxied(String reason) {
+        var cause = new ConnectException(reason);
         assertEquals(Optional.of(AviatorConnectivityFailureKind.DIRECT_REFUSED), classify(Status.UNAVAILABLE, cause, DIRECT));
     }
 
@@ -130,8 +134,18 @@ class AviatorConnectivityFailureClassifierTest {
         assertEquals(Optional.of(AviatorConnectivityFailureKind.DIRECT_REFUSED), classify(Status.UNAVAILABLE, cause, DIRECT));
     }
 
+    @ParameterizedTest
+    @EnumSource(AviatorConnectivityFailureKind.class)
+    void everyFailureHasAnActionableMessage(AviatorConnectivityFailureKind kind) {
+        var message = kind.formatMessage(PROXIED);
+        assertEquals(2, message.lines().count());
+        assertTrue(message.contains("\nCheck "));
+        assertFalse(message.contains("%s"));
+        assertFalse(message.contains("Exception"));
+    }
+
     private static Optional<AviatorConnectivityFailureKind> classify(Status status, Throwable cause, AviatorConnectionContext context) {
         var exception = new StatusRuntimeException(cause==null ? status : status.withCause(cause));
-        return AviatorConnectivityFailureClassifier.classify(exception, context);
+        return AviatorConnectivityFailureKind.classify(exception, context);
     }
 }

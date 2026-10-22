@@ -41,6 +41,10 @@ public final class FcliExceptionHelper {
      */
     public static String formatException(Exception e) {
         if ( e==null ) { return null; }
+        // Sensitive causes must not enter the message-based PKIX formatter.
+        if ( e instanceof AbstractFcliException fcliException && fcliException.isCauseSensitive() ) {
+            return fcliException.getStackTraceString();
+        }
         if ( isPkixRelatedException(e) ) {
             return formatPkixRelatedException(e);
         }

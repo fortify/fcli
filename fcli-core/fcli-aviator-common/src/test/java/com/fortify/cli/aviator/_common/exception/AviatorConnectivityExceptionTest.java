@@ -15,6 +15,7 @@ package com.fortify.cli.aviator._common.exception;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.PrintWriter;
@@ -26,12 +27,14 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.LoggerFactory;
 
+import com.fortify.cli.aviator.grpc.AviatorGrpcClientHelper;
 import com.fortify.cli.common.exception.FcliExceptionHelper;
 import com.fortify.cli.common.exception.FcliExecutionExceptionHandler;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.classic.spi.ThrowableProxyUtil;
 import ch.qos.logback.core.read.ListAppender;
 import io.grpc.Status;
 import picocli.CommandLine;
@@ -98,11 +101,29 @@ class AviatorConnectivityExceptionTest {
         assertFalse(event.getFormattedMessage().contains(SECRET));
     }
 
+    @Test
+    void malformedUrlDoesNotExposeCredentialsInOutputOrLogs() {
+        var exception = assertThrows(AviatorSimpleException.class,
+            () -> AviatorGrpcClientHelper.parseTarget("https://user:" + SECRET + "@aviator.invalid/%zz"));
+        var err = new StringWriter();
+        var commandLine = new CommandLine(CommandSpec.create());
+        commandLine.setErr(new PrintWriter(err));
+
+        assertEquals(1, FcliExecutionExceptionHandler.INSTANCE.handleException(exception, commandLine));
+
+        assertNull(exception.getCause());
+        assertFalse(err.toString().contains(SECRET));
+        assertEquals(1, appender.list.size());
+        var event = appender.list.get(0);
+        assertFalse(event.getFormattedMessage().contains(SECRET));
+        assertFalse(ThrowableProxyUtil.asString(event.getThrowableProxy()).contains(SECRET));
+    }
+
     private static AviatorConnectivityException createException() {
         var transportCause = new ConnectException("Connection refused: proxy-user:" + SECRET + "@localhost");
         transportCause.addSuppressed(new IllegalStateException("suppressed " + SECRET));
         var statusException = Status.UNAVAILABLE
-            .withDescription("io exception " + SECRET)
+            .withDescription("PKIX path building failed: " + SECRET)
             .withCause(transportCause)
             .asRuntimeException();
         return new AviatorConnectivityException(MESSAGE, "PROXY_REFUSED", statusException);
