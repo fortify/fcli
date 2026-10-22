@@ -89,27 +89,28 @@ public class AviatorGrpcClientHelper {
 
     public static ParsedTarget parseTarget(String url) {
         var normalizedUrl = normalizeUrl(url);
+        var safeUrl = toSafeUrlForDisplay(url);
         URI uri;
         try {
             uri = URI.create(normalizedUrl);
         } catch (Exception e) {
-            throw new AviatorSimpleException("Aviator URL format is invalid. Expected 'host:port' or a valid target string. Provided URL: " + url, e);
+            throw new AviatorSimpleException("Aviator URL format is invalid. Expected 'host:port' or a valid target string. Provided URL: " + safeUrl, e);
         }
 
         var host = uri.getHost();
         if ( host==null || host.isBlank() ) {
-            throw new AviatorSimpleException("Aviator URL is invalid: Host cannot be empty. Provided URL: " + url);
+            throw new AviatorSimpleException("Aviator URL is invalid: Host cannot be empty. Provided URL: " + safeUrl);
         }
 
         if ( uri.getPath()!=null && !uri.getPath().isBlank() && !"/".equals(uri.getPath()) ) {
-            LOG.warn("WARN: URL contained a path ('{}'), using only the host/port part. Full URL: {}", uri.getPath(), url);
+            LOG.warn("WARN: URL contained a path ('{}'), using only the host/port part. Full URL: {}", uri.getPath(), safeUrl);
         }
 
         var port = uri.getPort();
         if ( port==-1 ) {
             return new ParsedTarget(host, null);
         } else if (port <= 0 || port > 65535) {
-            throw new AviatorSimpleException("Aviator URL is invalid: Invalid port number '"+port+"'. Provided URL: " + url);
+            throw new AviatorSimpleException("Aviator URL is invalid: Invalid port number '"+port+"'. Provided URL: " + safeUrl);
         } else {
             return new ParsedTarget(host, port);
         }
@@ -131,13 +132,34 @@ public class AviatorGrpcClientHelper {
         var schemeSeparator = trimmed.indexOf("://");
         var scheme = trimmed.substring(0, schemeSeparator);
         if ( !"https".equalsIgnoreCase(scheme) ) {
-            throw new UnsupportedAviatorUrlSchemeException(scheme, url);
+            throw new UnsupportedAviatorUrlSchemeException(scheme, toSafeUrlForDisplay(url));
         }
         if ( "https".equals(scheme) ) {
             return trimmed;
         }
         // Canonicalize scheme casing (HTTPS://host → https://host)
         return "https"+trimmed.substring(schemeSeparator);
+    }
+
+    /**
+     * Returns the URL with any user-info part (for example {@code user:password@}) replaced by
+     * {@code ***}, so that the URL can be shown in messages and logs. Other URLs stay unchanged.
+     */
+    static String toSafeUrlForDisplay(String url) {
+        if ( url==null ) {
+            return null;
+        }
+        var schemeSeparator = url.indexOf("://");
+        var authorityStart = schemeSeparator<0 ? 0 : schemeSeparator+3;
+        var authorityEnd = authorityStart;
+        while ( authorityEnd<url.length() && "/?#".indexOf(url.charAt(authorityEnd))<0 ) {
+            authorityEnd++;
+        }
+        var userInfoEnd = url.lastIndexOf('@', authorityEnd-1);
+        if ( userInfoEnd<authorityStart ) {
+            return url;
+        }
+        return url.substring(0, authorityStart)+"***"+url.substring(userInfoEnd);
     }
 
     private static NettyChannelBuilder configureBuilder(NettyChannelBuilder builder, Optional<ProxyDescriptor> proxyDescriptor) {
