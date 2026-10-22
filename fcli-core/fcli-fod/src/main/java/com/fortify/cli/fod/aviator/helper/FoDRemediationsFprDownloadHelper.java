@@ -13,123 +13,102 @@
 package com.fortify.cli.fod.aviator.helper;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.time.Duration;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fortify.cli.common.exception.AbstractFcliException;
-import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.exception.FcliTechnicalException;
 import com.fortify.cli.common.rest.unirest.HttpHeader;
+import com.fortify.cli.common.rest.unirest.RestResponseBodyHelper;
+import com.fortify.cli.common.rest.unirest.UnexpectedHttpResponseException;
 import com.fortify.cli.fod._common.scan.helper.FoDScanDescriptor;
 import com.fortify.cli.fod._common.scan.helper.FoDScanHelper;
 import com.fortify.cli.fod._common.scan.helper.FoDScanType;
 import com.fortify.cli.fod.release.helper.FoDReleaseDescriptor;
 
 import kong.unirest.GetRequest;
-import kong.unirest.HttpResponse;
-import kong.unirest.RawResponse;
 import kong.unirest.UnirestInstance;
 
 /**
- * Shared FoD remediations FPR download with 202-retry handling. Supports any {@link Path},
- * including zip filesystem entry paths. Response body is written only when the download is
- * ready (successful non-202 status).
+ * FoD remediations FPR download built on {@link RestResponseBodyHelper}, which downloads to a
+ * temporary file, polls while FoD responds with HTTP 202, and only replaces the destination after
+ * a complete, successful download. Existing destination files are left untouched on failure.
+ *
+ * <p>Polling policy: the request is sent at most {@value #MAX_ATTEMPTS} times, waiting
+ * {@link #POLL_INTERVAL} between attempts; if FoD still responds with HTTP 202 after the last
+ * attempt, the download fails.</p>
+ *
+ * <p>{@link RestResponseBodyHelper} only supports default-filesystem destinations. For other
+ * filesystems (for example remediations cache zip entries), the FPR is first downloaded to a local
+ * temporary file, and then copied into a temporary sibling entry that replaces the destination
+ * only after the copy has completed.</p>
  */
 public final class FoDRemediationsFprDownloadHelper {
     private static final Logger logger = LoggerFactory.getLogger(FoDRemediationsFprDownloadHelper.class);
-    private static final int MAX_RETRIES = 10;
-    private static final long RETRY_SLEEP_MS = 30_000L;
+    static final int MAX_ATTEMPTS = 10;
+    static final Duration POLL_INTERVAL = Duration.ofSeconds(30);
+    private static final String PART_SUFFIX = ".part";
 
     private FoDRemediationsFprDownloadHelper() {}
 
     public static void downloadStaticRemediationsFpr(UnirestInstance unirest, FoDReleaseDescriptor releaseDescriptor,
             Path destination) {
-        boolean completed = false;
-        try {
-            FoDScanDescriptor scanDescriptor = FoDScanHelper.getLatestScanDescriptor(unirest, releaseDescriptor.getReleaseId(),
-                    FoDScanType.Static, false);
-            FoDScanHelper.validateScanDate(scanDescriptor, FoDScanHelper.MAX_RETENTION_PERIOD);
-            GetRequest request = unirest.get("/api/v3/releases/{releaseId}/fpr")
-                    .routeParam("releaseId", releaseDescriptor.getReleaseId())
-                    .headerReplace(HttpHeader.ACCEPT, "application/octet-stream")
-                    .queryString("scanType", scanDescriptor.getScanType());
+        FoDScanDescriptor scanDescriptor = FoDScanHelper.getLatestScanDescriptor(unirest, releaseDescriptor.getReleaseId(),
+                FoDScanType.Static, false);
+        FoDScanHelper.validateScanDate(scanDescriptor, FoDScanHelper.MAX_RETENTION_PERIOD);
+        GetRequest request = unirest.get("/api/v3/releases/{releaseId}/fpr")
+                .routeParam("releaseId", releaseDescriptor.getReleaseId())
+                .headerReplace(HttpHeader.ACCEPT, "application/octet-stream")
+                .queryString("scanType", scanDescriptor.getScanType());
+        download(request, destination, POLL_INTERVAL, MAX_ATTEMPTS);
+    }
 
-            int status = 202;
-            int retries = 0;
-            while (status == 202 && retries < MAX_RETRIES) {
-                HttpResponse<Integer> response = request.asObject(raw -> copyBodyIfReady(raw, destination));
-                status = response.getBody() != null ? response.getBody() : response.getStatus();
-                if (status == 202) {
-                    retries++;
-                    sleepBeforeRetry(releaseDescriptor.getReleaseId());
-                }
+    static void download(GetRequest request, Path destination, Duration pollInterval, int maxAttempts) {
+        try {
+            if (destination.getFileSystem().equals(FileSystems.getDefault())) {
+                RestResponseBodyHelper.saveToFileWhenReady(request, destination, null, pollInterval, Duration.ZERO, maxAttempts);
+            } else {
+                downloadViaLocalTempFile(request, destination, pollInterval, maxAttempts);
             }
-            if (status == 202) {
-                throw new FcliSimpleException("Timed out waiting for FoD remediations FPR download to complete after "
-                        + MAX_RETRIES + " retries");
-            }
-            if (status < 200 || status >= 300) {
-                throw new FcliSimpleException("FoD remediations FPR download failed with HTTP status " + status
-                        + " for release " + releaseDescriptor.getReleaseId());
-            }
-            completed = true;
-        } catch (AbstractFcliException e) {
-            if (!completed) {
-                deleteQuietly(destination);
-            }
+        } catch (AbstractFcliException | UnexpectedHttpResponseException e) {
             throw e;
         } catch (RuntimeException e) {
-            if (!completed) {
-                deleteQuietly(destination);
-            }
-            throw new FcliTechnicalException("Error downloading FoD remediations FPR for release "
-                    + releaseDescriptor.getReleaseId() + " to " + destination, e);
+            throw new FcliTechnicalException("Error downloading FoD remediations FPR to " + destination, e);
         }
     }
 
-    /** Status first; write body only for ready 2xx (not 202). Drain otherwise so the connection can close. */
-    private static int copyBodyIfReady(RawResponse raw, Path destination) {
-        int status = raw.getStatus();
-        try (InputStream in = raw.getContent()) {
-            if (status < 200 || status >= 300 || status == 202) {
-                in.transferTo(OutputStream.nullOutputStream());
-                return status;
-            }
-            Path parent = destination.getParent();
-            if (parent != null) {
-                Files.createDirectories(parent);
-            }
-            Files.copy(in, destination, StandardCopyOption.REPLACE_EXISTING);
-            return status;
-        } catch (IOException e) {
-            throw new FcliTechnicalException("Error handling FoD download response for " + destination, e);
-        }
-    }
-
-    private static void sleepBeforeRetry(String releaseId) {
+    private static void downloadViaLocalTempFile(GetRequest request, Path destination, Duration pollInterval, int maxAttempts) {
+        Path localTemp = null;
+        Path partEntry = null;
         try {
-            Thread.sleep(RETRY_SLEEP_MS);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new FcliTechnicalException(
-                    "Interrupted while waiting for FoD remediations FPR download for release " + releaseId, e);
+            localTemp = Files.createTempFile("fcli-fod-fpr-", ".fpr");
+            RestResponseBodyHelper.saveToFileWhenReady(request, localTemp, null, pollInterval, Duration.ZERO, maxAttempts);
+            partEntry = destination.resolveSibling(destination.getFileName() + PART_SUFFIX);
+            Files.copy(localTemp, partEntry, StandardCopyOption.REPLACE_EXISTING);
+            Files.move(partEntry, destination, StandardCopyOption.REPLACE_EXISTING);
+            partEntry = null;
+        } catch (IOException e) {
+            throw new FcliTechnicalException("Error saving FoD remediations FPR to " + destination, e);
+        } finally {
+            deleteQuietly(localTemp);
+            deleteQuietly(partEntry);
         }
     }
 
-    private static void deleteQuietly(Path destination) {
-        if (destination == null) {
+    private static void deleteQuietly(Path path) {
+        if (path == null) {
             return;
         }
         try {
-            Files.deleteIfExists(destination);
+            Files.deleteIfExists(path);
         } catch (IOException e) {
-            logger.warn("Failed to delete incomplete FoD FPR download: {}", destination, e);
+            logger.warn("Failed to delete temporary FoD FPR download artifact: {}", path, e);
         }
     }
 }

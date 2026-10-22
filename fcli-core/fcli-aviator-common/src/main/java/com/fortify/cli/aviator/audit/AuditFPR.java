@@ -32,10 +32,9 @@ import com.fortify.cli.aviator.audit.model.FPRAuditResult;
 import com.fortify.cli.aviator.audit.model.FilterSelection;
 import com.fortify.cli.aviator.audit.model.ParsedFprData;
 import com.fortify.cli.aviator.config.TagMappingConfig;
-import com.fortify.cli.aviator.fpr.FPRProcessor;
+import com.fortify.cli.aviator.fpr.SastFprParser;
 import com.fortify.cli.aviator.fpr.Vulnerability;
 import com.fortify.cli.aviator.fpr.filter.FilterSetSelector;
-import com.fortify.cli.aviator.fpr.model.AuditIssue;
 import com.fortify.cli.aviator.fpr.model.FPRInfo;
 import com.fortify.cli.aviator.fpr.processor.AuditProcessor;
 import com.fortify.cli.aviator.fpr.processor.StreamingFVDLProcessor;
@@ -82,16 +81,7 @@ public class AuditFPR {
 
     private static ParsedFprData prepareAndParseFpr(FprHandle fprHandle, ISourceDecoder sourceDecoder) {
         try {
-            // Processors now take the FprHandle directly, no more extracted path
-            AuditProcessor auditProcessor = new AuditProcessor(fprHandle, sourceDecoder);
-            StreamingFVDLProcessor streamingFVDLProcessor = new StreamingFVDLProcessor(fprHandle, sourceDecoder);
-
-            Map<String, AuditIssue> auditIssueMap = auditProcessor.processAuditXML();
-            FPRProcessor fprProcessor = new FPRProcessor(fprHandle, auditIssueMap, auditProcessor);
-            List<Vulnerability> vulnerabilities = fprProcessor.process(streamingFVDLProcessor);
-            FPRInfo fprInfo = fprProcessor.getFprInfo();
-
-            return new ParsedFprData(auditIssueMap, vulnerabilities, fprInfo, auditProcessor, streamingFVDLProcessor);
+            return SastFprParser.parse(fprHandle, sourceDecoder);
         } catch (Exception e) {
             LOG.error("A critical error occurred during FPR processing.", e);
             throw new AviatorTechnicalException("Failed to process FPR contents.", e);
