@@ -1,6 +1,6 @@
 ---
 title: 'Fortify CLI (fcli) Developer Information'
-fcli_version: 0.20261021.131441-dev_v3.x
+fcli_version: 0.20261022.110148-dev_v3.x
 ---
 
 <!DOCTYPE html>
@@ -17,13 +17,13 @@ fcli_version: 0.20261021.131441-dev_v3.x
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20261021.131441-dev_v3.x" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20261022.110148-dev_v3.x" %}
 
 
 <div id="header">
 <h1>Fortify CLI (fcli) Developer Information</h1>
 <div class="details">
-<span id="revnumber">version 0.20261021.131441-dev_v3.x</span>
+<span id="revnumber">version 0.20261022.110148-dev_v3.x</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -52,6 +52,7 @@ fcli_version: 0.20261021.131441-dev_v3.x
 <li><a href="#_incremental_compilation_resources">Incremental Compilation (Resources)</a></li>
 <li><a href="#_reflection">Reflection</a></li>
 <li><a href="#_logging_in_native_images">Logging in native images</a></li>
+<li><a href="#_dependency_upgrade_coordination">Dependency upgrade coordination</a></li>
 </ul>
 </li>
 <li><a href="#_gradle_wrapper">Gradle Wrapper</a></li>
@@ -714,11 +715,10 @@ After changing logging dependencies or native-image metadata, run the functional
 including the unsigned-action warning test in <code>OutputMaskingSpec</code>, to verify that warnings reach stderr and not stdout.</p>
 </div>
 <div class="paragraph">
-<p>When upgrading Logback, also check for newly required resources.
-For example, Logback 1.6.5 reads <code>ch/qos/logback/core/logback-core-version.properties</code> and
+<p>Logback 1.6.5 also reads <code>ch/qos/logback/core/logback-core-version.properties</code> and
 <code>ch/qos/logback/classic/logback-classic-version.properties</code> to check version alignment.
 Missing resources can cause an unknown-version warning and dump initialization diagnostics to stdout, corrupting command output.
-These resources are an upgrade consideration, not an additional requirement for the current Logback 1.5.23 configuration.
+These resources must be included through the adjacent <code>resource-config.json</code>.
 Run functional tests against the rebuilt executable using <code>-Dft.fcli=/absolute/path/to/fcli</code>;
 JVM-only tests cannot validate native-image reflection or resource inclusion.</p>
 </div>
@@ -860,6 +860,20 @@ table and structured output, file logging, levels, sensitive-value masking, and 
 Keep this as a separate change from general dependency maintenance so failures can be attributed and reverted independently.</p>
 </div>
 </div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_dependency_upgrade_coordination"><a class="anchor" href="#_dependency_upgrade_coordination"></a>Dependency upgrade coordination</h3>
+<div class="paragraph">
+<p>Keep <code>picocli-codegen</code> aligned with the upstream version on which the picocli fork in <code>fcli-common-thirdparty</code> is based.
+Codegen brings its own upstream picocli dependency onto the annotation-processor classpath; upgrading it independently
+can introduce differences between build-time command models and the fork used at runtime.</p>
+</div>
+<div class="paragraph">
+<p>Coordinate Aviator-specific dependency and protobuf-plugin upgrades with the Aviator maintainers.
+Passing unit tests does not establish compatibility with deployed Aviator servers.
+Shared dependency upgrades can still affect Aviator transitively: inspect Gradle&#8217;s resolved dependency graph,
+not just the versions declared in the Aviator modules. In particular, Jackson YAML also selects a SnakeYAML version.</p>
 </div>
 </div>
 </div>
@@ -1323,8 +1337,8 @@ public class &lt;Module&gt;&lt;Entity&gt;&lt;Action&gt;Command extends &lt;Super
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20261021.131441-dev_v3.x<br>
-Last updated 2026-10-21 13:14:40 UTC
+Version 0.20261022.110148-dev_v3.x<br>
+Last updated 2026-10-22 11:01:48 UTC
 </div>
 </div>
 </body>
