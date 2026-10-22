@@ -45,11 +45,20 @@ public class AviatorGrpcClientHelper {
     private static final String AVIATOR_MODULE = "aviator";
 
     public static AviatorGrpcClient createClient(String url, IAviatorLogger logger, long pingIntervalSeconds) throws AviatorSimpleException {
+        return createClient(url, logger, pingIntervalSeconds, AviatorRequestPolicy.UNCHANGED);
+    }
+
+    public static AviatorGrpcClient createClient(String url, IAviatorLogger logger, long pingIntervalSeconds,
+            AviatorRequestPolicy policy) throws AviatorSimpleException {
         if (url == null || url.trim().isEmpty()) {
             throw new AviatorSimpleException("Aviator URL cannot be null or empty.");
         }
+        return createClient(createConnectionPlan(url), logger, pingIntervalSeconds, policy);
+    }
 
-        var connectionPlan = createConnectionPlan(url);
+    /** Builds a client from a connection plan; tests use this to supply a proxy without environment variables. */
+    static AviatorGrpcClient createClient(AviatorConnectionPlan connectionPlan, IAviatorLogger logger, long pingIntervalSeconds,
+            AviatorRequestPolicy policy) {
         var proxyDescriptor = connectionPlan.proxyDescriptor();
         var target = connectionPlan.target();
         var builder = target.port() == null
@@ -63,7 +72,8 @@ public class AviatorGrpcClientHelper {
         }
 
         var channel = configureBuilder(builder, proxyDescriptor).build();
-        return new AviatorGrpcClient(channel, Constants.DEFAULT_TIMEOUT_SECONDS, logger, pingIntervalSeconds);
+        return new AviatorGrpcClient(channel, Constants.DEFAULT_TIMEOUT_SECONDS, logger, pingIntervalSeconds,
+            policy, AviatorConnectionContext.of(connectionPlan));
     }
 
     public static AviatorConnectionPlan createConnectionPlan(String url) {
@@ -172,7 +182,11 @@ public class AviatorGrpcClientHelper {
     }
 
     public static AviatorGrpcClient createClient(String url) throws AviatorSimpleException {
-        return createClient(url, null, Constants.DEFAULT_PING_INTERVAL_SECONDS);
+        return createClient(url, AviatorRequestPolicy.UNCHANGED);
+    }
+
+    public static AviatorGrpcClient createClient(String url, AviatorRequestPolicy policy) throws AviatorSimpleException {
+        return createClient(url, null, Constants.DEFAULT_PING_INTERVAL_SECONDS, policy);
     }
 
     public record AviatorConnectionPlan(

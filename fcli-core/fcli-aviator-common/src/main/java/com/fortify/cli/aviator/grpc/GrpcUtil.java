@@ -26,6 +26,7 @@ import com.fortify.aviator.grpc.File;
 import com.fortify.aviator.grpc.Fragment;
 import com.fortify.aviator.grpc.IssueData;
 import com.fortify.aviator.grpc.StackTraceElementList;
+import com.fortify.cli.aviator._common.exception.AviatorConnectivityException;
 import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
 import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
 import com.fortify.cli.aviator.audit.model.AuditResponse;
@@ -37,6 +38,11 @@ import com.fortify.cli.aviator.audit.model.UserPrompt;
 import com.fortify.cli.aviator.fpr.utils.SourceCodeEnricher;
 import com.fortify.cli.aviator.util.Constants;
 
+import io.grpc.CallOptions;
+import io.grpc.Channel;
+import io.grpc.ClientCall;
+import io.grpc.ClientInterceptor;
+import io.grpc.MethodDescriptor;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import io.grpc.stub.AbstractBlockingStub;
@@ -50,65 +56,107 @@ class GrpcUtil {
         R call(S stub, T request) throws StatusRuntimeException;
     }
 
+    // gRPC 1.76 stubs have no withoutWaitForReady(); this interceptor clears the flag per call.
+    private static final ClientInterceptor WITHOUT_WAIT_FOR_READY = new ClientInterceptor() {
+        @Override
+        public <ReqT, RespT> ClientCall<ReqT, RespT> interceptCall(MethodDescriptor<ReqT, RespT> method,
+                CallOptions callOptions, Channel next) {
+            return next.newCall(method, callOptions.withoutWaitForReady());
+        }
+    };
+
     static <S extends AbstractBlockingStub<S>, T, R> R executeGrpcCall(S stub, GrpcCall<S, T, R> call, T request, String operation) {
+        return executeGrpcCall(stub, call, request, operation, AviatorRequestPolicy.UNCHANGED, null);
+    }
+
+    /**
+     * Executes a unary call with the default deadline. The policy selects wait-for-ready and
+     * connectivity failure handling; the context must be non-null if the policy classifies failures.
+     */
+    static <S extends AbstractBlockingStub<S>, T, R> R executeGrpcCall(S stub, GrpcCall<S, T, R> call, T request, String operation,
+            AviatorRequestPolicy policy, AviatorConnectionContext context) {
         try {
-            S stubWithDeadline = stub.withDeadlineAfter(Constants.DEFAULT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
-            return call.call(stubWithDeadline, request);
+            return call.call(configureStub(stub, policy), request);
         } catch (StatusRuntimeException e) {
-            Status status = e.getStatus();
-            String serverDescription = status.getDescription() != null && !status.getDescription().isBlank()
-                    ? status.getDescription()
-                    : "No additional details were provided by the server.";
-
-            switch (status.getCode()) {
-                case INVALID_ARGUMENT:
-                    throw new AviatorSimpleException(String.format("Invalid input for %s. The server reported: %s. Please check the provided arguments.", operation, serverDescription));
-                case NOT_FOUND:
-                    throw new AviatorSimpleException(String.format("The requested resource was not found during %s. The server reported: %s. Please verify the name or ID is correct.", operation, serverDescription));
-                case ALREADY_EXISTS:
-                    throw new AviatorSimpleException(String.format("Cannot perform %s because a resource with the same identifier already exists. The server reported: %s.", operation, serverDescription));
-                case FAILED_PRECONDITION:
-                    throw new AviatorSimpleException(String.format("The %s operation could not be completed because a required condition was not met. The server reported: %s.", operation, serverDescription));
-
-                case PERMISSION_DENIED:
-                    if (serverDescription.toLowerCase().contains("invalid signature")) {
-                        throw new AviatorSimpleException("Permission Denied: Invalid signature. Please verify the private key in your admin configuration is correct and corresponds to the public key registered with Aviator.");
-                    } else {
-                        throw new AviatorSimpleException(String.format("Permission Denied for %s. You may not have the required roles for this action. Server details: %s", operation, serverDescription));
-                    }
-                case UNAUTHENTICATED:
-                    throw new AviatorSimpleException("Authentication Failed: The token or credentials used are invalid or expired. Please log in again using 'fcli aviator session login' or verify your admin configuration.");
-
-                case RESOURCE_EXHAUSTED:
-                    throw new AviatorSimpleException(String.format("The server's resource limits were exceeded during %s. Please try again later or contact support. Server details: %s", operation, serverDescription));
-                case DEADLINE_EXCEEDED:
-                    String timeoutMessage = String.format(
-                            "The %s operation timed out because the server did not respond in time.\n\n" +
-                                    "Please check the following:\n" +
-                                    "  1. The Aviator URL in your configuration is correct and reachable.\n" +
-                                    "  2. Your network connection is stable and any firewalls or proxies are properly configured.\n\n" +
-                                    "If the URL and network are correct, the server may be experiencing high load. Please try again later.",
-                            operation
-                    );
-                    throw new AviatorSimpleException(timeoutMessage);
-
-                case CANCELLED:
-                case UNKNOWN:
-                case ABORTED:
-                case UNIMPLEMENTED:
-                case INTERNAL:
-                case UNAVAILABLE:
-                case DATA_LOSS:
-                default:
-                    String techMessage = String.format("A technical error occurred on the server while performing the %s operation. Please check the fcli logs for details or contact support if the issue persists.", operation);
-                    String logMessage = String.format("gRPC call for '%s' failed with status %s (%s): %s", operation, status.getCode(), status.getCode().name(), serverDescription);
-                    LOG.error(logMessage, e);
-                    throw new AviatorTechnicalException(techMessage, e);
-            }
+            throw toConnectivityException(e, operation, policy, context)
+                .orElseGet(() -> toAviatorException(e, operation));
         } catch (Exception e) {
             String errorMessage = "An unexpected client-side error occurred during the " + operation + " operation.";
             LOG.error(errorMessage, e);
             throw new AviatorTechnicalException(errorMessage, e);
+        }
+    }
+
+    private static <S extends AbstractBlockingStub<S>> S configureStub(S stub, AviatorRequestPolicy policy) {
+        var stubWithDeadline = stub.withDeadlineAfter(Constants.DEFAULT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+        return policy.isWaitForReady() ? stubWithDeadline : stubWithDeadline.withInterceptors(WITHOUT_WAIT_FOR_READY);
+    }
+
+    private static Optional<RuntimeException> toConnectivityException(StatusRuntimeException e, String operation,
+            AviatorRequestPolicy policy, AviatorConnectionContext context) {
+        if ( !policy.isClassifyConnectivityFailures() ) {
+            return Optional.empty();
+        }
+        return AviatorConnectivityFailureClassifier.classify(e, context)
+            .map(kind -> newConnectivityException(kind, operation, e, context));
+    }
+
+    private static AviatorConnectivityException newConnectivityException(AviatorConnectivityFailureKind kind, String operation,
+            StatusRuntimeException e, AviatorConnectionContext context) {
+        return new AviatorConnectivityException(kind.formatMessage(context), kind.name(), operation,
+            e.getStatus().getCode().name(), context.route(), context.firstHop().display(), e);
+    }
+
+    private static RuntimeException toAviatorException(StatusRuntimeException e, String operation) {
+        Status status = e.getStatus();
+        String serverDescription = status.getDescription() != null && !status.getDescription().isBlank()
+                ? status.getDescription()
+                : "No additional details were provided by the server.";
+
+        switch (status.getCode()) {
+            case INVALID_ARGUMENT:
+                return new AviatorSimpleException(String.format("Invalid input for %s. The server reported: %s. Please check the provided arguments.", operation, serverDescription));
+            case NOT_FOUND:
+                return new AviatorSimpleException(String.format("The requested resource was not found during %s. The server reported: %s. Please verify the name or ID is correct.", operation, serverDescription));
+            case ALREADY_EXISTS:
+                return new AviatorSimpleException(String.format("Cannot perform %s because a resource with the same identifier already exists. The server reported: %s.", operation, serverDescription));
+            case FAILED_PRECONDITION:
+                return new AviatorSimpleException(String.format("The %s operation could not be completed because a required condition was not met. The server reported: %s.", operation, serverDescription));
+
+            case PERMISSION_DENIED:
+                if (serverDescription.toLowerCase().contains("invalid signature")) {
+                    return new AviatorSimpleException("Permission Denied: Invalid signature. Please verify the private key in your admin configuration is correct and corresponds to the public key registered with Aviator.");
+                } else {
+                    return new AviatorSimpleException(String.format("Permission Denied for %s. You may not have the required roles for this action. Server details: %s", operation, serverDescription));
+                }
+            case UNAUTHENTICATED:
+                return new AviatorSimpleException("Authentication Failed: The token or credentials used are invalid or expired. Please log in again using 'fcli aviator session login' or verify your admin configuration.");
+
+            case RESOURCE_EXHAUSTED:
+                return new AviatorSimpleException(String.format("The server's resource limits were exceeded during %s. Please try again later or contact support. Server details: %s", operation, serverDescription));
+            case DEADLINE_EXCEEDED:
+                String timeoutMessage = String.format(
+                        "The %s operation timed out because the server did not respond in time.\n\n" +
+                                "Please check the following:\n" +
+                                "  1. The Aviator URL in your configuration is correct and reachable.\n" +
+                                "  2. Your network connection is stable and any firewalls or proxies are properly configured.\n\n" +
+                                "If the URL and network are correct, the server may be experiencing high load. Please try again later.",
+                        operation
+                );
+                return new AviatorSimpleException(timeoutMessage);
+
+            case CANCELLED:
+            case UNKNOWN:
+            case ABORTED:
+            case UNIMPLEMENTED:
+            case INTERNAL:
+            case UNAVAILABLE:
+            case DATA_LOSS:
+            default:
+                String techMessage = String.format("A technical error occurred on the server while performing the %s operation. Please check the fcli logs for details or contact support if the issue persists.", operation);
+                String logMessage = String.format("gRPC call for '%s' failed with status %s (%s): %s", operation, status.getCode(), status.getCode().name(), serverDescription);
+                LOG.error(logMessage, e);
+                return new AviatorTechnicalException(techMessage, e);
         }
     }
 
