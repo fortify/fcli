@@ -24,6 +24,7 @@ import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
 import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
 import com.fortify.cli.aviator._common.output.cli.cmd.AbstractAviatorAdminSessionOutputCommand;
 import com.fortify.cli.aviator._common.util.AviatorSignatureUtils;
+import com.fortify.cli.aviator.app.cli.mixin.AviatorAppResolverMixin;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClient;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClientHelper;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
@@ -31,30 +32,30 @@ import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
-import picocli.CommandLine.Parameters;
 
 @Command(name = OutputHelperMixins.Delete.CMD_NAME)
 public class AviatorAppDeleteCommand extends AbstractAviatorAdminSessionOutputCommand {
     @Getter @Mixin private OutputHelperMixins.Delete outputHelper;
-    @Parameters(index = "0", description = "Application ID") private String applicationId;
+    @Mixin private AviatorAppResolverMixin.NameOrIdParameter appResolver;
     private static final Logger LOG = LoggerFactory.getLogger(AviatorAppDeleteCommand.class);
 
     @Override
     protected JsonNode getJsonNode(AviatorAdminConfigDescriptor configDescriptor) throws AviatorSimpleException, AviatorTechnicalException {
         try (AviatorGrpcClient client = AviatorGrpcClientHelper.createClient(configDescriptor.getAviatorUrl())) {
-            String[] messageAndSignature = createMessageAndSignature(configDescriptor);
-            ApplicationResponseMessage response = deleteApplication(client, configDescriptor, messageAndSignature);
+            String applicationId = appResolver.getApplicationId(client, configDescriptor);
+            String[] messageAndSignature = createMessageAndSignature(configDescriptor, applicationId);
+            ApplicationResponseMessage response = deleteApplication(client, configDescriptor, messageAndSignature, applicationId);
             JsonNode result = processDeleteResponse(response);
             LOG.info("Application '{}' deleted successfully for tenant: {}", applicationId, configDescriptor.getTenant());
             return result;
         }
     }
 
-    private String[] createMessageAndSignature(AviatorAdminConfigDescriptor configDescriptor) {
+    private String[] createMessageAndSignature(AviatorAdminConfigDescriptor configDescriptor, String applicationId) {
         return AviatorSignatureUtils.createMessageAndSignature(configDescriptor, configDescriptor.getTenant(), applicationId);
     }
 
-    private ApplicationResponseMessage deleteApplication(AviatorGrpcClient client, AviatorAdminConfigDescriptor configDescriptor, String[] messageAndSignature) {
+    private ApplicationResponseMessage deleteApplication(AviatorGrpcClient client, AviatorAdminConfigDescriptor configDescriptor, String[] messageAndSignature, String applicationId) {
         String message = messageAndSignature[0];
         String signature = messageAndSignature[1];
         return client.deleteApplication(applicationId, signature, message, configDescriptor.getTenant());

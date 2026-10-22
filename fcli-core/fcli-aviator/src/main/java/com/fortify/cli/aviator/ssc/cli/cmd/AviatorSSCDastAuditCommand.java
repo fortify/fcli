@@ -27,6 +27,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.aviator._common.config.AviatorConfigManager;
 import com.fortify.cli.aviator._common.session.user.cli.mixin.AviatorUserSessionDescriptorSupplier;
 import com.fortify.cli.aviator._common.session.user.helper.AviatorUserSessionDescriptor;
+import com.fortify.cli.aviator.app.cli.mixin.AviatorAppResolverMixin;
 import com.fortify.cli.aviator.audit.DastAuditFPR;
 import com.fortify.cli.aviator.audit.DastAuditFprResult;
 import com.fortify.cli.aviator.audit.DastAuditFprStatus;
@@ -68,7 +69,7 @@ public class AviatorSSCDastAuditCommand extends AbstractSSCJsonNodeOutputCommand
     @Mixin private SSCAppVersionResolverMixin.RequiredOption appVersionResolver;
     @Mixin private AviatorUserSessionDescriptorSupplier sessionDescriptorSupplier;
     @Mixin private SSCAppVersionRefreshOptions refreshOptions;
-    @Option(names = {"--app"}) private String appName;
+    @Mixin private AviatorAppResolverMixin.NameOnlyOption appResolver;
     @Option(names = {"--tag-mapping"}) private String tagMapping;
 
     private String actionResult = "SKIPPED";
@@ -127,7 +128,7 @@ public class AviatorSSCDastAuditCommand extends AbstractSSCJsonNodeOutputCommand
             AviatorUserSessionDescriptor session,
             IAviatorLogger logger,
             TagMappingConfig tagMappingConfig) throws Exception {
-        String effectiveAppName = appName != null ? appName : appVersion.getApplicationName();
+        String effectiveAppName = appResolver.getAppName() != null ? appResolver.getAppName() : appVersion.getApplicationName();
         var config = DastAuditStreamConfig.builder()
             .token(session.getAviatorToken())
             .applicationName(effectiveAppName)
