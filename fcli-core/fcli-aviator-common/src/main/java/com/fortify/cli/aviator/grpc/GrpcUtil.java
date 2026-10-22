@@ -12,7 +12,9 @@
  */
 package com.fortify.cli.aviator.grpc;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -38,11 +40,6 @@ import com.fortify.cli.aviator.audit.model.UserPrompt;
 import com.fortify.cli.aviator.fpr.utils.SourceCodeEnricher;
 import com.fortify.cli.aviator.util.Constants;
 
-import io.grpc.CallOptions;
-import io.grpc.Channel;
-import io.grpc.ClientCall;
-import io.grpc.ClientInterceptor;
-import io.grpc.MethodDescriptor;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import io.grpc.stub.AbstractBlockingStub;
@@ -56,29 +53,11 @@ class GrpcUtil {
         R call(S stub, T request) throws StatusRuntimeException;
     }
 
-    // gRPC 1.76 stubs have no withoutWaitForReady(); this interceptor clears the flag per call.
-    private static final ClientInterceptor WITHOUT_WAIT_FOR_READY = new ClientInterceptor() {
-        @Override
-        public <ReqT, RespT> ClientCall<ReqT, RespT> interceptCall(MethodDescriptor<ReqT, RespT> method,
-                CallOptions callOptions, Channel next) {
-            return next.newCall(method, callOptions.withoutWaitForReady());
-        }
-    };
-
     static <S extends AbstractBlockingStub<S>, T, R> R executeGrpcCall(S stub, GrpcCall<S, T, R> call, T request, String operation) {
-        return executeGrpcCall(stub, call, request, operation, AviatorRequestPolicy.UNCHANGED, null);
-    }
-
-    /**
-     * Executes a unary call with the default deadline. The policy selects wait-for-ready and
-     * connectivity failure handling; the context must be non-null if the policy classifies failures.
-     */
-    static <S extends AbstractBlockingStub<S>, T, R> R executeGrpcCall(S stub, GrpcCall<S, T, R> call, T request, String operation,
-            AviatorRequestPolicy policy, AviatorConnectionContext context) {
         try {
-            return call.call(configureStub(stub, policy), request);
+            return call.call(stub.withDeadlineAfter(Constants.DEFAULT_TIMEOUT_SECONDS, TimeUnit.SECONDS), request);
         } catch (StatusRuntimeException e) {
-            throw toConnectivityException(e, operation, policy, context)
+            throw toConnectivityException(e, stub.getCallOptions().getOption(AviatorConnectionContext.CALL_OPTION))
                 .orElseGet(() -> toAviatorException(e, operation));
         } catch (Exception e) {
             String errorMessage = "An unexpected client-side error occurred during the " + operation + " operation.";
@@ -87,24 +66,12 @@ class GrpcUtil {
         }
     }
 
-    private static <S extends AbstractBlockingStub<S>> S configureStub(S stub, AviatorRequestPolicy policy) {
-        var stubWithDeadline = stub.withDeadlineAfter(Constants.DEFAULT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
-        return policy.isWaitForReady() ? stubWithDeadline : stubWithDeadline.withInterceptors(WITHOUT_WAIT_FOR_READY);
-    }
-
-    private static Optional<RuntimeException> toConnectivityException(StatusRuntimeException e, String operation,
-            AviatorRequestPolicy policy, AviatorConnectionContext context) {
-        if ( !policy.isClassifyConnectivityFailures() ) {
+    private static Optional<RuntimeException> toConnectivityException(StatusRuntimeException e, AviatorConnectionContext context) {
+        if ( context == null ) {
             return Optional.empty();
         }
         return AviatorConnectivityFailureClassifier.classify(e, context)
-            .map(kind -> newConnectivityException(kind, operation, e, context));
-    }
-
-    private static AviatorConnectivityException newConnectivityException(AviatorConnectivityFailureKind kind, String operation,
-            StatusRuntimeException e, AviatorConnectionContext context) {
-        return new AviatorConnectivityException(kind.formatMessage(context), kind.name(), operation,
-            e.getStatus().getCode().name(), context.route(), context.firstHop().display(), e);
+            .map(kind -> new AviatorConnectivityException(kind.formatMessage(context), kind.name(), e));
     }
 
     private static RuntimeException toAviatorException(StatusRuntimeException e, String operation) {

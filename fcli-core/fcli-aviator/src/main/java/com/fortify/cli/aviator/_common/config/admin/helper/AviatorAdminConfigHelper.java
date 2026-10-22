@@ -39,7 +39,7 @@ public class AviatorAdminConfigHelper extends AbstractSessionHelper<AviatorAdmin
     }
 
     public void validateConfig(AviatorAdminConfigDescriptor configDescriptor) {
-        validateConfig(configDescriptor, AviatorRequestPolicy.UNCHANGED);
+        validateConfig(configDescriptor, AviatorRequestPolicy.WAIT_FOR_READY);
     }
 
     public void validateConfig(AviatorAdminConfigDescriptor configDescriptor, AviatorRequestPolicy policy) {

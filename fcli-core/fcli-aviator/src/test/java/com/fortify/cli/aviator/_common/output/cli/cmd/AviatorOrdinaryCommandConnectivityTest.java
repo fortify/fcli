@@ -23,7 +23,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.Base64;
-import java.util.List;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
@@ -38,18 +37,17 @@ import com.fortify.cli.aviator._common.config.admin.helper.AviatorAdminConfigDes
 import com.fortify.cli.aviator._common.exception.AviatorConnectivityException;
 import com.fortify.cli.aviator._common.session.user.helper.AviatorUserSessionHelper;
 import com.fortify.cli.aviator.grpc.AviatorRequestPolicy;
+import com.fortify.cli.aviator.grpc.AviatorGrpcClientHelper;
 import com.fortify.cli.common.cli.util.FcliExecutionContextHolder;
 import com.fortify.cli.common.output.cli.mixin.IOutputHelper;
 
 /**
- * Checks that ordinary Aviator commands fail fast with the shared connectivity messages.
+ * Checks that fail-fast Aviator commands fail fast with the shared connectivity messages.
  * Each case targets a closed loopback port, so no Aviator server is needed.
  */
 class AviatorOrdinaryCommandConnectivityTest {
     private static final String FCLI_DATA_DIR_PROPERTY = "fcli.env.FCLI_DATA_DIR";
     private static final Duration FAIL_FAST_LIMIT = Duration.ofSeconds(5);
-    private static final List<String> PROXY_ENV_VARS =
-            List.of("https_proxy", "HTTPS_PROXY", "http_proxy", "HTTP_PROXY", "all_proxy", "ALL_PROXY");
 
     // Static, because some fcli helpers cache paths below the fcli data directory in static fields
     @TempDir static Path fcliDataDir;
@@ -73,13 +71,12 @@ class AviatorOrdinaryCommandConnectivityTest {
 
     @BeforeEach
     void setUp() throws IOException {
-        // The client reads proxy environment variables; a configured proxy would change the result
-        assumeTrue(PROXY_ENV_VARS.stream().allMatch(name -> System.getenv(name)==null),
-            "Skipped because a proxy environment variable is set");
         FcliExecutionContextHolder.pushNew();
         try ( var socket = new ServerSocket(0, 1, InetAddress.getLoopbackAddress()) ) {
             closedPortUrl = "127.0.0.1:" + socket.getLocalPort();
         }
+        assumeTrue(AviatorGrpcClientHelper.createConnectionPlan(closedPortUrl).proxyDescriptor().isEmpty(),
+            "This test requires a direct loopback route (configure NO_PROXY for 127.0.0.1)");
     }
 
     @AfterEach
@@ -88,7 +85,7 @@ class AviatorOrdinaryCommandConnectivityTest {
     }
 
     @Test
-    void adminCommandBaseClassCreatesOrdinaryClient() {
+    void adminCommandBaseClassCreatesFailFastClient() {
         var descriptor = new AviatorAdminConfigDescriptor(closedPortUrl, "tenant", "unused-private-key");
         var command = new TestAdminCommand();
 
@@ -100,9 +97,9 @@ class AviatorOrdinaryCommandConnectivityTest {
     }
 
     @Test
-    void userSessionTokenValidationFailsFastWithOrdinaryPolicy() {
+    void userSessionTokenValidationFailsFastWithFailFastPolicy() {
         assertFailsFast(() -> AviatorUserSessionHelper.instance()
-            .validateToken(closedPortUrl, syntheticToken(), AviatorRequestPolicy.ORDINARY));
+            .validateToken(closedPortUrl, syntheticToken(), AviatorRequestPolicy.FAIL_FAST));
     }
 
     private static String syntheticToken() {

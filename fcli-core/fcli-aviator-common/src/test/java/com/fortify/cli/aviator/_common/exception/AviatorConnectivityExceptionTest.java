@@ -74,9 +74,7 @@ class AviatorConnectivityExceptionTest {
         var diagnostic = createException().getSafeDiagnosticString();
 
         assertTrue(diagnostic.contains("kind=PROXY_REFUSED"));
-        assertTrue(diagnostic.contains("status=UNAVAILABLE"));
-        assertTrue(diagnostic.contains("route=proxy"));
-        assertTrue(diagnostic.contains("endpoint=localhost:33444"));
+        assertTrue(diagnostic.contains("proxy localhost:33444"));
         assertTrue(diagnostic.contains("java.net.ConnectException"));
         assertFalse(diagnostic.contains(SECRET));
     }
@@ -107,7 +105,6 @@ class AviatorConnectivityExceptionTest {
             .withDescription("io exception " + SECRET)
             .withCause(transportCause)
             .asRuntimeException();
-        return new AviatorConnectivityException(MESSAGE, "PROXY_REFUSED", "listApplications",
-            "UNAVAILABLE", "proxy", "localhost:33444", statusException);
+        return new AviatorConnectivityException(MESSAGE, "PROXY_REFUSED", statusException);
     }
 }

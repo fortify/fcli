@@ -16,14 +16,16 @@ import java.util.Objects;
 
 import com.fortify.cli.aviator.grpc.AviatorGrpcClientHelper.AviatorConnectionPlan;
 
+import io.grpc.CallOptions;
+
 /**
- * Safe summary of the route that an Aviator client uses. It holds only host names and
- * ports; it never holds URLs, proxy credentials, or proxy descriptors.
- *
- * @param target the Aviator server endpoint
- * @param proxy the HTTP CONNECT proxy endpoint, or null for a direct connection
+ * Endpoints retained for error messages, without proxy credentials.
+ * @param proxy null for a direct connection
  */
 record AviatorConnectionContext(AviatorEndpoint target, AviatorEndpoint proxy) {
+    // Present only on fail-fast unary stubs; absence preserves the existing error mapping.
+    static final CallOptions.Key<AviatorConnectionContext> CALL_OPTION = CallOptions.Key.create("aviator-connectivity");
+
     AviatorConnectionContext {
         Objects.requireNonNull(target, "target");
     }
@@ -40,12 +42,7 @@ record AviatorConnectionContext(AviatorEndpoint target, AviatorEndpoint proxy) {
         return proxy!=null;
     }
 
-    /** Returns the first TCP peer of the client: the proxy if one is used, else the target. */
     AviatorEndpoint firstHop() {
         return isProxied() ? proxy : target;
-    }
-
-    String route() {
-        return isProxied() ? "proxy" : "direct";
     }
 }

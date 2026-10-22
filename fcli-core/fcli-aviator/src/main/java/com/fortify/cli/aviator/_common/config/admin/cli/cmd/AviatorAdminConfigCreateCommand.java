@@ -62,7 +62,7 @@ public class AviatorAdminConfigCreateCommand extends AbstractSessionLoginCommand
                 configCreateOptions.getTenant(),
                 privateKeyContents);
         LOG.info("Validating Aviator admin configuration with the Aviator server...");
-        configHelper.validateConfig(configDescriptor, AviatorRequestPolicy.ORDINARY);
+        configHelper.validateConfig(configDescriptor, AviatorRequestPolicy.FAIL_FAST);
         LOG.info("Aviator admin configuration validated successfully.");
         return configDescriptor;
     }

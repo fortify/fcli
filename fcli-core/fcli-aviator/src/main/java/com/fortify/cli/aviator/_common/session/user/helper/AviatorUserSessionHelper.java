@@ -43,7 +43,7 @@ public class AviatorUserSessionHelper extends AbstractSessionHelper<AviatorUserS
     }
 
     public AviatorUserTokenValidationResult validateToken(String aviatorUrl, String token) {
-        return validateToken(aviatorUrl, token, AviatorRequestPolicy.UNCHANGED);
+        return validateToken(aviatorUrl, token, AviatorRequestPolicy.WAIT_FOR_READY);
     }
 
     public AviatorUserTokenValidationResult validateToken(String aviatorUrl, String token, AviatorRequestPolicy policy) {

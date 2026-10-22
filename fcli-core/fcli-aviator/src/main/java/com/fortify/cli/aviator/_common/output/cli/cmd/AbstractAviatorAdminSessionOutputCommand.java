@@ -37,11 +37,8 @@ public abstract class AbstractAviatorAdminSessionOutputCommand extends AbstractO
 
     public abstract boolean isSingular();
 
-    /**
-     * Creates a gRPC client that fails fast on connectivity failures and reports them with
-     * the shared Aviator connectivity messages. Callers must close the client.
-     */
+    /** The caller must close the client. */
     protected final AviatorGrpcClient createGrpcClient(AviatorAdminConfigDescriptor configDescriptor) {
-        return AviatorGrpcClientHelper.createClient(configDescriptor.getAviatorUrl(), AviatorRequestPolicy.ORDINARY);
+        return AviatorGrpcClientHelper.createClient(configDescriptor.getAviatorUrl(), AviatorRequestPolicy.FAIL_FAST);
     }
 }

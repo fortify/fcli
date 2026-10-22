@@ -45,7 +45,7 @@ public class AviatorGrpcClientHelper {
     private static final String AVIATOR_MODULE = "aviator";
 
     public static AviatorGrpcClient createClient(String url, IAviatorLogger logger, long pingIntervalSeconds) throws AviatorSimpleException {
-        return createClient(url, logger, pingIntervalSeconds, AviatorRequestPolicy.UNCHANGED);
+        return createClient(url, logger, pingIntervalSeconds, AviatorRequestPolicy.WAIT_FOR_READY);
     }
 
     public static AviatorGrpcClient createClient(String url, IAviatorLogger logger, long pingIntervalSeconds,
@@ -56,7 +56,7 @@ public class AviatorGrpcClientHelper {
         return createClient(createConnectionPlan(url), logger, pingIntervalSeconds, policy);
     }
 
-    /** Builds a client from a connection plan; tests use this to supply a proxy without environment variables. */
+    /** Accepts an explicit route so callers need not resolve proxy settings again. */
     static AviatorGrpcClient createClient(AviatorConnectionPlan connectionPlan, IAviatorLogger logger, long pingIntervalSeconds,
             AviatorRequestPolicy policy) {
         var proxyDescriptor = connectionPlan.proxyDescriptor();
@@ -71,7 +71,7 @@ public class AviatorGrpcClientHelper {
             LOG.debug("Port specified, using NettyChannelBuilder.forAddress: {}:{}", target.host(), target.port());
         }
 
-        var channel = configureBuilder(builder, proxyDescriptor).build();
+        var channel = policy.configureChannel(configureBuilder(builder, proxyDescriptor)).build();
         return new AviatorGrpcClient(channel, Constants.DEFAULT_TIMEOUT_SECONDS, logger, pingIntervalSeconds,
             policy, AviatorConnectionContext.of(connectionPlan));
     }
@@ -204,7 +204,7 @@ public class AviatorGrpcClientHelper {
     }
 
     public static AviatorGrpcClient createClient(String url) throws AviatorSimpleException {
-        return createClient(url, AviatorRequestPolicy.UNCHANGED);
+        return createClient(url, AviatorRequestPolicy.WAIT_FOR_READY);
     }
 
     public static AviatorGrpcClient createClient(String url, AviatorRequestPolicy policy) throws AviatorSimpleException {

@@ -76,7 +76,6 @@ import io.grpc.CompressorRegistry;
 import io.grpc.DecompressorRegistry;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
-import io.grpc.stub.AbstractBlockingStub;
 
 public class AviatorGrpcClient implements AutoCloseable {
     private static final Logger LOG = LoggerFactory.getLogger(AviatorGrpcClient.class);
@@ -94,33 +93,32 @@ public class AviatorGrpcClient implements AutoCloseable {
     private final java.util.concurrent.ExecutorService processingExecutor;
     private final long pingIntervalSeconds;
     private final java.util.concurrent.ScheduledExecutorService pingScheduler;
-    private final AviatorRequestPolicy requestPolicy;
-    private final AviatorConnectionContext connectionContext;
     final AtomicBoolean isShutdown = new AtomicBoolean(false);
 
     public AviatorGrpcClient(ManagedChannel channel, long defaultTimeoutSeconds, IAviatorLogger logger, long pingIntervalSeconds) {
-        this(channel, defaultTimeoutSeconds, logger, pingIntervalSeconds, AviatorRequestPolicy.UNCHANGED, null);
+        this(channel, defaultTimeoutSeconds, logger, pingIntervalSeconds, AviatorRequestPolicy.WAIT_FOR_READY, null);
     }
 
-    /**
-     * Creates a client with an explicit request policy. A connection context is required if the
-     * policy classifies connectivity failures, because the messages name the failed endpoint.
-     */
+    /** Fail-fast clients require a connection context for error messages. */
     AviatorGrpcClient(ManagedChannel channel, long defaultTimeoutSeconds, IAviatorLogger logger, long pingIntervalSeconds,
             AviatorRequestPolicy requestPolicy, AviatorConnectionContext connectionContext) {
         LOG.debug("Initializing AviatorGrpcClient with ManagedChannel");
-        this.requestPolicy = Objects.requireNonNull(requestPolicy, "requestPolicy");
-        if ( requestPolicy.isClassifyConnectivityFailures() ) {
-            Objects.requireNonNull(connectionContext, "connectionContext");
-        }
-        this.connectionContext = connectionContext;
+        Objects.requireNonNull(requestPolicy, "requestPolicy");
         this.logger = logger;
         this.channel = channel;
         this.asyncStub = AuditorServiceGrpc.newStub(channel).withCompression("gzip").withMaxInboundMessageSize(Constants.MAX_MESSAGE_SIZE).withMaxOutboundMessageSize(Constants.MAX_MESSAGE_SIZE).withWaitForReady();
-        this.blockingStub = ApplicationServiceGrpc.newBlockingStub(channel).withCompression("gzip").withMaxInboundMessageSize(Constants.MAX_MESSAGE_SIZE).withMaxOutboundMessageSize(Constants.MAX_MESSAGE_SIZE).withWaitForReady();
-        this.tokenServiceBlockingStub = TokenServiceGrpc.newBlockingStub(channel).withCompression("gzip").withMaxInboundMessageSize(Constants.MAX_MESSAGE_SIZE).withMaxOutboundMessageSize(Constants.MAX_MESSAGE_SIZE).withWaitForReady();
-        this.entitlementServiceBlockingStub = EntitlementServiceGrpc.newBlockingStub(channel).withCompression("gzip").withMaxInboundMessageSize(Constants.MAX_MESSAGE_SIZE).withMaxOutboundMessageSize(Constants.MAX_MESSAGE_SIZE).withWaitForReady();
-        this.dastEntitlementServiceBlockingStub = DastEntitlementServiceGrpc.newBlockingStub(channel).withCompression("gzip").withMaxInboundMessageSize(Constants.MAX_MESSAGE_SIZE).withMaxOutboundMessageSize(Constants.MAX_MESSAGE_SIZE).withWaitForReady();
+        this.blockingStub = requestPolicy.configureNewStub(ApplicationServiceGrpc.newBlockingStub(channel)
+            .withCompression("gzip").withMaxInboundMessageSize(Constants.MAX_MESSAGE_SIZE)
+            .withMaxOutboundMessageSize(Constants.MAX_MESSAGE_SIZE), connectionContext);
+        this.tokenServiceBlockingStub = requestPolicy.configureNewStub(TokenServiceGrpc.newBlockingStub(channel)
+            .withCompression("gzip").withMaxInboundMessageSize(Constants.MAX_MESSAGE_SIZE)
+            .withMaxOutboundMessageSize(Constants.MAX_MESSAGE_SIZE), connectionContext);
+        this.entitlementServiceBlockingStub = requestPolicy.configureNewStub(EntitlementServiceGrpc.newBlockingStub(channel)
+            .withCompression("gzip").withMaxInboundMessageSize(Constants.MAX_MESSAGE_SIZE)
+            .withMaxOutboundMessageSize(Constants.MAX_MESSAGE_SIZE), connectionContext);
+        this.dastEntitlementServiceBlockingStub = requestPolicy.configureNewStub(DastEntitlementServiceGrpc.newBlockingStub(channel)
+            .withCompression("gzip").withMaxInboundMessageSize(Constants.MAX_MESSAGE_SIZE)
+            .withMaxOutboundMessageSize(Constants.MAX_MESSAGE_SIZE), connectionContext);
         this.correlationAsyncStub = CorrelationServiceGrpc.newStub(channel).withCompression("gzip").withMaxInboundMessageSize(Constants.MAX_MESSAGE_SIZE).withMaxOutboundMessageSize(Constants.MAX_MESSAGE_SIZE).withWaitForReady();
         this.dastAuditAsyncStub = DastAuditServiceGrpc.newStub(channel)
             .withCompression("gzip")
@@ -148,10 +146,6 @@ public class AviatorGrpcClient implements AutoCloseable {
 
     public AviatorGrpcClient(ManagedChannel channel, long defaultTimeoutSeconds, IAviatorLogger logger) {
         this(channel, defaultTimeoutSeconds, logger, 30);
-    }
-
-    private <S extends AbstractBlockingStub<S>, T, R> R execute(S stub, GrpcUtil.GrpcCall<S, T, R> call, T request, String operation) {
-        return GrpcUtil.executeGrpcCall(stub, call, request, operation, requestPolicy, connectionContext);
     }
 
     public CompletableFuture<Map<String, AuditResponse>> processBatchRequests(Queue<UserPrompt> requests, String projectName,
@@ -211,27 +205,32 @@ public class AviatorGrpcClient implements AutoCloseable {
 
     public Application createApplication(String name, String tenantName, String signature, String message) {
         CreateApplicationRequest request = CreateApplicationRequest.newBuilder().setName(name).setTenantName(tenantName).setSignature(signature).setMessage(message).build();
-        return execute(blockingStub, ApplicationServiceGrpc.ApplicationServiceBlockingStub::createApplication, request, Constants.OP_CREATE_APP);
+        return GrpcUtil.executeGrpcCall(blockingStub,
+            ApplicationServiceGrpc.ApplicationServiceBlockingStub::createApplication, request, Constants.OP_CREATE_APP);
     }
 
     public Application updateApplication(String projectId, String newName, String signature, String message, String tenantName) {
         UpdateApplicationRequest request = UpdateApplicationRequest.newBuilder().setId(Long.parseLong(projectId)).setName(newName).setTenantName(tenantName).setSignature(signature).setMessage(message).build();
-        return execute(blockingStub, ApplicationServiceGrpc.ApplicationServiceBlockingStub::updateApplication, request, Constants.OP_UPDATE_APP);
+        return GrpcUtil.executeGrpcCall(blockingStub,
+            ApplicationServiceGrpc.ApplicationServiceBlockingStub::updateApplication, request, Constants.OP_UPDATE_APP);
     }
 
     public Application addEntitlement(String projectId, String signature, String message, String tenantName) {
         ApplicationById request = ApplicationById.newBuilder().setId(Long.parseLong(projectId)).setSignature(signature).setMessage(message).setTenantName(tenantName).build();
-        return execute(blockingStub, ApplicationServiceGrpc.ApplicationServiceBlockingStub::addEntitlement, request, Constants.OP_ADD_APP_ENTITLEMENT);
+        return GrpcUtil.executeGrpcCall(blockingStub,
+            ApplicationServiceGrpc.ApplicationServiceBlockingStub::addEntitlement, request, Constants.OP_ADD_APP_ENTITLEMENT);
     }
 
     public ApplicationResponseMessage deleteApplication(String projectId, String signature, String message, String tenantName) {
         ApplicationById request = ApplicationById.newBuilder().setId(Long.parseLong(projectId)).setSignature(signature).setMessage(message).setTenantName(tenantName).build();
-        return execute(blockingStub, ApplicationServiceGrpc.ApplicationServiceBlockingStub::deleteApplication, request, Constants.OP_DELETE_APP);
+        return GrpcUtil.executeGrpcCall(blockingStub,
+            ApplicationServiceGrpc.ApplicationServiceBlockingStub::deleteApplication, request, Constants.OP_DELETE_APP);
     }
 
     public Application getApplication(String projectId, String signature, String message, String tenantName) {
         ApplicationById request = ApplicationById.newBuilder().setId(Long.parseLong(projectId)).setSignature(signature).setMessage(message).setTenantName(tenantName).build();
-        return execute(blockingStub, ApplicationServiceGrpc.ApplicationServiceBlockingStub::getApplication, request, Constants.OP_GET_APP);
+        return GrpcUtil.executeGrpcCall(blockingStub,
+            ApplicationServiceGrpc.ApplicationServiceBlockingStub::getApplication, request, Constants.OP_GET_APP);
     }
 
     public Application getApplicationByToken(String token, String appName) {
@@ -239,14 +238,15 @@ public class AviatorGrpcClient implements AutoCloseable {
             .setToken(token)
             .setAppName(appName)
             .build();
-        return execute(blockingStub, ApplicationServiceGrpc.ApplicationServiceBlockingStub::getApplicationByToken, request, Constants.OP_GET_APP_BY_TOKEN);
+        return GrpcUtil.executeGrpcCall(blockingStub,
+            ApplicationServiceGrpc.ApplicationServiceBlockingStub::getApplicationByToken, request, Constants.OP_GET_APP_BY_TOKEN);
     }
 
     public long getDefaultQuota(String token) {
         GetDefaultQuotaRequest request = GetDefaultQuotaRequest.newBuilder()
             .setToken(token)
             .build();
-        GetDefaultQuotaResponse response = execute(blockingStub,
+        GetDefaultQuotaResponse response = GrpcUtil.executeGrpcCall(blockingStub,
             ApplicationServiceGrpc.ApplicationServiceBlockingStub::getDefaultQuota,
             request, Constants.OP_GET_DEFAULT_QUOTA);
         return response.getDefaultQuota();
@@ -263,7 +263,7 @@ public class AviatorGrpcClient implements AutoCloseable {
             .setSignature(signature)
             .setMessage(message)
             .build();
-        execute(
+        GrpcUtil.executeGrpcCall(
             blockingStub,
             ApplicationServiceGrpc.ApplicationServiceBlockingStub::validateAdminSession,
             request,
@@ -272,18 +272,21 @@ public class AviatorGrpcClient implements AutoCloseable {
 
     public List<Application> listApplication(String tenantName, String signature, String message) {
         ApplicationByTenantName request = ApplicationByTenantName.newBuilder().setName(tenantName).setSignature(signature).setMessage(message).build();
-        ApplicationList applicationList = execute(blockingStub, ApplicationServiceGrpc.ApplicationServiceBlockingStub::listApplications, request, Constants.OP_LIST_APPS);
+        ApplicationList applicationList = GrpcUtil.executeGrpcCall(blockingStub,
+            ApplicationServiceGrpc.ApplicationServiceBlockingStub::listApplications, request, Constants.OP_LIST_APPS);
         return applicationList.getApplicationsList();
     }
 
     public TokenGenerationResponse generateToken(String email, String tokenName, String signature, String message, String tenantName, String endDate) {
         TokenGenerationRequest request = TokenGenerationRequest.newBuilder().setEmail(email != null ? email : "").setCustomTokenName(tokenName != null ? tokenName : "").setRequestSignature(signature).setEndDate(com.fortify.cli.aviator.util.StringUtil.isEmpty(endDate) ? "" : endDate).setMessage(message).setTenantName(tenantName).build();
-        return execute(tokenServiceBlockingStub, TokenServiceGrpc.TokenServiceBlockingStub::generateToken, request, Constants.OP_GENERATE_TOKEN);
+        return GrpcUtil.executeGrpcCall(tokenServiceBlockingStub,
+            TokenServiceGrpc.TokenServiceBlockingStub::generateToken, request, Constants.OP_GENERATE_TOKEN);
     }
 
     public ListTokensResponse listTokens(String email, String tenantName, String signature, String message) {
         ListTokensRequest request = ListTokensRequest.newBuilder().setRequestSignature(signature).setMessage(message).setTenantName(tenantName).setIgnorePagination(true).build();
-        return execute(tokenServiceBlockingStub, TokenServiceGrpc.TokenServiceBlockingStub::listTokens, request, Constants.OP_LIST_TOKENS);
+        return GrpcUtil.executeGrpcCall(tokenServiceBlockingStub,
+            TokenServiceGrpc.TokenServiceBlockingStub::listTokens, request, Constants.OP_LIST_TOKENS);
     }
 
     public ListTokensResponse listTokensByDeveloper(String tenantName, String developerEmail, String signature, String message) {
@@ -292,38 +295,46 @@ public class AviatorGrpcClient implements AutoCloseable {
             requestBuilder.setDeveloperEmail(developerEmail);
         }
         ListTokensByDeveloperRequest request = requestBuilder.build();
-        return execute(tokenServiceBlockingStub, TokenServiceGrpc.TokenServiceBlockingStub::listTokensByDeveloper, request, Constants.OP_LIST_TOKENS_BY_DEVELOPER);
+        return GrpcUtil.executeGrpcCall(tokenServiceBlockingStub,
+            TokenServiceGrpc.TokenServiceBlockingStub::listTokensByDeveloper, request, Constants.OP_LIST_TOKENS_BY_DEVELOPER);
     }
 
     public RevokeTokenResponse revokeToken(String token, String email, String tenantName, String signature, String message) {
         RevokeTokenRequest request = RevokeTokenRequest.newBuilder().setToken(token).setTenantName(tenantName).setRequestSignature(signature).setMessage(message).build();
-        return execute(tokenServiceBlockingStub, TokenServiceGrpc.TokenServiceBlockingStub::revokeToken, request, Constants.OP_REVOKE_TOKEN);
+        return GrpcUtil.executeGrpcCall(tokenServiceBlockingStub,
+            TokenServiceGrpc.TokenServiceBlockingStub::revokeToken, request, Constants.OP_REVOKE_TOKEN);
     }
 
     public DeleteTokenResponse deleteToken(String token, String email, String tenantName, String signature, String message) {
         DeleteTokenRequest request = DeleteTokenRequest.newBuilder().setToken(token).setTenantName(tenantName).setRequestSignature(signature).setMessage(message).build();
-        return execute(tokenServiceBlockingStub, TokenServiceGrpc.TokenServiceBlockingStub::deleteToken, request, Constants.OP_DELETE_TOKEN);
+        return GrpcUtil.executeGrpcCall(tokenServiceBlockingStub,
+            TokenServiceGrpc.TokenServiceBlockingStub::deleteToken, request, Constants.OP_DELETE_TOKEN);
     }
 
     public TokenValidationResponse validateToken(String token, String tenantName, String signature, String message) {
         TokenValidationRequest request = TokenValidationRequest.newBuilder().setToken(token).setTenantName(tenantName).setRequestSignature(signature).setMessage(message).build();
-        return execute(tokenServiceBlockingStub, TokenServiceGrpc.TokenServiceBlockingStub::validateToken, request, Constants.OP_VALIDATE_TOKEN);
+        return GrpcUtil.executeGrpcCall(tokenServiceBlockingStub,
+            TokenServiceGrpc.TokenServiceBlockingStub::validateToken, request, Constants.OP_VALIDATE_TOKEN);
     }
 
     public TokenValidationResponse validateUserToken(String token, String tenantName) {
         ValidateUserTokenRequest request = ValidateUserTokenRequest.newBuilder().setToken(token).setTenantName(tenantName != null ? tenantName : "").build();
-        return execute(tokenServiceBlockingStub, TokenServiceGrpc.TokenServiceBlockingStub::validateUserToken, request, Constants.OP_VALIDATE_USER_TOKEN);
+        return GrpcUtil.executeGrpcCall(tokenServiceBlockingStub,
+            TokenServiceGrpc.TokenServiceBlockingStub::validateUserToken, request, Constants.OP_VALIDATE_USER_TOKEN);
     }
 
     public List<Entitlement> listEntitlements(String tenantName, String signature, String message) {
         ListEntitlementsByTenantRequest request = ListEntitlementsByTenantRequest.newBuilder().setTenantName(tenantName).setSignature(signature).setMessage(message).build();
-        ListEntitlementsByTenantResponse response = execute(entitlementServiceBlockingStub, EntitlementServiceGrpc.EntitlementServiceBlockingStub::listEntitlementsByTenant, request, Constants.OP_LIST_ENTITLEMENTS);
+        ListEntitlementsByTenantResponse response = GrpcUtil.executeGrpcCall(entitlementServiceBlockingStub,
+            EntitlementServiceGrpc.EntitlementServiceBlockingStub::listEntitlementsByTenant, request, Constants.OP_LIST_ENTITLEMENTS);
         return response.getEntitlementsList();
     }
 
     public List<DastEntitlement> listDastEntitlements(String tenantName, String signature, String message) {
         ListDastEntitlementsByTenantRequest request = ListDastEntitlementsByTenantRequest.newBuilder().setTenantName(tenantName).setSignature(signature).setMessage(message).build();
-        ListDastEntitlementsByTenantResponse response = execute(dastEntitlementServiceBlockingStub, DastEntitlementServiceGrpc.DastEntitlementServiceBlockingStub::listDastEntitlementsByTenant, request, Constants.OP_LIST_DAST_ENTITLEMENTS);
+        ListDastEntitlementsByTenantResponse response = GrpcUtil.executeGrpcCall(dastEntitlementServiceBlockingStub,
+            DastEntitlementServiceGrpc.DastEntitlementServiceBlockingStub::listDastEntitlementsByTenant,
+            request, Constants.OP_LIST_DAST_ENTITLEMENTS);
         return response.getEntitlementsList();
     }
 

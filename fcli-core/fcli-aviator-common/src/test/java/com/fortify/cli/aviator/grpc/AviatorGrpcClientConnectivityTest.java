@@ -15,6 +15,7 @@ package com.fortify.cli.aviator.grpc;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -25,18 +26,32 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 
 import com.fortify.aviator.application.ApplicationByTenantName;
 import com.fortify.aviator.application.ApplicationList;
 import com.fortify.aviator.application.ApplicationServiceGrpc;
+import com.fortify.aviator.dastentitlement.DastEntitlementServiceGrpc;
+import com.fortify.aviator.dastentitlement.ListDastEntitlementsByTenantRequest;
+import com.fortify.aviator.dastentitlement.ListDastEntitlementsByTenantResponse;
+import com.fortify.aviator.entitlement.EntitlementServiceGrpc;
+import com.fortify.aviator.entitlement.ListEntitlementsByTenantRequest;
+import com.fortify.aviator.entitlement.ListEntitlementsByTenantResponse;
+import com.fortify.grpc.token.ListTokensRequest;
+import com.fortify.grpc.token.ListTokensResponse;
+import com.fortify.grpc.token.TokenServiceGrpc;
 import com.fortify.cli.aviator._common.exception.AviatorConnectivityException;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClientHelper.AviatorConnectionPlan;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClientHelper.ParsedTarget;
@@ -52,9 +67,11 @@ import io.grpc.Server;
 import io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder;
 import io.grpc.netty.shaded.io.grpc.netty.NettyServerBuilder;
 import io.grpc.stub.StreamObserver;
+import io.grpc.netty.shaded.io.netty.channel.nio.NioEventLoopGroup;
+import io.grpc.netty.shaded.io.netty.channel.socket.nio.NioSocketChannel;
 
 /**
- * Checks ordinary-policy behavior against real Netty transports on the loopback interface.
+ * Checks connectivity behavior against real Netty transports on the loopback interface.
  */
 class AviatorGrpcClientConnectivityTest {
     private static final Duration FAIL_FAST_LIMIT = Duration.ofSeconds(5);
@@ -80,7 +97,8 @@ class AviatorGrpcClientConnectivityTest {
 
         var exception = callAndExpectConnectivityFailure(plan);
 
-        assertEquals("DIRECT_REFUSED", exception.getKind());
+        assertEquals("DIRECT_REFUSED", exception.getKind(),
+            () -> ExceptionUtils.getRootCause(exception).toString());
         assertTrue(exception.getMessage().startsWith("Connection to Aviator server 127.0.0.1:" + port + " was refused"));
     }
 
@@ -110,33 +128,82 @@ class AviatorGrpcClientConnectivityTest {
     }
 
     @Test
-    void ordinaryPolicyDisablesWaitForReadyAndKeepsDeadline() throws Exception {
-        var captured = new AtomicReference<CallOptions>();
-        var client = createPlaintextClient(AviatorRequestPolicy.ORDINARY, captured);
+    @Timeout(15)
+    void pendingTcpConnectUsesNettyTimeoutBeforeRequestDeadline() throws Exception {
+        var eventLoop = new NioEventLoopGroup(1);
+        var builder = NettyChannelBuilder.forAddress("127.0.0.1", 443).usePlaintext()
+            .eventLoopGroup(eventLoop).channelFactory(PendingConnectChannel::new);
+        plaintextChannel = AviatorRequestPolicy.FAIL_FAST.configureChannel(builder).build();
+        var context = new AviatorConnectionContext(new AviatorEndpoint("127.0.0.1", 443), null);
+        long started = System.nanoTime();
+        try ( var client = new AviatorGrpcClient(plaintextChannel, 30, null, 30, AviatorRequestPolicy.FAIL_FAST, context) ) {
+            var exception = assertThrows(AviatorConnectivityException.class,
+                () -> client.listApplication("tenant", "signature", "message"));
+            assertEquals("CONNECT_TIMEOUT", exception.getKind());
+            assertTrue(exception.getMessage().contains("timed out"));
+            assertFalse(exception.getMessage().contains("refused"));
+        } finally {
+            eventLoop.shutdownGracefully(0, 5, TimeUnit.SECONDS).sync();
+        }
+        var elapsed = Duration.ofNanos(System.nanoTime() - started);
+        assertTrue(elapsed.compareTo(Duration.ofSeconds(4)) >= 0, "Connect timer fired too early: " + elapsed);
+        assertTrue(elapsed.compareTo(Duration.ofSeconds(10)) < 0, "Connect timer fired too late: " + elapsed);
+    }
 
-        var result = client.listApplication("tenant", "signature", "message");
-
-        assertTrue(result.isEmpty());
-        assertFalse(captured.get().isWaitForReady());
-        assertDeadlineAtMostDefault(captured.get());
-        client.close();
+    /** Simulates a pending TCP connection; Netty itself schedules and raises the timeout. */
+    private static final class PendingConnectChannel extends NioSocketChannel {
+        @Override
+        protected boolean doConnect(SocketAddress remoteAddress, SocketAddress localAddress) {
+            return false;
+        }
     }
 
     @Test
-    void unchangedPolicyKeepsWaitForReadyAndDeadline() throws Exception {
+    @Timeout(20)
+    void stalledProxyNegotiationEndsBeforeRequestDeadline() throws Exception {
+        proxyServer = new ServerSocket(0, 1, InetAddress.getLoopbackAddress());
+        // Leave the TCP connection in the listen backlog without answering CONNECT. Netty's real
+        // proxy handshake timer must end the call, rather than the RPC deadline.
+        var started = System.nanoTime();
+        try ( var client = AviatorGrpcClientHelper.createClient(proxiedPlan(proxyServer.getLocalPort()),
+                null, 30, AviatorRequestPolicy.FAIL_FAST) ) {
+            var exception = assertThrows(AviatorConnectivityException.class,
+                () -> client.listApplication("tenant", "signature", "message"));
+            assertEquals("PROXY_NEGOTIATION_FAILED", exception.getKind());
+            assertFalse(exception.getMessage().contains("refused"));
+            assertFalse(exception.getSafeDiagnosticString().contains(PROXY_SECRET));
+        }
+        assertTrue(Duration.ofNanos(System.nanoTime() - started).compareTo(Duration.ofSeconds(15)) < 0);
+    }
+
+    @ParameterizedTest
+    @EnumSource(AviatorRequestPolicy.class)
+    void healthyUnaryServicesUseSelectedPolicyAndStreamsKeepWaiting(AviatorRequestPolicy policy) throws Exception {
         var captured = new AtomicReference<CallOptions>();
-        var client = createPlaintextClient(AviatorRequestPolicy.UNCHANGED, captured);
+        try ( var client = createPlaintextClient(policy, captured) ) {
+            assertTrue(client.listApplication("tenant", "signature", "message").isEmpty());
+            assertCallPolicy(policy, captured.get());
+            assertEquals(ListTokensResponse.getDefaultInstance(), client.listTokens("email", "tenant", "signature", "message"));
+            assertCallPolicy(policy, captured.get());
+            assertTrue(client.listEntitlements("tenant", "signature", "message").isEmpty());
+            assertCallPolicy(policy, captured.get());
+            assertTrue(client.listDastEntitlements("tenant", "signature", "message").isEmpty());
+            assertCallPolicy(policy, captured.get());
+            assertTrue(client.getCorrelationAsyncStub().getCallOptions().isWaitForReady());
+            assertTrue(client.getDastAuditAsyncStub().getCallOptions().isWaitForReady());
+            assertNull(client.getCorrelationAsyncStub().getCallOptions().getOption(AviatorConnectionContext.CALL_OPTION));
+            assertNull(client.getDastAuditAsyncStub().getCallOptions().getOption(AviatorConnectionContext.CALL_OPTION));
+        }
+    }
 
-        var result = client.listApplication("tenant", "signature", "message");
-
-        assertTrue(result.isEmpty());
-        assertTrue(captured.get().isWaitForReady());
-        assertDeadlineAtMostDefault(captured.get());
-        client.close();
+    private static void assertCallPolicy(AviatorRequestPolicy policy, CallOptions options) {
+        assertEquals(policy.isWaitForReady(), options.isWaitForReady());
+        assertEquals(!policy.isWaitForReady(), options.getOption(AviatorConnectionContext.CALL_OPTION) != null);
+        assertDeadlineAtMostDefault(options);
     }
 
     private static AviatorConnectivityException callAndExpectConnectivityFailure(AviatorConnectionPlan plan) {
-        try ( var client = AviatorGrpcClientHelper.createClient(plan, null, 30, AviatorRequestPolicy.ORDINARY) ) {
+        try ( var client = AviatorGrpcClientHelper.createClient(plan, null, 30, AviatorRequestPolicy.FAIL_FAST) ) {
             long start = System.nanoTime();
             var exception = assertThrows(AviatorConnectivityException.class,
                 () -> client.listApplication("tenant", "signature", "message"));
@@ -158,6 +225,9 @@ class AviatorGrpcClientConnectivityTest {
     private AviatorGrpcClient createPlaintextClient(AviatorRequestPolicy policy, AtomicReference<CallOptions> captured) throws IOException {
         grpcServer = NettyServerBuilder.forAddress(new InetSocketAddress(InetAddress.getLoopbackAddress(), 0))
             .addService(new EmptyApplicationService())
+            .addService(new EmptyTokenService())
+            .addService(new EmptyEntitlementService())
+            .addService(new EmptyDastEntitlementService())
             .build()
             .start();
         plaintextChannel = NettyChannelBuilder.forAddress(InetAddress.getLoopbackAddress().getHostAddress(), grpcServer.getPort())
@@ -213,6 +283,32 @@ class AviatorGrpcClientConnectivityTest {
         public void listApplications(ApplicationByTenantName request, StreamObserver<ApplicationList> responseObserver) {
             responseObserver.onNext(ApplicationList.getDefaultInstance());
             responseObserver.onCompleted();
+        }
+    }
+
+    private static final class EmptyTokenService extends TokenServiceGrpc.TokenServiceImplBase {
+        @Override
+        public void listTokens(ListTokensRequest request, StreamObserver<ListTokensResponse> observer) {
+            observer.onNext(ListTokensResponse.getDefaultInstance());
+            observer.onCompleted();
+        }
+    }
+
+    private static final class EmptyEntitlementService extends EntitlementServiceGrpc.EntitlementServiceImplBase {
+        @Override
+        public void listEntitlementsByTenant(ListEntitlementsByTenantRequest request,
+                StreamObserver<ListEntitlementsByTenantResponse> observer) {
+            observer.onNext(ListEntitlementsByTenantResponse.getDefaultInstance());
+            observer.onCompleted();
+        }
+    }
+
+    private static final class EmptyDastEntitlementService extends DastEntitlementServiceGrpc.DastEntitlementServiceImplBase {
+        @Override
+        public void listDastEntitlementsByTenant(ListDastEntitlementsByTenantRequest request,
+                StreamObserver<ListDastEntitlementsByTenantResponse> observer) {
+            observer.onNext(ListDastEntitlementsByTenantResponse.getDefaultInstance());
+            observer.onCompleted();
         }
     }
 

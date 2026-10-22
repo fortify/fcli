@@ -37,18 +37,10 @@ import io.grpc.netty.shaded.io.netty.channel.ConnectTimeoutException;
 import io.grpc.netty.shaded.io.netty.handler.proxy.HttpProxyHandler.HttpProxyConnectException;
 import io.grpc.netty.shaded.io.netty.handler.proxy.ProxyConnectException;
 
-/**
- * Maps a failed unary gRPC call to an {@link AviatorConnectivityFailureKind}, based only on
- * the status code and the exception types in the cause chain. It never reads status
- * descriptions or exception messages.
- */
 final class AviatorConnectivityFailureClassifier {
     private AviatorConnectivityFailureClassifier() {}
 
-    /**
-     * Returns the failure kind, or an empty Optional if the failure is not a connectivity
-     * failure (other status codes, or TLS failures, which keep their current handling).
-     */
+    /** Leaves TLS failures and application statuses to the existing exception handler. */
     static Optional<AviatorConnectivityFailureKind> classify(StatusRuntimeException e, AviatorConnectionContext context) {
         var code = e.getStatus().getCode();
         if ( code!=Status.Code.UNAVAILABLE && code!=Status.Code.DEADLINE_EXCEEDED ) {
@@ -67,9 +59,21 @@ final class AviatorConnectivityFailureClassifier {
         if ( has(e, ConnectTimeoutException.class) ) { return CONNECT_TIMEOUT; }
         // With an HTTP CONNECT proxy, the proxy is the only TCP peer of the client;
         // a target refusal arrives as HttpProxyConnectException instead.
-        if ( has(e, ConnectException.class) ) { return context.isProxied() ? PROXY_REFUSED : DIRECT_REFUSED; }
+        if ( isConnectionRefused(e) ) { return context.isProxied() ? PROXY_REFUSED : DIRECT_REFUSED; }
         if ( has(e, UnknownHostException.class) || has(e, UnresolvedAddressException.class) ) { return DNS_FAILURE; }
         return code==Status.Code.DEADLINE_EXCEEDED ? DEADLINE_EXCEEDED : UNAVAILABLE;
+    }
+
+    // Java has no refusal-specific exception type. Match complete known reasons, never
+    // substrings that could come from a host name; unknown/localized reasons stay neutral.
+    private static boolean isConnectionRefused(Throwable e) {
+        return ExceptionUtils.getThrowableList(e).stream()
+            .filter(ConnectException.class::isInstance)
+            .map(Throwable::getMessage)
+            .anyMatch(message -> "Connection refused".equalsIgnoreCase(message)
+                || "Connection refused: no further information".equalsIgnoreCase(message)
+                || "connect(..) failed: Connection refused".equalsIgnoreCase(message)
+                || "finishConnect(..) failed: Connection refused".equalsIgnoreCase(message));
     }
 
     private static boolean has(Throwable e, Class<? extends Throwable> type) {

@@ -67,11 +67,8 @@ public abstract class AbstractSessionLoginCommand<D extends ISessionDescriptor> 
     protected void testAuthenticatedConnection(String sessionName) {}
 
     /**
-     * Returns whether an existing session with the same name must be logged out and
-     * destroyed before {@link #login(String)} is called. Subclasses can return false if
-     * login() only validates the new session and the old session needs no remote logout.
-     * The existing session then stays in place if login() fails, and
-     * {@code AbstractSessionHelper.save()} replaces it if login() succeeds.
+     * Return false when login only validates credentials and the old session needs no remote logout.
+     * This keeps the existing session if validation fails; save replaces it after success.
      */
     protected boolean isReplaceExistingSessionBeforeLogin() {
         return true;

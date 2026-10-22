@@ -32,21 +32,12 @@ class AviatorConnectionContextTest {
     private static final String PROXY_PASSWORD = "sentinel-proxy-password";
 
     @Test
-    void requestPolicyFlags() {
-        assertFalse(AviatorRequestPolicy.ORDINARY.isWaitForReady());
-        assertTrue(AviatorRequestPolicy.ORDINARY.isClassifyConnectivityFailures());
-        assertTrue(AviatorRequestPolicy.UNCHANGED.isWaitForReady());
-        assertFalse(AviatorRequestPolicy.UNCHANGED.isClassifyConnectivityFailures());
-    }
-
-    @Test
     void createsDirectContextFromPlan() {
         var context = AviatorConnectionContext.of(plan(Optional.empty()));
 
         assertFalse(context.isProxied());
         assertNull(context.proxy());
         assertEquals("aviator.example.com:443", context.firstHop().display());
-        assertEquals("direct", context.route());
     }
 
     @Test
@@ -60,7 +51,6 @@ class AviatorConnectionContextTest {
 
         assertTrue(context.isProxied());
         assertEquals("localhost:33444", context.firstHop().display());
-        assertEquals("proxy", context.route());
         assertFalse(context.toString().contains(PROXY_PASSWORD));
         assertFalse(context.toString().contains("sentinel-user"));
     }

@@ -14,7 +14,6 @@ package com.fortify.cli.common.exception;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.PrintWriter;
@@ -34,10 +33,8 @@ import picocli.CommandLine.Help.Ansi;
 import picocli.CommandLine.Model.CommandSpec;
 
 /**
- * Checks the default DEBUG logging of {@link FcliExecutionExceptionHandler}. The safe
- * diagnostic path is tested with a real overriding exception in fcli-aviator-common
- * (AviatorConnectivityExceptionTest), because test sources cannot extend the
- * {@code @Reflectable} exception classes without the compile-only annotation library.
+ * AviatorConnectivityExceptionTest covers the safe logging path. This module's test
+ * classpath lacks the annotation library needed to extend @Reflectable exceptions.
  */
 class FcliExecutionExceptionHandlerTest {
     private final Logger logger = (Logger)LoggerFactory.getLogger(FcliExecutionExceptionHandler.class);
@@ -56,11 +53,6 @@ class FcliExecutionExceptionHandlerTest {
     void tearDown() {
         logger.detachAppender(appender);
         logger.setLevel(previousLevel);
-    }
-
-    @Test
-    void defaultSafeDiagnosticStringIsNull() {
-        assertNull(new FcliSimpleException("Plain failure").getSafeDiagnosticString());
     }
 
     @Test

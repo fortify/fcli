@@ -12,10 +12,7 @@
  */
 package com.fortify.cli.aviator.grpc;
 
-/**
- * Host and port that are safe to show to users and to write to logs.
- * Control characters in the host name are replaced.
- */
+/** Replaces control characters in host names before display. */
 record AviatorEndpoint(String host, int port) {
     private static final String UNKNOWN_HOST = "unknown";
 

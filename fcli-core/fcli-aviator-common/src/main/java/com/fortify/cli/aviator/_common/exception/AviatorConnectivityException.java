@@ -16,38 +16,17 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
 
-/**
- * Reports an Aviator connectivity failure with a short user message. Terminal output
- * shows only the message; DEBUG logs show only safe metadata. The original cause stays
- * attached for in-memory use, but it is never written to output or logs.
- */
+/** Keeps transport cause text out of CLI output and DEBUG logs. */
 public final class AviatorConnectivityException extends AviatorSimpleException {
     private static final long serialVersionUID = 1L;
     private static final int MAX_CAUSE_TYPES = 10;
 
     private final String kind;
-    private final String operation;
-    private final String statusCode;
-    private final String route;
-    private final String endpoint;
 
-    /**
-     * @param message safe user message
-     * @param kind failure kind name
-     * @param operation internal operation label
-     * @param statusCode gRPC status code name
-     * @param route "direct" or "proxy"
-     * @param endpoint sanitized host and port of the first TCP peer
-     * @param cause original failure; it is never written to output or logs
-     */
-    public AviatorConnectivityException(String message, String kind, String operation,
-            String statusCode, String route, String endpoint, Throwable cause) {
+    /** Message and kind must be safe for display. */
+    public AviatorConnectivityException(String message, String kind, Throwable cause) {
         super(message, cause);
         this.kind = kind;
-        this.operation = operation;
-        this.statusCode = statusCode;
-        this.route = route;
-        this.endpoint = endpoint;
     }
 
     public String getKind() {
@@ -65,7 +44,7 @@ public final class AviatorConnectivityException extends AviatorSimpleException {
             .limit(MAX_CAUSE_TYPES)
             .map(t -> t.getClass().getName())
             .collect(Collectors.joining(" <- "));
-        return String.format("Aviator connectivity failure: kind=%s, operation=%s, status=%s, route=%s, endpoint=%s, causes=[%s]",
-            kind, operation, statusCode, route, endpoint, causeTypes);
+        return String.format("Aviator connectivity failure: kind=%s, message=%s, causes=[%s]",
+            kind, getMessage().replace("\n", " / "), causeTypes);
     }
 }

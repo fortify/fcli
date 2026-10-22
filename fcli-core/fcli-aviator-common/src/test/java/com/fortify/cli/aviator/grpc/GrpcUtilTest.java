@@ -73,34 +73,34 @@ class GrpcUtilTest {
     }
 
     @Test
-    void unchangedPolicyKeepsCurrentUnavailableMapping() {
+    void waitForReadyPolicyKeepsCurrentUnavailableMapping() {
         var e = assertThrows(AviatorTechnicalException.class,
-            () -> execute(Status.UNAVAILABLE.withCause(new ConnectException("refused")), AviatorRequestPolicy.UNCHANGED));
+            () -> execute(Status.UNAVAILABLE.withCause(new ConnectException("Connection refused")), AviatorRequestPolicy.WAIT_FOR_READY));
 
         assertTrue(e.getMessage().startsWith("A technical error occurred on the server while performing the test operation"));
     }
 
     @Test
-    void ordinaryPolicyClassifiesUnavailable() {
+    void failFastPolicyClassifiesUnavailable() {
         var e = assertThrows(AviatorConnectivityException.class,
-            () -> execute(Status.UNAVAILABLE.withCause(new ConnectException("refused")), AviatorRequestPolicy.ORDINARY));
+            () -> execute(Status.UNAVAILABLE.withCause(new ConnectException("Connection refused")), AviatorRequestPolicy.FAIL_FAST));
 
         assertEquals("DIRECT_REFUSED", e.getKind());
     }
 
     @Test
-    void ordinaryPolicyKeepsUnimplementedContractForOlderServerLoginFallback() {
+    void failFastPolicyKeepsUnimplementedContractForOlderServerLoginFallback() {
         var e = assertThrows(AviatorTechnicalException.class,
-            () -> execute(Status.UNIMPLEMENTED, AviatorRequestPolicy.ORDINARY));
+            () -> execute(Status.UNIMPLEMENTED, AviatorRequestPolicy.FAIL_FAST));
 
         var cause = assertInstanceOf(StatusRuntimeException.class, e.getCause());
         assertEquals(Status.Code.UNIMPLEMENTED, cause.getStatus().getCode());
     }
 
     @Test
-    void ordinaryPolicyKeepsApplicationStatusMapping() {
+    void failFastPolicyKeepsApplicationStatusMapping() {
         var e = assertThrows(AviatorSimpleException.class,
-            () -> execute(Status.NOT_FOUND.withDescription("app"), AviatorRequestPolicy.ORDINARY));
+            () -> execute(Status.NOT_FOUND.withDescription("app"), AviatorRequestPolicy.FAIL_FAST));
 
         assertFalse(e instanceof AviatorConnectivityException);
         assertTrue(e.getMessage().contains("not found"));
@@ -110,9 +110,9 @@ class GrpcUtilTest {
         var channel = NettyChannelBuilder.forAddress("127.0.0.1", 1).usePlaintext().build();
         try {
             var context = new AviatorConnectionContext(new AviatorEndpoint("127.0.0.1", 1), null);
-            GrpcUtil.executeGrpcCall(ApplicationServiceGrpc.newBlockingStub(channel),
+            GrpcUtil.executeGrpcCall(policy.configureNewStub(ApplicationServiceGrpc.newBlockingStub(channel), context),
                 (stub, request) -> { throw status.asRuntimeException(); },
-                "request", "test", policy, context);
+                "request", "test");
         } finally {
             channel.shutdownNow();
         }

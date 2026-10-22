@@ -12,29 +12,33 @@
  */
 package com.fortify.cli.aviator.grpc;
 
-/**
- * Selects how unary Aviator gRPC requests behave when the connection fails.
- * Code that uses this enum reads the flags; it does not compare with specific constants.
- */
+import java.util.Objects;
+
+import io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder;
+import io.grpc.netty.shaded.io.netty.channel.ChannelOption;
+import io.grpc.stub.AbstractBlockingStub;
+
+/** Unary request behavior; audit and diagnostic clients use {@link #WAIT_FOR_READY}. */
 public enum AviatorRequestPolicy {
-    /** Fail fast on connection failures and report them with the shared connectivity messages. */
-    ORDINARY(false, true),
-    /** Current behavior: wait for the channel to be ready and use the existing status mapping. */
-    UNCHANGED(true, false);
+    FAIL_FAST,
+    WAIT_FOR_READY;
 
-    private final boolean waitForReady;
-    private final boolean classifyConnectivityFailures;
+    private static final int CONNECT_TIMEOUT_MILLIS = 5_000;
 
-    AviatorRequestPolicy(boolean waitForReady, boolean classifyConnectivityFailures) {
-        this.waitForReady = waitForReady;
-        this.classifyConnectivityFailures = classifyConnectivityFailures;
+    boolean isWaitForReady() {
+        return this == WAIT_FOR_READY;
     }
 
-    public boolean isWaitForReady() {
-        return waitForReady;
+    /** Requires a fresh stub: gRPC's default is fail-fast, and wait-for-ready cannot be unset through the stub API. */
+    <S extends AbstractBlockingStub<S>> S configureNewStub(S stub, AviatorConnectionContext context) {
+        if ( isWaitForReady() ) {
+            return stub.withWaitForReady();
+        }
+        return stub.withOption(AviatorConnectionContext.CALL_OPTION, Objects.requireNonNull(context, "connectionContext"));
     }
 
-    public boolean isClassifyConnectivityFailures() {
-        return classifyConnectivityFailures;
+    NettyChannelBuilder configureChannel(NettyChannelBuilder builder) {
+        // TCP establishment has a shorter budget than a request to a connected server.
+        return isWaitForReady() ? builder : builder.withOption(ChannelOption.CONNECT_TIMEOUT_MILLIS, CONNECT_TIMEOUT_MILLIS);
     }
 }

@@ -60,10 +60,8 @@ public abstract class AbstractFcliException extends RuntimeException {
     public abstract String getStackTraceString();
 
     /**
-     * Returns a safe description of this exception for DEBUG logging, or null to log the
-     * full throwable as before. Override only if this exception or its causes can hold
-     * sensitive text; the returned value must not contain exception messages, URLs,
-     * headers, or credentials.
+     * Returns a safe DEBUG description, or null to log the full throwable.
+     * Overrides must exclude credentials and untrusted transport messages.
      */
     public String getSafeDiagnosticString() {
         return null;

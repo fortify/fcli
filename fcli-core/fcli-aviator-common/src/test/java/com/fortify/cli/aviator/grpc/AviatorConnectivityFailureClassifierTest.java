@@ -110,8 +110,23 @@ class AviatorConnectivityFailureClassifierTest {
     }
 
     @Test
-    void doesNotReadExceptionMessages() {
+    void doesNotInferRefusalFromAnAmbiguousConnectException() {
         var cause = new ConnectException("Connection refused: openssl-handshake_failure.example/10.0.0.1:443");
+        assertEquals(Optional.of(AviatorConnectivityFailureKind.UNAVAILABLE), classify(Status.UNAVAILABLE, cause, DIRECT));
+    }
+
+    @Test
+    void doesNotMisreportNetworkOrUnknownConnectFailuresAsRefusal() {
+        for ( var reason : new String[] {"Network is unreachable", "Connection timed out", "Permission denied", null} ) {
+            assertEquals(Optional.of(AviatorConnectivityFailureKind.UNAVAILABLE),
+                classify(Status.UNAVAILABLE, new ConnectException(reason), DIRECT));
+        }
+    }
+
+    @Test
+    void recognizesRefusalInsideNettyAnnotatedCause() {
+        var cause = new ConnectException("Connection refused: openssl-handshake_failure.example/10.0.0.1:443");
+        cause.initCause(new ConnectException("Connection refused"));
         assertEquals(Optional.of(AviatorConnectivityFailureKind.DIRECT_REFUSED), classify(Status.UNAVAILABLE, cause, DIRECT));
     }
 

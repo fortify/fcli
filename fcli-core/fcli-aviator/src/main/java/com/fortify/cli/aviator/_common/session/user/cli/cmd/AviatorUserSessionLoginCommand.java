@@ -64,7 +64,7 @@ public class AviatorUserSessionLoginCommand extends AbstractSessionLoginCommand<
         LOG.info("Validating Aviator user token with the server...");
         try {
             var validationResponse = sessionHelper.validateToken(sessionLoginOptions.getAviatorUrl(), resolvedToken,
-                    AviatorRequestPolicy.ORDINARY).response();
+                    AviatorRequestPolicy.FAIL_FAST).response();
 
             if (!validationResponse.getValid()) {
                 String errorMsg = validationResponse.getErrorMessage();
