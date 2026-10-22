@@ -15,6 +15,9 @@ package com.fortify.cli.aviator._common.output.cli.cmd;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.aviator._common.config.admin.cli.mixin.AviatorAdminConfigDescriptorSupplier;
 import com.fortify.cli.aviator._common.config.admin.helper.AviatorAdminConfigDescriptor;
+import com.fortify.cli.aviator.grpc.AviatorGrpcClient;
+import com.fortify.cli.aviator.grpc.AviatorGrpcClientHelper;
+import com.fortify.cli.aviator.grpc.AviatorRequestPolicy;
 import com.fortify.cli.common.output.cli.cmd.AbstractOutputCommand;
 import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
 
@@ -33,4 +36,12 @@ public abstract class AbstractAviatorAdminSessionOutputCommand extends AbstractO
     protected abstract JsonNode getJsonNode(AviatorAdminConfigDescriptor configDescriptor);
 
     public abstract boolean isSingular();
+
+    /**
+     * Creates a gRPC client that fails fast on connectivity failures and reports them with
+     * the shared Aviator connectivity messages. Callers must close the client.
+     */
+    protected final AviatorGrpcClient createGrpcClient(AviatorAdminConfigDescriptor configDescriptor) {
+        return AviatorGrpcClientHelper.createClient(configDescriptor.getAviatorUrl(), AviatorRequestPolicy.ORDINARY);
+    }
 }

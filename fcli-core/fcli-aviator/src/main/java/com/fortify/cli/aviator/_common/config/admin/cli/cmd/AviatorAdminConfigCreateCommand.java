@@ -19,6 +19,7 @@ import com.fortify.cli.aviator._common.config.admin.cli.mixin.AviatorAdminConfig
 import com.fortify.cli.aviator._common.config.admin.cli.mixin.AviatorAdminConfigNameArgGroup;
 import com.fortify.cli.aviator._common.config.admin.helper.AviatorAdminConfigDescriptor;
 import com.fortify.cli.aviator._common.config.admin.helper.AviatorAdminConfigHelper;
+import com.fortify.cli.aviator.grpc.AviatorRequestPolicy;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.session.cli.cmd.AbstractSessionLoginCommand;
 import com.fortify.cli.common.session.cli.mixin.ISessionNameSupplier;
@@ -61,7 +62,7 @@ public class AviatorAdminConfigCreateCommand extends AbstractSessionLoginCommand
                 configCreateOptions.getTenant(),
                 privateKeyContents);
         LOG.info("Validating Aviator admin configuration with the Aviator server...");
-        configHelper.validateConfig(configDescriptor);
+        configHelper.validateConfig(configDescriptor, AviatorRequestPolicy.ORDINARY);
         LOG.info("Aviator admin configuration validated successfully.");
         return configDescriptor;
     }
