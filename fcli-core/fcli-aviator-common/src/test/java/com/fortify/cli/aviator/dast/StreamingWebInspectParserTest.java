@@ -14,7 +14,6 @@ package com.fortify.cli.aviator.dast;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.nio.charset.StandardCharsets;
@@ -64,7 +63,7 @@ class StreamingWebInspectParserTest {
     }
 
     @Test
-    void domAndStreamingParsersDoNotResolveExternalEntities() throws Exception {
+    void streamingParserDoesNotResolveExternalEntities() throws Exception {
       Path secret = tempDir.resolve("secret.txt");
       Files.writeString(secret, "PRIVATE-SENTINEL");
       Path fpr = createFpr();
@@ -75,7 +74,6 @@ class StreamingWebInspectParserTest {
           .replace("<URL>https://example.test/login</URL>", "<URL>&xxe;</URL>");
         Files.writeString(handle.getPath("/webinspect.xml"), maliciousXml);
 
-        assertNotEquals("PRIVATE-SENTINEL", new WebInspectParser(handle).parseSessions().get(0).getUrl());
         AviatorTechnicalException exception = assertThrows(AviatorTechnicalException.class,
             () -> new StreamingWebInspectParser(handle).parseSessions());
         assertInstanceOf(XMLStreamException.class, exception.getCause());

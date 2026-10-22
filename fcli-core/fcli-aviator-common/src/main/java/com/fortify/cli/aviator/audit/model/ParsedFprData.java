@@ -31,7 +31,6 @@ public final class ParsedFprData {
     public final List<Vulnerability> vulnerabilities;
     public final FPRInfo fprInfo;
     public final AuditProcessor auditProcessor;
-    //public final FVDLProcessor fvdlProcessor;
     public final StreamingFVDLProcessor streamingFVDLProcessor;
 
     public ParsedFprData(Map<String, AuditIssue> auditIssueMap, List<Vulnerability> vulnerabilities, FPRInfo fprInfo, AuditProcessor auditProcessor, StreamingFVDLProcessor streamingFvdlProcessor) {
