@@ -323,11 +323,10 @@ Without these registrations, console warnings may be silently lost even though e
 After changing logging dependencies or native-image metadata, run the functional tests against a rebuilt native executable,
 including the unsigned-action warning test in `OutputMaskingSpec`, to verify that warnings reach stderr and not stdout.
 
-When upgrading Logback, also check for newly required resources.
-For example, Logback 1.6.5 reads `ch/qos/logback/core/logback-core-version.properties` and
+Logback 1.6.5 also reads `ch/qos/logback/core/logback-core-version.properties` and
 `ch/qos/logback/classic/logback-classic-version.properties` to check version alignment.
 Missing resources can cause an unknown-version warning and dump initialization diagnostics to stdout, corrupting command output.
-These resources are an upgrade consideration, not an additional requirement for the current Logback 1.5.23 configuration.
+These resources must be included through the adjacent `resource-config.json`.
 Run functional tests against the rebuilt executable using `-Dft.fcli=/absolute/path/to/fcli`;
 JVM-only tests cannot validate native-image reflection or resource inclusion.
 
@@ -418,6 +417,17 @@ guarantee byte-for-byte identical output across backends.
 Before accepting a migration, run JVM and rebuilt-native tests covering clean startup, stdout/stderr separation,
 table and structured output, file logging, levels, sensitive-value masking, and exception output.
 Keep this as a separate change from general dependency maintenance so failures can be attributed and reverted independently.
+
+=== Dependency upgrade coordination
+
+Keep `picocli-codegen` aligned with the upstream version on which the picocli fork in `fcli-common-thirdparty` is based.
+Codegen brings its own upstream picocli dependency onto the annotation-processor classpath; upgrading it independently
+can introduce differences between build-time command models and the fork used at runtime.
+
+Coordinate Aviator-specific dependency and protobuf-plugin upgrades with the Aviator maintainers.
+Passing unit tests does not establish compatibility with deployed Aviator servers.
+Shared dependency upgrades can still affect Aviator transitively: inspect Gradle's resolved dependency graph,
+not just the versions declared in the Aviator modules. In particular, Jackson YAML also selects a SnakeYAML version.
 
 == Gradle Wrapper
 

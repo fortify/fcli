@@ -1,0 +1,12 @@
+{
+  "resources": {
+    "includes": [
+      {
+        "pattern": "\\Qch/qos/logback/core/logback-core-version.properties\\E"
+      },
+      {
+        "pattern": "\\Qch/qos/logback/classic/logback-classic-version.properties\\E"
+      }
+    ]
+  }
+}
