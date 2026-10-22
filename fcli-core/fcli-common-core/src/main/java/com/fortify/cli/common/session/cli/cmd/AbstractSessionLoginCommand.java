@@ -28,7 +28,9 @@ public abstract class AbstractSessionLoginCommand<D extends ISessionDescriptor> 
         var sessionNameSupplier = getSessionNameSupplier();
         String sessionName = sessionNameSupplier==null?"default":sessionNameSupplier.getSessionName();
         var sessionHelper = getSessionHelper();
-        logoutIfSessionExists(sessionName);
+        if ( isReplaceExistingSessionBeforeLogin() ) {
+            logoutIfSessionExists(sessionName);
+        }
         D sessionDescriptor = login(sessionName);
         sessionHelper.save(sessionName, sessionDescriptor);
         testAuthenticatedConnection(sessionName);
@@ -63,4 +65,15 @@ public abstract class AbstractSessionLoginCommand<D extends ISessionDescriptor> 
     protected abstract void logoutBeforeNewLogin(String sessionName, D sessionDescriptor);
     protected abstract D login(String sessionName);
     protected void testAuthenticatedConnection(String sessionName) {}
+
+    /**
+     * Returns whether an existing session with the same name must be logged out and
+     * destroyed before {@link #login(String)} is called. Subclasses can return false if
+     * login() only validates the new session and the old session needs no remote logout.
+     * The existing session then stays in place if login() fails, and
+     * {@code AbstractSessionHelper.save()} replaces it if login() succeeds.
+     */
+    protected boolean isReplaceExistingSessionBeforeLogin() {
+        return true;
+    }
 }

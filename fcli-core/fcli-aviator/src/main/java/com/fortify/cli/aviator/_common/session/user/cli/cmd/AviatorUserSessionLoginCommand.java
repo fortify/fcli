@@ -50,6 +50,12 @@ public class AviatorUserSessionLoginCommand extends AbstractSessionLoginCommand<
     protected void logoutBeforeNewLogin(String sessionName, AviatorUserSessionDescriptor sessionDescriptor) {}
 
     @Override
+    protected boolean isReplaceExistingSessionBeforeLogin() {
+        // login() validates the token first; keep the existing session if validation fails
+        return false;
+    }
+
+    @Override
     protected AviatorUserSessionDescriptor login(String sessionName) {
         String resolvedToken = tokenResolver.getToken();
         Date expiryDate = AviatorJwtUtils.extractExpiryDateFromToken(resolvedToken);

@@ -48,6 +48,12 @@ public class AviatorAdminConfigCreateCommand extends AbstractSessionLoginCommand
     }
 
     @Override
+    protected boolean isReplaceExistingSessionBeforeLogin() {
+        // login() validates the configuration first; keep the existing configuration if validation fails
+        return false;
+    }
+
+    @Override
     protected AviatorAdminConfigDescriptor login(String configName) {
         String privateKeyContents = configCreateOptions.getPrivateKeyResolver().getPrivateKeyContents();
         AviatorAdminConfigDescriptor configDescriptor = new AviatorAdminConfigDescriptor(
