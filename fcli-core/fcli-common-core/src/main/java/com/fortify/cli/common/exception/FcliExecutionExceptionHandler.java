@@ -33,7 +33,7 @@ public class FcliExecutionExceptionHandler implements IExecutionExceptionHandler
 
     public int handleException(Exception ex, CommandLine commandLine) {
         if ( LOG.isDebugEnabled() ) {
-            LOG.debug("fcli terminating with exception", ex);
+            logDebug(ex);
         }
         var formattedException = FcliExceptionHelper.formatException(ex);
         if ( formattedException!=null ) {
@@ -42,6 +42,17 @@ public class FcliExecutionExceptionHandler implements IExecutionExceptionHandler
             err.flush();
         }
         return getExitCode(ex, commandLine);
+    }
+
+    private static void logDebug(Exception ex) {
+        var safeDiagnostic = ex instanceof AbstractFcliException fcliException
+                ? fcliException.getSafeDiagnosticString()
+                : null;
+        if ( safeDiagnostic==null ) {
+            LOG.debug("fcli terminating with exception", ex);
+        } else {
+            LOG.debug("fcli terminating with exception: {}", safeDiagnostic);
+        }
     }
 
     private int getExitCode(Exception ex, CommandLine commandLine) {
