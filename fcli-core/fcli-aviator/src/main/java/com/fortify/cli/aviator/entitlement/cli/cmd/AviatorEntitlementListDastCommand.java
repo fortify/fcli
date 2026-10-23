@@ -27,7 +27,6 @@ import com.fortify.cli.aviator._common.output.cli.mixin.AviatorOutputHelperMixin
 import com.fortify.cli.aviator._common.util.AviatorGrpcUtils;
 import com.fortify.cli.aviator._common.util.AviatorSignatureUtils;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClient;
-import com.fortify.cli.aviator.grpc.AviatorGrpcClientHelper;
 
 import lombok.Getter;
 import picocli.CommandLine.Command;
@@ -40,7 +39,7 @@ public class AviatorEntitlementListDastCommand extends AbstractAviatorAdminSessi
 
     @Override
     protected JsonNode getJsonNode(AviatorAdminConfigDescriptor configDescriptor) {
-        try (AviatorGrpcClient client = AviatorGrpcClientHelper.createClient(configDescriptor.getAviatorUrl())) {
+        try (AviatorGrpcClient client = createGrpcClient(configDescriptor)) {
             var messageAndSignature = AviatorSignatureUtils.createMessageAndSignature(configDescriptor, configDescriptor.getTenant());
             String message = messageAndSignature[0];
             String signature = messageAndSignature[1];

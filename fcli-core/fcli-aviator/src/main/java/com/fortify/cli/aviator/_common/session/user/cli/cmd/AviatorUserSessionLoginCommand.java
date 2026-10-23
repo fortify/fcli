@@ -25,6 +25,7 @@ import com.fortify.cli.aviator._common.session.user.cli.mixin.AviatorUserTokenRe
 import com.fortify.cli.aviator._common.session.user.helper.AviatorUserSessionDescriptor;
 import com.fortify.cli.aviator._common.session.user.helper.AviatorUserSessionHelper;
 import com.fortify.cli.aviator._common.util.AviatorJwtUtils;
+import com.fortify.cli.aviator.grpc.AviatorRequestPolicy;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.session.cli.cmd.AbstractSessionLoginCommand;
 
@@ -50,13 +51,20 @@ public class AviatorUserSessionLoginCommand extends AbstractSessionLoginCommand<
     protected void logoutBeforeNewLogin(String sessionName, AviatorUserSessionDescriptor sessionDescriptor) {}
 
     @Override
+    protected boolean isReplaceExistingSessionBeforeLogin() {
+        // login() validates the token first; keep the existing session if validation fails
+        return false;
+    }
+
+    @Override
     protected AviatorUserSessionDescriptor login(String sessionName) {
         String resolvedToken = tokenResolver.getToken();
         Date expiryDate = AviatorJwtUtils.extractExpiryDateFromToken(resolvedToken);
 
         LOG.info("Validating Aviator user token with the server...");
         try {
-            var validationResponse = sessionHelper.validateToken(sessionLoginOptions.getAviatorUrl(), resolvedToken).response();
+            var validationResponse = sessionHelper.validateToken(sessionLoginOptions.getAviatorUrl(), resolvedToken,
+                    AviatorRequestPolicy.FAIL_FAST).response();
 
             if (!validationResponse.getValid()) {
                 String errorMsg = validationResponse.getErrorMessage();

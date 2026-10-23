@@ -25,7 +25,6 @@ import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
 import com.fortify.cli.aviator._common.output.cli.cmd.AbstractAviatorAdminSessionOutputCommand;
 import com.fortify.cli.aviator._common.util.AviatorSignatureUtils;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClient;
-import com.fortify.cli.aviator.grpc.AviatorGrpcClientHelper;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 
 import lombok.Getter;
@@ -41,7 +40,7 @@ public class AviatorAppDeleteCommand extends AbstractAviatorAdminSessionOutputCo
 
     @Override
     protected JsonNode getJsonNode(AviatorAdminConfigDescriptor configDescriptor) throws AviatorSimpleException, AviatorTechnicalException {
-        try (AviatorGrpcClient client = AviatorGrpcClientHelper.createClient(configDescriptor.getAviatorUrl())) {
+        try (AviatorGrpcClient client = createGrpcClient(configDescriptor)) {
             String[] messageAndSignature = createMessageAndSignature(configDescriptor);
             ApplicationResponseMessage response = deleteApplication(client, configDescriptor, messageAndSignature);
             JsonNode result = processDeleteResponse(response);

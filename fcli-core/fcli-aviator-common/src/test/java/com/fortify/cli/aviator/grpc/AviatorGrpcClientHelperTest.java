@@ -13,6 +13,7 @@
 package com.fortify.cli.aviator.grpc;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -23,8 +24,10 @@ import java.net.SocketAddress;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
+import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
 import com.fortify.cli.aviator._common.exception.UnsupportedAviatorUrlSchemeException;
 import com.fortify.cli.common.http.proxy.helper.ProxyDescriptor;
 
@@ -117,5 +120,35 @@ class AviatorGrpcClientHelperTest {
         var proxied = AviatorGrpcClientHelper.toProxiedSocketAddress(unsupportedTarget, proxy);
 
         assertNull(proxied);
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+        "https://user:sentinel-secret@aviator.invalid:443/path, https://***@aviator.invalid:443/path",
+        "user:sentinel-secret@aviator.invalid:443, ***@aviator.invalid:443",
+        "mttp://sentinel-secret@aviator.invalid, mttp://***@aviator.invalid",
+        "https://aviator.invalid:443/a@b, https://aviator.invalid:443/a@b",
+        "aviator.invalid:443, aviator.invalid:443"
+    })
+    void shouldRemoveUserInfoFromDisplayedUrl(String url, String expected) {
+        assertEquals(expected, AviatorGrpcClientHelper.toSafeUrlForDisplay(url));
+    }
+
+    @Test
+    void shouldNotExposeUserInfoInInvalidPortMessage() {
+        var ex = assertThrows(AviatorSimpleException.class,
+            () -> AviatorGrpcClientHelper.parseTarget("https://user:sentinel-secret@aviator.invalid:99999"));
+
+        assertFalse(ex.getMessage().contains("sentinel-secret"));
+        assertTrue(ex.getMessage().contains("***@aviator.invalid:99999"));
+    }
+
+    @Test
+    void shouldNotExposeUserInfoInUnsupportedSchemeException() {
+        var ex = assertThrows(UnsupportedAviatorUrlSchemeException.class,
+            () -> AviatorGrpcClientHelper.parseTarget("http://user:sentinel-secret@aviator.invalid"));
+
+        assertFalse(ex.getMessage().contains("sentinel-secret"));
+        assertFalse(ex.getProvidedUrl().contains("sentinel-secret"));
     }
 }
