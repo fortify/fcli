@@ -41,8 +41,4 @@ record AviatorConnectionContext(AviatorEndpoint target, AviatorEndpoint proxy) {
     boolean isProxied() {
         return proxy!=null;
     }
-
-    AviatorEndpoint firstHop() {
-        return isProxied() ? proxy : target;
-    }
 }

@@ -21,8 +21,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.EnumSource;
 
 import com.fortify.cli.aviator.grpc.AviatorGrpcClientHelper.AviatorConnectionPlan;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClientHelper.ParsedTarget;
@@ -37,7 +35,7 @@ class AviatorConnectionContextTest {
 
         assertFalse(context.isProxied());
         assertNull(context.proxy());
-        assertEquals("aviator.example.com:443", context.firstHop().display());
+        assertEquals("aviator.example.com:443", context.target().display());
     }
 
     @Test
@@ -50,7 +48,7 @@ class AviatorConnectionContextTest {
         var context = AviatorConnectionContext.of(plan(Optional.of(proxy)));
 
         assertTrue(context.isProxied());
-        assertEquals("localhost:33444", context.firstHop().display());
+        assertEquals("localhost:33444", context.proxy().display());
         assertFalse(context.toString().contains(PROXY_PASSWORD));
         assertFalse(context.toString().contains("sentinel-user"));
     }
@@ -70,27 +68,6 @@ class AviatorConnectionContextTest {
     void displaysIpv6Hosts() {
         assertEquals("[::1]:443", new AviatorEndpoint("::1", 443).display());
         assertEquals("[::1]:443", new AviatorEndpoint("[::1]", 443).display());
-    }
-
-    @ParameterizedTest
-    @EnumSource(AviatorConnectivityFailureKind.class)
-    void messagesHaveSummaryAndGuidanceWithoutTrailingPeriod(AviatorConnectivityFailureKind kind) {
-        var context = new AviatorConnectionContext(new AviatorEndpoint("aviator.example.com", 443), new AviatorEndpoint("localhost", 33444));
-        var lines = kind.formatMessage(context).split("\n");
-
-        assertEquals(2, lines.length);
-        assertFalse(lines[0].contains("%s"));
-        assertFalse(lines[0].endsWith("."));
-        assertFalse(lines[1].endsWith("."));
-    }
-
-    @Test
-    void proxyRefusedMessageNamesTheProxy() {
-        var context = new AviatorConnectionContext(new AviatorEndpoint("aviator.example.com", 443), new AviatorEndpoint("localhost", 33444));
-
-        assertEquals("Connection to proxy localhost:33444 was refused\n"
-                + "Check that the proxy is running and that its host and port are correct",
-            AviatorConnectivityFailureKind.PROXY_REFUSED.formatMessage(context));
     }
 
     private static AviatorConnectionPlan plan(Optional<ProxyDescriptor> proxy) {

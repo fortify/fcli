@@ -19,9 +19,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.net.ConnectException;
 import java.net.UnknownHostException;
 import java.nio.channels.UnresolvedAddressException;
+import java.security.cert.CertPathValidatorException;
 import java.security.cert.CertificateException;
 import java.util.Optional;
 
+import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLHandshakeException;
 
 import org.junit.jupiter.api.Test;
@@ -88,8 +90,27 @@ class AviatorConnectivityFailureKindTest {
     }
 
     @Test
-    void ignoresTlsFailures() {
-        assertEquals(Optional.empty(), classify(Status.UNAVAILABLE, new SSLHandshakeException("handshake"), DIRECT));
+    void leavesCertificateFailuresToPkixGuidance() {
+        var pkix = new SSLHandshakeException("PKIX path building failed");
+        pkix.initCause(new CertificateException("untrusted"));
+        assertEquals(Optional.empty(), classify(Status.UNAVAILABLE, pkix, DIRECT));
+        assertEquals(Optional.empty(), classify(Status.UNAVAILABLE, new CertPathValidatorException("untrusted"), DIRECT));
+    }
+
+    @Test
+    void classifiesOtherTlsFailures() {
+        assertEquals(Optional.of(AviatorConnectivityFailureKind.TLS_FAILURE),
+            classify(Status.UNAVAILABLE, new SSLException("Unsupported or unrecognized SSL message"), PROXIED));
+        assertEquals(Optional.of(AviatorConnectivityFailureKind.TLS_FAILURE),
+            classify(Status.UNAVAILABLE, new SSLHandshakeException("handshake timed out"), DIRECT));
+    }
+
+    @Test
+    void usesNeutralKindForProxyFailuresWithoutFcliProxy() {
+        var cause = new HttpProxyConnectException("status: 407", new DefaultHttpHeaders());
+        assertEquals(Optional.of(AviatorConnectivityFailureKind.UNAVAILABLE), classify(Status.UNAVAILABLE, cause, DIRECT));
+        assertEquals(Optional.of(AviatorConnectivityFailureKind.DEADLINE_EXCEEDED),
+            classify(Status.DEADLINE_EXCEEDED, new ProxyConnectException("timeout"), DIRECT));
     }
 
     @ParameterizedTest
@@ -136,12 +157,28 @@ class AviatorConnectivityFailureKindTest {
 
     @ParameterizedTest
     @EnumSource(AviatorConnectivityFailureKind.class)
-    void everyFailureHasAnActionableMessage(AviatorConnectivityFailureKind kind) {
-        var message = kind.formatMessage(PROXIED);
-        assertEquals(2, message.lines().count());
-        assertTrue(message.contains("\nCheck "));
-        assertFalse(message.contains("%s"));
-        assertFalse(message.contains("Exception"));
+    void everyFailureHasASingleLineActionableMessage(AviatorConnectivityFailureKind kind) {
+        for ( var context : new AviatorConnectionContext[] {DIRECT, PROXIED} ) {
+            if ( !context.isProxied() && kind.name().startsWith("PROXY_") ) { continue; }
+            var message = kind.formatMessage(context);
+            assertEquals(1, message.lines().count(), message);
+            assertTrue(message.contains("; check ") || message.contains("; try "), message);
+            assertFalse(message.endsWith("."), message);
+            assertFalse(message.contains("null"), message);
+        }
+    }
+
+    @Test
+    void messagesNameTheFailingEndpoint() {
+        assertEquals("Proxy localhost:33444 refused the connection; check the proxy host and port",
+            AviatorConnectivityFailureKind.PROXY_REFUSED.formatMessage(PROXIED));
+        assertEquals("Aviator server aviator.example.com:443 refused the connection; check the Aviator URL",
+            AviatorConnectivityFailureKind.DIRECT_REFUSED.formatMessage(DIRECT));
+        assertEquals("Timed out connecting to proxy localhost:33444; check network access and firewall rules",
+            AviatorConnectivityFailureKind.CONNECT_TIMEOUT.formatMessage(PROXIED));
+        assertEquals("Aviator server aviator.example.com:443 did not respond within 30 seconds; "
+                + "check network access and proxy settings, or try again later",
+            AviatorConnectivityFailureKind.DEADLINE_EXCEEDED.formatMessage(DIRECT));
     }
 
     private static Optional<AviatorConnectivityFailureKind> classify(Status status, Throwable cause, AviatorConnectionContext context) {

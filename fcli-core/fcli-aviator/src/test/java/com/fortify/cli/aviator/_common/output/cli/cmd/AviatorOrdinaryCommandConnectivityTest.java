@@ -114,7 +114,7 @@ class AviatorOrdinaryCommandConnectivityTest {
         var exception = assertThrows(AviatorConnectivityException.class, executable);
         var elapsed = Duration.ofNanos(System.nanoTime() - start);
         assertTrue(elapsed.compareTo(FAIL_FAST_LIMIT) < 0, "Call took " + elapsed);
-        assertTrue(exception.getMessage().contains("was refused"), exception.getMessage());
+        assertTrue(exception.getMessage().contains("refused the connection"), exception.getMessage());
     }
 
     private static final class TestAdminCommand extends AbstractAviatorAdminSessionOutputCommand {

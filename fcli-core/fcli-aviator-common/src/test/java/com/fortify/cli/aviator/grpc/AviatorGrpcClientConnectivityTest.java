@@ -97,7 +97,7 @@ class AviatorGrpcClientConnectivityTest {
 
         var exception = callAndExpectConnectivityFailure(plan);
 
-        assertTrue(exception.getMessage().startsWith("Connection to Aviator server 127.0.0.1:" + port + " was refused"),
+        assertEquals("Aviator server 127.0.0.1:" + port + " refused the connection; check the Aviator URL",
             exception.getMessage());
     }
 
@@ -107,8 +107,8 @@ class AviatorGrpcClientConnectivityTest {
 
         var exception = callAndExpectConnectivityFailure(proxiedPlan(proxyPort));
 
-        assertEquals("Connection to proxy 127.0.0.1:" + proxyPort + " was refused\n"
-                + "Check that the proxy is running and that its host and port are correct", exception.getMessage());
+        assertEquals("Proxy 127.0.0.1:" + proxyPort + " refused the connection; check the proxy host and port",
+            exception.getMessage());
     }
 
     @Test
@@ -134,7 +134,8 @@ class AviatorGrpcClientConnectivityTest {
                 null, 30, AviatorRequestPolicy.FAIL_FAST) ) {
             var exception = assertThrows(AviatorConnectivityException.class,
                 () -> client.listApplication("tenant", "signature", "message"));
-            assertTrue(exception.getMessage().startsWith("Could not open a tunnel"), exception.getMessage());
+            assertTrue(exception.getMessage().startsWith("Could not connect to Aviator server " + TARGET_HOST + ":443 through proxy"),
+                exception.getMessage());
         }
         assertTrue(Duration.ofNanos(System.nanoTime() - started).compareTo(Duration.ofSeconds(15)) < 0);
     }

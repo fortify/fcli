@@ -20,8 +20,11 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.net.ConnectException;
+import java.security.cert.CertificateException;
 import java.util.List;
 import java.util.Set;
+
+import javax.net.ssl.SSLHandshakeException;
 
 import org.junit.jupiter.api.Test;
 
@@ -34,6 +37,7 @@ import com.fortify.cli.aviator.audit.model.AuditResponse;
 import com.fortify.cli.aviator.audit.model.AuditResponse.AuditSkipReason;
 import com.fortify.cli.aviator.audit.model.File;
 import com.fortify.cli.aviator.audit.model.UserPrompt;
+import com.fortify.cli.common.exception.FcliExceptionHelper;
 
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
@@ -86,8 +90,17 @@ class GrpcUtilTest {
         var e = assertThrows(AviatorConnectivityException.class,
             () -> execute(Status.UNAVAILABLE.withCause(new ConnectException("Connection refused")), AviatorRequestPolicy.FAIL_FAST));
 
-        assertTrue(e.getMessage().startsWith("Connection to Aviator server 127.0.0.1:1 was refused"), e.getMessage());
+        assertEquals("Aviator server 127.0.0.1:1 refused the connection; check the Aviator URL", e.getMessage());
         assertNull(e.getCause());
+    }
+
+    @Test
+    void failFastPolicyKeepsCertificateCauseForPkixGuidance() {
+        var e = assertThrows(AviatorTechnicalException.class,
+            () -> execute(Status.UNAVAILABLE.withCause(new SSLHandshakeException("PKIX path building failed")
+                .initCause(new CertificateException("untrusted"))), AviatorRequestPolicy.FAIL_FAST));
+
+        assertTrue(FcliExceptionHelper.formatException(e).contains("PKIX SSL certificate validation failed"));
     }
 
     @Test
