@@ -82,7 +82,9 @@ class GrpcUtilTest {
         var e = assertThrows(AviatorTechnicalException.class,
             () -> execute(Status.UNAVAILABLE.withCause(new ConnectException("Connection refused")), AviatorRequestPolicy.WAIT_FOR_READY));
 
-        assertTrue(e.getMessage().startsWith("A technical error occurred on the server while performing the test operation"));
+        assertEquals("The Aviator test operation failed with status UNAVAILABLE; check the Aviator URL and network access, "
+                + "run the command again with --log-level DEBUG to log details, and contact support if the problem continues",
+            e.getMessage());
     }
 
     @Test
@@ -110,6 +112,15 @@ class GrpcUtilTest {
 
         var cause = assertInstanceOf(StatusRuntimeException.class, e.getCause());
         assertEquals(Status.Code.UNIMPLEMENTED, cause.getStatus().getCode());
+    }
+
+    @Test
+    void resourceExhaustedPutsRemediationBeforeSupport() {
+        var e = assertThrows(AviatorSimpleException.class,
+            () -> execute(Status.RESOURCE_EXHAUSTED.withDescription("quota"), AviatorRequestPolicy.FAIL_FAST));
+
+        assertEquals("Aviator server resource limits were exceeded during test (server details: quota); "
+                + "try again later, and contact support if the problem continues", e.getMessage());
     }
 
     @Test

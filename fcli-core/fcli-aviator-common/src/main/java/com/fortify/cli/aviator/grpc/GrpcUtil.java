@@ -111,7 +111,7 @@ class GrpcUtil {
                 return new AviatorSimpleException("Authentication Failed: The token or credentials used are invalid or expired. Please log in again using 'fcli aviator session login' or verify your admin configuration.");
 
             case RESOURCE_EXHAUSTED:
-                return new AviatorSimpleException(String.format("The server's resource limits were exceeded during %s. Please try again later or contact support. Server details: %s", operation, serverDescription));
+                return new AviatorSimpleException(String.format("Aviator server resource limits were exceeded during %s (server details: %s); try again later, and contact support if the problem continues", operation, serverDescription));
             case DEADLINE_EXCEEDED:
                 String timeoutMessage = String.format(
                         "The %s operation timed out because the server did not respond in time.\n\n" +
@@ -131,7 +131,7 @@ class GrpcUtil {
             case UNAVAILABLE:
             case DATA_LOSS:
             default:
-                String techMessage = String.format("A technical error occurred on the server while performing the %s operation. Please check the fcli logs for details or contact support if the issue persists.", operation);
+                String techMessage = String.format("The Aviator %s operation failed with status %s; check the Aviator URL and network access, run the command again with --log-level DEBUG to log details, and contact support if the problem continues", operation, status.getCode());
                 String logMessage = String.format("gRPC call for '%s' failed with status %s (%s): %s", operation, status.getCode(), status.getCode().name(), serverDescription);
                 LOG.error(logMessage, e);
                 return new AviatorTechnicalException(techMessage, e);
