@@ -34,7 +34,6 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
-import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
@@ -98,9 +97,8 @@ class AviatorGrpcClientConnectivityTest {
 
         var exception = callAndExpectConnectivityFailure(plan);
 
-        assertEquals("DIRECT_REFUSED", exception.getKind(),
-            () -> ExceptionUtils.getRootCause(exception).toString());
-        assertTrue(exception.getMessage().startsWith("Connection to Aviator server 127.0.0.1:" + port + " was refused"));
+        assertTrue(exception.getMessage().startsWith("Connection to Aviator server 127.0.0.1:" + port + " was refused"),
+            exception.getMessage());
     }
 
     @Test
@@ -109,10 +107,8 @@ class AviatorGrpcClientConnectivityTest {
 
         var exception = callAndExpectConnectivityFailure(proxiedPlan(proxyPort));
 
-        assertEquals("PROXY_REFUSED", exception.getKind());
         assertEquals("Connection to proxy 127.0.0.1:" + proxyPort + " was refused\n"
                 + "Check that the proxy is running and that its host and port are correct", exception.getMessage());
-        assertFalse(exception.getSafeDiagnosticString().contains(PROXY_SECRET));
     }
 
     @Test
@@ -122,10 +118,9 @@ class AviatorGrpcClientConnectivityTest {
 
         var exception = callAndExpectConnectivityFailure(proxiedPlan(proxyServer.getLocalPort()));
 
-        assertEquals("PROXY_REJECTED", exception.getKind());
+        assertTrue(exception.getMessage().startsWith("Proxy 127.0.0.1:" + proxyServer.getLocalPort() + " rejected"),
+            exception.getMessage());
         assertFalse(exception.getMessage().contains("sentinel-realm"));
-        assertFalse(exception.getSafeDiagnosticString().contains("sentinel-realm"));
-        assertFalse(exception.getSafeDiagnosticString().contains(PROXY_SECRET));
     }
 
     @Test
@@ -139,9 +134,7 @@ class AviatorGrpcClientConnectivityTest {
                 null, 30, AviatorRequestPolicy.FAIL_FAST) ) {
             var exception = assertThrows(AviatorConnectivityException.class,
                 () -> client.listApplication("tenant", "signature", "message"));
-            assertEquals("PROXY_NEGOTIATION_FAILED", exception.getKind());
-            assertFalse(exception.getMessage().contains("refused"));
-            assertFalse(exception.getSafeDiagnosticString().contains(PROXY_SECRET));
+            assertTrue(exception.getMessage().startsWith("Could not open a tunnel"), exception.getMessage());
         }
         assertTrue(Duration.ofNanos(System.nanoTime() - started).compareTo(Duration.ofSeconds(15)) < 0);
     }
@@ -215,6 +208,8 @@ class AviatorGrpcClientConnectivityTest {
                 () -> client.listApplication("tenant", "signature", "message"));
             var elapsed = Duration.ofNanos(System.nanoTime() - start);
             assertTrue(elapsed.compareTo(FAIL_FAST_LIMIT) < 0, "Call took " + elapsed);
+            assertNull(exception.getCause());
+            assertFalse(exception.getMessage().contains(PROXY_SECRET));
             return exception;
         }
     }

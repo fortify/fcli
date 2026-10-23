@@ -18,6 +18,7 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -71,7 +72,17 @@ class GrpcUtil {
             return Optional.empty();
         }
         return AviatorConnectivityFailureKind.classify(e, context)
-            .map(kind -> new AviatorConnectivityException(kind.formatMessage(context), kind.name(), e));
+            .map(kind -> {
+                // Cause messages can contain credentials, so log only the cause types.
+                LOG.debug("Aviator connectivity failure: kind={}, causes=[{}]", kind, getCauseTypes(e));
+                return new AviatorConnectivityException(kind.formatMessage(context));
+            });
+    }
+
+    private static String getCauseTypes(Throwable e) {
+        return ExceptionUtils.getThrowableList(e).stream()
+            .map(t -> t.getClass().getName())
+            .collect(Collectors.joining(" <- "));
     }
 
     private static RuntimeException toAviatorException(StatusRuntimeException e, String operation) {

@@ -58,17 +58,4 @@ public abstract class AbstractFcliException extends RuntimeException {
     }
     
     public abstract String getStackTraceString();
-
-    /** Whether terminal output must use this exception's formatting without inspecting its causes. */
-    public boolean isCauseSensitive() {
-        return false;
-    }
-
-    /**
-     * Returns a safe DEBUG description, or null to log the full throwable.
-     * Overrides must exclude credentials and untrusted transport messages.
-     */
-    public String getSafeDiagnosticString() {
-        return null;
-    }
 }

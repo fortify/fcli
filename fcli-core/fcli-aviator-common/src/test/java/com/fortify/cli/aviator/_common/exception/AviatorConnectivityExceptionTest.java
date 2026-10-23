@@ -16,11 +16,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.net.ConnectException;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -28,7 +26,6 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.LoggerFactory;
 
 import com.fortify.cli.aviator.grpc.AviatorGrpcClientHelper;
-import com.fortify.cli.common.exception.FcliExceptionHelper;
 import com.fortify.cli.common.exception.FcliExecutionExceptionHandler;
 
 import ch.qos.logback.classic.Level;
@@ -36,15 +33,12 @@ import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.ThrowableProxyUtil;
 import ch.qos.logback.core.read.ListAppender;
-import io.grpc.Status;
 import picocli.CommandLine;
 import picocli.CommandLine.Help.Ansi;
 import picocli.CommandLine.Model.CommandSpec;
 
 class AviatorConnectivityExceptionTest {
     private static final String SECRET = "sentinel-secret-value";
-    private static final String MESSAGE = "Connection to proxy localhost:33444 was refused\n"
-            + "Check that the proxy is running and that its host and port are correct";
 
     private final Logger logger = (Logger)LoggerFactory.getLogger(FcliExecutionExceptionHandler.class);
     private final ListAppender<ILoggingEvent> appender = new ListAppender<>();
@@ -65,40 +59,15 @@ class AviatorConnectivityExceptionTest {
     }
 
     @Test
-    void stackTraceStringIsOnlyTheMessage() {
-        var exception = createException();
-
-        assertEquals(MESSAGE, exception.getStackTraceString());
-        assertEquals(MESSAGE, FcliExceptionHelper.formatException(exception));
-    }
-
-    @Test
-    void safeDiagnosticStringHasMetadataButNoSecrets() {
-        var diagnostic = createException().getSafeDiagnosticString();
-
-        assertTrue(diagnostic.contains("kind=PROXY_REFUSED"));
-        assertTrue(diagnostic.contains("proxy localhost:33444"));
-        assertTrue(diagnostic.contains("java.net.ConnectException"));
-        assertFalse(diagnostic.contains(SECRET));
-    }
-
-    @Test
-    void handlerPrintsOnlyMessageAndLogsOnlySafeDiagnostic() {
+    void handlerPrintsTheMessageWithoutCause() {
         var err = new StringWriter();
-        var commandLine = new CommandLine(CommandSpec.create());
-        commandLine.setErr(new PrintWriter(err));
-        commandLine.setColorScheme(CommandLine.Help.defaultColorScheme(Ansi.OFF));
+        var exception = new AviatorConnectivityException("Proxy localhost:33444 refused the connection; check the proxy host and port");
 
-        int exitCode = FcliExecutionExceptionHandler.INSTANCE.handleException(createException(), commandLine);
+        int exitCode = FcliExecutionExceptionHandler.INSTANCE.handleException(exception, createCommandLine(err));
 
         assertEquals(1, exitCode);
-        assertEquals(MESSAGE, err.toString().trim());
-        assertFalse(err.toString().contains("Exception"));
-        assertEquals(1, appender.list.size());
-        var event = appender.list.get(0);
-        assertNull(event.getThrowableProxy());
-        assertTrue(event.getFormattedMessage().contains("kind=PROXY_REFUSED"));
-        assertFalse(event.getFormattedMessage().contains(SECRET));
+        assertNull(exception.getCause());
+        assertFalse(err.toString().contains("Caused by"));
     }
 
     @Test
@@ -106,10 +75,8 @@ class AviatorConnectivityExceptionTest {
         var exception = assertThrows(AviatorSimpleException.class,
             () -> AviatorGrpcClientHelper.parseTarget("https://user:" + SECRET + "@aviator.invalid/%zz"));
         var err = new StringWriter();
-        var commandLine = new CommandLine(CommandSpec.create());
-        commandLine.setErr(new PrintWriter(err));
 
-        assertEquals(1, FcliExecutionExceptionHandler.INSTANCE.handleException(exception, commandLine));
+        assertEquals(1, FcliExecutionExceptionHandler.INSTANCE.handleException(exception, createCommandLine(err)));
 
         assertNull(exception.getCause());
         assertFalse(err.toString().contains(SECRET));
@@ -119,13 +86,10 @@ class AviatorConnectivityExceptionTest {
         assertFalse(ThrowableProxyUtil.asString(event.getThrowableProxy()).contains(SECRET));
     }
 
-    private static AviatorConnectivityException createException() {
-        var transportCause = new ConnectException("Connection refused: proxy-user:" + SECRET + "@localhost");
-        transportCause.addSuppressed(new IllegalStateException("suppressed " + SECRET));
-        var statusException = Status.UNAVAILABLE
-            .withDescription("PKIX path building failed: " + SECRET)
-            .withCause(transportCause)
-            .asRuntimeException();
-        return new AviatorConnectivityException(MESSAGE, "PROXY_REFUSED", statusException);
+    private static CommandLine createCommandLine(StringWriter err) {
+        var commandLine = new CommandLine(CommandSpec.create());
+        commandLine.setErr(new PrintWriter(err));
+        commandLine.setColorScheme(CommandLine.Help.defaultColorScheme(Ansi.OFF));
+        return commandLine;
     }
 }

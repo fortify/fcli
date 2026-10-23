@@ -15,6 +15,7 @@ package com.fortify.cli.aviator.grpc;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -85,7 +86,8 @@ class GrpcUtilTest {
         var e = assertThrows(AviatorConnectivityException.class,
             () -> execute(Status.UNAVAILABLE.withCause(new ConnectException("Connection refused")), AviatorRequestPolicy.FAIL_FAST));
 
-        assertEquals("DIRECT_REFUSED", e.getKind());
+        assertTrue(e.getMessage().startsWith("Connection to Aviator server 127.0.0.1:1 was refused"), e.getMessage());
+        assertNull(e.getCause());
     }
 
     @Test
