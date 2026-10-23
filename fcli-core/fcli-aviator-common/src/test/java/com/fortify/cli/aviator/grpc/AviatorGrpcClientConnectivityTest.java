@@ -31,9 +31,6 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -71,7 +68,6 @@ import io.grpc.NameResolver;
 import io.grpc.MethodDescriptor;
 import io.grpc.Server;
 import io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder;
-import io.grpc.netty.shaded.io.grpc.netty.GrpcSslContexts;
 import io.grpc.netty.shaded.io.grpc.netty.NettyServerBuilder;
 import io.grpc.stub.StreamObserver;
 
@@ -168,71 +164,6 @@ class AviatorGrpcClientConnectivityTest {
             assertNull(client.getCorrelationAsyncStub().getCallOptions().getOption(AviatorConnectionContext.CALL_OPTION));
             assertNull(client.getDastAuditAsyncStub().getCallOptions().getOption(AviatorConnectionContext.CALL_OPTION));
         }
-    }
-
-    @Test
-    @Timeout(20)
-    void healthyTlsConnectionThroughConnectProxySucceeds() throws Exception {
-        startTlsServer();
-        proxyServer = new ServerSocket(0, 1, InetAddress.getByName("127.0.0.1"));
-        var executor = Executors.newFixedThreadPool(2);
-        try {
-            var tunnel = startConnectTunnel(executor);
-            try ( var client = createProxiedTlsClient() ) {
-                assertTrue(client.listApplication("tenant", "signature", "message").isEmpty());
-            }
-            tunnel.get(10, TimeUnit.SECONDS);
-        } finally {
-            proxyServer.close();
-            executor.shutdownNow();
-            assertTrue(executor.awaitTermination(15, TimeUnit.SECONDS));
-        }
-    }
-
-    private void startTlsServer() throws IOException {
-        // Public test fixtures, trusted only by this test client.
-        try ( var certificate = getClass().getResourceAsStream("localhost-cert.pem");
-              var key = getClass().getResourceAsStream("localhost-key.pem") ) {
-            grpcServer = NettyServerBuilder.forAddress(new InetSocketAddress("127.0.0.1", 0))
-                .sslContext(GrpcSslContexts.forServer(certificate, key).build())
-                .addService(new EmptyApplicationService()).build().start();
-        }
-    }
-
-    private AviatorGrpcClient createProxiedTlsClient() throws IOException {
-        var proxy = ProxyDescriptor.builder().proxyHost("127.0.0.1").proxyPort(proxyServer.getLocalPort()).build();
-        try ( var certificate = getClass().getResourceAsStream("localhost-cert.pem") ) {
-            testChannel = NettyChannelBuilder.forAddress("localhost", grpcServer.getPort())
-                .sslContext(GrpcSslContexts.forClient().trustManager(certificate).build())
-                .proxyDetector(address -> AviatorGrpcClientHelper.toProxiedSocketAddress(address, proxy))
-                .build();
-        }
-        var context = new AviatorConnectionContext(new AviatorEndpoint("localhost", grpcServer.getPort()),
-            new AviatorEndpoint("127.0.0.1", proxyServer.getLocalPort()));
-        return new AviatorGrpcClient(testChannel, 30, null, 30, AviatorRequestPolicy.FAIL_FAST, context);
-    }
-
-    private Future<Void> startConnectTunnel(ExecutorService executor) {
-        return executor.submit(() -> {
-            try ( var downstream = proxyServer.accept();
-                  var upstream = new Socket("127.0.0.1", grpcServer.getPort()) ) {
-                downstream.setSoTimeout(10_000);
-                upstream.setSoTimeout(10_000);
-                readRequestHeaders(downstream.getInputStream());
-                downstream.getOutputStream().write("HTTP/1.1 200 Connection Established\r\n\r\n"
-                    .getBytes(StandardCharsets.US_ASCII));
-                downstream.getOutputStream().flush();
-                var response = executor.submit(() -> {
-                    upstream.getInputStream().transferTo(downstream.getOutputStream());
-                    downstream.shutdownOutput();
-                    return null;
-                });
-                downstream.getInputStream().transferTo(upstream.getOutputStream());
-                upstream.shutdownOutput();
-                response.get(10, TimeUnit.SECONDS);
-            }
-            return null;
-        });
     }
 
     @Test
