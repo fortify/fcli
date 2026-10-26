@@ -67,8 +67,9 @@ public abstract class AbstractSessionLoginCommand<D extends ISessionDescriptor> 
     protected void testAuthenticatedConnection(String sessionName) {}
 
     /**
-     * Return false when login only validates credentials and the old session needs no remote logout.
-     * This keeps the existing session if validation fails; save replaces it after success.
+     * Return false only when no remote logout is needed and {@link #login(String)} preserves the existing session until success.
+     * The session helper saves the new session after {@code login} returns.
+     * {@link #testAuthenticatedConnection(String)} runs after saving; failures there do not restore the previous session.
      */
     protected boolean shouldReplaceExistingSessionBeforeLogin() {
         return true;

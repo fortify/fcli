@@ -54,6 +54,11 @@ class GrpcUtil {
         R call(S stub, T request) throws StatusRuntimeException;
     }
 
+    /**
+     * Applies the 30-second deadline to each unary call.
+     * Fail-fast stubs carry {@link AviatorConnectionContext#CALL_OPTION} for safe connectivity classification.
+     * Stubs without that option retain the existing status mapping.
+     */
     static <S extends AbstractBlockingStub<S>, T, R> R executeGrpcCall(S stub, GrpcCall<S, T, R> call, T request, String operation) {
         try {
             return call.call(stub.withDeadlineAfter(Constants.DEFAULT_TIMEOUT_SECONDS, TimeUnit.SECONDS), request);
