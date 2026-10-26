@@ -28,7 +28,7 @@ public abstract class AbstractSessionLoginCommand<D extends ISessionDescriptor> 
         var sessionNameSupplier = getSessionNameSupplier();
         String sessionName = sessionNameSupplier==null?"default":sessionNameSupplier.getSessionName();
         var sessionHelper = getSessionHelper();
-        if ( isReplaceExistingSessionBeforeLogin() ) {
+        if ( shouldReplaceExistingSessionBeforeLogin() ) {
             logoutIfSessionExists(sessionName);
         }
         D sessionDescriptor = login(sessionName);
@@ -70,7 +70,7 @@ public abstract class AbstractSessionLoginCommand<D extends ISessionDescriptor> 
      * Return false when login only validates credentials and the old session needs no remote logout.
      * This keeps the existing session if validation fails; save replaces it after success.
      */
-    protected boolean isReplaceExistingSessionBeforeLogin() {
+    protected boolean shouldReplaceExistingSessionBeforeLogin() {
         return true;
     }
 }

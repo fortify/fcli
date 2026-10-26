@@ -51,7 +51,7 @@ public class AviatorUserSessionLoginCommand extends AbstractSessionLoginCommand<
     protected void logoutBeforeNewLogin(String sessionName, AviatorUserSessionDescriptor sessionDescriptor) {}
 
     @Override
-    protected boolean isReplaceExistingSessionBeforeLogin() {
+    protected boolean shouldReplaceExistingSessionBeforeLogin() {
         // login() validates the token first; keep the existing session if validation fails
         return false;
     }

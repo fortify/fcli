@@ -61,7 +61,8 @@ class AbstractSessionLoginCommandTest {
     @Test
     void defaultLifecycleDestroysExistingSessionBeforeLogin() {
         sessionHelper.save(SESSION_NAME, new TestSessionDescriptor("old"));
-        var command = new TestLoginCommand(sessionHelper, true, null);
+        assertTrue(sessionHelper.exists(SESSION_NAME));
+        var command = new TestLoginCommand(sessionHelper, null);
 
         assertThrows(FcliSimpleException.class, command::getJsonNode);
 
@@ -72,7 +73,7 @@ class AbstractSessionLoginCommandTest {
     @Test
     void optOutKeepsExistingSessionWhenLoginFails() {
         sessionHelper.save(SESSION_NAME, new TestSessionDescriptor("old"));
-        var command = new TestLoginCommand(sessionHelper, false, null);
+        TestLoginCommand command = new OptOutTestLoginCommand(sessionHelper, null);
 
         assertThrows(FcliSimpleException.class, command::getJsonNode);
 
@@ -83,7 +84,7 @@ class AbstractSessionLoginCommandTest {
 
     @Test
     void optOutCreatesNoSessionWhenLoginFailsForNewName() {
-        var command = new TestLoginCommand(sessionHelper, false, null);
+        TestLoginCommand command = new OptOutTestLoginCommand(sessionHelper, null);
 
         assertThrows(FcliSimpleException.class, command::getJsonNode);
 
@@ -93,7 +94,7 @@ class AbstractSessionLoginCommandTest {
     @Test
     void optOutReplacesExistingSessionWhenLoginSucceeds() {
         sessionHelper.save(SESSION_NAME, new TestSessionDescriptor("old"));
-        var command = new TestLoginCommand(sessionHelper, false, new TestSessionDescriptor("new"));
+        TestLoginCommand command = new OptOutTestLoginCommand(sessionHelper, new TestSessionDescriptor("new"));
 
         command.getJsonNode();
 
@@ -101,16 +102,13 @@ class AbstractSessionLoginCommandTest {
         assertEquals(0, command.logoutCount);
     }
 
-    private static final class TestLoginCommand extends AbstractSessionLoginCommand<TestSessionDescriptor> {
+    private static class TestLoginCommand extends AbstractSessionLoginCommand<TestSessionDescriptor> {
         private final TestSessionHelper sessionHelper;
-        private final boolean replaceExistingSessionBeforeLogin;
         private final TestSessionDescriptor loginResult;
         private int logoutCount;
 
-        private TestLoginCommand(TestSessionHelper sessionHelper, boolean replaceExistingSessionBeforeLogin,
-                TestSessionDescriptor loginResult) {
+        private TestLoginCommand(TestSessionHelper sessionHelper, TestSessionDescriptor loginResult) {
             this.sessionHelper = sessionHelper;
-            this.replaceExistingSessionBeforeLogin = replaceExistingSessionBeforeLogin;
             this.loginResult = loginResult;
         }
 
@@ -133,11 +131,6 @@ class AbstractSessionLoginCommandTest {
         }
 
         @Override
-        protected boolean isReplaceExistingSessionBeforeLogin() {
-            return replaceExistingSessionBeforeLogin;
-        }
-
-        @Override
         protected AbstractSessionHelper<TestSessionDescriptor> getSessionHelper() {
             return sessionHelper;
         }
@@ -145,6 +138,17 @@ class AbstractSessionLoginCommandTest {
         @Override
         public IOutputHelper getOutputHelper() {
             return null;
+        }
+    }
+
+    private static final class OptOutTestLoginCommand extends TestLoginCommand {
+        private OptOutTestLoginCommand(TestSessionHelper sessionHelper, TestSessionDescriptor loginResult) {
+            super(sessionHelper, loginResult);
+        }
+
+        @Override
+        protected boolean shouldReplaceExistingSessionBeforeLogin() {
+            return false;
         }
     }
 

@@ -49,7 +49,7 @@ public class AviatorAdminConfigCreateCommand extends AbstractSessionLoginCommand
     }
 
     @Override
-    protected boolean isReplaceExistingSessionBeforeLogin() {
+    protected boolean shouldReplaceExistingSessionBeforeLogin() {
         // login() validates the configuration first; keep the existing configuration if validation fails
         return false;
     }
