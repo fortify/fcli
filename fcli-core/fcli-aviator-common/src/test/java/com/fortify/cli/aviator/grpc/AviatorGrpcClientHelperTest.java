@@ -21,19 +21,68 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
+import java.util.List;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.slf4j.LoggerFactory;
 
 import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
 import com.fortify.cli.aviator._common.exception.UnsupportedAviatorUrlSchemeException;
 import com.fortify.cli.common.http.proxy.helper.ProxyDescriptor;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import io.grpc.HttpConnectProxiedSocketAddress;
 
 class AviatorGrpcClientHelperTest {
+    private static final List<String> URL_MARKERS =
+        List.of("sentinel-userinfo", "sentinel-path", "sentinel-query", "sentinel-fragment");
+
+    @Test
+    void shouldOmitIgnoredUrlDetailsFromWarnings() {
+        var logger = (Logger)LoggerFactory.getLogger(AviatorGrpcClientHelper.class);
+        var previousLevel = logger.getLevel();
+        var appender = new ListAppender<ILoggingEvent>();
+        appender.start();
+        logger.addAppender(appender);
+        logger.setLevel(Level.WARN);
+        try {
+            var target = AviatorGrpcClientHelper.parseTarget(
+                "https://user:sentinel-userinfo@aviator.invalid:8443/sentinel-path?token=sentinel-query#sentinel-fragment");
+
+            assertEquals("aviator.invalid", target.host());
+            assertEquals(8443, target.port());
+            assertEquals(1, appender.list.size());
+            var event = appender.list.get(0);
+            assertEquals(Level.WARN, event.getLevel());
+            assertTrue(event.getFormattedMessage().contains("Ignoring path"));
+            URL_MARKERS.forEach(marker -> assertFalse(event.getFormattedMessage().contains(marker), marker));
+            assertNull(event.getThrowableProxy());
+        } finally {
+            logger.detachAppender(appender);
+            logger.setLevel(previousLevel);
+            appender.stop();
+        }
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+        "https://user:sentinel-userinfo@aviator.invalid:99999/sentinel-path?token=sentinel-query#sentinel-fragment",
+        "https://user:sentinel-userinfo@aviator.invalid/sentinel-path/%zz?token=sentinel-query#sentinel-fragment",
+        "http://user:sentinel-userinfo@aviator.invalid/sentinel-path?token=sentinel-query#sentinel-fragment"
+    })
+    void shouldOmitUrlDetailsFromInvalidTargetMessages(String url) {
+        var exception = assertThrows(AviatorSimpleException.class, () -> AviatorGrpcClientHelper.parseTarget(url));
+
+        URL_MARKERS.forEach(marker -> assertFalse(exception.getMessage().contains(marker), marker));
+        assertNull(exception.getCause());
+    }
+
     @Test
     void shouldParseSchemeLessHostAndPort() {
         var parsed = AviatorGrpcClientHelper.parseTarget("aviator.invalid:443");
@@ -124,10 +173,11 @@ class AviatorGrpcClientHelperTest {
 
     @ParameterizedTest
     @CsvSource({
-        "https://user:sentinel-secret@aviator.invalid:443/path, https://***@aviator.invalid:443/path",
+        "https://user:sentinel-secret@aviator.invalid:443/path, https://***@aviator.invalid:443",
         "user:sentinel-secret@aviator.invalid:443, ***@aviator.invalid:443",
         "mttp://sentinel-secret@aviator.invalid, mttp://***@aviator.invalid",
-        "https://aviator.invalid:443/a@b, https://aviator.invalid:443/a@b",
+        "https://aviator.invalid:443/a@b, https://aviator.invalid:443",
+        "https://aviator.invalid?token=sentinel-query#sentinel-fragment, https://aviator.invalid",
         "aviator.invalid:443, aviator.invalid:443"
     })
     void shouldRemoveUserInfoFromDisplayedUrl(String url, String expected) {

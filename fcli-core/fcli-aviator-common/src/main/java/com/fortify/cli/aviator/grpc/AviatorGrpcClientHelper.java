@@ -44,16 +44,12 @@ public class AviatorGrpcClientHelper {
     private static final Logger LOG = LoggerFactory.getLogger(AviatorGrpcClientHelper.class);
     private static final String AVIATOR_MODULE = "aviator";
 
+    /**
+     * Keeps wait-for-ready for audit and streaming callers.
+     * Ordinary unary callers must select {@link AviatorRequestPolicy#FAIL_FAST} explicitly.
+     */
     public static AviatorGrpcClient createClient(String url, IAviatorLogger logger, long pingIntervalSeconds) throws AviatorSimpleException {
-        return createClient(url, logger, pingIntervalSeconds, AviatorRequestPolicy.WAIT_FOR_READY);
-    }
-
-    public static AviatorGrpcClient createClient(String url, IAviatorLogger logger, long pingIntervalSeconds,
-            AviatorRequestPolicy policy) throws AviatorSimpleException {
-        if (url == null || url.trim().isEmpty()) {
-            throw new AviatorSimpleException("Aviator URL cannot be null or empty.");
-        }
-        return createClient(createConnectionPlan(url), logger, pingIntervalSeconds, policy);
+        return createClient(createConnectionPlan(url), logger, pingIntervalSeconds, AviatorRequestPolicy.WAIT_FOR_READY);
     }
 
     /** Accepts an explicit route so callers need not resolve proxy settings again. */
@@ -104,7 +100,7 @@ public class AviatorGrpcClientHelper {
         }
 
         if ( uri.getPath()!=null && !uri.getPath().isBlank() && !"/".equals(uri.getPath()) ) {
-            LOG.warn("WARN: URL contained a path ('{}'), using only the host/port part. Full URL: {}", uri.getPath(), safeUrl);
+            LOG.warn("WARN: Ignoring path in Aviator URL; using only the host and port");
         }
 
         var port = uri.getPort();
@@ -143,8 +139,8 @@ public class AviatorGrpcClientHelper {
     }
 
     /**
-     * Returns the URL with any user-info part (for example {@code user:password@}) replaced by
-     * {@code ***}, so that the URL can be shown in messages and logs. Other URLs stay unchanged.
+     * Returns only the URL scheme and authority, with user-info replaced by {@code ***}.
+     * Paths, queries, and fragments are omitted because they can contain credentials.
      */
     static String toSafeUrlForDisplay(String url) {
         if ( url==null ) {
@@ -158,9 +154,9 @@ public class AviatorGrpcClientHelper {
         }
         var userInfoEnd = url.lastIndexOf('@', authorityEnd-1);
         if ( userInfoEnd<authorityStart ) {
-            return url;
+            return url.substring(0, authorityEnd);
         }
-        return url.substring(0, authorityStart)+"***"+url.substring(userInfoEnd);
+        return url.substring(0, authorityStart)+"***"+url.substring(userInfoEnd, authorityEnd);
     }
 
     private static NettyChannelBuilder configureBuilder(NettyChannelBuilder builder, Optional<ProxyDescriptor> proxyDescriptor) {
@@ -204,12 +200,16 @@ public class AviatorGrpcClientHelper {
         return builder.build();
     }
 
+    /**
+     * Keeps wait-for-ready for existing audit and diagnostic callers.
+     * Ordinary unary callers must select {@link AviatorRequestPolicy#FAIL_FAST} explicitly.
+     */
     public static AviatorGrpcClient createClient(String url) throws AviatorSimpleException {
         return createClient(url, AviatorRequestPolicy.WAIT_FOR_READY);
     }
 
     public static AviatorGrpcClient createClient(String url, AviatorRequestPolicy policy) throws AviatorSimpleException {
-        return createClient(url, null, Constants.DEFAULT_PING_INTERVAL_SECONDS, policy);
+        return createClient(createConnectionPlan(url), null, Constants.DEFAULT_PING_INTERVAL_SECONDS, policy);
     }
 
     public record AviatorConnectionPlan(
