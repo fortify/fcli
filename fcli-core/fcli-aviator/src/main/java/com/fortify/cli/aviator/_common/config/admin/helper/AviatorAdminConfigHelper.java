@@ -38,10 +38,6 @@ public class AviatorAdminConfigHelper extends AbstractSessionHelper<AviatorAdmin
         return AviatorAdminConfigDescriptor.class;
     }
 
-    public void validateConfig(AviatorAdminConfigDescriptor configDescriptor) {
-        validateConfig(configDescriptor, AviatorRequestPolicy.WAIT_FOR_READY);
-    }
-
     public void validateConfig(AviatorAdminConfigDescriptor configDescriptor, AviatorRequestPolicy policy) {
         try (AviatorGrpcClient client = AviatorGrpcClientHelper.createClient(configDescriptor.getAviatorUrl(), policy)) {
             String[] messageAndSignature = AviatorSignatureUtils.createMessageAndSignature(configDescriptor, configDescriptor.getTenant());

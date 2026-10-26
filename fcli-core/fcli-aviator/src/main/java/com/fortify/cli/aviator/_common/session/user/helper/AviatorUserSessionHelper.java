@@ -38,14 +38,6 @@ public class AviatorUserSessionHelper extends AbstractSessionHelper<AviatorUserS
         return AviatorUserSessionDescriptor.class;
     }
 
-    public AviatorUserTokenValidationResult validateToken(AviatorUserSessionDescriptor sessionDescriptor) {
-        return validateToken(sessionDescriptor.getAviatorUrl(), sessionDescriptor.getAviatorToken());
-    }
-
-    public AviatorUserTokenValidationResult validateToken(String aviatorUrl, String token) {
-        return validateToken(aviatorUrl, token, AviatorRequestPolicy.WAIT_FOR_READY);
-    }
-
     public AviatorUserTokenValidationResult validateToken(String aviatorUrl, String token, AviatorRequestPolicy policy) {
         var tenantName = AviatorJwtUtils.extractTenantNameFromToken(token);
         try (var client = AviatorGrpcClientHelper.createClient(aviatorUrl, policy)) {
