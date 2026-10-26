@@ -23,8 +23,6 @@ import javax.net.ssl.SSLException;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
 
-import com.fortify.cli.aviator.util.Constants;
-
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import io.grpc.netty.shaded.io.netty.channel.ConnectTimeoutException;
@@ -119,8 +117,8 @@ enum AviatorConnectivityFailureKind {
                 + "; check that the Aviator URL uses the HTTPS port of the Aviator server";
             case UNAVAILABLE -> server + " is unavailable or could not be reached"
                 + "; try again later, or check the Aviator URL, network access, and proxy settings";
-            case DEADLINE_EXCEEDED -> server + " did not respond within " + Constants.DEFAULT_TIMEOUT_SECONDS
-                + " seconds; try again later because the server may be busy, or check network access and proxy settings";
+            case DEADLINE_EXCEEDED -> "The Aviator request timed out; try again later"
+                + " (the server may be busy, or network/proxy delays may be involved)";
         };
     }
 }

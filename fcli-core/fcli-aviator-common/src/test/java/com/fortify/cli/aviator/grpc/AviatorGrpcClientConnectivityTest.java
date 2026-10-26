@@ -261,6 +261,33 @@ class AviatorGrpcClientConnectivityTest {
         }
     }
 
+    @Test
+    @Timeout(15)
+    void serverSentDeadlineDoesNotClaimLocalDeadlineExpired() throws Exception {
+        grpcServer = NettyServerBuilder.forAddress(new InetSocketAddress("127.0.0.1", 0))
+            .addService(new ApplicationServiceGrpc.ApplicationServiceImplBase() {
+                @Override
+                public void listApplications(ApplicationByTenantName request, StreamObserver<ApplicationList> observer) {
+                    observer.onError(Status.DEADLINE_EXCEEDED.withDescription("sentinel-server-deadline-details").asRuntimeException());
+                }
+            }).build().start();
+        testChannel = NettyChannelBuilder.forAddress("127.0.0.1", grpcServer.getPort())
+            .proxyDetector(address -> null).usePlaintext().build();
+        var context = new AviatorConnectionContext(new AviatorEndpoint("127.0.0.1", grpcServer.getPort()), null);
+        try ( var client = new AviatorGrpcClient(testChannel, 30, null, 30, AviatorRequestPolicy.FAIL_FAST, context) ) {
+            var e = assertThrows(AviatorConnectivityException.class,
+                () -> client.listApplication("tenant", "signature", "message"));
+
+            assertTrue(e.getMessage().contains("request timed out"));
+            assertFalse(e.getMessage().contains("30 seconds"));
+            assertFalse(e.getMessage().contains("did not respond"));
+            assertFalse(e.getMessage().contains("Timed out connecting"));
+            assertFalse(e.getMessage().contains("refused"));
+            assertFalse(e.getMessage().contains("sentinel-server-deadline-details"));
+            assertNull(e.getCause());
+        }
+    }
+
     private static AviatorConnectivityException callAndExpectConnectivityFailure(AviatorConnectionPlan plan) {
         try ( var client = AviatorGrpcClientHelper.createClient(plan, null, 30, AviatorRequestPolicy.FAIL_FAST) ) {
             long start = System.nanoTime();
