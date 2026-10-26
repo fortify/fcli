@@ -177,8 +177,11 @@ class AviatorConnectivityFailureKindTest {
         assertEquals("Timed out connecting to proxy localhost:33444; check network access and firewall rules",
             AviatorConnectivityFailureKind.CONNECT_TIMEOUT.formatMessage(PROXIED));
         assertEquals("Aviator server aviator.example.com:443 did not respond within 30 seconds; "
-                + "check network access and proxy settings, or try again later",
+                + "try again later because the server may be busy, or check network access and proxy settings",
             AviatorConnectivityFailureKind.DEADLINE_EXCEEDED.formatMessage(DIRECT));
+        assertEquals("Aviator server aviator.example.com:443 is unavailable or could not be reached; "
+                + "try again later, or check the Aviator URL, network access, and proxy settings",
+            AviatorConnectivityFailureKind.UNAVAILABLE.formatMessage(DIRECT));
     }
 
     private static Optional<AviatorConnectivityFailureKind> classify(Status status, Throwable cause, AviatorConnectionContext context) {

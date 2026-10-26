@@ -117,9 +117,10 @@ enum AviatorConnectivityFailureKind {
                 : "Could not resolve the host name of " + proxy + " or " + server + "; check the proxy settings and the Aviator URL";
             case TLS_FAILURE -> "Could not set up a TLS connection to " + server
                 + "; check that the Aviator URL uses the HTTPS port of the Aviator server";
-            case UNAVAILABLE -> "Cannot reach " + server + "; check the Aviator URL, network access, and proxy settings";
+            case UNAVAILABLE -> server + " is unavailable or could not be reached"
+                + "; try again later, or check the Aviator URL, network access, and proxy settings";
             case DEADLINE_EXCEEDED -> server + " did not respond within " + Constants.DEFAULT_TIMEOUT_SECONDS
-                + " seconds; check network access and proxy settings, or try again later";
+                + " seconds; try again later because the server may be busy, or check network access and proxy settings";
         };
     }
 }

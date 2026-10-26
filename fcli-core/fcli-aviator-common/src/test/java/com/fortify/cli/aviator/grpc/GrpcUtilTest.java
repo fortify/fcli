@@ -27,6 +27,9 @@ import java.util.Set;
 import javax.net.ssl.SSLHandshakeException;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
+import org.slf4j.LoggerFactory;
 
 import com.fortify.aviator.application.ApplicationServiceGrpc;
 import com.fortify.aviator.grpc.AuditorResponse;
@@ -39,11 +42,44 @@ import com.fortify.cli.aviator.audit.model.File;
 import com.fortify.cli.aviator.audit.model.UserPrompt;
 import com.fortify.cli.common.exception.FcliExceptionHelper;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder;
 
 class GrpcUtilTest {
+
+    @ParameterizedTest
+    @EnumSource(value = Status.Code.class, names = {"UNAVAILABLE", "DEADLINE_EXCEEDED"})
+    void causeFreeStatusesKeepSafeOutputAndLogs(Status.Code code) {
+        var secret = "sentinel-server-description";
+        var logger = (Logger)LoggerFactory.getLogger(GrpcUtil.class);
+        var previousLevel = logger.getLevel();
+        var appender = new ListAppender<ILoggingEvent>();
+        appender.start();
+        logger.addAppender(appender);
+        logger.setLevel(Level.DEBUG);
+        try {
+            var e = assertThrows(AviatorConnectivityException.class,
+                () -> execute(Status.fromCode(code).withDescription(secret), AviatorRequestPolicy.FAIL_FAST));
+
+            assertNull(e.getCause());
+            assertFalse(FcliExceptionHelper.formatException(e).contains(secret));
+            assertTrue(e.getMessage().contains(code==Status.Code.UNAVAILABLE
+                ? "is unavailable or could not be reached" : "server may be busy"));
+            assertFalse(e.getMessage().contains("refused"));
+            assertEquals(1, appender.list.size());
+            assertFalse(appender.list.get(0).getFormattedMessage().contains(secret));
+            assertNull(appender.list.get(0).getThrowableProxy());
+        } finally {
+            logger.detachAppender(appender);
+            logger.setLevel(previousLevel);
+            appender.stop();
+        }
+    }
 
     @Test
     void shouldPreserveResolvedProgrammingLanguages() {
