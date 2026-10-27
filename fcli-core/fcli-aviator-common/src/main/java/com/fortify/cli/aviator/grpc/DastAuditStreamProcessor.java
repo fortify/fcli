@@ -84,6 +84,7 @@ public class DastAuditStreamProcessor implements AutoCloseable {
     private final Map<String, String> requestIdsByIssue = new ConcurrentHashMap<>();
     private final Set<String> completedRequestIds = ConcurrentHashMap.newKeySet();
     private final Set<String> pendingIssueIds = ConcurrentHashMap.newKeySet();
+    private StreamInitializationTimeout initializationTimeout;
     private int reservedQuota;
     private int exceededCount;
     private boolean unlimitedQuota;
@@ -118,6 +119,12 @@ public class DastAuditStreamProcessor implements AutoCloseable {
         this.isClosed.set(false);
         this.quotaMetadataInitialized = false;
         initializeWorkItems(workItems);
+        initializationTimeout = new StreamInitializationTimeout(pingScheduler, () -> {
+            completeExceptionally(new AviatorSimpleException(
+                "DAST audit initialization timed out. Check the Aviator URL, proxy settings, and server availability."));
+            close();
+        });
+        resultFuture.whenComplete((result, error) -> initializationTimeout.close());
         startStream();
         return resultFuture;
     }
@@ -166,6 +173,7 @@ public class DastAuditStreamProcessor implements AutoCloseable {
     }
 
     private void handleInit(DastAuditInitResponse response) {
+        if (!initializationTimeout.initialized()) return;
         if (!isSuccess(response.getStatus())) {
             fail(new AviatorSimpleException("DAST audit initialization failed: " + response.getStatusMessage()));
             return;
@@ -294,7 +302,7 @@ public class DastAuditStreamProcessor implements AutoCloseable {
 
         @Override
         public void onNext(DastAuditServerMessage message) {
-            if (!isCurrent()) return;
+            if (!isCurrent() || resultFuture.isDone()) return;
             switch (message.getResponseTypeCase()) {
                 case INIT -> handleInit(message.getInit());
                 case AUDIT -> handleAudit(message.getAudit());
@@ -479,6 +487,7 @@ public class DastAuditStreamProcessor implements AutoCloseable {
     @Override
     public void close() {
         isClosed.set(true);
+        if (initializationTimeout != null) initializationTimeout.close();
         stopPingPong();
         if (retryTask != null) retryTask.cancel(false);
         if (!isRpcCompleted.get() && activeRequestStream != null) {
