@@ -72,10 +72,7 @@ import com.fortify.grpc.token.TokenValidationRequest;
 import com.fortify.grpc.token.TokenValidationResponse;
 import com.fortify.grpc.token.ValidateUserTokenRequest;
 
-import io.grpc.CompressorRegistry;
-import io.grpc.DecompressorRegistry;
 import io.grpc.ManagedChannel;
-import io.grpc.ManagedChannelBuilder;
 
 public class AviatorGrpcClient implements AutoCloseable {
     private static final Logger LOG = LoggerFactory.getLogger(AviatorGrpcClient.class);
@@ -94,10 +91,6 @@ public class AviatorGrpcClient implements AutoCloseable {
     private final long pingIntervalSeconds;
     private final java.util.concurrent.ScheduledExecutorService pingScheduler;
     final AtomicBoolean isShutdown = new AtomicBoolean(false);
-
-    public AviatorGrpcClient(ManagedChannel channel, long defaultTimeoutSeconds, IAviatorLogger logger, long pingIntervalSeconds) {
-        this(channel, defaultTimeoutSeconds, logger, pingIntervalSeconds, AviatorRequestPolicy.WAIT_FOR_READY, null);
-    }
 
     /** Fail-fast clients require a connection context for error messages. */
     AviatorGrpcClient(ManagedChannel channel, long defaultTimeoutSeconds, IAviatorLogger logger, long pingIntervalSeconds,
@@ -137,15 +130,6 @@ public class AviatorGrpcClient implements AutoCloseable {
             t.setDaemon(true);
             return t;
         });
-    }
-
-    public AviatorGrpcClient(String host, int port, long defaultTimeoutSeconds, IAviatorLogger logger, long pingIntervalSeconds) {
-        this(ManagedChannelBuilder.forAddress(host, port).useTransportSecurity().maxInboundMessageSize(Constants.MAX_MESSAGE_SIZE).keepAliveTime(30, TimeUnit.SECONDS).keepAliveTimeout(10, TimeUnit.SECONDS).keepAliveWithoutCalls(true).enableRetry().compressorRegistry(CompressorRegistry.getDefaultInstance()).decompressorRegistry(DecompressorRegistry.getDefaultInstance()).build(), defaultTimeoutSeconds, logger, pingIntervalSeconds);
-        LOG.debug("Initialized AviatorGrpcClient - Host: {}, Port: {}", host, port);
-    }
-
-    public AviatorGrpcClient(ManagedChannel channel, long defaultTimeoutSeconds, IAviatorLogger logger) {
-        this(channel, defaultTimeoutSeconds, logger, 30);
     }
 
     public CompletableFuture<Map<String, AuditResponse>> processBatchRequests(Queue<UserPrompt> requests, String projectName,

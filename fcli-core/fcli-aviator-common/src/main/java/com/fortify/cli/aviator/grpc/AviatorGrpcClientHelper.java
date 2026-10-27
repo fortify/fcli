@@ -15,6 +15,7 @@ package com.fortify.cli.aviator.grpc;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.net.URI;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
@@ -45,16 +46,19 @@ public class AviatorGrpcClientHelper {
     private static final String AVIATOR_MODULE = "aviator";
 
     /**
-     * Keeps wait-for-ready for audit and streaming callers.
-     * Ordinary unary callers must select {@link AviatorRequestPolicy#FAIL_FAST} explicitly.
+     * Creates a client with an explicit unary request policy.
+     * Streaming calls retain their own recovery behavior regardless of this policy.
      */
-    public static AviatorGrpcClient createClient(String url, IAviatorLogger logger, long pingIntervalSeconds) throws AviatorSimpleException {
-        return createClient(createConnectionPlan(url), logger, pingIntervalSeconds, AviatorRequestPolicy.WAIT_FOR_READY);
+    public static AviatorGrpcClient createClient(String url, IAviatorLogger logger, long pingIntervalSeconds,
+            AviatorRequestPolicy policy) throws AviatorSimpleException {
+        Objects.requireNonNull(policy, "policy");
+        return createClient(createConnectionPlan(url), logger, pingIntervalSeconds, policy);
     }
 
     /** Accepts an explicit route so callers need not resolve proxy settings again. */
     static AviatorGrpcClient createClient(AviatorConnectionPlan connectionPlan, IAviatorLogger logger, long pingIntervalSeconds,
             AviatorRequestPolicy policy) {
+        Objects.requireNonNull(policy, "policy");
         var proxyDescriptor = connectionPlan.proxyDescriptor();
         var target = connectionPlan.target();
         var builder = target.port() == null
@@ -201,15 +205,10 @@ public class AviatorGrpcClientHelper {
     }
 
     /**
-     * Keeps wait-for-ready for existing audit and diagnostic callers.
-     * Ordinary unary callers must select {@link AviatorRequestPolicy#FAIL_FAST} explicitly.
+     * Creates a client with the default ping interval and an explicit unary request policy.
      */
-    public static AviatorGrpcClient createClient(String url) throws AviatorSimpleException {
-        return createClient(url, AviatorRequestPolicy.WAIT_FOR_READY);
-    }
-
     public static AviatorGrpcClient createClient(String url, AviatorRequestPolicy policy) throws AviatorSimpleException {
-        return createClient(createConnectionPlan(url), null, Constants.DEFAULT_PING_INTERVAL_SECONDS, policy);
+        return createClient(url, null, Constants.DEFAULT_PING_INTERVAL_SECONDS, policy);
     }
 
     public record AviatorConnectionPlan(

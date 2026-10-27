@@ -42,7 +42,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
-import org.junit.jupiter.params.provider.ValueSource;
 
 import com.fortify.aviator.application.ApplicationByTenantName;
 import com.fortify.aviator.application.ApplicationList;
@@ -120,18 +119,21 @@ class AviatorGrpcClientConnectivityTest {
     }
 
     @ParameterizedTest
-    @ValueSource(booleans = {false, true})
-    void publicClientFactoriesKeepWaitForReady(boolean withLoggerAndPing) throws Exception {
-        try ( var client = withLoggerAndPing
-                ? AviatorGrpcClientHelper.createClient("127.0.0.1:1", null, 30)
-                : AviatorGrpcClientHelper.createClient("127.0.0.1:1") ) {
-            for ( var name : List.of("blockingStub", "tokenServiceBlockingStub",
-                    "entitlementServiceBlockingStub", "dastEntitlementServiceBlockingStub") ) {
-                var field = AviatorGrpcClient.class.getDeclaredField(name);
-                field.setAccessible(true);
-                var stub = assertInstanceOf(AbstractBlockingStub.class, field.get(client));
-                assertTrue(stub.getCallOptions().isWaitForReady(), name);
-                assertNull(stub.getCallOptions().getOption(AviatorConnectionContext.CALL_OPTION), name);
+    @EnumSource(AviatorRequestPolicy.class)
+    void publicClientFactoriesUseExplicitPolicy(AviatorRequestPolicy policy) throws Exception {
+        for ( boolean withLoggerAndPing : new boolean[] {false, true} ) {
+            try ( var client = withLoggerAndPing
+                    ? AviatorGrpcClientHelper.createClient("127.0.0.1:1", null, 30, policy)
+                    : AviatorGrpcClientHelper.createClient("127.0.0.1:1", policy) ) {
+                for ( var name : List.of("blockingStub", "tokenServiceBlockingStub",
+                        "entitlementServiceBlockingStub", "dastEntitlementServiceBlockingStub") ) {
+                    var field = AviatorGrpcClient.class.getDeclaredField(name);
+                    field.setAccessible(true);
+                    var stub = assertInstanceOf(AbstractBlockingStub.class, field.get(client));
+                    assertEquals(policy.isWaitForReady(), stub.getCallOptions().isWaitForReady(), name);
+                    assertEquals(policy == AviatorRequestPolicy.FAIL_FAST,
+                        stub.getCallOptions().getOption(AviatorConnectionContext.CALL_OPTION) != null, name);
+                }
             }
         }
     }

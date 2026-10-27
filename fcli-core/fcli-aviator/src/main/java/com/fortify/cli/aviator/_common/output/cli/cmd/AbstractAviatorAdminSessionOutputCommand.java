@@ -37,7 +37,7 @@ public abstract class AbstractAviatorAdminSessionOutputCommand extends AbstractO
 
     public abstract boolean isSingular();
 
-    /** The caller must close the client. */
+    /** Creates a fail-fast client for ordinary admin commands. The caller must close the client. */
     protected final AviatorGrpcClient createGrpcClient(AviatorAdminConfigDescriptor configDescriptor) {
         return AviatorGrpcClientHelper.createClient(configDescriptor.getAviatorUrl(), AviatorRequestPolicy.FAIL_FAST);
     }

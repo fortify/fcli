@@ -56,6 +56,7 @@ import com.fortify.cli.aviator.fpr.model.FVDLMetadata;
 import com.fortify.cli.aviator.fpr.processor.AuditProcessor;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClient;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClientHelper;
+import com.fortify.cli.aviator.grpc.AviatorRequestPolicy;
 import com.fortify.cli.aviator.util.Constants;
 import com.fortify.cli.aviator.util.ResourceUtil;
 import com.fortify.cli.aviator.util.StringUtil;
@@ -169,7 +170,7 @@ public class IssueAuditor {
         if (promptsToAudit.isEmpty()) {
             options.getLogger().progress("Audit skipped - no issues to process after filtering.");
         } else {
-            try (AviatorGrpcClient client = AviatorGrpcClientHelper.createClient(options.getUrl(), options.getLogger(), DEFAULT_PING_INTERVAL_SECONDS)) {
+            try (AviatorGrpcClient client = AviatorGrpcClientHelper.createClient(options.getUrl(), options.getLogger(), DEFAULT_PING_INTERVAL_SECONDS, AviatorRequestPolicy.WAIT_FOR_READY)) {
                 CompletableFuture<Map<String, AuditResponse>> future =
                         client.processBatchRequests(promptsToAudit, projectName, fprInfo.getBuildId(), SSCApplicationName,
                             SSCApplicationVersion, options.getToken(), options.getFprHandle(),

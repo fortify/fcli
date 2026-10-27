@@ -36,6 +36,7 @@ import javax.net.ssl.TrustManager;
 import com.fortify.cli.aviator._common.exception.AviatorBugException;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClientHelper;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClientHelper.AviatorConnectionPlan;
+import com.fortify.cli.aviator.grpc.AviatorRequestPolicy;
 import com.fortify.cli.common.http.ssl.trust.FcliTrustManager;
 
 import io.grpc.Status;
@@ -140,7 +141,7 @@ public class AviatorDefaultDiagnosticProbe implements IAviatorDiagnosticProbe {
 
     @Override
     public AviatorGrpcReachabilityResult probeGrpc(String url, int timeoutSeconds) throws Exception {
-        try (var client = AviatorGrpcClientHelper.createClient(url)) {
+        try (var client = AviatorGrpcClientHelper.createClient(url, AviatorRequestPolicy.WAIT_FOR_READY)) {
             client.probeGetDefaultQuota(timeoutSeconds);
             return AviatorGrpcReachabilityResult.responseReceived("OK", "Default quota response received");
         } catch (StatusRuntimeException e) {
