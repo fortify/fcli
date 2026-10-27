@@ -205,32 +205,27 @@ public class AviatorGrpcClient implements AutoCloseable {
 
     public Application createApplication(String name, String tenantName, String signature, String message) {
         CreateApplicationRequest request = CreateApplicationRequest.newBuilder().setName(name).setTenantName(tenantName).setSignature(signature).setMessage(message).build();
-        return GrpcUtil.executeGrpcCall(blockingStub,
-            ApplicationServiceGrpc.ApplicationServiceBlockingStub::createApplication, request, Constants.OP_CREATE_APP);
+        return GrpcUtil.executeGrpcCall(blockingStub, ApplicationServiceGrpc.ApplicationServiceBlockingStub::createApplication, request, Constants.OP_CREATE_APP);
     }
 
     public Application updateApplication(String projectId, String newName, String signature, String message, String tenantName) {
         UpdateApplicationRequest request = UpdateApplicationRequest.newBuilder().setId(Long.parseLong(projectId)).setName(newName).setTenantName(tenantName).setSignature(signature).setMessage(message).build();
-        return GrpcUtil.executeGrpcCall(blockingStub,
-            ApplicationServiceGrpc.ApplicationServiceBlockingStub::updateApplication, request, Constants.OP_UPDATE_APP);
+        return GrpcUtil.executeGrpcCall(blockingStub, ApplicationServiceGrpc.ApplicationServiceBlockingStub::updateApplication, request, Constants.OP_UPDATE_APP);
     }
 
     public Application addEntitlement(String projectId, String signature, String message, String tenantName) {
         ApplicationById request = ApplicationById.newBuilder().setId(Long.parseLong(projectId)).setSignature(signature).setMessage(message).setTenantName(tenantName).build();
-        return GrpcUtil.executeGrpcCall(blockingStub,
-            ApplicationServiceGrpc.ApplicationServiceBlockingStub::addEntitlement, request, Constants.OP_ADD_APP_ENTITLEMENT);
+        return GrpcUtil.executeGrpcCall(blockingStub, ApplicationServiceGrpc.ApplicationServiceBlockingStub::addEntitlement, request, Constants.OP_ADD_APP_ENTITLEMENT);
     }
 
     public ApplicationResponseMessage deleteApplication(String projectId, String signature, String message, String tenantName) {
         ApplicationById request = ApplicationById.newBuilder().setId(Long.parseLong(projectId)).setSignature(signature).setMessage(message).setTenantName(tenantName).build();
-        return GrpcUtil.executeGrpcCall(blockingStub,
-            ApplicationServiceGrpc.ApplicationServiceBlockingStub::deleteApplication, request, Constants.OP_DELETE_APP);
+        return GrpcUtil.executeGrpcCall(blockingStub, ApplicationServiceGrpc.ApplicationServiceBlockingStub::deleteApplication, request, Constants.OP_DELETE_APP);
     }
 
     public Application getApplication(String projectId, String signature, String message, String tenantName) {
         ApplicationById request = ApplicationById.newBuilder().setId(Long.parseLong(projectId)).setSignature(signature).setMessage(message).setTenantName(tenantName).build();
-        return GrpcUtil.executeGrpcCall(blockingStub,
-            ApplicationServiceGrpc.ApplicationServiceBlockingStub::getApplication, request, Constants.OP_GET_APP);
+        return GrpcUtil.executeGrpcCall(blockingStub, ApplicationServiceGrpc.ApplicationServiceBlockingStub::getApplication, request, Constants.OP_GET_APP);
     }
 
     public Application getApplicationByToken(String token, String appName) {
@@ -238,8 +233,7 @@ public class AviatorGrpcClient implements AutoCloseable {
             .setToken(token)
             .setAppName(appName)
             .build();
-        return GrpcUtil.executeGrpcCall(blockingStub,
-            ApplicationServiceGrpc.ApplicationServiceBlockingStub::getApplicationByToken, request, Constants.OP_GET_APP_BY_TOKEN);
+        return GrpcUtil.executeGrpcCall(blockingStub, ApplicationServiceGrpc.ApplicationServiceBlockingStub::getApplicationByToken, request, Constants.OP_GET_APP_BY_TOKEN);
     }
 
     public long getDefaultQuota(String token) {
@@ -272,21 +266,18 @@ public class AviatorGrpcClient implements AutoCloseable {
 
     public List<Application> listApplication(String tenantName, String signature, String message) {
         ApplicationByTenantName request = ApplicationByTenantName.newBuilder().setName(tenantName).setSignature(signature).setMessage(message).build();
-        ApplicationList applicationList = GrpcUtil.executeGrpcCall(blockingStub,
-            ApplicationServiceGrpc.ApplicationServiceBlockingStub::listApplications, request, Constants.OP_LIST_APPS);
+        ApplicationList applicationList = GrpcUtil.executeGrpcCall(blockingStub, ApplicationServiceGrpc.ApplicationServiceBlockingStub::listApplications, request, Constants.OP_LIST_APPS);
         return applicationList.getApplicationsList();
     }
 
     public TokenGenerationResponse generateToken(String email, String tokenName, String signature, String message, String tenantName, String endDate) {
         TokenGenerationRequest request = TokenGenerationRequest.newBuilder().setEmail(email != null ? email : "").setCustomTokenName(tokenName != null ? tokenName : "").setRequestSignature(signature).setEndDate(com.fortify.cli.aviator.util.StringUtil.isEmpty(endDate) ? "" : endDate).setMessage(message).setTenantName(tenantName).build();
-        return GrpcUtil.executeGrpcCall(tokenServiceBlockingStub,
-            TokenServiceGrpc.TokenServiceBlockingStub::generateToken, request, Constants.OP_GENERATE_TOKEN);
+        return GrpcUtil.executeGrpcCall(tokenServiceBlockingStub, TokenServiceGrpc.TokenServiceBlockingStub::generateToken, request, Constants.OP_GENERATE_TOKEN);
     }
 
     public ListTokensResponse listTokens(String email, String tenantName, String signature, String message) {
         ListTokensRequest request = ListTokensRequest.newBuilder().setRequestSignature(signature).setMessage(message).setTenantName(tenantName).setIgnorePagination(true).build();
-        return GrpcUtil.executeGrpcCall(tokenServiceBlockingStub,
-            TokenServiceGrpc.TokenServiceBlockingStub::listTokens, request, Constants.OP_LIST_TOKENS);
+        return GrpcUtil.executeGrpcCall(tokenServiceBlockingStub, TokenServiceGrpc.TokenServiceBlockingStub::listTokens, request, Constants.OP_LIST_TOKENS);
     }
 
     public ListTokensResponse listTokensByDeveloper(String tenantName, String developerEmail, String signature, String message) {
@@ -295,46 +286,38 @@ public class AviatorGrpcClient implements AutoCloseable {
             requestBuilder.setDeveloperEmail(developerEmail);
         }
         ListTokensByDeveloperRequest request = requestBuilder.build();
-        return GrpcUtil.executeGrpcCall(tokenServiceBlockingStub,
-            TokenServiceGrpc.TokenServiceBlockingStub::listTokensByDeveloper, request, Constants.OP_LIST_TOKENS_BY_DEVELOPER);
+        return GrpcUtil.executeGrpcCall(tokenServiceBlockingStub, TokenServiceGrpc.TokenServiceBlockingStub::listTokensByDeveloper, request, Constants.OP_LIST_TOKENS_BY_DEVELOPER);
     }
 
     public RevokeTokenResponse revokeToken(String token, String email, String tenantName, String signature, String message) {
         RevokeTokenRequest request = RevokeTokenRequest.newBuilder().setToken(token).setTenantName(tenantName).setRequestSignature(signature).setMessage(message).build();
-        return GrpcUtil.executeGrpcCall(tokenServiceBlockingStub,
-            TokenServiceGrpc.TokenServiceBlockingStub::revokeToken, request, Constants.OP_REVOKE_TOKEN);
+        return GrpcUtil.executeGrpcCall(tokenServiceBlockingStub, TokenServiceGrpc.TokenServiceBlockingStub::revokeToken, request, Constants.OP_REVOKE_TOKEN);
     }
 
     public DeleteTokenResponse deleteToken(String token, String email, String tenantName, String signature, String message) {
         DeleteTokenRequest request = DeleteTokenRequest.newBuilder().setToken(token).setTenantName(tenantName).setRequestSignature(signature).setMessage(message).build();
-        return GrpcUtil.executeGrpcCall(tokenServiceBlockingStub,
-            TokenServiceGrpc.TokenServiceBlockingStub::deleteToken, request, Constants.OP_DELETE_TOKEN);
+        return GrpcUtil.executeGrpcCall(tokenServiceBlockingStub, TokenServiceGrpc.TokenServiceBlockingStub::deleteToken, request, Constants.OP_DELETE_TOKEN);
     }
 
     public TokenValidationResponse validateToken(String token, String tenantName, String signature, String message) {
         TokenValidationRequest request = TokenValidationRequest.newBuilder().setToken(token).setTenantName(tenantName).setRequestSignature(signature).setMessage(message).build();
-        return GrpcUtil.executeGrpcCall(tokenServiceBlockingStub,
-            TokenServiceGrpc.TokenServiceBlockingStub::validateToken, request, Constants.OP_VALIDATE_TOKEN);
+        return GrpcUtil.executeGrpcCall(tokenServiceBlockingStub, TokenServiceGrpc.TokenServiceBlockingStub::validateToken, request, Constants.OP_VALIDATE_TOKEN);
     }
 
     public TokenValidationResponse validateUserToken(String token, String tenantName) {
         ValidateUserTokenRequest request = ValidateUserTokenRequest.newBuilder().setToken(token).setTenantName(tenantName != null ? tenantName : "").build();
-        return GrpcUtil.executeGrpcCall(tokenServiceBlockingStub,
-            TokenServiceGrpc.TokenServiceBlockingStub::validateUserToken, request, Constants.OP_VALIDATE_USER_TOKEN);
+        return GrpcUtil.executeGrpcCall(tokenServiceBlockingStub, TokenServiceGrpc.TokenServiceBlockingStub::validateUserToken, request, Constants.OP_VALIDATE_USER_TOKEN);
     }
 
     public List<Entitlement> listEntitlements(String tenantName, String signature, String message) {
         ListEntitlementsByTenantRequest request = ListEntitlementsByTenantRequest.newBuilder().setTenantName(tenantName).setSignature(signature).setMessage(message).build();
-        ListEntitlementsByTenantResponse response = GrpcUtil.executeGrpcCall(entitlementServiceBlockingStub,
-            EntitlementServiceGrpc.EntitlementServiceBlockingStub::listEntitlementsByTenant, request, Constants.OP_LIST_ENTITLEMENTS);
+        ListEntitlementsByTenantResponse response = GrpcUtil.executeGrpcCall(entitlementServiceBlockingStub, EntitlementServiceGrpc.EntitlementServiceBlockingStub::listEntitlementsByTenant, request, Constants.OP_LIST_ENTITLEMENTS);
         return response.getEntitlementsList();
     }
 
     public List<DastEntitlement> listDastEntitlements(String tenantName, String signature, String message) {
         ListDastEntitlementsByTenantRequest request = ListDastEntitlementsByTenantRequest.newBuilder().setTenantName(tenantName).setSignature(signature).setMessage(message).build();
-        ListDastEntitlementsByTenantResponse response = GrpcUtil.executeGrpcCall(dastEntitlementServiceBlockingStub,
-            DastEntitlementServiceGrpc.DastEntitlementServiceBlockingStub::listDastEntitlementsByTenant,
-            request, Constants.OP_LIST_DAST_ENTITLEMENTS);
+        ListDastEntitlementsByTenantResponse response = GrpcUtil.executeGrpcCall(dastEntitlementServiceBlockingStub, DastEntitlementServiceGrpc.DastEntitlementServiceBlockingStub::listDastEntitlementsByTenant, request, Constants.OP_LIST_DAST_ENTITLEMENTS);
         return response.getEntitlementsList();
     }
 
