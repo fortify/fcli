@@ -1,6 +1,12 @@
 # Simple prop property
 "prop=='test'","prop:test"
 
+# Large integer literals must remain numeric without leaking an L suffix
+"prop==3000000000","prop:3000000000"
+"prop==9223372036854775807","prop:9223372036854775807"
+"prop==0xFFFFFFFF","prop:4294967295"
+"prop==3000000000 || prop==4000000000","prop:3000000000|4000000000"
+
 # Simple prop property reversed operands
 "'test'==prop","prop:test"
 
@@ -41,5 +47,4 @@
 
 # AND expression
 "nested?.reword?.prop=='test' && nested?.nested?.prop=='test2'", "rewordProp:test+nested.nested.prop:test2"
-
 

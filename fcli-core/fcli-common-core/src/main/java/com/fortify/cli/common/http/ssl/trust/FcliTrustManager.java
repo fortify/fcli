@@ -341,6 +341,11 @@ public final class FcliTrustManager extends X509ExtendedTrustManager {
         if (PlatformHelper.isWindows()) {
             return loadSingleKeyStore("Windows-ROOT");
         } else if (PlatformHelper.isMac()) {
+            // GraalVM cannot resolve Keychain JNI calls: https://github.com/oracle/graal/issues/10387
+            if (PlatformHelper.isNativeImage()) {
+                LOG.debug("macOS Keychain trust store is not supported in native images; using other configured trust stores");
+                return null;
+            }
             return loadSingleKeyStore("KeychainStore");
         } else {
             LOG.debug("No OS trust store loaded for platform: {}", PlatformHelper.getOSString());

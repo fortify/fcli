@@ -24,6 +24,7 @@ import java.util.stream.StreamSupport;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -33,6 +34,7 @@ class NativeReflectConfigTest {
     private static final String SPEL_REFLECT_CONFIG = "META-INF/native-image/fcli/fcli-app/spel/reflect-config.json";
     private static final String YAML_REFLECT_CONFIG = "META-INF/native-image/fcli/fcli-app/yaml/reflect-config.json";
     private static final String GRPC_REFLECT_CONFIG = "META-INF/native-image/fcli/fcli-app/grpc/reflect-config.json";
+    private static final String LOGBACK_REFLECT_CONFIG = "META-INF/native-image/fcli/fcli-app/logback/reflect-config.json";
     private static final String OFFSET_DATE_TIME_CLASS = "java.time.OffsetDateTime";
     private static final String TAG_MAPPING_CONFIG_CLASS = "com.fortify.cli.aviator.config.TagMappingConfig";
     private static final List<String> TAG_MAPPING_NESTED_CLASSES = List.of(
@@ -71,6 +73,20 @@ class NativeReflectConfigTest {
                         List.of("setSuppression_exclusions"), TAG_MAPPING_NESTED_CLASSES),
                 Arguments.of(GRPC_REFLECT_CONFIG, TAG_MAPPING_CONFIG_CLASS, true, false,
                         List.of("setSuppression_exclusions"), TAG_MAPPING_NESTED_CLASSES));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "ch.qos.logback.classic.util.DefaultJoranConfigurator",
+            "ch.qos.logback.classic.BasicConfigurator"
+    })
+    void testLogbackConfiguratorConstructors(String className) throws IOException {
+        var entry = getReflectConfigEntry(loadReflectConfig(LOGBACK_REFLECT_CONFIG), className);
+        assertTrue(StreamSupport.stream(entry.path("methods").spliterator(), false)
+                .anyMatch(method -> "<init>".equals(method.path("name").asText())
+                        && method.path("parameterTypes").isArray()
+                        && method.path("parameterTypes").isEmpty()),
+                () -> "Expected no-argument constructor registration for " + className);
     }
 
     private JsonNode loadReflectConfig(String resourcePath) throws IOException {

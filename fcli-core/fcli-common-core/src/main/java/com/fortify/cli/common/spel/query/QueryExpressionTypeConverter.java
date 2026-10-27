@@ -14,15 +14,15 @@ package com.fortify.cli.common.spel.query;
 
 import org.springframework.expression.Expression;
 import org.springframework.expression.spel.SpelNode;
-import org.springframework.expression.spel.standard.SpelExpressionParser;
 
 import com.fortify.cli.common.exception.FcliSimpleException;
+import com.fortify.cli.common.spel.FcliSpelExpressionParser;
 import com.fortify.cli.common.spel.validator.AbstractSimpleSpelNodeValidator;
 
 import picocli.CommandLine.ITypeConverter;
 
 public class QueryExpressionTypeConverter implements ITypeConverter<QueryExpression> {
-    private static final SpelExpressionParser parser = new SpelExpressionParser();
+    private static final FcliSpelExpressionParser parser = new FcliSpelExpressionParser();
     
     @Override
     public QueryExpression convert(String value) throws Exception {

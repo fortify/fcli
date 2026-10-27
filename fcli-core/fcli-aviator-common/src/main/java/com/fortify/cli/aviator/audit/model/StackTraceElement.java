@@ -22,6 +22,7 @@ import java.util.regex.Pattern;
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.aviator.fpr.utils.Searchable;
 
+import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
@@ -43,6 +44,7 @@ public class StackTraceElement implements Searchable {
     private String reason = ""; // From Reason (text or concatenated RuleID/Internal)
     private Map<String, String> knowledge = new HashMap<>(); // From Node Knowledge/Fact
 
+    @Builder
     public StackTraceElement(String filename, int line, String code, String nodeType, Fragment fragment, String additionalInfo, String taintflags) {
         this.filename = filename;
         this.line = line;

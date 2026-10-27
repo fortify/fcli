@@ -1,6 +1,12 @@
 # Simple plain property
 "plain=='test'","plain:test"
 
+# Large integer literals must remain numeric without leaking an L suffix
+"plain==3000000000","plain:3000000000"
+"plain==9223372036854775807","plain:9223372036854775807"
+"plain==0xFFFFFFFF","plain:4294967295"
+"plain==3000000000 && wrapped=='3000000000'","plain:3000000000+and+wrapped:""3000000000"""
+
 # Simple prop property reversed operands
 "'test'==plain","plain:test"
 
@@ -64,4 +70,3 @@
 
 # Matches with unknown property - should return null
 "unknown matches 'abc'",null
-
