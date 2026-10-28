@@ -230,14 +230,20 @@ formatters:
               `false` to just kick off any configured scans without waiting for completion. Note that doing so
               will skip any post-scan tasks. The `SAST_WAIT_EXTRA_OPTS` environment variable can be used to pass
               extra options to the fcliCmd:fcli fod sast-scan wait-for: command.
-          - names: DO_FAA_SCAN\nFAA_SCAN_EXTRA_OPTS\nFAA_HOME
+          - names: DO_FAA_SCAN\nFAA_HOME\nFAA_SCAN_EXTRA_OPTS
             desc: >-
-              The fcli `ci` action supports running a Fortify Agentic Analyzer (FAA) scan.
-              The `DO_FAA_SCAN` environment variable can be set to `true` to enable the FAA scan.
-              The `FAA_SCAN_EXTRA_OPTS` environment variable can be used to provide additional options to
-              the `fortifyaa -scan` command.
-              If `FAA_HOME` is specified, the pre-installed FAA at that location will be registered and used. If not set, 
-              `fcli tool env init --tools=fortifyaa` will attempt to auto-detect and register any available FAA installation.
+              The fcli `ci` action supports running a Fortify Agentic Analyzer (FAA) scan, which is disabled by default.
+              Set `DO_FAA_SCAN` to `true` to enable the FAA scan, which is run through the fcli-provided actionRef:_:faa-scan
+              action. FAA must be pre-installed;
+              the FAA installation is taken from `FAA_HOME` if set, otherwise FAA is looked up in the system `PATH`.
+              \n\nThe latest available SAST scan results for the release are downloaded and passed to FAA for context-aware
+              analysis, allowing FAA to avoid reporting issues already found by SAST. As the `ci` action runs the FAA scan
+              after waiting for SAST scan completion (unless waiting is disabled), this usually includes the results from
+              the SAST scan started by the current pipeline. If no SAST results are available, FAA runs without SAST context.
+              FAA results are imported into ${productNames.fod} as a SARIF report; the `ci` action doesn't wait for this import
+              to be processed.
+              \n\nThe `FAA_SCAN_EXTRA_OPTS` environment variable can be used to pass extra options to the FAA scan action;
+              to pass extra options to the FAA scanner itself, use `FAA_SCAN_EXTRA_OPTS=--extra-scan-opts="<options>"`.
       - title: Post-Scan Actions
         overview: >
           Configure post-scan tasks including release summaries, policy checks, pull request comments, and
@@ -386,14 +392,20 @@ formatters:
               to provide additional options to the fcliCmd:fcli sc-dast scan start: command. Note that these
               environment variables only control the submission of the scan request; see the information below
               for details on waiting for the scan to complete. 
-          - names: DO_FAA_SCAN\nFAA_SCAN_EXTRA_OPTS\nFAA_HOME
+          - names: DO_FAA_SCAN\nFAA_HOME\nFAA_SCAN_EXTRA_OPTS
             desc: >-
-              The fcli `ci` action supports running a Fortify Agentic Analyzer (FAA) scan.
-              The `DO_FAA_SCAN` environment variable can be set to `true` to enable the FAA scan.
-              The `FAA_SCAN_EXTRA_OPTS` environment variable can be used to provide additional options to
-              the `fortifyaa -scan` command.
-              If `FAA_HOME` is specified, the pre-installed FAA at that location will be registered and used. If not set, 
-              `fcli tool env init --tools=fortifyaa` will attempt to auto-detect and register any available FAA installation.
+              The fcli `ci` action supports running a Fortify Agentic Analyzer (FAA) scan, which is disabled by default.
+              Set `DO_FAA_SCAN` to `true` to enable the FAA scan, which is run through the fcli-provided actionRef:_:faa-scan
+              action. FAA must be pre-installed;
+              the FAA installation is taken from `FAA_HOME` if set, otherwise FAA is looked up in the system `PATH`.
+              \n\nThe latest SAST scan results that have been fully processed by ${productNames.ssc} are downloaded and passed
+              to FAA for context-aware analysis, allowing FAA to avoid reporting issues already found by SAST. Note that if the
+              SAST scan started by the current pipeline hasn't been fully processed yet (for example because waiting is disabled
+              or the SAST scan failed), results from an earlier SAST scan will be used. If no processed SAST results are
+              available, FAA runs without SAST context. FAA results are uploaded to ${productNames.ssc} as a SARIF report,
+              and the FAA scan action waits for the uploaded report to be processed unless waiting is disabled through `DO_WAIT`.
+              \n\nThe `FAA_SCAN_EXTRA_OPTS` environment variable can be used to pass extra options to the FAA scan action;
+              to pass extra options to the FAA scanner itself, use `FAA_SCAN_EXTRA_OPTS=--extra-scan-opts="<options>"`.
           - names: DO_DEBRICKED_SCAN\nDEBRICKED_SCAN_EXTRA_OPTS\nDEBRICKED_ACCESS_TOKEN\nDEBRICKED_VERSION\nDEBRICKED_HOME
             desc: >-
               The fcli `ci` action supports running a Debricked Software Composition Analysis (SCA) scan, which
@@ -408,16 +420,16 @@ formatters:
               \n  * `latest` to use the latest available Debricked CLI version
               \n  * `auto` (default) to use a pre-installed version if available, otherwise installs latest
               \n* If neither `DEBRICKED_VERSION` nor `DEBRICKED_HOME` are set, defaults to `auto` behavior.
-          - names: DO_WAIT\nDO_SAST_WAIT\nSAST_WAIT_EXTRA_OPTS\nDO_DAST_WAIT\nDAST_WAIT_EXTRA_OPTS\nDO_FAA_WAIT\nFAA_WAIT_EXTRA_OPTS\nDEBRICKED_WAIT_EXTRA_OPTS
+          - names: DO_WAIT\nDO_SAST_WAIT\nSAST_WAIT_EXTRA_OPTS\nDO_DAST_WAIT\nDAST_WAIT_EXTRA_OPTS\nDEBRICKED_WAIT_EXTRA_OPTS
             desc: >-
               By default, the fcli `ci` action will wait for all started scans to complete; set `DO_WAIT` to
               `false` to just kick off any configured scans without waiting for completion. Note that doing so
               will skip any post-scan tasks. The `SAST_WAIT_EXTRA_OPTS` environment variable can be used to pass
               extra options to the fcliCmd:fcli sc-sast scan wait-for: command, and similarly, the `DAST_WAIT_EXTRA_OPTS`
               environment variable can be used to pass extra options to the fcliCmd:fcli sc-dast scan wait-for: command,
-              the `FAA_WAIT_EXTRA_OPTS` environment variable can be used to pass extra options to the
-              fcliCmd:fcli fortifyaa scan wait-for: command, and the `DEBRICKED_WAIT_EXTRA_OPTS` environment variable can be used to pass extra options to the
-              fcliCmd:fcli ssc artifact wait-for: command.\n\nUnlike other scan types, waiting for DAST scans is disabled
+              and the `DEBRICKED_WAIT_EXTRA_OPTS` environment variable can be used to pass extra options to the
+              fcliCmd:fcli ssc artifact wait-for: command. Waiting for processing of uploaded FAA results is handled
+              by the FAA scan action itself.\n\nUnlike other scan types, waiting for DAST scans is disabled
               by default (as DAST scans are often long-running and only run on demand); set `DO_DAST_WAIT` to `true` to
               wait for DAST scan completion.\n\nDAST scans can take considerably longer than SAST scans, potentially
               exceeding CI/CD job time limits (for example on GitHub Actions or GitLab CI); if the default wait timeout
