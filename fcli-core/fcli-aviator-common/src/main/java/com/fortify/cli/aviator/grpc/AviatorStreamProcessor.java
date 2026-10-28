@@ -87,7 +87,7 @@ class AviatorStreamProcessor implements AutoCloseable {
     private RequestHandler<UserPromptRequest> requestHandler;
 
     private ScheduledFuture<?> pingTask;
-    private StreamInitializationTimeout initializationTimeout;
+    private volatile StreamInitializationTimeout initializationTimeout;
     private final AtomicBoolean isPinging = new AtomicBoolean(false);
 
     private final ConcurrentLinkedDeque<RequestWrapper> processingQueue = new ConcurrentLinkedDeque<>();
@@ -192,29 +192,23 @@ class AviatorStreamProcessor implements AutoCloseable {
             this.streamLatch = new CountDownLatch(1);
             CountDownLatch initLatch = new CountDownLatch(1);
 
-            var attemptLatch = this.streamLatch;
             var attemptHandler = requestHandler;
-            var initializationTimeout = new StreamInitializationTimeout(pingScheduler, () -> {
-                var error = new AviatorSimpleException(
-                    "Audit initialization timed out. Check the Aviator URL, proxy settings, and server availability.");
-                initLatch.countDown();
-                attemptLatch.countDown();
-                attemptHandler.sendError(error);
-                resultFuture.completeExceptionally(error);
-            });
+            var initializationTimeout = new StreamInitializationTimeout(pingScheduler,
+                () -> attemptHandler.sendError(StreamInitializationTimeout.expiredError("Audit")));
             this.initializationTimeout = initializationTimeout;
             resultFuture.whenComplete((result, error) -> {
                 initializationTimeout.close();
                 initLatch.countDown();
             });
             ClientResponseObserver<UserPromptRequest, AuditorResponse> responseObserver = createResponseObserver(
-                    responses, processedRequests, resultFuture, attemptLatch, initLatch, initializationTimeout);
+                    responses, processedRequests, resultFuture, this.streamLatch, initLatch, initializationTimeout);
 
             try {
                 asyncStub.processStream(responseObserver);
 
                 LOG.info("Sending initialization request for stream retry {}", currentStreamState.streamRetryCount);
                 sendInitRequest();
+                initializationTimeout.arm();
 
                 if (currentStreamState.streamRetryCount > 1) {
                     requestSemaphore.drainPermits();
@@ -329,7 +323,6 @@ class AviatorStreamProcessor implements AutoCloseable {
 
             @Override
             public void onNext(AuditorResponse response) {
-                if (resultFuture.isDone()) return;
                 logger.info("Received response - Status: " + response.getStatus() + ", RequestId: " + response.getRequestId());
 
                 if ("PONG".equals(response.getStatus())) {
@@ -445,11 +438,12 @@ class AviatorStreamProcessor implements AutoCloseable {
 
             @Override
             public void onError(Throwable t) {
-                if (initializationTimeout.isExpired()) return;
+                boolean initializationExpired = initializationTimeout.isExpired();
                 initializationTimeout.close();
                 initLatch.countDown();
                 stopPingPong();
-                if (resultFuture.isDone()) {
+                if (initializationExpired) {
+                    resultFuture.completeExceptionally(StreamInitializationTimeout.expiredError("Audit"));
                     streamLatch.countDown();
                     return;
                 }
@@ -536,7 +530,6 @@ class AviatorStreamProcessor implements AutoCloseable {
 
             @Override
             public void onCompleted() {
-                if (initializationTimeout.isExpired()) return;
                 initializationTimeout.close();
                 initLatch.countDown();
                 stopPingPong();
