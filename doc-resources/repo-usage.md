@@ -10,3 +10,4 @@ Docker images for fcli are built and published in the separate [fortify/fcli-doc
 Published images are available at [Docker Hub: fortifydocker/fcli](https://hub.docker.com/r/fortifydocker/fcli).
 
 For more information about available Docker images and usage instructions, see the [fcli-docker repository](https://github.com/fortify/fcli-docker).
+
