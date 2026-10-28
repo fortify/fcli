@@ -61,8 +61,9 @@ class ConfigTrustStoreSpec extends FcliBaseSpec {
         when:
             def result = Fcli.run(args, {it.expectSuccess(false)})
         then:
+            result.nonZeroExitCode
             verifyAll(result.stderr) {
-                it.any { it.contains("javax.net.ssl.SSLException") }
+                it.any { it.contains("PKIX SSL certificate validation failed") }
             }
     }
     

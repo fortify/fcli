@@ -14,6 +14,20 @@ In general, the `rel/v3.x` branch shouldn't be touched (other than as described 
 
 Apart from the branches listed above, there's also a `gh-pages` branch that is used to publish documentation to https://fortify.github.io/fcli. Most of the files in this branch are either static or automatically generated during fcli builds, so other than changing documentation structure or performing cleanup (like removing documentation for outdated fcli versions), in general this branch shouldn't be touched.
 
+== Certificate Distrust Policy
+
+Certificate-verified connections using fcli's trust manager apply a mandatory, offline CA-key distrust policy in both JAR and native distributions. The policy covers CVE-2026-91403 and CVE-2026-114820 and cannot be overridden by configuring a custom trust store, OS trust or trusted URLs. External tools have their own TLS configuration, and disabling certificate verification bypasses this protection.
+
+The policy is maintained in `fcli-core/fcli-common-core/src/main/resources/com/fortify/cli/common/http/ssl/trust/distrusted-keys.txt`. Each non-comment line contains `algorithm|base64 DER SubjectPublicKeyInfo|CA subject DN|reason/advisory`. Entries identify public keys, not aliases or certificate fingerprints, so cross-signed and reissued certificates using the same key are covered. Verify new keys against authoritative sources and update the independently recorded fingerprint assertions in `CertificateDistrustPolicyTest`.
+
+The trust manager removes prohibited trust anchors from every trust source, applies a veto before trying delegates, and adds a PKIX path checker for intermediates discovered during path building. Directly trusted certificates signed by a listed issuer are also excluded when the issuer name and signature match. Each original trust manager is retained and paired with an additional policy-constrained PKIX validator using its filtered trusted certificates. Both must accept through the same trust source, preserving the original manager's restrictions and socket/engine context. The additional validator cannot override an original rejection, but may reject unusual provider-specific chains that standard PKIX cannot validate. Java's generic trust-manager API does not expose the original accepted path; the checks establish original acceptance plus the existence of a policy-compliant path, not inspection of that internal path. Original revocation behavior is retained; the additional validator follows `com.sun.net.ssl.checkRevocation`.
+
+Full certificate-verified TLS handshakes perform original validation followed by additional PKIX validation; existing connections have no per-request policy overhead. Additional path-building or revocation activity can occur depending on Java configuration. No policy-specific online revocation service is introduced.
+
+CI runs the same policy implementation as a Java source-file program to remove prohibited certificates from each native-image builder's `cacerts` before compilation. This additionally cleans the embedded default trust store. The build verifies the saved store and fails rather than publishing an empty store or ignoring an invalid policy. Updating the policy requires rebuilding and redistributing fcli, and long-running processes should be restarted to close existing connections and TLS sessions.
+
+Run the common-core unit/TLS tests and `ConfigCertificateDistrustSpec` when changing the policy or enforcement. The functional spec uses a local HTTPS server, unrelated generated test keys, and an intentionally invalid extra certificate carrying a public distrusted key; it never uses compromised private keys or external revocation services. It verifies successful trusted connections, explicit rejection before any HTTP request, and rejection of trusted-URL imports. The normal release verification matrix runs this spec for JAR/native distributions on Linux, Windows and macOS. Existing FoD/SSC tests provide additional positive regression coverage.
+
 == Conventional Commits & Versioning
 
 === `rel/v3.x` & `dev/v3.x` branches
