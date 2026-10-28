@@ -24,6 +24,7 @@ import com.fortify.cli.aviator.diagnose.AviatorConnectionDiagnostics;
 import com.fortify.cli.aviator.diagnose.AviatorDiagnosticEvidence;
 import com.fortify.cli.aviator.diagnose.AviatorDiagnosticReport;
 import com.fortify.cli.aviator.diagnose.AviatorDiagnosticStageResult;
+import com.fortify.cli.aviator.grpc.AviatorRequestPolicy;
 import com.fortify.cli.common.exception.FcliBugException;
 
 import lombok.RequiredArgsConstructor;
@@ -48,8 +49,9 @@ public class AviatorConnectionDiagnoseHelper {
 
     public AviatorConnectionDiagnoseHelper() {
         this(new AviatorConnectionDiagnostics(),
-            (url, token) -> AviatorUserSessionHelper.instance().validateToken(url, token),
-            descriptor -> AviatorAdminConfigHelper.instance().validateConfig(descriptor));
+            // Preserve diagnostic status mapping instead of ordinary fail-fast messages.
+            (url, token) -> AviatorUserSessionHelper.instance().validateToken(url, token, AviatorRequestPolicy.WAIT_FOR_READY),
+            descriptor -> AviatorAdminConfigHelper.instance().validateConfig(descriptor, AviatorRequestPolicy.WAIT_FOR_READY));
     }
 
     public DiagnoseRunResult diagnose(AviatorConnectionDiagnoseSource source, int timeoutSeconds) {

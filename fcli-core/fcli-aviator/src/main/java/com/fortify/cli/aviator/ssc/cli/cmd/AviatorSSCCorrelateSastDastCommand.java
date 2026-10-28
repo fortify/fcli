@@ -37,6 +37,7 @@ import com.fortify.cli.aviator.dast.DastIssue;
 import com.fortify.cli.aviator.fpr.Vulnerability;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClient;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClientHelper;
+import com.fortify.cli.aviator.grpc.AviatorRequestPolicy;
 import com.fortify.cli.aviator.grpc.CorrelationResult;
 import com.fortify.cli.aviator.grpc.CorrelationStreamConfig;
 import com.fortify.cli.aviator.grpc.CorrelationStreamProcessor;
@@ -280,7 +281,7 @@ public class AviatorSSCCorrelateSastDastCommand extends AbstractSSCJsonNodeOutpu
                 av.getApplicationName(), av.getVersionName(), sastResult.buildId);
 
             CorrelationResult result;
-            try (var grpcClient = AviatorGrpcClientHelper.createClient(sessionDescriptor.getAviatorUrl(), logger, 30)) {
+            try (var grpcClient = AviatorGrpcClientHelper.createClient(sessionDescriptor.getAviatorUrl(), logger, 30, AviatorRequestPolicy.WAIT_FOR_READY)) {
                 result = performCorrelation(grpcClient, config, bucketData, sastResult.scanGuid, alreadyTriedKeys);
             }
 

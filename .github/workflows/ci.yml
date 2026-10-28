@@ -197,6 +197,14 @@ jobs:
           java-version: ${{ env.graal_java_version }}
           native-image-musl: true
           github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Remove distrusted certificates from native-image trust store
+        shell: bash
+        run: |
+          "$JAVA_HOME/bin/java" \
+            fcli-core/fcli-common-core/src/main/java/com/fortify/cli/common/http/ssl/trust/CertificateDistrustPolicy.java \
+            fcli-core/fcli-common-core/src/main/resources/com/fortify/cli/common/http/ssl/trust/distrusted-keys.txt \
+            "$JAVA_HOME/lib/security/cacerts"
       
       - uses: fortify/shared-github/actions/3rdparty/actions/download-artifact/v8@5ad1afec0f56a21b03f0887eea35505cb6a66554
         with:
@@ -246,6 +254,14 @@ jobs:
           java-version: ${{ env.graal_java_version }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Remove distrusted certificates from native-image trust store
+        shell: bash
+        run: |
+          "$JAVA_HOME/bin/java" \
+            fcli-core/fcli-common-core/src/main/java/com/fortify/cli/common/http/ssl/trust/CertificateDistrustPolicy.java \
+            fcli-core/fcli-common-core/src/main/resources/com/fortify/cli/common/http/ssl/trust/distrusted-keys.txt \
+            "$JAVA_HOME/lib/security/cacerts"
+
       - uses: fortify/shared-github/actions/3rdparty/actions/download-artifact/v8@5ad1afec0f56a21b03f0887eea35505cb6a66554
         with:
           path: ./artifacts
@@ -280,11 +296,22 @@ jobs:
     needs: build
     runs-on: windows-2022
     steps:
+      - name: Check-out source code
+        uses: fortify/shared-github/actions/3rdparty/actions/checkout/v6@5ad1afec0f56a21b03f0887eea35505cb6a66554
+
       - uses: fortify/shared-github/actions/3rdparty/graalvm/setup-graalvm/v1@5ad1afec0f56a21b03f0887eea35505cb6a66554
         with:
           distribution: ${{ env.graal_distribution }}
           java-version: ${{ env.graal_java_version }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Remove distrusted certificates from native-image trust store
+        shell: bash
+        run: |
+          "$JAVA_HOME/bin/java" \
+            fcli-core/fcli-common-core/src/main/java/com/fortify/cli/common/http/ssl/trust/CertificateDistrustPolicy.java \
+            fcli-core/fcli-common-core/src/main/resources/com/fortify/cli/common/http/ssl/trust/distrusted-keys.txt \
+            "$JAVA_HOME/lib/security/cacerts"
 
       - uses: fortify/shared-github/actions/3rdparty/actions/download-artifact/v8@5ad1afec0f56a21b03f0887eea35505cb6a66554
         with:

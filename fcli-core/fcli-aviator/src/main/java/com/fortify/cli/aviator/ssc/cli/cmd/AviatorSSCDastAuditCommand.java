@@ -34,6 +34,7 @@ import com.fortify.cli.aviator.config.AviatorLoggerImpl;
 import com.fortify.cli.aviator.config.IAviatorLogger;
 import com.fortify.cli.aviator.config.TagMappingConfig;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClientHelper;
+import com.fortify.cli.aviator.grpc.AviatorRequestPolicy;
 import com.fortify.cli.aviator.grpc.DastAuditStreamConfig;
 import com.fortify.cli.aviator.grpc.DastAuditStreamProcessor;
 import com.fortify.cli.aviator.ssc.helper.AviatorSSCAttributeHelper;
@@ -135,7 +136,7 @@ public class AviatorSSCDastAuditCommand extends AbstractSSCJsonNodeOutputCommand
             .sscApplicationName(appVersion.getApplicationName())
             .sscApplicationVersion(appVersion.getVersionName())
             .build();
-        try (var grpcClient = AviatorGrpcClientHelper.createClient(session.getAviatorUrl(), logger, 30);
+        try (var grpcClient = AviatorGrpcClientHelper.createClient(session.getAviatorUrl(), logger, 30, AviatorRequestPolicy.WAIT_FOR_READY);
              var streamProcessor = new DastAuditStreamProcessor(
                  logger, grpcClient.getDastAuditAsyncStub(), grpcClient.getPingScheduler(),
                  grpcClient.getPingIntervalSeconds());

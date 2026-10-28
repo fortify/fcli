@@ -36,8 +36,7 @@ import com.fortify.cli.aviator.util.StringUtil;
  * Utility class for enriching stack traces with source code files.
  * Extracts unique files from stack traces and loads their content from the FPR extraction directory.
  *
- * This class provides the same logic as FVDLProcessor.processStackTraceElements() but as a
- * reusable, injectable component that can be used in different contexts (e.g., just-in-time
+ * This is a reusable, injectable component that can be used in different contexts (e.g., just-in-time
  * enrichment before sending to LLM).
  */
 public class SourceCodeEnricher {
@@ -93,7 +92,6 @@ public class SourceCodeEnricher {
 
     /**
      * Processes all stack traces to extract and load unique source files.
-     * Replicates FVDLProcessor.processStackTraceElements() logic.
      */
     private void processStackTraces(List<List<StackTraceElement>> stackTraces, Map<String, File> uniqueFiles,
                                     Map<String, SourceFileFailure> failuresByFilename) {
@@ -114,7 +112,6 @@ public class SourceCodeEnricher {
 
     /**
      * Processes a single stack trace element to extract and load its source file.
-     * Replicates FVDLProcessor.processFileForElement() logic.
      *
      * @param element     The stack trace element to process
      * @param uniqueFiles Map to store loaded files (deduplicated by filename)

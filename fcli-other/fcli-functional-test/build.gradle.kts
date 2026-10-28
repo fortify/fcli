@@ -23,7 +23,7 @@ testing {
                 implementation("org.apache.groovy:groovy")
                 implementation(platform("org.spockframework:spock-bom:2.3-groovy-4.0"))
                 implementation("org.spockframework:spock-core")
-                implementation("org.junit.platform:junit-platform-launcher:1.10.2")
+                implementation("org.junit.platform:junit-platform-launcher:6.1.3")
                 implementation("com.fasterxml.jackson.core:jackson-databind")
                 implementation("io.modelcontextprotocol.sdk:mcp-core") {
                     exclude(group = "org.slf4j", module = "slf4j-api")

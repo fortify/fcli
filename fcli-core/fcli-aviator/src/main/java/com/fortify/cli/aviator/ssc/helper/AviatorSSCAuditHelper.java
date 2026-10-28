@@ -33,6 +33,7 @@ import com.fortify.cli.aviator.audit.model.FPRAuditResult;
 import com.fortify.cli.aviator.config.AviatorLoggerImpl;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClient;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClientHelper;
+import com.fortify.cli.aviator.grpc.AviatorRequestPolicy;
 import com.fortify.cli.aviator.util.Constants;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonHelper;
@@ -717,7 +718,7 @@ public final class AviatorSSCAuditHelper {
     public static long getAvailableQuota(String aviatorUrl, String aviatorToken, String appName,
                                           AviatorLoggerImpl logger) {
         try (AviatorGrpcClient client = AviatorGrpcClientHelper.createClient(aviatorUrl, logger,
-                Constants.DEFAULT_PING_INTERVAL_SECONDS)) {
+                Constants.DEFAULT_PING_INTERVAL_SECONDS, AviatorRequestPolicy.WAIT_FOR_READY)) {
             Application app = client.getApplicationByToken(aviatorToken, appName);
             long quota = app.getQuota();
             logger.progress("Status: Available Aviator quota for app '%s': %s", appName,
@@ -745,7 +746,7 @@ public final class AviatorSSCAuditHelper {
     public static long getDefaultQuota(String aviatorUrl, String aviatorToken,
                                         AviatorLoggerImpl logger) {
         try (AviatorGrpcClient client = AviatorGrpcClientHelper.createClient(aviatorUrl, logger,
-                Constants.DEFAULT_PING_INTERVAL_SECONDS)) {
+                Constants.DEFAULT_PING_INTERVAL_SECONDS, AviatorRequestPolicy.WAIT_FOR_READY)) {
             long quota = client.getDefaultQuota(aviatorToken);
             logger.progress("Status: Default Aviator quota for new applications: %s",
                     quota < 0 ? "unlimited" : String.valueOf(quota));
