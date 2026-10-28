@@ -78,6 +78,8 @@ public class AviatorSSCCorrelateSastDastCommand extends AbstractSSCJsonNodeOutpu
     @Option(names = {"--app"}) private String appName;
 
     private static final Logger LOG = LoggerFactory.getLogger(AviatorSSCCorrelateSastDastCommand.class);
+    // Same overall limit as SAST/DAST audit; requests are now windowed so large runs take longer.
+    private static final long CORRELATION_TIMEOUT_MINUTES = 500;
     private String actionResult = "CORRELATED";
     private String actionMessage;
 
@@ -335,12 +337,12 @@ public class AviatorSSCCorrelateSastDastCommand extends AbstractSSCJsonNodeOutpu
         private CorrelationResult performCorrelation(AviatorGrpcClient grpcClient, CorrelationStreamConfig config,
                 List<CorrelationStreamProcessor.CorrelationBucketData> bucketData, String scanGuid,
                 Set<String> alreadyTriedKeys) {
-            try {
-                var processor = new CorrelationStreamProcessor(
+            try (var processor = new CorrelationStreamProcessor(
                     grpcClient, logger, grpcClient.getCorrelationAsyncStub(),
                     grpcClient.getPingScheduler(), grpcClient.getPingIntervalSeconds(),
-                    grpcClient.getDefaultTimeoutSeconds());
-                long timeoutSeconds = Math.max(grpcClient.getDefaultTimeoutSeconds(), 300);
+                    grpcClient.getDefaultTimeoutSeconds())) {
+                long timeoutSeconds = Math.max(grpcClient.getDefaultTimeoutSeconds(),
+                    TimeUnit.MINUTES.toSeconds(CORRELATION_TIMEOUT_MINUTES));
                 return processor.processCorrelation(config, bucketData, scanGuid, alreadyTriedKeys)
                     .get(timeoutSeconds, TimeUnit.SECONDS);
             } catch (TimeoutException e) {
