@@ -17,7 +17,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20261028.131047-dev_v3.x" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20261028.133822-dev_v3.x" %}
 
 
 <div id="header">
@@ -49,7 +49,9 @@ fcli_version:
 <div class="sect1">
 <h2 id="_description"><a class="anchor" href="#_description"></a>Description</h2>
 <div class="sectionbody">
-
+<div class="paragraph">
+<p>Certificate-verified fcli connections always apply a built-in CA-key distrust policy, including CVE-2026-91403 and CVE-2026-114820. This policy applies to default, custom, OS and trusted-URL stores in both JAR and native distributions. Adding certificates cannot override distrust. Replace affected server chains rather than disabling verification. External tools launched by fcli use their own trust configuration.</p>
+</div>
 </div>
 </div>
 <div class="sect1">
@@ -107,7 +109,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2026-10-28 13:14:18 UTC
+Last updated 2026-10-28 13:41:55 UTC
 </div>
 </div>
 </body>

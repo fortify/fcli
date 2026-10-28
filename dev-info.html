@@ -1,6 +1,6 @@
 ---
 title: 'Fortify CLI (fcli) Developer Information'
-fcli_version: 0.20261028.131047-dev_v3.x
+fcli_version: 0.20261028.133822-dev_v3.x
 ---
 
 <!DOCTYPE html>
@@ -17,18 +17,19 @@ fcli_version: 0.20261028.131047-dev_v3.x
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20261028.131047-dev_v3.x" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20261028.133822-dev_v3.x" %}
 
 
 <div id="header">
 <h1>Fortify CLI (fcli) Developer Information</h1>
 <div class="details">
-<span id="revnumber">version 0.20261028.131047-dev_v3.x</span>
+<span id="revnumber">version 0.20261028.133822-dev_v3.x</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
 <ul class="sectlevel1">
 <li><a href="#_branches">Branches</a></li>
+<li><a href="#_certificate_distrust_policy">Certificate Distrust Policy</a></li>
 <li><a href="#_conventional_commits_versioning">Conventional Commits &amp; Versioning</a>
 <ul class="sectlevel2">
 <li><a href="#_relv3_x_devv3_x_branches"><code>rel/v3.x</code> &amp; <code>dev/v3.x</code> branches</a></li>
@@ -109,6 +110,29 @@ fcli_version: 0.20261028.131047-dev_v3.x
 </div>
 <div class="paragraph">
 <p>Apart from the branches listed above, there&#8217;s also a <code>gh-pages</code> branch that is used to publish documentation to <a href="https://fortify.github.io/fcli" class="bare">https://fortify.github.io/fcli</a>. Most of the files in this branch are either static or automatically generated during fcli builds, so other than changing documentation structure or performing cleanup (like removing documentation for outdated fcli versions), in general this branch shouldn&#8217;t be touched.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_certificate_distrust_policy"><a class="anchor" href="#_certificate_distrust_policy"></a>Certificate Distrust Policy</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Certificate-verified connections using fcli&#8217;s trust manager apply a mandatory, offline CA-key distrust policy in both JAR and native distributions. The policy covers CVE-2026-91403 and CVE-2026-114820 and cannot be overridden by configuring a custom trust store, OS trust or trusted URLs. External tools have their own TLS configuration, and disabling certificate verification bypasses this protection.</p>
+</div>
+<div class="paragraph">
+<p>The policy is maintained in <code>fcli-core/fcli-common-core/src/main/resources/com/fortify/cli/common/http/ssl/trust/distrusted-keys.txt</code>. Each non-comment line contains <code>algorithm|base64 DER SubjectPublicKeyInfo|CA subject DN|reason/advisory</code>. Entries identify public keys, not aliases or certificate fingerprints, so cross-signed and reissued certificates using the same key are covered. Verify new keys against authoritative sources and update the independently recorded fingerprint assertions in <code>CertificateDistrustPolicyTest</code>.</p>
+</div>
+<div class="paragraph">
+<p>The trust manager removes prohibited trust anchors from every trust source, applies a veto before trying delegates, and adds a PKIX path checker for intermediates discovered during path building. Directly trusted certificates signed by a listed issuer are also excluded when the issuer name and signature match. Each original trust manager is retained and paired with an additional policy-constrained PKIX validator using its filtered trusted certificates. Both must accept through the same trust source, preserving the original manager&#8217;s restrictions and socket/engine context. The additional validator cannot override an original rejection, but may reject unusual provider-specific chains that standard PKIX cannot validate. Java&#8217;s generic trust-manager API does not expose the original accepted path; the checks establish original acceptance plus the existence of a policy-compliant path, not inspection of that internal path. Original revocation behavior is retained; the additional validator follows <code>com.sun.net.ssl.checkRevocation</code>.</p>
+</div>
+<div class="paragraph">
+<p>Full certificate-verified TLS handshakes perform original validation followed by additional PKIX validation; existing connections have no per-request policy overhead. Additional path-building or revocation activity can occur depending on Java configuration. No policy-specific online revocation service is introduced.</p>
+</div>
+<div class="paragraph">
+<p>CI runs the same policy implementation as a Java source-file program to remove prohibited certificates from each native-image builder&#8217;s <code>cacerts</code> before compilation. This additionally cleans the embedded default trust store. The build verifies the saved store and fails rather than publishing an empty store or ignoring an invalid policy. Updating the policy requires rebuilding and redistributing fcli, and long-running processes should be restarted to close existing connections and TLS sessions.</p>
+</div>
+<div class="paragraph">
+<p>Run the common-core unit/TLS tests and <code>ConfigCertificateDistrustSpec</code> when changing the policy or enforcement. The functional spec uses a local HTTPS server, unrelated generated test keys, and an intentionally invalid extra certificate carrying a public distrusted key; it never uses compromised private keys or external revocation services. It verifies successful trusted connections, explicit rejection before any HTTP request, and rejection of trusted-URL imports. The normal release verification matrix runs this spec for JAR/native distributions on Linux, Windows and macOS. Existing FoD/SSC tests provide additional positive regression coverage.</p>
 </div>
 </div>
 </div>
@@ -1337,8 +1361,8 @@ public class &lt;Module&gt;&lt;Entity&gt;&lt;Action&gt;Command extends &lt;Super
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20261028.131047-dev_v3.x<br>
-Last updated 2026-10-28 13:10:46 UTC
+Version 0.20261028.133822-dev_v3.x<br>
+Last updated 2026-10-28 13:38:22 UTC
 </div>
 </div>
 </body>
