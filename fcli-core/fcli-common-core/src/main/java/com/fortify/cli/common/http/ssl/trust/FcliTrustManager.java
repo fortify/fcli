@@ -91,7 +91,6 @@ public final class FcliTrustManager extends X509ExtendedTrustManager {
     private final AtomicReference<TrustSnapshot> snapshotRef = new AtomicReference<>(TrustSnapshot.empty());
     private final AtomicLong refreshCounter = new AtomicLong(0);
     private final AtomicLong skippedRefreshCounter = new AtomicLong(0);
-    private final AtomicLong failedRefreshCounter = new AtomicLong(0);
     private volatile String trustStateFingerprint = "";
 
     private FcliTrustManager() {
@@ -219,7 +218,7 @@ public final class FcliTrustManager extends X509ExtendedTrustManager {
         int previousCerts = previousSnapshot.acceptedIssuers().length;
         int newDelegates = newSnapshot.delegates().size();
         int newCerts = newSnapshot.acceptedIssuers().length;
-        LOG.debug("Trust refresh#{} reason={} took {}ms delegates {}->{} certs {}->{} skipped={} failed={} path={} useOs={} disableOs={}",
+        LOG.debug("Trust refresh#{} reason={} took {}ms delegates {}->{} certs {}->{} skipped={} path={} useOs={} disableOs={}",
                 refreshId,
                 reason,
                 elapsedMs,
@@ -228,7 +227,6 @@ public final class FcliTrustManager extends X509ExtendedTrustManager {
                 previousCerts,
                 newCerts,
                 skippedRefreshCounter.get(),
-                failedRefreshCounter.get(),
                 descriptor == null ? "" : Objects.toString(descriptor.getPath(), ""),
                 descriptor != null && !Boolean.FALSE.equals(descriptor.getUseOsTrustStore()),
                 EnvHelper.asBoolean(EnvHelper.env("FCLI_DISABLE_OS_TRUSTSTORE")));
