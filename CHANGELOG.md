@@ -1,5 +1,22 @@
 # Changelog
 
+## [3.29.0](https://github.com/fortify/fcli/compare/v3.28.3...v3.29.0) (2026-10-28)
+
+
+### Features
+
+* `fcli sc-sast scan prioritize`: New command to prioritize SC-SAST scan ([#1140](https://github.com/fortify/fcli/issues/1140)) ([d8c2cfd](https://github.com/fortify/fcli/commit/d8c2cfd07e9406a9d1a0467114ebce050c4c4466))
+
+
+### Bug Fixes
+
+* `fcli aviator`: Do not show credentials from the Aviator URL in messages and logs ([bb10f54](https://github.com/fortify/fcli/commit/bb10f54717aa785f39baf99bbc9cb0aba2860a12))
+* `fcli aviator`: Fail fast with clear messages when ordinary commands cannot connect ([bb10f54](https://github.com/fortify/fcli/commit/bb10f54717aa785f39baf99bbc9cb0aba2860a12))
+* `fcli aviator`: Keep the existing user session and admin config when validation fails ([bb10f54](https://github.com/fortify/fcli/commit/bb10f54717aa785f39baf99bbc9cb0aba2860a12))
+* Enforce built-in CA-key distrust for certificate-verified fcli connections in JAR and native distributions, including default, custom, OS and trusted-URL stores, while preserving original trust-manager validation (CVE-2026-91403 and CVE-2026-114820) ([25a3752](https://github.com/fortify/fcli/commit/25a37525adb4256dcbd876f7d89616a8c8f264de))
+* Remove distrusted CA certificates from the embedded default trust store in native binaries (CVE-2026-91403 and CVE-2026-114820) ([25a3752](https://github.com/fortify/fcli/commit/25a37525adb4256dcbd876f7d89616a8c8f264de))
+* Upgrade dependencies ([e4a2aa2](https://github.com/fortify/fcli/commit/e4a2aa21e171bb25ea428bc6a885927537db11a4))
+
 ## [3.28.3](https://github.com/fortify/fcli/compare/v3.28.2...v3.28.3) (2026-10-21)
 
 
