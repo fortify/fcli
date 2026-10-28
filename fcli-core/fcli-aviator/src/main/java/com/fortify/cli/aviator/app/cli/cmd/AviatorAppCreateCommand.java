@@ -23,7 +23,6 @@ import com.fortify.cli.aviator._common.output.cli.cmd.AbstractAviatorAdminSessio
 import com.fortify.cli.aviator._common.util.AviatorGrpcUtils;
 import com.fortify.cli.aviator._common.util.AviatorSignatureUtils;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClient;
-import com.fortify.cli.aviator.grpc.AviatorGrpcClientHelper;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.progress.cli.mixin.ProgressWriterFactoryMixin;
@@ -42,7 +41,7 @@ public class AviatorAppCreateCommand extends AbstractAviatorAdminSessionOutputCo
 
     @Override
     protected JsonNode getJsonNode(AviatorAdminConfigDescriptor configDescriptor) {
-        try (AviatorGrpcClient client = AviatorGrpcClientHelper.createClient(configDescriptor.getAviatorUrl())) {
+        try (AviatorGrpcClient client = createGrpcClient(configDescriptor)) {
             String[] messageAndSignature = createMessageAndSignature(configDescriptor);
             Application createdApplication = createApplication(client, configDescriptor, messageAndSignature);
             LOG.info("Application '{}' created successfully for tenant: {}", applicationName, configDescriptor.getTenant());

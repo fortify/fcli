@@ -98,6 +98,7 @@ public class CorrelationStreamProcessor implements AutoCloseable {
     private final Set<String> pendingCorrelationRequestIds = ConcurrentHashMap.newKeySet();
     private final ConcurrentHashMap<String, String> validationRequestToDastId = new ConcurrentHashMap<>();
     private volatile CompletableFuture<CorrelationResult> resultFuture;
+    private volatile StreamInitializationTimeout initializationTimeout;
 
     /**
      * Keys of SAST–DAST pairs that were confirmed or rejected in a previous run.
@@ -164,6 +165,9 @@ public class CorrelationStreamProcessor implements AutoCloseable {
         this.resultFuture = resultFuture;
         this.streamLatch = new CountDownLatch(1);
 
+        initializationTimeout = new StreamInitializationTimeout(pingScheduler,
+            () -> requestHandler.sendError(StreamInitializationTimeout.expiredError("Correlation")));
+        resultFuture.whenComplete((result, error) -> initializationTimeout.close());
         startStream(resultFuture, scanGuid);
 
         return resultFuture;
@@ -223,6 +227,7 @@ public class CorrelationStreamProcessor implements AutoCloseable {
         requestHandler.sendRequest(
             CorrelationClientMessage.newBuilder().setInit(initReq.build()).build()
         );
+        initializationTimeout.arm();
     }
 
     // ─── Phase 1: Send correlation requests ────────────────────────────
@@ -308,6 +313,11 @@ public class CorrelationStreamProcessor implements AutoCloseable {
         @Override
         public void onError(Throwable t) {
             stopPingPong();
+            if (initializationTimeout.isExpired()) {
+                resultFuture.completeExceptionally(StreamInitializationTimeout.expiredError("Correlation"));
+                streamLatch.countDown();
+                return;
+            }
             Status status = Status.fromThrowable(t);
             LOG.error("Correlation stream error: {} - {}", status.getCode(), status.getDescription(), t);
             resultFuture.completeExceptionally(
@@ -331,6 +341,7 @@ public class CorrelationStreamProcessor implements AutoCloseable {
     // ─── Response handlers ─────────────────────────────────────────────
 
     private void handleInitResponse(CorrelationInitResponse resp) {
+        if (!initializationTimeout.initialized()) return;
         LOG.info("Correlation stream initialized. Server stream ID: {}, Reserved quota: {}, Status: {}",
             resp.getServerStreamId(), resp.getReservedQuota(), resp.getStatus());
 
@@ -717,6 +728,7 @@ public class CorrelationStreamProcessor implements AutoCloseable {
 
     @Override
     public void close() {
+        if (initializationTimeout != null) initializationTimeout.close();
         stopPingPong();
         if (requestHandler != null && !requestHandler.isCompleted()) {
             requestHandler.complete();
