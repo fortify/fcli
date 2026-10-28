@@ -16,6 +16,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Parameter;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -83,7 +84,8 @@ public final class SpelFunctionDescriptorsFactory {
         return spelFunctionClazzes.stream()
             .flatMap(c->createFunctionDescriptorsStream(c))
             .flatMap(d->createNestedFunctionDescriptorsStream(d))
-            .sorted((a, b) -> a.getCategoryAndName().compareTo(b.getCategoryAndName()))
+            .sorted(Comparator.comparing(SpelFunctionDescriptor::getCategoryAndName)
+                .thenComparing(SpelFunctionDescriptor::getSignature))
             .collect(Collectors.toCollection(ArrayListWithAsJsonMethod::new));
     }
     
