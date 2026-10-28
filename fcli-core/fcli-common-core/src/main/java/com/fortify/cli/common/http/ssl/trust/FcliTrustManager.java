@@ -12,6 +12,7 @@
  */
 package com.fortify.cli.common.http.ssl.trust;
 
+import java.io.IOException;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -21,6 +22,8 @@ import java.security.GeneralSecurityException;
 import java.security.KeyStore;
 import java.security.MessageDigest;
 import java.security.cert.CertificateException;
+import java.security.cert.PKIXBuilderParameters;
+import java.security.cert.X509CertSelector;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -35,6 +38,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
+import javax.net.ssl.CertPathTrustManagerParameters;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.TrustManager;
@@ -46,11 +50,13 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fortify.cli.common.exception.FcliTechnicalException;
 import com.fortify.cli.common.http.ssl.truststore.helper.TrustStoreConfigDescriptor;
 import com.fortify.cli.common.http.ssl.truststore.helper.TrustStoreConfigHelper;
 import com.fortify.cli.common.http.ssl.truststore.helper.TrustedUrlCertificateDescriptor;
 import com.fortify.cli.common.http.ssl.truststore.helper.TrustedUrlTrustStoreHelper;
 import com.fortify.cli.common.util.EnvHelper;
+import com.fortify.cli.common.util.FileUtils;
 import com.fortify.cli.common.util.PlatformHelper;
 
 /**
@@ -65,6 +71,10 @@ import com.fortify.cli.common.util.PlatformHelper;
  * <p>Trust checks always run against an immutable snapshot referenced through an
  * {@link AtomicReference}, allowing refresh operations to atomically swap in a
  * newly loaded trust configuration without blocking in-flight TLS handshakes.</p>
+ *
+ * <p>The supplied certificate chain is first checked for mandatory distrust.
+ * Acceptance then requires both original and policy-constrained validation
+ * through the same trust source; see {@link PolicyConstrainedTrustManager}.</p>
  */
 public final class FcliTrustManager extends X509ExtendedTrustManager {
     private static final Logger LOG = LoggerFactory.getLogger(FcliTrustManager.class);
@@ -76,6 +86,7 @@ public final class FcliTrustManager extends X509ExtendedTrustManager {
     private static final AtomicBoolean INSTALLED = new AtomicBoolean(false);
     private static final int MAX_CERT_CHANGE_LOG_ENTRIES = 20;
 
+    private final CertificateDistrustPolicy distrustPolicy;
     private final Object refreshLock = new Object();
     private final AtomicReference<TrustSnapshot> snapshotRef = new AtomicReference<>(TrustSnapshot.empty());
     private final AtomicLong refreshCounter = new AtomicLong(0);
@@ -83,10 +94,34 @@ public final class FcliTrustManager extends X509ExtendedTrustManager {
     private final AtomicLong failedRefreshCounter = new AtomicLong(0);
     private volatile String trustStateFingerprint = "";
 
-    private FcliTrustManager() {}
+    private FcliTrustManager() {
+        this(loadDistrustPolicy(), List.of());
+    }
+
+    FcliTrustManager(CertificateDistrustPolicy distrustPolicy, List<X509TrustManager> delegates) {
+        this.distrustPolicy = Objects.requireNonNull(distrustPolicy);
+        this.snapshotRef.set(TrustSnapshot.of(delegates));
+    }
+
+    private static CertificateDistrustPolicy loadDistrustPolicy() {
+        try {
+            return CertificateDistrustPolicy.load(FileUtils.openResourceInputStream(CertificateDistrustPolicy.RESOURCE));
+        } catch (IOException | GeneralSecurityException e) {
+            throw new FcliTechnicalException("Unable to load mandatory fcli certificate distrust policy", e);
+        }
+    }
 
     public static FcliTrustManager getInstance() {
         return INSTANCE;
+    }
+
+    public void checkDistrust(X509Certificate[] chain) throws CertificateException {
+        if (chain == null || chain.length == 0) {
+            throw new CertificateException("Missing peer certificate chain");
+        }
+        for (var certificate : chain) {
+            distrustPolicy.check(certificate);
+        }
     }
 
     /**
@@ -101,8 +136,7 @@ public final class FcliTrustManager extends X509ExtendedTrustManager {
                 LOG.debug("Installed refreshable fcli SSL trust manager");
             } catch (GeneralSecurityException e) {
                 INSTALLED.set(false);
-                LOG.warn("Could not install refreshable fcli SSL trust manager: {}", e.getMessage());
-                return;
+                throw new FcliTechnicalException("Unable to install mandatory fcli SSL trust manager", e);
             }
         }
         refresh();
@@ -165,9 +199,7 @@ public final class FcliTrustManager extends X509ExtendedTrustManager {
         }
 
         if (managers.isEmpty()) {
-            failedRefreshCounter.incrementAndGet();
-            LOG.warn("No trust managers available after refresh; keeping previous trust snapshot");
-            return false;
+            LOG.debug("No trusted certificates configured after applying the fcli distrust policy; all TLS peers will be rejected");
         }
 
         var newSnapshot = TrustSnapshot.of(managers);
@@ -311,16 +343,36 @@ public final class FcliTrustManager extends X509ExtendedTrustManager {
 
     private void addTrustManagerFromKeyStore(List<X509TrustManager> managers, KeyStore keyStore) {
         try {
-            TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
-            tmf.init(keyStore);
-            for (TrustManager tm : tmf.getTrustManagers()) {
-                if (tm instanceof X509TrustManager x509tm) {
-                    managers.add(x509tm);
+            managers.addAll(createTrustManagers(keyStore));
+        } catch (GeneralSecurityException | IOException e) {
+            throw new FcliTechnicalException("Unable to apply mandatory fcli distrust policy to trust store", e);
+        }
+    }
+
+    List<X509TrustManager> createTrustManagers(KeyStore keyStore) throws GeneralSecurityException, IOException {
+        var source = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+        source.init(keyStore);
+        var managers = new ArrayList<X509TrustManager>();
+        for (var manager : source.getTrustManagers()) {
+            if (manager instanceof X509TrustManager x509) {
+                var filtered = distrustPolicy.filterTrustAnchors(x509.getAcceptedIssuers());
+                if (filtered.size() == 0) {
+                    continue;
+                }
+                var parameters = new PKIXBuilderParameters(filtered, new X509CertSelector());
+                parameters.setRevocationEnabled(Boolean.getBoolean("com.sun.net.ssl.checkRevocation"));
+                // Check the built path as well, including intermediates fetched through AIA.
+                parameters.addCertPathChecker(distrustPolicy.newPathChecker());
+                var factory = TrustManagerFactory.getInstance("PKIX");
+                factory.init(new CertPathTrustManagerParameters(parameters));
+                for (var filteredManager : factory.getTrustManagers()) {
+                    if (filteredManager instanceof X509TrustManager trustManager) {
+                        managers.add(new PolicyConstrainedTrustManager(x509, trustManager));
+                    }
                 }
             }
-        } catch (GeneralSecurityException e) {
-            LOG.debug("Could not load trust manager from key store: {}", e.getMessage());
         }
+        return managers;
     }
 
     private void logAcceptedIssuers(long refreshId, List<X509TrustManager> trustManagers) {
@@ -486,6 +538,8 @@ public final class FcliTrustManager extends X509ExtendedTrustManager {
     }
 
     private void tryEach(String method, X509Certificate[] chain, TrustCheckFactory check) throws CertificateException {
+        // Keep explicit distrust outside fallback: another trust source must not override this veto.
+        checkDistrust(chain);
         var snapshot = snapshotRef.get();
         CertificateException last = null;
         var delegates = snapshot.delegates();
@@ -504,7 +558,94 @@ public final class FcliTrustManager extends X509ExtendedTrustManager {
         if (last != null) {
             throw last;
         }
-        throw new CertificateException("No trust manager accepted the certificate chain");
+        throw new CertificateException("No trust manager accepted the certificate chain after applying the fcli distrust policy");
+    }
+
+    /**
+     * Requires original validation followed by policy-constrained PKIX validation
+     * for a single trust source. Retaining the original manager preserves its
+     * provider-specific restrictions; the additional validator uses filtered
+     * trust anchors and checks intermediates discovered during path building.
+     * Socket/engine context is forwarded to each manager when supported.
+     *
+     * <p>Both checks must succeed within this pair, never across different trust
+     * sources. Java's generic trust-manager API does not expose the original
+     * accepted path, so the validators may build different paths: acceptance
+     * establishes original trust plus a policy-compliant path, not inspection
+     * of the original manager's internal path.</p>
+     */
+    static final class PolicyConstrainedTrustManager extends X509ExtendedTrustManager {
+        private final X509TrustManager original;
+        private final X509TrustManager constrained;
+
+        PolicyConstrainedTrustManager(X509TrustManager original, X509TrustManager constrained) {
+            this.original = Objects.requireNonNull(original);
+            this.constrained = Objects.requireNonNull(constrained);
+        }
+
+        private void checkBoth(TrustCheckFactory check) throws CertificateException {
+            check.check(original);
+            check.check(constrained);
+        }
+
+        @Override
+        public void checkClientTrusted(X509Certificate[] chain, String authType) throws CertificateException {
+            checkBoth(tm -> tm.checkClientTrusted(chain, authType));
+        }
+
+        @Override
+        public void checkServerTrusted(X509Certificate[] chain, String authType) throws CertificateException {
+            checkBoth(tm -> tm.checkServerTrusted(chain, authType));
+        }
+
+        @Override
+        public void checkClientTrusted(X509Certificate[] chain, String authType, Socket socket) throws CertificateException {
+            checkBoth(tm -> {
+                if (tm instanceof X509ExtendedTrustManager ext) {
+                    ext.checkClientTrusted(chain, authType, socket);
+                } else {
+                    tm.checkClientTrusted(chain, authType);
+                }
+            });
+        }
+
+        @Override
+        public void checkServerTrusted(X509Certificate[] chain, String authType, Socket socket) throws CertificateException {
+            checkBoth(tm -> {
+                if (tm instanceof X509ExtendedTrustManager ext) {
+                    ext.checkServerTrusted(chain, authType, socket);
+                } else {
+                    tm.checkServerTrusted(chain, authType);
+                }
+            });
+        }
+
+        @Override
+        public void checkClientTrusted(X509Certificate[] chain, String authType, SSLEngine engine) throws CertificateException {
+            checkBoth(tm -> {
+                if (tm instanceof X509ExtendedTrustManager ext) {
+                    ext.checkClientTrusted(chain, authType, engine);
+                } else {
+                    tm.checkClientTrusted(chain, authType);
+                }
+            });
+        }
+
+        @Override
+        public void checkServerTrusted(X509Certificate[] chain, String authType, SSLEngine engine) throws CertificateException {
+            checkBoth(tm -> {
+                if (tm instanceof X509ExtendedTrustManager ext) {
+                    ext.checkServerTrusted(chain, authType, engine);
+                } else {
+                    tm.checkServerTrusted(chain, authType);
+                }
+            });
+        }
+
+        @Override
+        public X509Certificate[] getAcceptedIssuers() {
+            return constrained.getAcceptedIssuers();
+        }
     }
 
     private record TrustSnapshot(List<X509TrustManager> delegates, X509Certificate[] acceptedIssuers) {
