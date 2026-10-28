@@ -27,6 +27,7 @@ import org.slf4j.LoggerFactory;
 
 import com.fortify.aviator.application.Application;
 import com.fortify.aviator.application.ApplicationById;
+import com.fortify.aviator.application.ApplicationByName;
 import com.fortify.aviator.application.ApplicationByTenantName;
 import com.fortify.aviator.application.ApplicationList;
 import com.fortify.aviator.application.ApplicationResponseMessage;
@@ -218,6 +219,11 @@ public class AviatorGrpcClient implements AutoCloseable {
     public Application getApplication(String projectId, String signature, String message, String tenantName) {
         ApplicationById request = ApplicationById.newBuilder().setId(Long.parseLong(projectId)).setSignature(signature).setMessage(message).setTenantName(tenantName).build();
         return GrpcUtil.executeGrpcCall(blockingStub, ApplicationServiceGrpc.ApplicationServiceBlockingStub::getApplication, request, Constants.OP_GET_APP);
+    }
+
+    public Application getApplicationByName(String applicationName, String signature, String message, String tenantName) {
+        ApplicationByName request = ApplicationByName.newBuilder().setName(applicationName).setSignature(signature).setMessage(message).setTenantName(tenantName).build();
+        return GrpcUtil.executeGrpcCall(blockingStub, ApplicationServiceGrpc.ApplicationServiceBlockingStub::getApplicationByName, request, Constants.OP_GET_APP_BY_NAME);
     }
 
     public Application getApplicationByToken(String token, String appName) {

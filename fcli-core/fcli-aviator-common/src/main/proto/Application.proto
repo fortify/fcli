@@ -70,6 +70,13 @@ message ApplicationById {
   string tenantName = 4;
 }
 
+message ApplicationByName {
+  string name = 1;
+  string signature = 2;
+  string message = 3;
+  string tenantName = 4;
+}
+
 message ApplicationByTenantName {
   string name = 1;
   string signature = 2;
@@ -109,6 +116,8 @@ message GetDefaultQuotaResponse {
 service ApplicationService {
   rpc CreateApplication(CreateApplicationRequest) returns (Application) {}
   rpc GetApplication(ApplicationById) returns (Application) {}
+  // Admin lookup by exact, case-sensitive name within the admin's tenant; NOT_FOUND when absent or deleted.
+  rpc GetApplicationByName(ApplicationByName) returns (Application) {}
   rpc UpdateApplication(UpdateApplicationRequest) returns (Application) {}
   rpc AddEntitlement(ApplicationById) returns (Application) {}
   rpc ReduceEntitlement(ApplicationById) returns (ApplicationMultiplierOperationResponse) {}

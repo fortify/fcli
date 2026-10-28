@@ -17,20 +17,11 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.util.List;
-
 import org.junit.jupiter.api.Test;
 
-import com.fortify.aviator.application.Application;
 import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
 
 class AviatorAppHelperTest {
-    private static Application app(long id, String name) {
-        return Application.newBuilder().setId(id).setName(name).build();
-    }
-
-    private final List<Application> apps = List.of(app(1, "first"), app(2, "second"), app(3, "2024"), app(2024, "other"));
-
     @Test
     void isNumericAcceptsOnlyDigits() {
         assertTrue(AviatorAppHelper.isNumeric("123"));
@@ -52,27 +43,5 @@ class AviatorAppHelperTest {
     void failsIfBlank() {
         assertThrows(AviatorSimpleException.class, () -> AviatorAppHelper.resolveApplicationId(null, null, " "));
         assertThrows(AviatorSimpleException.class, () -> AviatorAppHelper.resolveApplicationId(null, null, null));
-    }
-
-    @Test
-    void resolvesNameToId() {
-        assertEquals("2", AviatorAppHelper.resolveApplicationIdByName(apps, "second"));
-    }
-
-    @Test
-    void failsIfNameNotFound() {
-        var e = assertThrows(AviatorSimpleException.class, () -> AviatorAppHelper.resolveApplicationIdByName(apps, "missing"));
-        assertTrue(e.getMessage().contains("missing"));
-    }
-
-    @Test
-    void failsIfNameIsAmbiguous() {
-        var duplicates = List.of(app(1, "dup"), app(2, "dup"));
-        assertThrows(AviatorSimpleException.class, () -> AviatorAppHelper.resolveApplicationIdByName(duplicates, "dup"));
-    }
-
-    @Test
-    void namesAreCaseSensitive() {
-        assertThrows(AviatorSimpleException.class, () -> AviatorAppHelper.resolveApplicationIdByName(apps, "FIRST"));
     }
 }
