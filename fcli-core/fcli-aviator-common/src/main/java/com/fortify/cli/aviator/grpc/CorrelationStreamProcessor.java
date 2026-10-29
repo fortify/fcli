@@ -191,6 +191,7 @@ public class CorrelationStreamProcessor implements AutoCloseable {
             .successfulCorrelationResponses(state.successfulCorrelations.get())
             .skippedCorrelationResponses(state.skippedCorrelations.get())
             .failedCorrelationResponses(state.failedCorrelations.get())
+            .failedValidationResponses(state.failedValidations.get())
             .build();
     }
 

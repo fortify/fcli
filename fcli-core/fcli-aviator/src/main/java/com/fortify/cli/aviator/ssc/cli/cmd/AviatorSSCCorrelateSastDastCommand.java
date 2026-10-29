@@ -299,10 +299,11 @@ public class AviatorSSCCorrelateSastDastCommand extends AbstractSSCJsonNodeOutpu
             int succeeded = result.successfulCorrelationResponses();
             int skipped = result.skippedCorrelationResponses();
             int failed = result.failedCorrelationResponses();
+            int failedValidations = result.failedValidationResponses();
             return submitted == 0 ? "SKIPPED"
                 : failed == submitted ? "FAILED"
                 : succeeded == 0 ? "SKIPPED"
-                : failed > 0 || skipped > 0 ? "PARTIALLY_CORRELATED" : "CORRELATED";
+                : failed > 0 || skipped > 0 || failedValidations > 0 ? "PARTIALLY_CORRELATED" : "CORRELATED";
         }
 
         private String uploadCorrelationResults(Path statePath, CorrelationResult result) {

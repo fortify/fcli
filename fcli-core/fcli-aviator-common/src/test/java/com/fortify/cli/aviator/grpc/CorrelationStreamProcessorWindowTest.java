@@ -115,6 +115,7 @@ class CorrelationStreamProcessorWindowTest {
 
         assertEquals(4, result.successfulCorrelationResponses());
         assertEquals(1, result.failedCorrelationResponses());
+        assertEquals(1, result.failedValidationResponses());
         assertEquals(3, result.confirmedPairs().size());
         assertTrue(result.rejectedPairs().isEmpty(), "failed validation must not be persisted as rejected");
     }
