@@ -223,7 +223,8 @@ public class AviatorGrpcClient implements AutoCloseable {
 
     public Application getApplicationByName(String applicationName, String signature, String message, String tenantName) {
         ApplicationByName request = ApplicationByName.newBuilder().setName(applicationName).setSignature(signature).setMessage(message).setTenantName(tenantName).build();
-        return GrpcUtil.executeGrpcCall(blockingStub, ApplicationServiceGrpc.ApplicationServiceBlockingStub::getApplicationByName, request, Constants.OP_GET_APP_BY_NAME);
+        return GrpcUtil.executeGrpcCall(blockingStub, ApplicationServiceGrpc.ApplicationServiceBlockingStub::getApplicationByName, request, Constants.OP_GET_APP_BY_NAME,
+                "Alternatively, specify the numeric application id instead of the application name.");
     }
 
     public Application getApplicationByToken(String token, String appName) {
