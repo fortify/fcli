@@ -40,7 +40,6 @@ import com.fortify.cli.aviator._common.session.user.helper.AviatorUserSessionDes
 import com.fortify.cli.aviator.audit.model.FPRAuditResult;
 import com.fortify.cli.aviator.config.AviatorLoggerImpl;
 import com.fortify.cli.aviator.ssc.helper.AviatorSSCAuditHelper;
-import com.fortify.cli.aviator.util.FprHandle;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.progress.helper.IProgressWriter;
@@ -275,30 +274,33 @@ class AviatorSSCAuditCommandTest {
 
     @ParameterizedTest
     @CsvSource(value = {
-        "WEBINSPECT; PROCESS_COMPLETE; true",
-        "SCA; PROCESS_COMPLETE; false",
-        "SCA,WEBINSPECT; PROCESS_COMPLETE; false",
-        "WEBINSPECT; ERROR_PROCESSING; false",
-        "SECURITYSCOPE; PROCESS_COMPLETE; false"
+        "WEBINSPECT; true",
+        "SECURITYSCOPE; true",
+        "SOMEPLUGIN; true",
+        "SCA; false",
+        "SCA,WEBINSPECT; false"
     }, delimiter = ';')
-    void failIfDastOnlyRejectsOnlyCompletedDastWithoutSast(String scanTypes, String status, boolean expectedFailure)
-            throws Exception {
-        var artifact = artifact(status, scanTypes.split(","));
-        assertDastOnlyCheck(expectedFailure, artifact);
+    void failIfNoSastResultsRequiresSastScanInArtifacts(String scanTypes, boolean expectedFailure) throws Exception {
+        assertSastResultsCheck(expectedFailure, artifact(scanTypes.split(",")));
     }
 
     @Test
-    void failIfDastOnlyAcceptsVersionWithDastAndSastInSeparateArtifacts() throws Exception {
-        assertDastOnlyCheck(false, artifact("PROCESS_COMPLETE", "WEBINSPECT"), artifact("PROCESS_COMPLETE", "SCA"));
+    void failIfNoSastResultsAcceptsSastInAnyArtifact() throws Exception {
+        assertSastResultsCheck(false, artifact("WEBINSPECT"), artifact("SCA"));
     }
 
     @Test
-    void failIfDastOnlyAcceptsVersionWithoutArtifacts() throws Exception {
-        assertDastOnlyCheck(false);
+    void failIfNoSastResultsRejectsVersionWithoutScanInformation() throws Exception {
+        assertSastResultsCheck(true, JsonHelper.getObjectMapper().createObjectNode());
     }
 
-    private static ObjectNode artifact(String status, String... scanTypes) {
-        var artifact = JsonHelper.getObjectMapper().createObjectNode().put("status", status);
+    @Test
+    void failIfNoSastResultsRejectsVersionWithoutArtifacts() throws Exception {
+        assertSastResultsCheck(true);
+    }
+
+    private static ObjectNode artifact(String... scanTypes) {
+        var artifact = JsonHelper.getObjectMapper().createObjectNode();
         var scans = artifact.putObject("_embed").putArray("scans");
         for (String scanType : scanTypes) {
             scans.addObject().put("type", scanType);
@@ -306,7 +308,7 @@ class AviatorSSCAuditCommandTest {
         return artifact;
     }
 
-    private static void assertDastOnlyCheck(boolean expectedFailure, ObjectNode... artifacts) throws Exception {
+    private static void assertSastResultsCheck(boolean expectedFailure, ObjectNode... artifacts) throws Exception {
         var data = JsonHelper.getObjectMapper().createArrayNode();
         for (var artifact : artifacts) {
             data.add(artifact);
@@ -330,10 +332,10 @@ class AviatorSSCAuditCommandTest {
             av.setVersionId("42");
             if (expectedFailure) {
                 var exception = assertThrows(AviatorSimpleException.class,
-                        () -> AviatorSSCAuditHelper.failIfDastOnly(unirest, av));
-                assertEquals(FprHandle.DAST_SCAN_RESULTS_NOT_SUPPORTED_MESSAGE, exception.getMessage());
+                        () -> AviatorSSCAuditHelper.failIfNoSastResults(unirest, av));
+                assertEquals(AviatorSSCAuditHelper.NO_SAST_RESULTS_MESSAGE, exception.getMessage());
             } else {
-                AviatorSSCAuditHelper.failIfDastOnly(unirest, av);
+                AviatorSSCAuditHelper.failIfNoSastResults(unirest, av);
             }
         } finally {
             server.stop(0);

@@ -47,9 +47,6 @@ import lombok.Getter;
  * All file access within the FPR should go through this class.
  */
 public final class FprHandle implements AutoCloseable {
-    /** Error reported when an operation requiring SAST scan results is run against DAST (WebInspect) scan results. */
-    public static final String DAST_SCAN_RESULTS_NOT_SUPPORTED_MESSAGE =
-        "Invalid FPR:                 The scan results are from a DAST (WebInspect) scan, but this operation requires SAST scan results.";
     private static final Logger LOG = LoggerFactory.getLogger(FprHandle.class);
     private static final Pattern PROPERTIES_DOCTYPE_PATTERN = Pattern.compile(
         "<!DOCTYPE\\s+properties\\s+SYSTEM\\s+(['\"])http://java\\.sun\\.com/dtd/properties\\.dtd\\1\\s*>"
@@ -102,7 +99,7 @@ public final class FprHandle implements AutoCloseable {
     public void validate() {
         if (!Files.exists(getPath("/audit.fvdl"))) {
             if (Files.exists(getPath("/webinspect.xml"))) {
-                throw new AviatorSimpleException(DAST_SCAN_RESULTS_NOT_SUPPORTED_MESSAGE);
+                throw new AviatorSimpleException("Invalid FPR:                 The scan results are from a DAST (WebInspect) scan, but this operation requires SAST scan results.");
             }
                             throw new AviatorSimpleException("Invalid FPR: The scan results do not contain 'audit.fvdl' and do not appear to be valid SAST scan results.");
         }
