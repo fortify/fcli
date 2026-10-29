@@ -83,6 +83,7 @@ public class Constants {
     public static final String OP_UPDATE_APP = "application update";
     public static final String OP_DELETE_APP = "application deletion";
     public static final String OP_GET_APP = "retrieving application";
+    public static final String OP_GET_APP_BY_NAME = "retrieving application by name";
     public static final String OP_LIST_APPS = "listing applications";
     public static final String OP_GENERATE_TOKEN = "token generation";
     public static final String OP_LIST_TOKENS = "listing tokens";

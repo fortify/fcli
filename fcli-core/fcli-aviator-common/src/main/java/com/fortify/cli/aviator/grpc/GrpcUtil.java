@@ -51,6 +51,11 @@ class GrpcUtil {
     }
 
     static <S extends AbstractBlockingStub<S>, T, R> R executeGrpcCall(S stub, GrpcCall<S, T, R> call, T request, String operation) {
+        return executeGrpcCall(stub, call, request, operation, null);
+    }
+
+    /** @param unimplementedHint optional extra advice appended to the error message when the server does not implement the call */
+    static <S extends AbstractBlockingStub<S>, T, R> R executeGrpcCall(S stub, GrpcCall<S, T, R> call, T request, String operation, String unimplementedHint) {
         try {
             S stubWithDeadline = stub.withDeadlineAfter(Constants.DEFAULT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
             return call.call(stubWithDeadline, request);
@@ -92,10 +97,15 @@ class GrpcUtil {
                     );
                     throw new AviatorSimpleException(timeoutMessage);
 
+                case UNIMPLEMENTED:
+                    LOG.warn("gRPC call for '{}' is not implemented by the server: {}", operation, serverDescription);
+                    throw new AviatorSimpleException(String.format(
+                            "The Aviator service does not support the %s operation.%s",
+                            operation, unimplementedHint == null ? "" : " " + unimplementedHint));
+
                 case CANCELLED:
                 case UNKNOWN:
                 case ABORTED:
-                case UNIMPLEMENTED:
                 case INTERNAL:
                 case UNAVAILABLE:
                 case DATA_LOSS:

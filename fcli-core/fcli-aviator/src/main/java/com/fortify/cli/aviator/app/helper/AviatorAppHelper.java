@@ -12,10 +12,6 @@
  */
 package com.fortify.cli.aviator.app.helper;
 
-import java.util.List;
-import java.util.Objects;
-
-import com.fortify.aviator.application.Application;
 import com.fortify.cli.aviator._common.config.admin.helper.AviatorAdminConfigDescriptor;
 import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
 import com.fortify.cli.aviator._common.util.AviatorSignatureUtils;
@@ -40,25 +36,14 @@ public final class AviatorAppHelper {
         return true;
     }
 
-    /** Numeric values are returned as-is, without contacting the server; names are resolved to an id through the application list. */
+    /** Numeric values are returned as-is without contacting the server; names are resolved through the server-side name lookup. */
     public static String resolveApplicationId(AviatorGrpcClient client, AviatorAdminConfigDescriptor configDescriptor, String appNameOrId) {
         if (appNameOrId == null || appNameOrId.isBlank()) {
             throw new AviatorSimpleException("Application name or id must be specified");
         }
         if (isNumeric(appNameOrId)) { return appNameOrId; }
-        String[] messageAndSignature = AviatorSignatureUtils.createMessageAndSignature(configDescriptor, configDescriptor.getTenant());
-        List<Application> applications = client.listApplication(configDescriptor.getTenant(), messageAndSignature[1], messageAndSignature[0]);
-        return resolveApplicationIdByName(applications, appNameOrId);
-    }
-
-    public static String resolveApplicationIdByName(List<Application> applications, String name) {
-        var byName = applications.stream().filter(a -> Objects.equals(a.getName(), name)).toList();
-        if (byName.isEmpty()) {
-            throw new AviatorSimpleException("No application found with name: " + name);
-        }
-        if (byName.size() > 1) {
-            throw new AviatorSimpleException("Multiple applications found with name: " + name + "; please specify the application id");
-        }
-        return String.valueOf(byName.get(0).getId());
+        String tenant = configDescriptor.getTenant();
+        String[] messageAndSignature = AviatorSignatureUtils.createMessageAndSignature(configDescriptor, tenant, appNameOrId);
+        return String.valueOf(client.getApplicationByName(appNameOrId, messageAndSignature[1], messageAndSignature[0], tenant).getId());
     }
 }
