@@ -126,6 +126,28 @@
     "allPublicFields": true
   },
   {
+    "name": "com.fortify.aviator.application.ApplicationMultiplierOutcome",
+    "allPublicMethods": true
+  },
+  {
+    "name": "com.fortify.aviator.application.ApplicationMultiplierOperationResponse",
+    "allDeclaredConstructors": true,
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true,
+    "allDeclaredFields": true,
+    "allPublicFields": true
+  },
+  {
+    "name": "com.fortify.aviator.application.ApplicationMultiplierOperationResponse$Builder",
+    "allDeclaredConstructors": true,
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true,
+    "allDeclaredFields": true,
+    "allPublicFields": true
+  },
+  {
     "name": "com.fortify.aviator.application.ApplicationResponseMessage",
     "allDeclaredConstructors": true,
     "allPublicConstructors": true,
