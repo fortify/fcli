@@ -33,6 +33,10 @@ import lombok.Getter;
 /**
  * Adds the Aviator, FoD and Auditor Status tag definitions to a parsed filter template and keeps
  * the resulting DOM so that {@link AuditProcessor} can write it back into the FPR.
+ * <p>
+ * Instances are single-use and stateful: {@link #getFilterTemplateDocument()} returns {@code null}
+ * until the FPR parser has invoked {@link #customize}, which it always does after parsing
+ * {@code filtertemplate.xml}.
  */
 public final class AviatorFilterTemplateCustomizer implements FilterTemplateCustomizer {
     @Getter private Document filterTemplateDocument;
