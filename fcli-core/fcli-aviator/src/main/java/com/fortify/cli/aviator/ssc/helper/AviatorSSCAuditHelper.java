@@ -35,12 +35,14 @@ import com.fortify.cli.aviator.grpc.AviatorGrpcClient;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClientHelper;
 import com.fortify.cli.aviator.grpc.AviatorRequestPolicy;
 import com.fortify.cli.aviator.util.Constants;
+import com.fortify.cli.aviator.util.FprHandle;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.rest.unirest.UnexpectedHttpResponseException;
 import com.fortify.cli.ssc._common.rest.ssc.SSCUrls;
 import com.fortify.cli.ssc.appversion.helper.SSCAppVersionDescriptor;
+import com.fortify.cli.ssc.artifact.helper.SSCArtifactHelper;
 import com.fortify.cli.ssc.issue.helper.SSCIssueFilterHelper;
 import com.fortify.cli.ssc.issue.helper.SSCIssueFilterSetDescriptor;
 import com.fortify.cli.ssc.issue.helper.SSCIssueFilterSetHelper;
@@ -57,6 +59,8 @@ import kong.unirest.UnirestInstance;
 public final class AviatorSSCAuditHelper {
     private static final Logger LOG = LoggerFactory.getLogger(AviatorSSCAuditHelper.class);
     private static final int PAGE_LIMIT = 200;
+    private static final String SSC_SCAN_TYPE_SAST = "SCA";
+    private static final String SSC_SCAN_TYPE_DAST = "WEBINSPECT";
     private AviatorSSCAuditHelper() {}
 
     /**
@@ -288,6 +292,34 @@ public final class AviatorSSCAuditHelper {
         long count = countEligibleIssues(query, logger, true);
         return count < 0 ? AuditableIssuePresence.UNKNOWN
                 : count == 0 ? AuditableIssuePresence.NONE : AuditableIssuePresence.PRESENT;
+    }
+
+    /**
+     * Rejects an application version whose completed artifacts only contain DAST (WebInspect) scan results.
+     * Intended for the case where the preflight finds nothing to audit: without this check, an audited DAST
+     * version is reported as "nothing to audit", while an unaudited one fails FPR validation after download.
+     * Versions with at least one SAST scan, or without any scan type information, are not rejected.
+     */
+    public static void failIfDastOnly(UnirestInstance unirest, SSCAppVersionDescriptor av) {
+        boolean hasDast = false;
+        int start = 0;
+        while (true) {
+            JsonNode response = unirest.get(SSCUrls.PROJECT_VERSION_ARTIFACTS(av.getVersionId()))
+                    .queryString("start", start).queryString("limit", PAGE_LIMIT).queryString("embed", "scans")
+                    .asObject(JsonNode.class).getBody();
+            JsonNode artifacts = response.path("data");
+            if (!artifacts.isArray() || artifacts.isEmpty()) { break; }
+            for (JsonNode artifact : artifacts) {
+                if (!"PROCESS_COMPLETE".equalsIgnoreCase(artifact.path("status").asText())) { continue; }
+                if (SSCArtifactHelper.hasEmbeddedScanType(artifact, SSC_SCAN_TYPE_SAST)) { return; }
+                hasDast |= SSCArtifactHelper.hasEmbeddedScanType(artifact, SSC_SCAN_TYPE_DAST);
+            }
+            start += PAGE_LIMIT;
+            if (start >= response.path("count").asInt(0)) { break; }
+        }
+        if (hasDast) {
+            throw new AviatorSimpleException(FprHandle.DAST_SCAN_RESULTS_NOT_SUPPORTED_MESSAGE);
+        }
     }
 
     private record AuditableIssueCountQuery(UnirestInstance unirest, SSCAppVersionDescriptor av, boolean noFilterSet,

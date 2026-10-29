@@ -101,6 +101,7 @@ abstract class AbstractAviatorSSCSastAuditCommand extends AbstractSSCJsonNodeOut
 
             long auditableIssueCount = getPreflightIssueCount(unirest, av, logger);
             if (auditableIssueCount == 0) {
+                AviatorSSCAuditHelper.failIfDastOnly(unirest, av);
                 logger.progress("Audit skipped - no auditable issues found matching the specified filters.");
                 ObjectNode result = AviatorSSCAuditHelper.buildResultNode(av, null, "SKIPPED");
                 AviatorSSCAuditHelper.setOperationMessage(result, "No auditable issues found matching the specified filters");

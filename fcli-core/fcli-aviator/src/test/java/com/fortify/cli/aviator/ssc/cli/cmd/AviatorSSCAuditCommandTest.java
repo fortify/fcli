@@ -16,6 +16,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.lang.reflect.Field;
@@ -34,10 +35,12 @@ import org.junit.jupiter.params.provider.CsvSource;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
 import com.fortify.cli.aviator._common.session.user.helper.AviatorUserSessionDescriptor;
 import com.fortify.cli.aviator.audit.model.FPRAuditResult;
 import com.fortify.cli.aviator.config.AviatorLoggerImpl;
 import com.fortify.cli.aviator.ssc.helper.AviatorSSCAuditHelper;
+import com.fortify.cli.aviator.util.FprHandle;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.progress.helper.IProgressWriter;
@@ -265,6 +268,73 @@ class AviatorSSCAuditCommandTest {
             assertTrue(progress.messages.stream().anyMatch(message -> message.contains(actionMessage)));
             assertFalse(progress.messages.stream().anyMatch(message -> message.contains("Proceeding")
                     || message.contains("Downloading") || message.contains("FPR download")));
+        } finally {
+            server.stop(0);
+        }
+    }
+
+    @ParameterizedTest
+    @CsvSource(value = {
+        "WEBINSPECT; PROCESS_COMPLETE; true",
+        "SCA; PROCESS_COMPLETE; false",
+        "SCA,WEBINSPECT; PROCESS_COMPLETE; false",
+        "WEBINSPECT; ERROR_PROCESSING; false",
+        "SECURITYSCOPE; PROCESS_COMPLETE; false"
+    }, delimiter = ';')
+    void failIfDastOnlyRejectsOnlyCompletedDastWithoutSast(String scanTypes, String status, boolean expectedFailure)
+            throws Exception {
+        var artifact = artifact(status, scanTypes.split(","));
+        assertDastOnlyCheck(expectedFailure, artifact);
+    }
+
+    @Test
+    void failIfDastOnlyAcceptsVersionWithDastAndSastInSeparateArtifacts() throws Exception {
+        assertDastOnlyCheck(false, artifact("PROCESS_COMPLETE", "WEBINSPECT"), artifact("PROCESS_COMPLETE", "SCA"));
+    }
+
+    @Test
+    void failIfDastOnlyAcceptsVersionWithoutArtifacts() throws Exception {
+        assertDastOnlyCheck(false);
+    }
+
+    private static ObjectNode artifact(String status, String... scanTypes) {
+        var artifact = JsonHelper.getObjectMapper().createObjectNode().put("status", status);
+        var scans = artifact.putObject("_embed").putArray("scans");
+        for (String scanType : scanTypes) {
+            scans.addObject().put("type", scanType);
+        }
+        return artifact;
+    }
+
+    private static void assertDastOnlyCheck(boolean expectedFailure, ObjectNode... artifacts) throws Exception {
+        var data = JsonHelper.getObjectMapper().createArrayNode();
+        for (var artifact : artifacts) {
+            data.add(artifact);
+        }
+        var server = HttpServer.create(new InetSocketAddress(0), 0);
+        server.createContext("/api/v1/projectVersions/42/artifacts", exchange -> {
+            byte[] response = JsonHelper.getObjectMapper().createObjectNode().put("count", artifacts.length)
+                    .set("data", data).toString().getBytes(StandardCharsets.UTF_8);
+            exchange.getResponseHeaders().set("Content-Type", "application/json");
+            exchange.sendResponseHeaders(200, response.length);
+            try (var output = exchange.getResponseBody()) {
+                output.write(response);
+            }
+        });
+        server.start();
+        try (var unirest = UnirestHelper.createUnirestInstance(instance -> {
+            UnirestJsonHeaderConfigurer.configure(instance);
+            instance.config().defaultBaseUrl("http://localhost:" + server.getAddress().getPort());
+        })) {
+            var av = new SSCAppVersionDescriptor();
+            av.setVersionId("42");
+            if (expectedFailure) {
+                var exception = assertThrows(AviatorSimpleException.class,
+                        () -> AviatorSSCAuditHelper.failIfDastOnly(unirest, av));
+                assertEquals(FprHandle.DAST_SCAN_RESULTS_NOT_SUPPORTED_MESSAGE, exception.getMessage());
+            } else {
+                AviatorSSCAuditHelper.failIfDastOnly(unirest, av);
+            }
         } finally {
             server.stop(0);
         }
