@@ -24,7 +24,7 @@ import lombok.Setter;
  */
 @Getter
 @Setter
-public class Entry {
+public class FvdlExternalEntry {
     private String url; // From <URL>
     private List<Field> fields = new ArrayList<>(); // From <Fields><Field>
 

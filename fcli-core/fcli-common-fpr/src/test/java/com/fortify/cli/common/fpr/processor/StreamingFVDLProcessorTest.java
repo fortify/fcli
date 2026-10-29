@@ -38,6 +38,7 @@ import org.junit.jupiter.api.Test;
 import com.fortify.cli.common.fpr.Vulnerability;
 import com.fortify.cli.common.fpr.filter.VulnerabilityFilterer;
 import com.fortify.cli.common.fpr.model.FVDLMetadata;
+import com.fortify.cli.common.fpr.model.FvdlExternalEntry;
 import com.fortify.cli.common.fpr.model.StackTraceElement;
 import com.fortify.cli.common.fpr.util.FprHandle;
 
@@ -265,23 +266,23 @@ class StreamingFVDLProcessorTest {
         assertEquals("instance-2", next.getInstanceID());
         assertTrue(next.getExternalEntries().isEmpty());
 
-        List<com.fortify.cli.common.fpr.model.Entry> entries = vulnerability.getExternalEntries();
+        List<FvdlExternalEntry> entries = vulnerability.getExternalEntries();
         assertEquals(2, entries.size());
 
-        com.fortify.cli.common.fpr.model.Entry first = entries.get(0);
+        FvdlExternalEntry first = entries.get(0);
         assertEquals("http://example.com/request", first.getUrl());
         assertEquals(List.of("RequestMethod", "RequestBody"),
-                first.getFields().stream().map(com.fortify.cli.common.fpr.model.Entry.Field::getName).toList());
+                first.getFields().stream().map(FvdlExternalEntry.Field::getName).toList());
         assertEquals("POST", first.getFields().get(0).getValue());
         assertEquals("text", first.getFields().get(0).getType());
         assertEquals("tag-1", first.getFields().get(0).getVulnTag());
         assertEquals("a=1", first.getFields().get(1).getValue());
 
-        com.fortify.cli.common.fpr.model.Entry second = entries.get(1);
+        FvdlExternalEntry second = entries.get(1);
         assertEquals("http://example.com/other", second.getUrl());
         assertTrue(second.getFields().isEmpty());
         assertNotSame(first.getFields(), second.getFields());
-        second.getFields().add(new com.fortify.cli.common.fpr.model.Entry.Field());
+        second.getFields().add(new FvdlExternalEntry.Field());
         assertEquals(2, first.getFields().size());
 
         assertEquals("POST", vulnerability.getRequestMethod());
@@ -332,7 +333,7 @@ class StreamingFVDLProcessorTest {
         }
 
         Vulnerability vulnerability = processor.getVulnerabilities().get(0);
-        com.fortify.cli.common.fpr.model.Entry.Field empty = vulnerability.getExternalEntries().get(0).getFields().get(0);
+        FvdlExternalEntry.Field empty = vulnerability.getExternalEntries().get(0).getFields().get(0);
         assertEquals("", empty.getName());
         assertEquals("", empty.getValue());
         assertEquals("", empty.getType());

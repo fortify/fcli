@@ -1309,7 +1309,7 @@ public class StreamingFVDLProcessor {
 
         // Set auxiliaryData and externalEntries on vulnerability
         // Convert StreamedVulnerability.ExternalEntry to Entry objects
-        List<com.fortify.cli.common.fpr.model.Entry> convertedEntries = convertExternalEntries(streamedVuln.getExternalEntries());
+        List<FvdlExternalEntry> convertedEntries = convertExternalEntries(streamedVuln.getExternalEntries());
         vulnCustom.setAuxiliaryData(streamedVuln.getAuxiliaryData());
         vulnCustom.setExternalEntries(convertedEntries);
 
@@ -1330,24 +1330,23 @@ public class StreamingFVDLProcessor {
      * @param streamedEntries List of StreamedVulnerability.ExternalEntry
      * @return List of converted Entry objects
      */
-    private List<com.fortify.cli.common.fpr.model.Entry> convertExternalEntries(
+    private List<FvdlExternalEntry> convertExternalEntries(
         List<StreamedVulnerability.ExternalEntry> streamedEntries) {
 
         if (streamedEntries == null) {
             return new ArrayList<>();
         }
 
-        List<com.fortify.cli.common.fpr.model.Entry> result = new ArrayList<>(streamedEntries.size());
+        List<FvdlExternalEntry> result = new ArrayList<>(streamedEntries.size());
         for (StreamedVulnerability.ExternalEntry streamedEntry : streamedEntries) {
-            com.fortify.cli.common.fpr.model.Entry entry = new com.fortify.cli.common.fpr.model.Entry();
+            FvdlExternalEntry entry = new FvdlExternalEntry();
             entry.setUrl(streamedEntry.getUrl());
 
             // Convert fields
-            List<com.fortify.cli.common.fpr.model.Entry.Field> fields = entry.getFields();
+            List<FvdlExternalEntry.Field> fields = entry.getFields();
             if (streamedEntry.getFields() != null) {
                 for (StreamedVulnerability.EntryField streamedField : streamedEntry.getFields()) {
-                    com.fortify.cli.common.fpr.model.Entry.Field field =
-                        new com.fortify.cli.common.fpr.model.Entry.Field();
+                    FvdlExternalEntry.Field field = new FvdlExternalEntry.Field();
                     field.setName(streamedField.getName());
                     field.setValue(streamedField.getValue());
                     field.setType(streamedField.getType());
@@ -1379,7 +1378,7 @@ public class StreamingFVDLProcessor {
     private void processRequestRelatedFromData(
         Vulnerability vulnCustom,
         List<Map<String, String>> auxData,
-        List<com.fortify.cli.common.fpr.model.Entry> externalEntries) {
+        List<FvdlExternalEntry> externalEntries) {
 
         // Process auxiliary data
         if (auxData != null) {
@@ -1431,9 +1430,9 @@ public class StreamingFVDLProcessor {
 
         // Process external entries
         if (externalEntries != null) {
-            for (com.fortify.cli.common.fpr.model.Entry entry : externalEntries) {
+            for (FvdlExternalEntry entry : externalEntries) {
                 if (entry.getUrl() != null && entry.getUrl().toLowerCase().contains("request")) {
-                    for (com.fortify.cli.common.fpr.model.Entry.Field field : entry.getFields()) {
+                    for (FvdlExternalEntry.Field field : entry.getFields()) {
                         switch (field.getName().toLowerCase()) {
                             case "requestheaders":
                                 vulnCustom.setRequestHeaders(field.getValue());

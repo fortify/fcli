@@ -194,14 +194,14 @@ class FprHandleTest {
     //03358915/OCTCR11A2429097 fix for audit issue
 
     @Test
-    @DisplayName("validateDast rejects SAST-only FPR with a user-friendly message")
+    @DisplayName("validateDast rejects SAST-only FPR without webinspect.xml")
     void validateDastRejectsSastOnlyFpr() throws Exception {
         Path fprPath = createFpr("<index />");
 
         try (FprHandle handle = new FprHandle(fprPath)) {
             FcliSimpleException exception = assertThrows(FcliSimpleException.class, handle::validateDast);
 
-            assertTrue(exception.getMessage().contains("from a SAST scan"));
+            assertTrue(exception.getMessage().contains("webinspect.xml"));
         }
     }
 

@@ -235,7 +235,7 @@ class DastAuditFPRTest {
                 () -> DastAuditFPR.audit(handle, streamConfig(), defaultTagMapping(),
                     (ignoredConfig, items, total) -> { streamStarted[0] = true; return null; }));
 
-            assertTrue(exception.getMessage().contains("from a SAST scan"));
+            assertTrue(exception.getMessage().contains("webinspect.xml"));
             assertFalse(streamStarted[0]);
         }
     }

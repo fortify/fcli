@@ -98,10 +98,7 @@ public final class FprHandle implements AutoCloseable {
      */
     public void validate() {
         if (!Files.exists(getPath("/audit.fvdl"))) {
-            if (Files.exists(getPath("/webinspect.xml"))) {
-                throw new FcliSimpleException("Invalid FPR:                 The scan results are from a DAST (WebInspect) scan, but this operation requires SAST scan results.");
-            }
-                            throw new FcliSimpleException("Invalid FPR: The scan results do not contain 'audit.fvdl' and do not appear to be valid SAST scan results.");
+            throw new FcliSimpleException("Invalid FPR: The scan results do not contain 'audit.fvdl' and do not appear to be valid SAST scan results.");
         }
         if (!hasSource()) {
             throw new FcliSimpleException("Invalid FPR: Source code is missing or incomplete. The 'src-archive' directory must contain 'index.xml' and at least one source file.");
@@ -116,10 +113,7 @@ public final class FprHandle implements AutoCloseable {
      */
     public void validateDast() {
         if (!Files.exists(getPath("/webinspect.xml"))) {
-            if (Files.exists(getPath("/audit.fvdl"))) {
-                throw new FcliSimpleException("Invalid FPR:                 The scan results are from a SAST scan, but this operation requires DAST (WebInspect) scan results.");
-            }
-                            throw new FcliSimpleException("Invalid FPR: The scan results do not contain 'webinspect.xml' and do not appear to be valid DAST (WebInspect) scan results.");
+            throw new FcliSimpleException("Invalid FPR: The scan results do not contain 'webinspect.xml' and do not appear to be valid DAST (WebInspect) scan results.");
         }
     }
 

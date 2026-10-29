@@ -16,9 +16,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -46,6 +44,7 @@ import com.fortify.cli.common.util.SecureXmlParserFactory;
  */
 public final class AuditXmlReader {
     public static final String AUDIT_NAMESPACE_URI = "xmlns://www.fortify.com/schema/audit";
+    private static final String DEFAULT_AUDIT_RESOURCE = "default_audit.xml";
 
     private static final Logger logger = LoggerFactory.getLogger(AuditXmlReader.class);
 
@@ -58,17 +57,7 @@ public final class AuditXmlReader {
         Document auditDoc;
 
         try {
-            if (!Files.exists(auditPath)) {
-                logger.debug("audit.xml not found. Creating a default audit.xml.");
-                auditDoc = createDefaultAuditXml();
-            } else {
-                var factory = SecureXmlParserFactory.newDocumentBuilderFactory(true);
-                DocumentBuilder builder = factory.newDocumentBuilder();
-
-                try (InputStream auditStream = Files.newInputStream(auditPath)) {
-                    auditDoc = builder.parse(auditStream);
-                }
-            }
+            auditDoc = getAuditDoc(auditPath);
             NodeList issueNodes = auditDoc.getElementsByTagNameNS(AUDIT_NAMESPACE_URI, "Issue");
             for (int i = 0; i < issueNodes.getLength(); i++) {
                 Element issueElement = (Element) issueNodes.item(i);
@@ -88,48 +77,20 @@ public final class AuditXmlReader {
         return new AuditXmlContent(auditDoc, auditIssueMap);
     }
 
-    private Document createDefaultAuditXml() throws FcliTechnicalException {
-        try {
-            var docFactory = SecureXmlParserFactory.newDocumentBuilderFactory(true);
-
-            DocumentBuilder docBuilder = docFactory.newDocumentBuilder();
-            Document doc = docBuilder.newDocument();
-
-            Element rootElement = doc.createElementNS(AUDIT_NAMESPACE_URI, "ns2:Audit");
-            doc.appendChild(rootElement);
-            rootElement.setPrefix("ns2");
-
-            rootElement.setAttribute("xmlns:ns3", "xmlns://www.fortifysoftware.com/schema/activitytemplate");
-            rootElement.setAttribute("xmlns:ns4", "xmlns://www.fortifysoftware.com/schema/wsTypes");
-            rootElement.setAttribute("xmlns:ns5", "xmlns://www.fortify.com/schema/issuemanagement");
-            rootElement.setAttribute("xmlns:ns6", "http://www.fortify.com/schema/fws");
-            rootElement.setAttribute("xmlns:ns7", "xmlns://www.fortifysoftware.com/schema/runtime");
-            rootElement.setAttribute("xmlns:ns8", "xmlns://www.fortifysoftware.com/schema/seed");
-            rootElement.setAttribute("xmlns:ns9", "xmlns://www.fortify.com/schema/attachments");
-            rootElement.setAttribute("xmlns:xsi", "http://www.w3.org/2001/XMLSchema-instance");
-            rootElement.setAttribute("version", "4.4");
-
-            Element projectInfoElement = doc.createElementNS(AUDIT_NAMESPACE_URI, "ns2:ProjectInfo");
-            Element projectNameElement = doc.createElementNS(AUDIT_NAMESPACE_URI, "ns2:Name");
-            projectNameElement.setTextContent("Unknown Project");
-            Element projectVersionIdElement = doc.createElementNS(AUDIT_NAMESPACE_URI, "ns2:ProjectVersionId");
-            projectVersionIdElement.setTextContent("-1");
-            Element writeDateElement = doc.createElementNS(AUDIT_NAMESPACE_URI, "ns2:WriteDate");
-            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
-            writeDateElement.setTextContent(dateFormat.format(new Date()));
-
-            projectInfoElement.appendChild(projectNameElement);
-            projectInfoElement.appendChild(projectVersionIdElement);
-            projectInfoElement.appendChild(writeDateElement);
-            rootElement.appendChild(projectInfoElement);
-
-            Element issueListElement = doc.createElementNS(AUDIT_NAMESPACE_URI, "ns2:IssueList");
-            rootElement.appendChild(issueListElement);
-
-            return doc;
-
-        } catch (ParserConfigurationException e) {
-            throw new FcliTechnicalException("Failed to create default audit.xml document.", e);
+    /** Parses the FPR's audit.xml, or the bundled default audit document if the FPR has none. */
+    private Document getAuditDoc(Path auditPath) throws ParserConfigurationException, SAXException, IOException {
+        DocumentBuilder builder = SecureXmlParserFactory.newDocumentBuilderFactory(true).newDocumentBuilder();
+        if (Files.exists(auditPath)) {
+            try (InputStream auditStream = Files.newInputStream(auditPath)) {
+                return builder.parse(auditStream);
+            }
+        }
+        logger.debug("audit.xml not found. Using default audit.xml.");
+        try (InputStream defaultStream = AuditXmlReader.class.getClassLoader().getResourceAsStream(DEFAULT_AUDIT_RESOURCE)) {
+            if (defaultStream == null) {
+                throw new FcliTechnicalException("Default audit document not found on classpath: " + DEFAULT_AUDIT_RESOURCE);
+            }
+            return builder.parse(defaultStream);
         }
     }
 

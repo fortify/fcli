@@ -95,7 +95,7 @@ class StreamingWebInspectParserTest {
                 () -> new StreamingWebInspectParser(handle).parse(),
                 () -> new StreamingWebInspectParser(handle).parseSessions() }) {
                 var ex = assertThrows(FcliSimpleException.class, call);
-                assertTrue(ex.getMessage().contains("from a SAST scan"));
+                assertTrue(ex.getMessage().contains("webinspect.xml"));
             }
         }
     }
