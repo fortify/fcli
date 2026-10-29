@@ -139,6 +139,7 @@ public class DastAuditStreamProcessor implements AutoCloseable {
         this.streamId = UUID.randomUUID().toString();
         this.requestIssueIds.clear();
         this.sendWindow.clear();
+        this.requestMessages.clear();
         this.serverBusyAttempts.clear();
         this.requestHandler = new RequestHandler<>(streamId);
         this.activeRequestStream = null;
