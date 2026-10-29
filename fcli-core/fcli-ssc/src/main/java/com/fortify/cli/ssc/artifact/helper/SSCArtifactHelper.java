@@ -276,7 +276,7 @@ public final class SSCArtifactHelper {
      * SSC embeds scan metadata under _embed.scans[]; each scan has a "type" field
      * with values like "SCA" (SAST), "WEBINSPECT" (DAST), "SECURITYSCOPE" (Runtime).
      */
-    private static boolean hasEmbeddedScanType(JsonNode artifact, String scanType) {
+    public static boolean hasEmbeddedScanType(JsonNode artifact, String scanType) {
         JsonNode scans = artifact.path("_embed").path("scans");
         if (!scans.isArray()) { return false; }
         for (JsonNode scan : scans) {

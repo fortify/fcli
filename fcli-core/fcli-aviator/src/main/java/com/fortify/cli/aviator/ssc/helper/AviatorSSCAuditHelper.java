@@ -41,6 +41,7 @@ import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.rest.unirest.UnexpectedHttpResponseException;
 import com.fortify.cli.ssc._common.rest.ssc.SSCUrls;
 import com.fortify.cli.ssc.appversion.helper.SSCAppVersionDescriptor;
+import com.fortify.cli.ssc.artifact.helper.SSCArtifactHelper;
 import com.fortify.cli.ssc.issue.helper.SSCIssueFilterHelper;
 import com.fortify.cli.ssc.issue.helper.SSCIssueFilterSetDescriptor;
 import com.fortify.cli.ssc.issue.helper.SSCIssueFilterSetHelper;
@@ -57,6 +58,9 @@ import kong.unirest.UnirestInstance;
 public final class AviatorSSCAuditHelper {
     private static final Logger LOG = LoggerFactory.getLogger(AviatorSSCAuditHelper.class);
     private static final int PAGE_LIMIT = 200;
+    private static final String SSC_SCAN_TYPE_SAST = "SCA";
+    public static final String NO_SAST_RESULTS_MESSAGE =
+            "Application version does not contain SAST (Fortify SCA) scan results, which are required by this operation.";
     private AviatorSSCAuditHelper() {}
 
     /**
@@ -288,6 +292,30 @@ public final class AviatorSSCAuditHelper {
         long count = countEligibleIssues(query, logger, true);
         return count < 0 ? AuditableIssuePresence.UNKNOWN
                 : count == 0 ? AuditableIssuePresence.NONE : AuditableIssuePresence.PRESENT;
+    }
+
+    /**
+     * Fails if the application version has no SAST (Fortify SCA) scan results. Intended for the case where the
+     * preflight finds nothing to audit: that shortcut returns before the FPR is downloaded and validated, so
+     * a version containing other results only (for example DAST) would otherwise be reported as "nothing to
+     * audit" instead of being rejected. Only the presence of the expected scan type is checked, as SSC may
+     * support any number of other scan types through parser plugins.
+     */
+    public static void failIfNoSastResults(UnirestInstance unirest, SSCAppVersionDescriptor av) {
+        int start = 0;
+        while (true) {
+            JsonNode response = unirest.get(SSCUrls.PROJECT_VERSION_ARTIFACTS(av.getVersionId()))
+                    .queryString("start", start).queryString("limit", PAGE_LIMIT).queryString("embed", "scans")
+                    .asObject(JsonNode.class).getBody();
+            JsonNode artifacts = response.path("data");
+            if (!artifacts.isArray() || artifacts.isEmpty()) { break; }
+            for (JsonNode artifact : artifacts) {
+                if (SSCArtifactHelper.hasEmbeddedScanType(artifact, SSC_SCAN_TYPE_SAST)) { return; }
+            }
+            start += PAGE_LIMIT;
+            if (start >= response.path("count").asInt(0)) { break; }
+        }
+        throw new AviatorSimpleException(NO_SAST_RESULTS_MESSAGE);
     }
 
     private record AuditableIssueCountQuery(UnirestInstance unirest, SSCAppVersionDescriptor av, boolean noFilterSet,
