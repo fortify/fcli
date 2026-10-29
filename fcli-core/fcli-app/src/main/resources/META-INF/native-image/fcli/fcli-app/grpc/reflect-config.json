@@ -1,5 +1,49 @@
 [
   {
+    "name": "com.google.protobuf.DescriptorProtos$FeatureSet",
+    "allPublicMethods": true
+  },
+  {
+    "name": "com.google.protobuf.DescriptorProtos$FeatureSet$Builder",
+    "allPublicMethods": true
+  },
+  {
+    "name": "com.google.protobuf.DescriptorProtos$FeatureSet$FieldPresence",
+    "allPublicMethods": true
+  },
+  {
+    "name": "com.google.protobuf.DescriptorProtos$FeatureSet$EnumType",
+    "allPublicMethods": true
+  },
+  {
+    "name": "com.google.protobuf.DescriptorProtos$FeatureSet$RepeatedFieldEncoding",
+    "allPublicMethods": true
+  },
+  {
+    "name": "com.google.protobuf.DescriptorProtos$FeatureSet$Utf8Validation",
+    "allPublicMethods": true
+  },
+  {
+    "name": "com.google.protobuf.DescriptorProtos$FeatureSet$MessageEncoding",
+    "allPublicMethods": true
+  },
+  {
+    "name": "com.google.protobuf.DescriptorProtos$FeatureSet$JsonFormat",
+    "allPublicMethods": true
+  },
+  {
+    "name": "com.google.protobuf.JavaFeaturesProto$JavaFeatures",
+    "allPublicMethods": true
+  },
+  {
+    "name": "com.google.protobuf.JavaFeaturesProto$JavaFeatures$Builder",
+    "allPublicMethods": true
+  },
+  {
+    "name": "com.google.protobuf.JavaFeaturesProto$JavaFeatures$Utf8Validation",
+    "allPublicMethods": true
+  },
+  {
     "name": "com.fortify.grpc.token.TokenGenerationResponse",
     "allDeclaredConstructors": true,
     "allPublicConstructors": true,
@@ -118,6 +162,28 @@
   },
   {
     "name": "com.fortify.aviator.application.Application$Builder",
+    "allDeclaredConstructors": true,
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true,
+    "allDeclaredFields": true,
+    "allPublicFields": true
+  },
+  {
+    "name": "com.fortify.aviator.application.ApplicationMultiplierOutcome",
+    "allPublicMethods": true
+  },
+  {
+    "name": "com.fortify.aviator.application.ApplicationMultiplierOperationResponse",
+    "allDeclaredConstructors": true,
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true,
+    "allDeclaredFields": true,
+    "allPublicFields": true
+  },
+  {
+    "name": "com.fortify.aviator.application.ApplicationMultiplierOperationResponse$Builder",
     "allDeclaredConstructors": true,
     "allPublicConstructors": true,
     "allDeclaredMethods": true,
