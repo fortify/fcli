@@ -51,9 +51,9 @@ import com.fortify.aviator.grpc.SastFindingContext;
 import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
 import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
 import com.fortify.cli.aviator.config.IAviatorLogger;
-import com.fortify.cli.aviator.dast.DastIssue;
-import com.fortify.cli.aviator.fpr.Vulnerability;
 import com.fortify.cli.aviator.grpc.CorrelationStreamState.CandidateMatch;
+import com.fortify.cli.common.fpr.Vulnerability;
+import com.fortify.cli.common.fpr.dast.DastIssue;
 
 import io.grpc.Status;
 import io.grpc.stub.ClientCallStreamObserver;

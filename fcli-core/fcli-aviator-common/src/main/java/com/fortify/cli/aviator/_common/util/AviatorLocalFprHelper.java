@@ -17,10 +17,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
-import com.fortify.cli.aviator.util.FprHandle;
 import com.fortify.cli.common.exception.AbstractFcliException;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.exception.FcliTechnicalException;
+import com.fortify.cli.common.fpr.util.FprHandle;
 
 public final class AviatorLocalFprHelper {
     private AviatorLocalFprHelper() {}

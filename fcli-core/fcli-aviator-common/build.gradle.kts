@@ -13,6 +13,8 @@ java {
 tasks.withType<JavaCompile>().configureEach { dependsOn("generateProto") }
 
 dependencies {
+    val fprRef = project.findProperty("fcliCommonFprRef") as String
+    api(project(fprRef))
     implementation(project(":fcli-core:fcli-common-core"))
     testFixturesImplementation(project(":fcli-core:fcli-common-core"))
     implementation("org.yaml:snakeyaml:2.3")

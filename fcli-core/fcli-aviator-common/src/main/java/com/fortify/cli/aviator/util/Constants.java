@@ -15,12 +15,14 @@ package com.fortify.cli.aviator.util;
 import java.util.Locale;
 import java.util.Set;
 
+import com.fortify.cli.common.fpr.util.FprConstants;
+
 public class Constants {
 
     // Audit Result Values
     public static final String NOT_AN_ISSUE = "Not an Issue";
     public static final String EXPLOITABLE = "Exploitable";
-    public static final String PENDING_REVIEW = "Pending Review/Not Set";
+    public static final String PENDING_REVIEW = FprConstants.PENDING_REVIEW;
     public static final String FALSE_POSITIVE = "False Positive";
     public static final String SUSPICIOUS = "Suspicious";
     public static final String SANITIZED = "Sanitized";
@@ -43,10 +45,10 @@ public class Constants {
     public static final String AVIATOR_PREDICTION_TAG_ID = "C2D6EC66-CCB3-4FB9-9EE0-0BB02F51008F";
     public static final String AVIATOR_STATUS_TAG_ID = "FB7B0462-2C2E-46D9-811A-DCC1F3C83051";
     public static final String AVIATOR_EXPECTED_OUTCOME_TAG_ID = "013cc66f-8651-4e39-bacb-beb918c5ef65";
-    public static final String ANALYSIS_TAG_ID = "87f2364f-dcd4-49e6-861d-f8d3f351686b";
+    public static final String ANALYSIS_TAG_ID = FprConstants.ANALYSIS_TAG_ID;
     public static final String SUPPRESSED_TAG_ID = "22222222-2222-2222-2222-222222222222";
-    public static final String AUDITOR_STATUS_TAG_ID = "ACB05E55-E74D-468C-8501-52E1FDC27D71";
-    public static final String FOD_TAG_ID = "604f0fbe-b5fe-47cd-a9cb-587ad8ebe93a";
+    public static final String AUDITOR_STATUS_TAG_ID = FprConstants.AUDITOR_STATUS_TAG_ID;
+    public static final String FOD_TAG_ID = FprConstants.FOD_TAG_ID;
 
     // User Names written into audit.xml TagHistory / comments
     public static final String USER_NAME = "Fortify Remediation Aviator";
@@ -74,7 +76,7 @@ public class Constants {
     public static final String MAX_TOTAL_EXCEEDED = "Fortify detected {issues_new_total} new issues. Fortify Remediation Aviator auditing was limited to {MAX_TOTAL} issues in total, while ensuring that representative issues in each category were audited.";
 
     // File size protection — prevent zip bomb and decompression DOS attacks
-    public static final long MAX_SOURCE_FILE_SIZE = 50L * 1024L * 1024L; // 50 MB
+    public static final long MAX_SOURCE_FILE_SIZE = FprConstants.MAX_SOURCE_FILE_SIZE;
 
     // Operation constants for error messages
     public static final String OP_CREATE_APP = "application creation";

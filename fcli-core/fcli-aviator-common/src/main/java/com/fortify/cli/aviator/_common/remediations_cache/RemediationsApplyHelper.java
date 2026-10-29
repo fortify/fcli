@@ -19,15 +19,15 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
-import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
 import com.fortify.cli.aviator._common.util.AviatorRemediationMetricsHelper;
 import com.fortify.cli.aviator.applyRemediation.ApplyAutoRemediationOnSource;
 import com.fortify.cli.aviator.config.IAviatorLogger;
 import com.fortify.cli.aviator.fpr.remediation.RemediationExecutionMode;
 import com.fortify.cli.aviator.fpr.remediation.RemediationProcessingOptions;
 import com.fortify.cli.aviator.fpr.remediation.model.RemediationMetric;
-import com.fortify.cli.aviator.util.FprHandle;
+import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.exception.FcliTechnicalException;
+import com.fortify.cli.common.fpr.util.FprHandle;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -119,7 +119,7 @@ public final class RemediationsApplyHelper {
                     options.getSourceDecoder());
             return ApplyAutoRemediationOnSource.applyRemediations(
                     fprHandle, options.getSourceCodeDirectory(), logger, processingOptions);
-        } catch (AviatorSimpleException e) {
+        } catch (FcliSimpleException e) {
             log.warn("Skipping entry {} as {}", entryLabel, e.getMessage());
             return null;
         } catch (IOException e) {

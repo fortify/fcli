@@ -29,9 +29,9 @@ import java.util.zip.ZipOutputStream;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-import com.fortify.cli.aviator.util.FprHandle;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.exception.FcliTechnicalException;
+import com.fortify.cli.common.fpr.util.FprHandle;
 
 class RemediationsCacheRoundTripTest {
     @TempDir Path tempDir;
