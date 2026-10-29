@@ -30,15 +30,14 @@ class GrpcUtilExecuteGrpcCallTest {
     @Test
     void unimplementedReportsUnsupportedOperationWithUpgradeAdviceAndHint() {
         String message = executeUnimplemented(HINT).getMessage();
-        assertTrue(message.contains("test-op"), message);
-        assertTrue(message.contains("upgrade the Aviator server"), message);
+        assertTrue(message.contains("service does not support the test-op operation"), message);
         assertTrue(message.endsWith(HINT), message);
     }
 
     @Test
     void unimplementedWithoutHintOmitsHint() {
         String message = executeUnimplemented(null).getMessage();
-        assertTrue(message.contains("upgrade the Aviator server"), message);
+        assertTrue(message.endsWith("test-op operation."), message);
         assertTrue(!message.contains("null"), message);
     }
 

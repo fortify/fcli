@@ -100,7 +100,7 @@ class GrpcUtil {
                 case UNIMPLEMENTED:
                     LOG.warn("gRPC call for '{}' is not implemented by the server: {}", operation, serverDescription);
                     throw new AviatorSimpleException(String.format(
-                            "The %s operation is not supported by the Aviator server. The server is probably older than this fcli version; please upgrade the Aviator server.%s",
+                            "The Aviator service does not support the %s operation.%s",
                             operation, unimplementedHint == null ? "" : " " + unimplementedHint));
 
                 case CANCELLED:
