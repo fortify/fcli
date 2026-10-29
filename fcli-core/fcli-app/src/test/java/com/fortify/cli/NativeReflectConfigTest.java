@@ -95,6 +95,26 @@ class NativeReflectConfigTest {
 
     @ParameterizedTest
     @ValueSource(strings = {
+            "com.google.protobuf.DescriptorProtos$FeatureSet",
+            "com.google.protobuf.DescriptorProtos$FeatureSet$Builder",
+            "com.google.protobuf.DescriptorProtos$FeatureSet$FieldPresence",
+            "com.google.protobuf.DescriptorProtos$FeatureSet$EnumType",
+            "com.google.protobuf.DescriptorProtos$FeatureSet$RepeatedFieldEncoding",
+            "com.google.protobuf.DescriptorProtos$FeatureSet$Utf8Validation",
+            "com.google.protobuf.DescriptorProtos$FeatureSet$MessageEncoding",
+            "com.google.protobuf.DescriptorProtos$FeatureSet$JsonFormat",
+            "com.google.protobuf.JavaFeaturesProto$JavaFeatures",
+            "com.google.protobuf.JavaFeaturesProto$JavaFeatures$Builder",
+            "com.google.protobuf.JavaFeaturesProto$JavaFeatures$Utf8Validation"
+    })
+    void testProtobufFeatureReflection(String className) throws IOException {
+        var entry = getReflectConfigEntry(loadReflectConfig(GRPC_REFLECT_CONFIG), className);
+        assertTrue(entry.path("allPublicMethods").asBoolean(),
+                () -> "Expected public protobuf feature accessor registration for " + className);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
             "ch.qos.logback.classic.util.DefaultJoranConfigurator",
             "ch.qos.logback.classic.BasicConfigurator"
     })
