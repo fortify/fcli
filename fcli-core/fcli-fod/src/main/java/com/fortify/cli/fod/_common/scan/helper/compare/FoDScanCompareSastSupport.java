@@ -110,11 +110,15 @@ public final class FoDScanCompareSastSupport implements IFoDScanCompareSupport {
     @Override
     public IFoDScanCompareChanges loadChanges(UnirestInstance unirest, FoDScanComparePair pair) {
         var current = loadManifest(unirest, pair.targetScanId());
+        var currentSkipReason = getSkipReason(current, pair.targetScanId());
+        // File changes can't be compared without the current manifest, so avoid loading the previous manifest
+        if ( currentSkipReason != null ) {
+            return new SastChanges(current.available(), null, currentSkipReason, null, maxFileChanges);
+        }
         var previous = loadManifest(unirest, pair.previousScanId());
-        var skipReason = StringUtils.firstNonBlank(
-                getSkipReason(current, pair.targetScanId()), getSkipReason(previous, pair.previousScanId()));
-        if ( skipReason != null ) {
-            return new SastChanges(current.available(), previous.available(), skipReason, null, maxFileChanges);
+        var previousSkipReason = getSkipReason(previous, pair.previousScanId());
+        if ( previousSkipReason != null ) {
+            return new SastChanges(true, previous.available(), previousSkipReason, null, maxFileChanges);
         }
         var index = new FoDAttributionFileChangeIndex(parseManifest(previous.text()), parseManifest(current.text()));
         return new SastChanges(true, true, null, index, maxFileChanges);
@@ -151,7 +155,8 @@ public final class FoDScanCompareSastSupport implements IFoDScanCompareSupport {
         return List.of("source");
     }
 
-    private record SastChanges(boolean currentAvailable, boolean previousAvailable, String skipReason,
+    /** @param previousAvailable Null if the previous manifest wasn't loaded, as the current manifest isn't available */
+    private record SastChanges(boolean currentAvailable, Boolean previousAvailable, String skipReason,
             FoDAttributionFileChangeIndex index, int maxFileChanges) implements IFoDScanCompareChanges {
         @Override
         public void addTo(ObjectNode result, Predicate<String> includeChange) {

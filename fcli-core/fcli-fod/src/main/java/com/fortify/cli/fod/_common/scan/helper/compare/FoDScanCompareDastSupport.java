@@ -108,8 +108,10 @@ public final class FoDScanCompareDastSupport implements IFoDScanCompareSupport {
 
     @Override
     public IFoDScanCompareChanges loadChanges(UnirestInstance unirest, FoDScanComparePair pair) {
-        return compareSiteTrees(pair.previousScanId(), loadSiteTree(unirest, pair.previousScanId()),
-                pair.targetScanId(), loadSiteTree(unirest, pair.targetScanId()));
+        // URL changes can't be compared without the current site tree, so avoid loading the previous site tree
+        var current = loadSiteTree(unirest, pair.targetScanId());
+        var previous = current.isComplete() ? loadSiteTree(unirest, pair.previousScanId()) : SiteTree.NOT_LOADED;
+        return compareSiteTrees(pair.previousScanId(), previous, pair.targetScanId(), current);
     }
 
     /**
@@ -167,7 +169,7 @@ public final class FoDScanCompareDastSupport implements IFoDScanCompareSupport {
         return new FoDAttributionBooleanSettingDetector.Setting(name, DETAILS + name, trueIsBroader);
     }
 
-    private record DastChanges(boolean currentAvailable, boolean previousAvailable, String skipReason,
+    private record DastChanges(Boolean currentAvailable, Boolean previousAvailable, String skipReason,
             Map<String, Long> previousStatistics, Map<String, Long> currentStatistics,
             FoDAttributionUrlChangeIndex index, int maxUrlChanges) implements IFoDScanCompareChanges {
         @Override
@@ -224,6 +226,7 @@ public final class FoDScanCompareDastSupport implements IFoDScanCompareSupport {
     }
 
     private String getSkipReason(SiteTree siteTree, String scanId) {
+        if ( !siteTree.isLoaded() ) { return null; }
         if ( siteTree.tooLarge() ) {
             return String.format("Site tree for scan %s exceeds maximum size of %d MB; use --max-site-tree-size to increase this limit",
                     scanId, maxSiteTreeBytes / FoDScanCompareHelper.BYTES_PER_MB);
@@ -255,17 +258,25 @@ public final class FoDScanCompareDastSupport implements IFoDScanCompareSupport {
         return SiteTree.of(entries);
     }
 
-    /** @param entries Site tree entries; null if the site tree is unavailable or too large */
-    record SiteTree(boolean available, boolean tooLarge, List<JsonNode> entries) {
+    /**
+     * @param available Whether the site tree is available; null if the site tree wasn't loaded
+     * @param entries Site tree entries; null if the site tree is unavailable, too large or not loaded
+     */
+    record SiteTree(Boolean available, boolean tooLarge, List<JsonNode> entries) {
         static final SiteTree UNAVAILABLE = new SiteTree(false, false, null);
         static final SiteTree TOO_LARGE = new SiteTree(true, true, null);
+        static final SiteTree NOT_LOADED = new SiteTree(null, false, null);
 
         static SiteTree of(List<JsonNode> entries) {
             return new SiteTree(true, false, entries);
         }
 
+        boolean isLoaded() {
+            return available != null;
+        }
+
         boolean isComplete() {
-            return available && !tooLarge;
+            return Boolean.TRUE.equals(available) && !tooLarge;
         }
     }
 

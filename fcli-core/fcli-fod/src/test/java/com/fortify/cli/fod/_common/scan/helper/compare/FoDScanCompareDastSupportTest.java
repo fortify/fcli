@@ -97,6 +97,16 @@ class FoDScanCompareDastSupportTest {
     }
 
     @Test
+    void previousSiteTreeIsReportedAsNotCheckedIfNotLoaded() {
+        var changes = DAST.compareSiteTrees("1", SiteTree.NOT_LOADED, "2", SiteTree.UNAVAILABLE);
+        var result = addTo(changes, change -> true);
+        assertEquals("Site tree not available for scan 2", changes.getSkipReason());
+        assertFalse(result.get("currentSiteTreeAvailable").asBoolean());
+        assertTrue(result.get("previousSiteTreeAvailable").isNull());
+        assertEquals(0, result.get("siteTreeStatistics").size());
+    }
+
+    @Test
     void invalidLimitsAreRejected() {
         assertThrows(FcliSimpleException.class, () -> new FoDScanCompareDastSupport(-1, 25));
         assertThrows(FcliSimpleException.class, () -> new FoDScanCompareDastSupport(1000, 0));
