@@ -22,6 +22,7 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.LongStream;
@@ -49,7 +50,9 @@ import com.fortify.cli.fod._common.scan.helper.compare.attribution.FoDAttributio
 import com.fortify.cli.fod._common.scan.helper.compare.attribution.FoDAttributionTargetHostMatcher;
 import com.fortify.cli.fod._common.scan.helper.compare.attribution.FoDAttributionTimeboxDetector;
 import com.fortify.cli.fod._common.scan.helper.compare.attribution.FoDAttributionUrlChangeIndex;
+import com.fortify.cli.fod._common.scan.helper.compare.attribution.FoDAttributionUrlChangeIndex.Kind;
 import com.fortify.cli.fod._common.scan.helper.compare.attribution.FoDAttributionUrlChangeIndex.SiteTreeUrl;
+import com.fortify.cli.fod._common.scan.helper.compare.attribution.FoDAttributionUrlChangeIndex.UrlMatch;
 import com.fortify.cli.fod._common.scan.helper.compare.attribution.FoDAttributionUrlChangeMatcher;
 import com.fortify.cli.fod._common.scan.helper.compare.attribution.FoDAttributionUrls;
 import com.fortify.cli.fod._common.scan.helper.compare.attribution.IFoDAttributionChangeIndex;
@@ -69,7 +72,7 @@ public final class FoDScanCompareDastSupport implements IFoDScanCompareSupport {
             "webServiceType", "userAgentType", "concurrentRequestThreadsType", "policyName", "timeBoxInHours");
     private static final List<FoDScanCompareField> STATISTIC_FIELDS = toFields(
             "crawlSessions", "failedRequests", "logouts", "macroPlaybacks");
-    private static final Comparator<SiteTreeUrl> URL_ORDER = Comparator.comparing(SiteTreeUrl::url);
+    private static final Comparator<UrlMatch> URL_ORDER = Comparator.comparing(UrlMatch::url);
     private final int maxUrlChanges;
     private final long maxSiteTreeBytes;
 
@@ -78,8 +81,9 @@ public final class FoDScanCompareDastSupport implements IFoDScanCompareSupport {
      * @param maxSiteTreeSizeMb Maximum site tree size in MB; site tree comparison is skipped for larger site trees
      */
     public FoDScanCompareDastSupport(int maxUrlChanges, int maxSiteTreeSizeMb) {
-        this.maxUrlChanges = maxUrlChanges;
-        this.maxSiteTreeBytes = maxSiteTreeSizeMb * FoDScanCompareHelper.BYTES_PER_MB;
+        this.maxUrlChanges = FoDScanCompareHelper.requireMinimum("--max-url-changes", maxUrlChanges, 0);
+        this.maxSiteTreeBytes = FoDScanCompareHelper.requireMinimum("--max-site-tree-size", maxSiteTreeSizeMb, 1)
+                * FoDScanCompareHelper.BYTES_PER_MB;
     }
 
     @Override
@@ -104,17 +108,23 @@ public final class FoDScanCompareDastSupport implements IFoDScanCompareSupport {
 
     @Override
     public IFoDScanCompareChanges loadChanges(UnirestInstance unirest, FoDScanComparePair pair) {
-        var current = loadSiteTree(unirest, pair.targetScanId());
-        var previous = loadSiteTree(unirest, pair.previousScanId());
-        var skipReason = StringUtils.firstNonBlank(
-                getSkipReason(current, pair.targetScanId()), getSkipReason(previous, pair.previousScanId()));
+        return compareSiteTrees(pair.previousScanId(), loadSiteTree(unirest, pair.previousScanId()),
+                pair.targetScanId(), loadSiteTree(unirest, pair.targetScanId()));
+    }
+
+    /**
+     * Compare the given site trees. URL changes are determined by {@link FoDAttributionUrlChangeIndex} only, such that
+     * listed URL changes, change counts and issue attributions are all based on the same (normalized) URL identity.
+     */
+    IFoDScanCompareChanges compareSiteTrees(String previousScanId, SiteTree previous, String currentScanId, SiteTree current) {
+        var skipReason = StringUtils.firstNonBlank(getSkipReason(current, currentScanId), getSkipReason(previous, previousScanId));
         var currentUrls = current.isComplete() ? getUrls(current.entries()) : null;
         var previousUrls = previous.isComplete() ? getUrls(previous.entries()) : null;
         var index = skipReason != null ? null
                 : new FoDAttributionUrlChangeIndex(previousUrls.values(), currentUrls.values());
         return new DastChanges(current.available(), previous.available(), skipReason,
                 getStatistics(previous.entries(), previousUrls), getStatistics(current.entries(), currentUrls),
-                skipReason != null ? null : previousUrls, skipReason != null ? null : currentUrls, index, maxUrlChanges);
+                index, maxUrlChanges);
     }
 
     @Override
@@ -159,7 +169,6 @@ public final class FoDScanCompareDastSupport implements IFoDScanCompareSupport {
 
     private record DastChanges(boolean currentAvailable, boolean previousAvailable, String skipReason,
             Map<String, Long> previousStatistics, Map<String, Long> currentStatistics,
-            Map<String, SiteTreeUrl> previousUrls, Map<String, SiteTreeUrl> currentUrls,
             FoDAttributionUrlChangeIndex index, int maxUrlChanges) implements IFoDScanCompareChanges {
         @Override
         public void addTo(ObjectNode result, Predicate<String> includeChange) {
@@ -168,8 +177,17 @@ public final class FoDScanCompareDastSupport implements IFoDScanCompareSupport {
             result.put("siteTreeComparisonSkipped", skipReason != null);
             result.put("siteTreeComparisonSkippedReason", skipReason);
             addSiteTreeStatistics(result, previousStatistics, currentStatistics);
-            var deltas = getUrlDeltas();
-            if ( deltas != null ) { deltas.addTo(result, maxUrlChanges, includeChange); }
+            if ( index == null ) { return; }
+            addUrlList(result, "addedUrl", Kind.ADDED, includeChange, m -> toJson(m.current()));
+            addUrlList(result, "removedUrl", Kind.REMOVED, includeChange, m -> toJson(m.previous()));
+            addUrlList(result, "changedUrl", Kind.CHANGED, includeChange, FoDScanCompareDastSupport::toChangeJson);
+        }
+
+        private void addUrlList(ObjectNode result, String name, Kind kind, Predicate<String> includeChange,
+                Function<UrlMatch, JsonNode> mapper) {
+            var list = new FoDScanCompareLimitedList<UrlMatch>(maxUrlChanges, URL_ORDER);
+            index.getMatches(kind).forEach(m -> list.add(m, includeChange.test(m.url())));
+            list.addTo(result, name, mapper);
         }
 
         @Override
@@ -184,16 +202,10 @@ public final class FoDScanCompareDastSupport implements IFoDScanCompareSupport {
 
         @Override
         public List<FoDScanCompareChangeSet> getChangeSets() {
-            var deltas = getUrlDeltas();
-            if ( deltas == null ) { return List.of(); }
-            return List.of(
-                    new FoDScanCompareChangeSet("URL", deltas.added().stream().map(SiteTreeUrl::url).toList()),
-                    new FoDScanCompareChangeSet("URL", deltas.changed().stream().map(c -> c.current().url()).toList()),
-                    new FoDScanCompareChangeSet("URL", deltas.removed().stream().map(SiteTreeUrl::url).toList()));
-        }
-
-        private UrlDeltas getUrlDeltas() {
-            return previousUrls == null || currentUrls == null ? null : UrlDeltas.of(previousUrls, currentUrls);
+            if ( index == null ) { return List.of(); }
+            return Stream.of(Kind.ADDED, Kind.CHANGED, Kind.REMOVED)
+                    .map(kind -> new FoDScanCompareChangeSet("URL", index.getMatches(kind).stream().map(UrlMatch::url).toList()))
+                    .toList();
         }
 
         @Override
@@ -240,12 +252,17 @@ public final class FoDScanCompareDastSupport implements IFoDScanCompareSupport {
             log.debug("Site tree for scan {} exceeds {} bytes", scanId, maxSiteTreeBytes);
             return SiteTree.TOO_LARGE;
         }
-        return new SiteTree(true, false, entries);
+        return SiteTree.of(entries);
     }
 
-    private record SiteTree(boolean available, boolean tooLarge, List<JsonNode> entries) {
+    /** @param entries Site tree entries; null if the site tree is unavailable or too large */
+    record SiteTree(boolean available, boolean tooLarge, List<JsonNode> entries) {
         static final SiteTree UNAVAILABLE = new SiteTree(false, false, null);
         static final SiteTree TOO_LARGE = new SiteTree(true, true, null);
+
+        static SiteTree of(List<JsonNode> entries) {
+            return new SiteTree(true, false, entries);
+        }
 
         boolean isComplete() {
             return available && !tooLarge;
@@ -287,46 +304,18 @@ public final class FoDScanCompareDastSupport implements IFoDScanCompareSupport {
         return entries.stream().mapToLong(e -> getLong(e, "statusCode")).filter(s -> s >= min && s <= max).count();
     }
 
-    /** Site tree URLs that were added, removed, or that have changed HTTP methods or status codes */
-    private record UrlDeltas(List<SiteTreeUrl> added, List<SiteTreeUrl> removed, List<UrlChange> changed) {
-        static UrlDeltas of(Map<String, SiteTreeUrl> previous, Map<String, SiteTreeUrl> current) {
-            var added = current.values().stream().filter(u -> !previous.containsKey(u.url())).toList();
-            var removed = previous.values().stream().filter(u -> !current.containsKey(u.url())).toList();
-            var changed = current.values().stream()
-                    .filter(u -> previous.containsKey(u.url()))
-                    .map(u -> new UrlChange(previous.get(u.url()), u))
-                    .filter(c -> !c.previous().methods().equals(c.current().methods())
-                            || !c.previous().statusCodes().equals(c.current().statusCodes()))
-                    .toList();
-            return new UrlDeltas(added, removed, changed);
-        }
-
-        void addTo(ObjectNode result, int maxUrlChanges, Predicate<String> includeChange) {
-            var addedList = new FoDScanCompareLimitedList<SiteTreeUrl>(maxUrlChanges, URL_ORDER);
-            var removedList = new FoDScanCompareLimitedList<SiteTreeUrl>(maxUrlChanges, URL_ORDER);
-            var changedList = new FoDScanCompareLimitedList<UrlChange>(maxUrlChanges, Comparator.comparing(c -> c.current().url()));
-            added.forEach(u -> addedList.add(u, includeChange.test(u.url())));
-            removed.forEach(u -> removedList.add(u, includeChange.test(u.url())));
-            changed.forEach(c -> changedList.add(c, includeChange.test(c.current().url())));
-            addedList.addTo(result, "addedUrl", FoDScanCompareDastSupport::toJson);
-            removedList.addTo(result, "removedUrl", FoDScanCompareDastSupport::toJson);
-            changedList.addTo(result, "changedUrl", UrlChange::toJson);
-        }
+    private static JsonNode toChangeJson(UrlMatch match) {
+        var change = JsonHelper.getObjectMapper().createObjectNode().put("url", match.url());
+        change.set("previousMethods", toArray(match.previous().methods()));
+        change.set("currentMethods", toArray(match.current().methods()));
+        change.set("previousStatusCodes", toArray(match.previous().statusCodes()));
+        change.set("currentStatusCodes", toArray(match.current().statusCodes()));
+        return change;
     }
 
-    private record UrlChange(SiteTreeUrl previous, SiteTreeUrl current) {
-        JsonNode toJson() {
-            var change = JsonHelper.getObjectMapper().createObjectNode().put("url", current.url());
-            change.set("previousMethods", toArray(previous.methods()));
-            change.set("currentMethods", toArray(current.methods()));
-            change.set("previousStatusCodes", toArray(previous.statusCodes()));
-            change.set("currentStatusCodes", toArray(current.statusCodes()));
-            return change;
-        }
-    }
-
+    // Grouped by normalized URL, consistent with how FoDAttributionUrlChangeIndex matches URLs
     private static Map<String, SiteTreeUrl> getUrls(List<JsonNode> entries) {
-        return entries.stream().collect(Collectors.groupingBy(FoDScanCompareDastSupport::toUrl, TreeMap::new,
+        return entries.stream().collect(Collectors.groupingBy(e -> FoDAttributionUrls.normalizeKey(toUrl(e)), TreeMap::new,
                 Collectors.collectingAndThen(Collectors.toList(), FoDScanCompareDastSupport::toSiteTreeUrl)));
     }
 

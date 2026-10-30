@@ -82,8 +82,9 @@ public final class FoDScanCompareSastSupport implements IFoDScanCompareSupport {
      * @param maxManifestSizeMb Maximum manifest size in MB; manifest comparison is skipped for larger manifests
      */
     public FoDScanCompareSastSupport(int maxFileChanges, int maxManifestSizeMb) {
-        this.maxFileChanges = maxFileChanges;
-        this.maxManifestBytes = maxManifestSizeMb * FoDScanCompareHelper.BYTES_PER_MB;
+        this.maxFileChanges = FoDScanCompareHelper.requireMinimum("--max-file-changes", maxFileChanges, 0);
+        this.maxManifestBytes = FoDScanCompareHelper.requireMinimum("--max-manifest-size", maxManifestSizeMb, 1)
+                * FoDScanCompareHelper.BYTES_PER_MB;
     }
 
     @Override

@@ -20,7 +20,6 @@ import org.apache.commons.lang3.StringUtils;
 import com.fortify.cli.common.rest.unirest.UnexpectedHttpResponseException;
 import com.fortify.cli.fod._common.scan.helper.compare.attribution.FoDAttributionIssue;
 
-import kong.unirest.UnirestException;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -28,7 +27,8 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * Base class for looking up optional per-issue data used as attribution evidence. Results (including
  * unavailable data) are cached per issue, and the number of lookups is limited to bound the number of
- * API calls. Lookup failures result in the issue being attributed without the looked up data.
+ * API calls. Issues for which data is unavailable or inaccessible are attributed without the looked up data;
+ * other lookup failures, like authentication or server errors, are propagated.
  */
 @Slf4j
 abstract class AbstractFoDScanCompareIssueLookup<T> {
@@ -68,10 +68,8 @@ abstract class AbstractFoDScanCompareIssueLookup<T> {
         try {
             return load(vulnId);
         } catch ( UnexpectedHttpResponseException e ) {
+            if ( !FoDScanCompareHelper.isUnavailable(e) ) { throw e; }
             log.debug("No {} available for issue {} (HTTP status {})", dataDescription, vulnId, e.getStatus());
-            return null;
-        } catch ( UnirestException e ) {
-            log.debug("Error loading {} for issue {}", dataDescription, vulnId, e);
             return null;
         }
     }

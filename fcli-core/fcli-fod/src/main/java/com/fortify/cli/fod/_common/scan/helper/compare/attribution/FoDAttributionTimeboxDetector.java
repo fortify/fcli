@@ -81,6 +81,7 @@ public final class FoDAttributionTimeboxDetector implements IFoDScanConditionDet
     }
 
     private static String format(Double hours) {
-        return hours == null ? "none" : hours == Math.rint(hours) ? String.valueOf(hours.longValue()) : String.format(Locale.ROOT, "%.2f", hours);
+        if ( hours == null ) { return "none"; }
+        return hours == Math.rint(hours) ? String.valueOf(hours.longValue()) : String.format(Locale.ROOT, "%.2f", hours);
     }
 }

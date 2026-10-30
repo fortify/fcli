@@ -30,8 +30,6 @@ public class FoDSastScanCompareCommand extends AbstractFoDScanCompareCommand {
 
     @Override
     protected IFoDScanCompareSupport getCompareSupport() {
-        return new FoDScanCompareSastSupport(
-                requireMinimum("--max-file-changes", maxFileChanges, 0),
-                requireMinimum("--max-manifest-size", maxManifestSizeMb, 1));
+        return new FoDScanCompareSastSupport(maxFileChanges, maxManifestSizeMb);
     }
 }

@@ -38,6 +38,7 @@ public final class FoDAttributionEngine {
 
     /** Attribute all issues in the given context, adding an 'attribution' property to each issue */
     public FoDAttributionResult attribute(FoDAttributionContext context) {
+        prefetchTraces(context);
         var conditions = detectors.stream().flatMap(d -> d.detect(context).stream()).toList();
         var summary = new FoDAttributionSummary();
         for ( var issue : context.getIssues() ) {
@@ -47,6 +48,19 @@ public final class FoDAttributionEngine {
             summary.add(issue.transition(), status, attributions);
         }
         return new FoDAttributionResult(context, conditions, summary);
+    }
+
+    /**
+     * Look up traces for all issues that need them, in issue order (highest severity first), before attributing any
+     * issue. Without this, matchers comparing issues against each other could spend bounded trace lookups on less
+     * severe issues first. Traces are cached by the lookup, so this doesn't result in any additional lookups.
+     */
+    private void prefetchTraces(FoDAttributionContext context) {
+        var lookup = context.getTraceLookup();
+        if ( lookup == null ) { return; }
+        for ( var issue : context.getIssues() ) {
+            if ( matchers.stream().anyMatch(m -> m.isTraceLookupRequired(context, issue)) ) { lookup.lookup(issue); }
+        }
     }
 
     private List<FoDAttribution> attribute(FoDAttributionContext context, List<FoDScanCondition> conditions, FoDAttributionIssue issue) {

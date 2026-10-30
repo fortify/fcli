@@ -34,17 +34,30 @@ import org.apache.commons.lang3.StringUtils;
 public final class FoDAttributionCorrelationErrorMatcher implements IFoDIssueEvidenceMatcher {
     @Override
     public List<FoDIssueEvidence> match(FoDAttributionContext context, FoDAttributionIssue issue) {
-        var location = getLocationKey(issue.getLocation());
-        if ( location.isEmpty() ) { return List.of(); }
-        var category = StringUtils.defaultString(issue.getCategory());
-        var pairs = context.getCached(PairIndex.class, () -> PairIndex.of(context.getIssues()));
-        var counterparts = pairs.getCounterparts(issue, location, category);
+        var counterparts = getCounterparts(context, issue);
         if ( counterparts == null ) { return List.of(); }
-        var changeIndex = context.getChangeIndex();
-        if ( changeIndex != null && changeIndex.isLocationChanged(issue.getLocation()) ) { return List.of(); }
         if ( !FoDAttributionDataflowMatcher.getChangedTraceFiles(context, issue).isEmpty() ) { return List.of(); }
         var correlationError = getCorrelationError(context, issue, counterparts);
         return correlationError == null ? List.of() : List.of(correlationError);
+    }
+
+    // Signatures of dataflow issues require traces, also if only needed for comparison against counterparts
+    @Override
+    public boolean isTraceLookupRequired(FoDAttributionContext context, FoDAttributionIssue issue) {
+        return issue.hasDataflowSource() && StringUtils.isNotBlank(issue.getText("lineNumber"))
+                && getCounterparts(context, issue) != null;
+    }
+
+    /** @return Counterparts of the given issue at the same, unchanged location, or null if none */
+    private static Group getCounterparts(FoDAttributionContext context, FoDAttributionIssue issue) {
+        var location = getLocationKey(issue.getLocation());
+        if ( location.isEmpty() ) { return null; }
+        var category = StringUtils.defaultString(issue.getCategory());
+        var pairs = context.getCached(PairIndex.class, () -> PairIndex.of(context.getIssues()));
+        var counterparts = pairs.getCounterparts(issue, location, category);
+        if ( counterparts == null ) { return null; }
+        var changeIndex = context.getChangeIndex();
+        return changeIndex != null && changeIndex.isLocationChanged(issue.getLocation()) ? null : counterparts;
     }
 
     private static FoDIssueEvidence getCorrelationError(FoDAttributionContext context, FoDAttributionIssue issue, Group counterparts) {

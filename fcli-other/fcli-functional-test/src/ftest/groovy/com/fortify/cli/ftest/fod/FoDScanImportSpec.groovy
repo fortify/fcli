@@ -107,5 +107,26 @@ class FoDScanImportSpec extends FcliBaseSpec {
             success
     }
 
+    // Imported scans can't be compared; this verifies end-to-end scan selection against the imported scans above
+    def "compare-sast-imported"() {
+        def args = "fod sast-scan compare --release=${webApp.get().qualifiedRelease}"
+        when:
+            def result = Fcli.run(args, {it.expectSuccess(false)})
+        then:
+            verifyAll(result.stderr) {
+                it.any { it.contains("is an imported") && it.contains("which cannot be compared") }
+            }
+    }
+
+    def "compare-dast-imported"() {
+        def args = "fod dast-scan compare --release=${webApp.get().qualifiedRelease}"
+        when:
+            def result = Fcli.run(args, {it.expectSuccess(false)})
+        then:
+            verifyAll(result.stderr) {
+                it.any { it.contains("is an imported") && it.contains("which cannot be compared") }
+            }
+    }
+
 }
 

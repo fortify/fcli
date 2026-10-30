@@ -14,6 +14,7 @@ package com.fortify.cli.fod._common.scan.helper.compare;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -26,6 +27,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.IntNode;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonHelper;
+import com.fortify.cli.fod._common.scan.helper.compare.attribution.FoDAttributionTransition;
 
 class FoDScanCompareHelperTest {
     private static final IFoDScanCompareSupport SAST = new FoDScanCompareSastSupport(1000, 25);
@@ -193,6 +195,42 @@ class FoDScanCompareHelperTest {
         FoDScanCompareHelper.addValueList(limited, "file", List.of("a", "b", "c"), 1, v -> !"a".equals(v));
         assertEquals("[\"b\"]", limited.get("files").toString());
         assertTrue(limited.get("filesTruncated").asBoolean());
+    }
+
+    @Test
+    void targetScanIssuesAreClassifiedByStatusAndScan() {
+        assertEquals(FoDAttributionTransition.NEW, FoDScanCompareHelper.getTargetScanTransition(issue("2", "New", false), "2"));
+        assertEquals(FoDAttributionTransition.REOPENED, FoDScanCompareHelper.getTargetScanTransition(issue("2", "Reopen", false), "2"));
+        // Existing issues, and issues last found in another scan, didn't change status in the target scan
+        assertNull(FoDScanCompareHelper.getTargetScanTransition(issue("2", "Existing", false), "2"));
+        assertNull(FoDScanCompareHelper.getTargetScanTransition(issue("1", "New", false), "2"));
+    }
+
+    @Test
+    void fixedIssuesMustHaveBeenLastFoundInPreviousScan() {
+        assertTrue(FoDScanCompareHelper.isFixedAfterScan(issue("1", "Existing", true), "1"));
+        assertTrue(FoDScanCompareHelper.isFixedAfterScan(issue("1", "Fix Validated", false), "1"));
+        // Not fixed, or already fixed after an older scan
+        assertFalse(FoDScanCompareHelper.isFixedAfterScan(issue("1", "Existing", false), "1"));
+        assertFalse(FoDScanCompareHelper.isFixedAfterScan(issue("0", "Existing", true), "1"));
+    }
+
+    @Test
+    void invalidOptionsAreRejected() {
+        assertThrows(FcliSimpleException.class, () -> options(-1, 10));
+        assertThrows(FcliSimpleException.class, () -> options(1000, 0));
+        assertThrows(FcliSimpleException.class, () -> options(1000, 101));
+        assertEquals(0, options(0, 1).maxIssues());
+        assertEquals(100, options(1000, 100).changeThresholdPercent());
+    }
+
+    private static FoDScanCompareOptions options(int maxIssues, int changeThresholdPercent) {
+        return FoDScanCompareOptions.builder().maxIssues(maxIssues).changeThresholdPercent(changeThresholdPercent).build();
+    }
+
+    private static JsonNode issue(String scanId, String status, boolean closedStatus) {
+        return JsonHelper.getObjectMapper().createObjectNode()
+                .put("scanId", scanId).put("status", status).put("closedStatus", closedStatus);
     }
 
     private static FoDScanCompareSelection select(boolean ignoreCanceled, JsonNode... scans) {

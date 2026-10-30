@@ -30,8 +30,6 @@ public class FoDDastScanCompareCommand extends AbstractFoDScanCompareCommand {
 
     @Override
     protected IFoDScanCompareSupport getCompareSupport() {
-        return new FoDScanCompareDastSupport(
-                requireMinimum("--max-url-changes", maxUrlChanges, 0),
-                requireMinimum("--max-site-tree-size", maxSiteTreeSizeMb, 1));
+        return new FoDScanCompareDastSupport(maxUrlChanges, maxSiteTreeSizeMb);
     }
 }

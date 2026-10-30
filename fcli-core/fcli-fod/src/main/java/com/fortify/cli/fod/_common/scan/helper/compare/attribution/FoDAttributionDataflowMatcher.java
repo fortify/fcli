@@ -50,6 +50,17 @@ public final class FoDAttributionDataflowMatcher implements IFoDIssueEvidenceMat
         return descriptionsByCause.entrySet().stream().map(FoDAttributionDataflowMatcher::toEvidence).toList();
     }
 
+    @Override
+    public boolean isTraceLookupRequired(FoDAttributionContext context, FoDAttributionIssue issue) {
+        return isTraceLookupRequiredForIssue(context, issue);
+    }
+
+    // Traces are only needed for dataflow issues at an unchanged sink location, if any manifest files were changed
+    private static boolean isTraceLookupRequiredForIssue(FoDAttributionContext context, FoDAttributionIssue issue) {
+        var index = context.getChangeIndex(FoDAttributionFileChangeIndex.class);
+        return index != null && index.hasChanges() && issue.hasDataflowSource() && !index.isLocationChanged(issue.getLocation());
+    }
+
     /**
      * @return Changed files on the dataflow of the given issue, excluding the sink file; empty if the issue has no
      *         dataflow source, if its sink location was changed, or if no manifest files were changed at all. Results
@@ -61,12 +72,9 @@ public final class FoDAttributionDataflowMatcher implements IFoDIssueEvidenceMat
     }
 
     private static List<TraceFileMatch> loadChangedTraceFiles(FoDAttributionContext context, FoDAttributionIssue issue) {
-        var index = context.getChangeIndex(FoDAttributionFileChangeIndex.class);
         var lookup = context.getTraceLookup();
-        if ( index == null || lookup == null || !index.hasChanges() || !issue.hasDataflowSource()
-                || index.isLocationChanged(issue.getLocation()) ) {
-            return List.of();
-        }
+        if ( lookup == null || !isTraceLookupRequiredForIssue(context, issue) ) { return List.of(); }
+        var index = context.getChangeIndex(FoDAttributionFileChangeIndex.class);
         var traces = lookup.lookup(issue);
         if ( traces == null ) { return List.of(); }
         var result = new ArrayList<TraceFileMatch>();
@@ -115,7 +123,8 @@ public final class FoDAttributionDataflowMatcher implements IFoDIssueEvidenceMat
         var description = FoDAttributionFileChangeMatcher.describe(matches.get(0));
         return matches.size() == 1
                 ? String.format("%s: %s", role, description)
-                : String.format("%s: %d files matching location %s, for example: %s", role, matches.size(), traceFile.location(), description);
+                : String.format("%s: %d files matching location %s, for example: %s",
+                        role, matches.size(), traceFile.location(), description);
     }
 
     private static FoDIssueEvidence toEvidence(Map.Entry<FoDAttributionCause, List<String>> entry) {

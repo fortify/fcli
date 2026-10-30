@@ -12,17 +12,13 @@
  */
 package com.fortify.cli.fod._common.scan.cli.cmd;
 
-import java.util.function.Predicate;
-
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.cli.util.CommandGroup;
-import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.fod._common.cli.mixin.FoDDelimiterMixin;
 import com.fortify.cli.fod._common.output.cli.cmd.AbstractFoDJsonNodeOutputCommand;
 import com.fortify.cli.fod._common.scan.helper.compare.FoDScanCompareHelper;
-import com.fortify.cli.fod._common.scan.helper.compare.FoDScanCompareSummary;
+import com.fortify.cli.fod._common.scan.helper.compare.FoDScanCompareOptions;
 import com.fortify.cli.fod._common.scan.helper.compare.IFoDScanCompareSupport;
-import com.fortify.cli.fod._common.scan.helper.compare.attribution.FoDAttributionResult;
 import com.fortify.cli.fod.release.cli.mixin.FoDReleaseByQualifiedNameOrIdResolverMixin;
 
 import kong.unirest.UnirestInstance;
@@ -45,55 +41,18 @@ public abstract class AbstractFoDScanCompareCommand extends AbstractFoDJsonNodeO
 
     @Override
     public final JsonNode getJsonNode(UnirestInstance unirest) {
-        requireMinimum("--max-issues", maxIssues, 0);
-        requireRange("--change-threshold", changeThresholdPercent, 1, 100);
+        var options = FoDScanCompareOptions.builder()
+                .ignoreCanceled(ignoreCanceled)
+                .maxIssues(maxIssues)
+                .attribution(attribution)
+                .limitChangeDetails(limitChangeDetails)
+                .changeThresholdPercent(changeThresholdPercent)
+                .build();
         var compareSupport = getCompareSupport();
-        var release = releaseResolver.getReleaseDescriptor(unirest);
-        var releaseId = release.getReleaseId();
-        var pair = FoDScanCompareHelper.getScanPair(unirest, releaseId, compareSupport, ignoreCanceled);
-        var issues = FoDScanCompareHelper.loadIssues(unirest, releaseId, compareSupport, pair);
-        var changes = compareSupport.loadChanges(unirest, pair);
-        var attributionResult = !attribution ? null : FoDScanCompareHelper.attributeIssues(
-                unirest, releaseId, pair, compareSupport, issues, changes, changeThresholdPercent);
-        var result = FoDScanCompareHelper.createResult(release, pair);
-        var changedSettings = FoDScanCompareHelper.getChangedSettingNames(pair, compareSupport.getSettingFields());
-        result.put("summary", new FoDScanCompareSummary(issues, changedSettings, changes, attributionResult).getText());
-        issues.addTo(result, maxIssues);
-        FoDScanCompareHelper.addSettingChanges(result, pair, compareSupport.getSettingFields());
-        FoDScanCompareHelper.addStatistics(result, pair, compareSupport.getStatisticFields());
-        result.put("changeDetailsLimited", limitChangeDetails);
-        changes.addTo(result, getChangeFilter(attributionResult));
-        if ( attributionResult != null ) {
-            attributionResult.addTo(result);
-        } else {
-            result.put("attributionEnabled", false);
-        }
-        return result;
+        return FoDScanCompareHelper.compare(unirest, releaseResolver.getReleaseDescriptor(unirest), compareSupport, options);
     }
 
     protected abstract IFoDScanCompareSupport getCompareSupport();
-
-    // With --limit-change-details, only changes referenced by issue attributions are listed
-    private Predicate<String> getChangeFilter(FoDAttributionResult attributionResult) {
-        if ( !limitChangeDetails ) { return change -> true; }
-        if ( attributionResult == null ) { return change -> false; }
-        var referenced = attributionResult.getReferencedChanges();
-        return referenced::contains;
-    }
-
-    protected static int requireMinimum(String optionName, int value, int minimum) {
-        if ( value < minimum ) {
-            throw new FcliSimpleException(String.format("Option %s must be at least %d", optionName, minimum));
-        }
-        return value;
-    }
-
-    private static int requireRange(String optionName, int value, int minimum, int maximum) {
-        if ( value < minimum || value > maximum ) {
-            throw new FcliSimpleException(String.format("Option %s must be between %d and %d", optionName, minimum, maximum));
-        }
-        return value;
-    }
 
     @Override
     public final boolean isSingular() {

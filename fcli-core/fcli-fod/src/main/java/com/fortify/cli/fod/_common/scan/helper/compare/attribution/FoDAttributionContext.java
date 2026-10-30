@@ -36,6 +36,7 @@ public final class FoDAttributionContext {
     @Getter private final int changeThresholdPercent;
     private final Map<String, FoDAttributionMetric> metrics;
     private final IFoDAttributionChangeIndex changeIndex;
+    /** Issues in attribution order; highest severity first, such that bounded per-issue lookups favor severe issues */
     @Getter private final List<FoDAttributionIssue> issues;
     @Getter private final IFoDIssueRequestLookup requestLookup;
     @Getter private final IFoDIssueTraceLookup traceLookup;

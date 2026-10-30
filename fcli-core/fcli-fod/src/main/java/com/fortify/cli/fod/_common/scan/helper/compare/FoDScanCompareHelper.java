@@ -42,6 +42,7 @@ import com.fortify.cli.fod._common.scan.helper.compare.attribution.FoDAttributio
 import com.fortify.cli.fod._common.scan.helper.compare.attribution.FoDAttributionEngine;
 import com.fortify.cli.fod._common.scan.helper.compare.attribution.FoDAttributionMetric;
 import com.fortify.cli.fod._common.scan.helper.compare.attribution.FoDAttributionResult;
+import com.fortify.cli.fod._common.scan.helper.compare.attribution.FoDAttributionTransition;
 import com.fortify.cli.fod.issue.helper.FoDIssueHelper;
 import com.fortify.cli.fod.release.helper.FoDReleaseDescriptor;
 
@@ -60,7 +61,61 @@ public final class FoDScanCompareHelper {
 
     private FoDScanCompareHelper() {}
 
-    public static FoDScanComparePair getScanPair(UnirestInstance unirest, String releaseId, IFoDScanCompareSupport support,
+    /**
+     * Compare the most recent completed scan of the given release against the previous completed scan of the same
+     * scan type and assessment type, returning the full compare result.
+     */
+    public static ObjectNode compare(UnirestInstance unirest, FoDReleaseDescriptor release, IFoDScanCompareSupport support,
+            FoDScanCompareOptions options) {
+        var releaseId = release.getReleaseId();
+        var pair = getScanPair(unirest, releaseId, support, options.ignoreCanceled());
+        var comparison = new Comparison(pair, loadIssues(unirest, releaseId, support, pair), support.loadChanges(unirest, pair));
+        var attributionResult = options.attribution()
+                ? attributeIssues(unirest, releaseId, support, comparison, options.changeThresholdPercent())
+                : null;
+        var issues = comparison.issues();
+        var changes = comparison.changes();
+        var result = createResult(release, pair);
+        var changedSettings = getChangedSettingNames(pair, support.getSettingFields());
+        result.put("summary", new FoDScanCompareSummary(issues, changedSettings, changes, attributionResult).getText());
+        issues.addTo(result, options.maxIssues());
+        addSettingChanges(result, pair, support.getSettingFields());
+        addStatistics(result, pair, support.getStatisticFields());
+        result.put("changeDetailsLimited", options.limitChangeDetails());
+        changes.addTo(result, getChangeFilter(options.limitChangeDetails(), attributionResult));
+        if ( attributionResult != null ) {
+            attributionResult.addTo(result);
+        } else {
+            result.put("attributionEnabled", false);
+        }
+        return result;
+    }
+
+    // With limitChangeDetails, only changes referenced by issue attributions are listed
+    static Predicate<String> getChangeFilter(boolean limitChangeDetails, FoDAttributionResult attributionResult) {
+        if ( !limitChangeDetails ) { return change -> true; }
+        if ( attributionResult == null ) { return change -> false; }
+        var referenced = attributionResult.getReferencedChanges();
+        return referenced::contains;
+    }
+
+    /** @throws FcliSimpleException if the given option value is less than the given minimum */
+    static int requireMinimum(String optionName, int value, int minimum) {
+        if ( value < minimum ) {
+            throw new FcliSimpleException(String.format("Option %s must be at least %d", optionName, minimum));
+        }
+        return value;
+    }
+
+    /** @throws FcliSimpleException if the given option value is outside the given range */
+    static int requireRange(String optionName, int value, int minimum, int maximum) {
+        if ( value < minimum || value > maximum ) {
+            throw new FcliSimpleException(String.format("Option %s must be between %d and %d", optionName, minimum, maximum));
+        }
+        return value;
+    }
+
+    private static FoDScanComparePair getScanPair(UnirestInstance unirest, String releaseId, IFoDScanCompareSupport support,
             boolean ignoreCanceled) {
         var selection = selectScans(getCandidateScans(unirest, releaseId, support), support, ignoreCanceled);
         var targetScanId = getText(selection.target(), "scanId");
@@ -122,7 +177,7 @@ public final class FoDScanCompareHelper {
                 scanTypeName, assessmentTypeName, targetScanId));
     }
 
-    public static ObjectNode createResult(FoDReleaseDescriptor release, FoDScanComparePair pair) {
+    private static ObjectNode createResult(FoDReleaseDescriptor release, FoDScanComparePair pair) {
         var target = pair.target();
         var previous = pair.previous();
         return JsonHelper.getObjectMapper().createObjectNode()
@@ -146,7 +201,7 @@ public final class FoDScanCompareHelper {
      * scan but fixed in the target scan. All issues are retained, such that issue attribution and attribution
      * summaries cover all issues; issue lists are only limited when adding them to the compare result.
      */
-    public static FoDScanCompareIssues loadIssues(UnirestInstance unirest, String releaseId, IFoDScanCompareSupport support,
+    private static FoDScanCompareIssues loadIssues(UnirestInstance unirest, String releaseId, IFoDScanCompareSupport support,
             FoDScanComparePair pair) {
         var scanTypeName = support.getScanType().name();
         var fields = getIssueFields(support);
@@ -155,18 +210,37 @@ public final class FoDScanCompareHelper {
         var reopenedIssues = new ArrayList<ObjectNode>();
         processIssues(unirest, releaseId, false, fields,
                 String.format("scantype:%s+status:New|Reopen+scanId:%s", scanTypeName, targetScanId), issue -> {
-                    if ( !targetScanId.equals(getText(issue, "scanId")) ) { return; }
-                    if ( hasStatus(issue, "New") ) { newIssues.add(issue); }
-                    else if ( hasStatus(issue, "Reopen") ) { reopenedIssues.add(issue); }
+                    var transition = getTargetScanTransition(issue, targetScanId);
+                    if ( transition == FoDAttributionTransition.NEW ) { newIssues.add(issue); }
+                    else if ( transition == FoDAttributionTransition.REOPENED ) { reopenedIssues.add(issue); }
                 });
-        // For fixed issues, scanId refers to the last scan in which the issue was found
         var previousScanId = pair.previousScanId();
         var fixedIssues = new ArrayList<ObjectNode>();
         processIssues(unirest, releaseId, true, fields,
                 String.format("scantype:%s+scanId:%s", scanTypeName, previousScanId), issue -> {
-                    if ( FoDIssueHelper.isFixed(issue) && previousScanId.equals(getText(issue, "scanId")) ) { fixedIssues.add(issue); }
+                    if ( isFixedAfterScan(issue, previousScanId) ) { fixedIssues.add(issue); }
                 });
         return new FoDScanCompareIssues(newIssues, reopenedIssues, fixedIssues);
+    }
+
+    /**
+     * Issues are also checked client-side, rather than relying on server-side filters only.
+     *
+     * @return NEW or REOPENED if the given issue was newly found or reopened in the given target scan, null otherwise
+     */
+    static FoDAttributionTransition getTargetScanTransition(JsonNode issue, String targetScanId) {
+        if ( !targetScanId.equals(getText(issue, "scanId")) ) { return null; }
+        if ( hasStatus(issue, "New") ) { return FoDAttributionTransition.NEW; }
+        return hasStatus(issue, "Reopen") ? FoDAttributionTransition.REOPENED : null;
+    }
+
+    /**
+     * For fixed issues, scanId refers to the last scan in which the issue was found
+     *
+     * @return Whether the given issue is fixed, and was last found in the given (previous) scan
+     */
+    static boolean isFixedAfterScan(JsonNode issue, String previousScanId) {
+        return FoDIssueHelper.isFixed(issue) && previousScanId.equals(getText(issue, "scanId"));
     }
 
     private static String getIssueFields(IFoDScanCompareSupport support) {
@@ -180,8 +254,10 @@ public final class FoDScanCompareHelper {
      *
      * @param changeThresholdPercent Minimum relative change of scan metrics to be considered significant
      */
-    public static FoDAttributionResult attributeIssues(UnirestInstance unirest, String releaseId, FoDScanComparePair pair,
-            IFoDScanCompareSupport support, FoDScanCompareIssues issues, IFoDScanCompareChanges changes, int changeThresholdPercent) {
+    private static FoDAttributionResult attributeIssues(UnirestInstance unirest, String releaseId, IFoDScanCompareSupport support,
+            Comparison comparison, int changeThresholdPercent) {
+        var pair = comparison.pair();
+        var changes = comparison.changes();
         var metrics = new LinkedHashMap<String, FoDAttributionMetric>();
         for ( var field : support.getStatisticFields() ) {
             metrics.put(field.name(), FoDAttributionMetric.of(getValue(pair.previous(), field.jsonPointer()),
@@ -194,7 +270,7 @@ public final class FoDScanCompareHelper {
                 .changeThresholdPercent(changeThresholdPercent)
                 .metrics(metrics)
                 .changeIndex(changes.getChangeIndex())
-                .issues(issues.toAttributionIssues())
+                .issues(comparison.issues().toAttributionIssues())
                 .requestLookup(support.isIssueRequestLookupSupported() ? new FoDScanCompareIssueRequestLookup(unirest, releaseId) : null)
                 .traceLookup(support.isIssueTraceLookupSupported() ? new FoDScanCompareIssueTraceLookup(unirest, releaseId) : null)
                 .build();
@@ -202,7 +278,7 @@ public final class FoDScanCompareHelper {
     }
 
     /** Add changed scan settings as 'settingChanges', together with 'settingChangeCount' */
-    public static void addSettingChanges(ObjectNode result, FoDScanComparePair pair, List<FoDScanCompareField> fields) {
+    private static void addSettingChanges(ObjectNode result, FoDScanComparePair pair, List<FoDScanCompareField> fields) {
         var changes = JsonHelper.getObjectMapper().createArrayNode();
         for ( var field : getChangedSettings(pair, fields) ) {
             addPreviousAndCurrent(changes, field.name(),
@@ -213,7 +289,7 @@ public final class FoDScanCompareHelper {
     }
 
     /** @return Names of scan settings that differ between both scans */
-    public static List<String> getChangedSettingNames(FoDScanComparePair pair, List<FoDScanCompareField> fields) {
+    private static List<String> getChangedSettingNames(FoDScanComparePair pair, List<FoDScanCompareField> fields) {
         return getChangedSettings(pair, fields).stream().map(FoDScanCompareField::name).toList();
     }
 
@@ -224,7 +300,7 @@ public final class FoDScanCompareHelper {
     }
 
     /** Add previous and current values for all given scan statistics as 'scanStatistics' */
-    public static void addStatistics(ObjectNode result, FoDScanComparePair pair, List<FoDScanCompareField> fields) {
+    private static void addStatistics(ObjectNode result, FoDScanComparePair pair, List<FoDScanCompareField> fields) {
         var statistics = JsonHelper.getObjectMapper().createArrayNode();
         for ( var field : fields ) {
             addPreviousAndCurrent(statistics, field.name(),
@@ -334,4 +410,7 @@ public final class FoDScanCompareHelper {
         var value = summary.at(jsonPointer);
         return value.isMissingNode() ? NullNode.getInstance() : value;
     }
+
+    /** Scan pair together with the issue and scan type-specific changes between both scans */
+    private record Comparison(FoDScanComparePair pair, FoDScanCompareIssues issues, IFoDScanCompareChanges changes) {}
 }

@@ -89,6 +89,11 @@ public final class FoDAttributionUrlChangeIndex implements IFoDAttributionChange
         return parent.length() <= 1 ? List.of() : findChangedWithPrefix(parent);
     }
 
+    /** @return URL matches of the given kind, ordered by normalized URL */
+    public List<UrlMatch> getMatches(Kind kind) {
+        return byKey.values().stream().filter(m -> m.kind() == kind).toList();
+    }
+
     @Override
     public boolean isLocationChanged(String location) {
         return lookup(location).stream().anyMatch(m -> m.kind() != Kind.UNCHANGED);

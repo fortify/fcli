@@ -21,4 +21,13 @@ import java.util.List;
  */
 public interface IFoDIssueEvidenceMatcher {
     List<FoDIssueEvidence> match(FoDAttributionContext context, FoDAttributionIssue issue);
+
+    /**
+     * @return Whether {@link #match(FoDAttributionContext, FoDAttributionIssue)} needs traces for the given issue, either
+     *         when matching that issue or when matching other issues; used to spend bounded trace lookups on the most
+     *         severe issues first
+     */
+    default boolean isTraceLookupRequired(FoDAttributionContext context, FoDAttributionIssue issue) {
+        return false;
+    }
 }

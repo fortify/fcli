@@ -69,8 +69,10 @@ class FoDAttributionDataflowTest {
                 Map.of("/Src/" + CONTROLLER, "2", "/Src/" + REPOSITORY, "2"));
         var unchanged = index(Map.of("/Src/" + CONTROLLER, "1"), Map.of("/Src/" + CONTROLLER, "1"));
         var matcher = new FoDAttributionDataflowMatcher();
-        var noSource = lookup.add(issue("v1", REPOSITORY, 10, "<None>", FoDAttributionTransition.NEW), trace(CONTROLLER, 1, REPOSITORY, 10));
-        var sinkChanged = lookup.add(issue("v2", REPOSITORY, 10, "f(0)", FoDAttributionTransition.NEW), trace(CONTROLLER, 1, REPOSITORY, 10));
+        var noSource = lookup.add(issue("v1", REPOSITORY, 10, "<None>", FoDAttributionTransition.NEW),
+                trace(CONTROLLER, 1, REPOSITORY, 10));
+        var sinkChanged = lookup.add(issue("v2", REPOSITORY, 10, "f(0)", FoDAttributionTransition.NEW),
+                trace(CONTROLLER, 1, REPOSITORY, 10));
         var noChanges = lookup.add(issue("v3", CONTROLLER, 10, "f(0)", FoDAttributionTransition.NEW), trace(SERVICE, 1, CONTROLLER, 10));
         assertTrue(matcher.match(context(changed, lookup, noSource), noSource).isEmpty());
         assertTrue(matcher.match(context(changed, lookup, sinkChanged), sinkChanged).isEmpty());
@@ -123,6 +125,25 @@ class FoDAttributionDataflowTest {
         assertStatus(newIssue, "INFERRED");
     }
 
+    @Test
+    void traceLookupsAreSpentOnMostSevereIssuesFirst() {
+        var lookup = new StubTraceLookup(3);
+        var index = index(Map.of("/Src/A.java", "1", "/Src/B.java", "1"), Map.of("/Src/A.java", "1", "/Src/B.java", "1"));
+        // Listed highest severity first, as provided by FoDScanCompareIssues::toAttributionIssues
+        var criticalNew = lookup.add(issue("v1", "A.java", 10, "f(0)", FoDAttributionTransition.NEW), trace("A.java", 5, "A.java", 10));
+        var highNew = lookup.add(issue("v2", "B.java", 20, "g(0)", FoDAttributionTransition.NEW), trace("B.java", 5, "B.java", 20));
+        var mediumFixed = lookup.add(issue("v3", "B.java", 20, "g(0)", FoDAttributionTransition.FIXED),
+                trace("B.java", 5, "B.java", 20));
+        var lowFixed = lookup.add(issue("v4", "A.java", 10, "f(0)", FoDAttributionTransition.FIXED), trace("A.java", 5, "A.java", 10));
+        attribute(index, lookup, criticalNew, highNew, mediumFixed, lowFixed);
+        // Without prefetching, the low severity counterpart of the critical issue would have been looked up second
+        assertEquals(List.of("v1", "v2", "v3"), lookup.getLookedUp());
+        assertTrue(lookup.isLimitReached());
+        assertCauses(highNew, "INSTANCE_ID_CORRELATION_ERROR");
+        assertCauses(mediumFixed, "INSTANCE_ID_CORRELATION_ERROR");
+        assertCauses(lowFixed);
+    }
+
     private static FoDAttributionIssue issue(String vulnId, String location, int lineNumber, String source,
             FoDAttributionTransition transition) {
         var node = JsonHelper.getObjectMapper().createObjectNode()
@@ -170,7 +191,18 @@ class FoDAttributionDataflowTest {
 
     private static final class StubTraceLookup implements IFoDIssueTraceLookup {
         private final Map<String, List<FoDIssueTrace>> traces = new HashMap<>();
-        private int count;
+        // Like the actual lookup, results are cached and the number of lookups is limited
+        private final int maxLookups;
+        private final List<String> lookedUp = new ArrayList<>();
+        private boolean limitReached;
+
+        StubTraceLookup() {
+            this(Integer.MAX_VALUE);
+        }
+
+        StubTraceLookup(int maxLookups) {
+            this.maxLookups = maxLookups;
+        }
 
         FoDAttributionIssue add(FoDAttributionIssue issue, FoDIssueTrace... issueTraces) {
             traces.put(issue.getText("vulnId"), List.of(issueTraces));
@@ -179,18 +211,29 @@ class FoDAttributionDataflowTest {
 
         @Override
         public List<FoDIssueTrace> lookup(FoDAttributionIssue issue) {
-            count++;
-            return traces.get(issue.getText("vulnId"));
+            var vulnId = issue.getText("vulnId");
+            if ( !lookedUp.contains(vulnId) ) {
+                if ( lookedUp.size() >= maxLookups ) {
+                    limitReached = true;
+                    return null;
+                }
+                lookedUp.add(vulnId);
+            }
+            return traces.get(vulnId);
+        }
+
+        List<String> getLookedUp() {
+            return lookedUp;
         }
 
         @Override
         public int getLookupCount() {
-            return count;
+            return lookedUp.size();
         }
 
         @Override
         public boolean isLimitReached() {
-            return false;
+            return limitReached;
         }
     }
 }

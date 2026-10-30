@@ -35,7 +35,8 @@ public final class FoDAttributionFileChangeMatcher implements IFoDIssueEvidenceM
         }
         var evidence = matches.size() == 1
                 ? describe(matches.get(0))
-                : String.format("%d files matching issue location %s, for example: %s", matches.size(), location, describe(matches.get(0)));
+                : String.format("%d files matching issue location %s, for example: %s",
+                        matches.size(), location, describe(matches.get(0)));
         return List.of(new FoDIssueEvidence(getCause(kinds.get(0)), evidence));
     }
 
