@@ -1,0 +1,117 @@
+# yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-dev-2.x.json
+
+author: Fortify
+usage:
+  header: (PREVIEW) Run Fortify Agentic Analyzer Scan
+  description: |
+    This action runs a Fortify Agentic Analyzer (FAA) scan on the project source code
+    and imports the results to FoD as a SARIF report.
+    
+    The action automatically downloads the latest SAST scan results for the specified
+    release. FAA uses this context to avoid reporting duplicate issues that were already
+    found by SAST, resulting in higher quality analysis results. If no SAST results are
+    available, FAA runs without SAST context.
+    
+    NOTE: SAST context is taken from the latest SAST scan results available in FoD at the
+    time this action runs. If a more recent SAST scan hasn't completed yet, results from an
+    earlier SAST scan will be used. The fcli 'ci' action waits for SAST scan completion
+    (unless waiting is disabled) before running this action. The imported SARIF results are
+    processed asynchronously by FoD; this action doesn't wait for import completion.
+
+config:
+  output: immediate
+  rest.target.default: fod
+  run.fcli.status.log.default: true
+  run.fcli.status.check.default: true
+  mcp: exclude # FAA is a specialized tool requiring specific setup
+
+cli.options:
+  sourceDir:
+    names: --source-dir, -d
+    description: >-
+      Source directory on which to run Fortify Agentic Analyzer scan.
+      Defaults to environment variable `SOURCE_DIR` if not specified.
+    required: false
+    default: ${#env('SOURCE_DIR')}
+  release:
+    names: --release, --rel
+    description: >-
+      FoD release for which to download SAST results and import FAA scan results.
+      Release must already exist in FoD.
+    required: true
+    default: ${#env('FOD_RELEASE')}
+  faaOutput:
+    names: --output, -o
+    description: >-
+      Output SARIF file path where FAA scan results will be written.
+      Defaults to fortifyaa-scan.sarif in the current working directory.
+    required: false 
+    default: fortifyaa-scan.sarif
+  faaPath:
+    names: --faa-path, -p
+    description: >-
+      Path to a pre-installed Fortify Agentic Analyzer (FAA) installation. 
+      FAA must be pre-installed on the system before running this action; 
+      this action only registers the existing installation with fcli.
+      Defaults to the FAA_HOME environment variable.
+      If not specified and FAA_HOME is not set, the system PATH will be searched.
+    required: false 
+    default: ${#env('FAA_HOME')}
+  extraScanOpts:
+    names: --extra-scan-opts
+    description: >-
+      Extra options to be passed to the 'fortifyaa -scan' command.
+    required: false 
+
+steps:
+  - var.set:
+      # Used for passing extra options from ci action without bothering about escaping
+      extraScanOpts: ${#join(" ", {cli.extraScanOpts, global.faaScan?.extraOpts})}
+      sastFprFile: faa_input_${#action.runID().replace('-','_')}.fpr
+      fprArg: ''
+  
+  # Register FAA with self-test to fail early if FAA is not found or not properly configured
+  - run.fcli:
+      SETUP_TOOLS:
+        cmd: >-
+          fcli tool env init "--tools=fortifyaa${#isNotBlank(cli.faaPath) ? ':' + cli.faaPath : ''}"
+  
+  # Download latest SAST results for the release
+  - run.fcli:
+      DOWNLOAD_LATEST_SAST_FPR:
+        cmd: fcli fod sast-scan download-latest --rel "${cli.release}" -f "${sastFprFile}"
+        status.check: false
+        on.success:
+          - var.set:
+              fprArg: '--fpr "${sastFprFile}"'
+        on.fail:
+          - log.warn:
+              msg: Unable to download latest SAST FPR for release '${cli.release}'; FAA scan will run without SAST context.
+              cause: ${lastException}
+  
+  # Run FAA scan with SAST FPR context if available, otherwise run without SAST context
+  - run.fcli:
+      RUN_FAA_SCAN:
+        cmd: >
+          fcli tool fortifyaa run --
+          -clean
+          -scan "${cli.sourceDir}"
+          ${fprArg}
+          -o "${cli.faaOutput}"
+          ${extraScanOpts}
+        stdout: collect
+        stderr: collect
+        on.success:
+          - out.write:
+              stdout: ${RUN_FAA_SCAN.stdout}
+              stderr: ${RUN_FAA_SCAN.stderr}
+        on.fail:
+          - out.write:
+              stdout: ${RUN_FAA_SCAN.stdout}
+              stderr: ${RUN_FAA_SCAN.stderr}
+          - throw: FAA Scan failed with errors.
+      IMPORT_SARIF:
+        cmd: >
+          fcli fod sast-scan import-sarif 
+          --rel "${cli.release}"
+          -f "${cli.faaOutput}"

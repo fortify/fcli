@@ -215,7 +215,7 @@ formatters:
               \n* Debug logging for Scancentral Client is disabled; pass --debug on the fcli invocation to enable debug logging.
       - title: Scan Execution
         overview: >-
-          Configure SAST scan execution and waiting behavior for ${productNames.fod}.
+          Configure SAST, FAA scan execution and waiting behavior for ${productNames.fod}.
         vars:
           - names: DO_SAST_SCAN\nSAST_SCAN_EXTRA_OPTS
             desc: >-
@@ -230,6 +230,20 @@ formatters:
               `false` to just kick off any configured scans without waiting for completion. Note that doing so
               will skip any post-scan tasks. The `SAST_WAIT_EXTRA_OPTS` environment variable can be used to pass
               extra options to the fcliCmd:fcli fod sast-scan wait-for: command.
+          - names: DO_FAA_SCAN\nFAA_HOME\nFAA_SCAN_EXTRA_OPTS
+            desc: >-
+              The fcli `ci` action supports running a Fortify Agentic Analyzer (FAA) scan, which is disabled by default.
+              Set `DO_FAA_SCAN` to `true` to enable the FAA scan, which is run through the fcli-provided actionRef:_:faa-scan
+              action. FAA must be pre-installed;
+              the FAA installation is taken from `FAA_HOME` if set, otherwise FAA is looked up in the system `PATH`.
+              \n\nThe latest available SAST scan results for the release are downloaded and passed to FAA for context-aware
+              analysis, allowing FAA to avoid reporting issues already found by SAST. As the `ci` action runs the FAA scan
+              after waiting for SAST scan completion (unless waiting is disabled), this usually includes the results from
+              the SAST scan started by the current pipeline. If no SAST results are available, FAA runs without SAST context.
+              FAA results are imported into ${productNames.fod} as a SARIF report; the `ci` action doesn't wait for this import
+              to be processed.
+              \n\nThe `FAA_SCAN_EXTRA_OPTS` environment variable can be used to pass extra options to the FAA scan action;
+              to pass extra options to the FAA scanner itself, use `FAA_SCAN_EXTRA_OPTS=--extra-scan-opts="<options>"`.
       - title: Post-Scan Actions
         overview: >
           Configure post-scan tasks including release summaries, policy checks, pull request comments, and
@@ -353,7 +367,7 @@ formatters:
               \n* Debug logging for Scancentral Client is disabled; pass --debug on the fcli invocation to enable debug logging.
       - title: Scan Execution
         overview: >-
-          Configure SAST, DAST, and Debricked scan execution and waiting behavior for ${productNames.ssc}.
+          Configure SAST, DAST, Fortify Agentic Analyzer (FAA) and Debricked scan execution and waiting behavior for ${productNames.ssc}.
         vars:
           - names: DO_SAST_SCAN\nSAST_SCAN_EXTRA_OPTS
             desc: >-
@@ -377,7 +391,21 @@ formatters:
               use a custom scan name instead. The `DAST_SCAN_EXTRA_OPTS` environment variable can be used
               to provide additional options to the fcliCmd:fcli sc-dast scan start: command. Note that these
               environment variables only control the submission of the scan request; see the information below
-              for details on waiting for the scan to complete.
+              for details on waiting for the scan to complete. 
+          - names: DO_FAA_SCAN\nFAA_HOME\nFAA_SCAN_EXTRA_OPTS
+            desc: >-
+              The fcli `ci` action supports running a Fortify Agentic Analyzer (FAA) scan, which is disabled by default.
+              Set `DO_FAA_SCAN` to `true` to enable the FAA scan, which is run through the fcli-provided actionRef:_:faa-scan
+              action. FAA must be pre-installed;
+              the FAA installation is taken from `FAA_HOME` if set, otherwise FAA is looked up in the system `PATH`.
+              \n\nThe latest SAST scan results that have been fully processed by ${productNames.ssc} are downloaded and passed
+              to FAA for context-aware analysis, allowing FAA to avoid reporting issues already found by SAST. Note that if the
+              SAST scan started by the current pipeline hasn't been fully processed yet (for example because waiting is disabled
+              or the SAST scan failed), results from an earlier SAST scan will be used. If no processed SAST results are
+              available, FAA runs without SAST context. FAA results are uploaded to ${productNames.ssc} as a SARIF report,
+              and the FAA scan action waits for the uploaded report to be processed unless waiting is disabled through `DO_WAIT`.
+              \n\nThe `FAA_SCAN_EXTRA_OPTS` environment variable can be used to pass extra options to the FAA scan action;
+              to pass extra options to the FAA scanner itself, use `FAA_SCAN_EXTRA_OPTS=--extra-scan-opts="<options>"`.
           - names: DO_DEBRICKED_SCAN\nDEBRICKED_SCAN_EXTRA_OPTS\nDEBRICKED_ACCESS_TOKEN\nDEBRICKED_VERSION\nDEBRICKED_HOME
             desc: >-
               The fcli `ci` action supports running a Debricked Software Composition Analysis (SCA) scan, which
@@ -400,7 +428,8 @@ formatters:
               extra options to the fcliCmd:fcli sc-sast scan wait-for: command, and similarly, the `DAST_WAIT_EXTRA_OPTS`
               environment variable can be used to pass extra options to the fcliCmd:fcli sc-dast scan wait-for: command,
               and the `DEBRICKED_WAIT_EXTRA_OPTS` environment variable can be used to pass extra options to the
-              fcliCmd:fcli ssc artifact wait-for: command.\n\nUnlike other scan types, waiting for DAST scans is disabled
+              fcliCmd:fcli ssc artifact wait-for: command. Waiting for processing of uploaded FAA results is handled
+              by the FAA scan action itself.\n\nUnlike other scan types, waiting for DAST scans is disabled
               by default (as DAST scans are often long-running and only run on demand); set `DO_DAST_WAIT` to `true` to
               wait for DAST scan completion.\n\nDAST scans can take considerably longer than SAST scans, potentially
               exceeding CI/CD job time limits (for example on GitHub Actions or GitLab CI); if the default wait timeout
