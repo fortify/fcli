@@ -45,7 +45,6 @@ import com.fortify.cli.fod._common.scan.helper.compare.attribution.FoDAttributio
 import com.fortify.cli.fod._common.scan.helper.compare.attribution.FoDAttributionMetric;
 import com.fortify.cli.fod._common.scan.helper.compare.attribution.FoDAttributionMetricDetector;
 import com.fortify.cli.fod._common.scan.helper.compare.attribution.FoDAttributionMetricDetector.MetricRule;
-import com.fortify.cli.fod._common.scan.helper.compare.attribution.FoDAttributionPairedLocationMatcher;
 import com.fortify.cli.fod._common.scan.helper.compare.attribution.FoDAttributionRankedSettingDetector;
 import com.fortify.cli.fod._common.scan.helper.compare.attribution.FoDAttributionTargetHostMatcher;
 import com.fortify.cli.fod._common.scan.helper.compare.attribution.FoDAttributionTimeboxDetector;
@@ -146,8 +145,7 @@ public final class FoDScanCompareDastSupport implements IFoDScanCompareSupport {
     public List<IFoDIssueEvidenceMatcher> getIssueMatchers() {
         return List.of(
                 new FoDAttributionTargetHostMatcher(DETAILS + "dynamicSiteURL"),
-                new FoDAttributionUrlChangeMatcher(),
-                new FoDAttributionPairedLocationMatcher());
+                new FoDAttributionUrlChangeMatcher());
     }
 
     @Override
@@ -170,14 +168,32 @@ public final class FoDScanCompareDastSupport implements IFoDScanCompareSupport {
             result.put("siteTreeComparisonSkipped", skipReason != null);
             result.put("siteTreeComparisonSkippedReason", skipReason);
             addSiteTreeStatistics(result, previousStatistics, currentStatistics);
-            if ( previousUrls != null && currentUrls != null ) {
-                addUrlDeltas(result, previousUrls, currentUrls, maxUrlChanges, includeChange);
-            }
+            var deltas = getUrlDeltas();
+            if ( deltas != null ) { deltas.addTo(result, maxUrlChanges, includeChange); }
         }
 
         @Override
         public IFoDAttributionChangeIndex getChangeIndex() {
             return index;
+        }
+
+        @Override
+        public String getSkipReason() {
+            return skipReason;
+        }
+
+        @Override
+        public List<FoDScanCompareChangeSet> getChangeSets() {
+            var deltas = getUrlDeltas();
+            if ( deltas == null ) { return List.of(); }
+            return List.of(
+                    new FoDScanCompareChangeSet("URL", deltas.added().stream().map(SiteTreeUrl::url).toList()),
+                    new FoDScanCompareChangeSet("URL", deltas.changed().stream().map(c -> c.current().url()).toList()),
+                    new FoDScanCompareChangeSet("URL", deltas.removed().stream().map(SiteTreeUrl::url).toList()));
+        }
+
+        private UrlDeltas getUrlDeltas() {
+            return previousUrls == null || currentUrls == null ? null : UrlDeltas.of(previousUrls, currentUrls);
         }
 
         @Override
@@ -271,22 +287,31 @@ public final class FoDScanCompareDastSupport implements IFoDScanCompareSupport {
         return entries.stream().mapToLong(e -> getLong(e, "statusCode")).filter(s -> s >= min && s <= max).count();
     }
 
-    private static void addUrlDeltas(ObjectNode result, Map<String, SiteTreeUrl> previous, Map<String, SiteTreeUrl> current,
-            int maxUrlChanges, Predicate<String> includeChange) {
-        var added = new FoDScanCompareLimitedList<SiteTreeUrl>(maxUrlChanges, URL_ORDER);
-        var removed = new FoDScanCompareLimitedList<SiteTreeUrl>(maxUrlChanges, URL_ORDER);
-        var changed = new FoDScanCompareLimitedList<UrlChange>(maxUrlChanges, Comparator.comparing(c -> c.current().url()));
-        current.values().stream().filter(u -> !previous.containsKey(u.url())).forEach(u -> added.add(u, includeChange.test(u.url())));
-        previous.values().stream().filter(u -> !current.containsKey(u.url())).forEach(u -> removed.add(u, includeChange.test(u.url())));
-        current.values().stream().filter(u -> previous.containsKey(u.url())).forEach(u -> {
-            var p = previous.get(u.url());
-            if ( !p.methods().equals(u.methods()) || !p.statusCodes().equals(u.statusCodes()) ) {
-                changed.add(new UrlChange(p, u), includeChange.test(u.url()));
-            }
-        });
-        added.addTo(result, "addedUrl", FoDScanCompareDastSupport::toJson);
-        removed.addTo(result, "removedUrl", FoDScanCompareDastSupport::toJson);
-        changed.addTo(result, "changedUrl", UrlChange::toJson);
+    /** Site tree URLs that were added, removed, or that have changed HTTP methods or status codes */
+    private record UrlDeltas(List<SiteTreeUrl> added, List<SiteTreeUrl> removed, List<UrlChange> changed) {
+        static UrlDeltas of(Map<String, SiteTreeUrl> previous, Map<String, SiteTreeUrl> current) {
+            var added = current.values().stream().filter(u -> !previous.containsKey(u.url())).toList();
+            var removed = previous.values().stream().filter(u -> !current.containsKey(u.url())).toList();
+            var changed = current.values().stream()
+                    .filter(u -> previous.containsKey(u.url()))
+                    .map(u -> new UrlChange(previous.get(u.url()), u))
+                    .filter(c -> !c.previous().methods().equals(c.current().methods())
+                            || !c.previous().statusCodes().equals(c.current().statusCodes()))
+                    .toList();
+            return new UrlDeltas(added, removed, changed);
+        }
+
+        void addTo(ObjectNode result, int maxUrlChanges, Predicate<String> includeChange) {
+            var addedList = new FoDScanCompareLimitedList<SiteTreeUrl>(maxUrlChanges, URL_ORDER);
+            var removedList = new FoDScanCompareLimitedList<SiteTreeUrl>(maxUrlChanges, URL_ORDER);
+            var changedList = new FoDScanCompareLimitedList<UrlChange>(maxUrlChanges, Comparator.comparing(c -> c.current().url()));
+            added.forEach(u -> addedList.add(u, includeChange.test(u.url())));
+            removed.forEach(u -> removedList.add(u, includeChange.test(u.url())));
+            changed.forEach(c -> changedList.add(c, includeChange.test(c.current().url())));
+            addedList.addTo(result, "addedUrl", FoDScanCompareDastSupport::toJson);
+            removedList.addTo(result, "removedUrl", FoDScanCompareDastSupport::toJson);
+            changedList.addTo(result, "changedUrl", UrlChange::toJson);
+        }
     }
 
     private record UrlChange(SiteTreeUrl previous, SiteTreeUrl current) {

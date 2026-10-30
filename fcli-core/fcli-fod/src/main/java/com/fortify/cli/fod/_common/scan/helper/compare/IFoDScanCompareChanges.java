@@ -12,6 +12,7 @@
  */
 package com.fortify.cli.fod._common.scan.helper.compare;
 
+import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
 
@@ -29,8 +30,14 @@ public interface IFoDScanCompareChanges {
      */
     void addTo(ObjectNode result, Predicate<String> includeChange);
 
-    /** @return Change index for issue attribution, or null if changes couldn't be determined */
+    /** @return Index of scan type-specific changes for issue attribution, or null if changes couldn't be determined */
     IFoDAttributionChangeIndex getChangeIndex();
+
+    /** @return Reason why scan type-specific changes couldn't be determined, or null if changes were determined */
+    String getSkipReason();
+
+    /** @return Scan type-specific changes, like added, changed and removed files; empty if changes couldn't be determined */
+    List<FoDScanCompareChangeSet> getChangeSets();
 
     /** @return Additional metrics for issue attribution, like site tree statistics */
     Map<String, FoDAttributionMetric> getMetrics();

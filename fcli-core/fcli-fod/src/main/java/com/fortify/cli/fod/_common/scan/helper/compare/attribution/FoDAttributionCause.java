@@ -20,8 +20,6 @@ import static com.fortify.cli.fod._common.scan.helper.compare.attribution.FoDAtt
 
 import com.fortify.cli.fod._common.scan.helper.compare.attribution.FoDAttributionEffects.Table;
 
-import lombok.Getter;
-
 /**
  * Catalog of attribution causes. Each cause declares which issue status transitions it can explain,
  * and with which basis, depending on the direction of the change. Issue-level evidence is always
@@ -49,8 +47,6 @@ public enum FoDAttributionCause {
     URL_STATUS_CHANGED(Table.any(all(DIRECT))),
     URL_CHANGED(Table.any(all(POSSIBLE))),
     RELATED_URL_CHANGED(Table.any(all(POSSIBLE))),
-    // Issue-level, any scan type
-    PAIRED_AT_UNCHANGED_LOCATION(Table.any(all(POSSIBLE)), true),
     // Scan-level, SAST
     PACKAGING_CHANGE(Table.directional()),
     MASS_RELOCATION(Table.any(none().newIssues(INFERRED).fixed(INFERRED))),
@@ -61,22 +57,15 @@ public enum FoDAttributionCause {
     TARGET_CHANGE(Table.any(none().newIssues(DIRECT).reopened(INFERRED).fixed(DIRECT))),
     SCOPE_CHANGE(Table.directional()),
     AUTH_CONFIG_CHANGE(Table.directional()),
-    COVERAGE_CHANGE(Table.recovery()),
-    AVAILABILITY_CHANGE(Table.recovery()),
-    AUTHENTICATION_CHANGE(Table.recovery()),
+    COVERAGE_CHANGE(Table.directional()),
+    AVAILABILITY_CHANGE(Table.directional()),
+    AUTHENTICATION_CHANGE(Table.directional()),
     TIMEBOX_CHANGE(Table.weakDirectional());
 
     private final Table effects;
-    /** Whether this cause renders an issue indeterminate, independent of any other attributions */
-    @Getter private final boolean forcesIndeterminate;
 
     FoDAttributionCause(Table effects) {
-        this(effects, false);
-    }
-
-    FoDAttributionCause(Table effects, boolean forcesIndeterminate) {
         this.effects = effects;
-        this.forcesIndeterminate = forcesIndeterminate;
     }
 
     public FoDAttributionEffects getEffects(FoDAttributionDirection direction) {

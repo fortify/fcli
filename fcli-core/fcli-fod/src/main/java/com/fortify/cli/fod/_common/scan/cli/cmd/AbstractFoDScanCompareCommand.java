@@ -20,6 +20,7 @@ import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.fod._common.cli.mixin.FoDDelimiterMixin;
 import com.fortify.cli.fod._common.output.cli.cmd.AbstractFoDJsonNodeOutputCommand;
 import com.fortify.cli.fod._common.scan.helper.compare.FoDScanCompareHelper;
+import com.fortify.cli.fod._common.scan.helper.compare.FoDScanCompareSummary;
 import com.fortify.cli.fod._common.scan.helper.compare.IFoDScanCompareSupport;
 import com.fortify.cli.fod._common.scan.helper.compare.attribution.FoDAttributionResult;
 import com.fortify.cli.fod.release.cli.mixin.FoDReleaseByQualifiedNameOrIdResolverMixin;
@@ -55,6 +56,8 @@ public abstract class AbstractFoDScanCompareCommand extends AbstractFoDJsonNodeO
         var attributionResult = !attribution ? null : FoDScanCompareHelper.attributeIssues(
                 unirest, releaseId, pair, compareSupport, issues, changes, changeThresholdPercent);
         var result = FoDScanCompareHelper.createResult(release, pair);
+        var changedSettings = FoDScanCompareHelper.getChangedSettingNames(pair, compareSupport.getSettingFields());
+        result.put("summary", new FoDScanCompareSummary(issues, changedSettings, changes, attributionResult).getText());
         issues.addTo(result, maxIssues);
         FoDScanCompareHelper.addSettingChanges(result, pair, compareSupport.getSettingFields());
         FoDScanCompareHelper.addStatistics(result, pair, compareSupport.getStatisticFields());

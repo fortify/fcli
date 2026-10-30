@@ -36,6 +36,7 @@ import com.fortify.cli.fod._common.scan.helper.FoDScanType;
 import com.fortify.cli.fod._common.scan.helper.compare.attribution.FoDAttributionCause;
 import com.fortify.cli.fod._common.scan.helper.compare.attribution.FoDAttributionChangedSettingDetector;
 import com.fortify.cli.fod._common.scan.helper.compare.attribution.FoDAttributionChangedSettingDetector.Setting;
+import com.fortify.cli.fod._common.scan.helper.compare.attribution.FoDAttributionCorrelationErrorMatcher;
 import com.fortify.cli.fod._common.scan.helper.compare.attribution.FoDAttributionDataflowMatcher;
 import com.fortify.cli.fod._common.scan.helper.compare.attribution.FoDAttributionFileChangeIndex;
 import com.fortify.cli.fod._common.scan.helper.compare.attribution.FoDAttributionFileChangeMatcher;
@@ -43,7 +44,6 @@ import com.fortify.cli.fod._common.scan.helper.compare.attribution.FoDAttributio
 import com.fortify.cli.fod._common.scan.helper.compare.attribution.FoDAttributionMetric;
 import com.fortify.cli.fod._common.scan.helper.compare.attribution.FoDAttributionMetricDetector;
 import com.fortify.cli.fod._common.scan.helper.compare.attribution.FoDAttributionMetricDetector.MetricRule;
-import com.fortify.cli.fod._common.scan.helper.compare.attribution.FoDAttributionPairedLocationMatcher;
 import com.fortify.cli.fod._common.scan.helper.compare.attribution.FoDAttributionRankedSettingDetector;
 import com.fortify.cli.fod._common.scan.helper.compare.attribution.IFoDAttributionChangeIndex;
 import com.fortify.cli.fod._common.scan.helper.compare.attribution.IFoDIssueEvidenceMatcher;
@@ -136,7 +136,7 @@ public final class FoDScanCompareSastSupport implements IFoDScanCompareSupport {
     @Override
     public List<IFoDIssueEvidenceMatcher> getIssueMatchers() {
         return List.of(new FoDAttributionFileChangeMatcher(), new FoDAttributionDataflowMatcher(),
-                new FoDAttributionPairedLocationMatcher(true));
+                new FoDAttributionCorrelationErrorMatcher());
     }
 
     @Override
@@ -167,6 +167,20 @@ public final class FoDScanCompareSastSupport implements IFoDScanCompareSupport {
         @Override
         public IFoDAttributionChangeIndex getChangeIndex() {
             return index;
+        }
+
+        @Override
+        public String getSkipReason() {
+            return skipReason;
+        }
+
+        @Override
+        public List<FoDScanCompareChangeSet> getChangeSets() {
+            if ( index == null ) { return List.of(); }
+            return List.of(
+                    new FoDScanCompareChangeSet("file", index.getAddedPaths()),
+                    new FoDScanCompareChangeSet("file", index.getChangedPaths()),
+                    new FoDScanCompareChangeSet("file", index.getRemovedPaths()));
         }
 
         @Override

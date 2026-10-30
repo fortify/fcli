@@ -204,15 +204,23 @@ public final class FoDScanCompareHelper {
     /** Add changed scan settings as 'settingChanges', together with 'settingChangeCount' */
     public static void addSettingChanges(ObjectNode result, FoDScanComparePair pair, List<FoDScanCompareField> fields) {
         var changes = JsonHelper.getObjectMapper().createArrayNode();
-        for ( var field : fields ) {
-            var previousValue = getValue(pair.previous(), field.jsonPointer());
-            var currentValue = getValue(pair.target(), field.jsonPointer());
-            if ( !previousValue.equals(currentValue) ) {
-                addPreviousAndCurrent(changes, field.name(), previousValue, currentValue);
-            }
+        for ( var field : getChangedSettings(pair, fields) ) {
+            addPreviousAndCurrent(changes, field.name(),
+                    getValue(pair.previous(), field.jsonPointer()), getValue(pair.target(), field.jsonPointer()));
         }
         result.put("settingChangeCount", changes.size());
         result.set("settingChanges", changes);
+    }
+
+    /** @return Names of scan settings that differ between both scans */
+    public static List<String> getChangedSettingNames(FoDScanComparePair pair, List<FoDScanCompareField> fields) {
+        return getChangedSettings(pair, fields).stream().map(FoDScanCompareField::name).toList();
+    }
+
+    private static List<FoDScanCompareField> getChangedSettings(FoDScanComparePair pair, List<FoDScanCompareField> fields) {
+        return fields.stream()
+                .filter(f -> !getValue(pair.previous(), f.jsonPointer()).equals(getValue(pair.target(), f.jsonPointer())))
+                .toList();
     }
 
     /** Add previous and current values for all given scan statistics as 'scanStatistics' */

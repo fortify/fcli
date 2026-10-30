@@ -33,7 +33,7 @@ class FoDAttributionEngineTest {
         attribute(List.of(analyzer), List.of(), newIssue, reopened);
         assertStatus(newIssue, "INFERRED");
         assertEquals("SCAN", attributions(newIssue).get(0).get("scope").asText());
-        assertStatus(reopened, "UNATTRIBUTED");
+        assertStatus(reopened, "INDETERMINATE");
     }
 
     @Test
@@ -43,17 +43,38 @@ class FoDAttributionEngineTest {
         var newIssue = issue("B.java", "XSS", FoDAttributionTransition.NEW);
         attribute(List.of(narrowed), List.of(), fixed, newIssue);
         assertStatus(fixed, "INFERRED");
-        assertStatus(newIssue, "UNATTRIBUTED");
+        assertStatus(newIssue, "INDETERMINATE");
     }
 
     @Test
-    void recoveryExplainsReopenedButOnlyPossiblyNewIssues() {
+    void directionalConditionsWithUnknownDirectionExplainAnyTransition() {
+        var changed = condition(FoDAttributionCause.SCAN_POLICY_CHANGE, FoDAttributionDirection.CHANGED);
+        var fixed = issue("A.java", "XSS", FoDAttributionTransition.FIXED);
+        var newIssue = issue("B.java", "XSS", FoDAttributionTransition.NEW);
+        var reopened = issue("C.java", "XSS", FoDAttributionTransition.REOPENED);
+        attribute(List.of(changed), List.of(), fixed, newIssue, reopened);
+        assertStatus(fixed, "INFERRED");
+        assertStatus(newIssue, "INFERRED");
+        assertStatus(reopened, "INFERRED");
+    }
+
+    @Test
+    void recoveryExplainsReopenedAndNewIssues() {
         var recovered = condition(FoDAttributionCause.COVERAGE_CHANGE, FoDAttributionDirection.INCREASE);
         var reopened = issue("/a", "XSS", FoDAttributionTransition.REOPENED);
         var newIssue = issue("/b", "XSS", FoDAttributionTransition.NEW);
         attribute(List.of(recovered), List.of(), reopened, newIssue);
         assertStatus(reopened, "INFERRED");
-        assertStatus(newIssue, "INDETERMINATE");
+        assertStatus(newIssue, "INFERRED");
+    }
+
+    @Test
+    void timeboxConditionsOnlyPossiblyExplainTransitions() {
+        var timebox = condition(FoDAttributionCause.TIMEBOX_CHANGE, FoDAttributionDirection.DECREASE);
+        var fixed = issue("/a", "XSS", FoDAttributionTransition.FIXED);
+        attribute(List.of(timebox), List.of(), fixed);
+        assertStatus(fixed, "INDETERMINATE");
+        assertEquals("TIMEBOX_CHANGE", attributions(fixed).get(0).get("cause").asText());
     }
 
     @Test
@@ -79,7 +100,7 @@ class FoDAttributionEngineTest {
         IFoDIssueEvidenceMatcher fileRemoved = (c, i) -> List.of(new FoDIssueEvidence(FoDAttributionCause.FILE_REMOVED, "removed"));
         var newIssue = issue("A.java", "XSS", FoDAttributionTransition.NEW);
         attribute(List.of(), List.of(fileRemoved), newIssue);
-        assertStatus(newIssue, "UNATTRIBUTED");
+        assertStatus(newIssue, "INDETERMINATE");
     }
 
     @Test
@@ -91,27 +112,25 @@ class FoDAttributionEngineTest {
     }
 
     @Test
-    void pairedAtUnchangedLocationForcesIndeterminate() {
+    void pairedAtUnchangedLocationWithoutCorrelationErrorHasNoIssueEvidence() {
         var analyzer = condition(FoDAttributionCause.ANALYZER_CHANGE, FoDAttributionDirection.ANY);
         var fixed = issue("Index.cshtml", "XSS", FoDAttributionTransition.FIXED);
         var newIssue = issue("Index.cshtml", "XSS", FoDAttributionTransition.NEW);
-        var other = issue("Other.cshtml", "XSS", FoDAttributionTransition.NEW);
-        attribute(List.of(analyzer), List.of(new FoDAttributionPairedLocationMatcher()), fixed, newIssue, other);
-        assertStatus(fixed, "INDETERMINATE");
-        assertStatus(newIssue, "INDETERMINATE");
-        assertEquals(2, attributions(fixed).size());
-        assertStatus(other, "INFERRED");
+        attribute(List.of(analyzer), List.of(new FoDAttributionCorrelationErrorMatcher()), fixed, newIssue);
+        assertStatus(fixed, "INFERRED");
+        assertStatus(newIssue, "INFERRED");
+        assertEquals(1, attributions(fixed).size());
     }
 
     @Test
-    void pairedAtChangedLocationIsNotIndeterminate() {
+    void pairedAtChangedLocationIsDirect() {
         var index = new FoDAttributionFileChangeIndex(Map.of("/Src/Index.cshtml", "100"), Map.of("/Src/Index.cshtml", "120"));
         var fixed = issue("Index.cshtml", "XSS", FoDAttributionTransition.FIXED);
         var newIssue = issue("Index.cshtml", "XSS", FoDAttributionTransition.NEW);
         var context = FoDAttributionContext.builder().changeThresholdPercent(10).changeIndex(index)
                 .issues(List.of(fixed, newIssue)).build();
         new FoDAttributionEngine(List.of(),
-                List.of(new FoDAttributionFileChangeMatcher(), new FoDAttributionPairedLocationMatcher())).attribute(context);
+                List.of(new FoDAttributionFileChangeMatcher(), new FoDAttributionCorrelationErrorMatcher())).attribute(context);
         assertStatus(fixed, "DIRECT");
         assertStatus(newIssue, "DIRECT");
     }

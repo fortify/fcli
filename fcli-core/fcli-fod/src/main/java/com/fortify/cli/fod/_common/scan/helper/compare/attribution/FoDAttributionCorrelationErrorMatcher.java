@@ -25,30 +25,13 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 
 /**
- * Handles issues with the same category that were both fixed and newly found or reopened at the same, unchanged
- * location. If any files on the issue dataflow were changed, these changes take precedence and are reported by
- * {@link FoDAttributionDataflowMatcher}. Otherwise, if correlation error detection is enabled and a fixed issue has
- * the same sink and dataflow source (file and line) as a new or reopened issue, the status change is attributed to
- * an issue instance ID correlation error, as differences in interim dataflow steps shouldn't result in new issue
- * instances. Otherwise, the issue is rendered indeterminate, as the status change may be caused by changes elsewhere
- * in the data flow, or by issue correlation; neither can be determined from the available data.
+ * Detects issue instance ID correlation errors: issues with the same category that were both fixed and newly found or
+ * reopened at the same, unchanged location, where a fixed issue has the same sink and dataflow source (file and line)
+ * as a new or reopened issue, as differences in interim dataflow steps shouldn't result in new issue instances. If any
+ * files on the issue dataflow were changed, these changes take precedence and are reported by
+ * {@link FoDAttributionDataflowMatcher}. Only applicable to SAST issues.
  */
-public final class FoDAttributionPairedLocationMatcher implements IFoDIssueEvidenceMatcher {
-    private final boolean detectCorrelationErrors;
-
-    /** Create a matcher that doesn't detect issue instance ID correlation errors */
-    public FoDAttributionPairedLocationMatcher() {
-        this(false);
-    }
-
-    /**
-     * @param detectCorrelationErrors Whether to detect issue instance ID correlation errors based on sink line numbers
-     *        and, for dataflow issues, dataflow sources from issue traces; only applicable to SAST issues
-     */
-    public FoDAttributionPairedLocationMatcher(boolean detectCorrelationErrors) {
-        this.detectCorrelationErrors = detectCorrelationErrors;
-    }
-
+public final class FoDAttributionCorrelationErrorMatcher implements IFoDIssueEvidenceMatcher {
     @Override
     public List<FoDIssueEvidence> match(FoDAttributionContext context, FoDAttributionIssue issue) {
         var location = getLocationKey(issue.getLocation());
@@ -60,11 +43,8 @@ public final class FoDAttributionPairedLocationMatcher implements IFoDIssueEvide
         var changeIndex = context.getChangeIndex();
         if ( changeIndex != null && changeIndex.isLocationChanged(issue.getLocation()) ) { return List.of(); }
         if ( !FoDAttributionDataflowMatcher.getChangedTraceFiles(context, issue).isEmpty() ) { return List.of(); }
-        var correlationError = detectCorrelationErrors ? getCorrelationError(context, issue, counterparts) : null;
-        return List.of(correlationError != null ? correlationError : new FoDIssueEvidence(
-                FoDAttributionCause.PAIRED_AT_UNCHANGED_LOCATION, String.format(
-                "both fixed and new or reopened '%s' issues at location %s, which was not changed",
-                category, issue.getLocation())));
+        var correlationError = getCorrelationError(context, issue, counterparts);
+        return correlationError == null ? List.of() : List.of(correlationError);
     }
 
     private static FoDIssueEvidence getCorrelationError(FoDAttributionContext context, FoDAttributionIssue issue, Group counterparts) {

@@ -95,22 +95,17 @@ class FoDAttributionDataflowTest {
         assertCauses(fixed, "INSTANCE_ID_CORRELATION_ERROR");
         assertStatus(newIssue, "INFERRED");
         assertStatus(other, "INDETERMINATE");
-        assertCauses(other, "PAIRED_AT_UNCHANGED_LOCATION");
+        assertCauses(other);
     }
 
     @Test
-    void nonDataflowPairWithIdenticalSinkIsCorrelationErrorOnlyIfDetectionIsEnabled() {
+    void nonDataflowPairWithIdenticalSinkIsCorrelationError() {
         var fixed = issue("v1", "data.sql", 12, "<None>", FoDAttributionTransition.FIXED);
         var newIssue = issue("v2", "data.sql", 12, "<None>", FoDAttributionTransition.NEW);
         var lookup = new StubTraceLookup();
         attribute(null, lookup, fixed, newIssue);
         assertCauses(fixed, "INSTANCE_ID_CORRELATION_ERROR");
         assertEquals(0, lookup.getLookupCount());
-        var dastFixed = issue("v3", "data.sql", 12, "<None>", FoDAttributionTransition.FIXED);
-        var dastNew = issue("v4", "data.sql", 12, "<None>", FoDAttributionTransition.NEW);
-        new FoDAttributionEngine(List.of(), List.of(new FoDAttributionPairedLocationMatcher()))
-                .attribute(context(null, null, dastFixed, dastNew));
-        assertCauses(dastFixed, "PAIRED_AT_UNCHANGED_LOCATION");
     }
 
     @Test
@@ -156,7 +151,7 @@ class FoDAttributionDataflowTest {
 
     private static void attribute(FoDAttributionFileChangeIndex index, IFoDIssueTraceLookup lookup, FoDAttributionIssue... issues) {
         new FoDAttributionEngine(List.of(), List.of(new FoDAttributionFileChangeMatcher(), new FoDAttributionDataflowMatcher(),
-                new FoDAttributionPairedLocationMatcher(true))).attribute(context(index, lookup, issues));
+                new FoDAttributionCorrelationErrorMatcher())).attribute(context(index, lookup, issues));
     }
 
     private static List<FoDAttributionCause> causes(List<FoDIssueEvidence> evidence) {

@@ -90,25 +90,15 @@ public final class FoDAttributionEffects {
         }
 
         /**
-         * Narrowing explains fixed issues; broadening explains new issues, and reopened issues as
-         * the setting may have been changed back to a broader value used in older scans
+         * Narrowing or degradation explains fixed issues; broadening or recovery from degradation in the previous
+         * scan explains new issues, and reopened issues as the scan may have returned to the broader or better
+         * state of older scans. Changes with unknown direction explain any status change.
          */
         public static Table directional() {
             return new Table(Map.of(
                     FoDAttributionDirection.DECREASE, NONE.fixed(INFERRED),
                     FoDAttributionDirection.INCREASE, NONE.newIssues(INFERRED).reopened(INFERRED),
-                    FoDAttributionDirection.CHANGED, all(POSSIBLE)));
-        }
-
-        /**
-         * Degradation explains fixed issues; recovery from degradation in the previous scan primarily
-         * explains reopened issues, with new issues only possibly being explained
-         */
-        public static Table recovery() {
-            return new Table(Map.of(
-                    FoDAttributionDirection.DECREASE, NONE.fixed(INFERRED),
-                    FoDAttributionDirection.INCREASE, NONE.newIssues(POSSIBLE).reopened(INFERRED),
-                    FoDAttributionDirection.CHANGED, all(POSSIBLE)));
+                    FoDAttributionDirection.CHANGED, all(INFERRED)));
         }
 
         /** Like {@link #directional()}, but only possibly explaining any transition */

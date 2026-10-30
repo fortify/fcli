@@ -37,6 +37,15 @@ public record FoDScanCompareIssues(List<ObjectNode> newIssues, List<ObjectNode> 
         return result;
     }
 
+    /** @return All issues for the given status transition */
+    public List<ObjectNode> getIssues(FoDAttributionTransition transition) {
+        return switch ( transition ) {
+            case NEW -> newIssues;
+            case REOPENED -> reopenedIssues;
+            case FIXED -> fixedIssues;
+        };
+    }
+
     /** Add issue lists, limited to the given maximum number of issues per list, together with counts and truncation flags */
     public void addTo(ObjectNode result, int maxIssues) {
         addList(result, "newIssue", newIssues, maxIssues);

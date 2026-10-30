@@ -14,13 +14,15 @@ package com.fortify.cli.fod._common.scan.helper.compare.attribution;
 
 import java.util.Collection;
 
-/** Overall attribution status of an issue, derived from its attributions */
+/**
+ * Overall attribution status of an issue, derived from its attributions; INDETERMINATE if there are no attributions
+ * or only POSSIBLE attributions
+ */
 public enum FoDAttributionStatus {
-    DIRECT, INFERRED, INDETERMINATE, UNATTRIBUTED;
+    DIRECT, INFERRED, INDETERMINATE;
 
     static FoDAttributionStatus of(Collection<FoDAttribution> attributions) {
-        if ( attributions.isEmpty() ) { return UNATTRIBUTED; }
-        if ( attributions.stream().anyMatch(a -> a.cause().isForcesIndeterminate()) ) { return INDETERMINATE; }
+        if ( attributions.isEmpty() ) { return INDETERMINATE; }
         var strongest = attributions.stream().map(FoDAttribution::basis).min(Enum::compareTo).orElseThrow();
         return switch ( strongest ) {
             case DIRECT -> DIRECT;

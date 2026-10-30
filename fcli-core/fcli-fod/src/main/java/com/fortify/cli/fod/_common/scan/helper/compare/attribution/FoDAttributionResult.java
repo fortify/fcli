@@ -13,6 +13,7 @@
 package com.fortify.cli.fod._common.scan.helper.compare.attribution;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -31,6 +32,15 @@ public final class FoDAttributionResult {
 
     public List<FoDScanCondition> getConditions() {
         return conditions;
+    }
+
+    /** @return Number of issues per cause that determined their attribution status, ordered by descending count */
+    public Map<FoDAttributionCause, Integer> getDriverCauses(FoDAttributionTransition transition) {
+        return summary.getDriverCauses(transition);
+    }
+
+    public int getIndeterminateCount(FoDAttributionTransition transition) {
+        return summary.getStatusCount(transition, FoDAttributionStatus.INDETERMINATE);
     }
 
     /** @return Changes (file paths or URLs as listed in the compare output) referenced by any issue attribution */

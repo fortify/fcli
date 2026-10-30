@@ -14,7 +14,9 @@ package com.fortify.cli.fod._common.scan.helper.compare.attribution;
 
 import java.util.Collection;
 import java.util.EnumMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.stream.Stream;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.json.JsonHelper;
@@ -32,6 +34,7 @@ final class FoDAttributionSummary {
         summary.count++;
         summary.statuses.merge(status, 1, Integer::sum);
         attributions.forEach(a -> summary.causes.merge(a.cause(), 1, Integer::sum));
+        getDrivers(status, attributions).forEach(cause -> summary.driverCauses.merge(cause, 1, Integer::sum));
     }
 
     ObjectNode toJson() {
@@ -40,10 +43,45 @@ final class FoDAttributionSummary {
         return result;
     }
 
+    /**
+     * @return Number of issues per driving cause for the given transition, ordered by descending count. Driving causes
+     *         are the causes that determined each issue's attribution status, like DIRECT attributions for DIRECT issues;
+     *         INDETERMINATE issues don't have any driving causes.
+     */
+    Map<FoDAttributionCause, Integer> getDriverCauses(FoDAttributionTransition transition) {
+        return sortByDescendingCount(summaries.get(transition).driverCauses);
+    }
+
+    int getStatusCount(FoDAttributionTransition transition, FoDAttributionStatus status) {
+        return summaries.get(transition).statuses.getOrDefault(status, 0);
+    }
+
+    // Causes that determined the given status; consistent with FoDAttributionStatus.of()
+    private static Stream<FoDAttributionCause> getDrivers(FoDAttributionStatus status, Collection<FoDAttribution> attributions) {
+        return switch ( status ) {
+            case DIRECT -> causesWithBasis(attributions, FoDAttributionBasis.DIRECT);
+            case INFERRED -> causesWithBasis(attributions, FoDAttributionBasis.INFERRED);
+            case INDETERMINATE -> Stream.empty();
+        };
+    }
+
+    private static Stream<FoDAttributionCause> causesWithBasis(Collection<FoDAttribution> attributions, FoDAttributionBasis basis) {
+        return attributions.stream().filter(a -> a.basis() == basis).map(FoDAttribution::cause);
+    }
+
+    private static Map<FoDAttributionCause, Integer> sortByDescendingCount(Map<FoDAttributionCause, Integer> causes) {
+        var result = new LinkedHashMap<FoDAttributionCause, Integer>();
+        causes.entrySet().stream()
+                .sorted(Map.Entry.<FoDAttributionCause, Integer>comparingByValue().reversed().thenComparing(Map.Entry.comparingByKey()))
+                .forEach(e -> result.put(e.getKey(), e.getValue()));
+        return result;
+    }
+
     private static final class TransitionSummary {
         private int count;
         private final Map<FoDAttributionStatus, Integer> statuses = new EnumMap<>(FoDAttributionStatus.class);
         private final Map<FoDAttributionCause, Integer> causes = new EnumMap<>(FoDAttributionCause.class);
+        private final Map<FoDAttributionCause, Integer> driverCauses = new EnumMap<>(FoDAttributionCause.class);
 
         private ObjectNode toJson() {
             var result = JsonHelper.getObjectMapper().createObjectNode().put("count", count);
