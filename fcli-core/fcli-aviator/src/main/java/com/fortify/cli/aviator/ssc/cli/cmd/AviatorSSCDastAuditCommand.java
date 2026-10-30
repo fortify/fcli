@@ -63,6 +63,8 @@ import picocli.CommandLine.Option;
 @Command(name = "audit-dast")
 public class AviatorSSCDastAuditCommand extends AbstractSSCJsonNodeOutputCommand implements IActionCommandResultSupplier {
     private static final Logger LOG = LoggerFactory.getLogger(AviatorSSCDastAuditCommand.class);
+    // Same overall limit as the SAST audit (IssueAuditor), so large runs are not cut off mid-stream.
+    private static final long AUDIT_TIMEOUT_MINUTES = 500;
 
     @Getter @Mixin private OutputHelperMixins.DetailsNoQuery outputHelper;
     @Mixin private ProgressWriterFactoryMixin progressWriterFactoryMixin;
@@ -139,7 +141,7 @@ public class AviatorSSCDastAuditCommand extends AbstractSSCJsonNodeOutputCommand
                  logger, grpcClient.getDastAuditAsyncStub(), grpcClient.getPingScheduler(),
                  grpcClient.getPingIntervalSeconds());
              var fprHandle = new FprHandle(fprPath)) {
-            long timeout = Math.max(grpcClient.getDefaultTimeoutSeconds(), 300);
+            long timeout = Math.max(grpcClient.getDefaultTimeoutSeconds(), TimeUnit.MINUTES.toSeconds(AUDIT_TIMEOUT_MINUTES));
             return DastAuditFPR.audit(fprHandle, config, tagMappingConfig, (streamConfig, workItems, totalReported) ->
                 streamProcessor.process(streamConfig, workItems, totalReported)
                     .orTimeout(timeout, TimeUnit.SECONDS));

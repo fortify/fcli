@@ -46,6 +46,7 @@ class CorrelationStreamState {
     int totalValidationRequests;
     final AtomicInteger sentValidations = new AtomicInteger(0);
     final AtomicInteger receivedValidations = new AtomicInteger(0);
+    final AtomicInteger failedValidations = new AtomicInteger(0);
 
     // Quota from init response
     volatile long quota = -1;
