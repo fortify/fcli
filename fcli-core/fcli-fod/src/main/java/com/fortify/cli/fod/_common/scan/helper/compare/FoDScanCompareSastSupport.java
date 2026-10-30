@@ -20,6 +20,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Predicate;
+import java.util.function.UnaryOperator;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -31,6 +33,20 @@ import com.fortify.cli.common.exception.FcliTechnicalException;
 import com.fortify.cli.common.rest.unirest.UnexpectedHttpResponseException;
 import com.fortify.cli.fod._common.rest.FoDUrls;
 import com.fortify.cli.fod._common.scan.helper.FoDScanType;
+import com.fortify.cli.fod._common.scan.helper.compare.attribution.FoDAttributionCause;
+import com.fortify.cli.fod._common.scan.helper.compare.attribution.FoDAttributionChangedSettingDetector;
+import com.fortify.cli.fod._common.scan.helper.compare.attribution.FoDAttributionChangedSettingDetector.Setting;
+import com.fortify.cli.fod._common.scan.helper.compare.attribution.FoDAttributionFileChangeIndex;
+import com.fortify.cli.fod._common.scan.helper.compare.attribution.FoDAttributionFileChangeMatcher;
+import com.fortify.cli.fod._common.scan.helper.compare.attribution.FoDAttributionMassRelocationDetector;
+import com.fortify.cli.fod._common.scan.helper.compare.attribution.FoDAttributionMetric;
+import com.fortify.cli.fod._common.scan.helper.compare.attribution.FoDAttributionMetricDetector;
+import com.fortify.cli.fod._common.scan.helper.compare.attribution.FoDAttributionMetricDetector.MetricRule;
+import com.fortify.cli.fod._common.scan.helper.compare.attribution.FoDAttributionPairedLocationMatcher;
+import com.fortify.cli.fod._common.scan.helper.compare.attribution.FoDAttributionRankedSettingDetector;
+import com.fortify.cli.fod._common.scan.helper.compare.attribution.IFoDAttributionChangeIndex;
+import com.fortify.cli.fod._common.scan.helper.compare.attribution.IFoDIssueEvidenceMatcher;
+import com.fortify.cli.fod._common.scan.helper.compare.attribution.IFoDScanConditionDetector;
 
 import kong.unirest.RawResponse;
 import kong.unirest.UnirestInstance;
@@ -90,26 +106,60 @@ public final class FoDScanCompareSastSupport implements IFoDScanCompareSupport {
     }
 
     @Override
-    public void addScanTypeDeltas(UnirestInstance unirest, FoDScanComparePair pair, ObjectNode result) {
+    public IFoDScanCompareChanges loadChanges(UnirestInstance unirest, FoDScanComparePair pair) {
         var current = loadManifest(unirest, pair.targetScanId());
         var previous = loadManifest(unirest, pair.previousScanId());
-        result.put("currentManifestAvailable", current.available());
-        result.put("previousManifestAvailable", previous.available());
         var skipReason = StringUtils.firstNonBlank(
                 getSkipReason(current, pair.targetScanId()), getSkipReason(previous, pair.previousScanId()));
-        result.put("manifestComparisonSkipped", skipReason != null);
-        result.put("manifestComparisonSkippedReason", skipReason);
-        if ( skipReason != null ) { return; }
-        var currentEntries = parseManifest(current.text());
-        var previousEntries = parseManifest(previous.text());
-        var added = currentEntries.keySet().stream().filter(f -> !previousEntries.containsKey(f)).toList();
-        var removed = previousEntries.keySet().stream().filter(f -> !currentEntries.containsKey(f)).toList();
-        var changed = currentEntries.keySet().stream()
-                .filter(f -> previousEntries.containsKey(f) && !previousEntries.get(f).equals(currentEntries.get(f)))
-                .toList();
-        FoDScanCompareHelper.addValueList(result, "addedFile", added, maxFileChanges);
-        FoDScanCompareHelper.addValueList(result, "changedFile", changed, maxFileChanges);
-        FoDScanCompareHelper.addValueList(result, "removedFile", removed, maxFileChanges);
+        if ( skipReason != null ) {
+            return new SastChanges(current.available(), previous.available(), skipReason, null, maxFileChanges);
+        }
+        var index = new FoDAttributionFileChangeIndex(parseManifest(previous.text()), parseManifest(current.text()));
+        return new SastChanges(true, true, null, index, maxFileChanges);
+    }
+
+    @Override
+    public List<IFoDScanConditionDetector> getConditionDetectors() {
+        return List.of(
+                new FoDAttributionMetricDetector(FoDAttributionCause.PACKAGING_CHANGE,
+                        MetricRule.size("fileCount"), MetricRule.size("totalLinesOfCode"), MetricRule.size("payloadSize")),
+                new FoDAttributionMassRelocationDetector(),
+                new FoDAttributionChangedSettingDetector(FoDAttributionCause.ANALYZER_CHANGE, UnaryOperator.identity(),
+                        new Setting("engineVersion", DETAILS + "engineVersion"),
+                        new Setting("rulePackVersion", DETAILS + "rulePackVersion")),
+                // FoD (legacy) is unranked, as its analysis differs from the other policies rather than being a subset
+                new FoDAttributionRankedSettingDetector(FoDAttributionCause.SCAN_POLICY_CHANGE, "scanPolicy", DETAILS + "scanPolicy",
+                        Map.of("security", 2, "devops", 1)));
+    }
+
+    @Override
+    public List<IFoDIssueEvidenceMatcher> getIssueMatchers() {
+        return List.of(new FoDAttributionFileChangeMatcher(), new FoDAttributionPairedLocationMatcher());
+    }
+
+    private record SastChanges(boolean currentAvailable, boolean previousAvailable, String skipReason,
+            FoDAttributionFileChangeIndex index, int maxFileChanges) implements IFoDScanCompareChanges {
+        @Override
+        public void addTo(ObjectNode result, Predicate<String> includeChange) {
+            result.put("currentManifestAvailable", currentAvailable);
+            result.put("previousManifestAvailable", previousAvailable);
+            result.put("manifestComparisonSkipped", skipReason != null);
+            result.put("manifestComparisonSkippedReason", skipReason);
+            if ( index == null ) { return; }
+            FoDScanCompareHelper.addValueList(result, "addedFile", index.getAddedPaths(), maxFileChanges, includeChange);
+            FoDScanCompareHelper.addValueList(result, "changedFile", index.getChangedPaths(), maxFileChanges, includeChange);
+            FoDScanCompareHelper.addValueList(result, "removedFile", index.getRemovedPaths(), maxFileChanges, includeChange);
+        }
+
+        @Override
+        public IFoDAttributionChangeIndex getChangeIndex() {
+            return index;
+        }
+
+        @Override
+        public Map<String, FoDAttributionMetric> getMetrics() {
+            return Map.of();
+        }
     }
 
     private String getSkipReason(ManifestContent manifest, String scanId) {
@@ -159,13 +209,14 @@ public final class FoDScanCompareSastSupport implements IFoDScanCompareSupport {
         static final ManifestContent TOO_LARGE = new ManifestContent(true, null, true, null);
     }
 
-    // Lines look like '"<path>"    <size>    <timestamp>'; maps path to non-timestamp columns to ignore timestamp-only changes
+    // Lines look like '"<path>"    <size>    <timestamp>'; maps path to non-timestamp columns to ignore timestamp-only changes.
+    // Path separators are normalized, as manifests for the same code may use either '/' or '\' depending on packaging OS.
     static Map<String, String> parseManifest(String content) {
         var result = new LinkedHashMap<String, String>();
         if ( content == null ) { return result; }
         content.lines().map(String::trim).filter(StringUtils::isNotBlank).forEach(line -> {
             var matcher = MANIFEST_LINE_PATTERN.matcher(line);
-            var path = matcher.matches() ? matcher.group(1) : line;
+            var path = (matcher.matches() ? matcher.group(1) : line).replace('\\', '/');
             var remainder = matcher.matches() ? matcher.group(2) : "";
             var fingerprint = Arrays.stream(remainder.split("\\s+"))
                     .filter(c -> !TIMESTAMP_COLUMN_PATTERN.matcher(c).matches())

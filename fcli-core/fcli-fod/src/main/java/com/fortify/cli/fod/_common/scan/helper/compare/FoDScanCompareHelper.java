@@ -15,11 +15,12 @@ package com.fortify.cli.fod._common.scan.helper.compare;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
-import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.IntStream;
 
 import org.apache.commons.lang3.StringUtils;
@@ -37,6 +38,10 @@ import com.fortify.cli.fod._common.rest.FoDUrls;
 import com.fortify.cli.fod._common.rest.helper.FoDPagingHelper;
 import com.fortify.cli.fod._common.scan.helper.FoDScanHelper;
 import com.fortify.cli.fod._common.scan.helper.FoDScanStatus;
+import com.fortify.cli.fod._common.scan.helper.compare.attribution.FoDAttributionContext;
+import com.fortify.cli.fod._common.scan.helper.compare.attribution.FoDAttributionEngine;
+import com.fortify.cli.fod._common.scan.helper.compare.attribution.FoDAttributionMetric;
+import com.fortify.cli.fod._common.scan.helper.compare.attribution.FoDAttributionResult;
 import com.fortify.cli.fod.issue.helper.FoDIssueHelper;
 import com.fortify.cli.fod.release.helper.FoDReleaseDescriptor;
 
@@ -46,9 +51,9 @@ import kong.unirest.UnirestInstance;
 public final class FoDScanCompareHelper {
     static final long BYTES_PER_MB = 1024L * 1024L;
     private static final String ISSUE_FIELDS = "id,vulnId,instanceId,severity,severityString,category,"
-            + "primaryLocation,lineNumber,status,scanId,closedStatus,introducedDate";
+            + "primaryLocation,primaryLocationFull,lineNumber,status,scanId,closedStatus,introducedDate";
     // Highest severity first; category and id provide a stable order for truncated lists
-    private static final Comparator<JsonNode> ISSUE_ORDER = Comparator
+    static final Comparator<JsonNode> ISSUE_ORDER = Comparator
             .comparingInt((JsonNode i) -> i.path("severity").asInt()).reversed()
             .thenComparing(i -> StringUtils.defaultString(getText(i, "category")))
             .thenComparing(i -> StringUtils.defaultString(getText(i, "id")));
@@ -136,11 +141,16 @@ public final class FoDScanCompareHelper {
                 .put("previousScanCompletedDateTime", getText(previous, "completedDateTime"));
     }
 
-    public static void addIssueDeltas(UnirestInstance unirest, String releaseId, String scanTypeName,
-            FoDScanComparePair pair, int maxIssues, ObjectNode result) {
+    /**
+     * Load all new and reopened issues found in the target scan, and all issues that were found in the previous
+     * scan but fixed in the target scan. All issues are retained, such that issue attribution and attribution
+     * summaries cover all issues; issue lists are only limited when adding them to the compare result.
+     */
+    public static FoDScanCompareIssues loadIssues(UnirestInstance unirest, String releaseId, String scanTypeName,
+            FoDScanComparePair pair) {
         var targetScanId = pair.targetScanId();
-        var newIssues = new FoDScanCompareLimitedList<JsonNode>(maxIssues, ISSUE_ORDER);
-        var reopenedIssues = new FoDScanCompareLimitedList<JsonNode>(maxIssues, ISSUE_ORDER);
+        var newIssues = new ArrayList<ObjectNode>();
+        var reopenedIssues = new ArrayList<ObjectNode>();
         processIssues(unirest, releaseId, false,
                 String.format("scantype:%s+status:New|Reopen+scanId:%s", scanTypeName, targetScanId), issue -> {
                     if ( !targetScanId.equals(getText(issue, "scanId")) ) { return; }
@@ -149,14 +159,38 @@ public final class FoDScanCompareHelper {
                 });
         // For fixed issues, scanId refers to the last scan in which the issue was found
         var previousScanId = pair.previousScanId();
-        var fixedIssues = new FoDScanCompareLimitedList<JsonNode>(maxIssues, ISSUE_ORDER);
+        var fixedIssues = new ArrayList<ObjectNode>();
         processIssues(unirest, releaseId, true,
                 String.format("scantype:%s+scanId:%s", scanTypeName, previousScanId), issue -> {
                     if ( FoDIssueHelper.isFixed(issue) && previousScanId.equals(getText(issue, "scanId")) ) { fixedIssues.add(issue); }
                 });
-        newIssues.addTo(result, "newIssue", Function.identity());
-        reopenedIssues.addTo(result, "reopenedIssue", Function.identity());
-        fixedIssues.addTo(result, "fixedIssue", Function.identity());
+        return new FoDScanCompareIssues(newIssues, reopenedIssues, fixedIssues);
+    }
+
+    /**
+     * Attribute all issue status transitions to scan-level conditions and scan type-specific changes,
+     * adding an 'attribution' property to each issue.
+     *
+     * @param changeThresholdPercent Minimum relative change of scan metrics to be considered significant
+     */
+    public static FoDAttributionResult attributeIssues(UnirestInstance unirest, String releaseId, FoDScanComparePair pair,
+            IFoDScanCompareSupport support, FoDScanCompareIssues issues, IFoDScanCompareChanges changes, int changeThresholdPercent) {
+        var metrics = new LinkedHashMap<String, FoDAttributionMetric>();
+        for ( var field : support.getStatisticFields() ) {
+            metrics.put(field.name(), FoDAttributionMetric.of(getValue(pair.previous(), field.jsonPointer()),
+                    getValue(pair.target(), field.jsonPointer())));
+        }
+        metrics.putAll(changes.getMetrics());
+        var context = FoDAttributionContext.builder()
+                .previousSummary(pair.previous())
+                .currentSummary(pair.target())
+                .changeThresholdPercent(changeThresholdPercent)
+                .metrics(metrics)
+                .changeIndex(changes.getChangeIndex())
+                .issues(issues.toAttributionIssues())
+                .requestLookup(support.isIssueRequestLookupSupported() ? new FoDScanCompareIssueRequestLookup(unirest, releaseId) : null)
+                .build();
+        return new FoDAttributionEngine(support.getConditionDetectors(), support.getIssueMatchers()).attribute(context);
     }
 
     /** Add changed scan settings as 'settingChanges', together with 'settingChangeCount' */
@@ -193,12 +227,12 @@ public final class FoDScanCompareHelper {
     }
 
     /**
-     * Add sorted values as '{name}s', limited to the given maximum number of values,
-     * together with '{name}Count' and '{name}sTruncated'
+     * Add sorted values as '{name}s', limited to the given maximum number of values and to values matching the
+     * given predicate, together with '{name}Count' (reflecting all values) and '{name}sTruncated'
      */
-    static void addValueList(ObjectNode result, String name, Collection<String> values, int maxItems) {
+    static void addValueList(ObjectNode result, String name, Collection<String> values, int maxItems, Predicate<String> include) {
         var list = new FoDScanCompareLimitedList<String>(maxItems, Comparator.naturalOrder());
-        values.forEach(list::add);
+        values.forEach(v -> list.add(v, include.test(v)));
         list.addTo(result, name, TextNode::valueOf);
     }
 
@@ -240,7 +274,7 @@ public final class FoDScanCompareHelper {
     }
 
     private static void processIssues(UnirestInstance unirest, String releaseId, boolean includeFixed, String filters,
-            Consumer<JsonNode> consumer) {
+            Consumer<ObjectNode> consumer) {
         var request = unirest.get(FoDUrls.VULNERABILITIES)
                 .routeParam("relId", releaseId)
                 .queryString("excludeFilters", "true")
@@ -249,7 +283,7 @@ public final class FoDScanCompareHelper {
                 .queryString("fields", ISSUE_FIELDS)
                 .queryString("filters", filters);
         FoDPagingHelper.processItems(unirest, request, issue -> {
-            consumer.accept(issue);
+            if ( issue instanceof ObjectNode objectNode ) { consumer.accept(objectNode); }
             return Break.FALSE;
         });
     }

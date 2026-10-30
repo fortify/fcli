@@ -22,6 +22,7 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.LongStream;
 import java.util.stream.Stream;
@@ -38,6 +39,23 @@ import com.fortify.cli.common.util.Break;
 import com.fortify.cli.fod._common.rest.FoDUrls;
 import com.fortify.cli.fod._common.rest.helper.FoDPagingHelper;
 import com.fortify.cli.fod._common.scan.helper.FoDScanType;
+import com.fortify.cli.fod._common.scan.helper.compare.attribution.FoDAttributionBooleanSettingDetector;
+import com.fortify.cli.fod._common.scan.helper.compare.attribution.FoDAttributionCause;
+import com.fortify.cli.fod._common.scan.helper.compare.attribution.FoDAttributionChangedSettingDetector;
+import com.fortify.cli.fod._common.scan.helper.compare.attribution.FoDAttributionMetric;
+import com.fortify.cli.fod._common.scan.helper.compare.attribution.FoDAttributionMetricDetector;
+import com.fortify.cli.fod._common.scan.helper.compare.attribution.FoDAttributionMetricDetector.MetricRule;
+import com.fortify.cli.fod._common.scan.helper.compare.attribution.FoDAttributionPairedLocationMatcher;
+import com.fortify.cli.fod._common.scan.helper.compare.attribution.FoDAttributionRankedSettingDetector;
+import com.fortify.cli.fod._common.scan.helper.compare.attribution.FoDAttributionTargetHostMatcher;
+import com.fortify.cli.fod._common.scan.helper.compare.attribution.FoDAttributionTimeboxDetector;
+import com.fortify.cli.fod._common.scan.helper.compare.attribution.FoDAttributionUrlChangeIndex;
+import com.fortify.cli.fod._common.scan.helper.compare.attribution.FoDAttributionUrlChangeIndex.SiteTreeUrl;
+import com.fortify.cli.fod._common.scan.helper.compare.attribution.FoDAttributionUrlChangeMatcher;
+import com.fortify.cli.fod._common.scan.helper.compare.attribution.FoDAttributionUrls;
+import com.fortify.cli.fod._common.scan.helper.compare.attribution.IFoDAttributionChangeIndex;
+import com.fortify.cli.fod._common.scan.helper.compare.attribution.IFoDIssueEvidenceMatcher;
+import com.fortify.cli.fod._common.scan.helper.compare.attribution.IFoDScanConditionDetector;
 
 import kong.unirest.UnirestInstance;
 import lombok.extern.slf4j.Slf4j;
@@ -86,20 +104,94 @@ public final class FoDScanCompareDastSupport implements IFoDScanCompareSupport {
     }
 
     @Override
-    public void addScanTypeDeltas(UnirestInstance unirest, FoDScanComparePair pair, ObjectNode result) {
+    public IFoDScanCompareChanges loadChanges(UnirestInstance unirest, FoDScanComparePair pair) {
         var current = loadSiteTree(unirest, pair.targetScanId());
         var previous = loadSiteTree(unirest, pair.previousScanId());
-        result.put("currentSiteTreeAvailable", current.available());
-        result.put("previousSiteTreeAvailable", previous.available());
         var skipReason = StringUtils.firstNonBlank(
                 getSkipReason(current, pair.targetScanId()), getSkipReason(previous, pair.previousScanId()));
-        result.put("siteTreeComparisonSkipped", skipReason != null);
-        result.put("siteTreeComparisonSkippedReason", skipReason);
         var currentUrls = current.isComplete() ? getUrls(current.entries()) : null;
         var previousUrls = previous.isComplete() ? getUrls(previous.entries()) : null;
-        addSiteTreeStatistics(result, getStatistics(previous.entries(), previousUrls), getStatistics(current.entries(), currentUrls));
-        if ( skipReason == null ) {
-            addUrlDeltas(result, previousUrls, currentUrls);
+        var index = skipReason != null ? null
+                : new FoDAttributionUrlChangeIndex(previousUrls.values(), currentUrls.values());
+        return new DastChanges(current.available(), previous.available(), skipReason,
+                getStatistics(previous.entries(), previousUrls), getStatistics(current.entries(), currentUrls),
+                skipReason != null ? null : previousUrls, skipReason != null ? null : currentUrls, index, maxUrlChanges);
+    }
+
+    @Override
+    public List<IFoDScanConditionDetector> getConditionDetectors() {
+        return List.of(
+                new FoDAttributionChangedSettingDetector(FoDAttributionCause.TARGET_CHANGE, FoDAttributionUrls::normalizeKey,
+                        new FoDAttributionChangedSettingDetector.Setting("dynamicSiteURL", DETAILS + "dynamicSiteURL")),
+                new FoDAttributionBooleanSettingDetector(FoDAttributionCause.SCOPE_CHANGE,
+                        booleanSetting("restrictToDirectoryAndSubdirectories", false),
+                        booleanSetting("allowFormSubmissions", true),
+                        booleanSetting("allowSameHostRedirects", true)),
+                new FoDAttributionBooleanSettingDetector(FoDAttributionCause.AUTH_CONFIG_CHANGE,
+                        booleanSetting("hasFormsAuthentication", true),
+                        booleanSetting("requiresNetworkAuthentication", true)),
+                new FoDAttributionRankedSettingDetector(FoDAttributionCause.SCAN_POLICY_CHANGE, "policyName", DETAILS + "policyName",
+                        Map.of("standard", 3, "criticalsandhighs", 2, "passivescan", 1, "passive", 1)),
+                new FoDAttributionMetricDetector(FoDAttributionCause.COVERAGE_CHANGE,
+                        MetricRule.size("urlCount"), MetricRule.size("requestCount"), MetricRule.counter("crawlSessions")),
+                new FoDAttributionMetricDetector(FoDAttributionCause.AVAILABILITY_CHANGE,
+                        MetricRule.degradationRatio("failedRequests", "crawlSessions"),
+                        MetricRule.degradationRatio("failedRequestCount", "requestCount")),
+                new FoDAttributionMetricDetector(FoDAttributionCause.AUTHENTICATION_CHANGE,
+                        MetricRule.degradationCounter("logouts"), MetricRule.degradationCounter("macroPlaybacks")),
+                new FoDAttributionTimeboxDetector(DETAILS + "timeBoxInHours", DETAILS + "elapsedTimeSpan"));
+    }
+
+    @Override
+    public List<IFoDIssueEvidenceMatcher> getIssueMatchers() {
+        return List.of(
+                new FoDAttributionTargetHostMatcher(DETAILS + "dynamicSiteURL"),
+                new FoDAttributionUrlChangeMatcher(),
+                new FoDAttributionPairedLocationMatcher());
+    }
+
+    @Override
+    public boolean isIssueRequestLookupSupported() {
+        return true;
+    }
+
+    private static FoDAttributionBooleanSettingDetector.Setting booleanSetting(String name, boolean trueIsBroader) {
+        return new FoDAttributionBooleanSettingDetector.Setting(name, DETAILS + name, trueIsBroader);
+    }
+
+    private record DastChanges(boolean currentAvailable, boolean previousAvailable, String skipReason,
+            Map<String, Long> previousStatistics, Map<String, Long> currentStatistics,
+            Map<String, SiteTreeUrl> previousUrls, Map<String, SiteTreeUrl> currentUrls,
+            FoDAttributionUrlChangeIndex index, int maxUrlChanges) implements IFoDScanCompareChanges {
+        @Override
+        public void addTo(ObjectNode result, Predicate<String> includeChange) {
+            result.put("currentSiteTreeAvailable", currentAvailable);
+            result.put("previousSiteTreeAvailable", previousAvailable);
+            result.put("siteTreeComparisonSkipped", skipReason != null);
+            result.put("siteTreeComparisonSkippedReason", skipReason);
+            addSiteTreeStatistics(result, previousStatistics, currentStatistics);
+            if ( previousUrls != null && currentUrls != null ) {
+                addUrlDeltas(result, previousUrls, currentUrls, maxUrlChanges, includeChange);
+            }
+        }
+
+        @Override
+        public IFoDAttributionChangeIndex getChangeIndex() {
+            return index;
+        }
+
+        @Override
+        public Map<String, FoDAttributionMetric> getMetrics() {
+            var result = new LinkedHashMap<String, FoDAttributionMetric>();
+            if ( previousStatistics != null && currentStatistics != null ) {
+                previousStatistics.forEach((name, value) -> result.put(name,
+                        new FoDAttributionMetric(value.doubleValue(), toDouble(currentStatistics.get(name)))));
+            }
+            return result;
+        }
+
+        private static Double toDouble(Long value) {
+            return value == null ? null : value.doubleValue();
         }
     }
 
@@ -179,20 +271,21 @@ public final class FoDScanCompareDastSupport implements IFoDScanCompareSupport {
         return entries.stream().mapToLong(e -> getLong(e, "statusCode")).filter(s -> s >= min && s <= max).count();
     }
 
-    private void addUrlDeltas(ObjectNode result, Map<String, SiteTreeUrl> previous, Map<String, SiteTreeUrl> current) {
+    private static void addUrlDeltas(ObjectNode result, Map<String, SiteTreeUrl> previous, Map<String, SiteTreeUrl> current,
+            int maxUrlChanges, Predicate<String> includeChange) {
         var added = new FoDScanCompareLimitedList<SiteTreeUrl>(maxUrlChanges, URL_ORDER);
         var removed = new FoDScanCompareLimitedList<SiteTreeUrl>(maxUrlChanges, URL_ORDER);
         var changed = new FoDScanCompareLimitedList<UrlChange>(maxUrlChanges, Comparator.comparing(c -> c.current().url()));
-        current.values().stream().filter(u -> !previous.containsKey(u.url())).forEach(added::add);
-        previous.values().stream().filter(u -> !current.containsKey(u.url())).forEach(removed::add);
+        current.values().stream().filter(u -> !previous.containsKey(u.url())).forEach(u -> added.add(u, includeChange.test(u.url())));
+        previous.values().stream().filter(u -> !current.containsKey(u.url())).forEach(u -> removed.add(u, includeChange.test(u.url())));
         current.values().stream().filter(u -> previous.containsKey(u.url())).forEach(u -> {
             var p = previous.get(u.url());
             if ( !p.methods().equals(u.methods()) || !p.statusCodes().equals(u.statusCodes()) ) {
-                changed.add(new UrlChange(p, u));
+                changed.add(new UrlChange(p, u), includeChange.test(u.url()));
             }
         });
-        added.addTo(result, "addedUrl", SiteTreeUrl::toJson);
-        removed.addTo(result, "removedUrl", SiteTreeUrl::toJson);
+        added.addTo(result, "addedUrl", FoDScanCompareDastSupport::toJson);
+        removed.addTo(result, "removedUrl", FoDScanCompareDastSupport::toJson);
         changed.addTo(result, "changedUrl", UrlChange::toJson);
     }
 
@@ -209,7 +302,7 @@ public final class FoDScanCompareDastSupport implements IFoDScanCompareSupport {
 
     private static Map<String, SiteTreeUrl> getUrls(List<JsonNode> entries) {
         return entries.stream().collect(Collectors.groupingBy(FoDScanCompareDastSupport::toUrl, TreeMap::new,
-                Collectors.collectingAndThen(Collectors.toList(), SiteTreeUrl::of)));
+                Collectors.collectingAndThen(Collectors.toList(), FoDScanCompareDastSupport::toSiteTreeUrl)));
     }
 
     // Omits default ports for readability
@@ -234,22 +327,19 @@ public final class FoDScanCompareDastSupport implements IFoDScanCompareSupport {
         return array;
     }
 
-    private record SiteTreeUrl(String url, Set<String> methods, Set<String> statusCodes) {
-        static SiteTreeUrl of(List<JsonNode> entries) {
-            return new SiteTreeUrl(toUrl(entries.get(0)),
-                    collect(entries, "method"), collect(entries, "statusCode"));
-        }
+    private static SiteTreeUrl toSiteTreeUrl(List<JsonNode> entries) {
+        return new SiteTreeUrl(toUrl(entries.get(0)), collect(entries, "method"), collect(entries, "statusCode"));
+    }
 
-        private static Set<String> collect(List<JsonNode> entries, String fieldName) {
-            return entries.stream().map(e -> FoDScanCompareHelper.getText(e, fieldName))
-                    .filter(StringUtils::isNotBlank).collect(Collectors.toCollection(TreeSet::new));
-        }
+    private static Set<String> collect(List<JsonNode> entries, String fieldName) {
+        return entries.stream().map(e -> FoDScanCompareHelper.getText(e, fieldName))
+                .filter(StringUtils::isNotBlank).collect(Collectors.toCollection(TreeSet::new));
+    }
 
-        ObjectNode toJson() {
-            var node = JsonHelper.getObjectMapper().createObjectNode().put("url", url);
-            node.set("methods", toArray(methods));
-            node.set("statusCodes", toArray(statusCodes));
-            return node;
-        }
+    private static ObjectNode toJson(SiteTreeUrl url) {
+        var node = JsonHelper.getObjectMapper().createObjectNode().put("url", url.url());
+        node.set("methods", toArray(url.methods()));
+        node.set("statusCodes", toArray(url.statusCodes()));
+        return node;
     }
 }

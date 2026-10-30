@@ -15,8 +15,9 @@ package com.fortify.cli.fod._common.scan.helper.compare;
 import java.util.List;
 import java.util.Set;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.fod._common.scan.helper.FoDScanType;
+import com.fortify.cli.fod._common.scan.helper.compare.attribution.IFoDIssueEvidenceMatcher;
+import com.fortify.cli.fod._common.scan.helper.compare.attribution.IFoDScanConditionDetector;
 
 import kong.unirest.UnirestInstance;
 
@@ -40,5 +41,17 @@ public interface IFoDScanCompareSupport {
     /** Scan statistics, for which previous and current values are always reported */
     List<FoDScanCompareField> getStatisticFields();
 
-    void addScanTypeDeltas(UnirestInstance unirest, FoDScanComparePair pair, ObjectNode result);
+    /** Load scan type-specific changes, like scan manifest or site tree changes */
+    IFoDScanCompareChanges loadChanges(UnirestInstance unirest, FoDScanComparePair pair);
+
+    /** Detectors for scan-level conditions that may explain issue status transitions */
+    List<IFoDScanConditionDetector> getConditionDetectors();
+
+    /** Matchers for issue-specific evidence that may explain issue status transitions */
+    List<IFoDIssueEvidenceMatcher> getIssueMatchers();
+
+    /** Whether issue request/response data should be looked up for attributing issues to request-level changes */
+    default boolean isIssueRequestLookupSupported() {
+        return false;
+    }
 }

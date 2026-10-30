@@ -30,6 +30,8 @@ final class FoDScanCompareLimitedList<T> {
     // Reversed order, such that the head is the item to drop first when exceeding maxItems
     private final PriorityQueue<T> retained;
     private long count;
+    // Only set if items to be retained were dropped due to maxItems, not for items excluded by the caller
+    private boolean truncated;
 
     FoDScanCompareLimitedList(int maxItems, Comparator<T> comparator) {
         this.maxItems = maxItems;
@@ -38,10 +40,22 @@ final class FoDScanCompareLimitedList<T> {
     }
 
     void add(T item) {
+        add(item, true);
+    }
+
+    /** Count the given item, but only retain it if {@code retain} is true */
+    void add(T item, boolean retain) {
         count++;
-        if ( maxItems <= 0 ) { return; }
+        if ( !retain ) { return; }
+        if ( maxItems <= 0 ) {
+            truncated = true;
+            return;
+        }
         retained.add(item);
-        if ( retained.size() > maxItems ) { retained.poll(); }
+        if ( retained.size() > maxItems ) {
+            retained.poll();
+            truncated = true;
+        }
     }
 
     long getCount() {
@@ -49,7 +63,7 @@ final class FoDScanCompareLimitedList<T> {
     }
 
     boolean isTruncated() {
-        return count > retained.size();
+        return truncated;
     }
 
     /** Add the retained items as '{name}s', together with '{name}Count' and '{name}sTruncated' */

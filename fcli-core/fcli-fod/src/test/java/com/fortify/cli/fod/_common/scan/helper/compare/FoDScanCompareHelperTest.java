@@ -149,6 +149,36 @@ class FoDScanCompareHelperTest {
         assertEquals("11", current.get("/src/B.java"));
     }
 
+    @Test
+    void parseManifestNormalizesPathSeparators() {
+        var previous = FoDScanCompareSastSupport.parseManifest("\"/site-packages\\yaml\\__init__.py\"  120\n");
+        var current = FoDScanCompareSastSupport.parseManifest("\"/site-packages/yaml/__init__.py\"  120\n");
+        assertEquals(previous, current);
+    }
+
+    @Test
+    void requestLookupParsesRequestAndResponseLines() {
+        var node = JsonHelper.getObjectMapper().createObjectNode()
+                .put("requestContent", "OPTIONS / HTTP/1.1\r\nHost: zero.webappsecurity.com\r\n\r\n")
+                .put("responseContent", "HTTP/1.1 501 Not Implemented\r\nServer: x\r\n\r\n");
+        var info = FoDScanCompareIssueRequestLookup.parse(node);
+        assertEquals("OPTIONS", info.method());
+        assertEquals("501", info.statusCode());
+    }
+
+    @Test
+    void limitedListCountsItemsThatAreNotRetained() {
+        var result = JsonHelper.getObjectMapper().createObjectNode();
+        FoDScanCompareHelper.addValueList(result, "file", List.of("a", "b", "c"), 10, "b"::equals);
+        assertEquals(3, result.get("fileCount").asInt());
+        assertEquals("[\"b\"]", result.get("files").toString());
+        assertFalse(result.get("filesTruncated").asBoolean());
+        var limited = JsonHelper.getObjectMapper().createObjectNode();
+        FoDScanCompareHelper.addValueList(limited, "file", List.of("a", "b", "c"), 1, v -> !"a".equals(v));
+        assertEquals("[\"b\"]", limited.get("files").toString());
+        assertTrue(limited.get("filesTruncated").asBoolean());
+    }
+
     private static FoDScanCompareSelection select(boolean ignoreCanceled, JsonNode... scans) {
         return FoDScanCompareHelper.selectScans(List.of(scans), SAST, ignoreCanceled);
     }
