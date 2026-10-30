@@ -67,4 +67,5 @@ public class FoDUrls {
     public static final String SCAN_POLLING_SUMMARY = ApiBase + "/releases/{relId}/scans/{scanId}/polling-summary";
     public static final String VULNERABILITIES = ApiBase + "/releases/{relId}/vulnerabilities";
     public static final String VULNERABILITY_REQUEST_RESPONSE = VULNERABILITIES + "/{vulnId}/request-response";
+    public static final String VULNERABILITY_TRACES = VULNERABILITIES + "/{vulnId}/traces";
 }

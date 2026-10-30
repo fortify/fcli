@@ -38,13 +38,14 @@ public final class FoDAttributionContext {
     private final IFoDAttributionChangeIndex changeIndex;
     @Getter private final List<FoDAttributionIssue> issues;
     @Getter private final IFoDIssueRequestLookup requestLookup;
+    @Getter private final IFoDIssueTraceLookup traceLookup;
     private final Set<String> referencedChanges = new LinkedHashSet<>();
     private final Map<Object, Object> cache = new HashMap<>();
 
     @Builder
     private FoDAttributionContext(JsonNode previousSummary, JsonNode currentSummary, int changeThresholdPercent,
             Map<String, FoDAttributionMetric> metrics, IFoDAttributionChangeIndex changeIndex,
-            List<FoDAttributionIssue> issues, IFoDIssueRequestLookup requestLookup) {
+            List<FoDAttributionIssue> issues, IFoDIssueRequestLookup requestLookup, IFoDIssueTraceLookup traceLookup) {
         this.previousSummary = previousSummary == null ? NullNode.getInstance() : previousSummary;
         this.currentSummary = currentSummary == null ? NullNode.getInstance() : currentSummary;
         this.changeThresholdPercent = changeThresholdPercent;
@@ -52,6 +53,7 @@ public final class FoDAttributionContext {
         this.changeIndex = changeIndex;
         this.issues = issues == null ? List.of() : issues;
         this.requestLookup = requestLookup;
+        this.traceLookup = traceLookup;
     }
 
     /** @return Metric with the given name, or null if not available */

@@ -35,6 +35,13 @@ public enum FoDAttributionCause {
     FILE_CHANGED(Table.any(all(DIRECT))),
     FILE_MOVED(Table.any(all(DIRECT))),
     FILE_MATCH_AMBIGUOUS(Table.any(all(POSSIBLE))),
+    // Issue-level, SAST dataflow (based on issue traces, for issues at an unchanged sink location)
+    SOURCE_FILE_ADDED(Table.any(none().newIssues(DIRECT).reopened(DIRECT))),
+    SOURCE_FILE_REMOVED(Table.any(none().fixed(DIRECT))),
+    SOURCE_FILE_CHANGED(Table.any(all(INFERRED))),
+    SOURCE_FILE_MOVED(Table.any(all(INFERRED))),
+    DATAFLOW_FILE_CHANGED(Table.any(all(INFERRED))),
+    INSTANCE_ID_CORRELATION_ERROR(Table.any(all(INFERRED))),
     // Issue-level, DAST
     URL_ADDED(Table.any(none().newIssues(DIRECT).reopened(DIRECT))),
     URL_REMOVED(Table.any(none().fixed(DIRECT))),

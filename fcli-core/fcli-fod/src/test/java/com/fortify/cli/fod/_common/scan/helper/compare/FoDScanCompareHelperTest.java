@@ -167,6 +167,22 @@ class FoDScanCompareHelperTest {
     }
 
     @Test
+    void traceLookupParsesTraceEntries() {
+        var body = JsonHelper.getObjectMapper().createArrayNode();
+        var entries = body.addObject().put("traceIndex", 0).putArray("traceEntries");
+        entries.addObject().put("location", "src/A.java").put("lineNumber", 10).put("actionType", "InCall");
+        entries.addObject().put("location", "").put("lineNumber", 11);
+        entries.addObject().put("location", "src/B.java").put("lineNumber", 20);
+        body.addObject().put("traceIndex", 1).putArray("traceEntries");
+        var traces = FoDScanCompareIssueTraceLookup.parse(body);
+        assertEquals(1, traces.size());
+        assertEquals("src/A.java", traces.get(0).getSource().location());
+        assertEquals(10, traces.get(0).getSource().lineNumber());
+        assertEquals(3, traces.get(0).nodes().size());
+        assertTrue(traces.get(0).getInterimNodes().isEmpty());
+    }
+
+    @Test
     void limitedListCountsItemsThatAreNotRetained() {
         var result = JsonHelper.getObjectMapper().createObjectNode();
         FoDScanCompareHelper.addValueList(result, "file", List.of("a", "b", "c"), 10, "b"::equals);

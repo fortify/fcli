@@ -36,6 +36,7 @@ import com.fortify.cli.fod._common.scan.helper.FoDScanType;
 import com.fortify.cli.fod._common.scan.helper.compare.attribution.FoDAttributionCause;
 import com.fortify.cli.fod._common.scan.helper.compare.attribution.FoDAttributionChangedSettingDetector;
 import com.fortify.cli.fod._common.scan.helper.compare.attribution.FoDAttributionChangedSettingDetector.Setting;
+import com.fortify.cli.fod._common.scan.helper.compare.attribution.FoDAttributionDataflowMatcher;
 import com.fortify.cli.fod._common.scan.helper.compare.attribution.FoDAttributionFileChangeIndex;
 import com.fortify.cli.fod._common.scan.helper.compare.attribution.FoDAttributionFileChangeMatcher;
 import com.fortify.cli.fod._common.scan.helper.compare.attribution.FoDAttributionMassRelocationDetector;
@@ -134,7 +135,19 @@ public final class FoDScanCompareSastSupport implements IFoDScanCompareSupport {
 
     @Override
     public List<IFoDIssueEvidenceMatcher> getIssueMatchers() {
-        return List.of(new FoDAttributionFileChangeMatcher(), new FoDAttributionPairedLocationMatcher());
+        return List.of(new FoDAttributionFileChangeMatcher(), new FoDAttributionDataflowMatcher(),
+                new FoDAttributionPairedLocationMatcher(true));
+    }
+
+    @Override
+    public boolean isIssueTraceLookupSupported() {
+        return true;
+    }
+
+    // Dataflow source function (or '<None>'), used to determine whether issue traces need to be looked up
+    @Override
+    public List<String> getAdditionalIssueFields() {
+        return List.of("source");
     }
 
     private record SastChanges(boolean currentAvailable, boolean previousAvailable, String skipReason,

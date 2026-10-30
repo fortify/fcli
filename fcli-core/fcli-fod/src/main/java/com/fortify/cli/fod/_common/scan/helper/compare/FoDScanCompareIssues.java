@@ -13,6 +13,7 @@
 package com.fortify.cli.fod._common.scan.helper.compare;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.function.Function;
 
@@ -23,11 +24,16 @@ import com.fortify.cli.fod._common.scan.helper.compare.attribution.FoDAttributio
 
 /** All new, reopened and fixed issues between two scans */
 public record FoDScanCompareIssues(List<ObjectNode> newIssues, List<ObjectNode> reopenedIssues, List<ObjectNode> fixedIssues) {
+    /**
+     * @return Issues to be attributed, highest severity first, such that bounded per-issue lookups (like issue
+     *         traces) are spent on the most relevant issues
+     */
     public List<FoDAttributionIssue> toAttributionIssues() {
         var result = new ArrayList<FoDAttributionIssue>();
         newIssues.forEach(i -> result.add(new FoDAttributionIssue(i, FoDAttributionTransition.NEW)));
         reopenedIssues.forEach(i -> result.add(new FoDAttributionIssue(i, FoDAttributionTransition.REOPENED)));
         fixedIssues.forEach(i -> result.add(new FoDAttributionIssue(i, FoDAttributionTransition.FIXED)));
+        result.sort(Comparator.comparing(FoDAttributionIssue::node, FoDScanCompareHelper.ISSUE_ORDER));
         return result;
     }
 

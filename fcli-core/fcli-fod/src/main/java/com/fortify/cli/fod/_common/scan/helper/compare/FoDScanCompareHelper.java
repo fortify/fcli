@@ -146,12 +146,14 @@ public final class FoDScanCompareHelper {
      * scan but fixed in the target scan. All issues are retained, such that issue attribution and attribution
      * summaries cover all issues; issue lists are only limited when adding them to the compare result.
      */
-    public static FoDScanCompareIssues loadIssues(UnirestInstance unirest, String releaseId, String scanTypeName,
+    public static FoDScanCompareIssues loadIssues(UnirestInstance unirest, String releaseId, IFoDScanCompareSupport support,
             FoDScanComparePair pair) {
+        var scanTypeName = support.getScanType().name();
+        var fields = getIssueFields(support);
         var targetScanId = pair.targetScanId();
         var newIssues = new ArrayList<ObjectNode>();
         var reopenedIssues = new ArrayList<ObjectNode>();
-        processIssues(unirest, releaseId, false,
+        processIssues(unirest, releaseId, false, fields,
                 String.format("scantype:%s+status:New|Reopen+scanId:%s", scanTypeName, targetScanId), issue -> {
                     if ( !targetScanId.equals(getText(issue, "scanId")) ) { return; }
                     if ( hasStatus(issue, "New") ) { newIssues.add(issue); }
@@ -160,11 +162,16 @@ public final class FoDScanCompareHelper {
         // For fixed issues, scanId refers to the last scan in which the issue was found
         var previousScanId = pair.previousScanId();
         var fixedIssues = new ArrayList<ObjectNode>();
-        processIssues(unirest, releaseId, true,
+        processIssues(unirest, releaseId, true, fields,
                 String.format("scantype:%s+scanId:%s", scanTypeName, previousScanId), issue -> {
                     if ( FoDIssueHelper.isFixed(issue) && previousScanId.equals(getText(issue, "scanId")) ) { fixedIssues.add(issue); }
                 });
         return new FoDScanCompareIssues(newIssues, reopenedIssues, fixedIssues);
+    }
+
+    private static String getIssueFields(IFoDScanCompareSupport support) {
+        var additionalFields = support.getAdditionalIssueFields();
+        return additionalFields.isEmpty() ? ISSUE_FIELDS : ISSUE_FIELDS + "," + String.join(",", additionalFields);
     }
 
     /**
@@ -189,6 +196,7 @@ public final class FoDScanCompareHelper {
                 .changeIndex(changes.getChangeIndex())
                 .issues(issues.toAttributionIssues())
                 .requestLookup(support.isIssueRequestLookupSupported() ? new FoDScanCompareIssueRequestLookup(unirest, releaseId) : null)
+                .traceLookup(support.isIssueTraceLookupSupported() ? new FoDScanCompareIssueTraceLookup(unirest, releaseId) : null)
                 .build();
         return new FoDAttributionEngine(support.getConditionDetectors(), support.getIssueMatchers()).attribute(context);
     }
@@ -273,14 +281,14 @@ public final class FoDScanCompareHelper {
         return summary;
     }
 
-    private static void processIssues(UnirestInstance unirest, String releaseId, boolean includeFixed, String filters,
-            Consumer<ObjectNode> consumer) {
+    private static void processIssues(UnirestInstance unirest, String releaseId, boolean includeFixed, String fields,
+            String filters, Consumer<ObjectNode> consumer) {
         var request = unirest.get(FoDUrls.VULNERABILITIES)
                 .routeParam("relId", releaseId)
                 .queryString("excludeFilters", "true")
                 .queryString("includeSuppressed", "false")
                 .queryString("includeFixed", Boolean.toString(includeFixed))
-                .queryString("fields", ISSUE_FIELDS)
+                .queryString("fields", fields)
                 .queryString("filters", filters);
         FoDPagingHelper.processItems(unirest, request, issue -> {
             if ( issue instanceof ObjectNode objectNode ) { consumer.accept(objectNode); }

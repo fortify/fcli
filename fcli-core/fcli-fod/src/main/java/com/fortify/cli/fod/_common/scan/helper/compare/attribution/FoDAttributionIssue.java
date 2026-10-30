@@ -28,6 +28,12 @@ public record FoDAttributionIssue(ObjectNode node, FoDAttributionTransition tran
         return getText("category");
     }
 
+    /** @return Whether the issue has a dataflow source; FoD returns '&lt;None&gt;' for issues without dataflow */
+    public boolean hasDataflowSource() {
+        var source = StringUtils.trimToEmpty(getText("source"));
+        return !source.isEmpty() && !"<None>".equalsIgnoreCase(source);
+    }
+
     public String getText(String fieldName) {
         JsonNode value = node.get(fieldName);
         return value == null || value.isNull() ? null : value.asText();

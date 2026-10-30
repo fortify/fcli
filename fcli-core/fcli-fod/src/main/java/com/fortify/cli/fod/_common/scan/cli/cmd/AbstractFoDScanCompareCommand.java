@@ -50,7 +50,7 @@ public abstract class AbstractFoDScanCompareCommand extends AbstractFoDJsonNodeO
         var release = releaseResolver.getReleaseDescriptor(unirest);
         var releaseId = release.getReleaseId();
         var pair = FoDScanCompareHelper.getScanPair(unirest, releaseId, compareSupport, ignoreCanceled);
-        var issues = FoDScanCompareHelper.loadIssues(unirest, releaseId, compareSupport.getScanType().name(), pair);
+        var issues = FoDScanCompareHelper.loadIssues(unirest, releaseId, compareSupport, pair);
         var changes = compareSupport.loadChanges(unirest, pair);
         var attributionResult = !attribution ? null : FoDScanCompareHelper.attributeIssues(
                 unirest, releaseId, pair, compareSupport, issues, changes, changeThresholdPercent);

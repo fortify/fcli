@@ -50,5 +50,10 @@ public final class FoDAttributionResult {
             result.put("issueRequestLookupCount", lookup.getLookupCount());
             result.put("issueRequestLookupLimitReached", lookup.isLimitReached());
         }
+        var traceLookup = context.getTraceLookup();
+        if ( traceLookup != null ) {
+            result.put("issueTraceLookupCount", traceLookup.getLookupCount());
+            result.put("issueTraceLookupLimitReached", traceLookup.isLimitReached());
+        }
     }
 }

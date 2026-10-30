@@ -39,7 +39,7 @@ public final class FoDAttributionFileChangeMatcher implements IFoDIssueEvidenceM
         return List.of(new FoDIssueEvidence(getCause(kinds.get(0)), evidence));
     }
 
-    private static void reference(FoDAttributionContext context, FileMatch match) {
+    static void reference(FoDAttributionContext context, FileMatch match) {
         if ( match.kind() == Kind.UNCHANGED ) { return; }
         context.referenceChange(match.path());
         context.referenceChange(match.movedFrom());
@@ -56,7 +56,7 @@ public final class FoDAttributionFileChangeMatcher implements IFoDIssueEvidenceM
         };
     }
 
-    private static String describe(FileMatch match) {
+    static String describe(FileMatch match) {
         return switch ( match.kind() ) {
             case ADDED -> String.format("file %s was added", match.path());
             case REMOVED -> String.format("file %s was removed", match.path());

@@ -54,4 +54,14 @@ public interface IFoDScanCompareSupport {
     default boolean isIssueRequestLookupSupported() {
         return false;
     }
+
+    /** Whether issue traces should be looked up for attributing issues to dataflow file changes */
+    default boolean isIssueTraceLookupSupported() {
+        return false;
+    }
+
+    /** Scan type-specific issue fields to be loaded in addition to the generic issue fields */
+    default List<String> getAdditionalIssueFields() {
+        return List.of();
+    }
 }

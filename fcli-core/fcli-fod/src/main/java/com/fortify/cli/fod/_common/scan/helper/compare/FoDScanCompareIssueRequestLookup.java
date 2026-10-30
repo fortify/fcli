@@ -12,71 +12,32 @@
  */
 package com.fortify.cli.fod._common.scan.helper.compare;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import org.apache.commons.lang3.StringUtils;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.common.rest.unirest.UnexpectedHttpResponseException;
 import com.fortify.cli.fod._common.rest.FoDUrls;
-import com.fortify.cli.fod._common.scan.helper.compare.attribution.FoDAttributionIssue;
 import com.fortify.cli.fod._common.scan.helper.compare.attribution.IFoDIssueRequestLookup;
+import com.fortify.cli.fod._common.scan.helper.compare.attribution.IFoDIssueRequestLookup.RequestInfo;
 
-import kong.unirest.UnirestException;
 import kong.unirest.UnirestInstance;
-import lombok.Getter;
-import lombok.extern.slf4j.Slf4j;
 
-/**
- * Looks up the request method and response status code for DAST issues, based on the issue
- * request/response. Results are cached per issue, and the number of lookups is limited to
- * bound the number of API calls.
- */
-@Slf4j
-final class FoDScanCompareIssueRequestLookup implements IFoDIssueRequestLookup {
+/** Looks up the request method and response status code for DAST issues, based on the issue request/response */
+final class FoDScanCompareIssueRequestLookup extends AbstractFoDScanCompareIssueLookup<RequestInfo>
+        implements IFoDIssueRequestLookup {
+    // If changed, update the 'fcli.fod.dast-scan.compare.usage.description.4' message in FoDMessages.properties
     static final int MAX_LOOKUPS = 250;
-    private final UnirestInstance unirest;
-    private final String releaseId;
-    private final Map<String, RequestInfo> cache = new HashMap<>();
-    @Getter private int lookupCount;
-    @Getter private boolean limitReached;
 
     FoDScanCompareIssueRequestLookup(UnirestInstance unirest, String releaseId) {
-        this.unirest = unirest;
-        this.releaseId = releaseId;
+        super(unirest, releaseId, MAX_LOOKUPS, "request/response");
     }
 
     @Override
-    public RequestInfo lookup(FoDAttributionIssue issue) {
-        var vulnId = issue.getText("vulnId");
-        if ( StringUtils.isBlank(vulnId) ) { return null; }
-        if ( cache.containsKey(vulnId) ) { return cache.get(vulnId); }
-        if ( lookupCount >= MAX_LOOKUPS ) {
-            limitReached = true;
-            return null;
-        }
-        lookupCount++;
-        var result = load(vulnId);
-        cache.put(vulnId, result);
-        return result;
-    }
-
-    // Request data is optional evidence, so any failure results in the issue being attributed without it
-    private RequestInfo load(String vulnId) {
-        try {
-            var body = unirest.get(FoDUrls.VULNERABILITY_REQUEST_RESPONSE)
-                    .routeParam("relId", releaseId).routeParam("vulnId", vulnId)
-                    .asObject(JsonNode.class).getBody();
-            var requestResponse = body != null && body.isArray() ? body.path(0) : body;
-            return requestResponse == null ? null : parse(requestResponse);
-        } catch ( UnexpectedHttpResponseException e ) {
-            log.debug("No request/response available for issue {} (HTTP status {})", vulnId, e.getStatus());
-            return null;
-        } catch ( UnirestException e ) {
-            log.debug("Error loading request/response for issue {}", vulnId, e);
-            return null;
-        }
+    protected RequestInfo load(String vulnId) {
+        var body = unirest.get(FoDUrls.VULNERABILITY_REQUEST_RESPONSE)
+                .routeParam("relId", releaseId).routeParam("vulnId", vulnId)
+                .asObject(JsonNode.class).getBody();
+        var requestResponse = body != null && body.isArray() ? body.path(0) : body;
+        return requestResponse == null ? null : parse(requestResponse);
     }
 
     // Request content starts with '<method> <path> HTTP/x.y', response content with 'HTTP/x.y <status> <reason>'

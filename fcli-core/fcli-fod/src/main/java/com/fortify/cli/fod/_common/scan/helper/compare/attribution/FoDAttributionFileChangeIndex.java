@@ -96,6 +96,11 @@ public final class FoDAttributionFileChangeIndex implements IFoDAttributionChang
         return lookup(location).stream().anyMatch(m -> m.kind() != Kind.UNCHANGED);
     }
 
+    /** @return Whether any files were added, removed or changed between both manifests */
+    public boolean hasChanges() {
+        return !addedPaths.isEmpty() || !removedPaths.isEmpty() || !changedPaths.isEmpty();
+    }
+
     private void add(FileMatch match) {
         var normalized = normalize(match.path());
         if ( byNormalizedPath.putIfAbsent(normalized, match) == null ) {
