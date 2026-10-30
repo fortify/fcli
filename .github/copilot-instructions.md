@@ -15,7 +15,8 @@ Fcli is a modular Java 17 CLI (Picocli + Gradle) for Fortify products (FoD, SSC,
 - `fcli-common-core` — Core framework (output, REST, SpEL, sessions, exceptions)
 - `fcli-common-ci` / `fcli-common-action` / `fcli-common-tool` — CI, action engine, tool definitions
 - `fcli-fod`, `fcli-ssc`, `fcli-sc-sast`, `fcli-sc-dast` — Product modules
-- `fcli-aviator-common`, `fcli-aviator` — FPR parsing, Aviator CLI
+- `fcli-common-fpr` — Reusable, Aviator-independent SAST/DAST FPR parsing library (no `com.fortify.cli.aviator` imports allowed)
+- `fcli-aviator-common`, `fcli-aviator` — Aviator audit/remediation logic and CLI (builds on `fcli-common-fpr`)
 - `fcli-ai-assist` — MCP server (only module with MCP SDK dep)
 - `fcli-app` — Shadow jar assembly (only module with `picocli-codegen`)
 - `build-logic/` — `fcli.java-conventions` (all modules), `fcli.module-conventions` (product modules; auto-adds common-core + common-thirdparty)

@@ -1,0 +1,264 @@
+/*
+ * Copyright 2021-2026 Open Text.
+ *
+ * The only warranties for products and services of Open Text
+ * and its affiliates and licensors ("Open Text") are as may
+ * be set forth in the express warranty statements accompanying
+ * such products and services. Nothing herein should be construed
+ * as constituting an additional warranty. Open Text shall not be
+ * liable for technical or editorial errors or omissions contained
+ * herein. The information contained herein is subject to change
+ * without notice.
+ */
+package com.fortify.cli.common.fpr.filter.engine;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+
+import com.fortify.cli.common.fpr.Vulnerability;
+import com.fortify.cli.common.fpr.filter.Filter;
+import com.fortify.cli.common.fpr.filter.FilterSet;
+import com.fortify.cli.common.fpr.filter.SearchTree;
+import com.fortify.cli.common.fpr.filter.VulnerabilityFilterer;
+import com.fortify.cli.common.fpr.filter.comparer.BooleanComparer;
+import com.fortify.cli.common.fpr.filter.comparer.SearchComparer;
+import com.fortify.cli.common.fpr.model.StackTraceElement;
+
+class FilterEngineTest {
+
+    private static int countTreeNodes(SearchTree.Node node) {
+        if (node == null) return 0;
+        if (node.isLeaf()) return 1;
+        return 1 + countTreeNodes(node.getLeftChild()) + countTreeNodes(node.getRightChild());
+    }
+
+    @Nested
+    class ModernParserTests {
+        // All these tests now pass with the robust manual tokenizer.
+        @Test void testSimpleTerm() { assertEquals(1, countTreeNodes(FilterParser.parse("category:value").getRoot())); }
+        @Test void testBracketedModifierWithSpaces() { assertEquals(1, countTreeNodes(FilterParser.parse("[fortify priority order]:critical").getRoot())); }
+        @Test void testImplicitAnd() { assertEquals(3, countTreeNodes(FilterParser.parse("analyzer:A category:B").getRoot())); }
+        @Test void testImplicitAndWithMultiWordValue() { assertEquals(3, countTreeNodes(FilterParser.parse("[category]:Insecure Dependency: Vulnerable Component [analysis type]:SCA").getRoot())); }
+        @Test void testExplicitAnd() { assertEquals(3, countTreeNodes(FilterParser.parse("[PCI 4.0]:<none> AND [fortify priority order]:low").getRoot())); }
+        @Test void testExplicitOr() { assertEquals(3, countTreeNodes(FilterParser.parse("analyzer:A OR analyzer:B").getRoot())); }
+        @Test void testOperatorPrecedence() { assertEquals(5, countTreeNodes(FilterParser.parse("A:1 OR B:2 AND C:3").getRoot())); }
+        @Test void testTermWithQuotedValue() { assertEquals(1, countTreeNodes(FilterParser.parse("category:\"SQL Injection\"").getRoot())); }
+        @Test void testTermWithEscapedColonInValue() { assertEquals(1, countTreeNodes(FilterParser.parse("category:Password Management\\: Weak Encryption").getRoot())); }
+    }
+
+    @Nested
+    class LegacyParserTests {
+        // These tests correctly validate the legacy parser logic.
+        @Test void testImplicitAndForDifferentModifiers() { assertEquals(3, countTreeNodes(FilterParser.parseLegacy("analyzer:A category:B").getRoot())); }
+        @Test void testImplicitOrForSameModifier() { assertTrue(FilterParser.parseLegacy("category:A category:B").getRoot().getQuery().getSearchComparer() instanceof BooleanComparer); }
+        @Test void testImplicitAndForNegatedSameModifier() {
+            SearchComparer comparer = FilterParser.parseLegacy("category:!A category:!B").getRoot().getQuery().getSearchComparer();
+            assertTrue(comparer instanceof BooleanComparer);
+            assertEquals(2, ((BooleanComparer)comparer).getAndComparers().size());
+            assertEquals(0, ((BooleanComparer)comparer).getOrComparers().size());
+        }
+    }
+
+    @Nested
+    class FiltererTests {
+        private static Vulnerability vulnCritical, vulnHigh, vulnMedium, vulnLow, vulnToHideByAudience, vulnToHideByCategory, vulnToKeep;
+        private static List<Vulnerability> allVulnerabilities;
+
+        @BeforeAll
+        static void setupVulnerabilities() {
+            vulnCritical = new Vulnerability(); vulnCritical.setInstanceID("CRITICAL_VULN"); vulnCritical.setPriority("Critical"); vulnCritical.setImpact(5.0); vulnCritical.setLikelihood("5.0"); vulnCritical.setConfidence(5.0); vulnCritical.setAudience("broad,fod");
+            vulnHigh = new Vulnerability(); vulnHigh.setInstanceID("HIGH_VULN"); vulnHigh.setPriority("High"); vulnHigh.setImpact(4.0); vulnHigh.setLikelihood("4.0"); vulnHigh.setConfidence(4.0); vulnHigh.setAudience("broad,fod");
+            vulnMedium = new Vulnerability(); vulnMedium.setInstanceID("MEDIUM_VULN"); vulnMedium.setPriority("Medium"); vulnMedium.setImpact(2.0); vulnMedium.setLikelihood("4.0"); vulnMedium.setConfidence(4.0); vulnMedium.setAudience("broad,fod");
+            vulnLow = new Vulnerability(); vulnLow.setInstanceID("LOW_VULN"); vulnLow.setPriority("Low"); vulnLow.setImpact(1.0); vulnLow.setLikelihood("0.5"); vulnLow.setConfidence(2.0); vulnLow.setAudience("broad,fod"); vulnLow.setCategory("Insecure Dependency: Vulnerable Component");
+            vulnToHideByAudience = new Vulnerability(); vulnToHideByAudience.setInstanceID("HIDDEN_BY_AUDIENCE"); vulnToHideByAudience.setPriority("High"); vulnToHideByAudience.setImpact(4.0); vulnToHideByAudience.setLikelihood("4.0"); vulnToHideByAudience.setConfidence(4.0); vulnToHideByAudience.setAudience("broad"); vulnToHideByAudience.setAnalyzerName("Structural"); vulnToHideByAudience.setCategory("Some Random Category");
+            vulnToHideByCategory = new Vulnerability(); vulnToHideByCategory.setInstanceID("HIDDEN_BY_CATEGORY"); vulnToHideByCategory.setPriority("High"); vulnToHideByCategory.setImpact(4.0); vulnToHideByCategory.setLikelihood("4.0"); vulnToHideByCategory.setConfidence(4.0); vulnToHideByCategory.setAudience("broad,fod"); vulnToHideByCategory.setAnalyzerName("Structural"); vulnToHideByCategory.setCategory("Insecure Dependency: Vulnerable Component");  // Changed to match hide category
+            vulnToKeep = new Vulnerability(); vulnToKeep.setInstanceID("SHOULD_BE_KEPT"); vulnToKeep.setPriority("High"); vulnToKeep.setImpact(4.0); vulnToKeep.setLikelihood("4.0"); vulnToKeep.setConfidence(4.0); vulnToKeep.setAudience("broad,fod"); vulnToKeep.setAnalyzerName("Structural"); vulnToKeep.setCategory("Some Random Category");
+            allVulnerabilities = List.of(vulnCritical, vulnHigh, vulnMedium, vulnLow, vulnToHideByAudience, vulnToHideByCategory, vulnToKeep);
+        }
+
+        @Test
+        void testQuickViewFilter() {
+            FilterSet quickView = new FilterSet();
+            quickView.setFilters(List.of(
+                createFolderFilter("[fortify priority order]:critical OR [fortify priority order]:high OR [fortify priority order]:medium OR [fortify priority order]:low"),
+                createHideFilter("impact:![2.5, 5.0]"),
+                createHideFilter("likelihood:![1.0,5.0]"),
+                createHideFilter("[category]:\"Insecure Dependency\\: Vulnerable Component\"") // with quote and \\ : to full, Exact match
+            ));
+            List<Vulnerability> result = VulnerabilityFilterer.filterVulnerabilities(allVulnerabilities, quickView);
+            Set<String> resultIds = result.stream().map(Vulnerability::getInstanceID).collect(Collectors.toSet());
+
+            assertEquals(4, result.size(), "Should keep Critical, High, H_BY_A, S_BE_K (H_BY_C hidden by category)");
+            assertTrue(resultIds.contains("CRITICAL_VULN"));
+            assertTrue(resultIds.contains("HIGH_VULN"));
+            assertTrue(resultIds.contains("HIDDEN_BY_AUDIENCE"));
+            assertTrue(resultIds.contains("SHOULD_BE_KEPT"));
+        }
+
+        @Test
+        void testLegacyFoDFilterHidesCorrectly() {
+            FilterSet fodFilter = new FilterSet();
+            fodFilter.setFilters(List.of(
+                createFolderFilter("[fortify priority order]:high"),
+                createHideFilter("audience:!fod analyzer:!pentest category:!docker")
+            ));
+            List<Vulnerability> result = VulnerabilityFilterer.filterVulnerabilities(allVulnerabilities, fodFilter);
+
+            assertEquals(3, result.size(), "Should keep vulnHigh, H_BY_C, S_BE_K (H_BY_A hidden)");
+            Set<String> resultIds = result.stream().map(Vulnerability::getInstanceID).collect(Collectors.toSet());
+            assertTrue(resultIds.contains("HIGH_VULN"));
+            assertTrue(resultIds.contains("HIDDEN_BY_CATEGORY"));
+            assertTrue(resultIds.contains("SHOULD_BE_KEPT"));
+        }
+
+        // NEW TEST: Regex
+        @Test
+        void testRegexMatch() {
+            Vulnerability vuln = new Vulnerability();
+            vuln.setCategory("SQL Injection");
+            List<Vulnerability> vulns = List.of(vuln);
+            List<Vulnerability> result = VulnerabilityFilterer.filter(vulns, "category:/sql.*/");
+            assertEquals(1, result.size());
+        }
+
+        @Test
+        void testAnalysisTypeFilterMatchesOnlyMatchingVulnerability() {
+            Vulnerability scaVuln = new Vulnerability();
+            scaVuln.setInstanceID("SCA_VULN");
+            scaVuln.setAnalysisType("SCA");
+
+            Vulnerability webInspectVuln = new Vulnerability();
+            webInspectVuln.setInstanceID("WEBINSPECT_VULN");
+            webInspectVuln.setAnalysisType("WEBINSPECT");
+
+            List<Vulnerability> result = VulnerabilityFilterer.filter(
+                List.of(scaVuln, webInspectVuln),
+                "[analysis type]:SCA"
+            );
+
+            assertEquals(1, result.size());
+            assertEquals("SCA_VULN", result.get(0).getInstanceID());
+        }
+
+        @Test
+        void testStreamingBackedAttributesAreFilterable() {
+            Vulnerability matchingVuln = new Vulnerability();
+            matchingVuln.setInstanceID("MATCHING_VULN");
+            matchingVuln.setClassID("RULE-123");
+            matchingVuln.setKingdom("Dataflow");
+            matchingVuln.setProbability(2.5);
+            matchingVuln.setRequestBody("username=admin");
+            matchingVuln.setRequestMethod("POST");
+            matchingVuln.setAttackPayload("drop table users");
+            matchingVuln.setResponse("HTTP/1.1 500 Internal Server Error");
+            matchingVuln.setSource(new StackTraceElement("src/main/java/com/acme/SqlExample.java", 41, "dangerousCall()", "Call", null, "", ""));
+
+            Vulnerability nonMatchingVuln = new Vulnerability();
+            nonMatchingVuln.setInstanceID("NON_MATCHING_VULN");
+            nonMatchingVuln.setClassID("RULE-999");
+            nonMatchingVuln.setKingdom("Control Flow");
+            nonMatchingVuln.setProbability(0.5);
+            nonMatchingVuln.setRequestBody("username=guest");
+            nonMatchingVuln.setRequestMethod("GET");
+            nonMatchingVuln.setAttackPayload("benign payload");
+            nonMatchingVuln.setResponse("HTTP/1.1 200 OK");
+            nonMatchingVuln.setSource(new StackTraceElement("src/test/java/com/acme/SafeExample.java", 12, "safeCall()", "Call", null, "", ""));
+
+            List<Vulnerability> vulnerabilities = List.of(matchingVuln, nonMatchingVuln);
+
+            assertMatchesOnly("ruleid:RULE-123", vulnerabilities, "MATCHING_VULN");
+            assertMatchesOnly("kingdom:Dataflow", vulnerabilities, "MATCHING_VULN");
+            assertMatchesOnly("probability:[2.0,3.0]", vulnerabilities, "MATCHING_VULN");
+            assertMatchesOnly("body:username=admin", vulnerabilities, "MATCHING_VULN");
+            assertMatchesOnly("method:POST", vulnerabilities, "MATCHING_VULN");
+            assertMatchesOnly("[attack payload]:\"drop table users\"", vulnerabilities, "MATCHING_VULN");
+            assertMatchesOnly("response:500 Internal Server Error", vulnerabilities, "MATCHING_VULN");
+            assertMatchesOnly("file:SqlExample.java", vulnerabilities, "MATCHING_VULN");
+            assertMatchesOnly("sourcefile:src/main/java/com/acme/SqlExample.java", vulnerabilities, "MATCHING_VULN");
+            assertMatchesOnly("shortfilename:SqlExample.java", vulnerabilities, "MATCHING_VULN");
+        }
+
+        @Test
+        void testCodeSnippetFilterUsesSourceCode() {
+            Vulnerability matchingVuln = new Vulnerability();
+            matchingVuln.setInstanceID("MATCHING_VULN");
+            matchingVuln.setSource(new StackTraceElement("src/Main.java", 42, "dangerousCall()", "Call", null, "", ""));
+
+            Vulnerability nonMatchingVuln = new Vulnerability();
+            nonMatchingVuln.setInstanceID("NON_MATCHING_VULN");
+            nonMatchingVuln.setSource(new StackTraceElement("src/Main.java", 43, "safeCall()", "Call", null, "", ""));
+
+            assertMatchesOnly(
+                "codesnippet:\"dangerousCall()\"",
+                List.of(matchingVuln, nonMatchingVuln),
+                "MATCHING_VULN"
+            );
+        }
+
+        @Test
+        void testVirtualConfidenceFilters() {
+            Vulnerability mediumVirtConf = new Vulnerability();
+            mediumVirtConf.setInstanceID("MEDIUM_VIRT_CONF");
+            mediumVirtConf.setMinVirtualCallConfidence(0.58);
+
+            Vulnerability highVirtConf = new Vulnerability();
+            highVirtConf.setInstanceID("HIGH_VIRT_CONF");
+            highVirtConf.setMinVirtualCallConfidence(0.95);
+
+            List<Vulnerability> vulnerabilities = List.of(mediumVirtConf, highVirtConf);
+
+            assertMatchesOnly("virtconf:0.58", vulnerabilities, "MEDIUM_VIRT_CONF");
+            assertMatchesOnly("maxVirtConf:0.60", vulnerabilities, "MEDIUM_VIRT_CONF");
+            assertMatchesOnly("minVirtConf:0.90", vulnerabilities, "HIGH_VIRT_CONF");
+        }
+
+        @Test
+        void testLegacyFortifyAliasesRemainSupported() {
+            Vulnerability matchingVuln = new Vulnerability();
+            matchingVuln.setInstanceID("MATCHING_VULN");
+            matchingVuln.getKnowledge().put("EnginePriority", "5");
+            matchingVuln.getKnowledge().put("IssueAge", "7");
+            matchingVuln.getKnowledge().put("MappedCategory", "OWASP A1");
+            matchingVuln.getKnowledge().put("SecondaryRequests", "3");
+
+            Vulnerability nonMatchingVuln = new Vulnerability();
+            nonMatchingVuln.setInstanceID("NON_MATCHING_VULN");
+            nonMatchingVuln.getKnowledge().put("EnginePriority", "2");
+            nonMatchingVuln.getKnowledge().put("IssueAge", "1");
+            nonMatchingVuln.getKnowledge().put("MappedCategory", "OWASP A3");
+            nonMatchingVuln.getKnowledge().put("SecondaryRequests", "0");
+
+            List<Vulnerability> vulnerabilities = List.of(matchingVuln, nonMatchingVuln);
+
+            assertMatchesOnly("[engine priority]:[4,5]", vulnerabilities, "MATCHING_VULN");
+            assertMatchesOnly("[issue age]:[6,8]", vulnerabilities, "MATCHING_VULN");
+            assertMatchesOnly("[mapped category]:\"OWASP A1\"", vulnerabilities, "MATCHING_VULN");
+            assertMatchesOnly("[secondary requests]:[2,4]", vulnerabilities, "MATCHING_VULN");
+        }
+
+        // Null Attr Handling
+        @Test
+        void testNullAttrNotContains() {
+            Vulnerability vuln = new Vulnerability(); // analyzer null
+            List<Vulnerability> vulns = List.of(vuln);
+            List<Vulnerability> result = VulnerabilityFilterer.filter(vulns, "analyzer:!pentest");
+            assertEquals(1, result.size()); // !false (null not contains) = true, matches
+        }
+
+        private void assertMatchesOnly(String query, List<Vulnerability> vulnerabilities, String expectedInstanceId) {
+            List<Vulnerability> result = VulnerabilityFilterer.filter(vulnerabilities, query);
+            assertEquals(1, result.size(), "Unexpected match count for query: " + query);
+            assertEquals(expectedInstanceId, result.get(0).getInstanceID(), "Unexpected match for query: " + query);
+        }
+
+        private Filter createFolderFilter(String query) { Filter f = new Filter(); f.setAction("setFolder"); f.setQuery(query); return f; }
+        private Filter createHideFilter(String query) { Filter f = new Filter(); f.setAction("hide"); f.setQuery(query); return f; }
+    }
+}

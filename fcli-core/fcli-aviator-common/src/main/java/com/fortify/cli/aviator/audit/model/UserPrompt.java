@@ -16,6 +16,8 @@ import java.util.List;
 import java.util.Set;
 
 import com.formkiq.graalvm.annotations.Reflectable;
+import com.fortify.cli.common.fpr.model.File;
+import com.fortify.cli.common.fpr.model.StackTraceElement;
 
 import lombok.Builder;
 import lombok.Getter;

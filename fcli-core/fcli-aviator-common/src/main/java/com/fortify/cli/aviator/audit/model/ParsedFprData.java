@@ -15,11 +15,11 @@ package com.fortify.cli.aviator.audit.model;
 import java.util.List;
 import java.util.Map;
 
-import com.fortify.cli.aviator.fpr.Vulnerability;
-import com.fortify.cli.aviator.fpr.model.AuditIssue;
-import com.fortify.cli.aviator.fpr.model.FPRInfo;
-import com.fortify.cli.aviator.fpr.processor.AuditProcessor;
-import com.fortify.cli.aviator.fpr.processor.StreamingFVDLProcessor;
+import com.fortify.cli.aviator.audit.processor.AuditProcessor;
+import com.fortify.cli.common.fpr.Vulnerability;
+import com.fortify.cli.common.fpr.model.AuditIssue;
+import com.fortify.cli.common.fpr.model.FPRInfo;
+import com.fortify.cli.common.fpr.processor.StreamingFVDLProcessor;
 
 /**
  * A data-holding class that represents the complete, parsed contents of an FPR file.

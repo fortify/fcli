@@ -32,14 +32,14 @@ import com.fortify.aviator.grpc.StackTraceElementList;
 import com.fortify.cli.aviator._common.exception.AviatorConnectivityException;
 import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
 import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
+import com.fortify.cli.aviator.audit.SourceCodeEnricher;
 import com.fortify.cli.aviator.audit.model.AuditResponse;
 import com.fortify.cli.aviator.audit.model.AuditResponse.AuditSkipReason;
 import com.fortify.cli.aviator.audit.model.Autoremediation;
 import com.fortify.cli.aviator.audit.model.Change;
-import com.fortify.cli.aviator.audit.model.StackTraceElement;
 import com.fortify.cli.aviator.audit.model.UserPrompt;
-import com.fortify.cli.aviator.fpr.utils.SourceCodeEnricher;
 import com.fortify.cli.aviator.util.Constants;
+import com.fortify.cli.common.fpr.model.StackTraceElement;
 
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;

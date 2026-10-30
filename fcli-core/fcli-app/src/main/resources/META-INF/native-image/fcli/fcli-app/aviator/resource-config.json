@@ -15,6 +15,9 @@
       },
       {
         "pattern": "webinspect.xsd"
+      },
+      {
+        "pattern": "default_audit.xml"
       }
     ]
   }

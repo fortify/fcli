@@ -15,9 +15,9 @@ package com.fortify.cli.aviator.fpr.remediation.model;
 import java.util.Arrays;
 import java.util.regex.Pattern;
 
-import com.fortify.cli.aviator.util.FileTypeLanguageMapperUtil;
-import com.fortify.cli.aviator.util.FileUtil;
-import com.fortify.cli.aviator.util.LanguageCommentMapperUtil;
+import com.fortify.cli.common.fpr.util.FileTypeLanguageMapperUtil;
+import com.fortify.cli.common.fpr.util.FileUtil;
+import com.fortify.cli.common.fpr.util.LanguageCommentMapperUtil;
 
 import lombok.Builder;
 

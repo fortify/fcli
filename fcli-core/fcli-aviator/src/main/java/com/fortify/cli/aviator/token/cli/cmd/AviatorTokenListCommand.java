@@ -29,7 +29,7 @@ import com.fortify.cli.aviator._common.output.cli.cmd.AbstractAviatorAdminSessio
 import com.fortify.cli.aviator._common.util.AviatorGrpcUtils;
 import com.fortify.cli.aviator._common.util.AviatorSignatureUtils;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClient;
-import com.fortify.cli.aviator.util.StringUtil;
+import com.fortify.cli.common.fpr.util.StringUtil;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.grpc.token.ListTokensResponse;
 import com.fortify.grpc.token.TokenInfo;

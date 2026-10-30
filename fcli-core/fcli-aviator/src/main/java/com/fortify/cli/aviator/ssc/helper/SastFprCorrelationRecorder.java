@@ -37,7 +37,7 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
 import com.fortify.cli.aviator.grpc.CorrelatedPair;
-import com.fortify.cli.aviator.util.FprHandle;
+import com.fortify.cli.common.fpr.util.FprHandle;
 import com.fortify.cli.common.util.SecureXmlParserFactory;
 
 import lombok.SneakyThrows;

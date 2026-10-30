@@ -19,13 +19,13 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-import com.fortify.cli.aviator.audit.model.File;
-import com.fortify.cli.aviator.audit.model.StackTraceElement;
-import com.fortify.cli.aviator.fpr.Vulnerability;
-import com.fortify.cli.aviator.fpr.model.FVDLMetadata;
-import com.fortify.cli.aviator.util.FileTypeLanguageMapperUtil;
-import com.fortify.cli.aviator.util.FileUtil;
-import com.fortify.cli.aviator.util.StringUtil;
+import com.fortify.cli.common.fpr.Vulnerability;
+import com.fortify.cli.common.fpr.model.FVDLMetadata;
+import com.fortify.cli.common.fpr.model.File;
+import com.fortify.cli.common.fpr.model.StackTraceElement;
+import com.fortify.cli.common.fpr.util.FileTypeLanguageMapperUtil;
+import com.fortify.cli.common.fpr.util.FileUtil;
+import com.fortify.cli.common.fpr.util.StringUtil;
 
 class SourceLanguageResolver {
     static final String UNKNOWN_LANGUAGE = "Unknown";

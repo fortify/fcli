@@ -24,13 +24,13 @@
     "allDeclaredFields": true, "allPublicFields": true
   },
   {
-    "name": "com.fortify.cli.aviator.util.ExtensionsConfig",
+    "name": "com.fortify.cli.common.fpr.config.ExtensionsConfig",
     "allDeclaredConstructors": true, "allPublicConstructors": true,
     "allDeclaredMethods": true, "allPublicMethods": true,
     "allDeclaredFields": true, "allPublicFields": true
   },
   {
-    "name":"com.fortify.cli.aviator.config.LanguagesCommentConfig",
+    "name":"com.fortify.cli.common.fpr.config.LanguagesCommentConfig",
     "allDeclaredConstructors": true,
     "allPublicConstructors": true,
     "allDeclaredMethods": true,
