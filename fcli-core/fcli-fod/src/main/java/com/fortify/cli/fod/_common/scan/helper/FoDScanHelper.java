@@ -80,7 +80,7 @@ public class FoDScanHelper {
                         .getBody();
                 return getDescriptor(pollingResult);
             case 1:
-                var summaryResult = unirest.get(FoDUrls.SCAN + "/summary")
+                var summaryResult = unirest.get(FoDUrls.SCAN_SUMMARY)
                         .routeParam("scanId", elts[0])
                         .asObject(ObjectNode.class)
                         .getBody();

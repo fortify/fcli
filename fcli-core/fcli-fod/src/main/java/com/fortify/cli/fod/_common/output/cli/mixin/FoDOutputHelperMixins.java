@@ -110,4 +110,8 @@ public class FoDOutputHelperMixins {
     public static class UploadFile extends OutputHelperMixins.TableNoQuery {
         public static final String CMD_NAME = "upload-file";
     }
+
+    public static class Compare extends OutputHelperMixins.DetailsNoQuery {
+        public static final String CMD_NAME = "compare";
+    }
 }

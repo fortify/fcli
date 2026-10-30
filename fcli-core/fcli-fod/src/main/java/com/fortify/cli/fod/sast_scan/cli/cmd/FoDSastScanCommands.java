@@ -20,6 +20,7 @@ import picocli.CommandLine;
 @CommandLine.Command(name = "sast-scan", aliases = "sast",
         subcommands = {
                 FoDSastScanCancelCommand.class,
+                FoDSastScanCompareCommand.class,
                 FoDSastScanDownloadCommand.class,
                 FoDSastScanDownloadLatestCommand.class,
                 FoDSastScanGetCommand.class,

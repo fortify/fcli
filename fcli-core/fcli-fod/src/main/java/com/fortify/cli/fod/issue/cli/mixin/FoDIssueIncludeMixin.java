@@ -23,6 +23,7 @@ import com.fortify.cli.common.output.transform.IRecordTransformer;
 import com.fortify.cli.common.rest.unirest.IHttpRequestUpdater;
 import com.fortify.cli.common.util.DisableTest;
 import com.fortify.cli.common.util.DisableTest.TestType;
+import com.fortify.cli.fod.issue.helper.FoDIssueHelper;
 
 import kong.unirest.HttpRequest;
 import lombok.Getter;
@@ -80,17 +81,11 @@ public class FoDIssueIncludeMixin implements IHttpRequestUpdater, IRecordTransfo
     private ObjectNode addVisibilityProperties(ObjectNode record) {
         Map<String,String> visibility = new LinkedHashMap<>();
         if ( getBoolean(record, "isSuppressed") ) { visibility.put("suppressed", "(S)"); }
-        // Updated as per (Issue#820): using status field as well to determine fixed status instead of just closedStatus field
-        if ( getBoolean(record, "closedStatus") || isFixValidated(record) ) { visibility.put("fixed", "(F)"); }
+        if ( FoDIssueHelper.isFixed(record) ) { visibility.put("fixed", "(F)"); }
         if ( visibility.isEmpty() )               { visibility.put("visible", " "); }
         record.put("visibility", String.join(",", visibility.keySet()))
             .put("visibilityMarker", String.join("", visibility.values()));
         return record;
-    }
-
-    private boolean isFixValidated(ObjectNode record) {
-        var field = record.get("status");
-        return field != null && "Fix Validated".equals(field.asText());
     }
 
     private boolean getBoolean(ObjectNode record, String propertyName) {

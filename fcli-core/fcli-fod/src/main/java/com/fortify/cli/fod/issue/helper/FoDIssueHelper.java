@@ -47,6 +47,14 @@ public class FoDIssueHelper {
         return new RenameFieldsTransformer(new String[]{}).transform(record);
     }
 
+    /**
+     * Whether the given issue record represents a fixed issue; besides closedStatus, the
+     * 'Fix Validated' status needs to be checked as well (see issue #820)
+     */
+    public static final boolean isFixed(JsonNode issue) {
+        return issue.path("closedStatus").asBoolean() || "Fix Validated".equals(issue.path("status").asText(null));
+    }
+
     /** Immutable aggregation data carrier for adding merged issue fields. */
     @Data @Builder
     public static class IssueAggregationData {
