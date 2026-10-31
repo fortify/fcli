@@ -13,7 +13,10 @@
 package com.fortify.cli.sc_dast.scan.cli.cmd;
 
 import java.util.Set;
+import java.util.stream.Stream;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.rest.cli.cmd.AbstractWaitForCommand;
 import com.fortify.cli.common.rest.wait.WaitHelper.WaitHelperBuilder;
@@ -34,15 +37,30 @@ public class SCDastScanWaitForCommand extends AbstractWaitForCommand {
     @Mixin private SCDastScanResolverMixin.PositionalParameterMulti scansResolver;
     @Option(names={"-s", "--any-state"}, required=true, split=",", defaultValue="Complete", completionCandidates = SCDastScanStatusIterable.class)
     private Set<String> states;
+    @Option(names={"--published"})
+    private boolean waitForPublish;
     
     @Override
     protected WaitHelperBuilder configure(UnirestInstance unirest, WaitHelperBuilder builder) {
         return builder
                 .recordsSupplier(scansResolver::getScanDescriptorJsonNodes)
-                .recordTransformer(SCDastScanStatus::addScanStatus)
+                .recordTransformer(this::addScanStatus)
                 .currentStateProperty("scanStatus")
-                .knownStates(SCDastScanStatus.getKnownStateNames())
+                .knownStates(Stream.concat(Stream.of(SCDastScanStatus.getKnownStateNames()), Stream.of(STATE_PUBLISHING)).toArray(String[]::new))
                 .failureStates(SCDastScanStatus.getFailureStateNames())
                 .matchStates(states);
     }
+    
+    // Completed scans report 'Publishing' until results have been published to SSC
+    private JsonNode addScanStatus(JsonNode scanRecord) {
+        var record = SCDastScanStatus.addScanStatus(scanRecord);
+        if ( waitForPublish && record instanceof ObjectNode objectNode
+                && SCDastScanStatus.Complete.name().equals(objectNode.path("scanStatus").asText())
+                && !"Published".equals(objectNode.path("publishStatusTypeDescription").asText()) ) {
+            objectNode.put("scanStatus", STATE_PUBLISHING);
+        }
+        return record;
+    }
+    
+    private static final String STATE_PUBLISHING = "Publishing";
 }
