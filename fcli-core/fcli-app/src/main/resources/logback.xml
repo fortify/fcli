@@ -11,13 +11,13 @@
     without notice.
  -->
 <configuration>
-  <appender name="default" class="ch.qos.logback.core.ConsoleAppender">
-    <target>System.err</target>
+  <appender name="default" class="com.fortify.cli.common.progress.helper.ProgressAwareConsoleAppender">
     <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
       <level>WARN</level>
     </filter>
     <encoder>
-        <pattern>%msg%n</pattern>
+        <charset>UTF-8</charset>
+        <pattern>%msg%n%ex{0}</pattern>
     </encoder>
   </appender>
 
