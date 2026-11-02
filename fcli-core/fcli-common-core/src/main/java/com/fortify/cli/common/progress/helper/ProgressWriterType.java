@@ -124,6 +124,7 @@ public enum ProgressWriterType {
                 callback.accept(formattedMessage);
             }
             if (drawsProgress()) {
+                beforeRender();
                 ProgressRenderCoordinator.render(this, () -> writeProgress(formattedMessage));
             }
         }
@@ -131,6 +132,12 @@ public enum ProgressWriterType {
         protected boolean drawsProgress() {
             return true;
         }
+
+        /**
+         * Hook to resolve lazily initialized values, which may log, before the render lock is taken.
+         * Logging while holding the render lock can deadlock with a thread that initializes the same value.
+         */
+        protected void beforeRender() {}
 
         protected abstract void writeProgress(String message);
 
@@ -238,6 +245,10 @@ public enum ProgressWriterType {
         @Override
         public boolean isMultiLineSupported() {
             return false;
+        }
+        @Override
+        protected void beforeRender() {
+            ConsoleHelper.getTerminalWidth();
         }
         @Override
         public void writeProgress(String message) {
