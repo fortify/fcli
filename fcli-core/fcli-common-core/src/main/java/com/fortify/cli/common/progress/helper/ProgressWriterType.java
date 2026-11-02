@@ -74,8 +74,8 @@ public enum ProgressWriterType {
             this.warningErr = currentErr;
             this.ownerThread = Thread.currentThread();
             this.executionContext = FcliExecutionContextHolder.tryCurrentContext();
-            var wrappedOut = new ProgressWriterPrintStreamWrapper(currentOut, this);
-            var wrappedErr = new ProgressWriterPrintStreamWrapper(currentErr, this);
+            var wrappedOut = new ProgressWriterPrintStreamWrapper(currentOut);
+            var wrappedErr = new ProgressWriterPrintStreamWrapper(currentErr);
             StdioHelper.pushOut(wrappedOut);
             StdioHelper.pushErr(wrappedErr);
         }

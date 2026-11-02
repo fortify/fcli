@@ -14,18 +14,18 @@ package com.fortify.cli.common.progress.helper;
 
 import java.io.PrintStream;
 
+/**
+ * Clears any visible progress and writes in one step under the {@link ProgressRenderCoordinator} lock,
+ * so another thread cannot redraw progress in between. The lock is held during the write: a blocked
+ * stream also blocks progress rendering and console log output. A write to a capture buffer can also
+ * clear progress shown on the terminal by another writer.
+ */
 public class ProgressWriterPrintStreamWrapper extends PrintStream {
     private final PrintStream original;
-    private final IProgressWriter progressWriter;
 
-    public ProgressWriterPrintStreamWrapper(PrintStream original, IProgressWriter progressWriter) {
+    public ProgressWriterPrintStreamWrapper(PrintStream original) {
         super(original);
         this.original = original;
-        this.progressWriter = progressWriter;
-    }
-
-    private void clearProgress() {
-        progressWriter.clearProgress();
     }
 
     @Override
@@ -35,26 +35,32 @@ public class ProgressWriterPrintStreamWrapper extends PrintStream {
 
     @Override
     public void write(int b) {
-        clearProgress();
-        original.write(b);
+        ProgressRenderCoordinator.emit(() -> original.write(b));
     }
 
     @Override
     public void write(byte[] buf, int off, int len) {
-        clearProgress();
-        original.write(buf, off, len);
+        ProgressRenderCoordinator.emit(() -> original.write(buf, off, len));
     }
 
     @Override
     public void print(String s) {
-        clearProgress();
-        original.print(s);
+        ProgressRenderCoordinator.emit(() -> original.print(s));
+    }
+
+    @Override
+    public void println() {
+        ProgressRenderCoordinator.emit(original::println);
     }
 
     @Override
     public void println(String s) {
-        clearProgress();
-        original.println(s);
+        ProgressRenderCoordinator.emit(() -> original.println(s));
+    }
+
+    @Override
+    public void println(Object o) {
+        ProgressRenderCoordinator.emit(() -> original.println(o));
     }
 
     @Override

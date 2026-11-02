@@ -36,7 +36,10 @@ public final class ProgressRenderCoordinator {
         }
     }
 
-    /** Clear any visible progress and emit one complete console event. */
+    /**
+     * Clear any visible progress and run one complete write. The lock is held while {@code emit} runs,
+     * so it must not block for long.
+     */
     public static void emit(Runnable emit) {
         synchronized (LOCK) {
             if (visibleWriter != null) visibleWriter.clearProgress();
