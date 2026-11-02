@@ -63,6 +63,8 @@ class StreamInitializationTimeoutTest {
         public void info(String format, Object... args) {}
         public void warn(String format, Object... args) {}
         public void error(String format, Object... args) {}
+        public void warnWithException(String format, Throwable cause, Object... args) {}
+        public void errorWithException(String format, Throwable cause, Object... args) {}
     };
 
     @Test

@@ -234,7 +234,7 @@ public class DastAuditStreamProcessor implements AutoCloseable {
     private void handleAudit(DastAuditResponse response) {
         String issueId = completeRequest(response.getRequestId());
         if (issueId == null) {
-            LOG.warn("Ignoring DAST audit response for unknown or completed request {}", response.getRequestId());
+            LOG.debug("Ignoring DAST audit response for unknown or completed request {}", response.getRequestId());
             return;
         }
         var decision = response.hasDecision() ? response.getDecision() : null;
@@ -310,7 +310,7 @@ public class DastAuditStreamProcessor implements AutoCloseable {
                 case AUDIT -> handleAudit(message.getAudit());
                 case ERROR -> handleError(message.getError());
                 case PONG -> handlePong(message.getPong());
-                default -> LOG.warn("Unknown DAST audit response type: {}", message.getResponseTypeCase());
+                default -> LOG.debug("Unknown DAST audit response type: {}", message.getResponseTypeCase());
             }
         }
 
@@ -394,7 +394,7 @@ public class DastAuditStreamProcessor implements AutoCloseable {
         int completedCount = workItems.size() - pendingIssueIds.size();
         if (completedCount == lastRetryCompletedCount) {
             if (stagnantRetryCount.incrementAndGet() >= 3) {
-                LOG.error("DAST audit stream made no progress after multiple retries");
+                logger.error("DAST audit stream made no progress after multiple retries");
                 return false;
             }
         } else {

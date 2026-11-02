@@ -206,7 +206,7 @@ public class AviatorSSCCorrelateSastDastCommand extends AbstractSSCJsonNodeOutpu
             try {
                 Files.deleteIfExists(path);
             } catch (IOException e) {
-                LOG.warn("Failed to delete temporary correlation FPR {}", path, e);
+                LOG.warn("WARN: Failed to delete temporary correlation FPR {}", path, e);
             }
         }
 

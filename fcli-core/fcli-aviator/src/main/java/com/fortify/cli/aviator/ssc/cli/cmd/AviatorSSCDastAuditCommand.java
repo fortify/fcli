@@ -115,7 +115,7 @@ public class AviatorSSCDastAuditCommand extends AbstractSSCJsonNodeOutputCommand
                 try {
                     Files.deleteIfExists(downloadedFpr);
                 } catch (Exception e) {
-                    LOG.warn("Failed to delete temporary DAST FPR {}", downloadedFpr, e);
+                    LOG.warn("WARN: Failed to delete temporary DAST FPR {}", downloadedFpr, e);
                 }
             }
         }

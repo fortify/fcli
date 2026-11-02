@@ -276,8 +276,10 @@ class AviatorSSCAuditCommandTest {
         @Override public void writeProgress(String message, Object... args) { messages.add(String.format(message, args)); }
         @Override public void writeInfo(String message, Object... args) {}
         @Override public void writeInfoWithException(String message, Throwable cause, Object... args) {}
-        @Override public void writeWarning(String message, Object... args) {}
-        @Override public void writeWarningWithException(String message, Throwable cause, Object... args) {}
+        @Override public void writeWarning(String message, Object... args) { messages.add(String.format(message, args)); }
+        @Override public void writeWarningWithException(String message, Throwable cause, Object... args) {
+            messages.add(String.format(message, args));
+        }
         @Override public void clearProgress() {}
         @Override public void close() {}
         @Override public String type() { return "test"; }

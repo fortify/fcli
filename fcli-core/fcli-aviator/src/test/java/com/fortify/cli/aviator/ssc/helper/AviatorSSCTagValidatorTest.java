@@ -225,7 +225,12 @@ class AviatorSSCTagValidatorTest {
         @Override public void warn(String format, Object... args) {
             warnings.add(String.format(format, args));
         }
+        @Override public void warnWithException(String format, Throwable cause, Object... args) {
+            String message = String.format(format, args);
+            warnings.add(cause == null ? message : message + ": " + cause);
+        }
         @Override public void error(String format, Object... args) {}
+        @Override public void errorWithException(String format, Throwable cause, Object... args) {}
     }
 
     private static final class TestSscServer implements AutoCloseable {

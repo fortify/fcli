@@ -303,7 +303,7 @@ public class CorrelationStreamProcessor implements AutoCloseable {
                     case VALIDATION -> handleValidationResponse(message.getValidation(), scanGuid);
                     case ERROR -> handleErrorResponse(message.getError(), resultFuture);
                     case PONG -> handlePongResponse(message.getPong());
-                    default -> LOG.warn("Unknown correlation response type: {}", message.getResponseTypeCase());
+                    default -> warnUser("Unknown correlation response type: %s", message.getResponseTypeCase());
                 }
             } catch (Exception e) {
                 LOG.error("Error handling correlation response", e);
@@ -340,6 +340,21 @@ public class CorrelationStreamProcessor implements AutoCloseable {
 
     // ─── Response handlers ─────────────────────────────────────────────
 
+    /** User-visible correlation warning. IAviatorLogger adds the WARN: prefix; the SLF4J fallback includes it. */
+    private void warnUser(String format, Object... args) {
+        if (logger != null) {
+            logger.warn(format, args);
+        } else {
+            Object[] slf4jArgs = args == null ? new Object[0] : args;
+            // warn(String, Object) would treat an Object[] as one argument, so pick the arity overload.
+            switch (slf4jArgs.length) {
+                case 1 -> LOG.warn("WARN: " + format.replace("%s", "{}"), slf4jArgs[0]);
+                case 2 -> LOG.warn("WARN: " + format.replace("%s", "{}"), slf4jArgs[0], slf4jArgs[1]);
+                default -> LOG.warn("WARN: " + format.replace("%s", "{}"), slf4jArgs);
+            }
+        }
+    }
+
     private void handleInitResponse(CorrelationInitResponse resp) {
         if (!initializationTimeout.initialized()) return;
         LOG.info("Correlation stream initialized. Server stream ID: {}, Reserved quota: {}, Status: {}",
@@ -349,7 +364,7 @@ public class CorrelationStreamProcessor implements AutoCloseable {
         state.quota = resp.getReservedQuota();
 
         if (!"OK".equalsIgnoreCase(resp.getStatus()) && !"SUCCESS".equalsIgnoreCase(resp.getStatus())) {
-            LOG.warn("Init response status: {} — {}", resp.getStatus(), resp.getStatusMessage());
+            warnUser("Init response status: %s — %s", resp.getStatus(), resp.getStatusMessage());
         }
 
         // Start sending correlation requests
@@ -358,7 +373,7 @@ public class CorrelationStreamProcessor implements AutoCloseable {
 
     private void handleCorrelationResponse(CorrelationResponse resp) {
         if (!pendingCorrelationRequestIds.remove(resp.getRequestId())) {
-            LOG.warn("Ignoring correlation response for unknown or completed request {}", resp.getRequestId());
+            warnUser("Ignoring correlation response for unknown or completed request %s", resp.getRequestId());
             return;
         }
         int received = state.receivedCorrelations.incrementAndGet();

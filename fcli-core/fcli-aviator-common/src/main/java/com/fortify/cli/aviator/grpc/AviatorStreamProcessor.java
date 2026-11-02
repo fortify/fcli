@@ -266,7 +266,7 @@ class AviatorStreamProcessor implements AutoCloseable {
                 this.streamLatch.await();
 
             } catch (Exception e) {
-                LOG.error("Stream failed with error: {}", e.getMessage(), e);
+                logger.errorWithException("Stream failed with error: %s", e, e.getMessage());
 
                 if (isRetryableError(e)) {
                     boolean infinite = isInfiniteRetryError(e);
@@ -285,7 +285,7 @@ class AviatorStreamProcessor implements AutoCloseable {
                     }
                     lastProcessed.set(processedRequests.get());
                     if (infinite || currentStreamState.streamRetryCount < Constants.MAX_STREAM_RETRIES) {
-                        LOG.warn("WARN: Stream encountered a retryable error. Will attempt to reconnect...");
+                        logger.warn("WARN: Stream encountered a retryable error. Will attempt to reconnect...");
                         if (requestHandler != null) {
                             requestHandler.complete();
                         }
@@ -352,7 +352,7 @@ class AviatorStreamProcessor implements AutoCloseable {
                 if ("BACKPRESSURE_WARNING".equals(response.getStatus())) {
                     handleBackpressureWarning();
                 } else if ("BACKPRESSURE_VIOLATION".equals(response.getStatus())) {
-                    logger.error("Server terminated stream due to backpressure violations: {}", response.getStatusMessage());
+                    logger.error("Server terminated stream due to backpressure violations: %s", response.getStatusMessage());
                     if (requestHandler != null) {
                         requestHandler.complete();
                     }
@@ -491,14 +491,14 @@ class AviatorStreamProcessor implements AutoCloseable {
                         if (!processingExecutor.isShutdown()) {
                             processingExecutor.submit(() -> startStreamWithRetry(responses, processedRequests, resultFuture));
                         } else {
-                            LOG.warn("Cannot retry stream, as the processing executor is already shut down.");
+                            logger.warn("WARN: Cannot retry stream, as the processing executor is already shut down.");
                             if (!resultFuture.isDone()) {
                                 resultFuture.completeExceptionally(new AviatorTechnicalException("Cannot retry stream, executor is shut down.", t));
                             }
                         }
                     } else {
                         if (!resultFuture.isDone()) {
-                            LOG.error("Stream error occurred: {}", t.getMessage(), t);
+                            logger.errorWithException("Stream error occurred: %s", t, t.getMessage());
                             if (t instanceof StatusRuntimeException sre) {
                                 String description = sre.getStatus().getDescription() != null ?
                                         sre.getStatus().getDescription() : "Unknown gRPC error";
@@ -512,7 +512,7 @@ class AviatorStreamProcessor implements AutoCloseable {
                     }
                     streamLatch.countDown();
                 } else {
-                    LOG.error("Stream error occurred: {}", t.getMessage(), t);
+                    logger.errorWithException("Stream error occurred: %s", t, t.getMessage());
                     if (!resultFuture.isDone()) {
                         if (t instanceof StatusRuntimeException sre) {
                             String description = sre.getStatus().getDescription() != null ?
@@ -768,7 +768,7 @@ class AviatorStreamProcessor implements AutoCloseable {
                 if (wrapper.attemptCount > 0) {
                     long delay = (long) (Constants.BASE_DELAY_MS * Math.pow(2, wrapper.attemptCount - 1));
                     delay = Math.min(delay, Constants.MAX_DELAY_MS) + ThreadLocalRandom.current().nextLong(100);
-                    LOG.warn("WARN: Applying retry delay of {}ms for instance {} (attempt {}/{})",
+                    LOG.debug("Applying retry delay of {}ms for instance {} (attempt {}/{})",
                             delay, instanceId,
                             wrapper.attemptCount + 1, Constants.MAX_RETRIES);
                     Thread.sleep(delay);
@@ -786,7 +786,8 @@ class AviatorStreamProcessor implements AutoCloseable {
             } catch (AviatorSimpleException e) {
                 if (wrapper != null) {
                     String instanceId = wrapper.userPrompt.getIssueData().getInstanceID();
-                    LOG.error("Permanently failing request for issue {} due to a client-side error: {}", instanceId, e.getMessage());
+                    logger.errorWithException("Permanently failing request for issue %s due to a client-side error: %s",
+                            e, instanceId, e.getMessage());
 
                     AuditResponse failedResponse = new AuditResponse();
                     failedResponse.setIssueId(instanceId);
@@ -804,11 +805,11 @@ class AviatorStreamProcessor implements AutoCloseable {
 
                     logger.progress("Processed " + completed + " out of " + totalRequests + " issues (" + failed + " failed).");
                 } else {
-                    LOG.error("Caught AviatorSimpleException but the request wrapper was null.", e);
+                    logger.errorWithException("Caught AviatorSimpleException but the request wrapper was null.", e);
                 }
             } catch (Exception e) {
                 if (!resultFuture.isDone()) {
-                    LOG.error("Unexpected error in processing loop, failing entire operation.", e);
+                    logger.errorWithException("Unexpected error in processing loop, failing entire operation.", e);
                     resultFuture.completeExceptionally(new AviatorTechnicalException("Unexpected error in processing loop", e));
                 }
                 break;
@@ -885,7 +886,7 @@ class AviatorStreamProcessor implements AutoCloseable {
 
         int completed = processedRequests.incrementAndGet();
         int skipped = skippedRequests.incrementAndGet();
-        LOG.warn("Skipping issue {}: {}", instanceId, failureMessage);
+        logger.warn("WARN: Skipping issue %s: %s", instanceId, failureMessage);
         logger.progress("Processed " + completed + " out of " + totalRequests + " issues (" + skipped + " skipped).");
 
         if (completed >= totalRequests) {
@@ -923,7 +924,7 @@ class AviatorStreamProcessor implements AutoCloseable {
     private void handleServerBusy(String requestId, int totalRequests, AtomicInteger processedRequests, Map<String, AuditResponse> responses, CompletableFuture<Map<String, AuditResponse>> resultFuture, CountDownLatch streamLatch) {
         RequestWrapper wrapperToRetry = inflightRequests.remove(requestId);
         if (wrapperToRetry == null) {
-            LOG.warn("WARN: Received SERVER_BUSY for unknown or already completed requestId: {}", requestId);
+            LOG.debug("Received SERVER_BUSY for unknown or already completed requestId: {}", requestId);
             return;
         }
 
@@ -933,7 +934,8 @@ class AviatorStreamProcessor implements AutoCloseable {
         wrapperToRetry.attemptCount++;
 
         if (wrapperToRetry.attemptCount > Constants.MAX_RETRIES) {
-            LOG.error("Request for instance {} failed after {} retries due to server being busy. Dropping request.", wrapperToRetry.userPrompt.getIssueData().getInstanceID(), Constants.MAX_RETRIES);
+            logger.error("Request for instance %s failed after %s retries due to server being busy. Dropping request.",
+                    wrapperToRetry.userPrompt.getIssueData().getInstanceID(), Constants.MAX_RETRIES);
 
             AuditResponse failedResponse = new AuditResponse();
             failedResponse.setIssueId(wrapperToRetry.userPrompt.getIssueData().getInstanceID());
@@ -946,7 +948,8 @@ class AviatorStreamProcessor implements AutoCloseable {
             logger.progress("Request permanently failed due to server busy - Processed " + completed + " out of " + totalRequests + " issues");
             decrementOutstanding(wrapperToRetry);
             int stillOutstanding = outstandingRequests.get();
-            LOG.warn("WARN: Request for instance {} permanently failed. Remaining outstanding requests: {}", wrapperToRetry.userPrompt.getIssueData().getInstanceID(), stillOutstanding);
+            LOG.debug("Request for instance {} permanently failed. Remaining outstanding requests: {}",
+                    wrapperToRetry.userPrompt.getIssueData().getInstanceID(), stillOutstanding);
             if (completed >= totalRequests) {
                 logger.info("All requests accounted for after permanent failure, completing stream.");
                 if (requestHandler != null && !requestHandler.isCompleted()) {
@@ -956,7 +959,9 @@ class AviatorStreamProcessor implements AutoCloseable {
                 streamLatch.countDown();
             }
         } else {
-            LOG.warn("WARN: Server is busy for instanceId {}. Re-queueing for retry (Attempt {}/{}). Queue size before re-queue: {}", wrapperToRetry.userPrompt.getIssueData().getInstanceID(), wrapperToRetry.attemptCount, Constants.MAX_RETRIES, processingQueue.size());
+            LOG.debug("Server is busy for instanceId {}. Re-queueing for retry (Attempt {}/{}). Queue size before re-queue: {}",
+                    wrapperToRetry.userPrompt.getIssueData().getInstanceID(), wrapperToRetry.attemptCount,
+                    Constants.MAX_RETRIES, processingQueue.size());
 
             processingQueue.addFirst(wrapperToRetry);
 
@@ -975,7 +980,8 @@ class AviatorStreamProcessor implements AutoCloseable {
 
         boolean sent = sendRequestWithRetry(promptRequest, Constants.MAX_RETRIES);
         if (!sent) {
-            LOG.error("Failed to send request for instance {} after all retries. Re-queueing for later attempt.", wrapper.userPrompt.getIssueData().getInstanceID());
+            logger.error("Failed to send request for instance %s after all retries. Re-queueing for later attempt.",
+                    wrapper.userPrompt.getIssueData().getInstanceID());
             inflightRequests.remove(requestId);
             requestMetricsMap.remove(requestId);
             decrementOutstanding(wrapper);
@@ -989,18 +995,18 @@ class AviatorStreamProcessor implements AutoCloseable {
         for (int attempt = 0; attempt < maxRetries; attempt++) {
             try {
                 if (requestHandler == null || !requestHandler.isReady()) {
-                    LOG.warn("WARN: Request handler not ready for send (attempt {}), aborting", attempt + 1);
+                    LOG.debug("Request handler not ready for send (attempt {}), aborting", attempt + 1);
                     return false;
                 }
 
                 if (requestHandler.isCompleted()) {
-                    LOG.warn("WARN: Request handler completed, cannot send (attempt {})", attempt + 1);
+                    LOG.debug("Request handler completed, cannot send (attempt {})", attempt + 1);
                     return false;
                 }
 
                 int messageSize = request.getSerializedSize();
                 if (messageSize > Constants.MAX_MESSAGE_SIZE) {
-                    LOG.error("Message size too large: {} bytes", messageSize);
+                    logger.error("Message size too large: %s bytes", messageSize);
                     throw new AviatorSimpleException("Message size exceeds maximum allowed limit");
                 }
 
@@ -1011,7 +1017,7 @@ class AviatorStreamProcessor implements AutoCloseable {
                 throw e;
             } catch (Exception e) {
                 if (requestHandler != null && !requestHandler.isCompleted()) {
-                    LOG.error("Error sending request (attempt {}): {}", attempt + 1, e.getMessage());
+                    logger.errorWithException("Error sending request (attempt %s): %s", e, attempt + 1, e.getMessage());
                 }
                 if (attempt == maxRetries - 1) {
                     return false;
@@ -1044,7 +1050,8 @@ class AviatorStreamProcessor implements AutoCloseable {
                 int newWindow = Math.max(20, currentWindow / 2);
                 serverWindowSize.set(newWindow);
 
-                LOG.warn("WARN: Received multiple backpressure warnings. Reducing window to {} and setting backoff to {}x", newWindow, newBackoff);
+                LOG.debug("Received multiple backpressure warnings. Reducing window to {} and setting backoff to {}x",
+                        newWindow, newBackoff);
             }
         } else {
             consecutiveBackpressureViolations.set(1);
@@ -1081,7 +1088,7 @@ class AviatorStreamProcessor implements AutoCloseable {
             }
         } catch (Exception e) {
             if (requestHandler != null && !requestHandler.isCompleted()) {
-                LOG.warn("WARN: Failed to send ping: {}", e.getMessage());
+                LOG.debug("Failed to send ping: {}", e.getMessage(), e);
             }
         }
     }
@@ -1096,11 +1103,11 @@ class AviatorStreamProcessor implements AutoCloseable {
         if (streamLatch != null) {
             try {
                 if (!streamLatch.await(10, TimeUnit.SECONDS)) {
-                    LOG.warn("WARN: Timed out waiting for stream completion in close");
+                    logger.warn("WARN: Timed out waiting for stream completion in close");
                 }
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
-                LOG.warn("WARN: Interrupted during close await");
+                logger.warnWithException("WARN: Interrupted during close await", e);
             }
         }
     }

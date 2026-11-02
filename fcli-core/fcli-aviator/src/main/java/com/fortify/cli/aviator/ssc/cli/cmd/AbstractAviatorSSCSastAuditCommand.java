@@ -191,7 +191,7 @@ abstract class AbstractAviatorSSCSastAuditCommand extends AbstractSSCJsonNodeOut
         // If auditable issue count is unknown (-1), fail closed when quota protection was requested.
         if (auditableIssueCount < 0) {
             if (isSkipIfExceedingQuota()) {
-                LOG.warn("Auditable issue count unknown; cannot honor --skip-if-exceeding-quota for {}:{}. Audit skipped.",
+                logger.warn("WARN: Auditable issue count unknown; cannot honor --skip-if-exceeding-quota for %s:%s. Audit skipped.",
                     av.getApplicationName(), av.getVersionName());
                 ObjectNode result = AviatorSSCAuditHelper.buildResultNode(av, null, "SKIPPED");
                 AviatorSSCAuditHelper.setOperationMessage(result,
@@ -199,7 +199,7 @@ abstract class AbstractAviatorSSCSastAuditCommand extends AbstractSSCJsonNodeOut
                 logger.progress("Audit skipped - issue count unavailable; cannot honor --skip-if-exceeding-quota.");
                 return result;
             }
-            LOG.warn("Auditable issue count unknown; cannot evaluate --test-exceeding-quota for {}:{}.",
+            logger.warn("WARN: Auditable issue count unknown; cannot evaluate --test-exceeding-quota for %s:%s.",
                 av.getApplicationName(), av.getVersionName());
             ObjectNode result = AviatorSSCAuditHelper.buildResultNode(av, null, "QUOTA_UNKNOWN");
             AviatorSSCAuditHelper.setOperationMessage(result,
@@ -227,10 +227,10 @@ abstract class AbstractAviatorSSCSastAuditCommand extends AbstractSSCJsonNodeOut
                     return AviatorSSCAuditHelper.QUOTA_UNKNOWN;
                 }
                 if (isSkipIfExceedingQuota()) {
-                    LOG.warn("Could not retrieve default quota; cannot honor --skip-if-exceeding-quota. Audit will be skipped.");
+                    logger.warn("WARN: Could not retrieve default quota; cannot honor --skip-if-exceeding-quota. Audit will be skipped.");
                     return AviatorSSCAuditHelper.QUOTA_APP_NOT_FOUND;
                 }
-                logger.progress("Warning: Could not retrieve default quota, proceeding with audit.");
+                logger.warn("WARN: Could not retrieve default quota, proceeding with audit.");
                 return AviatorSSCAuditHelper.QUOTA_UNKNOWN;
             }
             return defaultQuota;
@@ -254,14 +254,14 @@ abstract class AbstractAviatorSSCSastAuditCommand extends AbstractSSCJsonNodeOut
                 return result;
             }
             if (isSkipIfExceedingQuota()) {
-                LOG.warn("Could not retrieve quota; cannot honor --skip-if-exceeding-quota for {}:{}. Audit skipped.",
+                logger.warn("WARN: Could not retrieve quota; cannot honor --skip-if-exceeding-quota for %s:%s. Audit skipped.",
                     av.getApplicationName(), av.getVersionName());
                 ObjectNode result = AviatorSSCAuditHelper.buildResultNode(av, null, "SKIPPED");
                 AviatorSSCAuditHelper.setOperationMessage(result,
                     "Could not retrieve quota; audit skipped per --skip-if-exceeding-quota");
                 return result;
             }
-            logger.progress("Warning: Could not retrieve quota for '%s', proceeding with audit.", effectiveAppName);
+            logger.warn("WARN: Could not retrieve quota for '%s', proceeding with audit.", effectiveAppName);
         } else if (availableQuota >= 0 && auditableIssueCount > availableQuota) {
             checkedQuotaBefore = availableQuota;
             var topCategories = AviatorSSCAuditHelper.getTopUnauditedCategories(unirest, av, logger, 10, forceReaudit);
@@ -318,7 +318,6 @@ abstract class AbstractAviatorSSCSastAuditCommand extends AbstractSSCJsonNodeOut
                 artifactId = uploadAuditedFprToSSC(unirest, auditResult.getUpdatedFile(), av);
             } catch (Exception e) {
                 LOG.error("Failed to upload audited FPR for {}:{}: {}", av.getApplicationName(), av.getVersionName(), e.getMessage(), e);
-                logger.progress("WARN: Upload of audited FPR to SSC failed: %s", e.getMessage());
             }
         }
 
