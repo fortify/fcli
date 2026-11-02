@@ -35,6 +35,7 @@ import com.fortify.cli.aviator.config.AviatorLoggerImpl;
 import com.fortify.cli.aviator.config.TagMappingConfig;
 import com.fortify.cli.aviator.ssc.helper.AviatorSSCAuditHelper;
 import com.fortify.cli.aviator.ssc.helper.AviatorSSCAuditHelper.AuditableIssuePresence;
+import com.fortify.cli.aviator.ssc.helper.AviatorSSCFprFilterHelper;
 import com.fortify.cli.aviator.ssc.helper.AviatorSSCRefreshHelper;
 import com.fortify.cli.aviator.ssc.helper.AviatorSSCTagValidator;
 import com.fortify.cli.aviator.util.ResourceUtil;
@@ -379,9 +380,20 @@ abstract class AbstractAviatorSSCSastAuditCommand extends AbstractSSCJsonNodeOut
 
     @SneakyThrows
     private String uploadAuditedFprToSSC(UnirestInstance unirest, File auditedFpr, SSCAppVersionDescriptor av) {
-        try (IProgressWriter progressWriter = progressWriterFactoryMixin.create()) {
-            JsonNode uploadResponse = SSCFileTransferHelper.restUpload(unirest, SSCUrls.PROJECT_VERSION_ARTIFACTS(av.getVersionId()), auditedFpr, JsonNode.class, progressWriter);
-            return uploadResponse.path("data").path("id").asText("UPLOAD_FAILED");
+        Path filteredFpr = null;
+        try {
+            filteredFpr = AviatorSSCFprFilterHelper.createEngineSpecificFpr(
+                auditedFpr.toPath(), AviatorSSCFprFilterHelper.Engine.SAST);
+            try (IProgressWriter progressWriter = progressWriterFactoryMixin.create()) {
+                JsonNode uploadResponse = SSCFileTransferHelper.restUpload(
+                    unirest, SSCUrls.PROJECT_VERSION_ARTIFACTS(av.getVersionId()), filteredFpr.toFile(),
+                    JsonNode.class, progressWriter);
+                return uploadResponse.path("data").path("id").asText("UPLOAD_FAILED");
+            }
+        } finally {
+            if (filteredFpr != null) {
+                Files.deleteIfExists(filteredFpr);
+            }
         }
     }
 

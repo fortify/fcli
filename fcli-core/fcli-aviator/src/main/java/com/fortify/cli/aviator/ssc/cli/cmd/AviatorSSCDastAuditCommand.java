@@ -39,6 +39,7 @@ import com.fortify.cli.aviator.grpc.DastAuditStreamConfig;
 import com.fortify.cli.aviator.grpc.DastAuditStreamProcessor;
 import com.fortify.cli.aviator.ssc.helper.AviatorSSCAttributeHelper;
 import com.fortify.cli.aviator.ssc.helper.AviatorSSCAuditHelper;
+import com.fortify.cli.aviator.ssc.helper.AviatorSSCFprFilterHelper;
 import com.fortify.cli.aviator.ssc.helper.AviatorSSCFprTransferHelper;
 import com.fortify.cli.aviator.ssc.helper.AviatorSSCRefreshHelper;
 import com.fortify.cli.aviator.ssc.helper.AviatorSSCTagValidator;
@@ -93,10 +94,8 @@ public class AviatorSSCDastAuditCommand extends AbstractSSCJsonNodeOutputCommand
             actionResult = result.status().name();
             String artifactId = null;
             if (result.updatedFile() != null && result.succeeded() > 0) {
-                validateSSCTagsBeforeUpload(unirest, appVersion, logger, tagMappingConfig);
-                logger.progress("Status: Uploading audited DAST FPR to SSC");
-                artifactId = AviatorSSCFprTransferHelper.uploadFpr(
-                    unirest, appVersion, downloadedFpr, progressWriter);
+                artifactId = uploadAuditedDastFprToSSC(
+                    unirest, appVersion, downloadedFpr, logger, tagMappingConfig, progressWriter);
             }
             if (result.status() == DastAuditFprStatus.AUDITED
                     || result.status() == DastAuditFprStatus.SKIPPED) {
@@ -115,7 +114,33 @@ public class AviatorSSCDastAuditCommand extends AbstractSSCJsonNodeOutputCommand
                 try {
                     Files.deleteIfExists(downloadedFpr);
                 } catch (Exception e) {
-                    LOG.warn("Failed to delete temporary DAST FPR {}", downloadedFpr, e);
+                    LOG.warn("WARN: Failed to delete temporary DAST FPR {}", downloadedFpr, e);
+                }
+            }
+        }
+    }
+
+    private String uploadAuditedDastFprToSSC(
+            UnirestInstance unirest,
+            SSCAppVersionDescriptor appVersion,
+            Path downloadedFpr,
+            IAviatorLogger logger,
+            TagMappingConfig tagMappingConfig,
+            IProgressWriter progressWriter) throws Exception {
+        Path filteredFpr = null;
+        try {
+            validateSSCTagsBeforeUpload(unirest, appVersion, logger, tagMappingConfig);
+            logger.progress("Status: Uploading audited DAST FPR to SSC");
+            filteredFpr = AviatorSSCFprFilterHelper.createEngineSpecificFpr(
+                downloadedFpr, AviatorSSCFprFilterHelper.Engine.DAST);
+            return AviatorSSCFprTransferHelper.uploadFpr(
+                unirest, appVersion, filteredFpr, progressWriter);
+        } finally {
+            if (filteredFpr != null) {
+                try {
+                    Files.deleteIfExists(filteredFpr);
+                } catch (Exception e) {
+                    LOG.warn("WARN: Failed to delete temporary filtered DAST FPR {}", filteredFpr, e);
                 }
             }
         }
