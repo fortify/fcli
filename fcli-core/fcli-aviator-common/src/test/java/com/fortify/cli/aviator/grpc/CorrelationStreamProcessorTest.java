@@ -19,7 +19,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
@@ -28,26 +27,25 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 import org.junit.jupiter.api.Test;
-import org.slf4j.LoggerFactory;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import com.fortify.aviator.grpc.CorrelationInitResponse;
 import com.fortify.aviator.grpc.CorrelationResponse;
 import com.fortify.aviator.grpc.CorrelationServerMessage;
 import com.fortify.cli.aviator.config.AviatorLoggerImpl;
+import com.fortify.cli.aviator.config.IAviatorLogger;
 import com.fortify.cli.aviator.dast.DastIssue;
 import com.fortify.cli.aviator.fpr.Vulnerability;
 import com.fortify.cli.common.progress.helper.IProgressWriter;
 
-import ch.qos.logback.classic.Level;
-import ch.qos.logback.classic.Logger;
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.core.read.ListAppender;
-
 class CorrelationStreamProcessorTest {
+    private final RecordingProgressWriter progress = new RecordingProgressWriter();
+    private final IAviatorLogger logger = new AviatorLoggerImpl(progress);
 
     @Test
     void buildCorrelationWorkItemsPreservesDastSessionUrlEncounterOrder() throws Exception {
-        CorrelationStreamProcessor processor = new CorrelationStreamProcessor(null, null, null, null, 0, 0);
+        CorrelationStreamProcessor processor = new CorrelationStreamProcessor(null, logger, null, null, 0, 0);
         CorrelationStreamProcessor.CorrelationBucketData bucket = createBucket(
             "SQL Injection",
             List.of("https://example.com/z", "https://example.com/login", "https://example.com/z", "https://example.com/a")
@@ -64,7 +62,7 @@ class CorrelationStreamProcessorTest {
 
     @Test
     void buildUrlToDastMapPreservesUrlEncounterOrder() throws Exception {
-        CorrelationStreamProcessor processor = new CorrelationStreamProcessor(null, null, null, null, 0, 0);
+        CorrelationStreamProcessor processor = new CorrelationStreamProcessor(null, logger, null, null, 0, 0);
         CorrelationStreamProcessor.CorrelationBucketData bucket = createBucket(
             "SQL Injection",
             List.of("https://example.com/z", "https://example.com/login", "https://example.com/z", "https://example.com/a")
@@ -80,7 +78,7 @@ class CorrelationStreamProcessorTest {
 
     @Test
     void buildCorrelationWorkItemsSkipsFindingWhenAllPairsWereTried() throws Exception {
-        CorrelationStreamProcessor processor = new CorrelationStreamProcessor(null, null, null, null, 0, 0);
+        CorrelationStreamProcessor processor = new CorrelationStreamProcessor(null, logger, null, null, 0, 0);
         CorrelationStreamProcessor.CorrelationBucketData bucket = createBucket(
             "SQL Injection",
             List.of("https://example.com/login", "https://example.com/admin")
@@ -99,34 +97,55 @@ class CorrelationStreamProcessorTest {
 
     @Test
     void unknownCorrelationResponseTypeIsWarnedOnce() throws Exception {
-        CorrelationStreamProcessor processor = new CorrelationStreamProcessor(null, null, null, null, 0, 0);
-        assertSlf4jWarnOnce(() -> invokeOnNext(processor, CorrelationServerMessage.newBuilder().build()),
-                "Unknown correlation response type");
+        CorrelationStreamProcessor processor = new CorrelationStreamProcessor(null, logger, null, null, 0, 0);
+
+        invokeOnNext(processor, CorrelationServerMessage.newBuilder().build());
+
+        assertEquals(List.of("WARN: Unknown correlation response type: RESPONSETYPE_NOT_SET"), progress.warnings);
     }
 
     @Test
     void nonOkInitResponseIsWarnedOnce() throws Exception {
-        CorrelationStreamProcessor processor = new CorrelationStreamProcessor(null, null, null, null, 0, 0);
+        CorrelationStreamProcessor processor = new CorrelationStreamProcessor(null, logger, null, null, 0, 0);
         prepareInitializedStream(processor);
-        assertSlf4jWarnOnce(() -> invokeHandleInitResponse(processor, true), "Init response status");
+
+        invokeHandleInitResponse(processor, "FAILED");
+
+        assertEquals(List.of("WARN: Init response status: FAILED — quota unavailable"), progress.warnings);
+        CorrelationStreamState state = (CorrelationStreamState) getField(processor, "state");
+        assertTrue(state.isStreamInitialized);
+        assertEquals(CorrelationStreamState.Phase.CORRELATING, state.currentPhase);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"OK", "SUCCESS", "ok", "success"})
+    void successfulInitResponseDoesNotWarn(String status) throws Exception {
+        CorrelationStreamProcessor processor = new CorrelationStreamProcessor(null, logger, null, null, 0, 0);
+        prepareInitializedStream(processor);
+
+        invokeHandleInitResponse(processor, status);
+
+        assertTrue(progress.warnings.isEmpty());
     }
 
     @Test
     void unknownOrCompletedCorrelationRequestIsWarnedOnce() throws Exception {
-        CorrelationStreamProcessor processor = new CorrelationStreamProcessor(null, null, null, null, 0, 0);
-        assertSlf4jWarnOnce(() -> invokeHandleCorrelationResponse(processor), "unknown or completed request");
+        CorrelationStreamProcessor processor = new CorrelationStreamProcessor(null, logger, null, null, 0, 0);
+
+        invokeHandleCorrelationResponse(processor);
+
+        assertEquals(List.of("WARN: Ignoring correlation response for unknown or completed request missing-request"),
+                progress.warnings);
     }
 
     @Test
     void aviatorLoggerPrefixesCorrelationWarningsOnce() throws Exception {
-        RecordingProgressWriter progress = new RecordingProgressWriter();
-        AviatorLoggerImpl logger = new AviatorLoggerImpl(progress);
         CorrelationStreamProcessor processor = new CorrelationStreamProcessor(null, logger, null, null, 0, 0);
 
         invokeOnNext(processor, CorrelationServerMessage.newBuilder().build());
         invokeHandleCorrelationResponse(processor);
         prepareInitializedStream(processor);
-        invokeHandleInitResponse(processor, false);
+        invokeHandleInitResponse(processor, "FAILED");
 
         assertEquals(3, progress.warnings.size());
         assertWarnOnce(progress.warnings.get(0), "Unknown correlation response type");
@@ -178,25 +197,10 @@ class CorrelationStreamProcessorTest {
         field.set(processor, value);
     }
 
-    private void assertSlf4jWarnOnce(ThrowingRunnable action, String distinguishingText) throws Exception {
-        Logger logger = (Logger) LoggerFactory.getLogger(CorrelationStreamProcessor.class);
-        Level previousLevel = logger.getLevel();
-        boolean previousAdditive = logger.isAdditive();
-        ListAppender<ILoggingEvent> appender = new ListAppender<>();
-        appender.start();
-        logger.addAppender(appender);
-        logger.setLevel(Level.WARN);
-        logger.setAdditive(false);
-        try {
-            action.run();
-            assertEquals(1, appender.list.size());
-            assertWarnOnce(appender.list.get(0).getFormattedMessage(), distinguishingText);
-        } finally {
-            logger.detachAppender(appender);
-            logger.setLevel(previousLevel);
-            logger.setAdditive(previousAdditive);
-            appender.stop();
-        }
+    private Object getField(CorrelationStreamProcessor processor, String fieldName) throws Exception {
+        Field field = CorrelationStreamProcessor.class.getDeclaredField(fieldName);
+        field.setAccessible(true);
+        return field.get(processor);
     }
 
     private static void assertWarnOnce(String message, String distinguishingText) {
@@ -230,22 +234,16 @@ class CorrelationStreamProcessorTest {
         onNext.invoke(observer, message);
     }
 
-    private void invokeHandleInitResponse(CorrelationStreamProcessor processor, boolean acceptNullLogger)
+    private void invokeHandleInitResponse(CorrelationStreamProcessor processor, String status)
             throws Exception {
         Method method = CorrelationStreamProcessor.class.getDeclaredMethod(
                 "handleInitResponse", CorrelationInitResponse.class);
         method.setAccessible(true);
         CorrelationInitResponse response = CorrelationInitResponse.newBuilder()
-                .setStatus("FAILED")
+                .setStatus(status)
                 .setStatusMessage("quota unavailable")
                 .build();
-        try {
-            method.invoke(processor, response);
-        } catch (InvocationTargetException e) {
-            if (!(acceptNullLogger && e.getCause() instanceof NullPointerException)) {
-                throw e;
-            }
-        }
+        method.invoke(processor, response);
     }
 
     private void invokeHandleCorrelationResponse(CorrelationStreamProcessor processor) throws Exception {
@@ -253,11 +251,6 @@ class CorrelationStreamProcessorTest {
                 "handleCorrelationResponse", CorrelationResponse.class);
         method.setAccessible(true);
         method.invoke(processor, CorrelationResponse.newBuilder().setRequestId("missing-request").build());
-    }
-
-    @FunctionalInterface
-    private interface ThrowingRunnable {
-        void run() throws Exception;
     }
 
     private static final class RecordingProgressWriter implements IProgressWriter {
