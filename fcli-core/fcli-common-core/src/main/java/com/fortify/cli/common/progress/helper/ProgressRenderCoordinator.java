@@ -12,6 +12,10 @@
  */
 package com.fortify.cli.common.progress.helper;
 
+import java.io.PrintStream;
+
+import com.fortify.cli.common.cli.util.StdioHelper;
+
 /** Coordinates terminal progress with complete console log events. */
 public final class ProgressRenderCoordinator {
     private static final Object LOCK = new Object();
@@ -40,9 +44,24 @@ public final class ProgressRenderCoordinator {
      * Clear any visible progress and run one complete write. The lock is held while {@code emit} runs,
      * so it must not block for long.
      */
-    public static void emit(Runnable emit) {
+    static void emit(Runnable emit) {
         synchronized (LOCK) {
             if (visibleWriter != null) visibleWriter.clearProgress();
+            emit.run();
+        }
+    }
+
+    /**
+     * Coordinate original stdout and stderr together, since both can share a terminal.
+     * Captured or suppressed output must not clear unrelated terminal progress.
+     */
+    static void emit(PrintStream destination, Runnable emit) {
+        while (destination instanceof ProgressWriterPrintStreamWrapper wrapper) {
+            destination = wrapper.original();
+        }
+        if (StdioHelper.isOriginalStream(destination)) {
+            emit(emit);
+        } else {
             emit.run();
         }
     }

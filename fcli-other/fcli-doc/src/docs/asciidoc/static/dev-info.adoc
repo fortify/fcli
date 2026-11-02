@@ -426,6 +426,12 @@ The backend change should preserve the existing output contract, rather than ado
 * `--log-file`, `--log-level`, `--log-mask`, and `--debug` retain their existing behavior.
   Progress-writer warnings are WARN log events: `--log-level ERROR` suppresses them on both console and file.
 
+Console writes and progress rendering share a lock for original stdout and stderr, since both can use the same terminal.
+Captured and suppressed output bypasses that lock and does not clear unrelated terminal progress.
+Nested progress wrappers retain the original destination.
+Worker warnings borrow the captured execution context only when the worker has no active context.
+Borrowing restores the worker's context stack without closing the command's resources.
+
 Masking is the most important migration requirement: port the integration, not just the formatting pattern.
 Compare exception rendering, logger abbreviation, and key/value formatting explicitly; equivalent patterns do not
 guarantee byte-for-byte identical output across backends. In Logback 1.6.5, `%ex{0}` renders exception and cause

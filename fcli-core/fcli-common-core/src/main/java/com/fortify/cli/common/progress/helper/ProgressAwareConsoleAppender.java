@@ -14,6 +14,7 @@ package com.fortify.cli.common.progress.helper;
 
 import java.nio.charset.StandardCharsets;
 
+import com.fortify.cli.common.cli.util.StdioHelper;
 import com.fortify.cli.common.log.LogMaskHelper;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
@@ -41,6 +42,7 @@ public final class ProgressAwareConsoleAppender extends UnsynchronizedAppenderBa
         // redirection and masking also work for worker-thread warnings.
         var encoded = new String(encoder.encode(event), StandardCharsets.UTF_8);
         byte[] bytes = LogMaskHelper.INSTANCE.maskStdio(encoded).getBytes(StandardCharsets.UTF_8);
-        ProgressRenderCoordinator.emit(() -> System.err.write(bytes, 0, bytes.length));
+        var destination = StdioHelper.currentErr();
+        ProgressRenderCoordinator.emit(destination, () -> destination.write(bytes, 0, bytes.length));
     }
 }

@@ -200,13 +200,20 @@ public final class StdioHelper {
     /** Return the current effective stdout for this thread. */
     public static PrintStream currentOut() {
         var stack = outStack.get();
-        return stack.isEmpty() ? rawOut : stack.peek();
+        return stack.isEmpty() ? (installed ? rawOut : System.out) : stack.peek();
     }
 
     /** Return the current effective stderr for this thread. */
     public static PrintStream currentErr() {
         var stack = errStack.get();
-        return stack.isEmpty() ? (installed ? maskedErr : rawErr) : stack.peek();
+        return stack.isEmpty() ? (installed ? maskedErr : System.err) : stack.peek();
+    }
+
+    /** Return whether a stream is an original stdout/stderr destination, rather than a command capture. */
+    public static boolean isOriginalStream(PrintStream stream) {
+        return installed
+                ? stream == rawOut || stream == rawErr || stream == maskedOut || stream == maskedErr
+                : stream == System.out || stream == System.err;
     }
 
     /** Whether this thread has explicitly installed a stderr stream. */

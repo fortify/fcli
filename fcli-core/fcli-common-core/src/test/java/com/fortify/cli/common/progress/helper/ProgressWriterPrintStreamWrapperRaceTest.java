@@ -50,6 +50,8 @@ class ProgressWriterPrintStreamWrapperRaceTest {
         };
         var writer = new VisibleFlagProgressWriter(visible);
         var wrapper = new ProgressWriterPrintStreamWrapper(original);
+        var oldOut = System.out;
+        System.setOut(original);
         var pool = Executors.newFixedThreadPool(2, task -> {
             var thread = new Thread(task, "progress-wrapper-race");
             thread.setDaemon(true);
@@ -73,6 +75,7 @@ class ProgressWriterPrintStreamWrapperRaceTest {
         } finally {
             pool.shutdownNow();
             writer.close();
+            System.setOut(oldOut);
         }
     }
 
@@ -83,13 +86,15 @@ class ProgressWriterPrintStreamWrapperRaceTest {
         var sink = new ByteArrayOutputStream();
         var original = new PrintStream(sink, true, StandardCharsets.UTF_8) {
             @Override
-            public void println(Object o) {
+            public void println(String s) {
                 visibleWhenWritten.set(visible.get());
-                super.println(o);
+                super.println(s);
             }
         };
         var writer = new VisibleFlagProgressWriter(visible);
         var wrapper = new ProgressWriterPrintStreamWrapper(original);
+        var oldOut = System.out;
+        System.setOut(original);
         try {
             writer.writeProgress("progress");
             wrapper.println((Object) "data");
@@ -97,6 +102,7 @@ class ProgressWriterPrintStreamWrapperRaceTest {
             assertEquals("data" + System.lineSeparator(), sink.toString(StandardCharsets.UTF_8));
         } finally {
             writer.close();
+            System.setOut(oldOut);
         }
     }
 

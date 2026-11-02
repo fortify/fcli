@@ -63,7 +63,6 @@ public enum ProgressWriterType {
         protected final PrintStream progressOut;
         protected final PrintStream progressErr;
         private final PrintStream warningErr;
-        private final Thread ownerThread;
         private final FcliExecutionContext executionContext;
 
         protected AbstractProgressWriter() {
@@ -72,7 +71,6 @@ public enum ProgressWriterType {
             var currentOut = StdioHelper.currentOut();
             var currentErr = StdioHelper.currentErr();
             this.warningErr = currentErr;
-            this.ownerThread = Thread.currentThread();
             this.executionContext = FcliExecutionContextHolder.tryCurrentContext();
             var wrappedOut = new ProgressWriterPrintStreamWrapper(currentOut);
             var wrappedErr = new ProgressWriterPrintStreamWrapper(currentErr);
@@ -100,18 +98,20 @@ public enum ProgressWriterType {
         }
 
         private void log(String message, Throwable cause) {
-            // A progress writer may be used by a worker with no command context or
-            // stderr stack. Restore the context and route captured at construction.
-            var needsContext = executionContext != null && FcliExecutionContextHolder.tryCurrentContext() == null;
-            var frame = needsContext ? FcliExecutionContextHolder.push(executionContext.createChild()) : null;
-            var needsErr = Thread.currentThread() != ownerThread && !StdioHelper.hasErrRedirect()
-                    && StdioHelper.currentErr() != warningErr;
+            if (executionContext != null && FcliExecutionContextHolder.tryCurrentContext() == null) {
+                FcliExecutionContextHolder.runWithContext(executionContext, () -> logWarning(message, cause));
+            } else {
+                logWarning(message, cause);
+            }
+        }
+
+        private void logWarning(String message, Throwable cause) {
+            var needsErr = !StdioHelper.hasErrRedirect() && StdioHelper.currentErr() != warningErr;
             try {
                 if (needsErr) StdioHelper.pushErr(warningErr);
                 if (cause == null) LOG.warn(message); else LOG.warn(message, cause);
             } finally {
                 if (needsErr) StdioHelper.popErr();
-                if (frame != null) frame.close();
             }
         }
         

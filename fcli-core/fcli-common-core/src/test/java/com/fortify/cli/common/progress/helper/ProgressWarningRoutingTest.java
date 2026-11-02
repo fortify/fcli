@@ -14,18 +14,22 @@ package com.fortify.cli.common.progress.helper;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.lang.reflect.Field;
 import java.nio.charset.StandardCharsets;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.Test;
 import org.slf4j.LoggerFactory;
 
+import com.fortify.cli.common.cli.util.FcliExecutionContext;
 import com.fortify.cli.common.cli.util.FcliExecutionContextHolder;
 import com.fortify.cli.common.cli.util.StdioHelper;
 import com.fortify.cli.common.log.LogMaskHelper;
@@ -66,7 +70,14 @@ class ProgressWarningRoutingTest {
         console.setContext(logger.getLoggerContext());
         console.setEncoder(encoder);
         console.start();
-        var events = new ListAppender<ILoggingEvent>();
+        var warningContexts = new CopyOnWriteArrayList<FcliExecutionContext>();
+        var events = new ListAppender<ILoggingEvent>() {
+            @Override
+            protected void append(ILoggingEvent event) {
+                warningContexts.add(FcliExecutionContextHolder.current());
+                super.append(event);
+            }
+        };
         events.setContext(logger.getLoggerContext());
         events.start();
         logger.setLevel(Level.WARN);
@@ -75,14 +86,43 @@ class ProgressWarningRoutingTest {
         logger.addAppender(events);
 
         try (var context = FcliExecutionContextHolder.pushNew()) {
+            var ownerContext = context.context();
+            var client = ownerContext.getUnirestContext().getUnirestInstance("warning-owner", null);
             LogMaskHelper.INSTANCE.setLogMaskLevel(LogMaskLevel.high);
             LogMaskHelper.INSTANCE.registerValue(LogSensitivityLevel.high, "secret-worker-72814", "<MASKED>");
             StdioHelper.pushErr(captureStream);
             try (var writer = ProgressWriterType.single_line.create()) {
                 var pool = Executors.newSingleThreadExecutor();
                 try {
-                    pool.submit(() -> writer.writeWarningWithException("worker secret-worker-72814",
-                            new IllegalArgumentException("cause secret-worker-72814"))).get(5, TimeUnit.SECONDS);
+                    pool.submit(() -> {
+                        assertNull(FcliExecutionContextHolder.tryCurrentContext());
+                        writer.writeWarningWithException("worker secret-worker-72814",
+                                new IllegalArgumentException("cause secret-worker-72814"));
+                        writer.writeWarning("second worker warning");
+                        assertNull(FcliExecutionContextHolder.tryCurrentContext());
+                        assertFalse(StdioHelper.hasErrRedirect());
+                    }).get(5, TimeUnit.SECONDS);
+                    var workerOutput = pool.submit(() -> {
+                        var workerErr = new ByteArrayOutputStream();
+                        try (var workerContext = FcliExecutionContextHolder.pushNew()) {
+                            LogMaskHelper.INSTANCE.registerValue(LogSensitivityLevel.high,
+                                    "secret-active-worker-93471", "<WORKER>");
+                            try (var workerStream = new PrintStream(workerErr, true, StandardCharsets.UTF_8)) {
+                                StdioHelper.pushErr(workerStream);
+                                try {
+                                    writer.writeWarning("active secret-active-worker-93471");
+                                    assertSame(workerContext.context(), FcliExecutionContextHolder.current());
+                                } finally {
+                                    StdioHelper.popErr();
+                                }
+                            }
+                        }
+                        assertNull(FcliExecutionContextHolder.tryCurrentContext());
+                        assertFalse(StdioHelper.hasErrRedirect());
+                        return workerErr.toString(StandardCharsets.UTF_8);
+                    }).get(5, TimeUnit.SECONDS);
+                    assertTrue(workerOutput.contains("active <WORKER>"), workerOutput);
+                    assertFalse(workerOutput.contains("secret-active-worker-93471"), workerOutput);
                 } finally {
                     pool.shutdownNow();
                 }
@@ -95,7 +135,12 @@ class ProgressWarningRoutingTest {
             assertTrue(routed.contains("cause <MASKED>"), routed);
             assertFalse(routed.contains("secret-worker-72814"), routed);
             assertFalse(physical.toString(StandardCharsets.UTF_8).contains("worker secret-worker-72814"));
-            assertEquals(1, events.list.size());
+            assertSame(client, ownerContext.getUnirestContext().getUnirestInstance("warning-owner", null));
+            assertSame(ownerContext, FcliExecutionContextHolder.current());
+            assertEquals(3, events.list.size());
+            assertSame(ownerContext, warningContexts.get(0));
+            assertSame(ownerContext, warningContexts.get(1));
+            assertFalse(ownerContext == warningContexts.get(2));
             assertEquals(Level.WARN, events.list.get(0).getLevel());
             assertTrue(events.list.get(0).getThrowableProxy() != null);
         } finally {

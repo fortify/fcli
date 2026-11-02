@@ -15,10 +15,9 @@ package com.fortify.cli.common.progress.helper;
 import java.io.PrintStream;
 
 /**
- * Clears any visible progress and writes in one step under the {@link ProgressRenderCoordinator} lock,
- * so another thread cannot redraw progress in between. The lock is held during the write: a blocked
- * stream also blocks progress rendering and console log output. A write to a capture buffer can also
- * clear progress shown on the terminal by another writer.
+ * Clears visible progress and writes original stdout/stderr under the {@link ProgressRenderCoordinator} lock.
+ * A blocked original stream also blocks progress rendering and console log output.
+ * Captured and suppressed output bypasses that lock and does not clear terminal progress.
  */
 public class ProgressWriterPrintStreamWrapper extends PrintStream {
     private final PrintStream original;
@@ -28,6 +27,10 @@ public class ProgressWriterPrintStreamWrapper extends PrintStream {
         this.original = original;
     }
 
+    PrintStream original() {
+        return original;
+    }
+
     @Override
     public void close() {
         original.flush();
@@ -35,32 +38,32 @@ public class ProgressWriterPrintStreamWrapper extends PrintStream {
 
     @Override
     public void write(int b) {
-        ProgressRenderCoordinator.emit(() -> original.write(b));
+        ProgressRenderCoordinator.emit(original, () -> original.write(b));
     }
 
     @Override
     public void write(byte[] buf, int off, int len) {
-        ProgressRenderCoordinator.emit(() -> original.write(buf, off, len));
+        ProgressRenderCoordinator.emit(original, () -> original.write(buf, off, len));
     }
 
     @Override
     public void print(String s) {
-        ProgressRenderCoordinator.emit(() -> original.print(s));
+        ProgressRenderCoordinator.emit(original, () -> original.print(s));
     }
 
     @Override
     public void println() {
-        ProgressRenderCoordinator.emit(original::println);
+        ProgressRenderCoordinator.emit(original, original::println);
     }
 
     @Override
     public void println(String s) {
-        ProgressRenderCoordinator.emit(() -> original.println(s));
+        ProgressRenderCoordinator.emit(original, () -> original.println(s));
     }
 
     @Override
     public void println(Object o) {
-        ProgressRenderCoordinator.emit(() -> original.println(o));
+        println(String.valueOf(o));
     }
 
     @Override
