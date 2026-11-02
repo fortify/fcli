@@ -19,9 +19,9 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.fortify.cli.aviator.fpr.Vulnerability;
-import com.fortify.cli.aviator.fpr.model.AuditIssue;
 import com.fortify.cli.common.exception.FcliSimpleException;
+import com.fortify.cli.common.fpr.Vulnerability;
+import com.fortify.cli.common.fpr.model.AuditIssue;
 import com.fortify.cli.ssc.artifact.helper.SSCArtifactDescriptor;
 import com.fortify.cli.ssc.artifact.helper.SSCArtifactHelper;
 

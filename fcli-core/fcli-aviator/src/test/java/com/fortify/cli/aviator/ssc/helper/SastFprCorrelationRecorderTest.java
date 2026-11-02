@@ -27,7 +27,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import com.fortify.cli.aviator.grpc.CorrelatedPair;
-import com.fortify.cli.aviator.util.FprHandle;
+import com.fortify.cli.common.fpr.util.FprHandle;
 
 class SastFprCorrelationRecorderTest {
 

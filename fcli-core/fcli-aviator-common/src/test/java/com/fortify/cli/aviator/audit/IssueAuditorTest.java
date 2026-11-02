@@ -36,18 +36,18 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import com.fortify.cli.aviator.audit.model.AuditFprOptions;
-import com.fortify.cli.aviator.audit.model.FilterSelection;
 import com.fortify.cli.aviator.audit.model.UserPrompt;
 import com.fortify.cli.aviator.config.IAviatorLogger;
-import com.fortify.cli.aviator.fpr.Vulnerability;
-import com.fortify.cli.aviator.fpr.filter.Filter;
-import com.fortify.cli.aviator.fpr.filter.FilterSet;
-import com.fortify.cli.aviator.fpr.filter.FilterTemplate;
-import com.fortify.cli.aviator.fpr.model.AuditIssue;
-import com.fortify.cli.aviator.fpr.model.FPRInfo;
-import com.fortify.cli.aviator.fpr.model.FVDLMetadata;
 import com.fortify.cli.aviator.util.Constants;
-import com.fortify.cli.aviator.util.FprHandle;
+import com.fortify.cli.common.fpr.Vulnerability;
+import com.fortify.cli.common.fpr.filter.Filter;
+import com.fortify.cli.common.fpr.filter.FilterSelection;
+import com.fortify.cli.common.fpr.filter.FilterSet;
+import com.fortify.cli.common.fpr.filter.FilterTemplate;
+import com.fortify.cli.common.fpr.model.AuditIssue;
+import com.fortify.cli.common.fpr.model.FPRInfo;
+import com.fortify.cli.common.fpr.model.FVDLMetadata;
+import com.fortify.cli.common.fpr.util.FprHandle;
 
 
 class IssueAuditorTest {

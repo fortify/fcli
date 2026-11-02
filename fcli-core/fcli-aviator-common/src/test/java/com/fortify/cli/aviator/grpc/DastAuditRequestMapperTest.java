@@ -16,9 +16,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.Test;
 
-import com.fortify.cli.aviator.dast.DastIssue;
-import com.fortify.cli.aviator.dast.DastReproStep;
-import com.fortify.cli.aviator.dast.DastSession;
+import com.fortify.cli.common.fpr.dast.DastIssue;
+import com.fortify.cli.common.fpr.dast.DastReproStep;
+import com.fortify.cli.common.fpr.dast.DastSession;
 
 class DastAuditRequestMapperTest {
     @Test

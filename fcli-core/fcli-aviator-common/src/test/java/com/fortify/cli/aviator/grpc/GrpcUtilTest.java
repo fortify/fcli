@@ -38,9 +38,9 @@ import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
 import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
 import com.fortify.cli.aviator.audit.model.AuditResponse;
 import com.fortify.cli.aviator.audit.model.AuditResponse.AuditSkipReason;
-import com.fortify.cli.aviator.audit.model.File;
 import com.fortify.cli.aviator.audit.model.UserPrompt;
 import com.fortify.cli.common.exception.FcliExceptionHelper;
+import com.fortify.cli.common.fpr.model.File;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;

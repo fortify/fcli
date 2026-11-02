@@ -32,7 +32,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import com.fortify.cli.aviator.grpc.CorrelatedPair;
-import com.fortify.cli.aviator.util.FprHandle;
+import com.fortify.cli.common.fpr.util.FprHandle;
 
 class DastFprCorrelationEnricherTest {
     @TempDir Path tempDir;

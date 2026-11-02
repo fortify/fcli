@@ -37,8 +37,8 @@ import com.fortify.cli.aviator.ssc.helper.AviatorSSCAuditHelper;
 import com.fortify.cli.aviator.ssc.helper.AviatorSSCAuditHelper.AuditableIssuePresence;
 import com.fortify.cli.aviator.ssc.helper.AviatorSSCRefreshHelper;
 import com.fortify.cli.aviator.ssc.helper.AviatorSSCTagValidator;
-import com.fortify.cli.aviator.util.FprHandle;
 import com.fortify.cli.aviator.util.ResourceUtil;
+import com.fortify.cli.common.fpr.util.FprHandle;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.progress.cli.mixin.ProgressWriterFactoryMixin;
@@ -101,6 +101,7 @@ abstract class AbstractAviatorSSCSastAuditCommand extends AbstractSSCJsonNodeOut
 
             long auditableIssueCount = getPreflightIssueCount(unirest, av, logger);
             if (auditableIssueCount == 0) {
+                AviatorSSCAuditHelper.failIfNoSastResults(unirest, av);
                 logger.progress("Audit skipped - no auditable issues found matching the specified filters.");
                 ObjectNode result = AviatorSSCAuditHelper.buildResultNode(av, null, "SKIPPED");
                 AviatorSSCAuditHelper.setOperationMessage(result, "No auditable issues found matching the specified filters");

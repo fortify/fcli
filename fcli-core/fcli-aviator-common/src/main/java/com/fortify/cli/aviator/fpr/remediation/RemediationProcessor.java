@@ -31,8 +31,6 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
 import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
-import com.fortify.cli.aviator.fpr.model.FVDLMetadata;
-import com.fortify.cli.aviator.fpr.processor.StreamingFVDLProcessor;
 import com.fortify.cli.aviator.fpr.remediation.applier.RemediationApplier;
 import com.fortify.cli.aviator.fpr.remediation.classifier.AppliedChangeLedger;
 import com.fortify.cli.aviator.fpr.remediation.classifier.HunkClassifier;
@@ -54,9 +52,12 @@ import com.fortify.cli.aviator.fpr.remediation.writer.PendingFileWrite;
 import com.fortify.cli.aviator.fpr.remediation.writer.PreparedFileChanges;
 import com.fortify.cli.aviator.fpr.remediation.xmlprocessor.RemediationDocumentMapper;
 import com.fortify.cli.aviator.fpr.remediation.xmlprocessor.RemediationXmlReader;
-import com.fortify.cli.aviator.fpr.utils.ISourceDecoder;
-import com.fortify.cli.aviator.fpr.utils.SourceDecoders;
-import com.fortify.cli.aviator.util.FprHandle;
+import com.fortify.cli.common.exception.FcliTechnicalException;
+import com.fortify.cli.common.fpr.model.FVDLMetadata;
+import com.fortify.cli.common.fpr.processor.StreamingFVDLProcessor;
+import com.fortify.cli.common.fpr.util.FprHandle;
+import com.fortify.cli.common.fpr.utils.ISourceDecoder;
+import com.fortify.cli.common.fpr.utils.SourceDecoders;
 
 /**
  * Orchestrator. {@link #processRemediationXML()} runs the three phases in sequence: parse
@@ -122,7 +123,7 @@ public class RemediationProcessor {
             }
             AppliedChangeLedger ledger = new AppliedChangeLedger();
             return classifyAndApply(remediations, sourceBasePath, fvdlMetadata, ledger, state);
-        } catch (AviatorTechnicalException e) {
+        } catch (FcliTechnicalException e) {
             throw e;
         } catch (Exception e) {
             LOG.error("Unexpected error processing remediation.xml: {}", remediationPath, e);

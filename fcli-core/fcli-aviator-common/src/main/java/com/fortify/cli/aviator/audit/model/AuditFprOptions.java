@@ -14,9 +14,9 @@ package com.fortify.cli.aviator.audit.model;
 import java.util.List;
 
 import com.fortify.cli.aviator.config.IAviatorLogger;
-import com.fortify.cli.aviator.fpr.utils.ISourceDecoder;
-import com.fortify.cli.aviator.fpr.utils.SourceDecoders;
-import com.fortify.cli.aviator.util.FprHandle;
+import com.fortify.cli.common.fpr.util.FprHandle;
+import com.fortify.cli.common.fpr.utils.ISourceDecoder;
+import com.fortify.cli.common.fpr.utils.SourceDecoders;
 
 import lombok.Builder;
 import lombok.Getter;

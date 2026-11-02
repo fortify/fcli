@@ -1,0 +1,1103 @@
+/*
+ * Copyright 2021-2026 Open Text.
+ *
+ * The only warranties for products and services of Open Text
+ * and its affiliates and licensors ("Open Text") are as may
+ * be set forth in the express warranty statements accompanying
+ * such products and services. Nothing herein should be construed
+ * as constituting an additional warranty. Open Text shall not be
+ * liable for technical or editorial errors or omissions contained
+ * herein. The information contained herein is subject to change
+ * without notice.
+ */
+package com.fortify.cli.aviator.audit.processor;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.text.SimpleDateFormat;
+import java.util.Base64;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import javax.xml.XMLConstants;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+import javax.xml.validation.Schema;
+import javax.xml.validation.SchemaFactory;
+import javax.xml.validation.Validator;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
+
+import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
+import com.fortify.cli.aviator.audit.model.AuditResponse;
+import com.fortify.cli.aviator.audit.model.AuditTier;
+import com.fortify.cli.aviator.config.TagMappingConfig;
+import com.fortify.cli.aviator.util.Constants;
+import com.fortify.cli.common.fpr.model.AuditIssue;
+import com.fortify.cli.common.fpr.model.FPRInfo;
+import com.fortify.cli.common.fpr.model.FVDLMetadata;
+import com.fortify.cli.common.fpr.processor.AuditXmlReader;
+import com.fortify.cli.common.fpr.util.FileUtil;
+import com.fortify.cli.common.fpr.util.FprHandle;
+import com.fortify.cli.common.fpr.utils.FileUtils;
+import com.fortify.cli.common.fpr.utils.ISourceDecoder;
+import com.fortify.cli.common.fpr.utils.SourceDecoders;
+import com.fortify.cli.common.util.SecureXmlParserFactory;
+
+import lombok.Setter;
+
+
+public class AuditProcessor {
+
+    Logger logger = LoggerFactory.getLogger(AuditProcessor.class);
+    private static final String AUDIT_NAMESPACE_URI = "xmlns://www.fortify.com/schema/audit";
+    private static final String REMEDIATIONS_NAMESPACE_URI = "xmlns://www.fortify.com/schema/remediations";
+
+    private static final String REMEDIATIONS_XSD_PATH = "/remediations.xsd";
+    private static volatile Schema remediationsSchema;
+    private static final String HASHING_ALGORITHM_SHA_256 = "SHA-256";
+
+    private Document auditDoc;
+    @Setter
+    private Document filterTemplateDoc;
+    private Document remediationsDoc;
+
+    private final Map<String, AuditIssue> auditIssueMap;
+    private final FprHandle fprHandle;
+    private final ISourceDecoder sourceDecoder;
+    private RemediationGenerationMetric lastRemediationGenerationMetric = RemediationGenerationMetric.empty();
+
+    public record RemediationGenerationMetric(int skippedRemediations, Map<String, Integer> skippedByReason) {
+        public static RemediationGenerationMetric empty() {
+            return new RemediationGenerationMetric(0, Map.of());
+        }
+    }
+
+    private enum RemediationSkipReason {
+        SOURCE_READ_OR_DECODE_FAILED("Source file read/decode failed"),
+        INVALID_LINE_NUMBER("Invalid line number"),
+        STRUCTURALLY_INVALID("Structurally invalid remediation"),
+        NO_VALID_CHANGES("No valid changes");
+
+        private final String label;
+
+        RemediationSkipReason(String label) {
+            this.label = label;
+        }
+    }
+
+    public AuditProcessor(FprHandle fprHandle) {
+        this(fprHandle, SourceDecoders.defaults());
+    }
+
+    public AuditProcessor(FprHandle fprHandle, ISourceDecoder sourceDecoder) {
+        this.fprHandle = fprHandle;
+        this.sourceDecoder = Objects.requireNonNull(sourceDecoder, "sourceDecoder");
+        this.auditIssueMap = new HashMap<>();
+    }
+
+    /**
+     * Creates a processor from already parsed audit and filter template state, sharing the given
+     * issue map instance with the parser that produced it.
+     */
+    public AuditProcessor(FprHandle fprHandle, ISourceDecoder sourceDecoder, Document auditDoc,
+            Map<String, AuditIssue> auditIssueMap, Document filterTemplateDoc) {
+        this.fprHandle = fprHandle;
+        this.sourceDecoder = Objects.requireNonNull(sourceDecoder, "sourceDecoder");
+        this.auditDoc = auditDoc;
+        this.auditIssueMap = auditIssueMap;
+        this.filterTemplateDoc = filterTemplateDoc;
+    }
+
+    public RemediationGenerationMetric getLastRemediationGenerationMetric() {
+        return lastRemediationGenerationMetric;
+    }
+
+    /**
+     * Per-save result of applying Aviator responses to the in-memory {@code audit.xml} DOM.
+     * {@code writtenInstanceIds} is the local retain set for upload isolation (no processor state).
+     */
+    private static final class AuditXmlUpdateResult {
+        private final Map<String, String> remediationCommentTimestamps;
+        private final Set<String> writtenInstanceIds;
+
+        private AuditXmlUpdateResult(Map<String, String> remediationCommentTimestamps,
+                Set<String> writtenInstanceIds) {
+            this.remediationCommentTimestamps = remediationCommentTimestamps;
+            this.writtenInstanceIds = writtenInstanceIds;
+        }
+    }
+
+    public Map<String, AuditIssue> processAuditXML() throws AviatorTechnicalException {
+        AuditXmlReader.AuditXmlContent content = new AuditXmlReader().read(fprHandle);
+        auditDoc = content.document();
+        auditIssueMap.putAll(content.auditIssues());
+        return auditIssueMap;
+    }
+
+    public void updateIssueTag(AuditIssue auditIssue, String tagId, String tagValue) {
+        if (auditIssue == null || tagId == null || tagId.isEmpty() || tagValue == null) {
+            logger.error("Invalid input parameters for updateIssueTag.");
+            return;
+        }
+
+        Element issueElement = findIssueElement(auditIssue.getInstanceId());
+
+        if (issueElement == null) {
+            logger.error("Issue element not found for instance ID: {}", auditIssue.getInstanceId());
+            return;
+        }
+
+        updateOrAddTag(issueElement, tagId, tagValue);
+    }
+
+    private AuditXmlUpdateResult updateAuditXml(Map<String, AuditResponse> auditResponses,
+            TagMappingConfig tagMappingConfig, Map<String, String> issueCategoryLookup) throws AviatorTechnicalException {
+        Map<String, String> remediationCommentTimestamps = new HashMap<>();
+        Set<String> writtenInstanceIds = new HashSet<>();
+        for (Map.Entry<String, AuditResponse> entry : auditResponses.entrySet()) {
+            String instanceId = entry.getKey();
+            AuditResponse response = entry.getValue();
+
+            boolean isSilentlySkipped = "SKIPPED".equalsIgnoreCase(response.getStatus()) &&
+                    (response.getAuditResult() == null ||
+                            response.getAuditResult().getComment() == null ||
+                            response.getAuditResult().getComment().trim().isEmpty());
+
+            if (isSilentlySkipped) {
+                logger.debug("Issue {} was skipped by Aviator. No changes will be made to audit.xml for this issue.", instanceId);
+                continue;
+            }
+
+            Element issueElement = findIssueElement(instanceId);
+            String commentTimestamp;
+
+            if (response.getAuditResult() != null) {
+                if (issueElement != null) {
+                    commentTimestamp = updateIssueElement(issueElement, response, tagMappingConfig, issueCategoryLookup);
+                } else {
+                    commentTimestamp = addNewIssueElement(instanceId, response, tagMappingConfig, issueCategoryLookup);
+                }
+                // Local retain set for this save only — instance IDs successfully written here.
+                writtenInstanceIds.add(instanceId);
+                if (commentTimestamp != null &&
+                        response.getAuditResult().getAutoremediation() != null &&
+                        response.getAuditResult().getAutoremediation().getChanges() != null &&
+                        !response.getAuditResult().getAutoremediation().getChanges().isEmpty()) {
+                    remediationCommentTimestamps.put(instanceId, commentTimestamp);
+                }
+            } else {
+                logger.debug("Issue {} skipped or no audit result provided.", response.getIssueId());
+            }
+        }
+        return new AuditXmlUpdateResult(remediationCommentTimestamps, writtenInstanceIds);
+    }
+    public Element findIssueElement(String instanceId) {
+        NodeList issueNodes = auditDoc.getElementsByTagNameNS(AUDIT_NAMESPACE_URI, "Issue");
+        for (int i = 0; i < issueNodes.getLength(); i++) {
+            Element issueElement = (Element) issueNodes.item(i);
+            if (issueElement.getAttribute("instanceId").equals(instanceId)) {
+                return issueElement;
+            }
+        }
+        return null;
+    }
+
+    public String updateIssueElement(Element issueElement, AuditResponse response, TagMappingConfig tagMappingConfig,
+            Map<String, String> issueCategoryLookup) throws AviatorTechnicalException {
+        int revision = Integer.parseInt(issueElement.getAttribute("revision"));
+        issueElement.setAttribute("revision", String.valueOf(++revision));
+        String commentTimestamp = null;
+        Boolean suppressedHistoryValue = null;
+
+        if (response != null && response.getAuditResult() != null) {
+            String tagValue = response.getAuditResult().tagValue;
+            String tier = response.getTier();
+            TagMappingConfig.Tier tierConfig = tier != null && tier.equalsIgnoreCase("GOLD")
+                    ? tagMappingConfig.getMapping().getTier_1()
+                    : tagMappingConfig.getMapping().getTier_2();
+            TagMappingConfig.Result resultConfig;
+
+            if (Constants.NOT_AN_ISSUE.equalsIgnoreCase(tagValue)) {
+                resultConfig = tierConfig.getFp();
+                updateOrAddTag(issueElement, Constants.AVIATOR_PREDICTION_TAG_ID,
+                        tier != null && tier.equalsIgnoreCase("GOLD") ? Constants.AVIATOR_NOT_AN_ISSUE : Constants.AVIATOR_LIKELY_FP);
+            } else if (Constants.EXPLOITABLE.equalsIgnoreCase(tagValue)) {
+                resultConfig = tierConfig.getTp();
+                updateOrAddTag(issueElement, Constants.AVIATOR_PREDICTION_TAG_ID,
+                        tier != null && tier.equalsIgnoreCase("GOLD") ? Constants.AVIATOR_REMEDIATION_REQUIRED : Constants.AVIATOR_LIKELY_TP);
+            } else if (Constants.UNSURE.equalsIgnoreCase(tagValue)) {
+                resultConfig = tierConfig.getUnsure();
+                updateOrAddTag(issueElement, Constants.AVIATOR_PREDICTION_TAG_ID, Constants.AVIATOR_UNSURE);
+            } else {
+                resultConfig = null;
+            }
+
+            if (resultConfig != null && resultConfig.getValue() != null && !resultConfig.getValue().isEmpty()) {
+                updateOrAddTag(issueElement, tagMappingConfig.getTag_id(), resultConfig.getValue());
+            }
+            suppressedHistoryValue = applySuppressionDecision(issueElement, issueElement.getAttribute("instanceId"), resultConfig,
+                    tagMappingConfig, issueCategoryLookup);
+        }
+
+        updateOrAddTag(issueElement, Constants.AVIATOR_STATUS_TAG_ID, Constants.PROCESSED_BY_AVIATOR);
+
+        if (response.getAuditResult() != null) {
+            commentTimestamp = updateOrAddComment(issueElement, response.getAuditResult().comment);
+        }
+
+        updateClientAuditTrail(issueElement, response, tagMappingConfig, suppressedHistoryValue);
+
+        return commentTimestamp;
+    }
+
+
+    private void updateClientAuditTrail(Element issueElement, AuditResponse response, TagMappingConfig tagMappingConfig, Boolean suppressedHistoryValue) {
+        Element clientAuditTrail = getClientAuditTrailElement(issueElement);
+
+        if (response != null && response.getAuditResult() != null) {
+            String tagValue = response.getAuditResult().tagValue;
+            String tier = response.getTier();
+            TagMappingConfig.Tier tierConfig = tier != null && tier.equalsIgnoreCase("GOLD")
+                    ? tagMappingConfig.getMapping().getTier_1()
+                    : tagMappingConfig.getMapping().getTier_2();
+            TagMappingConfig.Result resultConfig;
+
+            if (Constants.NOT_AN_ISSUE.equalsIgnoreCase(tagValue)) {
+                resultConfig = tierConfig.getFp();
+                addTagHistory(clientAuditTrail, Constants.AVIATOR_PREDICTION_TAG_ID,
+                        tier != null && tier.equalsIgnoreCase("GOLD") ? Constants.AVIATOR_NOT_AN_ISSUE : Constants.AVIATOR_LIKELY_FP);
+            } else if (Constants.EXPLOITABLE.equalsIgnoreCase(tagValue)) {
+                resultConfig = tierConfig.getTp();
+                addTagHistory(clientAuditTrail, Constants.AVIATOR_PREDICTION_TAG_ID,
+                        tier != null && tier.equalsIgnoreCase("GOLD") ? Constants.AVIATOR_REMEDIATION_REQUIRED : Constants.AVIATOR_LIKELY_TP);
+            } else if (Constants.UNSURE.equalsIgnoreCase(tagValue)) {
+                resultConfig = tierConfig.getUnsure();
+                addTagHistory(clientAuditTrail, Constants.AVIATOR_PREDICTION_TAG_ID, Constants.AVIATOR_UNSURE);
+            } else {
+                resultConfig = null;
+            }
+
+            if (resultConfig != null && resultConfig.getValue() != null && !resultConfig.getValue().isEmpty()) {
+                addTagHistory(clientAuditTrail, tagMappingConfig.getTag_id(), resultConfig.getValue());
+            }
+            if (suppressedHistoryValue != null) {
+                addTagHistory(clientAuditTrail, Constants.SUPPRESSED_TAG_ID, suppressedHistoryValue.toString());
+            }
+        }
+        addTagHistory(clientAuditTrail, Constants.AVIATOR_STATUS_TAG_ID, Constants.PROCESSED_BY_AVIATOR);
+    }
+
+    private Boolean applySuppressionDecision(Element issueElement, String instanceId, TagMappingConfig.Result resultConfig,
+            TagMappingConfig tagMappingConfig, Map<String, String> issueCategoryLookup) throws AviatorTechnicalException {
+        if (resultConfig == null) {
+            return null;
+        }
+
+        return updateSuppressedState(issueElement, shouldSuppress(instanceId, resultConfig, tagMappingConfig, issueCategoryLookup));
+    }
+
+    private boolean shouldSuppress(String instanceId, TagMappingConfig.Result resultConfig,
+            TagMappingConfig tagMappingConfig, Map<String, String> issueCategoryLookup) throws AviatorTechnicalException {
+        if (resultConfig == null || !Boolean.TRUE.equals(resultConfig.getSuppress())) {
+            return false;
+        }
+
+        if (!tagMappingConfig.hasSuppressionExclusions()) {
+            return true;
+        }
+
+        String issueCategory = null;
+        if (tagMappingConfig.requiresCategoryForSuppressionEvaluation()) {
+            issueCategory = Optional.ofNullable(issueCategoryLookup.get(instanceId))
+                    .map(String::trim)
+                    .filter(category -> !category.isEmpty())
+                    .orElseThrow(() -> new AviatorTechnicalException(
+                            "Cannot apply suppression exclusions for issue '" + instanceId + "' because no vulnerability category was available."));
+        }
+
+        TagMappingConfig.SuppressionExclusionContext suppressionExclusionContext = TagMappingConfig.SuppressionExclusionContext
+                .builder()
+                .withExactMatchSelectorValue(TagMappingConfig.SUPPRESSION_SELECTOR_CATEGORIES, issueCategory)
+                .build();
+        return !tagMappingConfig.isSuppressionExcluded(suppressionExclusionContext);
+    }
+
+    private Element getClientAuditTrailElement(Element issueElement) {
+        NodeList clientAuditTrailNodes = issueElement.getElementsByTagNameNS(AUDIT_NAMESPACE_URI, "ClientAuditTrail");
+        Element clientAuditTrail;
+        if (clientAuditTrailNodes.getLength() > 0) {
+            clientAuditTrail = (Element) clientAuditTrailNodes.item(0);
+        } else {
+            clientAuditTrail = auditDoc.createElementNS(AUDIT_NAMESPACE_URI, "ClientAuditTrail");
+            issueElement.appendChild(clientAuditTrail);
+        }
+        return clientAuditTrail;
+    }
+
+    private void addTagHistory(Element clientAuditTrail, String tagId, String tagValue) {
+        Element tagHistory = auditDoc.createElementNS(AUDIT_NAMESPACE_URI, "TagHistory");
+
+        Element tag = auditDoc.createElementNS(AUDIT_NAMESPACE_URI, "Tag");
+        tag.setAttribute("id", tagId);
+        Element value = auditDoc.createElementNS(AUDIT_NAMESPACE_URI, "Value");
+        value.setTextContent(tagValue);
+        tag.appendChild(value);
+        tagHistory.appendChild(tag);
+
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
+        Element editTime = auditDoc.createElementNS(AUDIT_NAMESPACE_URI, "EditTime");
+        editTime.setTextContent(dateFormat.format(new Date()));
+        tagHistory.appendChild(editTime);
+
+        Element username = auditDoc.createElementNS(AUDIT_NAMESPACE_URI, "Username");
+        username.setTextContent(Constants.USER_NAME);
+        tagHistory.appendChild(username);
+
+        clientAuditTrail.appendChild(tagHistory);
+    }
+
+    private void updateOrAddTag(Element issueElement, String tagId, String tagValue) {
+        NodeList tagNodes = issueElement.getElementsByTagNameNS(AUDIT_NAMESPACE_URI, "Tag");
+        Element tagElement = null;
+
+        for (int i = 0; i < tagNodes.getLength(); i++) {
+            Element currentTag = (Element) tagNodes.item(i);
+            if (currentTag.getAttribute("id").equalsIgnoreCase(tagId)) {
+                tagElement = currentTag;
+                break;
+            }
+        }
+
+        if (tagElement == null) {
+            tagElement = auditDoc.createElementNS(AUDIT_NAMESPACE_URI, "Tag");
+            tagElement.setAttribute("id", tagId);
+            issueElement.appendChild(tagElement);
+        }
+
+        NodeList valueNodes = tagElement.getElementsByTagNameNS(AUDIT_NAMESPACE_URI, "Value");
+        Element valueElement;
+        if (valueNodes.getLength() > 0) {
+            valueElement = (Element) valueNodes.item(0);
+        } else {
+            valueElement = auditDoc.createElementNS(AUDIT_NAMESPACE_URI, "Value");
+            tagElement.appendChild(valueElement);
+        }
+
+        valueElement.setTextContent(tagValue);
+    }
+
+    private String updateOrAddComment(Element issueElement, String commentText) {
+        NodeList threadedCommentsNodes = issueElement.getElementsByTagNameNS(AUDIT_NAMESPACE_URI, "ThreadedComments");
+        Element threadedCommentsElement;
+
+        if (threadedCommentsNodes.getLength() > 0) {
+            threadedCommentsElement = (Element) threadedCommentsNodes.item(0);
+        } else {
+            threadedCommentsElement = auditDoc.createElementNS(AUDIT_NAMESPACE_URI, "ThreadedComments");
+            issueElement.appendChild(threadedCommentsElement);
+        }
+
+        Element commentElement = auditDoc.createElementNS(AUDIT_NAMESPACE_URI, "Comment");
+
+        Element contentElement = auditDoc.createElementNS(AUDIT_NAMESPACE_URI, "Content");
+        contentElement.setTextContent(commentText);
+        commentElement.appendChild(contentElement);
+
+        Element usernameElement = auditDoc.createElementNS(AUDIT_NAMESPACE_URI, "Username");
+        usernameElement.setTextContent(Constants.USER_NAME);
+        commentElement.appendChild(usernameElement);
+
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
+        String timestamp = dateFormat.format(new Date());
+        Element timestampElement = auditDoc.createElementNS(AUDIT_NAMESPACE_URI, "Timestamp");
+        timestampElement.setTextContent(timestamp);
+        commentElement.appendChild(timestampElement);
+
+        threadedCommentsElement.appendChild(commentElement);
+        return timestamp;
+    }
+
+    public String addNewIssueElement(String instanceId, AuditResponse response, TagMappingConfig tagMappingConfig,
+            Map<String, String> issueCategoryLookup) throws AviatorTechnicalException {
+        Element issueList = (Element) auditDoc.getElementsByTagNameNS(AUDIT_NAMESPACE_URI, "IssueList").item(0);
+        if (issueList == null) {
+            issueList = auditDoc.createElementNS(AUDIT_NAMESPACE_URI, "IssueList");
+            auditDoc.getDocumentElement().appendChild(issueList);
+        }
+
+        Element newIssue = auditDoc.createElementNS(AUDIT_NAMESPACE_URI, "Issue");
+        newIssue.setAttribute("instanceId", instanceId);
+        newIssue.setAttribute("revision", "0");
+        String commentTimestamp = null;
+        Boolean suppressedHistoryValue = null;
+
+        if (response != null && response.getAuditResult() != null) {
+            String tagValue = response.getAuditResult().tagValue;
+            String tier = response.getTier();
+            TagMappingConfig.Tier tierConfig = tier != null && tier.equalsIgnoreCase("GOLD")
+                    ? tagMappingConfig.getMapping().getTier_1()
+                    : tagMappingConfig.getMapping().getTier_2();
+            TagMappingConfig.Result resultConfig;
+
+            if (Constants.NOT_AN_ISSUE.equalsIgnoreCase(tagValue)) {
+                resultConfig = tierConfig.getFp();
+                updateOrAddTag(newIssue, Constants.AVIATOR_PREDICTION_TAG_ID,
+                        tier != null && tier.equalsIgnoreCase("GOLD") ? Constants.AVIATOR_NOT_AN_ISSUE : Constants.AVIATOR_LIKELY_FP);
+            } else if (Constants.EXPLOITABLE.equalsIgnoreCase(tagValue)) {
+                resultConfig = tierConfig.getTp();
+                updateOrAddTag(newIssue, Constants.AVIATOR_PREDICTION_TAG_ID,
+                        tier != null && tier.equalsIgnoreCase("GOLD") ? Constants.AVIATOR_REMEDIATION_REQUIRED : Constants.AVIATOR_LIKELY_TP);
+            } else if (Constants.UNSURE.equalsIgnoreCase(tagValue)) {
+                resultConfig = tierConfig.getUnsure();
+                updateOrAddTag(newIssue, Constants.AVIATOR_PREDICTION_TAG_ID, Constants.AVIATOR_UNSURE);
+            } else {
+                resultConfig = null;
+            }
+
+            if (resultConfig != null && resultConfig.getValue() != null && !resultConfig.getValue().isEmpty()) {
+                updateOrAddTag(newIssue, tagMappingConfig.getTag_id(), resultConfig.getValue());
+            }
+            suppressedHistoryValue = applySuppressionDecision(newIssue, instanceId, resultConfig, tagMappingConfig, issueCategoryLookup);
+        }
+
+        updateOrAddTag(newIssue, Constants.AVIATOR_STATUS_TAG_ID, Constants.PROCESSED_BY_AVIATOR);
+
+        if (response != null && response.getAuditResult() != null) {
+            commentTimestamp = updateOrAddComment(newIssue, response.getAuditResult().comment);
+        }
+
+        updateClientAuditTrail(newIssue, response, tagMappingConfig, suppressedHistoryValue);
+
+        issueList.appendChild(newIssue);
+        return commentTimestamp;
+    }
+
+    private Boolean updateSuppressedState(Element issueElement, Boolean suppressed) {
+        if (suppressed == null) {
+            return null;
+        }
+
+        boolean currentSuppressed = Boolean.parseBoolean(issueElement.getAttribute("suppressed"));
+        issueElement.setAttribute("suppressed", Boolean.toString(suppressed));
+
+        return currentSuppressed == suppressed ? null : suppressed;
+    }
+
+    public void addCommentToIssueXml(String instanceId, String commentText, String username) {
+        if (auditDoc == null) {
+            logger.error("Cannot add comment, auditDoc is not initialized.");
+            return;
+        }
+        Element issueElement = findIssueElement(instanceId);
+        if (issueElement != null) {
+            addCommentToIssueElement(issueElement, commentText, username);
+            logger.debug("Added comment via XML update for issue: {}", instanceId);
+        } else {
+            logger.warn("WARN: Cannot add comment to XML, issue element not found for instance ID: {}. If this is a skipped new issue, addSkippedIssueElement should be used.", instanceId);
+        }
+    }
+
+    public void addSkippedIssueElement(String instanceId, String comment) {
+        if (auditDoc == null) {
+            logger.error("Cannot add skipped issue element, auditDoc is not initialized.");
+            return;
+        }
+        if (findIssueElement(instanceId) != null) {
+            logger.warn("WARN: Attempted to add skipped issue element for {}, but it already exists in audit.xml.", instanceId);
+            addCommentToIssueXml(instanceId, comment, Constants.USER_NAME);
+            return;
+        }
+
+        Element issueList = (Element) auditDoc.getElementsByTagNameNS(AUDIT_NAMESPACE_URI, "IssueList").item(0);
+        if (issueList == null) {
+            logger.error("Cannot add skipped issue element, <IssueList> not found in audit.xml.");
+            issueList = auditDoc.createElementNS(AUDIT_NAMESPACE_URI, "IssueList");
+            if (auditDoc.getDocumentElement() != null) {
+                auditDoc.getDocumentElement().appendChild(issueList);
+                logger.warn("WARN: Created missing <IssueList> element.");
+            } else {
+                logger.error("Cannot add skipped issue element, document root is null.");
+                return;
+            }
+        }
+
+        Element newIssue = auditDoc.createElementNS(AUDIT_NAMESPACE_URI, "Issue");
+        newIssue.setAttribute("instanceId", instanceId);
+        newIssue.setAttribute("revision", "0");
+        newIssue.setAttribute("suppressed", "false");
+
+        updateOrAddTag(newIssue, Constants.AVIATOR_STATUS_TAG_ID, Constants.PROCESSED_BY_AVIATOR);
+        updateOrAddTag(newIssue, Constants.AVIATOR_PREDICTION_TAG_ID, Constants.AVIATOR_EXCLUDED);
+
+        addCommentToIssueElement(newIssue, comment, Constants.USER_NAME);
+
+        issueList.appendChild(newIssue);
+        logger.debug("Added skipped issue element to audit.xml for instance ID: {}", instanceId);
+
+        if (!auditIssueMap.containsKey(instanceId)) {
+            AuditIssue skippedAuditIssue = AuditIssue.builder()
+                    .instanceId(instanceId)
+                    .revision(0)
+                    .suppressed(false)
+                    .tags(Map.of(
+                            Constants.AVIATOR_STATUS_TAG_ID, Constants.PROCESSED_BY_AVIATOR,
+                            Constants.AVIATOR_PREDICTION_TAG_ID, Constants.AVIATOR_EXCLUDED
+                    ))
+                    .threadedComments(List.of(
+                            AuditIssue.Comment.builder()
+                                    .content(comment)
+                                    .username(Constants.USER_NAME)
+                                    .timestamp(new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX").format(new Date()))
+                                    .build()
+                    ))
+                    .build();
+            auditIssueMap.put(instanceId, skippedAuditIssue);
+            logger.debug("Added skipped issue {} to in-memory auditIssueMap.", instanceId);
+        }
+    }
+
+    private String addCommentToIssueElement(Element issueElement, String commentText, String username) {
+        NodeList threadedCommentsNodes = issueElement.getElementsByTagNameNS(AUDIT_NAMESPACE_URI, "ThreadedComments");
+        Element threadedCommentsElement;
+
+        if (threadedCommentsNodes.getLength() > 0) {
+            threadedCommentsElement = (Element) threadedCommentsNodes.item(0);
+        } else {
+            threadedCommentsElement = auditDoc.createElementNS(AUDIT_NAMESPACE_URI, "ThreadedComments");
+            issueElement.appendChild(threadedCommentsElement);
+        }
+
+        Element commentElement = auditDoc.createElementNS(AUDIT_NAMESPACE_URI, "Comment");
+
+        Element contentElement = auditDoc.createElementNS(AUDIT_NAMESPACE_URI, "Content");
+        contentElement.setTextContent(commentText != null ? commentText : "");
+        commentElement.appendChild(contentElement);
+
+        Element usernameElement = auditDoc.createElementNS(AUDIT_NAMESPACE_URI, "Username");
+        usernameElement.setTextContent(username != null ? username : "Unknown User");
+        commentElement.appendChild(usernameElement);
+
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
+        String timestamp = "";
+        try {
+            timestamp = dateFormat.format(new Date());
+        } catch (Exception e) {
+            logger.warn("WARN: Could not format timestamp for comment: {}", e.getMessage());
+        }
+        Element timestampElement = auditDoc.createElementNS(AUDIT_NAMESPACE_URI, "Timestamp");
+        timestampElement.setTextContent(timestamp);
+        commentElement.appendChild(timestampElement);
+
+        threadedCommentsElement.appendChild(commentElement);
+        return timestamp;
+    }
+
+    public File updateAndSaveAuditAndRemediationsXml(Map<String, AuditResponse> auditResponses,
+            TagMappingConfig tagMappingConfig, Map<String, String> issueCategoryLookup,
+            FPRInfo fprInfo) throws AviatorTechnicalException {
+        return updateAndSaveAuditAndRemediationsXml(auditResponses, tagMappingConfig, issueCategoryLookup, fprInfo, null);
+    }
+
+    public File updateAndSaveAuditAndRemediationsXml(Map<String, AuditResponse> auditResponses,
+            TagMappingConfig tagMappingConfig, Map<String, String> issueCategoryLookup,
+            FPRInfo fprInfo, FVDLMetadata fvdlMetadata) throws AviatorTechnicalException {
+        lastRemediationGenerationMetric = RemediationGenerationMetric.empty();
+        // Step 1: Apply this save's audit responses. writtenInstanceIds is the local retain set.
+        Map<String, String> effectiveIssueCategoryLookup = issueCategoryLookup == null ? Map.of() : issueCategoryLookup;
+        AuditXmlUpdateResult updateResult = updateAuditXml(
+                auditResponses, tagMappingConfig, effectiveIssueCategoryLookup);
+        Map<String, String> remediationCommentTimestamps = updateResult.remediationCommentTimestamps;
+
+        // Step 2: Keep only Issue nodes written in this save so SSC does not overwrite concurrent
+        // tag edits on Non-SAST / non-audited SAST findings. In-memory only — before any zip I/O.
+        AuditXmlIssuePruner.retainOnly(auditDoc, updateResult.writtenInstanceIds);
+
+        // Step 3: Check if there are any remediations to generate.
+        boolean hasRemediations = auditResponses.values().stream()
+                .anyMatch(ar -> ar.getAuditResult() != null &&
+                        ar.getAuditResult().getAutoremediation() != null &&
+                        ar.getAuditResult().getAutoremediation().getChanges() != null &&
+                        !ar.getAuditResult().getAutoremediation().getChanges().isEmpty());
+
+        // Step 4: Generate the in-memory remediations.xml document if needed.
+        if (hasRemediations && !remediationCommentTimestamps.isEmpty()) {
+            Map<String, Integer> skippedByReason = new LinkedHashMap<>();
+            this.remediationsDoc = generateRemediationsXml(auditResponses, remediationCommentTimestamps, fprInfo,
+                    fvdlMetadata, skippedByReason);
+            lastRemediationGenerationMetric = toRemediationGenerationMetric(skippedByReason);
+        } else {
+            this.remediationsDoc = null;
+            if (hasRemediations) {
+                logger.info("WARN: Remediation data found, but could not associate timestamps for all. remediations.xml will not be generated.");
+            }
+        }
+
+        // Step 5: Write the modified XML documents directly back into the open FPR file system.
+        try {
+            if (auditDoc != null) {
+                // Get the path to 'audit.xml' *inside* the zip and overwrite it.
+                try (OutputStream os = Files.newOutputStream(fprHandle.getPath("/audit.xml"))) {
+                    transformDomToStream(auditDoc, os);
+                }
+            }
+            if (remediationsDoc != null) {
+                // Get the path to 'remediations.xml' *inside* the zip and create/overwrite it.
+                try (OutputStream os = Files.newOutputStream(fprHandle.getPath("/remediations.xml"))) {
+                    transformDomToStream(remediationsDoc, os);
+                }
+            }
+            if (filterTemplateDoc != null) {
+                // Get the path to 'filtertemplate.xml' *inside* the zip and overwrite it.
+                try (OutputStream os = Files.newOutputStream(fprHandle.getPath("/filtertemplate.xml"))) {
+                    transformDomToStream(filterTemplateDoc, os);
+                }
+            }
+        } catch (Exception e) {
+            throw new AviatorTechnicalException("Failed to write updated audit/remediation data back into the FPR file.", e);
+        }
+
+        return fprHandle.getFprPath().toFile();
+    }
+
+    /**
+     * Applies DAST audit decisions to audit.xml without creating SAST remediation artifacts.
+     */
+    public File updateAndSaveDastAuditXml(Map<String, AuditResponse> auditResponses,
+            TagMappingConfig tagMappingConfig) {
+        Set<String> writtenInstanceIds = new HashSet<>();
+        for (Map.Entry<String, AuditResponse> entry : auditResponses.entrySet()) {
+            AuditResponse response = entry.getValue();
+            if (response == null || !"SUCCESS".equalsIgnoreCase(response.getStatus())
+                    || response.getAuditResult() == null) {
+                continue;
+            }
+            Element issueElement = findIssueElement(entry.getKey());
+            if (issueElement == null) {
+                issueElement = createDastIssueElement(entry.getKey());
+            } else {
+                int revision = Optional.ofNullable(issueElement.getAttribute("revision"))
+                    .filter(value -> !value.isBlank())
+                    .map(value -> {
+                        try { return Integer.parseInt(value); } catch (NumberFormatException e) { return 0; }
+                    })
+                    .orElse(0);
+                issueElement.setAttribute("revision", String.valueOf(revision + 1));
+            }
+            applyDastAuditResponse(issueElement, response, tagMappingConfig);
+            writtenInstanceIds.add(entry.getKey());
+        }
+
+        AuditXmlIssuePruner.retainOnly(auditDoc, writtenInstanceIds);
+
+        try (OutputStream os = Files.newOutputStream(fprHandle.getPath("/audit.xml"))) {
+            transformDomToStream(auditDoc, os);
+        } catch (Exception e) {
+            throw new AviatorTechnicalException("Failed to write DAST audit data back into the FPR file", e);
+        }
+        return fprHandle.getFprPath().toFile();
+    }
+
+    private Element createDastIssueElement(String instanceId) {
+        Element issueList = (Element) auditDoc.getElementsByTagNameNS(AUDIT_NAMESPACE_URI, "IssueList").item(0);
+        if (issueList == null) {
+            issueList = auditDoc.createElementNS(AUDIT_NAMESPACE_URI, "IssueList");
+            auditDoc.getDocumentElement().appendChild(issueList);
+        }
+        Element issueElement = auditDoc.createElementNS(AUDIT_NAMESPACE_URI, "Issue");
+        issueElement.setAttribute("instanceId", instanceId);
+        issueElement.setAttribute("revision", "0");
+        issueElement.setAttribute("suppressed", "false");
+        issueList.appendChild(issueElement);
+        return issueElement;
+    }
+
+    private void applyDastAuditResponse(Element issueElement, AuditResponse response,
+            TagMappingConfig tagMappingConfig) {
+        String prediction = response.getAviatorPredictionTag();
+        updateOrAddTag(issueElement, Constants.AVIATOR_PREDICTION_TAG_ID, prediction);
+        TagMappingConfig.Result resultConfig = getDastResultConfig(response, tagMappingConfig);
+        if (resultConfig.getValue() != null && !resultConfig.getValue().isBlank()) {
+            updateOrAddTag(issueElement, tagMappingConfig.getTag_id(), resultConfig.getValue());
+        }
+        Boolean suppressedHistoryValue = updateSuppressedState(
+            issueElement, Boolean.TRUE.equals(resultConfig.getSuppress()));
+        updateOrAddTag(issueElement, Constants.AVIATOR_STATUS_TAG_ID, Constants.PROCESSED_BY_AVIATOR);
+        if (response.getAuditResult().getComment() != null) {
+            updateOrAddComment(issueElement, response.getAuditResult().getComment());
+        }
+        Element clientAuditTrail = getClientAuditTrailElement(issueElement);
+        addTagHistory(clientAuditTrail, Constants.AVIATOR_PREDICTION_TAG_ID, prediction);
+        if (resultConfig.getValue() != null && !resultConfig.getValue().isBlank()) {
+            addTagHistory(clientAuditTrail, tagMappingConfig.getTag_id(), resultConfig.getValue());
+        }
+        addTagHistory(clientAuditTrail, Constants.AVIATOR_STATUS_TAG_ID, Constants.PROCESSED_BY_AVIATOR);
+        if (suppressedHistoryValue != null) {
+            addTagHistory(clientAuditTrail, Constants.SUPPRESSED_TAG_ID, suppressedHistoryValue.toString());
+        }
+    }
+
+    private TagMappingConfig.Result getDastResultConfig(AuditResponse response,
+            TagMappingConfig tagMappingConfig) {
+        boolean tierOne = AuditTier.fromServerValue(response.getTier()) == AuditTier.GOLD;
+        String tagValue = response.getAuditResult().getTagValue();
+        if (Constants.NOT_AN_ISSUE.equalsIgnoreCase(tagValue)) {
+            return tagMappingConfig.getResult(tierOne, TagMappingConfig.ResultType.FP);
+        }
+        if (Constants.EXPLOITABLE.equalsIgnoreCase(tagValue)) {
+            return tagMappingConfig.getResult(tierOne, TagMappingConfig.ResultType.TP);
+        }
+        return tagMappingConfig.getResult(tierOne, TagMappingConfig.ResultType.UNSURE);
+    }
+
+    private Document generateRemediationsXml(Map<String, AuditResponse> auditResponses,
+                                            Map<String, String> remediationCommentTimestamps,
+                                            FPRInfo fprInfo, FVDLMetadata fvdlMetadata,
+                                            Map<String, Integer> skippedByReason) throws AviatorTechnicalException {
+        try {
+            var docFactory = SecureXmlParserFactory.newDocumentBuilderFactory(true);
+            DocumentBuilder docBuilder = docFactory.newDocumentBuilder();
+
+            Document finalDoc = docBuilder.newDocument();
+            Element rootElement = finalDoc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "Remediations");
+            finalDoc.appendChild(rootElement);
+
+            Element projectInfoElement = finalDoc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "ProjectInfo");
+            Element projectNameElement = finalDoc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "Name");
+            projectNameElement.setTextContent(fprInfo.getBuildId() != null ? fprInfo.getBuildId() : "UnknownProject");
+            Element projectWriteDateElement = finalDoc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "WriteDate");
+            SimpleDateFormat dateTimeFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
+            projectWriteDateElement.setTextContent(dateTimeFormat.format(new Date()));
+            projectInfoElement.appendChild(projectNameElement);
+            projectInfoElement.appendChild(projectWriteDateElement);
+            rootElement.appendChild(projectInfoElement);
+
+            Element remediationListElement = finalDoc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "RemediationList");
+            rootElement.appendChild(remediationListElement);
+
+            FileUtils fileUtils = new FileUtils(this.sourceDecoder, fvdlMetadata);
+            int validRemediationCount = 0;
+
+            for (Map.Entry<String, AuditResponse> entry : auditResponses.entrySet()) {
+                String instanceId = entry.getKey();
+                AuditResponse auditResponse = entry.getValue();
+
+                if (auditResponse.getAuditResult() != null &&
+                        auditResponse.getAuditResult().getAutoremediation() != null &&
+                        auditResponse.getAuditResult().getAutoremediation().getChanges() != null &&
+                        !auditResponse.getAuditResult().getAutoremediation().getChanges().isEmpty() &&
+                        remediationCommentTimestamps.containsKey(instanceId)) {
+
+                    Element remediationElement = finalDoc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "Remediation");
+                    remediationElement.setAttribute("instanceId", instanceId);
+                    remediationElement.setAttribute("writeDate", remediationCommentTimestamps.get(instanceId));
+
+                    Element auditCommentElement = finalDoc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "AuditComment");
+                    String auditComment = auditResponse.getAuditResult().getComment() != null ? auditResponse.getAuditResult().getComment() : "";
+                    auditCommentElement.appendChild(finalDoc.createCDATASection(auditComment));
+                    remediationElement.appendChild(auditCommentElement);
+
+                    Map<String, List<com.fortify.cli.aviator.audit.model.Change>> changesByFile =
+                            auditResponse.getAuditResult().getAutoremediation().getChanges().stream()
+                                    .collect(Collectors.groupingBy(com.fortify.cli.aviator.audit.model.Change::getFile));
+
+                    for (Map.Entry<String, List<com.fortify.cli.aviator.audit.model.Change>> fileChangeEntry : changesByFile.entrySet()) {
+                        String filename = fileChangeEntry.getKey();
+                        List<com.fortify.cli.aviator.audit.model.Change> fileSpecificChanges = fileChangeEntry.getValue();
+
+                        Element fileChangesElement = finalDoc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "FileChanges");
+                        Element filenameElement = finalDoc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "Filename");
+                        filenameElement.setTextContent(filename);
+                        fileChangesElement.appendChild(filenameElement);
+
+                        Optional<String> originalFileContentOptional = fileUtils.getSourceFileContent(fprHandle, filename);
+
+                        if (originalFileContentOptional.isEmpty()) {
+                            logger.warn("WARN: Could not retrieve source code for file '{}'. Skipping remediation generation for this file for instanceId '{}'.", filename, instanceId);
+                            recordSkipped(skippedByReason, RemediationSkipReason.SOURCE_READ_OR_DECODE_FAILED);
+                            continue;
+                        }
+
+                        String originalFileContent = originalFileContentOptional.get();
+                        Element hashElement = finalDoc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "Hash");
+                        hashElement.setAttribute("type", HASHING_ALGORITHM_SHA_256);
+                        hashElement.setTextContent(calculateHashBase64(originalFileContent, HASHING_ALGORITHM_SHA_256));
+                        fileChangesElement.appendChild(hashElement);
+
+                        String[] allLines = originalFileContent.split("\\r?\\n|\\r|\\n");
+
+                        for (com.fortify.cli.aviator.audit.model.Change change : fileSpecificChanges) {
+                            try {
+                                Element changeElement = finalDoc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "Change");
+                                int lineFromNum = parseLineNumber(change.getFromLine(), filename, instanceId, "FromLine");
+                                int lineToNum = parseLineNumber(change.getToLine(), filename, instanceId, "ToLine");
+
+                                Element lineFromElement = finalDoc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "LineFrom");
+                                lineFromElement.setTextContent(String.valueOf(lineFromNum));
+                                changeElement.appendChild(lineFromElement);
+
+                                Element lineToElement = finalDoc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "LineTo");
+                                lineToElement.setTextContent(String.valueOf(lineToNum));
+                                changeElement.appendChild(lineToElement);
+
+                                StringBuilder originalCodeSb = new StringBuilder();
+                                if (lineFromNum >= 1 && lineToNum >= lineFromNum && lineFromNum <= allLines.length) {
+                                    for (int k = lineFromNum - 1; k < Math.min(lineToNum, allLines.length); k++) {
+                                        originalCodeSb.append(allLines[k]);
+                                        if (k < Math.min(lineToNum, allLines.length) - 1) {
+                                            originalCodeSb.append('\n');
+                                        }
+                                    }
+                                }
+                                Element originalCodeElement = finalDoc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "OriginalCode");
+                                originalCodeElement.appendChild(finalDoc.createCDATASection(originalCodeSb.toString()));
+                                changeElement.appendChild(originalCodeElement);
+
+                                Element newCodeElement = finalDoc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "NewCode");
+                                String sanitizedNewCode = FileUtil.stripSyntheticLineMarkers(
+                                    change.getReplaceWith() != null ? change.getReplaceWith() : "", filename);
+                                newCodeElement.appendChild(finalDoc.createCDATASection(sanitizedNewCode));
+                                changeElement.appendChild(newCodeElement);
+
+                                final int CONTEXT_LINES = 3;
+                                int contextStartLineIndex = Math.max(0, lineFromNum - 1 - CONTEXT_LINES);
+                                if (lineFromNum == 0) contextStartLineIndex = 0;
+                                int contextEndLineIndex = Math.min(allLines.length - 1, lineToNum - 1 + CONTEXT_LINES);
+                                if (lineToNum == 0) contextEndLineIndex = -1;
+                                int actualBeforeLines = (lineFromNum > 0) ? (lineFromNum - 1 - contextStartLineIndex) : 0;
+                                int actualAfterLines = (lineToNum > 0) ? (contextEndLineIndex - (lineToNum - 1)) : 0;
+
+                                StringBuilder contextSb = new StringBuilder();
+                                for (int i = contextStartLineIndex; i <= contextEndLineIndex; i++) {
+                                    contextSb.append(allLines[i]);
+                                    if (i < contextEndLineIndex) {
+                                        contextSb.append('\n');
+                                    }
+                                }
+                                Element contextElement = finalDoc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "Context");
+                                contextElement.setAttribute("before", String.valueOf(actualBeforeLines));
+                                contextElement.setAttribute("after", String.valueOf(actualAfterLines));
+                                contextElement.appendChild(finalDoc.createCDATASection(contextSb.toString()));
+                                changeElement.appendChild(contextElement);
+
+                                fileChangesElement.appendChild(changeElement);
+                            } catch (NumberFormatException e) {
+                                logger.error("Skipping change for issue {} due to invalid line number format. Details: {}", instanceId, e.getMessage());
+                                recordSkipped(skippedByReason, RemediationSkipReason.INVALID_LINE_NUMBER);
+                            }
+                        }
+                        if (fileChangesElement.getElementsByTagNameNS(REMEDIATIONS_NAMESPACE_URI, "Change").getLength() > 0) {
+                            remediationElement.appendChild(fileChangesElement);
+                        }
+                    }
+
+                    // Check if any FileChanges were actually added to the remediation element.
+                    // This prevents validation errors if all changes for an issue were skipped.
+                    if (remediationElement.getElementsByTagNameNS(REMEDIATIONS_NAMESPACE_URI, "FileChanges").getLength() > 0) {
+                        if (isRemediationElementValid(remediationElement, fprInfo)) {
+                            remediationListElement.appendChild(remediationElement);
+                            validRemediationCount++;
+                        } else {
+                            logger.warn("WARN: Skipping structurally invalid remediation for issue instanceId: {}", instanceId);
+                            recordSkipped(skippedByReason, RemediationSkipReason.STRUCTURALLY_INVALID);
+                        }
+                    } else {
+                        logger.warn("WARN: Skipping remediation for instanceId '{}' because all of its proposed changes were invalid and could not be processed.", instanceId);
+                        recordSkipped(skippedByReason, RemediationSkipReason.NO_VALID_CHANGES);
+                    }
+
+                }
+            }
+
+            return validRemediationCount > 0 ? finalDoc : null;
+        } catch (ParserConfigurationException e) {
+            throw new AviatorTechnicalException("Error creating XML document for remediations", e);
+        }
+    }
+
+    private RemediationGenerationMetric toRemediationGenerationMetric(Map<String, Integer> skippedByReason) {
+        int skippedRemediations = skippedByReason.values().stream().mapToInt(Integer::intValue).sum();
+        return new RemediationGenerationMetric(skippedRemediations, Map.copyOf(skippedByReason));
+    }
+
+    private void recordSkipped(Map<String, Integer> skippedByReason, RemediationSkipReason reason) {
+        skippedByReason.merge(reason.label, 1, Integer::sum);
+    }
+
+    private String calculateHashBase64(String content, String algorithm) {
+        try {
+            MessageDigest md = MessageDigest.getInstance(algorithm);
+            // hash the canonical form (LF-normalised, no trailing newline) so the apply
+            // side can reproduce the digest regardless of the OS that ran the audit or the
+            // file's trailing-newline state.
+            String canonical = FileUtil.canonicalizeForHash(content);
+            byte[] digest = md.digest(canonical.getBytes(StandardCharsets.UTF_8));
+            return Base64.getEncoder().encodeToString(digest);
+        } catch (NoSuchAlgorithmException e) {
+            throw new AviatorTechnicalException("Hashing algorithm not available: " + algorithm, e);
+        }
+    }
+
+    private int parseLineNumber(String lineStr, String filePath, String instanceId, String changeType) {
+        if (lineStr == null || lineStr.trim().isEmpty()) {
+            logger.warn("WARN: Line number string is null or empty for file '{}', instanceId '{}', changeType '{}'. Defaulting to 0.", filePath, instanceId, changeType);
+            return 0;
+        }
+
+        String cleanedLineStr = lineStr.replace(",", "");
+
+        try {
+            return Integer.parseInt(cleanedLineStr);
+        } catch (NumberFormatException e) {
+            logger.error("Error parsing {} line number string: '{}' (original: '{}') for file '{}', instanceId '{}'.",
+                    changeType, cleanedLineStr, lineStr, filePath, instanceId, e);
+            throw e;
+        }
+    }
+
+    private static Schema getRemediationsSchema() throws SAXException, IOException {
+        if (remediationsSchema == null) {
+            synchronized (AuditProcessor.class) {
+                if (remediationsSchema == null) {
+                    SchemaFactory factory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
+                    try (InputStream schemaStream = AuditProcessor.class.getResourceAsStream(REMEDIATIONS_XSD_PATH)) {
+                        if (schemaStream == null) {
+                            throw new IOException("Cannot find resource: " + REMEDIATIONS_XSD_PATH + ". Is it in the JAR?");
+                        }
+                        remediationsSchema = factory.newSchema(new javax.xml.transform.stream.StreamSource(schemaStream));
+                    }
+                }
+            }
+        }
+        return remediationsSchema;
+    }
+
+    private void validateRemediationsDocument(Document doc) throws SAXException, IOException {
+        Schema schema = getRemediationsSchema();
+        Validator validator = schema.newValidator();
+
+        validator.setErrorHandler(new org.xml.sax.helpers.DefaultHandler() {
+            @Override
+            public void error(org.xml.sax.SAXParseException e) throws SAXException {
+                logger.error("Schema Validation Error: Line {}, Column {}: {}", e.getLineNumber(), e.getColumnNumber(), e.getMessage());
+                throw e;
+            }
+            @Override
+            public void fatalError(org.xml.sax.SAXParseException e) throws SAXException {
+                logger.error("Schema Validation Fatal Error: Line {}, Column {}: {}", e.getLineNumber(), e.getColumnNumber(), e.getMessage());
+                throw e;
+            }
+            @Override
+            public void warning(org.xml.sax.SAXParseException e) {
+                logger.warn("WARN: Schema Validation Warning: Line {}, Column {}: {}", e.getLineNumber(), e.getColumnNumber(), e.getMessage());
+            }
+        });
+
+        validator.validate(new DOMSource(doc));
+    }
+
+    private boolean isRemediationElementValid(Element remediationElement, FPRInfo fprInfo) {
+        String instanceId = remediationElement.getAttribute("instanceId");
+        try {
+            var factory = SecureXmlParserFactory.newDocumentBuilderFactory(true);
+            DocumentBuilder builder = factory.newDocumentBuilder();
+            Document tempDoc = builder.newDocument();
+
+            Element root = tempDoc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "Remediations");
+            tempDoc.appendChild(root);
+
+            Element projectInfo = tempDoc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "ProjectInfo");
+            Element name = tempDoc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "Name");
+            name.setTextContent(fprInfo.getBuildId() != null ? fprInfo.getBuildId() : "UnknownProject");
+            Element date = tempDoc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "WriteDate");
+            date.setTextContent(new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX").format(new Date()));
+            projectInfo.appendChild(name);
+            projectInfo.appendChild(date);
+            root.appendChild(projectInfo);
+
+            Element list = tempDoc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "RemediationList");
+            root.appendChild(list);
+
+            org.w3c.dom.Node importedNode = tempDoc.importNode(remediationElement, true);
+            list.appendChild(importedNode);
+
+            // Validate the temporary document
+            validateRemediationsDocument(tempDoc);
+            return true;
+
+        } catch (SAXException e) {
+            String xmlContent = domElementToString(remediationElement);
+            logger.error("Validation failed for remediation of issue instanceId: {}. It will be excluded. Reason: {}\n--- Invalid XML Snippet ---\n{}\n--- End Snippet ---",
+                    instanceId, e.getMessage(), xmlContent);
+            return false;
+        } catch (Exception e) {
+            logger.error("An unexpected error occurred during validation for issue instanceId: {}. It will be excluded.", instanceId, e);
+            return false;
+        }
+    }
+
+    /**
+     * Converts a DOM Element to its XML string representation for logging.
+     * @param element The element to convert.
+     * @return A formatted XML string of the element.
+     */
+    private String domElementToString(Element element) {
+        try {
+            TransformerFactory tf = TransformerFactory.newInstance();
+            tf.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
+            tf.setAttribute(XMLConstants.ACCESS_EXTERNAL_STYLESHEET, "");
+            tf.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
+            Transformer transformer = tf.newTransformer();
+            transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
+            transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+            transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
+
+            java.io.StringWriter writer = new java.io.StringWriter();
+            transformer.transform(new DOMSource(element), new StreamResult(writer));
+            return writer.getBuffer().toString();
+        } catch (Exception e) {
+            logger.error("Failed to serialize XML element for logging", e);
+            return "Error converting element to string: " + e.getMessage();
+        }
+    }
+
+    private void transformDomToStream(Document doc, OutputStream os) throws TransformerException {
+        TransformerFactory transformerFactory = TransformerFactory.newInstance();
+        transformerFactory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
+        transformerFactory.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
+        transformerFactory.setAttribute(XMLConstants.ACCESS_EXTERNAL_STYLESHEET, "");
+        Transformer transformer = transformerFactory.newTransformer();
+        transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+        transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
+        DOMSource source = new DOMSource(doc);
+        StreamResult result = new StreamResult(os);
+        transformer.transform(source, result);
+    }
+
+
+}

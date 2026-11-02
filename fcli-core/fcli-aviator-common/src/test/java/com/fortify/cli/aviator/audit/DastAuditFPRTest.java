@@ -30,15 +30,15 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import com.fortify.cli.aviator._common.config.AviatorConfigManager;
-import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
 import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
 import com.fortify.cli.aviator.audit.model.AuditTier;
 import com.fortify.cli.aviator.config.TagMappingConfig;
 import com.fortify.cli.aviator.grpc.DastAuditResult;
 import com.fortify.cli.aviator.grpc.DastAuditStreamConfig;
 import com.fortify.cli.aviator.grpc.DastAuditStreamResult;
-import com.fortify.cli.aviator.util.FprHandle;
 import com.fortify.cli.aviator.util.ResourceUtil;
+import com.fortify.cli.common.exception.FcliSimpleException;
+import com.fortify.cli.common.fpr.util.FprHandle;
 
 class DastAuditFPRTest {
     @TempDir Path tempDir;
@@ -231,11 +231,11 @@ class DastAuditFPRTest {
         boolean[] streamStarted = {false};
 
         try (FprHandle handle = new FprHandle(fpr)) {
-            var exception = assertThrows(AviatorSimpleException.class,
+            var exception = assertThrows(FcliSimpleException.class,
                 () -> DastAuditFPR.audit(handle, streamConfig(), defaultTagMapping(),
                     (ignoredConfig, items, total) -> { streamStarted[0] = true; return null; }));
 
-            assertTrue(exception.getMessage().contains("from a SAST scan"));
+            assertTrue(exception.getMessage().contains("webinspect.xml"));
             assertFalse(streamStarted[0]);
         }
     }

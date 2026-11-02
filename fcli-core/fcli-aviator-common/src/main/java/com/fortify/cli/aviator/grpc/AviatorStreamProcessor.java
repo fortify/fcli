@@ -47,16 +47,18 @@ import com.fortify.cli.aviator._common.exception.AviatorQuotaFilterException;
 import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
 import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
 import com.fortify.cli.aviator.audit.QuotaBasedFilter;
+import com.fortify.cli.aviator.audit.SourceCodeEnricher;
 import com.fortify.cli.aviator.audit.model.AuditResponse;
 import com.fortify.cli.aviator.audit.model.AuditResponse.AuditSkipReason;
 import com.fortify.cli.aviator.audit.model.UserPrompt;
 import com.fortify.cli.aviator.config.IAviatorLogger;
-import com.fortify.cli.aviator.fpr.model.FVDLMetadata;
-import com.fortify.cli.aviator.fpr.utils.ISourceDecoder;
-import com.fortify.cli.aviator.fpr.utils.SourceCodeEnricher;
 import com.fortify.cli.aviator.util.Constants;
-import com.fortify.cli.aviator.util.FprHandle;
-import com.fortify.cli.aviator.util.StringUtil;
+import com.fortify.cli.common.exception.FcliSimpleException;
+import com.fortify.cli.common.fpr.model.FVDLMetadata;
+import com.fortify.cli.common.fpr.model.File;
+import com.fortify.cli.common.fpr.util.FprHandle;
+import com.fortify.cli.common.fpr.util.StringUtil;
+import com.fortify.cli.common.fpr.utils.ISourceDecoder;
 
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
@@ -783,7 +785,7 @@ class AviatorStreamProcessor implements AutoCloseable {
                     resultFuture.completeExceptionally(new AviatorTechnicalException("Thread interrupted while processing queue", ie));
                 }
                 break;
-            } catch (AviatorSimpleException e) {
+            } catch (FcliSimpleException e) {
                 if (wrapper != null) {
                     String instanceId = wrapper.userPrompt.getIssueData().getInstanceID();
                     LOG.error("Permanently failing request for issue {} due to a client-side error: {}", instanceId, e.getMessage());
@@ -839,7 +841,7 @@ class AviatorStreamProcessor implements AutoCloseable {
             SourceCodeEnricher.EnrichmentResult enrichmentResult =
                     sourceCodeEnricher.enrichWithSourceCodeDetailed(wrapper.userPrompt.getStackTrace());
             if (!enrichmentResult.hasFailures()) {
-                List<com.fortify.cli.aviator.audit.model.File> sourceCodeFiles =
+                List<File> sourceCodeFiles =
                         new ArrayList<>(enrichmentResult.files().values());
                 wrapper.userPrompt.getFiles().addAll(sourceCodeFiles);
                 wrapper.sourceCodeEnriched = true;

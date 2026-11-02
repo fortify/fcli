@@ -25,9 +25,9 @@ import com.fortify.cli.aviator.fpr.remediation.RemediationExecutionMode;
 import com.fortify.cli.aviator.fpr.remediation.RemediationProcessingOptions;
 import com.fortify.cli.aviator.fpr.remediation.RemediationProcessor;
 import com.fortify.cli.aviator.fpr.remediation.model.RemediationMetric;
-import com.fortify.cli.aviator.fpr.utils.ISourceDecoder;
-import com.fortify.cli.aviator.fpr.utils.SourceDecoders;
-import com.fortify.cli.aviator.util.FprHandle;
+import com.fortify.cli.common.fpr.util.FprHandle;
+import com.fortify.cli.common.fpr.utils.ISourceDecoder;
+import com.fortify.cli.common.fpr.utils.SourceDecoders;
 
 public class ApplyAutoRemediationOnSource {
     private static final Logger LOG = LoggerFactory.getLogger(ApplyAutoRemediationOnSource.class);

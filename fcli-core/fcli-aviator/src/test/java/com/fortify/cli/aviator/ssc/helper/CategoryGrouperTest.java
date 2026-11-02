@@ -20,8 +20,8 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
-import com.fortify.cli.aviator.dast.DastIssue;
-import com.fortify.cli.aviator.fpr.Vulnerability;
+import com.fortify.cli.common.fpr.Vulnerability;
+import com.fortify.cli.common.fpr.dast.DastIssue;
 
 class CategoryGrouperTest {
 

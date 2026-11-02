@@ -18,8 +18,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
 
-import com.fortify.cli.aviator.dast.DastIssue;
-import com.fortify.cli.aviator.fpr.Vulnerability;
+import com.fortify.cli.common.fpr.Vulnerability;
+import com.fortify.cli.common.fpr.dast.DastIssue;
 
 class CategoryBucketTest {
 

@@ -35,8 +35,8 @@ import com.fortify.aviator.grpc.CorrelationResponse;
 import com.fortify.aviator.grpc.CorrelationServerMessage;
 import com.fortify.cli.aviator.config.AviatorLoggerImpl;
 import com.fortify.cli.aviator.config.IAviatorLogger;
-import com.fortify.cli.aviator.dast.DastIssue;
-import com.fortify.cli.aviator.fpr.Vulnerability;
+import com.fortify.cli.common.fpr.Vulnerability;
+import com.fortify.cli.common.fpr.dast.DastIssue;
 import com.fortify.cli.common.progress.helper.IProgressWriter;
 
 class CorrelationStreamProcessorTest {

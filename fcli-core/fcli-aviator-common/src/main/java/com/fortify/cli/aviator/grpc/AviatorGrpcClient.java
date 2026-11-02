@@ -54,10 +54,11 @@ import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
 import com.fortify.cli.aviator.audit.model.AuditResponse;
 import com.fortify.cli.aviator.audit.model.UserPrompt;
 import com.fortify.cli.aviator.config.IAviatorLogger;
-import com.fortify.cli.aviator.fpr.model.FVDLMetadata;
-import com.fortify.cli.aviator.fpr.utils.ISourceDecoder;
 import com.fortify.cli.aviator.util.Constants;
-import com.fortify.cli.aviator.util.FprHandle;
+import com.fortify.cli.common.fpr.model.FVDLMetadata;
+import com.fortify.cli.common.fpr.util.FprHandle;
+import com.fortify.cli.common.fpr.util.StringUtil;
+import com.fortify.cli.common.fpr.utils.ISourceDecoder;
 import com.fortify.grpc.token.DeleteTokenRequest;
 import com.fortify.grpc.token.DeleteTokenResponse;
 import com.fortify.grpc.token.ListTokensByDeveloperRequest;
@@ -255,7 +256,7 @@ public class AviatorGrpcClient implements AutoCloseable {
     }
 
     public TokenGenerationResponse generateToken(String email, String tokenName, String signature, String message, String tenantName, String endDate) {
-        TokenGenerationRequest request = TokenGenerationRequest.newBuilder().setEmail(email != null ? email : "").setCustomTokenName(tokenName != null ? tokenName : "").setRequestSignature(signature).setEndDate(com.fortify.cli.aviator.util.StringUtil.isEmpty(endDate) ? "" : endDate).setMessage(message).setTenantName(tenantName).build();
+        TokenGenerationRequest request = TokenGenerationRequest.newBuilder().setEmail(email != null ? email : "").setCustomTokenName(tokenName != null ? tokenName : "").setRequestSignature(signature).setEndDate(StringUtil.isEmpty(endDate) ? "" : endDate).setMessage(message).setTenantName(tenantName).build();
         return GrpcUtil.executeGrpcCall(tokenServiceBlockingStub, TokenServiceGrpc.TokenServiceBlockingStub::generateToken, request, Constants.OP_GENERATE_TOKEN);
     }
 

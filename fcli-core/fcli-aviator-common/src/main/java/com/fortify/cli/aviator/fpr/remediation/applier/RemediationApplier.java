@@ -32,7 +32,8 @@ import com.fortify.cli.aviator.fpr.remediation.classifier.AppliedChangeLedger;
 import com.fortify.cli.aviator.fpr.remediation.exception.SkipRemediationException;
 import com.fortify.cli.aviator.fpr.remediation.model.AppliedChange;
 import com.fortify.cli.aviator.fpr.remediation.model.Hunk;
-import com.fortify.cli.aviator.util.FileUtil;
+import com.fortify.cli.common.fpr.util.FileUtil;
+import com.fortify.cli.common.fpr.util.LineRange;
 
 /** Houses the original {@code applyChange}, split into the same steps it always tried, just named. */
 public final class RemediationApplier {
@@ -251,7 +252,7 @@ public final class RemediationApplier {
      * Anchor verification: line-by-line whitespace-insensitive, case-insensitive comparison
      * between a slice of the current file and the expected OriginalCode. Matches the same
      * normalization ({@code trim().replaceAll("\\s+", " ")}, {@code equalsIgnoreCase}) that
-     * {@link com.fortify.cli.aviator.util.FuzzyContextSearcher} uses so behaviour is consistent
+     * {@link com.fortify.cli.common.fpr.util.FuzzyContextSearcher} uses so behaviour is consistent
      * between the fast projection path and the fuzzy fallback.
      */
     private boolean linesEqualNormalized(List<String> source, int startInclusive, int endInclusive, List<String> expected) {

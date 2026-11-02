@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<ns2:Audit xmlns:ns2="xmlns://www.fortify.com/schema/audit"
+    xmlns:ns3="xmlns://www.fortifysoftware.com/schema/activitytemplate"
+    xmlns:ns4="xmlns://www.fortifysoftware.com/schema/wsTypes"
+    xmlns:ns5="xmlns://www.fortify.com/schema/issuemanagement"
+    xmlns:ns6="http://www.fortify.com/schema/fws"
+    xmlns:ns7="xmlns://www.fortifysoftware.com/schema/runtime"
+    xmlns:ns8="xmlns://www.fortifysoftware.com/schema/seed"
+    xmlns:ns9="xmlns://www.fortify.com/schema/attachments"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    version="4.4">
+    <ns2:ProjectInfo>
+        <ns2:Name>Unknown Project</ns2:Name>
+        <ns2:ProjectVersionId>-1</ns2:ProjectVersionId>
+        <ns2:WriteDate>1970-01-01T00:00:00.000Z</ns2:WriteDate>
+    </ns2:ProjectInfo>
+    <ns2:IssueList/>
+</ns2:Audit>

@@ -44,10 +44,10 @@ import com.fortify.aviator.grpc.CorrelationServiceGrpc;
 import com.fortify.cli.aviator.audit.model.IssueData;
 import com.fortify.cli.aviator.audit.model.UserPrompt;
 import com.fortify.cli.aviator.config.IAviatorLogger;
-import com.fortify.cli.aviator.dast.DastIssue;
-import com.fortify.cli.aviator.dast.DastSession;
-import com.fortify.cli.aviator.fpr.Vulnerability;
-import com.fortify.cli.aviator.fpr.utils.SourceDecoders;
+import com.fortify.cli.common.fpr.Vulnerability;
+import com.fortify.cli.common.fpr.dast.DastIssue;
+import com.fortify.cli.common.fpr.dast.DastSession;
+import com.fortify.cli.common.fpr.utils.SourceDecoders;
 
 import io.grpc.CallOptions;
 import io.grpc.Channel;

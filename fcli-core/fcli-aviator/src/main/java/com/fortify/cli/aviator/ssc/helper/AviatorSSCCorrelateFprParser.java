@@ -21,16 +21,16 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fortify.cli.aviator.audit.AviatorSastFprParser;
 import com.fortify.cli.aviator.audit.model.ParsedFprData;
-import com.fortify.cli.aviator.dast.DastIssue;
-import com.fortify.cli.aviator.dast.StreamingWebInspectParser;
-import com.fortify.cli.aviator.fpr.SastFprParser;
-import com.fortify.cli.aviator.fpr.Vulnerability;
-import com.fortify.cli.aviator.fpr.model.AuditIssue;
-import com.fortify.cli.aviator.fpr.processor.AuditProcessor;
-import com.fortify.cli.aviator.fpr.utils.SourceDecoders;
-import com.fortify.cli.aviator.util.FprHandle;
+import com.fortify.cli.aviator.audit.processor.AuditProcessor;
 import com.fortify.cli.common.exception.FcliSimpleException;
+import com.fortify.cli.common.fpr.Vulnerability;
+import com.fortify.cli.common.fpr.dast.DastIssue;
+import com.fortify.cli.common.fpr.dast.StreamingWebInspectParser;
+import com.fortify.cli.common.fpr.model.AuditIssue;
+import com.fortify.cli.common.fpr.util.FprHandle;
+import com.fortify.cli.common.fpr.utils.SourceDecoders;
 
 /**
  * Encapsulates FPR parsing for the correlate-sast-dast command.
@@ -58,7 +58,7 @@ public final class AviatorSSCCorrelateFprParser {
     public static ParseResult parseSastFpr(Path sastfpr) {
         try (FprHandle fprHandle = new FprHandle(sastfpr)) {
             fprHandle.validate();
-            ParsedFprData parsed = SastFprParser.parse(fprHandle, SourceDecoders.defaults());
+            ParsedFprData parsed = AviatorSastFprParser.parse(fprHandle, SourceDecoders.defaults());
             List<Vulnerability> vulnerabilities = parsed.vulnerabilities;
 
             ParseResult result = new ParseResult();

@@ -17,8 +17,8 @@ import java.util.Set;
 import com.fortify.cli.aviator.audit.model.AnalysisInfo;
 import com.fortify.cli.aviator.audit.model.IssueData;
 import com.fortify.cli.aviator.audit.model.UserPrompt;
-import com.fortify.cli.aviator.fpr.Vulnerability;
-import com.fortify.cli.aviator.util.StringUtil;
+import com.fortify.cli.common.fpr.Vulnerability;
+import com.fortify.cli.common.fpr.util.StringUtil;
 
 public class IssueObjBuilder {
 

@@ -17,8 +17,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import com.fortify.cli.aviator.dast.DastIssue;
-import com.fortify.cli.aviator.fpr.Vulnerability;
+import com.fortify.cli.common.fpr.Vulnerability;
+import com.fortify.cli.common.fpr.dast.DastIssue;
 
 import lombok.Getter;
 
