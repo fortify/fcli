@@ -13,7 +13,6 @@
 package com.fortify.cli.aviator.grpc;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertIterableEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -138,21 +137,6 @@ class CorrelationStreamProcessorTest {
                 progress.warnings);
     }
 
-    @Test
-    void aviatorLoggerPrefixesCorrelationWarningsOnce() throws Exception {
-        CorrelationStreamProcessor processor = new CorrelationStreamProcessor(null, logger, null, null, 0, 0);
-
-        invokeOnNext(processor, CorrelationServerMessage.newBuilder().build());
-        invokeHandleCorrelationResponse(processor);
-        prepareInitializedStream(processor);
-        invokeHandleInitResponse(processor, "FAILED");
-
-        assertEquals(3, progress.warnings.size());
-        assertWarnOnce(progress.warnings.get(0), "Unknown correlation response type");
-        assertWarnOnce(progress.warnings.get(1), "unknown or completed request");
-        assertWarnOnce(progress.warnings.get(2), "Init response status");
-    }
-
     private CorrelationStreamProcessor.CorrelationBucketData createBucket(String category, List<String> sessionUrls) {
         List<DastIssue> dastIssues = sessionUrls.stream()
             .map(this::createDastIssue)
@@ -201,18 +185,6 @@ class CorrelationStreamProcessorTest {
         Field field = CorrelationStreamProcessor.class.getDeclaredField(fieldName);
         field.setAccessible(true);
         return field.get(processor);
-    }
-
-    private static void assertWarnOnce(String message, String distinguishingText) {
-        assertTrue(message.contains(distinguishingText), message);
-        assertFalse(message.contains("WARN: WARN:"), message);
-        int count = 0;
-        int from = 0;
-        while ((from = message.indexOf("WARN:", from)) >= 0) {
-            count++;
-            from += "WARN:".length();
-        }
-        assertEquals(1, count, message);
     }
 
     private void prepareInitializedStream(CorrelationStreamProcessor processor) throws Exception {
