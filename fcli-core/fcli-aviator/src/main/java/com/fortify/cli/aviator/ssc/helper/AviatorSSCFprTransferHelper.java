@@ -101,6 +101,16 @@ public final class AviatorSSCFprTransferHelper {
         return getUploadedArtifactId(uploadResponse);
     }
 
+    public static String uploadEngineSpecificFpr(
+            UnirestInstance unirest,
+            SSCAppVersionDescriptor appVersion,
+            Path fprPath,
+            AviatorSSCFprFilterHelper.Engine engine,
+            IProgressWriter progressWriter) {
+        AviatorSSCFprFilterHelper.filterEngineSpecificFprInPlace(fprPath, engine);
+        return uploadFpr(unirest, appVersion, fprPath, progressWriter);
+    }
+
     static String getUploadedArtifactId(JsonNode uploadResponse) {
         String artifactId = uploadResponse == null
             ? null : uploadResponse.path("data").path("id").asText(null);

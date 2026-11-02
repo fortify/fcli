@@ -127,23 +127,10 @@ public class AviatorSSCDastAuditCommand extends AbstractSSCJsonNodeOutputCommand
             IAviatorLogger logger,
             TagMappingConfig tagMappingConfig,
             IProgressWriter progressWriter) throws Exception {
-        Path filteredFpr = null;
-        try {
-            validateSSCTagsBeforeUpload(unirest, appVersion, logger, tagMappingConfig);
-            logger.progress("Status: Uploading audited DAST FPR to SSC");
-            filteredFpr = AviatorSSCFprFilterHelper.createEngineSpecificFpr(
-                downloadedFpr, AviatorSSCFprFilterHelper.Engine.DAST);
-            return AviatorSSCFprTransferHelper.uploadFpr(
-                unirest, appVersion, filteredFpr, progressWriter);
-        } finally {
-            if (filteredFpr != null) {
-                try {
-                    Files.deleteIfExists(filteredFpr);
-                } catch (Exception e) {
-                    LOG.warn("WARN: Failed to delete temporary filtered DAST FPR {}", filteredFpr, e);
-                }
-            }
-        }
+        validateSSCTagsBeforeUpload(unirest, appVersion, logger, tagMappingConfig);
+        logger.progress("Status: Uploading audited DAST FPR to SSC");
+        return AviatorSSCFprTransferHelper.uploadEngineSpecificFpr(
+            unirest, appVersion, downloadedFpr, AviatorSSCFprFilterHelper.Engine.DAST, progressWriter);
     }
 
     private DastAuditFprResult auditFpr(
