@@ -1,7 +1,8 @@
 ---
+name: fcli-add-command
 description: 'Scaffold a new picocli command in fcli'
+disable-model-invocation: true
 ---
-
 # Add New fcli Command
 
 Create a new fcli picocli command following established patterns.

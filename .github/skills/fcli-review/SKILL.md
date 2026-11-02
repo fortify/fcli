@@ -1,7 +1,8 @@
 ---
+name: fcli-review
 description: 'Review an fcli local change or pull request'
+disable-model-invocation: true
 ---
-
 # Review fcli Change
 
 Review one fcli change end to end.

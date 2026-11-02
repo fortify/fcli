@@ -1,7 +1,8 @@
 ---
+name: fcli-add-ftest
 description: 'Scaffold a functional test spec for fcli'
+disable-model-invocation: true
 ---
-
 # Add Functional fcli Test
 
 Create a new Spock functional test for an fcli command.
