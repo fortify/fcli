@@ -420,13 +420,18 @@ The backend change should preserve the existing output contract, rather than ado
 
 * stdout contains command results only, including tables, JSON, CSV, and RPC output.
 * Default console logging remains message-only WARN/ERROR output on stderr, including existing logger-specific exclusions.
+  For warnings with an exception, show its type and message (including causes) without stack frames; keep full traces in the file log.
 * File logging retains timestamps, thread names, levels, message categories, abbreviated logger names, key/value pairs,
   masked messages, and exception details.
 * `--log-file`, `--log-level`, `--log-mask`, and `--debug` retain their existing behavior.
+  Progress-writer warnings are WARN log events: `--log-level ERROR` suppresses them on both console and file.
 
 Masking is the most important migration requirement: port the integration, not just the formatting pattern.
 Compare exception rendering, logger abbreviation, and key/value formatting explicitly; equivalent patterns do not
-guarantee byte-for-byte identical output across backends.
+guarantee byte-for-byte identical output across backends. In Logback 1.6.5, `%ex{0}` renders exception and cause
+types/messages without stack frames. Log4j Core 2.20.0 interprets `%ex{0}` as no exception output, while `%ex{1}`
+prints only the outer exception type/message; neither is an exact replacement. Configure and test the desired
+console behavior for the chosen backend.
 
 Before accepting a migration, run JVM and rebuilt-native tests covering clean startup, stdout/stderr separation,
 table and structured output, file logging, levels, sensitive-value masking, and exception output.

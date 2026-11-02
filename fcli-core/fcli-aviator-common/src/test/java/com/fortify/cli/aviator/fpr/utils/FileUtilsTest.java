@@ -18,10 +18,16 @@ import java.util.Map;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.slf4j.LoggerFactory;
 
 import com.fortify.cli.aviator._common.config.AviatorConfigManager;
 import com.fortify.cli.aviator.config.LanguagesCommentConfig;
 import com.fortify.cli.aviator.util.LanguageCommentMapperUtil;
+
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 
 class FileUtilsTest {
 
@@ -63,5 +69,28 @@ class FileUtilsTest {
         String result = fileUtils.appendLineNumbers("package com.example;", "src/main/java/com/example/HomeController.java", 0);
 
         assertEquals("package com.example; // L1", result);
+    }
+
+    @Test
+    void unknownCommentSymbolIsDiagnosticOnlyAndReportedOncePerInstance() {
+        Logger logger = (Logger) LoggerFactory.getLogger(FileUtils.class);
+        Level previousLevel = logger.getLevel();
+        ListAppender<ILoggingEvent> appender = new ListAppender<>();
+        appender.start();
+        logger.addAppender(appender);
+        logger.setLevel(Level.DEBUG);
+        try {
+            FileUtils fileUtils = new FileUtils();
+            assertEquals("line one", fileUtils.appendLineNumbers("line one", "source.unknown", 0, "UNMAPPED_LANGUAGE"));
+            assertEquals("line two", fileUtils.appendLineNumbers("line two", "source.unknown", 1, "UNMAPPED_LANGUAGE"));
+            assertEquals(1, appender.list.size());
+            assertEquals(Level.DEBUG, appender.list.get(0).getLevel());
+            assertEquals("No comment symbol for language UNMAPPED_LANGUAGE; line numbers not appended",
+                    appender.list.get(0).getFormattedMessage());
+        } finally {
+            logger.setLevel(previousLevel);
+            logger.detachAppender(appender);
+            appender.stop();
+        }
     }
 }
