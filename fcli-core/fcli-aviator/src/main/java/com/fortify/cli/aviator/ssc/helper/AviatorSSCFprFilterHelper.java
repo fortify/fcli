@@ -13,15 +13,16 @@
 package com.fortify.cli.aviator.ssc.helper;
 
 import java.io.IOException;
-import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.exception.FcliTechnicalException;
-import com.fortify.cli.common.util.ZipHelper;
+import com.fortify.cli.common.fpr.util.FprHandle;
 
 public final class AviatorSSCFprFilterHelper {
     private static final String WEBINSPECT_XML = "webinspect.xml";
@@ -36,36 +37,34 @@ public final class AviatorSSCFprFilterHelper {
     }
 
     public static void filterEngineSpecificFprInPlace(Path fpr, Engine engine) {
-        try (FileSystem fileSystem = ZipHelper.openZipFileSystem(fpr)) {
-            Path root = fileSystem.getPath("/");
+        try (FprHandle fprHandle = new FprHandle(fpr)) {
+            Path root = fprHandle.getPath("/");
             validateRequiredEntry(root, engine);
 
-            try (var entries = Files.walk(root)) {
-                for (Path entry : entries
-                        .filter(path -> !path.equals(root))
-                        .filter(path -> !shouldRetain(path, root, engine))
-                        .sorted(Comparator.comparingInt(Path::getNameCount).reversed())
-                        .toList()) {
+            if (engine == Engine.SAST) {
+                Files.deleteIfExists(fprHandle.getPath("/webinspect.xml"));
+            } else {
+                List<Path> entriesToDelete;
+                try (Stream<Path> entries = Files.walk(root)) {
+                    entriesToDelete = entries
+                            .filter(path -> !path.equals(root))
+                            .filter(path -> !shouldRetainDastEntry(path))
+                            .sorted(Comparator.comparingInt(Path::getNameCount).reversed())
+                            .toList();
+                }
+                for (Path entry : entriesToDelete) {
                     Files.deleteIfExists(entry);
                 }
             }
-        } catch (RuntimeException | IOException e) {
-            if (e instanceof RuntimeException runtimeException) {
-                throw runtimeException;
-            }
+        } catch (IOException e) {
             throw new FcliTechnicalException("Failed to filter FPR for " + engine + " upload", e);
         }
     }
 
-    private static boolean shouldRetain(Path path, Path root, Engine engine) {
-        Path relativePath = root.relativize(path);
-        String entryName = relativePath.toString().replace('\\', '/');
-        return switch (engine) {
-            case SAST -> !entryName.equals(WEBINSPECT_XML);
-            case DAST -> relativePath.getNameCount() == 1
-                && DAST_ENTRIES.contains(entryName)
-                && Files.isRegularFile(path);
-        };
+    private static boolean shouldRetainDastEntry(Path path) {
+        return path.getNameCount() == 1
+            && DAST_ENTRIES.contains(path.getFileName().toString())
+            && Files.isRegularFile(path);
     }
 
     private static void validateRequiredEntry(Path root, Engine engine) {

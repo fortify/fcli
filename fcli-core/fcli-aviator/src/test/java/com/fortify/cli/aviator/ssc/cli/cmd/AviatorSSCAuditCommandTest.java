@@ -19,27 +19,38 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
 import com.fortify.cli.aviator._common.session.user.helper.AviatorUserSessionDescriptor;
+import com.fortify.cli.aviator.audit.model.AuditFprOptions;
 import com.fortify.cli.aviator.audit.model.FPRAuditResult;
 import com.fortify.cli.aviator.config.AviatorLoggerImpl;
 import com.fortify.cli.aviator.ssc.helper.AviatorSSCAuditHelper;
+import com.fortify.cli.common.cli.mixin.ICommandAware;
+import com.fortify.cli.common.cli.util.FcliCommandSpecHelper;
+import com.fortify.cli.common.fpr.util.FprHandle;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.progress.helper.IProgressWriter;
@@ -52,6 +63,8 @@ import kong.unirest.UnirestInstance;
 import picocli.CommandLine;
 
 class AviatorSSCAuditCommandTest {
+    @TempDir Path tempDir;
+
     @Test
     void registersCanonicalAndDeprecatedCommandNames() {
         assertEquals("audit-sast", new CommandLine(new AviatorSSCSastAuditCommand()).getCommandName());
@@ -157,6 +170,138 @@ class AviatorSSCAuditCommandTest {
         assertEquals(3, audit.get("submitted").asInt());
         assertEquals(2, audit.get("succeeded").asInt());
         assertEquals(2, audit.get("skipped").asInt());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"AUDITED", "PARTIALLY_AUDITED"})
+    void preservesCompletedAuditWhenSastUploadFails(String status) throws Exception {
+        assertPostAuditResult(status, "upload");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"AUDITED", "PARTIALLY_AUDITED"})
+    void preservesCompletedAuditWhenSastFilteringFails(String status) throws Exception {
+        assertPostAuditResult(status, "filter");
+    }
+
+    @Test
+    void returnsUploadedArtifactWithCompletedAudit() throws Exception {
+        assertPostAuditResult("AUDITED", "none");
+    }
+
+    private void assertPostAuditResult(String status, String failure) throws Exception {
+        Path fpr = tempDir.resolve("audited.fpr");
+        try (var zip = new ZipOutputStream(Files.newOutputStream(fpr))) {
+            for (String entry : List.of("audit.fvdl", "webinspect.xml")) {
+                zip.putNextEntry(new ZipEntry(entry));
+                zip.write(entry.getBytes(StandardCharsets.UTF_8));
+                zip.closeEntry();
+            }
+        }
+        int succeeded = "AUDITED".equals(status) ? 3 : 2;
+        int skipped = 3 - succeeded;
+        Map<String, Integer> skippedByReason = skipped == 0 ? Map.of() : Map.of("Skipped by Aviator", skipped);
+        var auditResult = new FPRAuditResult(fpr.toFile(), status, "Audit finished", succeeded, 3, 3, skipped,
+            skippedByReason, 1, Map.of("No remediation available", 1));
+        var command = new CompletedAuditCommand(auditResult, "filter".equals(failure));
+        var commandLine = new CommandLine(command);
+        commandLine.parseArgs("--av", "TestApp:1.0", "--progress", "none");
+        FcliCommandSpecHelper.getAllUserObjectsStream(commandLine.getCommandSpec()).forEach(object -> {
+            if (object instanceof ICommandAware commandAware) {
+                commandAware.setCommandSpec(commandLine.getCommandSpec());
+            }
+        });
+        var av = new SSCAppVersionDescriptor();
+        av.setVersionId("42");
+        av.setApplicationName("TestApp");
+        av.setVersionName("1.0");
+        var progress = new RecordingProgressWriter();
+        var uploads = new AtomicInteger();
+        var server = HttpServer.create(new InetSocketAddress(0), 0);
+        server.createContext("/api/v1/projectVersions/42/customTags", exchange -> {
+            byte[] response = "{}".getBytes(StandardCharsets.UTF_8);
+            exchange.getResponseHeaders().set("Content-Type", "application/json");
+            exchange.sendResponseHeaders(200, response.length);
+            try (var output = exchange.getResponseBody()) {
+                output.write(response);
+            }
+        });
+        server.createContext("/api/v1/projectVersions/42/artifacts", exchange -> {
+            uploads.incrementAndGet();
+            exchange.getRequestBody().readAllBytes();
+            byte[] response = ("upload".equals(failure) ? "{\"data\":{}}" : "{\"data\":{\"id\":\"2786\"}}")
+                .getBytes(StandardCharsets.UTF_8);
+            exchange.getResponseHeaders().set("Content-Type", "application/json");
+            exchange.sendResponseHeaders(200, response.length);
+            try (var output = exchange.getResponseBody()) {
+                output.write(response);
+            }
+        });
+        server.start();
+        try (var unirest = UnirestHelper.createUnirestInstance(instance -> {
+            UnirestJsonHeaderConfigurer.configure(instance);
+            instance.config().defaultBaseUrl("http://localhost:" + server.getAddress().getPort());
+        })) {
+            var result = command.processFpr(unirest, av, "unused", "unused",
+                new AviatorLoggerImpl(progress), fpr);
+
+            assertEquals(status, result.path(IActionCommandResultSupplier.actionFieldName).asText());
+            assertFalse(command.auditPayloadPath.getFileSystem().isOpen(),
+                "Audit handle must close before filtering/upload");
+            var audit = result.path("operation").path("audit");
+            assertEquals(3, audit.path("submitted").asInt());
+            assertEquals(succeeded, audit.path("succeeded").asInt());
+            assertEquals(skipped, audit.path("skipped").asInt());
+            assertEquals(JsonHelper.getObjectMapper().valueToTree(skippedByReason), audit.path("skippedByReason"));
+            assertEquals(1, audit.path("remediationGenerationSkipped").asInt());
+            assertEquals(1, audit.path("remediationGenerationSkippedByReason").path("No remediation available").asInt());
+            assertEquals("AUDITED".equals(status) ? "Audit completed successfully" : "Audit finished",
+                audit.path("message").asText());
+            assertEquals("filter".equals(failure) ? 0 : 1, uploads.get());
+            if ("none".equals(failure)) {
+                assertEquals("2786", result.path("artifactId").asText());
+                assertFalse(progress.messages.stream().anyMatch(message -> message.startsWith("WARN: Upload")));
+            } else {
+                assertTrue(result.path("artifactId").isNull());
+                String warning = "upload".equals(failure)
+                    ? "SSC FPR upload response did not contain an artifact ID"
+                    : "FPR does not contain the required SAST engine payload: audit.fvdl";
+                assertTrue(progress.messages.contains("WARN: Upload of audited FPR to SSC failed: " + warning),
+                    progress.messages.toString());
+            }
+            try (var handle = new FprHandle(fpr)) {
+                assertEquals("filter".equals(failure), Files.exists(handle.getPath("/webinspect.xml")));
+                assertEquals("updated audit", Files.readString(handle.getPath("/audit.xml")));
+            }
+        } finally {
+            server.stop(0);
+        }
+    }
+
+    private static final class CompletedAuditCommand extends AviatorSSCSastAuditCommand {
+        private final FPRAuditResult auditResult;
+        private final boolean removeSastPayload;
+        private Path auditPayloadPath;
+
+        private CompletedAuditCommand(FPRAuditResult auditResult, boolean removeSastPayload) {
+            this.auditResult = auditResult;
+            this.removeSastPayload = removeSastPayload;
+        }
+
+        @Override
+        FPRAuditResult auditFpr(AuditFprOptions options) {
+            auditPayloadPath = options.getFprHandle().getPath("/audit.fvdl");
+            assertTrue(auditPayloadPath.getFileSystem().isOpen());
+            try {
+                Files.writeString(options.getFprHandle().getPath("/audit.xml"), "updated audit");
+                if (removeSastPayload) {
+                    Files.delete(auditPayloadPath);
+                }
+            } catch (IOException e) {
+                throw new AssertionError(e);
+            }
+            return auditResult;
+        }
     }
 
     @ParameterizedTest

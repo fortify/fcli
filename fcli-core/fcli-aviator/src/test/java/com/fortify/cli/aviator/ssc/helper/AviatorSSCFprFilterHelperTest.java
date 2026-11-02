@@ -59,13 +59,34 @@ class AviatorSSCFprFilterHelperTest {
             "audit.xml", "audit",
             "attachments.xml", "attachments",
             "audit.fvdl", "sast",
-            "sources/source.java", "source"));
+            "sources/source.java", "source",
+            "nested/webinspect.xml", "nested dast",
+            "nested/deeper/audit.xml", "nested audit"));
 
         AviatorSSCFprFilterHelper.filterEngineSpecificFprInPlace(
             fpr, AviatorSSCFprFilterHelper.Engine.DAST);
 
         assertEquals(Set.of("VERSION", "webinspect.xml", "audit.xml", "attachments.xml"), entries(fpr));
         assertEquals("dast", entryContent(fpr, "/webinspect.xml"));
+        assertEquals(Set.of(fpr), fprFiles());
+    }
+
+    @Test
+    void removesDastDirectoriesNamedLikeKeptFiles() throws Exception {
+        Path fpr = createFpr(Map.of(
+            "webinspect.xml", "dast",
+            "VERSION/nested/file.txt", "not a root regular file",
+            "audit.xml/nested/file.txt", "not a root regular file",
+            "attachments.xml/nested/file.txt", "not a root regular file"));
+
+        AviatorSSCFprFilterHelper.filterEngineSpecificFprInPlace(
+            fpr, AviatorSSCFprFilterHelper.Engine.DAST);
+
+        assertEquals(Set.of("webinspect.xml"), entries(fpr));
+        try (var fileSystem = java.nio.file.FileSystems.newFileSystem(fpr, (ClassLoader) null);
+                var paths = Files.walk(fileSystem.getPath("/"))) {
+            assertEquals(2, paths.count());
+        }
         assertEquals(Set.of(fpr), fprFiles());
     }
 

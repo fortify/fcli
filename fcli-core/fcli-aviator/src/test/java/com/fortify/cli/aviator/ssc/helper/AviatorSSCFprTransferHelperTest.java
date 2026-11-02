@@ -16,6 +16,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.NullSource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import com.fortify.cli.common.exception.FcliTechnicalException;
 import com.fortify.cli.common.json.JsonHelper;
@@ -28,13 +31,18 @@ class AviatorSSCFprTransferHelperTest {
         assertEquals("2786", AviatorSSCFprTransferHelper.getUploadedArtifactId(response));
     }
 
-    @Test
-    void rejectsMissingArtifactId() throws Exception {
-        var response = JsonHelper.getObjectMapper().readTree("{\"data\":{}}");
+    @ParameterizedTest
+    @NullSource
+    @ValueSource(strings = {
+        "{}", "{\"data\":{}}", "{\"data\":{\"id\":null}}",
+        "{\"data\":{\"id\":\"\"}}", "{\"data\":{\"id\":\"   \"}}"
+    })
+    void detectsMissingArtifactIdAsUploadFailure(String responseJson) throws Exception {
+        var response = responseJson == null ? null : JsonHelper.getObjectMapper().readTree(responseJson);
 
-        assertThrows(FcliTechnicalException.class,
+        var failure = assertThrows(FcliTechnicalException.class,
             () -> AviatorSSCFprTransferHelper.getUploadedArtifactId(response));
-        assertThrows(FcliTechnicalException.class,
-            () -> AviatorSSCFprTransferHelper.getUploadedArtifactId(null));
+
+        assertEquals("SSC FPR upload response did not contain an artifact ID", failure.getMessage());
     }
 }
