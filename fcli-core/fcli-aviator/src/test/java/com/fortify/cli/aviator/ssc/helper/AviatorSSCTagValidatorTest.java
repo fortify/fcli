@@ -230,7 +230,6 @@ class AviatorSSCTagValidatorTest {
             warnings.add(cause == null ? message : message + ": " + cause);
         }
         @Override public void error(String format, Object... args) {}
-        @Override public void errorWithException(String format, Throwable cause, Object... args) {}
     }
 
     private static final class TestSscServer implements AutoCloseable {

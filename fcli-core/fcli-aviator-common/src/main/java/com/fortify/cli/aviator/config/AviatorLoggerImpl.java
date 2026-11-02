@@ -61,11 +61,12 @@ public class AviatorLoggerImpl implements IAviatorLogger {
 
     @Override
     public void error(String format, Object... args) {
-        progressWriter.writeError(format, args);
-    }
-
-    @Override
-    public void errorWithException(String format, Throwable cause, Object... args) {
-        progressWriter.writeErrorWithException(format, cause, args);
+        String message = String.format(format, args);
+        if (logger.isErrorEnabled()) {
+            logger.error(message);
+        } else {
+            progressWriter.writeWarning(message);
+            logger.error(message);
+        }
     }
 }

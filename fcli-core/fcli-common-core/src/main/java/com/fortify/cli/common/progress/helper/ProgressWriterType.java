@@ -90,26 +90,16 @@ public enum ProgressWriterType {
         @Override
         public final void writeWarning(String message, Object... args) {
             var formattedMessage = format(message, args);
-            log(formattedMessage, null, false);
+            log(formattedMessage, null);
         }
         
         @Override
         public final void writeWarningWithException(String message, Throwable cause, Object... args) {
             var formattedMessage = format(message, args);
-            log(formattedMessage, cause, false);
+            log(formattedMessage, cause);
         }
 
-        @Override
-        public final void writeError(String message, Object... args) {
-            log(format(message, args), null, true);
-        }
-
-        @Override
-        public final void writeErrorWithException(String message, Throwable cause, Object... args) {
-            log(format(message, args), cause, true);
-        }
-
-        private void log(String message, Throwable cause, boolean error) {
+        private void log(String message, Throwable cause) {
             // A progress writer may be used by a worker with no command context or
             // stderr stack. Restore the context and route captured at construction.
             var needsContext = executionContext != null && FcliExecutionContextHolder.tryCurrentContext() == null;
@@ -118,11 +108,7 @@ public enum ProgressWriterType {
                     && StdioHelper.currentErr() != warningErr;
             try {
                 if (needsErr) StdioHelper.pushErr(warningErr);
-                if (error) {
-                    if (cause == null) LOG.error(message); else LOG.error(message, cause);
-                } else {
-                    if (cause == null) LOG.warn(message); else LOG.warn(message, cause);
-                }
+                if (cause == null) LOG.warn(message); else LOG.warn(message, cause);
             } finally {
                 if (needsErr) StdioHelper.popErr();
                 if (frame != null) frame.close();

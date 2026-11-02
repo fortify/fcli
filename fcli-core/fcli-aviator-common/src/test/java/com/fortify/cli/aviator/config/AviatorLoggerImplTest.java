@@ -32,7 +32,7 @@ class AviatorLoggerImplTest {
             "com.fortify.cli.common.progress.helper.ProgressWriterType$AbstractProgressWriter";
 
     @Test
-    void warningsAndErrorsUseOneEventWithCorrectSeverityAndCause() {
+    void warningsUseOneEventWithWarnPrefixAndCause() {
         Logger logbackLogger = (Logger) LoggerFactory.getLogger(WRITER_LOGGER_NAME);
         Level previousLevel = logbackLogger.getLevel();
         boolean previousAdditivity = logbackLogger.isAdditive();
@@ -44,18 +44,15 @@ class AviatorLoggerImplTest {
         try (var writer = ProgressWriterType.none.create()) {
             AviatorLoggerImpl logger = new AviatorLoggerImpl(writer);
             IllegalStateException warningCause = new IllegalStateException("quota unavailable");
-            IllegalStateException errorCause = new IllegalStateException("stream failed");
 
             logger.warn("Quota unavailable for %s", "app");
             logger.warn("WARN: Quota unavailable for %s", "other app");
             logger.warnWithException("Cannot retrieve quota", warningCause);
-            logger.errorWithException("Audit failed for %s", errorCause, "app");
 
-            assertEquals(4, appender.list.size());
+            assertEquals(3, appender.list.size());
             assertEvent(appender.list.get(0), Level.WARN, "WARN: Quota unavailable for app", null);
             assertEvent(appender.list.get(1), Level.WARN, "WARN: Quota unavailable for other app", null);
             assertEvent(appender.list.get(2), Level.WARN, "WARN: Cannot retrieve quota", warningCause);
-            assertEvent(appender.list.get(3), Level.ERROR, "Audit failed for app", errorCause);
         } finally {
             logbackLogger.setLevel(previousLevel);
             logbackLogger.setAdditive(previousAdditivity);

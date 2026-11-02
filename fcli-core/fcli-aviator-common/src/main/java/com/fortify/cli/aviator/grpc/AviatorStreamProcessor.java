@@ -266,7 +266,7 @@ class AviatorStreamProcessor implements AutoCloseable {
                 this.streamLatch.await();
 
             } catch (Exception e) {
-                logger.errorWithException("Stream failed with error: %s", e, e.getMessage());
+                LOG.error("Stream failed with error: {}", e.getMessage(), e);
 
                 if (isRetryableError(e)) {
                     boolean infinite = isInfiniteRetryError(e);
@@ -498,7 +498,7 @@ class AviatorStreamProcessor implements AutoCloseable {
                         }
                     } else {
                         if (!resultFuture.isDone()) {
-                            logger.errorWithException("Stream error occurred: %s", t, t.getMessage());
+                            LOG.error("Stream error occurred: {}", t.getMessage(), t);
                             if (t instanceof StatusRuntimeException sre) {
                                 String description = sre.getStatus().getDescription() != null ?
                                         sre.getStatus().getDescription() : "Unknown gRPC error";
@@ -512,7 +512,7 @@ class AviatorStreamProcessor implements AutoCloseable {
                     }
                     streamLatch.countDown();
                 } else {
-                    logger.errorWithException("Stream error occurred: %s", t, t.getMessage());
+                    LOG.error("Stream error occurred: {}", t.getMessage(), t);
                     if (!resultFuture.isDone()) {
                         if (t instanceof StatusRuntimeException sre) {
                             String description = sre.getStatus().getDescription() != null ?
@@ -786,8 +786,7 @@ class AviatorStreamProcessor implements AutoCloseable {
             } catch (AviatorSimpleException e) {
                 if (wrapper != null) {
                     String instanceId = wrapper.userPrompt.getIssueData().getInstanceID();
-                    logger.errorWithException("Permanently failing request for issue %s due to a client-side error: %s",
-                            e, instanceId, e.getMessage());
+                    LOG.error("Permanently failing request for issue {} due to a client-side error: {}", instanceId, e.getMessage());
 
                     AuditResponse failedResponse = new AuditResponse();
                     failedResponse.setIssueId(instanceId);
@@ -805,11 +804,11 @@ class AviatorStreamProcessor implements AutoCloseable {
 
                     logger.progress("Processed " + completed + " out of " + totalRequests + " issues (" + failed + " failed).");
                 } else {
-                    logger.errorWithException("Caught AviatorSimpleException but the request wrapper was null.", e);
+                    LOG.error("Caught AviatorSimpleException but the request wrapper was null.", e);
                 }
             } catch (Exception e) {
                 if (!resultFuture.isDone()) {
-                    logger.errorWithException("Unexpected error in processing loop, failing entire operation.", e);
+                    LOG.error("Unexpected error in processing loop, failing entire operation.", e);
                     resultFuture.completeExceptionally(new AviatorTechnicalException("Unexpected error in processing loop", e));
                 }
                 break;
@@ -934,8 +933,7 @@ class AviatorStreamProcessor implements AutoCloseable {
         wrapperToRetry.attemptCount++;
 
         if (wrapperToRetry.attemptCount > Constants.MAX_RETRIES) {
-            logger.error("Request for instance %s failed after %s retries due to server being busy. Dropping request.",
-                    wrapperToRetry.userPrompt.getIssueData().getInstanceID(), Constants.MAX_RETRIES);
+            LOG.error("Request for instance {} failed after {} retries due to server being busy. Dropping request.", wrapperToRetry.userPrompt.getIssueData().getInstanceID(), Constants.MAX_RETRIES);
 
             AuditResponse failedResponse = new AuditResponse();
             failedResponse.setIssueId(wrapperToRetry.userPrompt.getIssueData().getInstanceID());
@@ -980,8 +978,7 @@ class AviatorStreamProcessor implements AutoCloseable {
 
         boolean sent = sendRequestWithRetry(promptRequest, Constants.MAX_RETRIES);
         if (!sent) {
-            logger.error("Failed to send request for instance %s after all retries. Re-queueing for later attempt.",
-                    wrapper.userPrompt.getIssueData().getInstanceID());
+            LOG.error("Failed to send request for instance {} after all retries. Re-queueing for later attempt.", wrapper.userPrompt.getIssueData().getInstanceID());
             inflightRequests.remove(requestId);
             requestMetricsMap.remove(requestId);
             decrementOutstanding(wrapper);
@@ -1006,7 +1003,7 @@ class AviatorStreamProcessor implements AutoCloseable {
 
                 int messageSize = request.getSerializedSize();
                 if (messageSize > Constants.MAX_MESSAGE_SIZE) {
-                    logger.error("Message size too large: %s bytes", messageSize);
+                    LOG.error("Message size too large: {} bytes", messageSize);
                     throw new AviatorSimpleException("Message size exceeds maximum allowed limit");
                 }
 
@@ -1017,7 +1014,7 @@ class AviatorStreamProcessor implements AutoCloseable {
                 throw e;
             } catch (Exception e) {
                 if (requestHandler != null && !requestHandler.isCompleted()) {
-                    logger.errorWithException("Error sending request (attempt %s): %s", e, attempt + 1, e.getMessage());
+                    LOG.error("Error sending request (attempt {}): {}", attempt + 1, e.getMessage());
                 }
                 if (attempt == maxRetries - 1) {
                     return false;

@@ -394,7 +394,7 @@ public class DastAuditStreamProcessor implements AutoCloseable {
         int completedCount = workItems.size() - pendingIssueIds.size();
         if (completedCount == lastRetryCompletedCount) {
             if (stagnantRetryCount.incrementAndGet() >= 3) {
-                logger.error("DAST audit stream made no progress after multiple retries");
+                LOG.error("DAST audit stream made no progress after multiple retries");
                 return false;
             }
         } else {
