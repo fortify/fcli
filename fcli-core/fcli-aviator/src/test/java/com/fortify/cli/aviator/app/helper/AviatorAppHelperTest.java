@@ -23,13 +23,16 @@ import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
 
 class AviatorAppHelperTest {
     @Test
-    void isNumericAcceptsOnlyDigits() {
-        assertTrue(AviatorAppHelper.isNumeric("123"));
-        assertFalse(AviatorAppHelper.isNumeric(null));
-        assertFalse(AviatorAppHelper.isNumeric(""));
-        assertFalse(AviatorAppHelper.isNumeric("-1"));
-        assertFalse(AviatorAppHelper.isNumeric("12a"));
-        assertFalse(AviatorAppHelper.isNumeric("1234567890123456789"));
+    void isCanonicalIdAcceptsOnlyDigitsWithoutLeadingZero() {
+        assertTrue(AviatorAppHelper.isCanonicalId("123"));
+        assertTrue(AviatorAppHelper.isCanonicalId("0"));
+        assertFalse(AviatorAppHelper.isCanonicalId(null));
+        assertFalse(AviatorAppHelper.isCanonicalId(""));
+        assertFalse(AviatorAppHelper.isCanonicalId("-1"));
+        assertFalse(AviatorAppHelper.isCanonicalId("12a"));
+        assertFalse(AviatorAppHelper.isCanonicalId("000144"));
+        assertFalse(AviatorAppHelper.isCanonicalId("00"));
+        assertFalse(AviatorAppHelper.isCanonicalId("1234567890123456789"));
     }
 
     @Test
@@ -40,10 +43,15 @@ class AviatorAppHelperTest {
     }
 
     @Test
-    void leadingZerosAreRemovedFromNumericId() {
-        assertEquals("1564", AviatorAppHelper.resolveApplicationId(null, null, "001564"));
-        assertEquals("0", AviatorAppHelper.resolveApplicationId(null, null, "000"));
+    void canonicalIdsArePassedThroughUnchanged() {
+        assertEquals("0", AviatorAppHelper.resolveApplicationId(null, null, "0"));
         assertEquals("999999999999999999", AviatorAppHelper.resolveApplicationId(null, null, "999999999999999999"));
+    }
+
+    @Test
+    void leadingZeroValuesAreTreatedAsNames() {
+        // null config descriptor proves the name lookup path is taken (it is dereferenced before any server call)
+        assertThrows(NullPointerException.class, () -> AviatorAppHelper.resolveApplicationId(null, null, "000144"));
     }
 
     @Test

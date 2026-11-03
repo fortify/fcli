@@ -19,16 +19,18 @@ import com.fortify.cli.aviator.grpc.AviatorGrpcClient;
 
 /**
  * Helper methods for resolving Aviator applications specified as either id or name.
- * Numeric values are always interpreted as an application id, as was the case before
- * names were supported; all other values are interpreted as an application name. There
- * is no fallback from id to name, so applications with a purely numeric name can only
- * be addressed through their id.
+ * Values in canonical numeric form (digits without leading zeros) are interpreted as an
+ * application id, as was the case before names were supported; all other values, including
+ * numeric values with leading zeros like {@code 000144}, are interpreted as an application
+ * name and passed to the server exactly as specified. There is no fallback from id to name,
+ * so applications whose name is a canonical number can only be addressed through their id.
  */
 public final class AviatorAppHelper {
     private AviatorAppHelper() {}
 
-    public static boolean isNumeric(String value) {
+    public static boolean isCanonicalId(String value) {
         if (value == null || value.isEmpty() || value.length() > 18) { return false; }
+        if (value.length() > 1 && value.charAt(0) == '0') { return false; }
         for (int i = 0; i < value.length(); i++) {
             char c = value.charAt(i);
             if (c < '0' || c > '9') { return false; }
@@ -37,14 +39,14 @@ public final class AviatorAppHelper {
     }
 
     /**
-     * Numeric values are returned as a normalized id (leading zeros removed, as the server rejects ids that don't
-     * match their canonical form) without contacting the server; names are resolved through the server-side name lookup.
+     * Canonical numeric ids are returned as-is without contacting the server (the server rejects ids that don't
+     * match their canonical form); any other value is treated as a name, resolved through the server-side name lookup.
      */
     public static String resolveApplicationId(AviatorGrpcClient client, AviatorAdminConfigDescriptor configDescriptor, String appNameOrId) {
         if (appNameOrId == null || appNameOrId.isBlank()) {
             throw new AviatorSimpleException("Application name or id must be specified");
         }
-        if (isNumeric(appNameOrId)) { return String.valueOf(Long.parseLong(appNameOrId)); }
+        if (isCanonicalId(appNameOrId)) { return appNameOrId; }
         String tenant = configDescriptor.getTenant();
         String[] messageAndSignature = AviatorSignatureUtils.createMessageAndSignature(configDescriptor, tenant, appNameOrId);
         return String.valueOf(client.getApplicationByName(appNameOrId, messageAndSignature[1], messageAndSignature[0], tenant).getId());
