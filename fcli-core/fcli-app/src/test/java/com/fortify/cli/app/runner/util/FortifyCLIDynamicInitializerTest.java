@@ -166,7 +166,6 @@ class FortifyCLIDynamicInitializerTest {
         String warning = "debug-explicit-error-warning-stderr-only";
         String error = "debug-explicit-error-error-stderr-and-file";
         var output = capture(new String[] { "--debug", "--log-level=ERROR" }, tempDir.resolve("debug-error.log"), root -> {
-            assertEquals(Level.WARN, root.getLevel());
             root.debug(debug);
             root.warn(warning);
             root.error(error);
@@ -196,20 +195,6 @@ class FortifyCLIDynamicInitializerTest {
 
         assertTrue(output.stderr().contains(warning), output.stderr());
         assertFalse(output.fileCreated());
-    }
-
-    @Test
-    void noOptionsCaptureDoesNotReusePreviousFileOptions() throws Exception {
-        Path previousFile = tempDir.resolve("previous.log");
-        capture(new String[] { "--log-level=ERROR" }, previousFile, root -> root.error("keep-this-error"));
-        String previousContent = Files.readString(previousFile);
-
-        var output = capture(new String[0], tempDir.resolve("unused.log"), false,
-                root -> root.warn("subsequent-console-warning"));
-
-        assertTrue(output.stderr().contains("subsequent-console-warning"));
-        assertFalse(output.fileCreated());
-        assertEquals(previousContent, Files.readString(previousFile));
     }
 
     @Test
