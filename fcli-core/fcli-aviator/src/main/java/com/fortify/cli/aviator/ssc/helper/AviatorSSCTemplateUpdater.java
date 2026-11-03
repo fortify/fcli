@@ -120,7 +120,7 @@ public class AviatorSSCTemplateUpdater {
                 } else {
                     counter.incrementFailed();
                     String failureMsg = "Failed to update " + entityType + " '" + nameExtractor.apply(item) + "': " + responseBody.toString();
-                    LOG.warn(failureMsg);
+                    LOG.warn("WARN: {}", failureMsg);
                     result.addEntry(entityType + ": " + nameExtractor.apply(item), "FAILED", responseBody.toString());
                 }
             });

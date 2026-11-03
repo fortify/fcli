@@ -14,18 +14,21 @@ package com.fortify.cli.common.progress.helper;
 
 import java.io.PrintStream;
 
+/**
+ * Clears visible progress and writes original stdout/stderr under the {@link ProgressRenderCoordinator} lock.
+ * A blocked original stream also blocks progress rendering and console log output.
+ * Captured and suppressed output bypasses that lock and does not clear terminal progress.
+ */
 public class ProgressWriterPrintStreamWrapper extends PrintStream {
     private final PrintStream original;
-    private final IProgressWriter progressWriter;
 
-    public ProgressWriterPrintStreamWrapper(PrintStream original, IProgressWriter progressWriter) {
+    public ProgressWriterPrintStreamWrapper(PrintStream original) {
         super(original);
         this.original = original;
-        this.progressWriter = progressWriter;
     }
 
-    private void clearProgress() {
-        progressWriter.clearProgress();
+    PrintStream original() {
+        return original;
     }
 
     @Override
@@ -35,26 +38,32 @@ public class ProgressWriterPrintStreamWrapper extends PrintStream {
 
     @Override
     public void write(int b) {
-        clearProgress();
-        original.write(b);
+        ProgressRenderCoordinator.emit(original, () -> original.write(b));
     }
 
     @Override
     public void write(byte[] buf, int off, int len) {
-        clearProgress();
-        original.write(buf, off, len);
+        ProgressRenderCoordinator.emit(original, () -> original.write(buf, off, len));
     }
 
     @Override
     public void print(String s) {
-        clearProgress();
-        original.print(s);
+        ProgressRenderCoordinator.emit(original, () -> original.print(s));
+    }
+
+    @Override
+    public void println() {
+        ProgressRenderCoordinator.emit(original, original::println);
     }
 
     @Override
     public void println(String s) {
-        clearProgress();
-        original.println(s);
+        ProgressRenderCoordinator.emit(original, () -> original.println(s));
+    }
+
+    @Override
+    public void println(Object o) {
+        println(String.valueOf(o));
     }
 
     @Override

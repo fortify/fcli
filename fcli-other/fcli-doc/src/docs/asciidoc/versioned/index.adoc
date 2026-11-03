@@ -325,13 +325,17 @@ Note that a default value for the `+--env-prefix+` option itself can be specifie
 
 === --log-file
 
-This option can be used on every fcli (sub-)command to specify the file to which to output log data. If not specified, currently no log data will be written, although future versions may specify a default log file
-location in the fcli data folder.
+This option can be used on every fcli (sub-)command to specify the file to which to output log data. If specified without
+`+--log-level+` or `+--debug+`, the file receives INFO and higher-level events. If omitted, no file is written unless
+`+--log-level+` or `+--debug+` enables file logging; in that case, the default file is `+fcli.log+` in the current working directory.
 
 === --log-level
 
-This option can be used on every fcli (sub-)command to specify the fcli log level; see the help output for a list of allowed levels. Note that this option also requires the `+--log-file+` option to be specified,
-otherwise no log will be written.
+This option can be used on every fcli (sub-)command to set the minimum level written to the log file; see the help output
+for a list of allowed levels. It does not change the console threshold: WARN and ERROR events continue to be shown on
+stderr. If no `+--log-file+` is specified, the file is written to `+fcli.log+` in the current working directory.
+`+--debug+` selects TRACE only when no explicit `+--log-level+` is supplied. The default file level is INFO when
+`+--log-file+` is specified without `+--log-level+` or `+--debug+`; `+--log-level NONE+` disables file logging.
 
 === --log-mask
 
@@ -638,7 +642,7 @@ Of course, even if this environment variable is set, you can still override indi
 
 === Fcli Data Storage
 
-By default, fcli stores configuration and state data like session files (see link:#_session_management[Session Management]), fcli variable contents (see link:#_fcli_variables[Fcli Variables]) and proxy settings in its data folder. Future versions of fcli may also automatically generated log files in this data directory, if no `+--log-file+` option is provided.
+By default, fcli stores configuration and state data like session files (see link:#_session_management[Session Management]), fcli variable contents (see link:#_fcli_variables[Fcli Variables]) and proxy settings in its data folder. When neither `+--log-file+` nor `+--log-level+`/`+--debug+` is specified, no log file is written; an explicit level without a file path writes `+fcli.log+` in the current working directory.
 
 The locations of these files can be controlled through the following environment variables:
 

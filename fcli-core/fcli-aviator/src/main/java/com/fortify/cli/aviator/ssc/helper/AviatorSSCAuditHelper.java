@@ -492,8 +492,7 @@ public final class AviatorSSCAuditHelper {
     }
 
     private static long issueCountUnavailable(AviatorLoggerImpl logger, String reason) {
-        LOG.warn("SSC issue count unavailable: {}.", reason);
-        logger.progress("WARN: SSC issue count unavailable: %s.", reason);
+        logger.warn("WARN: SSC issue count unavailable: %s.", reason);
         return -1;
     }
 
@@ -757,12 +756,10 @@ public final class AviatorSSCAuditHelper {
                 LOG.info("Application '{}' not found on Aviator server.", appName);
                 return QUOTA_APP_NOT_FOUND;
             }
-            LOG.warn("Failed to retrieve quota for application '{}': {}", appName, e.getMessage());
-            logger.progress("WARN: Aviator quota unavailable for app '%s'.", appName);
+            logger.warn("WARN: Aviator quota unavailable for app '%s': %s", appName, e.getMessage(), e);
             return QUOTA_UNKNOWN;
         } catch (Exception e) {
-            LOG.warn("Failed to retrieve quota for application '{}': {}", appName, e.getMessage());
-            logger.progress("WARN: Aviator quota unavailable for app '%s'.", appName);
+            logger.warn("WARN: Aviator quota unavailable for app '%s': %s", appName, e.getMessage(), e);
             return QUOTA_UNKNOWN;
         }
     }
@@ -780,8 +777,7 @@ public final class AviatorSSCAuditHelper {
                     quota < 0 ? "unlimited" : String.valueOf(quota));
             return quota;
         } catch (Exception e) {
-            LOG.warn("Failed to retrieve default quota: {}", e.getMessage());
-            logger.progress("WARN: Could not retrieve default Aviator quota.");
+            logger.warn("WARN: Could not retrieve default Aviator quota: %s", e.getMessage(), e);
             return QUOTA_UNKNOWN;
         }
     }
@@ -799,9 +795,8 @@ public final class AviatorSSCAuditHelper {
         try {
             return getTopUnauditedCategoriesInternal(unirest, av, logger, topN, forceReaudit);
         } catch (Exception e) {
-            LOG.warn("Failed to retrieve top unaudited categories for {}:{}: {}",
-                av.getApplicationName(), av.getVersionName(), e.getMessage());
-            logger.progress("WARN: Could not retrieve category breakdown from SSC.");
+            logger.warn("WARN: Could not retrieve category breakdown from SSC for %s:%s: %s",
+                av.getApplicationName(), av.getVersionName(), e.getMessage(), e);
             return List.of();
         }
     }
