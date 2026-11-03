@@ -12,7 +12,6 @@
  */
 package com.fortify.cli.aviator.ssc.cli.cmd;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -35,6 +34,8 @@ import com.fortify.cli.aviator.config.AviatorLoggerImpl;
 import com.fortify.cli.aviator.config.TagMappingConfig;
 import com.fortify.cli.aviator.ssc.helper.AviatorSSCAuditHelper;
 import com.fortify.cli.aviator.ssc.helper.AviatorSSCAuditHelper.AuditableIssuePresence;
+import com.fortify.cli.aviator.ssc.helper.AviatorSSCFprFilterHelper;
+import com.fortify.cli.aviator.ssc.helper.AviatorSSCFprTransferHelper;
 import com.fortify.cli.aviator.ssc.helper.AviatorSSCRefreshHelper;
 import com.fortify.cli.aviator.ssc.helper.AviatorSSCTagValidator;
 import com.fortify.cli.aviator.util.ResourceUtil;
@@ -289,11 +290,12 @@ abstract class AbstractAviatorSSCSastAuditCommand extends AbstractSSCJsonNodeOut
     }
 
     @SneakyThrows
-    private JsonNode processFpr(UnirestInstance unirest, SSCAppVersionDescriptor av, String token, String url, AviatorLoggerImpl logger, Path downloadedFprPath) {
+    JsonNode processFpr(UnirestInstance unirest, SSCAppVersionDescriptor av, String token, String url,
+            AviatorLoggerImpl logger, Path downloadedFprPath) {
         FPRAuditResult auditResult;
 
         try (FprHandle fprHandle = new FprHandle(downloadedFprPath)) {
-            auditResult = AuditFPR.auditFPR(AuditFprOptions.builder()
+            auditResult = auditFpr(AuditFprOptions.builder()
                     .fprHandle(fprHandle).token(token).url(url)
                     .appVersion(appName)
                     .sscAppName(av.getApplicationName())
@@ -314,18 +316,16 @@ abstract class AbstractAviatorSSCSastAuditCommand extends AbstractSSCJsonNodeOut
 
         String artifactId = null;
         if (auditResult.getUpdatedFile() != null && !"SKIPPED".equals(action) && !"FAILED".equals(action)) {
-            validateSSCTagsBeforeUpload(unirest, av, logger);
-            try {
-                artifactId = uploadAuditedFprToSSC(unirest, auditResult.getUpdatedFile(), av);
-            } catch (Exception e) {
-                LOG.error("Failed to upload audited FPR for {}:{}: {}", av.getApplicationName(), av.getVersionName(), e.getMessage(), e);
-                logger.progress("WARN: Upload of audited FPR to SSC failed: %s", e.getMessage());
-            }
+            artifactId = uploadAuditedFprToSSC(unirest, downloadedFprPath, av, logger);
         }
 
         ObjectNode result = AviatorSSCAuditHelper.buildResultNode(av, artifactId, action);
         AviatorSSCAuditHelper.setAuditStats(result, auditResult);
         return result;
+    }
+
+    FPRAuditResult auditFpr(AuditFprOptions options) {
+        return AuditFPR.auditFPR(options);
     }
 
     /**
@@ -378,10 +378,12 @@ abstract class AbstractAviatorSSCSastAuditCommand extends AbstractSSCJsonNodeOut
     }
 
     @SneakyThrows
-    private String uploadAuditedFprToSSC(UnirestInstance unirest, File auditedFpr, SSCAppVersionDescriptor av) {
+    private String uploadAuditedFprToSSC(
+            UnirestInstance unirest, Path auditedFpr, SSCAppVersionDescriptor av, AviatorLoggerImpl logger) {
         try (IProgressWriter progressWriter = progressWriterFactoryMixin.create()) {
-            JsonNode uploadResponse = SSCFileTransferHelper.restUpload(unirest, SSCUrls.PROJECT_VERSION_ARTIFACTS(av.getVersionId()), auditedFpr, JsonNode.class, progressWriter);
-            return uploadResponse.path("data").path("id").asText("UPLOAD_FAILED");
+            validateSSCTagsBeforeUpload(unirest, av, logger);
+            return AviatorSSCFprTransferHelper.uploadEngineSpecificFprBestEffort(
+                unirest, av, auditedFpr, AviatorSSCFprFilterHelper.Engine.SAST, progressWriter, logger);
         }
     }
 

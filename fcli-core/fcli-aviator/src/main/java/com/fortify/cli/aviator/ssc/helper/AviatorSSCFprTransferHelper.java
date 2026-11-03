@@ -15,6 +15,12 @@ package com.fortify.cli.aviator.ssc.helper;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+import java.util.function.Consumer;
+import java.util.function.Function;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.aviator.config.IAviatorLogger;
@@ -31,6 +37,8 @@ import kong.unirest.UnirestInstance;
  * Shared SSC transfer operations for Aviator FPR workflows.
  */
 public final class AviatorSSCFprTransferHelper {
+    private static final Logger LOG = LoggerFactory.getLogger(AviatorSSCFprTransferHelper.class);
+
     private AviatorSSCFprTransferHelper() {}
 
     public static Path downloadCurrentStateFpr(
@@ -99,6 +107,63 @@ public final class AviatorSSCFprTransferHelper {
             JsonNode.class,
             progressWriter);
         return getUploadedArtifactId(uploadResponse);
+    }
+
+    public static String uploadEngineSpecificFprBestEffort(
+            UnirestInstance unirest,
+            SSCAppVersionDescriptor appVersion,
+            Path fprPath,
+            AviatorSSCFprFilterHelper.Engine engine,
+            IProgressWriter progressWriter,
+            IAviatorLogger logger) {
+        return uploadEngineSpecificFprBestEffort(
+            fprPath,
+            engine,
+            logger,
+            candidate -> AviatorSSCFprFilterHelper.filterEngineSpecificFprInPlace(candidate, engine),
+            candidate -> uploadFpr(unirest, appVersion, candidate, progressWriter));
+    }
+
+    static String uploadEngineSpecificFprBestEffort(
+            Path fprPath,
+            AviatorSSCFprFilterHelper.Engine engine,
+            IAviatorLogger logger,
+            Consumer<Path> pruneFpr,
+            Function<Path, String> uploadFpr) {
+        Path candidate = null;
+        Path fprToUpload = fprPath;
+        try {
+            candidate = Files.createTempFile(fprPath.toAbsolutePath().getParent(), "aviator-", ".fpr");
+            Files.copy(fprPath, candidate, StandardCopyOption.REPLACE_EXISTING);
+            pruneFpr.accept(candidate);
+            fprToUpload = candidate;
+        } catch (Exception e) {
+            LOG.warn("WARN: Failed to prune {} FPR for SSC upload; uploading the full original FPR including all engines",
+                engine, e);
+            logger.progress("WARN: Could not prune %s FPR; uploading the full original FPR including all engines: %s",
+                engine, getErrorMessage(e));
+        }
+
+        try {
+            return uploadFpr.apply(fprToUpload);
+        } catch (Exception e) {
+            LOG.warn("WARN: Failed to upload audited {} FPR to SSC", engine, e);
+            logger.progress("WARN: Upload of audited %s FPR to SSC failed: %s", engine, getErrorMessage(e));
+            return null;
+        } finally {
+            if (candidate != null) {
+                try {
+                    Files.deleteIfExists(candidate);
+                } catch (Exception e) {
+                    LOG.warn("WARN: Failed to delete temporary FPR candidate {}", candidate, e);
+                    logger.progress("WARN: Failed to delete temporary FPR candidate: %s", getErrorMessage(e));
+                }
+            }
+        }
+    }
+
+    private static String getErrorMessage(Exception e) {
+        return e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage();
     }
 
     static String getUploadedArtifactId(JsonNode uploadResponse) {
