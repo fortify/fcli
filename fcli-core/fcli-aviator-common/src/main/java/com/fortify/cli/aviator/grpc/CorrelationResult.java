@@ -26,6 +26,7 @@ import lombok.Builder;
  * @param successfulCorrelationResponses number of Phase 1 requests with a successful server response
  * @param skippedCorrelationResponses   number of Phase 1 requests skipped by the server
  * @param failedCorrelationResponses    number of Phase 1 requests that failed
+ * @param failedValidationResponses     number of Phase 2 validation requests that failed
  */
 @Builder
 public record CorrelationResult(
@@ -34,7 +35,8 @@ public record CorrelationResult(
     int submittedCorrelationRequests,
     int successfulCorrelationResponses,
     int skippedCorrelationResponses,
-    int failedCorrelationResponses
+    int failedCorrelationResponses,
+    int failedValidationResponses
 ) {
     public CorrelationResult {
         confirmedPairs = confirmedPairs == null ? List.of() : List.copyOf(confirmedPairs);

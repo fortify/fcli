@@ -1,3 +1,8 @@
+---
+name: fix-imports
+description: fix-imports
+disable-model-invocation: true
+---
 # Replace Fully Qualified Class Names with Imports
 
 ## Objective

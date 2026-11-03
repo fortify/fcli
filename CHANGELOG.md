@@ -1,5 +1,14 @@
 # Changelog
 
+## [3.29.1](https://github.com/fortify/fcli/compare/v3.29.0...v3.29.1) (2026-11-02)
+
+
+### Bug Fixes
+
+* `fcli aviator ssc audit-dast`: Improve reliability for large DAST FPRs and avoid failures caused by server overload ([43607ce](https://github.com/fortify/fcli/commit/43607ceef19c83e9b77580a6c82527a6b1efc2ea))
+* `fcli aviator ssc audit-sast`: Fix inconsistency in error handling of mismatched audit types ([1a73e8f](https://github.com/fortify/fcli/commit/1a73e8f9a8dad6a9372b608074516362cacf90c5))
+* `fcli aviator ssc correlate-sast-dast`: Improve reliability for large correlations and report partial results when individual requests fail ([43607ce](https://github.com/fortify/fcli/commit/43607ceef19c83e9b77580a6c82527a6b1efc2ea))
+
 ## [3.29.0](https://github.com/fortify/fcli/compare/v3.28.3...v3.29.0) (2026-10-28)
 
 

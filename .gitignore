@@ -54,6 +54,10 @@ bin/
 ### Directory where users can store local-only files ###
 _gitignored/
 
+### Internal-only skills
+.github/skills/fcli-code-review/
+.github/skills/fcli-octane-story/
+
 ### Sample scans & logs ###
 samples/**/scans/**
 samples/**/logs/**
