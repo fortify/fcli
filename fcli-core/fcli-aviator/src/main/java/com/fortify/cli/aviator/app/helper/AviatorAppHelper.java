@@ -36,12 +36,15 @@ public final class AviatorAppHelper {
         return true;
     }
 
-    /** Numeric values are returned as-is without contacting the server; names are resolved through the server-side name lookup. */
+    /**
+     * Numeric values are returned as a normalized id (leading zeros removed, as the server rejects ids that don't
+     * match their canonical form) without contacting the server; names are resolved through the server-side name lookup.
+     */
     public static String resolveApplicationId(AviatorGrpcClient client, AviatorAdminConfigDescriptor configDescriptor, String appNameOrId) {
         if (appNameOrId == null || appNameOrId.isBlank()) {
             throw new AviatorSimpleException("Application name or id must be specified");
         }
-        if (isNumeric(appNameOrId)) { return appNameOrId; }
+        if (isNumeric(appNameOrId)) { return String.valueOf(Long.parseLong(appNameOrId)); }
         String tenant = configDescriptor.getTenant();
         String[] messageAndSignature = AviatorSignatureUtils.createMessageAndSignature(configDescriptor, tenant, appNameOrId);
         return String.valueOf(client.getApplicationByName(appNameOrId, messageAndSignature[1], messageAndSignature[0], tenant).getId());

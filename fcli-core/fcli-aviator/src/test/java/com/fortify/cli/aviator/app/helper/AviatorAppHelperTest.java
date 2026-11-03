@@ -40,6 +40,13 @@ class AviatorAppHelperTest {
     }
 
     @Test
+    void leadingZerosAreRemovedFromNumericId() {
+        assertEquals("1564", AviatorAppHelper.resolveApplicationId(null, null, "001564"));
+        assertEquals("0", AviatorAppHelper.resolveApplicationId(null, null, "000"));
+        assertEquals("999999999999999999", AviatorAppHelper.resolveApplicationId(null, null, "999999999999999999"));
+    }
+
+    @Test
     void failsIfBlank() {
         assertThrows(AviatorSimpleException.class, () -> AviatorAppHelper.resolveApplicationId(null, null, " "));
         assertThrows(AviatorSimpleException.class, () -> AviatorAppHelper.resolveApplicationId(null, null, null));
