@@ -58,7 +58,6 @@ class IssueAuditorTest {
         @Override public void info(String format, Object... args) {}
         @Override public void warn(String format, Object... args) {}
         @Override public void error(String format, Object... args) {}
-        @Override public void warnWithException(String format, Throwable cause, Object... args) {}
     };
 
     private Path tempFprFile;
@@ -351,7 +350,6 @@ class IssueAuditorTest {
             @Override public void info(String format, Object... args) {}
             @Override public void warn(String format, Object... args) {}
             @Override public void error(String format, Object... args) {}
-            @Override public void warnWithException(String format, Throwable cause, Object... args) {}
         };
 
         FPRInfo fprInfo = new FPRInfo(fprHandle);

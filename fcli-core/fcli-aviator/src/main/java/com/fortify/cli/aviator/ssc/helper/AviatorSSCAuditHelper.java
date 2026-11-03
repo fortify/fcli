@@ -756,10 +756,10 @@ public final class AviatorSSCAuditHelper {
                 LOG.info("Application '{}' not found on Aviator server.", appName);
                 return QUOTA_APP_NOT_FOUND;
             }
-            logger.warnWithException("WARN: Aviator quota unavailable for app '%s': %s", e, appName, e.getMessage());
+            logger.warn("WARN: Aviator quota unavailable for app '%s': %s", appName, e.getMessage(), e);
             return QUOTA_UNKNOWN;
         } catch (Exception e) {
-            logger.warnWithException("WARN: Aviator quota unavailable for app '%s': %s", e, appName, e.getMessage());
+            logger.warn("WARN: Aviator quota unavailable for app '%s': %s", appName, e.getMessage(), e);
             return QUOTA_UNKNOWN;
         }
     }
@@ -777,7 +777,7 @@ public final class AviatorSSCAuditHelper {
                     quota < 0 ? "unlimited" : String.valueOf(quota));
             return quota;
         } catch (Exception e) {
-            logger.warnWithException("WARN: Could not retrieve default Aviator quota: %s", e, e.getMessage());
+            logger.warn("WARN: Could not retrieve default Aviator quota: %s", e.getMessage(), e);
             return QUOTA_UNKNOWN;
         }
     }
@@ -795,8 +795,8 @@ public final class AviatorSSCAuditHelper {
         try {
             return getTopUnauditedCategoriesInternal(unirest, av, logger, topN, forceReaudit);
         } catch (Exception e) {
-            logger.warnWithException("WARN: Could not retrieve category breakdown from SSC for %s:%s: %s", e,
-                av.getApplicationName(), av.getVersionName(), e.getMessage());
+            logger.warn("WARN: Could not retrieve category breakdown from SSC for %s:%s: %s",
+                av.getApplicationName(), av.getVersionName(), e.getMessage(), e);
             return List.of();
         }
     }

@@ -1106,7 +1106,7 @@ class AviatorStreamProcessor implements AutoCloseable {
                 }
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
-                logger.warnWithException("WARN: Interrupted during close await", e);
+                logger.warn("WARN: Interrupted during close await", e);
             }
         }
     }

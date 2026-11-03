@@ -47,12 +47,17 @@ class AviatorLoggerImplTest {
 
             logger.warn("Quota unavailable for %s", "app");
             logger.warn("WARN: Quota unavailable for %s", "other app");
-            logger.warnWithException("Cannot retrieve quota", warningCause);
+            logger.warn("Cannot retrieve quota for %s", "app", warningCause);
 
-            assertEquals(3, appender.list.size());
+            logger.warn("Cannot retrieve quota", warningCause);
+            logger.warn("Failure: %s", warningCause);
+
+            assertEquals(5, appender.list.size());
             assertEvent(appender.list.get(0), Level.WARN, "WARN: Quota unavailable for app", null);
             assertEvent(appender.list.get(1), Level.WARN, "WARN: Quota unavailable for other app", null);
-            assertEvent(appender.list.get(2), Level.WARN, "WARN: Cannot retrieve quota", warningCause);
+            assertEvent(appender.list.get(2), Level.WARN, "WARN: Cannot retrieve quota for app", warningCause);
+            assertEvent(appender.list.get(3), Level.WARN, "WARN: Cannot retrieve quota", warningCause);
+            assertEvent(appender.list.get(4), Level.WARN, "WARN: Failure: " + warningCause, warningCause);
         } finally {
             logbackLogger.setLevel(previousLevel);
             logbackLogger.setAdditive(previousAdditivity);
