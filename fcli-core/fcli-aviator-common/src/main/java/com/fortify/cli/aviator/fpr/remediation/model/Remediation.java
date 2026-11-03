@@ -21,10 +21,37 @@ import com.fortify.cli.aviator.fpr.remediation.exception.SkipRemediationExceptio
 public final class Remediation {
     private final String instanceId;
     private final List<FileChange> fileChanges;
+    private final List<String> coveredByInstanceIds;
+    private final List<String> supersedesInstanceIds;
 
     public Remediation(String instanceId, List<FileChange> fileChanges) {
+        this(instanceId, fileChanges, List.of(), List.of());
+    }
+
+    public Remediation(String instanceId, List<FileChange> fileChanges, List<String> coveredByInstanceIds) {
+        this(instanceId, fileChanges, coveredByInstanceIds, List.of());
+    }
+
+    public Remediation(String instanceId, List<FileChange> fileChanges, List<String> coveredByInstanceIds,
+            List<String> supersedesInstanceIds) {
         this.instanceId = instanceId;
         this.fileChanges = fileChanges;
+        this.coveredByInstanceIds = coveredByInstanceIds == null ? List.of() : List.copyOf(coveredByInstanceIds);
+        this.supersedesInstanceIds = supersedesInstanceIds == null ? List.of() : List.copyOf(supersedesInstanceIds);
+    }
+
+    /** Issue ids whose fix already covers or contains this issue (this issue has no file changes of its own). */
+    public List<String> coveredByInstanceIds() {
+        return coveredByInstanceIds;
+    }
+
+    /** Issue ids whose own fix is contained in this remediation's file changes. */
+    public List<String> supersedesInstanceIds() {
+        return supersedesInstanceIds;
+    }
+
+    public boolean isCoveredByPriorFix() {
+        return fileChanges.isEmpty() && !coveredByInstanceIds.isEmpty();
     }
 
     public String instanceId() {

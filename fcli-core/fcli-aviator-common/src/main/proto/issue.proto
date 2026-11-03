@@ -154,6 +154,9 @@ message FinalSummary {
 
 message Autoremediation {
   repeated Change changes = 1;
+  string skip_reason = 2;
+  repeated string covered_by_issue_ids = 3;
+  repeated string superseded_issue_ids = 4;
 }
 
 message Change {

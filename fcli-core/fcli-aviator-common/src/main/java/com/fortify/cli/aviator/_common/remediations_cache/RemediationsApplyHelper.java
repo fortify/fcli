@@ -116,7 +116,8 @@ public final class RemediationsApplyHelper {
             RemediationProcessingOptions processingOptions = new RemediationProcessingOptions(
                     issueFilter,
                     previewMode ? RemediationExecutionMode.PREVIEW : RemediationExecutionMode.APPLY,
-                    options.getSourceDecoder());
+                    options.getSourceDecoder(),
+                    options.getImplicitFixApprover());
             return ApplyAutoRemediationOnSource.applyRemediations(
                     fprHandle, options.getSourceCodeDirectory(), logger, processingOptions);
         } catch (AviatorSimpleException e) {

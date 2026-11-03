@@ -19,6 +19,7 @@ import java.util.List;
 import org.apache.commons.lang3.StringUtils;
 
 import com.fortify.cli.aviator._common.remediations_cache.IApplyRemediationsOptions;
+import com.fortify.cli.aviator.fpr.remediation.ImplicitFixApprover;
 import com.fortify.cli.aviator.fpr.remediation.RemediationExecutionMode;
 import com.fortify.cli.aviator.fpr.utils.ISourceDecoder;
 import com.fortify.cli.common.exception.FcliSimpleException;
@@ -44,6 +45,14 @@ public abstract class AbstractApplyRemediationsOptionsMixin implements IApplyRem
 
     @Option(names = {"--preview"})
     private boolean previewMode = false;
+
+    @Option(names = {"-y", "--confirm"})
+    private boolean confirmImplicitFixes;
+
+    @Override
+    public ImplicitFixApprover getImplicitFixApprover() {
+        return new ConsoleImplicitFixApprover(confirmImplicitFixes);
+    }
 
     public RemediationExecutionMode executionMode() {
         return previewMode ? RemediationExecutionMode.PREVIEW : RemediationExecutionMode.APPLY;

@@ -200,7 +200,12 @@ class GrpcUtil {
         if (response.getAuditResult().hasAutoremediation()) {
             com.fortify.aviator.grpc.Autoremediation grpcAutoremediation = response.getAuditResult().getAutoremediation();
             List<Change> cliChanges = grpcAutoremediation.getChangesList().stream().map(grpcChange -> Change.builder().file(grpcChange.getFile()).fromLine(grpcChange.getFromLine()).toLine(grpcChange.getToLine()).replaceWith(grpcChange.getReplaceWith()).build()).collect(Collectors.toList());
-            auditResultBuilder.autoremediation(Autoremediation.builder().changes(cliChanges).build());
+            auditResultBuilder.autoremediation(Autoremediation.builder()
+                    .changes(cliChanges)
+                    .skipReason(grpcAutoremediation.getSkipReason())
+                    .coveredByIssueIds(new java.util.ArrayList<>(grpcAutoremediation.getCoveredByIssueIdsList()))
+                    .supersededIssueIds(new java.util.ArrayList<>(grpcAutoremediation.getSupersededIssueIdsList()))
+                    .build());
         }
         auditResponse.setAuditResult(auditResultBuilder.build());
         auditResponse.setInputToken(response.getInputToken());
