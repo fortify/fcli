@@ -106,6 +106,8 @@ public enum ProgressWriterType {
         }
 
         private void logWarning(String message, Throwable cause) {
+            // Stdio redirects are thread-local. Preserve this thread's redirect; otherwise use
+            // the stderr captured when the progress writer was created.
             var needsErr = !StdioHelper.hasErrRedirect() && StdioHelper.currentErr() != warningErr;
             try {
                 if (needsErr) StdioHelper.pushErr(warningErr);

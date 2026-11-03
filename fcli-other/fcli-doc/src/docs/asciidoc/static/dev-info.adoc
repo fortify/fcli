@@ -428,12 +428,20 @@ The backend change should preserve the existing output contract, rather than ado
   An explicit level without a path writes to `fcli.log` in the current working directory.
   `--debug` selects TRACE only when no explicit level is supplied, while `--log-level NONE` disables file logging.
   `--log-mask` continues to control masking for log data.
+* Discarding a corrupt session during an optional lookup emits one WARN with the original exception.
+  A required lookup throws the existing exception instead, without a duplicate warning.
+* Unknown DAST response types and unrecognized audit request IDs emit warnings.
+  Ignored responses do not advance progress, complete pending work, or release request capacity.
+  Known completed duplicates remain at DEBUG.
 
 Console writes and progress rendering share a lock for original stdout and stderr, since both can use the same terminal.
+Blocked original streams can delay progress rendering and console logging.
 Captured and suppressed output bypasses that lock and does not clear unrelated terminal progress.
 Nested progress wrappers retain the original destination.
 Worker warnings borrow the captured execution context only when the worker has no active context.
 Borrowing restores the worker's context stack without closing the command's resources.
+Stderr redirects are thread-local, not part of the execution context.
+Worker warnings preserve an existing worker redirect; otherwise they use the stderr captured by the progress writer.
 
 Masking is the most important migration requirement: port the integration, not just the formatting pattern.
 Compare exception rendering, logger abbreviation, and key/value formatting explicitly; equivalent patterns do not
