@@ -18,13 +18,16 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.slf4j.Logger.ROOT_LOGGER_NAME;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.PrintStream;
+import java.net.URLClassLoader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 import org.junit.jupiter.api.Test;
@@ -42,6 +45,7 @@ import ch.qos.logback.classic.encoder.PatternLayoutEncoder;
 import ch.qos.logback.classic.filter.ThresholdFilter;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Appender;
+import ch.qos.logback.core.FileAppender;
 
 class FortifyCLIDynamicInitializerTest {
     @TempDir
@@ -195,32 +199,67 @@ class FortifyCLIDynamicInitializerTest {
     }
 
     @Test
-    void explicitLevelWithoutFilePathUsesFcliLog() throws Exception {
-        Path defaultLogFile = Path.of("fcli.log").toAbsolutePath();
-        Path backup = tempDir.resolve("fcli.log.backup");
-        boolean existedBeforeTest = Files.exists(defaultLogFile);
-        if ( existedBeforeTest ) {
-            Files.copy(defaultLogFile, backup);
-        }
-        try {
-            String warning = "implicit-log-file-warning-stderr-only";
-            String error = "implicit-log-file-error";
-            var output = capture(new String[] { "--log-level=ERROR" }, defaultLogFile, false, root -> {
-                root.warn(warning);
-                root.error(error);
-            });
+    void noOptionsCaptureDoesNotReusePreviousFileOptions() throws Exception {
+        Path previousFile = tempDir.resolve("previous.log");
+        capture(new String[] { "--log-level=ERROR" }, previousFile, root -> root.error("keep-this-error"));
+        String previousContent = Files.readString(previousFile);
 
-            assertTrue(output.fileCreated());
-            assertTrue(output.stderr().contains(warning), output.stderr());
-            assertFalse(output.file().contains(warning), output.file());
-            assertTrue(output.file().contains(error), output.file());
+        var output = capture(new String[0], tempDir.resolve("unused.log"), false,
+                root -> root.warn("subsequent-console-warning"));
+
+        assertTrue(output.stderr().contains("subsequent-console-warning"));
+        assertFalse(output.fileCreated());
+        assertEquals(previousContent, Files.readString(previousFile));
+    }
+
+    @Test
+    void explicitLevelWithoutFilePathUsesFcliLog() throws Exception {
+        Path output = tempDir.resolve("child-output.txt");
+        var process = new ProcessBuilder(
+                Path.of(System.getProperty("java.home"), "bin", "java").toString(),
+                "-cp", subprocessClasspath(), DefaultLogFileProbe.class.getName())
+                .directory(tempDir.toFile())
+                .redirectErrorStream(true)
+                .redirectOutput(output.toFile())
+                .start();
+        try {
+            assertTrue(process.waitFor(30, TimeUnit.SECONDS), "Default log file probe timed out");
+            assertEquals(0, process.exitValue(), Files.readString(output));
+            String file = Files.readString(tempDir.resolve("fcli.log"));
+            assertFalse(file.contains("implicit-log-file-warning-stderr-only"), file);
+            assertTrue(file.contains("implicit-log-file-error"), file);
+            assertTrue(Files.readString(output).contains("implicit-log-file-warning-stderr-only"));
         } finally {
-            if ( existedBeforeTest ) {
-                Files.copy(backup, defaultLogFile, StandardCopyOption.REPLACE_EXISTING);
-            } else {
-                Files.deleteIfExists(defaultLogFile);
+            process.destroyForcibly();
+        }
+    }
+
+    /** Runs in a fresh JVM whose working directory belongs exclusively to this test. */
+    public static class DefaultLogFileProbe {
+        public static void main(String[] args) {
+            FortifyCLIDynamicInitializer.getInstance().initialize(new String[] { "--log-level=ERROR" });
+            Logger root = (Logger) LoggerFactory.getLogger(ROOT_LOGGER_NAME);
+            root.warn("implicit-log-file-warning-stderr-only");
+            root.error("implicit-log-file-error");
+            ((LoggerContext) LoggerFactory.getILoggerFactory()).stop();
+        }
+    }
+
+    private static String subprocessClasspath() throws Exception {
+        var entries = new LinkedHashSet<String>();
+        for (String entry : System.getProperty("java.class.path").split(File.pathSeparator)) {
+            entries.add(Path.of(entry).toAbsolutePath().toString());
+        }
+        // Gradle loads test dependencies through a separate class loader.
+        for (ClassLoader loader = FortifyCLIDynamicInitializerTest.class.getClassLoader();
+                loader != null; loader = loader.getParent()) {
+            if (loader instanceof URLClassLoader urls) {
+                for (var url : urls.getURLs()) {
+                    entries.add(Path.of(url.toURI()).toAbsolutePath().toString());
+                }
             }
         }
+        return String.join(File.pathSeparator, entries);
     }
 
     private LogOutput capture(String[] options, Path logFile, Consumer<Logger> logEvents) throws Exception {
@@ -263,7 +302,14 @@ class FortifyCLIDynamicInitializerTest {
                 args[options.length] = "--log-file";
                 args[options.length + 1] = logFile.toString();
             }
-            FortifyCLIDynamicInitializer.getInstance().initialize(args);
+            // The production singleton caches its parser; every test needs fresh option state.
+            var constructor = FortifyCLIDynamicInitializer.class.getDeclaredConstructor();
+            constructor.setAccessible(true);
+            constructor.newInstance().initialize(args);
+            if (!includeLogFileOption && options.length == 0) {
+                assertFalse(getAppenders(root).stream().anyMatch(FileAppender.class::isInstance),
+                        "No logging options must not install any file appender");
+            }
             logEvents.accept(root);
             captureErr.flush();
 
