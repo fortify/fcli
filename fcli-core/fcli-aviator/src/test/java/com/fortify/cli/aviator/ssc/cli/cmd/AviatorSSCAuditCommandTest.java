@@ -257,20 +257,22 @@ class AviatorSSCAuditCommandTest {
             assertEquals(1, audit.path("remediationGenerationSkippedByReason").path("No remediation available").asInt());
             assertEquals("AUDITED".equals(status) ? "Audit completed successfully" : "Audit finished",
                 audit.path("message").asText());
-            assertEquals("filter".equals(failure) ? 0 : 1, uploads.get());
+            assertEquals(1, uploads.get());
             if ("none".equals(failure)) {
                 assertEquals("2786", result.path("artifactId").asText());
                 assertFalse(progress.messages.stream().anyMatch(message -> message.startsWith("WARN: Upload")));
+            } else if ("filter".equals(failure)) {
+                assertEquals("2786", result.path("artifactId").asText());
+                assertTrue(progress.messages.stream().anyMatch(message ->
+                    message.startsWith("WARN: Could not prune SAST FPR; uploading the full original FPR including all engines")));
             } else {
                 assertTrue(result.path("artifactId").isNull());
-                String warning = "upload".equals(failure)
-                    ? "SSC FPR upload response did not contain an artifact ID"
-                    : "FPR does not contain the required SAST engine payload: audit.fvdl";
-                assertTrue(progress.messages.contains("WARN: Upload of audited FPR to SSC failed: " + warning),
+                String warning = "SSC FPR upload response did not contain an artifact ID";
+                assertTrue(progress.messages.contains("WARN: Upload of audited SAST FPR to SSC failed: " + warning),
                     progress.messages.toString());
             }
             try (var handle = new FprHandle(fpr)) {
-                assertEquals("filter".equals(failure), Files.exists(handle.getPath("/webinspect.xml")));
+                assertTrue(Files.exists(handle.getPath("/webinspect.xml")));
                 assertEquals("updated audit", Files.readString(handle.getPath("/audit.xml")));
             }
         } finally {

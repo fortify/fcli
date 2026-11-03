@@ -16,10 +16,12 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.nio.charset.StandardCharsets;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -83,7 +85,7 @@ class AviatorSSCFprFilterHelperTest {
             fpr, AviatorSSCFprFilterHelper.Engine.DAST);
 
         assertEquals(Set.of("webinspect.xml"), entries(fpr));
-        try (var fileSystem = java.nio.file.FileSystems.newFileSystem(fpr, (ClassLoader) null);
+        try (var fileSystem = FileSystems.newFileSystem(fpr, (ClassLoader) null);
                 var paths = Files.walk(fileSystem.getPath("/"))) {
             assertEquals(2, paths.count());
         }
@@ -127,17 +129,17 @@ class AviatorSSCFprFilterHelperTest {
     }
 
     private static Set<String> entries(Path fpr) throws Exception {
-        try (var fileSystem = java.nio.file.FileSystems.newFileSystem(fpr, (ClassLoader) null)) {
+        try (var fileSystem = FileSystems.newFileSystem(fpr, (ClassLoader) null)) {
             try (var paths = Files.walk(fileSystem.getPath("/"))) {
                 return paths.filter(path -> !Files.isDirectory(path))
                     .map(path -> fileSystem.getPath("/").relativize(path).toString().replace('\\', '/'))
-                    .collect(java.util.stream.Collectors.toSet());
+                    .collect(Collectors.toSet());
             }
         }
     }
 
     private static String entryContent(Path fpr, String entry) throws Exception {
-        try (var fileSystem = java.nio.file.FileSystems.newFileSystem(fpr, (ClassLoader) null)) {
+        try (var fileSystem = FileSystems.newFileSystem(fpr, (ClassLoader) null)) {
             return Files.readString(fileSystem.getPath(entry), StandardCharsets.UTF_8);
         }
     }
@@ -145,7 +147,7 @@ class AviatorSSCFprFilterHelperTest {
     private Set<Path> fprFiles() throws Exception {
         try (var paths = Files.list(tempDir)) {
             return paths.filter(path -> path.getFileName().toString().endsWith(".fpr"))
-                .collect(java.util.stream.Collectors.toSet());
+                .collect(Collectors.toSet());
         }
     }
 }
