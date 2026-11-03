@@ -24,7 +24,7 @@ import com.fortify.cli.fod._common.scan.helper.compare.attribution.FoDScanCondit
 import lombok.RequiredArgsConstructor;
 
 /**
- * Short, human-readable summary of a scan comparison: which causes drove new, reopened and fixed issues,
+ * Short, human-readable summary of a scan comparison: strongest attributions for new, reopened and fixed issues,
  * or which scan changes were detected if there are no issue changes, or that nothing changed at all.
  */
 @RequiredArgsConstructor
@@ -38,6 +38,7 @@ public final class FoDScanCompareSummary {
 
     public String getText() {
         var result = new StringBuilder(getMainSentence()).append('.');
+        if ( hasOverlappingCounts() ) { result.append(" Attribution counts may overlap."); }
         var skipReason = changes.getSkipReason();
         if ( skipReason != null ) { result.append(' ').append(skipReason).append(", so scan changes may be incomplete."); }
         return result.toString();
@@ -56,22 +57,34 @@ public final class FoDScanCompareSummary {
                 : "No new, reopened or fixed issues, despite " + joinWithAnd(scanChanges);
     }
 
-    // For example: '50 fixed issues driven by URL_REMOVED (39), SCAN_POLICY_CHANGE (9) and 2 other causes, 1 indeterminate'
     private String getIssueDescription(FoDAttributionTransition transition, int count) {
         var result = String.format("%s %s", count, pluralize(transition.getJsonName() + " issue", count));
         if ( attributionResult == null ) { return result; }
-        var causes = attributionResult.getDriverCauses(transition).entrySet().stream()
-                .map(e -> e.getValue() == count ? e.getKey().name() : String.format("%s (%s)", e.getKey().name(), e.getValue()))
+        var causeCounts = attributionResult.getDriverCauses(transition);
+        var causes = causeCounts.entrySet().stream()
+                .map(e -> causeCounts.size() == 1 && e.getValue() == count
+                        ? e.getKey().name() : String.format("%s (%s)", e.getKey().name(), e.getValue()))
                 .toList();
-        if ( causes.isEmpty() ) { return result + " (indeterminate)"; }
+        var indeterminate = attributionResult.getIndeterminateCount(transition);
+        if ( causes.isEmpty() ) { return String.format("%s (%s indeterminate)", result, indeterminate); }
         var shownCauses = new ArrayList<>(causes.subList(0, Math.min(MAX_CAUSES, causes.size())));
         if ( causes.size() > MAX_CAUSES ) {
             int otherCount = causes.size() - MAX_CAUSES;
             shownCauses.add(String.format("%s other %s", otherCount, pluralize("cause", otherCount)));
         }
-        result += " driven by " + joinWithAnd(shownCauses);
-        var indeterminate = attributionResult.getIndeterminateCount(transition);
-        return indeterminate == 0 ? result : String.format("%s, %s indeterminate", result, indeterminate);
+        result += " (strongest " + pluralize("attribution", causes.size()) + ": " + joinWithAnd(shownCauses);
+        if ( indeterminate > 0 ) { result += String.format("; %s indeterminate", indeterminate); }
+        return result + ")";
+    }
+
+    private boolean hasOverlappingCounts() {
+        if ( attributionResult == null ) { return false; }
+        for ( var transition : FoDAttributionTransition.values() ) {
+            int attributedCount = issues.getIssues(transition).size() - attributionResult.getIndeterminateCount(transition);
+            int causeCount = attributionResult.getDriverCauses(transition).values().stream().mapToInt(Integer::intValue).sum();
+            if ( causeCount > attributedCount ) { return true; }
+        }
+        return false;
     }
 
     private List<String> getScanChangeDescriptions() {

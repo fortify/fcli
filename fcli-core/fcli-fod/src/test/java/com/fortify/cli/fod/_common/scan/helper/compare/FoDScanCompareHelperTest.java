@@ -25,6 +25,7 @@ import org.junit.jupiter.api.Test;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.IntNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.fod._common.scan.helper.compare.attribution.FoDAttributionTransition;
@@ -198,6 +199,24 @@ class FoDScanCompareHelperTest {
     }
 
     @Test
+    void issueOutputOmitsClosedStatusWithoutChangingIssueData() {
+        var newIssue = outputIssue("New", false);
+        var reopenedIssue = outputIssue("Reopen", false);
+        var fixedIssue = outputIssue("Existing", true);
+        var issues = new FoDScanCompareIssues(List.of(newIssue), List.of(reopenedIssue), List.of(fixedIssue));
+        var result = JsonHelper.getObjectMapper().createObjectNode();
+
+        issues.addTo(result, 10);
+
+        for ( var issueList : List.of("newIssues", "reopenedIssues", "fixedIssues") ) {
+            assertFalse(result.path(issueList).get(0).has("closedStatus"));
+        }
+        assertTrue(newIssue.has("closedStatus"));
+        assertTrue(reopenedIssue.has("closedStatus"));
+        assertTrue(fixedIssue.has("closedStatus"));
+    }
+
+    @Test
     void targetScanIssuesAreClassifiedByStatusAndScan() {
         assertEquals(FoDAttributionTransition.NEW, FoDScanCompareHelper.getTargetScanTransition(issue("2", "New", false), "2"));
         assertEquals(FoDAttributionTransition.REOPENED, FoDScanCompareHelper.getTargetScanTransition(issue("2", "Reopen", false), "2"));
@@ -231,6 +250,11 @@ class FoDScanCompareHelperTest {
     private static JsonNode issue(String scanId, String status, boolean closedStatus) {
         return JsonHelper.getObjectMapper().createObjectNode()
                 .put("scanId", scanId).put("status", status).put("closedStatus", closedStatus);
+    }
+
+    private static ObjectNode outputIssue(String status, boolean closedStatus) {
+        return JsonHelper.getObjectMapper().createObjectNode()
+                .put("scanId", "2").put("status", status).put("closedStatus", closedStatus);
     }
 
     private static FoDScanCompareSelection select(boolean ignoreCanceled, JsonNode... scans) {

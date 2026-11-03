@@ -15,7 +15,6 @@ package com.fortify.cli.fod._common.scan.helper.compare;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.function.Function;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -56,6 +55,12 @@ public record FoDScanCompareIssues(List<ObjectNode> newIssues, List<ObjectNode> 
     private static void addList(ObjectNode result, String name, List<ObjectNode> issues, int maxIssues) {
         var list = new FoDScanCompareLimitedList<JsonNode>(maxIssues, FoDScanCompareHelper.ISSUE_ORDER);
         issues.forEach(list::add);
-        list.addTo(result, name, Function.identity());
+        list.addTo(result, name, FoDScanCompareIssues::copyForOutput);
+    }
+
+    private static ObjectNode copyForOutput(JsonNode issue) {
+        var result = (ObjectNode) issue.deepCopy();
+        result.remove("closedStatus");
+        return result;
     }
 }
