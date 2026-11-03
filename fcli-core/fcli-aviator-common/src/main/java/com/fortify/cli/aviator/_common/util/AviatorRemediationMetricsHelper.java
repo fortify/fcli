@@ -81,6 +81,9 @@ public final class AviatorRemediationMetricsHelper {
         Set<String> identicalIssueIds = new LinkedHashSet<>();
         Set<String> supersededIssueIds = new LinkedHashSet<>();
         Set<String> possiblyRemediatedIssueIds = new LinkedHashSet<>();
+        Map<String, List<String>> coveredByPriorFixIssues = new LinkedHashMap<>();
+        Map<String, List<String>> supersededByPriorFixIssues = new LinkedHashMap<>();
+        Set<String> implicitlyAppliedIssueIds = new LinkedHashSet<>();
         Set<String> modifiedFiles = new LinkedHashSet<>();
         Map<String, String> issueSkipReasons = new LinkedHashMap<>();
         Map<String, PreviewDetail> previewDetailsByIssue = new LinkedHashMap<>();
@@ -92,6 +95,9 @@ public final class AviatorRemediationMetricsHelper {
             identicalIssueIds.addAll(metric.identicalIssueIds());
             supersededIssueIds.addAll(metric.supersededIssueIds());
             possiblyRemediatedIssueIds.addAll(metric.possiblyRemediatedIssueIds());
+            coveredByPriorFixIssues.putAll(metric.coveredByPriorFixIssues());
+            supersededByPriorFixIssues.putAll(metric.supersededByPriorFixIssues());
+            implicitlyAppliedIssueIds.addAll(metric.implicitlyAppliedIssueIds());
             modifiedFiles.addAll(metric.modifiedFiles());
             issueSkipReasons.putAll(metric.issueSkipReasons());
             previewMode |= metric.isPreview();
@@ -105,6 +111,7 @@ public final class AviatorRemediationMetricsHelper {
 
         issueSkipReasons.keySet().removeAll(satisfiedIssueIds);
         possiblyRemediatedIssueIds.removeAll(satisfiedIssueIds);
+        implicitlyAppliedIssueIds.removeAll(requestedIssueIds);
         for (String requestedIssueId : requestedIssueIds) {
             if (!satisfiedIssueIds.contains(requestedIssueId) && !seenIssueIds.contains(requestedIssueId)) {
                 issueSkipReasons.put(requestedIssueId, REQUESTED_ISSUE_NOT_FOUND);
@@ -117,13 +124,18 @@ public final class AviatorRemediationMetricsHelper {
 
         Map<String, Integer> skippedByReason = new LinkedHashMap<>();
         issueSkipReasons.values().forEach(reason -> skippedByReason.merge(reason, 1, Integer::sum));
-        int skippedRemediations = requestedIssueIds.size() - satisfiedIssueIds.size();
+        Set<String> totalIds = new LinkedHashSet<>(requestedIssueIds);
+        totalIds.addAll(satisfiedIssueIds);
+        int skippedRemediations = totalIds.size() - satisfiedIssueIds.size();
         return RemediationMetric.builder()
-                .totalRemediations(requestedIssueIds.size())
+                .totalRemediations(totalIds.size())
                 .appliedRemediations(appliedIssueIds.size())
                 .identicalRemediations(identicalIssueIds.size())
                 .supersededRemediations(supersededIssueIds.size())
                 .possiblyRemediatedRemediations(possiblyRemediatedIssueIds.size())
+                .coveredByPriorFixRemediations(coveredByPriorFixIssues.size())
+                .supersedesPriorFixRemediations(supersededByPriorFixIssues.size())
+                .remediatedRemediations(satisfiedIssueIds.size())
                 .skippedRemediations(skippedRemediations)
                 .modifiedFiles(modifiedFiles)
                 .skippedByReason(skippedByReason)
@@ -135,6 +147,9 @@ public final class AviatorRemediationMetricsHelper {
                 .identicalIssueIds(identicalIssueIds)
                 .supersededIssueIds(supersededIssueIds)
                 .possiblyRemediatedIssueIds(possiblyRemediatedIssueIds)
+                .coveredByPriorFixIssues(coveredByPriorFixIssues)
+                .supersededByPriorFixIssues(supersededByPriorFixIssues)
+                .implicitlyAppliedIssueIds(implicitlyAppliedIssueIds)
                 .issueSkipReasons(issueSkipReasons)
                 .previewDetails(new ArrayList<>(previewDetailsByIssue.values()))
                 .build();
@@ -197,10 +212,85 @@ public final class AviatorRemediationMetricsHelper {
         result.put("identicalRemediation", metric == null ? 0 : metric.identicalRemediations());
         result.put("supersededRemediation", metric == null ? 0 : metric.supersededRemediations());
         result.put("possiblyRemediatedRemediation", metric == null ? 0 : metric.possiblyRemediatedRemediations());
+        result.put("coveredByPriorFixRemediation", metric == null ? 0 : metric.coveredByPriorFixRemediations());
+        result.put("supersedesPriorFixRemediation", metric == null ? 0 : metric.supersedesPriorFixRemediations());
+        result.put("remediatedRemediation", metric == null ? 0 : metric.remediatedRemediations());
         result.put("skippedRemediation", skipped);
         result.put("skippedReasons", formatSkippedReasons(skippedByReason));
         result.set("skippedByReason", toSkippedByReasonNode(skippedByReason, issueSkipReasons));
         result.set("modifiedFiles", toArrayNode(modifiedFiles));
+        result.set("coveredByPriorFix", toCoveredByPriorFixNode(metric == null ? Map.of() : metric.coveredByPriorFixIssues()));
+        result.set("supersedesPriorFix",
+            toSupersedesPriorFixNode(metric == null ? Map.of() : metric.supersededByPriorFixIssues()));
+        result.set("resolvedIssueIds", toResolvedIssueIdsNode(
+            metric == null ? Map.of() : metric.coveredByPriorFixIssues(),
+            metric == null ? Map.of() : metric.supersededByPriorFixIssues()));
+        result.set("implicitlyAppliedIssueIds",
+            toArrayNode(metric == null ? Set.of() : metric.implicitlyAppliedIssueIds()));
+    }
+
+    /** Per superseding fix: the issues whose own fix it contains. */
+    public static ArrayNode toSupersedesPriorFixNode(Map<String, List<String>> supersededByPriorFixIssues) {
+        Map<String, List<String>> byFix = invert(supersededByPriorFixIssues);
+        ArrayNode array = JsonHelper.getObjectMapper().createArrayNode();
+        byFix.forEach((fixId, supersededIds) -> {
+            ObjectNode node = array.addObject();
+            node.put("issueId", fixId);
+            node.set("supersedesIssueIds", toStringArrayNode(supersededIds));
+        });
+        return array;
+    }
+
+    /** Per applied fix: every issue it resolves in addition to itself, and how (covered by it, or superseded by it). */
+    public static ArrayNode toResolvedIssueIdsNode(Map<String, List<String>> coveredByPriorFixIssues,
+            Map<String, List<String>> supersededByPriorFixIssues) {
+        Map<String, ArrayNode> resolvesByFix = new LinkedHashMap<>();
+        addResolved(resolvesByFix, coveredByPriorFixIssues, "coveredByPriorFix");
+        addResolved(resolvesByFix, supersededByPriorFixIssues, "supersedesPriorFix");
+        ArrayNode array = JsonHelper.getObjectMapper().createArrayNode();
+        resolvesByFix.forEach((fixId, resolves) -> {
+            ObjectNode node = array.addObject();
+            node.put("issueId", fixId);
+            node.set("resolves", resolves);
+        });
+        return array;
+    }
+
+    private static void addResolved(Map<String, ArrayNode> resolvesByFix, Map<String, List<String>> issuesToFixes, String via) {
+        if (issuesToFixes == null) {
+            return;
+        }
+        issuesToFixes.forEach((issueId, fixIds) -> {
+            for (String fixId : fixIds) {
+                ObjectNode resolved = resolvesByFix
+                    .computeIfAbsent(fixId, k -> JsonHelper.getObjectMapper().createArrayNode())
+                    .addObject();
+                resolved.put("issueId", issueId);
+                resolved.put("via", via);
+            }
+        });
+    }
+
+    private static Map<String, List<String>> invert(Map<String, List<String>> issuesToFixes) {
+        Map<String, List<String>> byFix = new LinkedHashMap<>();
+        if (issuesToFixes != null) {
+            issuesToFixes.forEach((issueId, fixIds) -> fixIds.forEach(
+                fixId -> byFix.computeIfAbsent(fixId, k -> new ArrayList<>()).add(issueId)));
+        }
+        return byFix;
+    }
+
+    /** Per covered issue: the issue(s) whose fix covers it, so the call-out names the fix to look at. */
+    public static ArrayNode toCoveredByPriorFixNode(Map<String, List<String>> coveredByPriorFixIssues) {
+        ArrayNode array = JsonHelper.getObjectMapper().createArrayNode();
+        if (coveredByPriorFixIssues != null) {
+            coveredByPriorFixIssues.forEach((issueId, coveredBy) -> {
+                ObjectNode node = array.addObject();
+                node.put("issueId", issueId);
+                node.set("coveredByIssueIds", toStringArrayNode(coveredBy));
+            });
+        }
+        return array;
     }
 
     /** Metric fields plus {@code __action__} and, for preview results, preview details (shared by SSC/FoD result builders). */

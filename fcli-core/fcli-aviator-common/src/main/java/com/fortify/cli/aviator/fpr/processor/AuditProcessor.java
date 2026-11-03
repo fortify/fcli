@@ -336,10 +336,8 @@ public class AuditProcessor {
                 }
                 // Local retain set for this save only — instance IDs successfully written here.
                 writtenInstanceIds.add(instanceId);
-                if (commentTimestamp != null &&
-                        response.getAuditResult().getAutoremediation() != null &&
-                        response.getAuditResult().getAutoremediation().getChanges() != null &&
-                        !response.getAuditResult().getAutoremediation().getChanges().isEmpty()) {
+                if (commentTimestamp != null
+                        && (hasRemediationChanges(response) || !coveredByPriorFixIds(response).isEmpty())) {
                     remediationCommentTimestamps.put(instanceId, commentTimestamp);
                 }
             } else {
@@ -771,10 +769,7 @@ public class AuditProcessor {
 
         // Step 3: Check if there are any remediations to generate.
         boolean hasRemediations = auditResponses.values().stream()
-                .anyMatch(ar -> ar.getAuditResult() != null &&
-                        ar.getAuditResult().getAutoremediation() != null &&
-                        ar.getAuditResult().getAutoremediation().getChanges() != null &&
-                        !ar.getAuditResult().getAutoremediation().getChanges().isEmpty());
+                .anyMatch(ar -> hasRemediationChanges(ar) || !coveredByPriorFixIds(ar).isEmpty());
 
         // Step 4: Generate the in-memory remediations.xml document if needed.
         if (hasRemediations && !remediationCommentTimestamps.isEmpty()) {
@@ -934,14 +929,30 @@ public class AuditProcessor {
             FileUtils fileUtils = new FileUtils(this.sourceDecoder, fvdlMetadata);
             int validRemediationCount = 0;
 
+            // An issue superseded by another issue's fix keeps no fix of its own: it is written as a reference
+            // to the superseding fix (like an issue covered by a prior fix), so the file stays self-contained.
+            Map<String, String> supersededByFix = resolveSupersededByFix(auditResponses, remediationCommentTimestamps);
+            Map<String, List<String>> referenceEntries = new LinkedHashMap<>();
+            Set<String> writtenFixIds = new HashSet<>();
+
             for (Map.Entry<String, AuditResponse> entry : auditResponses.entrySet()) {
                 String instanceId = entry.getKey();
                 AuditResponse auditResponse = entry.getValue();
 
-                if (auditResponse.getAuditResult() != null &&
-                        auditResponse.getAuditResult().getAutoremediation() != null &&
-                        auditResponse.getAuditResult().getAutoremediation().getChanges() != null &&
-                        !auditResponse.getAuditResult().getAutoremediation().getChanges().isEmpty() &&
+                if (supersededByFix.containsKey(instanceId) && remediationCommentTimestamps.containsKey(instanceId)) {
+                    referenceEntries.put(instanceId, List.of(supersededByFix.get(instanceId)));
+                    continue;
+                }
+
+                List<String> coveredByIds = coveredByPriorFixIds(auditResponse);
+                if (!hasRemediationChanges(auditResponse) && !coveredByIds.isEmpty()
+                        && remediationCommentTimestamps.containsKey(instanceId)) {
+                    referenceEntries.put(instanceId, coveredByIds.stream()
+                            .map(id -> supersededByFix.getOrDefault(id, id)).distinct().toList());
+                    continue;
+                }
+
+                if (hasRemediationChanges(auditResponse) &&
                         remediationCommentTimestamps.containsKey(instanceId)) {
 
                     Element remediationElement = finalDoc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "Remediation");
@@ -1050,8 +1061,16 @@ public class AuditProcessor {
                     // Check if any FileChanges were actually added to the remediation element.
                     // This prevents validation errors if all changes for an issue were skipped.
                     if (remediationElement.getElementsByTagNameNS(REMEDIATIONS_NAMESPACE_URI, "FileChanges").getLength() > 0) {
+                        supersededByFix.forEach((supersededId, fixId) -> {
+                            if (fixId.equals(instanceId)) {
+                                Element supersedesElement = finalDoc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "SupersedesPriorFix");
+                                supersedesElement.setAttribute("instanceId", supersededId);
+                                remediationElement.appendChild(supersedesElement);
+                            }
+                        });
                         if (isRemediationElementValid(remediationElement, fprInfo)) {
                             remediationListElement.appendChild(remediationElement);
+                            writtenFixIds.add(instanceId);
                             validRemediationCount++;
                         } else {
                             logger.warn("WARN: Skipping structurally invalid remediation for issue instanceId: {}", instanceId);
@@ -1065,10 +1084,107 @@ public class AuditProcessor {
                 }
             }
 
+            for (Map.Entry<String, List<String>> reference : referenceEntries.entrySet()) {
+                String instanceId = reference.getKey();
+                List<String> fixIds = reference.getValue().stream().filter(writtenFixIds::contains).toList();
+                if (fixIds.isEmpty()) {
+                    logger.warn("WARN: Skipping issue instanceId '{}': none of the fixes it is covered by or superseded by "
+                            + "({}) could be written to remediations.xml.", instanceId, reference.getValue());
+                    continue;
+                }
+                Element referenceElement = createCoveredByPriorFixElement(finalDoc, instanceId, auditResponses.get(instanceId),
+                        fixIds, remediationCommentTimestamps.get(instanceId));
+                if (isRemediationElementValid(referenceElement, fprInfo)) {
+                    remediationListElement.appendChild(referenceElement);
+                    validRemediationCount++;
+                } else {
+                    logger.warn("WARN: Skipping structurally invalid covered-by-prior-fix entry for issue instanceId: {}", instanceId);
+                }
+            }
+
             return validRemediationCount > 0 ? finalDoc : null;
         } catch (ParserConfigurationException e) {
             throw new AviatorTechnicalException("Error creating XML document for remediations", e);
         }
+    }
+
+    private static boolean hasRemediationChanges(AuditResponse response) {
+        return response != null && response.getAuditResult() != null
+                && response.getAuditResult().getAutoremediation() != null
+                && response.getAuditResult().getAutoremediation().getChanges() != null
+                && !response.getAuditResult().getAutoremediation().getChanges().isEmpty();
+    }
+
+    /** Issue ids whose own fix the server reports as contained in this issue's fix. */
+    private static List<String> supersededIssueIds(AuditResponse response) {
+        if (!hasRemediationChanges(response)) {
+            return List.of();
+        }
+        List<String> ids = response.getAuditResult().getAutoremediation().getSupersededIssueIds();
+        return ids == null ? List.of() : ids.stream().filter(id -> id != null && !id.isBlank()).toList();
+    }
+
+    /**
+     * Maps each superseded issue to the widest fix that contains it, following chains (A supersedes D, E
+     * supersedes A gives D to E and A to E). Only issues that have a fix of their own can be superseded, and
+     * cycles are ignored so every involved issue simply keeps its own fix.
+     */
+    static Map<String, String> resolveSupersededByFix(Map<String, AuditResponse> auditResponses,
+            Map<String, String> remediationCommentTimestamps) {
+        Map<String, String> direct = new LinkedHashMap<>();
+        for (Map.Entry<String, AuditResponse> entry : auditResponses.entrySet()) {
+            String fixId = entry.getKey();
+            if (!hasRemediationChanges(entry.getValue()) || !remediationCommentTimestamps.containsKey(fixId)) {
+                continue;
+            }
+            for (String supersededId : supersededIssueIds(entry.getValue())) {
+                AuditResponse supersededResponse = auditResponses.get(supersededId);
+                if (!supersededId.equals(fixId) && hasRemediationChanges(supersededResponse)
+                        && remediationCommentTimestamps.containsKey(supersededId)) {
+                    direct.putIfAbsent(supersededId, fixId);
+                }
+            }
+        }
+        Map<String, String> resolved = new LinkedHashMap<>();
+        for (String supersededId : direct.keySet()) {
+            Set<String> visited = new HashSet<>(Set.of(supersededId));
+            String fixId = direct.get(supersededId);
+            while (direct.containsKey(fixId) && visited.add(fixId)) {
+                fixId = direct.get(fixId);
+            }
+            if (!direct.containsKey(fixId)) {
+                resolved.put(supersededId, fixId);
+            }
+        }
+        return resolved;
+    }
+
+    /** Issue ids whose prior fix already covers this issue; empty when the issue has its own changes or none apply. */
+    private static List<String> coveredByPriorFixIds(AuditResponse response) {
+        if (response == null || response.getAuditResult() == null
+                || response.getAuditResult().getAutoremediation() == null
+                || hasRemediationChanges(response)) {
+            return List.of();
+        }
+        List<String> ids = response.getAuditResult().getAutoremediation().getCoveredByIssueIds();
+        return ids == null ? List.of() : ids.stream().filter(id -> id != null && !id.isBlank()).toList();
+    }
+
+    private Element createCoveredByPriorFixElement(Document doc, String instanceId, AuditResponse auditResponse,
+            List<String> coveredByIds, String writeDate) {
+        Element remediationElement = doc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "Remediation");
+        remediationElement.setAttribute("instanceId", instanceId);
+        remediationElement.setAttribute("writeDate", writeDate);
+        Element auditCommentElement = doc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "AuditComment");
+        String auditComment = auditResponse.getAuditResult().getComment() != null ? auditResponse.getAuditResult().getComment() : "";
+        auditCommentElement.appendChild(doc.createCDATASection(auditComment));
+        remediationElement.appendChild(auditCommentElement);
+        for (String coveredById : coveredByIds) {
+            Element coveredByElement = doc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "CoveredByPriorFix");
+            coveredByElement.setAttribute("instanceId", coveredById);
+            remediationElement.appendChild(coveredByElement);
+        }
+        return remediationElement;
     }
 
     private RemediationGenerationMetric toRemediationGenerationMetric(Map<String, Integer> skippedByReason) {

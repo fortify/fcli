@@ -178,4 +178,36 @@ class AviatorRemediationMetricsHelperTest {
                                 .skippedByReason(skippedByReason)
                                 .build();
     }
+
+    @org.junit.jupiter.api.Test
+    void resolvedIssueIdsListsEverythingEachFixResolvesAndHow() {
+        var node = AviatorRemediationMetricsHelper.toResolvedIssueIdsNode(
+            java.util.Map.of("covered-B", java.util.List.of("fix-A")),
+            java.util.Map.of("superseded-D", java.util.List.of("fix-A")));
+
+        org.junit.jupiter.api.Assertions.assertEquals(1, node.size());
+        org.junit.jupiter.api.Assertions.assertEquals("fix-A", node.get(0).get("issueId").asText());
+        var resolves = node.get(0).get("resolves");
+        org.junit.jupiter.api.Assertions.assertEquals(2, resolves.size());
+        org.junit.jupiter.api.Assertions.assertEquals("covered-B", resolves.get(0).get("issueId").asText());
+        org.junit.jupiter.api.Assertions.assertEquals("coveredByPriorFix", resolves.get(0).get("via").asText());
+        org.junit.jupiter.api.Assertions.assertEquals("superseded-D", resolves.get(1).get("issueId").asText());
+        org.junit.jupiter.api.Assertions.assertEquals("supersedesPriorFix", resolves.get(1).get("via").asText());
+    }
+
+    @org.junit.jupiter.api.Test
+    void supersedesPriorFixListsTheSupersededIssuesPerSupersedingFix() {
+        var node = AviatorRemediationMetricsHelper.toSupersedesPriorFixNode(java.util.Map.of(
+            "D", java.util.List.of("A"), "C", java.util.List.of("A"), "X", java.util.List.of("Z")));
+
+        org.junit.jupiter.api.Assertions.assertEquals(2, node.size());
+        for (var entry : node) {
+            if (entry.get("issueId").asText().equals("A")) {
+                org.junit.jupiter.api.Assertions.assertEquals(2, entry.get("supersedesIssueIds").size());
+            } else {
+                org.junit.jupiter.api.Assertions.assertEquals("Z", entry.get("issueId").asText());
+                org.junit.jupiter.api.Assertions.assertEquals("X", entry.get("supersedesIssueIds").get(0).asText());
+            }
+        }
+    }
 }
