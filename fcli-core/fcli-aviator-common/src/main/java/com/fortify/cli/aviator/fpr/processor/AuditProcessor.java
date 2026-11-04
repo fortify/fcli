@@ -28,11 +28,15 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Predicate;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import javax.xml.XMLConstants;
@@ -57,6 +61,7 @@ import org.xml.sax.SAXException;
 
 import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
 import com.fortify.cli.aviator.audit.model.AuditResponse;
+import com.fortify.cli.aviator.audit.model.AuditResult;
 import com.fortify.cli.aviator.audit.model.AuditTier;
 import com.fortify.cli.aviator.config.TagMappingConfig;
 import com.fortify.cli.aviator.fpr.model.AuditIssue;
@@ -757,6 +762,7 @@ public class AuditProcessor {
             TagMappingConfig tagMappingConfig, Map<String, String> issueCategoryLookup,
             FPRInfo fprInfo, FVDLMetadata fvdlMetadata) throws AviatorTechnicalException {
         lastRemediationGenerationMetric = RemediationGenerationMetric.empty();
+        resolvePriorFixNotes(auditResponses);
         // Step 1: Apply this save's audit responses. writtenInstanceIds is the local retain set.
         Map<String, String> effectiveIssueCategoryLookup = issueCategoryLookup == null ? Map.of() : issueCategoryLookup;
         AuditXmlUpdateResult updateResult = updateAuditXml(
@@ -931,7 +937,7 @@ public class AuditProcessor {
 
             // An issue superseded by another issue's fix keeps no fix of its own: it is written as a reference
             // to the superseding fix (like an issue covered by a prior fix), so the file stays self-contained.
-            Map<String, String> supersededByFix = resolveSupersededByFix(auditResponses, remediationCommentTimestamps);
+            Map<String, String> supersededByFix = resolveSupersededByFix(auditResponses, remediationCommentTimestamps::containsKey);
             Map<String, List<String>> referenceEntries = new LinkedHashMap<>();
             Set<String> writtenFixIds = new HashSet<>();
 
@@ -1124,23 +1130,65 @@ public class AuditProcessor {
         return ids == null ? List.of() : ids.stream().filter(id -> id != null && !id.isBlank()).toList();
     }
 
+    private static final Pattern COVERED_NOTE = Pattern.compile(
+            "(already addressed by )(?:the fix for issue |the fixes for issues )([\\w-]+(?:, [\\w-]+)*)(\\.)");
+    private static final Pattern SUPERSEDE_NOTE = Pattern.compile(
+            "(also contains )(?:the fix for issue |the fixes for issues )([\\w-]+(?:, [\\w-]+)*)(, which falls within the lines it changes\\.)");
+
+    /**
+     * The server words the notes in audit comments before it knows which fix finally wins. Rewrites them so they name
+     * the fixes that are written to remediations.xml: a covering fix that was superseded is replaced by the fix that
+     * superseded it, and a superseding fix lists every issue it absorbed, including through chains.
+     */
+    static void resolvePriorFixNotes(Map<String, AuditResponse> auditResponses) {
+        Map<String, String> supersededByFix = resolveSupersededByFix(auditResponses, id -> true);
+        if (supersededByFix.isEmpty()) {
+            return;
+        }
+        for (Map.Entry<String, AuditResponse> entry : auditResponses.entrySet()) {
+            AuditResult result = entry.getValue() == null ? null : entry.getValue().getAuditResult();
+            if (result == null || result.getComment() == null) {
+                continue;
+            }
+            String comment = COVERED_NOTE.matcher(result.getComment()).replaceAll(match -> {
+                List<String> fixIds = java.util.Arrays.stream(match.group(2).split(", "))
+                        .map(id -> supersededByFix.getOrDefault(id, id)).distinct().toList();
+                return Matcher.quoteReplacement(match.group(1) + noteSubject(fixIds) + match.group(3));
+            });
+            List<String> absorbed = supersededByFix.entrySet().stream()
+                    .filter(e -> e.getValue().equals(entry.getKey())).map(Map.Entry::getKey).toList();
+            if (!absorbed.isEmpty()) {
+                comment = SUPERSEDE_NOTE.matcher(comment).replaceAll(match -> {
+                    Set<String> ids = new LinkedHashSet<>(List.of(match.group(2).split(", ")));
+                    ids.addAll(absorbed);
+                    return Matcher.quoteReplacement(match.group(1) + noteSubject(new ArrayList<>(ids)) + match.group(3));
+                });
+            }
+            result.setComment(comment);
+        }
+    }
+
+    private static String noteSubject(List<String> ids) {
+        return (ids.size() == 1 ? "the fix for issue " : "the fixes for issues ") + String.join(", ", ids);
+    }
+
     /**
      * Maps each superseded issue to the widest fix that contains it, following chains (A supersedes D, E
      * supersedes A gives D to E and A to E). Only issues that have a fix of their own can be superseded, and
      * cycles are ignored so every involved issue simply keeps its own fix.
      */
     static Map<String, String> resolveSupersededByFix(Map<String, AuditResponse> auditResponses,
-            Map<String, String> remediationCommentTimestamps) {
+            Predicate<String> hasWritableEntry) {
         Map<String, String> direct = new LinkedHashMap<>();
         for (Map.Entry<String, AuditResponse> entry : auditResponses.entrySet()) {
             String fixId = entry.getKey();
-            if (!hasRemediationChanges(entry.getValue()) || !remediationCommentTimestamps.containsKey(fixId)) {
+            if (!hasRemediationChanges(entry.getValue()) || !hasWritableEntry.test(fixId)) {
                 continue;
             }
             for (String supersededId : supersededIssueIds(entry.getValue())) {
                 AuditResponse supersededResponse = auditResponses.get(supersededId);
                 if (!supersededId.equals(fixId) && hasRemediationChanges(supersededResponse)
-                        && remediationCommentTimestamps.containsKey(supersededId)) {
+                        && hasWritableEntry.test(supersededId)) {
                     direct.putIfAbsent(supersededId, fixId);
                 }
             }

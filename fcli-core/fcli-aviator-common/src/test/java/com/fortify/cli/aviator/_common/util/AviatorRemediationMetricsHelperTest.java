@@ -196,18 +196,22 @@ class AviatorRemediationMetricsHelperTest {
     }
 
     @org.junit.jupiter.api.Test
-    void supersedesPriorFixListsTheSupersededIssuesPerSupersedingFix() {
-        var node = AviatorRemediationMetricsHelper.toSupersedesPriorFixNode(java.util.Map.of(
-            "D", java.util.List.of("A"), "C", java.util.List.of("A"), "X", java.util.List.of("Z")));
+    void implicitlyAppliedIssueIdsIsOnlyReportedWhenApplyingIssueByIssue() {
+        RemediationMetric all = RemediationMetric.builder()
+            .executionMode(RemediationExecutionMode.APPLY)
+            .build();
+        RemediationMetric byIssue = RemediationMetric.builder()
+            .executionMode(RemediationExecutionMode.APPLY)
+            .requestedIssueIds(Set.of("D"))
+            .implicitlyAppliedIssueIds(Set.of("A"))
+            .build();
 
-        org.junit.jupiter.api.Assertions.assertEquals(2, node.size());
-        for (var entry : node) {
-            if (entry.get("issueId").asText().equals("A")) {
-                org.junit.jupiter.api.Assertions.assertEquals(2, entry.get("supersedesIssueIds").size());
-            } else {
-                org.junit.jupiter.api.Assertions.assertEquals("Z", entry.get("issueId").asText());
-                org.junit.jupiter.api.Assertions.assertEquals("X", entry.get("supersedesIssueIds").get(0).asText());
-            }
-        }
+        ObjectNode allResult = com.fortify.cli.common.json.JsonHelper.getObjectMapper().createObjectNode();
+        AviatorRemediationMetricsHelper.putRemediationMetricFields(allResult, all);
+        ObjectNode byIssueResult = com.fortify.cli.common.json.JsonHelper.getObjectMapper().createObjectNode();
+        AviatorRemediationMetricsHelper.putRemediationMetricFields(byIssueResult, byIssue);
+
+        org.junit.jupiter.api.Assertions.assertFalse(allResult.has("implicitlyAppliedIssueIds"));
+        org.junit.jupiter.api.Assertions.assertEquals("A", byIssueResult.get("implicitlyAppliedIssueIds").get(0).asText());
     }
 }
