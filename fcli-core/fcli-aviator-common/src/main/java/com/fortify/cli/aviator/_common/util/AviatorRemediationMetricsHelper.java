@@ -219,26 +219,13 @@ public final class AviatorRemediationMetricsHelper {
         result.put("skippedReasons", formatSkippedReasons(skippedByReason));
         result.set("skippedByReason", toSkippedByReasonNode(skippedByReason, issueSkipReasons));
         result.set("modifiedFiles", toArrayNode(modifiedFiles));
-        result.set("coveredByPriorFix", toCoveredByPriorFixNode(metric == null ? Map.of() : metric.coveredByPriorFixIssues()));
-        result.set("supersedesPriorFix",
-            toSupersedesPriorFixNode(metric == null ? Map.of() : metric.supersededByPriorFixIssues()));
         result.set("resolvedIssueIds", toResolvedIssueIdsNode(
             metric == null ? Map.of() : metric.coveredByPriorFixIssues(),
             metric == null ? Map.of() : metric.supersededByPriorFixIssues()));
-        result.set("implicitlyAppliedIssueIds",
-            toArrayNode(metric == null ? Set.of() : metric.implicitlyAppliedIssueIds()));
-    }
-
-    /** Per superseding fix: the issues whose own fix it contains. */
-    public static ArrayNode toSupersedesPriorFixNode(Map<String, List<String>> supersededByPriorFixIssues) {
-        Map<String, List<String>> byFix = invert(supersededByPriorFixIssues);
-        ArrayNode array = JsonHelper.getObjectMapper().createArrayNode();
-        byFix.forEach((fixId, supersededIds) -> {
-            ObjectNode node = array.addObject();
-            node.put("issueId", fixId);
-            node.set("supersedesIssueIds", toStringArrayNode(supersededIds));
-        });
-        return array;
+        // Only meaningful when applying issue by issue (--issue-ids): fixes applied that were not requested.
+        if (metric != null && !metric.requestedIssueIds().isEmpty()) {
+            result.set("implicitlyAppliedIssueIds", toArrayNode(metric.implicitlyAppliedIssueIds()));
+        }
     }
 
     /** Per applied fix: every issue it resolves in addition to itself, and how (covered by it, or superseded by it). */
@@ -269,28 +256,6 @@ public final class AviatorRemediationMetricsHelper {
                 resolved.put("via", via);
             }
         });
-    }
-
-    private static Map<String, List<String>> invert(Map<String, List<String>> issuesToFixes) {
-        Map<String, List<String>> byFix = new LinkedHashMap<>();
-        if (issuesToFixes != null) {
-            issuesToFixes.forEach((issueId, fixIds) -> fixIds.forEach(
-                fixId -> byFix.computeIfAbsent(fixId, k -> new ArrayList<>()).add(issueId)));
-        }
-        return byFix;
-    }
-
-    /** Per covered issue: the issue(s) whose fix covers it, so the call-out names the fix to look at. */
-    public static ArrayNode toCoveredByPriorFixNode(Map<String, List<String>> coveredByPriorFixIssues) {
-        ArrayNode array = JsonHelper.getObjectMapper().createArrayNode();
-        if (coveredByPriorFixIssues != null) {
-            coveredByPriorFixIssues.forEach((issueId, coveredBy) -> {
-                ObjectNode node = array.addObject();
-                node.put("issueId", issueId);
-                node.set("coveredByIssueIds", toStringArrayNode(coveredBy));
-            });
-        }
-        return array;
     }
 
     /** Metric fields plus {@code __action__} and, for preview results, preview details (shared by SSC/FoD result builders). */

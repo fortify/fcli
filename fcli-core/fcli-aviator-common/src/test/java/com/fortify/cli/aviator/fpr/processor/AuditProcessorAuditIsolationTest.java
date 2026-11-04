@@ -151,7 +151,7 @@ class AuditProcessorAuditIsolationTest {
         responses.put("E", fixResponse("E", 1, 5, "e", List.of("A")));
         Map<String, String> timestamps = Map.of("D", "t", "A", "t", "E", "t");
 
-        Map<String, String> resolved = AuditProcessor.resolveSupersededByFix(responses, timestamps);
+        Map<String, String> resolved = AuditProcessor.resolveSupersededByFix(responses, timestamps::containsKey);
 
         assertEquals(Map.of("D", "E", "A", "E"), resolved);
     }
@@ -163,7 +163,55 @@ class AuditProcessorAuditIsolationTest {
         responses.put("B", fixResponse("B", 1, 3, "b", List.of("A")));
         Map<String, String> timestamps = Map.of("A", "t", "B", "t");
 
-        assertEquals(Map.of(), AuditProcessor.resolveSupersededByFix(responses, timestamps));
+        assertEquals(Map.of(), AuditProcessor.resolveSupersededByFix(responses, timestamps::containsKey));
+    }
+
+    @Test
+    void testCoveredNoteNamesTheFixThatSupersededTheCoveringFix() {
+        Map<String, AuditResponse> responses = new java.util.LinkedHashMap<>();
+        responses.put("A", fixResponse("A", 1, 3, "a", List.of()));
+        responses.put("B", fixResponse("B", 1, 3, "b", List.of("A")));
+        responses.put("C", coveredResponse("C", List.of("A")));
+        responses.get("C").getAuditResult().setComment("Text. Note: No separate automated remediation was generated "
+                + "for this finding because it is already addressed by the fix for issue A.");
+        responses.put("E", coveredResponse("E", List.of("A", "B")));
+        responses.get("E").getAuditResult().setComment("Note: It is already addressed by the fixes for issues A, B.");
+        responses.put("F", coveredResponse("F", List.of("X")));
+        responses.get("F").getAuditResult().setComment("Note: It is already addressed by the fix for issue X.");
+
+        AuditProcessor.resolvePriorFixNotes(responses);
+
+        assertEquals("Text. Note: No separate automated remediation was generated for this finding because it is "
+                + "already addressed by the fix for issue B.", responses.get("C").getAuditResult().getComment());
+        assertEquals("Note: It is already addressed by the fix for issue B.", responses.get("E").getAuditResult().getComment());
+        assertEquals("Note: It is already addressed by the fix for issue X.", responses.get("F").getAuditResult().getComment());
+    }
+
+    @Test
+    void testSupersedeNoteListsEveryAbsorbedIssueIncludingChains() {
+        Map<String, AuditResponse> responses = new java.util.LinkedHashMap<>();
+        responses.put("D", fixResponse("D", 2, 2, "d", List.of()));
+        responses.put("A", fixResponse("A", 1, 3, "a", List.of("D")));
+        responses.put("E", fixResponse("E", 1, 5, "e", List.of("A")));
+        responses.get("E").getAuditResult().setComment("Note: The automated remediation for this finding also contains "
+                + "the fix for issue A, which falls within the lines it changes.");
+
+        AuditProcessor.resolvePriorFixNotes(responses);
+
+        assertEquals("Note: The automated remediation for this finding also contains the fixes for issues A, D, "
+                + "which falls within the lines it changes.", responses.get("E").getAuditResult().getComment());
+    }
+
+    @Test
+    void testNotesAreLeftAloneWhenNothingWasSuperseded() {
+        Map<String, AuditResponse> responses = new java.util.LinkedHashMap<>();
+        responses.put("A", fixResponse("A", 1, 3, "a", List.of()));
+        responses.put("C", coveredResponse("C", List.of("A")));
+        responses.get("C").getAuditResult().setComment("Note: It is already addressed by the fix for issue A.");
+
+        AuditProcessor.resolvePriorFixNotes(responses);
+
+        assertEquals("Note: It is already addressed by the fix for issue A.", responses.get("C").getAuditResult().getComment());
     }
 
     private static final String REMEDIATIONS_NS = "xmlns://www.fortify.com/schema/remediations";
