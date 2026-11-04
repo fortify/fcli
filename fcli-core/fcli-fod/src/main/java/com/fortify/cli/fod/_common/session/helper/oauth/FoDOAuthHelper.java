@@ -50,6 +50,18 @@ public class FoDOAuthHelper {
         }
     }
 
+    public static final FoDTokenCreateResponse createTokenFromSamlAssertion(IUrlConfig urlConfig, String samlAssertion) {
+        try ( var unirest = UnirestHelper.createUnirestInstance() ) {
+            configureUnirest(unirest, urlConfig);
+            return unirest.post("/oauth/SAMLToOAuthToken")
+                    .headerReplace(HttpHeader.ACCEPT, "application/json")
+                    .headerReplace(HttpHeader.CONTENT_TYPE, "application/x-www-form-urlencoded")
+                    .field("samlAssertion", samlAssertion)
+                    .asObject(FoDTokenCreateResponse.class)
+                    .getBody();
+        }
+    }
+
     private static final FoDTokenCreateResponse createToken(UnirestInstance unirest, IUrlConfig urlConfig, Map<String, Object> formData) {
         configureUnirest(unirest, urlConfig);
         return unirest.post("/oauth/token")
