@@ -39,6 +39,8 @@ import org.w3c.dom.NodeList;
 
 import com.fortify.cli.aviator.audit.model.AuditResponse;
 import com.fortify.cli.aviator.audit.model.AuditResult;
+import com.fortify.cli.aviator.audit.model.Autoremediation;
+import com.fortify.cli.aviator.audit.model.Change;
 import com.fortify.cli.aviator.config.TagMappingConfig;
 import com.fortify.cli.aviator.util.Constants;
 import com.fortify.cli.common.fpr.model.FPRInfo;
@@ -87,6 +89,36 @@ class AuditProcessorAuditIsolationTest {
                 || readTagValues(audited).contains(Constants.AVIATOR_NOT_AN_ISSUE));
         assertTrue(readComments(audited).stream().anyMatch(c -> c.contains("Reviewed by Aviator")));
         assertTrue(hasTagHistory(audited));
+    }
+
+    @Test
+    void statusTracksRemediationAvailabilityAndReauditTransitions() throws Exception {
+        createTestFpr(multiIssueAuditXml("instance-A"));
+        AuditProcessor auditProcessor = new AuditProcessor(fprHandle);
+        auditProcessor.processAuditXML();
+
+        auditProcessor.updateAndSaveAuditAndRemediationsXml(
+                Map.of("instance-A", responseWithChanges("instance-A", List.of(
+                        Change.builder().file("src/Example.java").fromLine("1").toLine("1").replaceWith("fixed").build()))),
+                createTagMappingConfig(),
+                Map.of("instance-A", "SQL Injection"),
+                new FPRInfo(fprHandle));
+
+        Element audited = readIssueElement("instance-A");
+        assertEquals("PROCESSED_BY_AVIATOR_WITH_REMEDIATION", readAviatorStatus(audited));
+        assertEquals(List.of("PROCESSED_BY_AVIATOR_WITH_REMEDIATION"), readAviatorStatusHistory(audited));
+
+        auditProcessor.updateAndSaveAuditAndRemediationsXml(
+                Map.of("instance-A", responseWithChanges("instance-A", List.of())),
+                createTagMappingConfig(),
+                Map.of("instance-A", "SQL Injection"),
+                new FPRInfo(fprHandle));
+
+        audited = readIssueElement("instance-A");
+        assertEquals(Constants.PROCESSED_BY_AVIATOR, readAviatorStatus(audited));
+        assertEquals(List.of(
+                "PROCESSED_BY_AVIATOR_WITH_REMEDIATION",
+                Constants.PROCESSED_BY_AVIATOR), readAviatorStatusHistory(audited));
     }
 
     @Test
@@ -140,6 +172,29 @@ class AuditProcessorAuditIsolationTest {
                 new FPRInfo(fprHandle));
 
         assertEquals(Set.of("instance-new"), readIssueInstanceIds());
+        Element newIssue = readIssueElement("instance-new");
+        assertEquals(Constants.PROCESSED_BY_AVIATOR, readAviatorStatus(newIssue));
+        assertEquals(List.of(Constants.PROCESSED_BY_AVIATOR), readAviatorStatusHistory(newIssue));
+    }
+
+    @Test
+    void newIssueReceivesRemediationStatusAndHistory() throws Exception {
+        createTestFpr(multiIssueAuditXml("instance-old"));
+        AuditProcessor auditProcessor = new AuditProcessor(fprHandle);
+        auditProcessor.processAuditXML();
+
+        auditProcessor.updateAndSaveAuditAndRemediationsXml(
+                Map.of("instance-new", responseWithChanges("instance-new", List.of(
+                        Change.builder().file("src/Example.java").fromLine("1").toLine("1").replaceWith("fixed").build()))),
+                createTagMappingConfig(),
+                Map.of("instance-new", "SQL Injection"),
+                new FPRInfo(fprHandle));
+
+        assertEquals(Set.of("instance-new"), readIssueInstanceIds());
+        Element newIssue = readIssueElement("instance-new");
+        assertEquals(Constants.PROCESSED_BY_AVIATOR_WITH_REMEDIATION, readAviatorStatus(newIssue));
+        assertEquals(List.of(Constants.PROCESSED_BY_AVIATOR_WITH_REMEDIATION),
+                readAviatorStatusHistory(newIssue));
     }
 
     @Test
@@ -301,6 +356,34 @@ class AuditProcessorAuditIsolationTest {
         return issueElement.getElementsByTagNameNS(AUDIT_NS, "TagHistory").getLength() > 0;
     }
 
+    private String readAviatorStatus(Element issueElement) {
+        NodeList tags = issueElement.getElementsByTagNameNS(AUDIT_NS, "Tag");
+        for (int i = 0; i < tags.getLength(); i++) {
+            Element tag = (Element) tags.item(i);
+            if (Constants.AVIATOR_STATUS_TAG_ID.equalsIgnoreCase(tag.getAttribute("id"))) {
+                return tag.getElementsByTagNameNS(AUDIT_NS, "Value").item(0).getTextContent();
+            }
+        }
+        return null;
+    }
+
+    private List<String> readAviatorStatusHistory(Element issueElement) {
+        List<String> values = new ArrayList<>();
+        NodeList histories = issueElement.getElementsByTagNameNS(AUDIT_NS, "TagHistory");
+        for (int i = 0; i < histories.getLength(); i++) {
+            Element history = (Element) histories.item(i);
+            NodeList tags = history.getElementsByTagNameNS(AUDIT_NS, "Tag");
+            if (tags.getLength() == 0) {
+                continue;
+            }
+            Element tag = (Element) tags.item(0);
+            if (Constants.AVIATOR_STATUS_TAG_ID.equalsIgnoreCase(tag.getAttribute("id"))) {
+                values.add(tag.getElementsByTagNameNS(AUDIT_NS, "Value").item(0).getTextContent());
+            }
+        }
+        return values;
+    }
+
     private AuditResponse successResponse(String instanceId) {
         return AuditResponse.builder()
                 .issueId(instanceId)
@@ -311,6 +394,19 @@ class AuditProcessorAuditIsolationTest {
                         .comment("Reviewed by Aviator")
                         .build())
                 .build();
+    }
+
+    private AuditResponse responseWithChanges(String instanceId, List<Change> changes) {
+        return AuditResponse.builder()
+                        .issueId(instanceId)
+                        .status("SUCCESS")
+                        .tier("GOLD")
+                        .auditResult(AuditResult.builder()
+                                .tagValue(Constants.NOT_AN_ISSUE)
+                                .comment("Reviewed by Aviator")
+                                .autoremediation(Autoremediation.builder().changes(changes).build())
+                                .build())
+                        .build();
     }
 
     private AuditResponse failedResponse(String instanceId) {

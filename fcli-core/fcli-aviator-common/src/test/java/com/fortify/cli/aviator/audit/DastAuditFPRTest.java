@@ -63,7 +63,8 @@ class DastAuditFPRTest {
             String auditXml = Files.readString(zip.getPath("/audit.xml"));
             assertTrue(auditXml.contains("instanceId=\"DAST-1\""));
             assertTrue(auditXml.contains("suppressed=\"true\""));
-            assertTrue(auditXml.contains("PROCESSED_BY_AVIATOR"));
+            assertTrue(auditXml.contains("<Value>PROCESSED_BY_AVIATOR</Value>"));
+            assertFalse(auditXml.contains("PROCESSED_BY_AVIATOR_WITH_REMEDIATION"));
             assertFalse(Files.exists(zip.getPath("/remediations.xml")));
         }
     }
