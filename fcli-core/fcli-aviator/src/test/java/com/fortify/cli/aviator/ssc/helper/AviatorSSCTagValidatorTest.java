@@ -28,6 +28,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.aviator.config.IAviatorLogger;
@@ -69,15 +70,56 @@ class AviatorSSCTagValidatorTest {
     void assignedCustomTagsDoNotWarn() throws IOException {
         server = new TestSscServer()
             .withTags(customTag(AviatorSSCTagDefs.AVIATOR_PREDICTION_TAG.getGuid(), "Aviator prediction"),
-                customTag(AviatorSSCTagDefs.AVIATOR_STATUS_TAG.getGuid(), "Aviator status"));
+                customTag(AviatorSSCTagDefs.AVIATOR_STATUS_TAG.getGuid(), "Aviator status"))
+            .withCustomTagDetails(AviatorSSCTagDefs.AVIATOR_STATUS_TAG.getGuid(),
+                tagDetails(AviatorSSCTagDefs.AVIATOR_STATUS_TAG.getGuid(), "PROCESSED_BY_AVIATOR",
+                    "PROCESSED_BY_AVIATOR_WITH_REMEDIATION"));
         unirest = newUnirest(server);
 
         List<String> warnings = validate();
 
         assertTrue(warnings.isEmpty());
         assertTrue(server.includeAllRequests == 1);
+        assertTrue(server.statusTagDetailsRequests == 1);
         assertTrue(server.plainRequests == 0);
         assertTrue(server.internalCatalogRequests == 0);
+    }
+
+    @Test
+    @DisplayName("user-managed status tag missing the remediation value warns to prepare SSC")
+    void userManagedStatusTagMissingRemediationValueWarns() throws IOException {
+        String statusGuid = AviatorSSCTagDefs.AVIATOR_STATUS_TAG.getGuid();
+        server = new TestSscServer()
+            .withTags(
+                customTag(AviatorSSCTagDefs.AVIATOR_PREDICTION_TAG.getGuid(), "Aviator prediction"),
+                customTag(statusGuid, "Aviator status"))
+            .withCustomTagDetails(statusGuid, tagDetails(statusGuid, "PROCESSED_BY_AVIATOR"));
+        unirest = newUnirest(server);
+
+        List<String> warnings = validate();
+
+        assertTrue(warnings.stream().anyMatch(w -> w.contains("PROCESSED_BY_AVIATOR_WITH_REMEDIATION")));
+        assertTrue(warnings.stream().anyMatch(w -> w.contains("fcli aviator ssc prepare")));
+    }
+
+    @Test
+    @DisplayName("system-managed status tag missing the remediation value warns to configure SSC")
+    void systemManagedStatusTagMissingRemediationValueWarns() throws IOException {
+        ObjectNode statusTag = aviatorTag(
+            AviatorSSCTagDefs.AVIATOR_STATUS_TAG.getGuid(), "Aviator status");
+        ArrayNode values = statusTag.putArray("valueList");
+        values.add(JsonHelper.getObjectMapper().createObjectNode().put("lookupValue", "PROCESSED_BY_AVIATOR"));
+        server = new TestSscServer()
+            .withTags(
+                aviatorTag(AviatorSSCTagDefs.AVIATOR_PREDICTION_TAG.getGuid(), "Aviator prediction"),
+                statusTag);
+        unirest = newUnirest(server);
+
+        List<String> warnings = validate();
+
+        assertTrue(warnings.stream().anyMatch(w -> w.contains("PROCESSED_BY_AVIATOR_WITH_REMEDIATION")));
+        assertTrue(warnings.stream().anyMatch(w -> w.contains("Configure the system-managed tag through SSC")));
+        assertFalse(warnings.stream().anyMatch(w -> w.contains("fcli aviator ssc prepare")));
     }
 
     @Test
@@ -207,14 +249,36 @@ class AviatorSSCTagValidatorTest {
     }
 
     private static ObjectNode aviatorTag(String guid, String name) {
-        return tag(guid, name, "AVIATOR");
+        ObjectNode result = tag(guid, name, "AVIATOR");
+        if (AviatorSSCTagDefs.AVIATOR_STATUS_TAG.getGuid().equalsIgnoreCase(guid)) {
+            ArrayNode values = result.putArray("valueList");
+            values.add(JsonHelper.getObjectMapper().createObjectNode().put("lookupValue", "PROCESSED_BY_AVIATOR"));
+            values.add(JsonHelper.getObjectMapper().createObjectNode()
+                .put("lookupValue", "PROCESSED_BY_AVIATOR_WITH_REMEDIATION"));
+        }
+        return result;
     }
 
     private static ObjectNode tag(String guid, String name, String customTagType) {
         return JsonHelper.getObjectMapper().createObjectNode()
+            .put("id", guid)
             .put("guid", guid)
             .put("name", name)
             .put("customTagType", customTagType);
+    }
+
+    private static ObjectNode tagDetails(String id, String... values) {
+        ObjectNode details = JsonHelper.getObjectMapper().createObjectNode()
+            .put("id", id)
+            .put("name", "Aviator status")
+            .put("guid", AviatorSSCTagDefs.AVIATOR_STATUS_TAG.getGuid())
+            .put("customTagType", "CUSTOM")
+            .put("valueType", "LIST");
+        ArrayNode valueList = details.putArray("valueList");
+        for (String value : values) {
+            valueList.add(JsonHelper.getObjectMapper().createObjectNode().put("lookupValue", value));
+        }
+        return details;
     }
 
     private static final class CollectingLogger implements IAviatorLogger {
@@ -232,16 +296,19 @@ class AviatorSSCTagValidatorTest {
         private final HttpServer server;
         private final ArrayNode tags = JsonHelper.getObjectMapper().createArrayNode();
         private final ArrayNode internalCatalog = JsonHelper.getObjectMapper().createArrayNode();
+        private final java.util.Map<String, ObjectNode> customTagDetails = new java.util.HashMap<>();
         private boolean failIncludeAll;
         private boolean internalCatalogPresent;
         private int includeAllRequests;
         private int plainRequests;
         private int internalCatalogRequests;
+        private int statusTagDetailsRequests;
 
         private TestSscServer() throws IOException {
             this.server = HttpServer.create(new InetSocketAddress(0), 0);
             server.createContext("/api/v1/projectVersions/" + VERSION_ID + "/customTags", this::handleCustomTags);
             server.createContext("/api/v1/internalCustomTags", this::handleInternalCustomTags);
+            server.createContext("/api/v1/customTags/", this::handleCustomTagDetails);
             server.start();
         }
 
@@ -269,6 +336,11 @@ class AviatorSSCTagValidatorTest {
             for (ObjectNode tag : versionTags) {
                 tags.add(tag);
             }
+            return this;
+        }
+
+        private TestSscServer withCustomTagDetails(String id, ObjectNode details) {
+            customTagDetails.put(id, details);
             return this;
         }
 
@@ -310,7 +382,19 @@ class AviatorSSCTagValidatorTest {
             writeJson(exchange, JsonHelper.getObjectMapper().createArrayNode());
         }
 
-        private void writeJson(HttpExchange exchange, ArrayNode data) throws IOException {
+        private void handleCustomTagDetails(HttpExchange exchange) throws IOException {
+            statusTagDetailsRequests++;
+            String id = exchange.getRequestURI().getPath().substring("/api/v1/customTags/".length());
+            ObjectNode details = customTagDetails.get(id);
+            if (details == null) {
+                exchange.sendResponseHeaders(404, -1);
+                exchange.close();
+                return;
+            }
+            writeJson(exchange, details);
+        }
+
+        private void writeJson(HttpExchange exchange, JsonNode data) throws IOException {
             ObjectNode wrapper = JsonHelper.getObjectMapper().createObjectNode();
             wrapper.set("data", data);
             byte[] response = JsonHelper.getObjectMapper()

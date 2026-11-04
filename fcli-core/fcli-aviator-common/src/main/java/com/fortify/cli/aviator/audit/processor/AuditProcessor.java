@@ -233,6 +233,7 @@ public class AuditProcessor {
         int revision = Integer.parseInt(issueElement.getAttribute("revision"));
         issueElement.setAttribute("revision", String.valueOf(++revision));
         String commentTimestamp = null;
+        String aviatorStatus = aviatorStatus(response);
         Boolean suppressedHistoryValue = null;
 
         if (response != null && response.getAuditResult() != null) {
@@ -265,19 +266,29 @@ public class AuditProcessor {
                     tagMappingConfig, issueCategoryLookup);
         }
 
-        updateOrAddTag(issueElement, Constants.AVIATOR_STATUS_TAG_ID, Constants.PROCESSED_BY_AVIATOR);
+        updateOrAddTag(issueElement, Constants.AVIATOR_STATUS_TAG_ID, aviatorStatus);
 
-        if (response.getAuditResult() != null) {
+        if (response != null && response.getAuditResult() != null) {
             commentTimestamp = updateOrAddComment(issueElement, response.getAuditResult().comment);
         }
 
-        updateClientAuditTrail(issueElement, response, tagMappingConfig, suppressedHistoryValue);
+        updateClientAuditTrail(issueElement, response, tagMappingConfig, suppressedHistoryValue, aviatorStatus);
 
         return commentTimestamp;
     }
 
+    private static String aviatorStatus(AuditResponse response) {
+        if (response == null || response.getAuditResult() == null
+                || response.getAuditResult().getAutoremediation() == null
+                || response.getAuditResult().getAutoremediation().getChanges() == null
+                || response.getAuditResult().getAutoremediation().getChanges().isEmpty()) {
+            return Constants.PROCESSED_BY_AVIATOR;
+        }
+        return Constants.PROCESSED_BY_AVIATOR_WITH_REMEDIATION;
+    }
 
-    private void updateClientAuditTrail(Element issueElement, AuditResponse response, TagMappingConfig tagMappingConfig, Boolean suppressedHistoryValue) {
+    private void updateClientAuditTrail(Element issueElement, AuditResponse response, TagMappingConfig tagMappingConfig,
+            Boolean suppressedHistoryValue, String aviatorStatus) {
         Element clientAuditTrail = getClientAuditTrailElement(issueElement);
 
         if (response != null && response.getAuditResult() != null) {
@@ -310,7 +321,7 @@ public class AuditProcessor {
                 addTagHistory(clientAuditTrail, Constants.SUPPRESSED_TAG_ID, suppressedHistoryValue.toString());
             }
         }
-        addTagHistory(clientAuditTrail, Constants.AVIATOR_STATUS_TAG_ID, Constants.PROCESSED_BY_AVIATOR);
+        addTagHistory(clientAuditTrail, Constants.AVIATOR_STATUS_TAG_ID, aviatorStatus);
     }
 
     private Boolean applySuppressionDecision(Element issueElement, String instanceId, TagMappingConfig.Result resultConfig,
@@ -486,13 +497,14 @@ public class AuditProcessor {
             suppressedHistoryValue = applySuppressionDecision(newIssue, instanceId, resultConfig, tagMappingConfig, issueCategoryLookup);
         }
 
-        updateOrAddTag(newIssue, Constants.AVIATOR_STATUS_TAG_ID, Constants.PROCESSED_BY_AVIATOR);
+        String aviatorStatus = aviatorStatus(response);
+        updateOrAddTag(newIssue, Constants.AVIATOR_STATUS_TAG_ID, aviatorStatus);
 
         if (response != null && response.getAuditResult() != null) {
             commentTimestamp = updateOrAddComment(newIssue, response.getAuditResult().comment);
         }
 
-        updateClientAuditTrail(newIssue, response, tagMappingConfig, suppressedHistoryValue);
+        updateClientAuditTrail(newIssue, response, tagMappingConfig, suppressedHistoryValue, aviatorStatus);
 
         issueList.appendChild(newIssue);
         return commentTimestamp;

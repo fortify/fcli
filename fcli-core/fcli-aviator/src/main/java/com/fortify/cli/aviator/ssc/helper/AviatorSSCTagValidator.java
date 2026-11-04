@@ -149,13 +149,71 @@ public final class AviatorSSCTagValidator {
                 missing.add(tag);
             }
         }
-        if (missing.isEmpty()) {
+        if (!missing.isEmpty()) {
+            String resolution = publishesBuiltInAviatorTags(unirest) ? ENABLE_AVIATOR : RUN_PREPARE;
+            for (TagDefinition tag : missing) {
+                warnings.add(missingTagWarning(tag, resolution));
+            }
+        }
+        if (findByGuid(tags, AviatorSSCTagDefs.AVIATOR_STATUS_TAG.getGuid()) != null) {
+            validateAviatorStatusValues(tags, unirest, warnings);
+        }
+    }
+
+    /**
+     * Warns when SSC cannot accept the new SAST status value.
+     */
+    private static void validateAviatorStatusValues(ArrayNode tags, UnirestInstance unirest,
+            List<String> warnings) {
+        JsonNode statusTag = findByGuid(tags, AviatorSSCTagDefs.AVIATOR_STATUS_TAG.getGuid());
+        JsonNode details = getAviatorStatusDetails(unirest, statusTag);
+        JsonNode valueList = details == null ? null : details.get("valueList");
+        if (valueList == null || !valueList.isArray()) {
+            warnings.add("WARN: Could not verify the value list for 'Aviator status'. "
+                + "Audit results may not display correctly in SSC.");
             return;
         }
-        String resolution = publishesBuiltInAviatorTags(unirest) ? ENABLE_AVIATOR : RUN_PREPARE;
-        for (TagDefinition tag : missing) {
-            warnings.add(missingTagWarning(tag, resolution));
+
+        Set<String> existingValues = JsonHelper.stream((ArrayNode) valueList)
+            .map(value -> value.path("lookupValue").asText())
+            .collect(Collectors.toSet());
+        List<String> missingValues = AviatorSSCTagDefs.AVIATOR_STATUS_TAG.getValues().stream()
+            .filter(value -> !existingValues.contains(value))
+            .toList();
+        if (missingValues.isEmpty()) {
+            return;
         }
+
+        String resolution = isBuiltInTag(statusTag, AviatorSSCTagDefs.AVIATOR_STATUS_TAG)
+            ? "Configure the system-managed tag through SSC."
+            : RUN_PREPARE;
+        warnings.add(String.format(
+            "WARN: 'Aviator status' is missing values %s. %s Audit results for these values may not be visible in SSC.",
+            missingValues, resolution));
+    }
+
+    private static JsonNode getAviatorStatusDetails(UnirestInstance unirest, JsonNode statusTag) {
+        if (statusTag == null) {
+            return null;
+        }
+        JsonNode valueList = statusTag.get("valueList");
+        if (valueList != null && valueList.isArray()) {
+            return statusTag;
+        }
+
+        if (isBuiltInTag(statusTag, AviatorSSCTagDefs.AVIATOR_STATUS_TAG)) {
+            JsonNode response = unirest.get(SSCUrls.INTERNAL_CUSTOM_TAGS)
+                .asObject(JsonNode.class).getBody();
+            return findByGuid(dataArray(response), AviatorSSCTagDefs.AVIATOR_STATUS_TAG.getGuid());
+        }
+
+        String tagId = statusTag.path("id").asText();
+        if (tagId.isBlank()) {
+            return null;
+        }
+        JsonNode response = unirest.get(SSCUrls.CUSTOM_TAG(tagId))
+            .asObject(JsonNode.class).getBody();
+        return response == null ? null : response.get("data");
     }
 
     /**
