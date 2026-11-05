@@ -63,8 +63,9 @@ class AviatorAppResolverMixinTest {
     void helpTextDescribesNameOrIdRules() {
         var help = commandLine().getUsageMessage().replaceAll("\\s+", " ");
         assertTrue(help.contains("<app-name-or-id>"), help);
-        assertTrue(help.contains("Numeric values are always interpreted as an application id"), help);
-        assertTrue(help.contains("purely numeric name can only be specified by its id"), help);
+        assertTrue(help.contains("Numeric values without leading zeros are interpreted as an application id"), help);
+        assertTrue(help.contains("numeric values with leading zeros, like 000144) as an application name"), help);
+        assertTrue(help.contains("without leading zeros can only be specified by its id"), help);
     }
 
     @Test
