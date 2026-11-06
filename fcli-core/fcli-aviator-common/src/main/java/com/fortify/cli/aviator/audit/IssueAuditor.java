@@ -231,6 +231,8 @@ public class IssueAuditor {
                 .filter(this::shouldInclude)
                 .collect(Collectors.toList());
 
+        prompts.forEach(prompt -> prompt.setReaudit(isAviatorWork(auditIssue(prompt))));
+
         return prompts.stream().collect(Collectors.toCollection(ConcurrentLinkedDeque::new));
     }
 

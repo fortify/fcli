@@ -93,6 +93,10 @@ message AuditRequest {
   string tokenName = 19;
   string projectId = 20;
   string entitlementId = 21;
+  // True when the issue already carried an audit before this run and is being audited again
+  // (source evidence changed, or --force-reaudit). Used for reporting only; quota and
+  // entitlement are enforced identically for re-audits.
+  bool isReaudit = 22;
 }
 message File {
   string name = 1;

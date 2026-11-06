@@ -170,6 +170,7 @@ class GrpcUtil {
         builder.setCategoryLevel(userPrompt.getCategoryLevel() == null ? "" : userPrompt.getCategoryLevel());
         builder.setRequestId(requestId);
         builder.setStreamId(streamId);
+        builder.setIsReaudit(userPrompt.isReaudit());
 
         return builder.build();
     }
