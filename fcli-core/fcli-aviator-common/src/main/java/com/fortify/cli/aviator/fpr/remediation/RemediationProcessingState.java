@@ -237,8 +237,11 @@ final class RemediationProcessingState {
 
     RemediationMetric toMetric() {
         recordMissingRequestedIssues();
+        // Every issue that was requested, resolved, or reported with a skip reason is part of the total, so the skip
+        // details always add up (an issue that depends on a selected fix that failed has a skip reason but was not requested).
         Set<String> filteredTotal = new LinkedHashSet<>(options.issueIdFilter());
         filteredTotal.addAll(satisfiedIssueIds);
+        filteredTotal.addAll(issueSkipReasons.keySet());
         int totalRemediations = options.isFiltered() ? filteredTotal.size() : xmlEntryCount;
         int applied = options.isFiltered() ? appliedIssueIds.size() : appliedRemediations;
         int skipped = options.isFiltered()

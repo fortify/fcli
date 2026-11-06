@@ -214,6 +214,63 @@ class AuditProcessorAuditIsolationTest {
         assertEquals("Note: It is already addressed by the fix for issue A.", responses.get("C").getAuditResult().getComment());
     }
 
+    @Test
+    void testNarrowerFixIsKeptWhenTheWiderFixCannotBeWritten() throws Exception {
+        createTestFprWithSource(multiIssueAuditXml("instance-A", "instance-D", "instance-C"),
+                "Example.java", "line1\nline2\nline3\nline4\n");
+        AuditProcessor auditProcessor = new AuditProcessor(fprHandle);
+        auditProcessor.processAuditXML();
+
+        Map<String, AuditResponse> responses = new java.util.LinkedHashMap<>();
+        responses.put("instance-D", fixResponse("instance-D", 2, 2, "D-CODE", List.of()));
+        // The wider fix is for a file that is not in the source archive, so it cannot be written.
+        responses.put("instance-A", fixResponse("instance-A", "Missing.java", 1, 3, "A-CODE", List.of("instance-D")));
+        responses.put("instance-C", coveredResponse("instance-C", List.of("instance-D")));
+
+        auditProcessor.updateAndSaveAuditAndRemediationsXml(
+                responses,
+                createTagMappingConfig(),
+                Map.of("instance-A", "SQL Injection", "instance-D", "SQL Injection", "instance-C", "SQL Injection"),
+                new FPRInfo(fprHandle));
+
+        Map<String, Element> entries = readRemediationEntries();
+        assertEquals(Set.of("instance-D", "instance-C"), entries.keySet());
+        Element narrower = entries.get("instance-D");
+        assertEquals(1, narrower.getElementsByTagNameNS(REMEDIATIONS_NS, "FileChanges").getLength());
+        assertEquals(List.of(), referencedIds(narrower, "CoveredByPriorFix"));
+        assertEquals(List.of(), referencedIds(narrower, "SupersedesPriorFix"));
+        assertEquals(List.of("instance-D"), referencedIds(entries.get("instance-C"), "CoveredByPriorFix"));
+    }
+
+    @Test
+    void testSupersededChainFallsBackToTheNearestWrittenFix() throws Exception {
+        createTestFprWithSource(multiIssueAuditXml("instance-A", "instance-D", "instance-E"),
+                "Example.java", "line1\nline2\nline3\nline4\n");
+        AuditProcessor auditProcessor = new AuditProcessor(fprHandle);
+        auditProcessor.processAuditXML();
+
+        Map<String, AuditResponse> responses = new java.util.LinkedHashMap<>();
+        responses.put("instance-D", fixResponse("instance-D", 2, 2, "D-CODE", List.of()));
+        responses.put("instance-A", fixResponse("instance-A", 1, 3, "A-CODE", List.of("instance-D")));
+        // The widest fix cannot be written, so A stays a fix and D references A instead of E.
+        responses.put("instance-E", fixResponse("instance-E", "Missing.java", 1, 4, "E-CODE", List.of("instance-A")));
+
+        auditProcessor.updateAndSaveAuditAndRemediationsXml(
+                responses,
+                createTagMappingConfig(),
+                Map.of("instance-A", "SQL Injection", "instance-D", "SQL Injection", "instance-E", "SQL Injection"),
+                new FPRInfo(fprHandle));
+
+        Map<String, Element> entries = readRemediationEntries();
+        assertEquals(Set.of("instance-A", "instance-D"), entries.keySet());
+        Element fix = entries.get("instance-A");
+        assertEquals(1, fix.getElementsByTagNameNS(REMEDIATIONS_NS, "FileChanges").getLength());
+        assertEquals(List.of("instance-D"), referencedIds(fix, "SupersedesPriorFix"));
+        Element narrower = entries.get("instance-D");
+        assertEquals(0, narrower.getElementsByTagNameNS(REMEDIATIONS_NS, "FileChanges").getLength());
+        assertEquals(List.of("instance-A"), referencedIds(narrower, "CoveredByPriorFix"));
+    }
+
     private static final String REMEDIATIONS_NS = "xmlns://www.fortify.com/schema/remediations";
 
     private static AuditResponse coveredResponse(String issueId, List<String> coveredBy) {
@@ -233,6 +290,11 @@ class AuditProcessorAuditIsolationTest {
     }
 
     private static AuditResponse fixResponse(String issueId, int from, int to, String newCode, List<String> supersedes) {
+        return fixResponse(issueId, "Example.java", from, to, newCode, supersedes);
+    }
+
+    private static AuditResponse fixResponse(String issueId, String file, int from, int to, String newCode,
+            List<String> supersedes) {
         return AuditResponse.builder()
                 .issueId(issueId)
                 .status("SUCCESS")
@@ -242,7 +304,7 @@ class AuditProcessorAuditIsolationTest {
                         .comment("Fix for " + issueId)
                         .autoremediation(Autoremediation.builder()
                                 .changes(List.of(com.fortify.cli.aviator.audit.model.Change.builder()
-                                        .file("Example.java")
+                                        .file(file)
                                         .fromLine(String.valueOf(from))
                                         .toLine(String.valueOf(to))
                                         .replaceWith(newCode)

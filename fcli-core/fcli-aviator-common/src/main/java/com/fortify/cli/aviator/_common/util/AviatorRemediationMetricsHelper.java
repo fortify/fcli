@@ -126,6 +126,7 @@ public final class AviatorRemediationMetricsHelper {
         issueSkipReasons.values().forEach(reason -> skippedByReason.merge(reason, 1, Integer::sum));
         Set<String> totalIds = new LinkedHashSet<>(requestedIssueIds);
         totalIds.addAll(satisfiedIssueIds);
+        totalIds.addAll(issueSkipReasons.keySet());
         int skippedRemediations = totalIds.size() - satisfiedIssueIds.size();
         return RemediationMetric.builder()
                 .totalRemediations(totalIds.size())
