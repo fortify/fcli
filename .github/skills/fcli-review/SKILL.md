@@ -19,6 +19,8 @@ One review standard for everyone. The same checklist (Step 5) applies whether yo
 4. **Review only what the change touches.** Report pre-existing issues separately and do not block on them.
 5. **Always use the latest code.** Fetch fresh before every review and re-review, and confirm the commit SHA.
 6. **Be kind and specific.** Explain why, suggest the smallest safe fix, and phrase uncertain points as requests to confirm.
+7. **Post only comments that add value.** Each pending comment must be a specific, verified review comment or question on a line of code, written as a fellow peer would. Do not post praise, thanks, a verdict, a summary or an "approve with changes" note. Drop nits, duplicates of existing threads, and points you cannot verify or that change nothing for the author.
+8. **Verify delegated findings.** Treat the output of any sub-agent or tool pass (security, performance) as unverified. Re-read each cited location yourself before it becomes a finding, and say which points you could not confirm.
 
 ## Step 1: Detect context
 - Determine the target branch and base. Default base is `dev/v3.x`; release work targets its feature branch (for example `feat/v3.x/<area>/<release>`).
@@ -45,6 +47,11 @@ Read, then review explicitly against them. Do not restate their rules; cite them
 
 ## Step 4: Understand and verify before judging
 - Read the PR description, linked issues and commit messages. For PRs, verify any literal fenced changelog block matches the actual changes.
+- `peer` (and `self` on an existing PR): read all existing review comments, threads and author replies before judging, on the first pass as well as on re-reviews. GitHub: `gh api repos/<owner>/<repo>/pulls/<N>/comments --paginate` and `.../pulls/<N>/reviews`, plus `gh pr view <N> --comments`.
+  - For each thread record: reviewer, file:line, the concern, the author's reply, and the commit made after the comment.
+  - Check the reply is really in the head (read the code and the commits after the comment); do not trust the reply text.
+  - Classify each thread as addressed, partly addressed, declined with a reason, or open. Only reopen a declined or partial one with new evidence.
+  - Do not repeat a point already raised. A new finding related to a thread is a fresh comment that references it. Reply on an existing thread only when the user asks, since replies post immediately and cannot be part of a pending review.
 - Write down, in at most two sentences each, the **business use case** (requirement, who benefits) and the **behavior change** (what is added, removed or changed for users, scripts and API clients). Check traceability: every change maps to the requirement (flag scope creep), every acceptance criterion is implemented and tested, and the code solves the real problem, not only the literal wording. If the requirement is missing or unclear, ask; do not infer it.
 - Read the full final code of every changed production file, not only the diff.
 - Grep callers and remaining usages of anything added or changed (old overloads, defaults, duplicated helpers).
@@ -92,7 +99,7 @@ Read, then review explicitly against them. Do not restate their rules; cite them
 - Commit history is clean: squash fix-ups and reversals, and keep commit messages in conventional style (`feat:`, `fix:`, `chore:`).
 - User-visible behaviour changes have doc or changelog updates (do not hand-edit `CHANGELOG.md` unless the repo says so).
 
-**Positives**: note what is done well.
+**Positives** (for the user only, never posted): note what is done well.
 
 **Breaking changes and guardrails**
 - Assume existing behavior and contracts (command names, options, output columns and JSON, action YAML, `.proto` copies) are preserved. Recommend a breaking change only when current behavior is clearly wrong or unsafe and there is no reasonable non-breaking fix; then state the exact impact.
@@ -100,12 +107,14 @@ Read, then review explicitly against them. Do not restate their rules; cite them
 
 ## Step 6: Report findings (show the user first)
 - Severity: Critical (security, data loss, broken core flow; must fix), High (likely bug or contract break; fix before merge), Medium (real risk or maintainability problem; fix or justify), Low (nit or optimization; does not block), **Question** (unconfirmed or needs the author's input; never presented as a defect).
-- Review scope and verdict: Approve, Approve with changes, or Request changes (`self`: Ready to raise, or Fix first). State the review scope explicitly when you intentionally exclude modules or files.
+- Review scope and verdict: Approve, Approve with changes, or Request changes (`self`: Ready to raise, or Fix first). The verdict is for the user only and is never posted. State the review scope explicitly when you intentionally exclude modules or files.
 - Findings grouped by severity, each with:
   - `file:line` (new-file line numbers, on lines present in the diff)
   - the problem and why it matters in this specific change
   - a concrete fix or snippet
-- Then: Questions to the author (what you checked and what you need confirmed), pre-existing issues (not blocking), and what was verified versus not verified.
+- Then: **Existing threads** (per thread, its status (addressed, partly, declined, open) with evidence from the head commit, and whether a reply is warranted), Questions to the author (what you checked and what you need confirmed), pre-existing issues (not blocking), and what was verified versus not verified.
+- Avoid questions you can answer yourself (for example whether a copy matches another repository, or whether callers exist): check first and raise only what the author alone can answer.
+- Before asking for approval, mark each finding and question "post" or "drop", and say why for each drop.
 - Add test results and the exact commands used.
 - `peer`: comments are written to the author. Wait for the user's explicit OK or edits before posting anything.
 - `self`: do not change code unless the user asks. When asked, fix, re-run the affected tests and re-report.
@@ -114,15 +123,17 @@ Read, then review explicitly against them. Do not restate their rules; cite them
 - `self`: the report in Step 6 is the deliverable. Remind the user what is left before raising the PR.
 - `peer`: post as a **pending/draft review** only, with inline comments on the PR head SHA:
   - `gh api -X POST repos/<owner>/<repo>/pulls/<N>/reviews` with `commit_id`, `body` and `comments[]`, and **no `event` field**. Pipe the JSON through stdin (`--input -`); don't write temp files.
-  - For lines outside the diff, anchor to the nearest changed line and state the real location in the text. Put general remarks (verdict, history hygiene) in the review body.
+  - For lines outside the diff, anchor to the nearest changed line and state the real location in the text. Leave the review body empty: no summary, verdict, positives or history-hygiene remarks. Give those to the user in chat only.
   - **Never submit, publish, approve, request changes, merge or resolve.** The user does the final manual review in the UI.
   - If drafts are unsupported or posting fails, output ready-to-paste comments instead.
   - Finish with the review URL, the comment count and confirmation that the state is PENDING/draft. Remind the user which review branch is checked out and how to return to their previous branch.
 
 ## Step 8: Re-review after the author updates the PR
 - Fetch and verify the head SHA again (Step 2) before reading anything.
-- Review only the new commits and the replies on existing threads, compared with the previously reviewed SHA.
-- Withdraw or correct any earlier comment that turns out to be wrong, plainly and politely. Do not repeat comments that were already addressed.
+- Re-read every existing thread, including resolved ones, with the author's replies and the commits made after each comment (Step 4). Check in the head code that each reply is really implemented, and update each thread's status.
+- Review the new commits compared with the previously reviewed SHA. Also look at the rest of the change for anything the earlier pass missed, including problems the new commits introduce next to the fixes.
+- Withdraw or correct any earlier comment that turns out to be wrong, plainly and politely.
+- Do not repeat comments that were already addressed, and do not post replies that only confirm a fix or say thanks. Post a reply only when it adds a new, verified point.
 
 ## Cleanup
 - Never commit or push from a review checkout. When finished, offer to remove the review branch or worktree and let the user decide.
