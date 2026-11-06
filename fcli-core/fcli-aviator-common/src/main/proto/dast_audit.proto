@@ -19,6 +19,8 @@ message DastAuditStreamInitRequest {
   optional string fprBuildId = 7;
   optional string sscApplicationName = 8;
   optional string sscApplicationVersion = 9;
+  // See issue.StreamInitRequest.operation_id.
+  string operation_id = 10;
 }
 
 message DastAuditClientMessage {

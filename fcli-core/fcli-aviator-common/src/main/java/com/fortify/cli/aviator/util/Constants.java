@@ -80,6 +80,7 @@ public class Constants {
     public static final String OP_CREATE_APP = "application creation";
     public static final String OP_ADD_APP_ENTITLEMENT = "application entitlement increment";
     public static final String OP_REDUCE_APP_ENTITLEMENT = "application entitlement reduction";
+    public static final String OP_GET_SERVER_CAPABILITIES = "retrieving server capabilities";
     public static final String OP_UPDATE_APP = "application update";
     public static final String OP_DELETE_APP = "application deletion";
     public static final String OP_GET_APP = "retrieving application";

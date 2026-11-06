@@ -85,7 +85,11 @@ class NativeReflectConfigTest {
             "com.fortify.aviator.application.ApplicationResponseMessage$Builder",
             "com.fortify.aviator.application.ApplicationMultiplierOperationResponse",
             "com.fortify.aviator.application.ApplicationMultiplierOperationResponse$Builder",
-            "com.fortify.aviator.application.ApplicationMultiplierOutcome"
+            "com.fortify.aviator.application.ApplicationMultiplierOutcome",
+            "com.fortify.aviator.application.ServerCapabilities",
+            "com.fortify.aviator.application.ServerCapabilities$Builder",
+            "com.google.rpc.ErrorInfo",
+            "com.google.rpc.RetryInfo"
     })
     void testApplicationResponseReflection(String className) throws IOException {
         var entry = getReflectConfigEntry(loadReflectConfig(GRPC_REFLECT_CONFIG), className);

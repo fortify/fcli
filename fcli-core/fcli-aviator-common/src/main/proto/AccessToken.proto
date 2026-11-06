@@ -24,6 +24,10 @@ message TokenGenerationRequest {
   string message = 4;  // format: "developerEmail;tokenName;startDate;endDate;timestamp"
   string tenant_name = 5;
   string end_date = 6;  // Optional
+  // Lowercase UUIDv7 reused on every retry. When set, `message` must end with
+  // ";<fully qualified method>;<operation_id>;<timestamp>". Duplicates are answered with
+  // OPERATION_ALREADY_COMPLETED: the token value is never stored, so it cannot be shown a second time.
+  string operation_id = 7;
 }
 
 message TokenGenerationResponse {
@@ -62,11 +66,13 @@ message RevokeTokenRequest {
   string tenant_name = 3;
   string request_signature = 4;
   string message = 5;  // format: "token;email;tenantName;timestamp"
+  string operation_id = 6;  // see TokenGenerationRequest.operation_id
 }
 
 message RevokeTokenResponse {
   bool success = 1;
   string error_message = 2;
+  bool operation_replayed = 3;
 }
 
 // List all tokens for tenant - customer admin identified via signature
@@ -113,9 +119,11 @@ message DeleteTokenRequest {
   string tenant_name = 3;
   string request_signature = 4;
   string message = 5;  // format: "token;email;tenantName;timestamp"
+  string operation_id = 6;  // see TokenGenerationRequest.operation_id
 }
 
 message DeleteTokenResponse {
   bool success = 1;
   string error_message = 2;
+  bool operation_replayed = 3;
 }

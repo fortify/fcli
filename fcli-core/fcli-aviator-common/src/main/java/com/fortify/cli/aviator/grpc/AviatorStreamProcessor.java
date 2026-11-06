@@ -524,9 +524,12 @@ class AviatorStreamProcessor implements AutoCloseable {
 
     private void sendInitRequest() throws Exception {
         String initRequestId = UUID.randomUUID().toString();
+        // A reconnect never resumes the previous stream (the server finalizes it), so every attempt is a new operation.
+        currentStreamState.operationId = AviatorOperationId.generate();
         StreamInitRequest.Builder initRequestBuilder = StreamInitRequest.newBuilder()
             .setStreamId(currentStreamState.streamId)
             .setRequestId(initRequestId)
+            .setOperationId(currentStreamState.operationId)
             .setToken(currentStreamState.token)
             .setApplicationName(currentStreamState.projectName)
             .setSscApplicationName(currentStreamState.SSCApplicationName)
