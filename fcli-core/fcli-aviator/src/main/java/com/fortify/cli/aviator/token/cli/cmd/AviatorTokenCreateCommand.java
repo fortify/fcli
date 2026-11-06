@@ -28,6 +28,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.aviator._common.config.admin.helper.AviatorAdminConfigDescriptor;
 import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
 import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
+import com.fortify.cli.aviator._common.operation.cli.mixin.AviatorOperationIdMixin;
 import com.fortify.cli.aviator._common.output.cli.cmd.AbstractAviatorAdminSessionOutputCommand;
 import com.fortify.cli.aviator._common.util.AviatorGrpcUtils;
 import com.fortify.cli.aviator._common.util.AviatorSignatureUtils;
@@ -46,6 +47,7 @@ import picocli.CommandLine.Option;
 @Command(name = OutputHelperMixins.CreateWithDetailsOutput.CMD_NAME)
 public class AviatorTokenCreateCommand extends AbstractAviatorAdminSessionOutputCommand implements IActionCommandResultSupplier {
     @Getter @Mixin private OutputHelperMixins.CreateWithDetailsOutput outputHelper;
+    @Mixin private AviatorOperationIdMixin operationIdMixin;
     @Option(names = {"-e", "--email"}, required = true) private String email;
     @Option(names = {"-n", "--name"}) private String customTokenName;
     @Option(names = {"--end-date"}) private String endDate;
@@ -58,23 +60,18 @@ public class AviatorTokenCreateCommand extends AbstractAviatorAdminSessionOutput
     @Override
     protected JsonNode getJsonNode(AviatorAdminConfigDescriptor configDescriptor) throws AviatorSimpleException, AviatorTechnicalException {
         try (AviatorGrpcClient client = AviatorGrpcClientHelper.createClient(configDescriptor.getAviatorUrl())) {
-            String[] messageAndSignature = createMessageAndSignature(configDescriptor);
-            TokenGenerationResponse response = generateToken(client, configDescriptor, messageAndSignature);
+            TokenGenerationResponse response = generateToken(client, configDescriptor);
             return processTokenResponse(response);
         }
     }
 
-    private String[] createMessageAndSignature(AviatorAdminConfigDescriptor configDescriptor) {
+    private TokenGenerationResponse generateToken(AviatorGrpcClient client, AviatorAdminConfigDescriptor configDescriptor) {
+        // The message carries the creation date; it is fixed per run so that every retry signs the same payload.
         String currentDate = CURRENT_DATE_FORMATTER.format(Instant.now().atOffset(ZoneOffset.UTC));
         String safeCustomTokenName = customTokenName == null ? "" : customTokenName;
         String safeEndDate = endDate == null ? "" : endDate;
-        return AviatorSignatureUtils.createMessageAndSignature(configDescriptor, email, safeCustomTokenName, currentDate, safeEndDate);
-    }
-
-    private TokenGenerationResponse generateToken(AviatorGrpcClient client, AviatorAdminConfigDescriptor configDescriptor, String[] messageAndSignature) {
-        String message = messageAndSignature[0];
-        String signature = messageAndSignature[1];
-        return client.generateToken(email, customTokenName, signature, message, configDescriptor.getTenant(), endDate);
+        return client.generateToken(email, customTokenName, endDate, configDescriptor.getTenant(), operationIdMixin.getOperationId(),
+                AviatorSignatureUtils.operationSigner(configDescriptor, email, safeCustomTokenName, currentDate, safeEndDate));
     }
 
     private JsonNode processTokenResponse(TokenGenerationResponse response) {

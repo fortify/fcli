@@ -12,8 +12,11 @@
  */
 package com.fortify.cli.aviator.grpc;
 
+import java.time.Clock;
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
@@ -30,12 +33,14 @@ import com.fortify.aviator.application.ApplicationById;
 import com.fortify.aviator.application.ApplicationByName;
 import com.fortify.aviator.application.ApplicationByTenantName;
 import com.fortify.aviator.application.ApplicationList;
+import com.fortify.aviator.application.ApplicationMultiplierOperationResponse;
 import com.fortify.aviator.application.ApplicationResponseMessage;
 import com.fortify.aviator.application.ApplicationServiceGrpc;
 import com.fortify.aviator.application.CreateApplicationRequest;
 import com.fortify.aviator.application.GetApplicationByTokenRequest;
 import com.fortify.aviator.application.GetDefaultQuotaRequest;
 import com.fortify.aviator.application.GetDefaultQuotaResponse;
+import com.fortify.aviator.application.ServerCapabilities;
 import com.fortify.aviator.application.UpdateApplicationRequest;
 import com.fortify.aviator.application.ValidateAdminSessionRequest;
 import com.fortify.aviator.dastaudit.DastAuditServiceGrpc;
@@ -58,6 +63,7 @@ import com.fortify.cli.aviator.fpr.model.FVDLMetadata;
 import com.fortify.cli.aviator.fpr.utils.ISourceDecoder;
 import com.fortify.cli.aviator.util.Constants;
 import com.fortify.cli.aviator.util.FprHandle;
+import com.fortify.cli.aviator.util.StringUtil;
 import com.fortify.grpc.token.DeleteTokenRequest;
 import com.fortify.grpc.token.DeleteTokenResponse;
 import com.fortify.grpc.token.ListTokensByDeveloperRequest;
@@ -76,6 +82,8 @@ import io.grpc.CompressorRegistry;
 import io.grpc.DecompressorRegistry;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import io.grpc.Status;
+import io.grpc.StatusRuntimeException;
 
 public class AviatorGrpcClient implements AutoCloseable {
     private static final Logger LOG = LoggerFactory.getLogger(AviatorGrpcClient.class);
@@ -188,32 +196,129 @@ public class AviatorGrpcClient implements AutoCloseable {
         LOG.debug("Client closed");
     }
 
-    public Application createApplication(String name, String tenantName, String signature, String message) {
-        CreateApplicationRequest request = CreateApplicationRequest.newBuilder().setName(name).setTenantName(tenantName).setSignature(signature).setMessage(message).build();
-        return GrpcUtil.executeGrpcCall(blockingStub, ApplicationServiceGrpc.ApplicationServiceBlockingStub::createApplication, request, Constants.OP_CREATE_APP);
-    }
+    // ------------------------------------------------------------------------------------------------
+    // Replay protection: capability negotiation and state-changing calls
+    // ------------------------------------------------------------------------------------------------
 
-    public Application updateApplication(String projectId, String newName, String signature, String message, String tenantName) {
-        UpdateApplicationRequest request = UpdateApplicationRequest.newBuilder().setId(Long.parseLong(projectId)).setName(newName).setTenantName(tenantName).setSignature(signature).setMessage(message).build();
-        return GrpcUtil.executeGrpcCall(blockingStub, ApplicationServiceGrpc.ApplicationServiceBlockingStub::updateApplication, request, Constants.OP_UPDATE_APP);
-    }
+    private volatile Optional<ServerCapabilities> serverCapabilities;
 
-    public Application addEntitlement(String projectId, String signature, String message, String tenantName) {
-        ApplicationById request = ApplicationById.newBuilder().setId(Long.parseLong(projectId)).setSignature(signature).setMessage(message).setTenantName(tenantName).build();
-        return GrpcUtil.executeGrpcCall(blockingStub, ApplicationServiceGrpc.ApplicationServiceBlockingStub::addEntitlement, request, Constants.OP_ADD_APP_ENTITLEMENT);
-    }
-
-        public com.fortify.aviator.application.ApplicationMultiplierOperationResponse reduceEntitlement(
-            String projectId, String signature, String message, String tenantName) {
-        ApplicationById request = ApplicationById.newBuilder().setId(Long.parseLong(projectId)).setSignature(signature)
-            .setMessage(message).setTenantName(tenantName).build();
-        return GrpcUtil.executeGrpcCall(blockingStub, ApplicationServiceGrpc.ApplicationServiceBlockingStub::reduceEntitlement,
-            request, Constants.OP_REDUCE_APP_ENTITLEMENT);
+    /**
+     * Capabilities advertised by the server, or empty when the server predates replay protection
+     * ({@code UNIMPLEMENTED}). Cached for the lifetime of the client.
+     */
+    public Optional<ServerCapabilities> getServerCapabilities() {
+        Optional<ServerCapabilities> cached = serverCapabilities;
+        if (cached == null) {
+            try {
+                cached = Optional.of(blockingStub.withDeadlineAfter(Constants.DEFAULT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+                        .getServerCapabilities(com.google.protobuf.Empty.getDefaultInstance()));
+            } catch (StatusRuntimeException e) {
+                if (e.getStatus().getCode() != Status.Code.UNIMPLEMENTED) {
+                    throw GrpcUtil.toAviatorException(e, Constants.OP_GET_SERVER_CAPABILITIES, null);
+                }
+                cached = Optional.empty();
+            }
+            serverCapabilities = cached;
         }
+        return cached;
+    }
 
-        public ApplicationResponseMessage deleteApplication(String projectId, String signature, String message, String tenantName) {
-        ApplicationById request = ApplicationById.newBuilder().setId(Long.parseLong(projectId)).setSignature(signature).setMessage(message).setTenantName(tenantName).build();
-        return GrpcUtil.executeGrpcCall(blockingStub, ApplicationServiceGrpc.ApplicationServiceBlockingStub::deleteApplication, request, Constants.OP_DELETE_APP);
+    /**
+     * Chooses the operation id for one logical operation. A user supplied id (a retry of an earlier run) is
+     * validated; otherwise a new UUIDv7 is generated. Returns {@code null} when the server does not support
+     * operation ids, in which case the legacy signed message is used and the call is never retried.
+     */
+    String resolveOperationId(String requestedOperationId) {
+        Optional<ServerCapabilities> capabilities = getServerCapabilities();
+        if (capabilities.isEmpty()) {
+            if (requestedOperationId != null) {
+                throw new AviatorSimpleException("This Aviator server does not support operation IDs, so --operation-id cannot be honored. "
+                        + "Upgrade the Aviator server, or omit --operation-id (the command then cannot be retried safely).");
+            }
+            LOG.warn("The Aviator server does not support operation IDs; this request cannot be retried safely after an unknown outcome.");
+            return null;
+        }
+        if (requestedOperationId == null) {
+            return AviatorOperationId.generate();
+        }
+        if (!AviatorOperationId.isValid(requestedOperationId)) {
+            throw new AviatorSimpleException("Invalid --operation-id '" + requestedOperationId
+                    + "'. Use the exact operation ID printed by the failed run (a lowercase UUIDv7).");
+        }
+        long maxAgeSeconds = capabilities.get().getOperationIdMaxAgeSeconds();
+        Duration maxAge = maxAgeSeconds > 0 ? Duration.ofSeconds(maxAgeSeconds) : AviatorOperationId.DEFAULT_MAX_AGE;
+        if (AviatorOperationId.isExpired(requestedOperationId, maxAge, Clock.systemUTC())) {
+            throw new AviatorSimpleException("Operation ID " + requestedOperationId + " is older than " + maxAge.toHours()
+                    + " hours and can no longer be deduplicated by the server. Check the current state with the corresponding "
+                    + "list or get command; if the change was not applied, run the command again without --operation-id.");
+        }
+        return requestedOperationId;
+    }
+
+    private <S extends io.grpc.stub.AbstractBlockingStub<S>, T, R> R executeMutation(S stub, String operation, String fullMethodName,
+            String requestedOperationId, AviatorRequestSigner signer,
+            java.util.function.BiFunction<AviatorRequestSigner.SignedRequest, String, T> requestFactory,
+            GrpcUtil.GrpcCall<S, T, R> call) {
+        String operationId = resolveOperationId(requestedOperationId);
+        if (operationId != null) {
+            LOG.info("{} uses operation ID {}", operation, operationId);
+        }
+        return GrpcUtil.executeMutationCall(stub, call,
+                () -> requestFactory.apply(signer.sign(fullMethodName, operationId), operationId), operation, operationId);
+    }
+
+    public Application createApplication(String name, String tenantName, String requestedOperationId, AviatorRequestSigner signer) {
+        return executeMutation(blockingStub, Constants.OP_CREATE_APP,
+                ApplicationServiceGrpc.getCreateApplicationMethod().getFullMethodName(), requestedOperationId, signer,
+                (signed, operationId) -> withOperationId(CreateApplicationRequest.newBuilder().setName(name).setTenantName(tenantName)
+                        .setSignature(signed.signature()).setMessage(signed.message()), operationId),
+                ApplicationServiceGrpc.ApplicationServiceBlockingStub::createApplication);
+    }
+
+    public Application updateApplication(String projectId, String newName, String tenantName, String requestedOperationId, AviatorRequestSigner signer) {
+        return executeMutation(blockingStub, Constants.OP_UPDATE_APP,
+                ApplicationServiceGrpc.getUpdateApplicationMethod().getFullMethodName(), requestedOperationId, signer,
+                (signed, operationId) -> withOperationId(UpdateApplicationRequest.newBuilder().setId(Long.parseLong(projectId)).setName(newName)
+                        .setTenantName(tenantName).setSignature(signed.signature()).setMessage(signed.message()), operationId),
+                ApplicationServiceGrpc.ApplicationServiceBlockingStub::updateApplication);
+    }
+
+    public Application addEntitlement(String projectId, String tenantName, String requestedOperationId, AviatorRequestSigner signer) {
+        return executeMutation(blockingStub, Constants.OP_ADD_APP_ENTITLEMENT,
+                ApplicationServiceGrpc.getAddEntitlementMethod().getFullMethodName(), requestedOperationId, signer,
+                (signed, operationId) -> applicationById(projectId, tenantName, signed, operationId),
+                ApplicationServiceGrpc.ApplicationServiceBlockingStub::addEntitlement);
+    }
+
+    public ApplicationMultiplierOperationResponse reduceEntitlement(String projectId, String tenantName, String requestedOperationId, AviatorRequestSigner signer) {
+        return executeMutation(blockingStub, Constants.OP_REDUCE_APP_ENTITLEMENT,
+                ApplicationServiceGrpc.getReduceEntitlementMethod().getFullMethodName(), requestedOperationId, signer,
+                (signed, operationId) -> applicationById(projectId, tenantName, signed, operationId),
+                ApplicationServiceGrpc.ApplicationServiceBlockingStub::reduceEntitlement);
+    }
+
+    public ApplicationResponseMessage deleteApplication(String projectId, String tenantName, String requestedOperationId, AviatorRequestSigner signer) {
+        return executeMutation(blockingStub, Constants.OP_DELETE_APP,
+                ApplicationServiceGrpc.getDeleteApplicationMethod().getFullMethodName(), requestedOperationId, signer,
+                (signed, operationId) -> applicationById(projectId, tenantName, signed, operationId),
+                ApplicationServiceGrpc.ApplicationServiceBlockingStub::deleteApplication);
+    }
+
+    private static ApplicationById applicationById(String projectId, String tenantName, AviatorRequestSigner.SignedRequest signed, String operationId) {
+        ApplicationById.Builder builder = ApplicationById.newBuilder().setId(Long.parseLong(projectId)).setSignature(signed.signature())
+                .setMessage(signed.message()).setTenantName(tenantName);
+        if (operationId != null) {
+            builder.setOperationId(operationId);
+        }
+        return builder.build();
+    }
+
+    private static CreateApplicationRequest withOperationId(CreateApplicationRequest.Builder builder, String operationId) {
+        return operationId == null ? builder.build() : builder.setOperationId(operationId).build();
+    }
+
+    private static UpdateApplicationRequest withOperationId(UpdateApplicationRequest.Builder builder, String operationId) {
+        return operationId == null ? builder.build() : builder.setOperationId(operationId).build();
     }
 
     public Application getApplication(String projectId, String signature, String message, String tenantName) {
@@ -269,9 +374,16 @@ public class AviatorGrpcClient implements AutoCloseable {
         return applicationList.getApplicationsList();
     }
 
-    public TokenGenerationResponse generateToken(String email, String tokenName, String signature, String message, String tenantName, String endDate) {
-        TokenGenerationRequest request = TokenGenerationRequest.newBuilder().setEmail(email != null ? email : "").setCustomTokenName(tokenName != null ? tokenName : "").setRequestSignature(signature).setEndDate(com.fortify.cli.aviator.util.StringUtil.isEmpty(endDate) ? "" : endDate).setMessage(message).setTenantName(tenantName).build();
-        return GrpcUtil.executeGrpcCall(tokenServiceBlockingStub, TokenServiceGrpc.TokenServiceBlockingStub::generateToken, request, Constants.OP_GENERATE_TOKEN);
+    public TokenGenerationResponse generateToken(String email, String tokenName, String endDate, String tenantName, String requestedOperationId, AviatorRequestSigner signer) {
+        return executeMutation(tokenServiceBlockingStub, Constants.OP_GENERATE_TOKEN,
+                TokenServiceGrpc.getGenerateTokenMethod().getFullMethodName(), requestedOperationId, signer,
+                (signed, operationId) -> {
+                    TokenGenerationRequest.Builder builder = TokenGenerationRequest.newBuilder().setEmail(email != null ? email : "")
+                            .setCustomTokenName(tokenName != null ? tokenName : "").setRequestSignature(signed.signature())
+                            .setEndDate(StringUtil.isEmpty(endDate) ? "" : endDate).setMessage(signed.message()).setTenantName(tenantName);
+                    return operationId == null ? builder.build() : builder.setOperationId(operationId).build();
+                },
+                TokenServiceGrpc.TokenServiceBlockingStub::generateToken);
     }
 
     public ListTokensResponse listTokens(String email, String tenantName, String signature, String message) {
@@ -288,14 +400,26 @@ public class AviatorGrpcClient implements AutoCloseable {
         return GrpcUtil.executeGrpcCall(tokenServiceBlockingStub, TokenServiceGrpc.TokenServiceBlockingStub::listTokensByDeveloper, request, Constants.OP_LIST_TOKENS_BY_DEVELOPER);
     }
 
-    public RevokeTokenResponse revokeToken(String token, String email, String tenantName, String signature, String message) {
-        RevokeTokenRequest request = RevokeTokenRequest.newBuilder().setToken(token).setTenantName(tenantName).setRequestSignature(signature).setMessage(message).build();
-        return GrpcUtil.executeGrpcCall(tokenServiceBlockingStub, TokenServiceGrpc.TokenServiceBlockingStub::revokeToken, request, Constants.OP_REVOKE_TOKEN);
+    public RevokeTokenResponse revokeToken(String token, String tenantName, String requestedOperationId, AviatorRequestSigner signer) {
+        return executeMutation(tokenServiceBlockingStub, Constants.OP_REVOKE_TOKEN,
+                TokenServiceGrpc.getRevokeTokenMethod().getFullMethodName(), requestedOperationId, signer,
+                (signed, operationId) -> {
+                    RevokeTokenRequest.Builder builder = RevokeTokenRequest.newBuilder().setToken(token).setTenantName(tenantName)
+                            .setRequestSignature(signed.signature()).setMessage(signed.message());
+                    return operationId == null ? builder.build() : builder.setOperationId(operationId).build();
+                },
+                TokenServiceGrpc.TokenServiceBlockingStub::revokeToken);
     }
 
-    public DeleteTokenResponse deleteToken(String token, String email, String tenantName, String signature, String message) {
-        DeleteTokenRequest request = DeleteTokenRequest.newBuilder().setToken(token).setTenantName(tenantName).setRequestSignature(signature).setMessage(message).build();
-        return GrpcUtil.executeGrpcCall(tokenServiceBlockingStub, TokenServiceGrpc.TokenServiceBlockingStub::deleteToken, request, Constants.OP_DELETE_TOKEN);
+    public DeleteTokenResponse deleteToken(String token, String tenantName, String requestedOperationId, AviatorRequestSigner signer) {
+        return executeMutation(tokenServiceBlockingStub, Constants.OP_DELETE_TOKEN,
+                TokenServiceGrpc.getDeleteTokenMethod().getFullMethodName(), requestedOperationId, signer,
+                (signed, operationId) -> {
+                    DeleteTokenRequest.Builder builder = DeleteTokenRequest.newBuilder().setToken(token).setTenantName(tenantName)
+                            .setRequestSignature(signed.signature()).setMessage(signed.message());
+                    return operationId == null ? builder.build() : builder.setOperationId(operationId).build();
+                },
+                TokenServiceGrpc.TokenServiceBlockingStub::deleteToken);
     }
 
     public TokenValidationResponse validateToken(String token, String tenantName, String signature, String message) {

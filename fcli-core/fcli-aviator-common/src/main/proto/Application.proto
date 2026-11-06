@@ -28,6 +28,8 @@ message Application {
   optional int64 operation_allocation_quota = 16;
   optional int64 previous_multiplier = 17;
   optional string operation_message = 18;
+  // True when this response is the stored result of an earlier attempt with the same operation_id.
+  optional bool operation_replayed = 19;
 }
 
 enum ApplicationMultiplierOutcome {
@@ -35,7 +37,8 @@ enum ApplicationMultiplierOutcome {
   FRESH_ALLOCATION_CREATED = 1;
   INACTIVE_ALLOCATION_REACTIVATED = 2;
   MULTIPLIER_REDUCED = 3;
-  NO_CAPACITY = 4;
+  // Retained for generated-client compatibility; capacity failures use non-OK RPC statuses.
+  NO_CAPACITY = 4 [deprecated = true];
 }
 
 message ApplicationMultiplierOperationResponse {
@@ -46,13 +49,23 @@ message ApplicationMultiplierOperationResponse {
   ApplicationMultiplierOutcome outcome = 5;
   string message = 6;
   Application application = 7;
+  // True when this response is the stored result of an earlier attempt with the same operation_id.
+  bool operation_replayed = 8;
 }
 
+// Mutating requests carry an operation_id (lowercase UUIDv7, generated once per logical operation and
+// reused on every retry). When set, the signed `message` must end with
+//   ;<fully qualified method>;<operation_id>;<timestamp>
+// so that the signature binds the caller, tenant, method, payload and operation id. A retry must be
+// re-signed with a fresh timestamp but keeps the same operation_id and payload.
+// Clients that omit operation_id are served in compatibility mode (aviator.grpc.replay.mode=COMPATIBLE, the default)
+// and are deduplicated by their exact signed message.
 message CreateApplicationRequest {
   string name = 1;
   string tenantName = 2;
   string signature = 3;
   string message = 4;
+  string operation_id = 5;
 }
 
 message UpdateApplicationRequest {
@@ -61,13 +74,16 @@ message UpdateApplicationRequest {
   string signature = 3;
   string message = 4;
   string tenantName = 5;
+  string operation_id = 6;
 }
 
+// operation_id is honoured by AddEntitlement, ReduceEntitlement and DeleteApplication and ignored by reads.
 message ApplicationById {
   int64 id = 1;
   string signature = 2;
   string message = 3;
   string tenantName = 4;
+  string operation_id = 5;
 }
 
 message ApplicationByName {
@@ -95,6 +111,21 @@ message ApplicationList {
 
 message ApplicationResponseMessage {
   string responseMessage = 1;
+  // True when this response is the stored result of an earlier attempt with the same operation_id.
+  bool operation_replayed = 2;
+}
+
+// Public, unauthenticated, side-effect free. Old servers answer UNIMPLEMENTED, which clients treat as
+// "replay protection not supported".
+message ServerCapabilities {
+  // 0 is never returned by a server that implements this RPC; protocol 1 = operation ids and method-bound signatures.
+  int32 replay_protocol_version = 1;
+  // True when the server rejects mutations that do not carry an operation_id.
+  bool operation_id_required = 2;
+  // Operation ids older than this are rejected as expired and are never executed.
+  int64 operation_id_max_age_seconds = 3;
+  // Maximum age of the signed timestamp; retries must be re-signed within this window.
+  int64 message_max_age_seconds = 4;
 }
 
 message GetApplicationByTokenRequest {
@@ -113,6 +144,14 @@ message GetDefaultQuotaResponse {
   int64 default_quota = 1;
 }
 
+// Allocation failures use non-OK gRPC statuses with google.rpc.ErrorInfo:
+// domain "aviator.application", reason INVALID_ARGUMENT, NOT_FOUND,
+// FAILED_PRECONDITION, or APPLICATION_BUSY. Reasons do not imply a safe retry.
+//
+// Replay and duplicate failures use google.rpc.ErrorInfo domain "aviator.operation" with reasons
+// OPERATION_ID_REQUIRED, OPERATION_ID_INVALID, OPERATION_ID_EXPIRED, OPERATION_ID_REUSED,
+// OPERATION_BINDING_MISMATCH, OPERATION_IN_PROGRESS (ABORTED, retry the same id) and
+// OPERATION_ALREADY_COMPLETED.
 service ApplicationService {
   rpc CreateApplication(CreateApplicationRequest) returns (Application) {}
   rpc GetApplication(ApplicationById) returns (Application) {}
@@ -127,4 +166,5 @@ service ApplicationService {
   rpc ListApplicationsByEntitlement(ApplicationById) returns (ApplicationList) {}
   rpc GetApplicationByToken(GetApplicationByTokenRequest) returns (Application) {}
   rpc GetDefaultQuota(GetDefaultQuotaRequest) returns (GetDefaultQuotaResponse) {}
+  rpc GetServerCapabilities(google.protobuf.Empty) returns (ServerCapabilities) {}
 }

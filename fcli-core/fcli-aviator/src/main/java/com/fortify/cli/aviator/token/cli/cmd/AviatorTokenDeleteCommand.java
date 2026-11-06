@@ -21,6 +21,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.aviator._common.config.admin.helper.AviatorAdminConfigDescriptor;
 import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
 import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
+import com.fortify.cli.aviator._common.operation.cli.mixin.AviatorOperationIdMixin;
 import com.fortify.cli.aviator._common.output.cli.cmd.AbstractAviatorAdminSessionOutputCommand;
 import com.fortify.cli.aviator._common.session.user.cli.mixin.AviatorUserTokenResolverMixin;
 import com.fortify.cli.aviator._common.util.AviatorSignatureUtils;
@@ -37,6 +38,7 @@ import picocli.CommandLine.Option;
 @Command(name = OutputHelperMixins.Delete.CMD_NAME)
 public class AviatorTokenDeleteCommand extends AbstractAviatorAdminSessionOutputCommand {
     @Getter @Mixin private OutputHelperMixins.Delete outputHelper;
+    @Mixin private AviatorOperationIdMixin operationIdMixin;
     @Option(names = {"-e", "--email"}) private String email;
     @Mixin @Getter private AviatorUserTokenResolverMixin tokenResolver;
     private static final Logger LOG = LoggerFactory.getLogger(AviatorTokenDeleteCommand.class);
@@ -46,20 +48,11 @@ public class AviatorTokenDeleteCommand extends AbstractAviatorAdminSessionOutput
         String tokenToDelete = tokenResolver.getToken();
 
         try (AviatorGrpcClient client = AviatorGrpcClientHelper.createClient(configDescriptor.getAviatorUrl())) {
-            String[] messageAndSignature = createMessageAndSignature(configDescriptor, tokenToDelete);
-            DeleteTokenResponse response = deleteToken(client, configDescriptor, messageAndSignature, tokenToDelete);
+            DeleteTokenResponse response = client.deleteToken(tokenToDelete, configDescriptor.getTenant(),
+                    operationIdMixin.getOperationId(),
+                    AviatorSignatureUtils.operationSigner(configDescriptor, tokenToDelete, email, configDescriptor.getTenant()));
             return processDeleteResponse(response, tokenToDelete);
         }
-    }
-
-    private String[] createMessageAndSignature(AviatorAdminConfigDescriptor configDescriptor, String tokenToDelete) {
-        return AviatorSignatureUtils.createMessageAndSignature(configDescriptor, tokenToDelete, email, configDescriptor.getTenant());
-    }
-
-    private DeleteTokenResponse deleteToken(AviatorGrpcClient client, AviatorAdminConfigDescriptor configDescriptor, String[] messageAndSignature, String tokenToDelete) {
-        String message = messageAndSignature[0];
-        String signature = messageAndSignature[1];
-        return client.deleteToken(tokenToDelete, email, configDescriptor.getTenant(), signature, message);
     }
 
     private JsonNode processDeleteResponse(DeleteTokenResponse response, String tokenToDelete) {
