@@ -1,11 +1,5 @@
 # Changelog
 
-## Unreleased
-
-### Features
-
-* `fcli aviator`: Set the SAST Aviator status according to remediation availability and support both status values in FPR and SSC.
-
 ## [3.30.0](https://github.com/fortify/fcli/compare/v3.29.1...v3.30.0) (2026-11-12)
 
 
