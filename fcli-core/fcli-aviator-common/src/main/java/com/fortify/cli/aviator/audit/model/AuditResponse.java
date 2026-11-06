@@ -26,7 +26,7 @@ import lombok.RequiredArgsConstructor;
 @Data
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @NoArgsConstructor
-@Builder
+@Builder(toBuilder = true)
 @Reflectable
 public class AuditResponse {
     @Getter

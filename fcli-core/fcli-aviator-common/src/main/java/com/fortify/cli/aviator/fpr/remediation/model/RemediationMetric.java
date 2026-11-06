@@ -35,6 +35,9 @@ public final class RemediationMetric {
     private final int identicalRemediations;
     private final int supersededRemediations;
     private final int possiblyRemediatedRemediations;
+    private final int coveredByPriorFixRemediations;
+    private final int supersedesPriorFixRemediations;
+    private final int remediatedRemediations;
     private final int skippedRemediations;
     private final Set<String> modifiedFiles;
     private final Map<String, Integer> skippedByReason;
@@ -46,6 +49,9 @@ public final class RemediationMetric {
     private final Set<String> identicalIssueIds;
     private final Set<String> supersededIssueIds;
     private final Set<String> possiblyRemediatedIssueIds;
+    private final Map<String, List<String>> coveredByPriorFixIssues;
+    private final Map<String, List<String>> supersededByPriorFixIssues;
+    private final Set<String> implicitlyAppliedIssueIds;
     private final Map<String, String> issueSkipReasons;
     private final List<PreviewDetail> previewDetails;
 
@@ -56,6 +62,9 @@ public final class RemediationMetric {
             int identicalRemediations,
             int supersededRemediations,
             int possiblyRemediatedRemediations,
+            int coveredByPriorFixRemediations,
+            int supersedesPriorFixRemediations,
+            int remediatedRemediations,
             int skippedRemediations,
             Set<String> modifiedFiles,
             Map<String, Integer> skippedByReason,
@@ -67,6 +76,9 @@ public final class RemediationMetric {
             Set<String> identicalIssueIds,
             Set<String> supersededIssueIds,
             Set<String> possiblyRemediatedIssueIds,
+            Map<String, List<String>> coveredByPriorFixIssues,
+            Map<String, List<String>> supersededByPriorFixIssues,
+            Set<String> implicitlyAppliedIssueIds,
             Map<String, String> issueSkipReasons,
             List<PreviewDetail> previewDetails) {
         this.totalRemediations = totalRemediations;
@@ -74,6 +86,9 @@ public final class RemediationMetric {
         this.identicalRemediations = identicalRemediations;
         this.supersededRemediations = supersededRemediations;
         this.possiblyRemediatedRemediations = possiblyRemediatedRemediations;
+        this.coveredByPriorFixRemediations = coveredByPriorFixRemediations;
+        this.supersedesPriorFixRemediations = supersedesPriorFixRemediations;
+        this.remediatedRemediations = remediatedRemediations;
         this.skippedRemediations = skippedRemediations;
         this.modifiedFiles = immutableSet(modifiedFiles);
         this.skippedByReason = immutableMap(skippedByReason);
@@ -85,6 +100,9 @@ public final class RemediationMetric {
         this.identicalIssueIds = immutableSet(identicalIssueIds);
         this.supersededIssueIds = immutableSet(supersededIssueIds);
         this.possiblyRemediatedIssueIds = immutableSet(possiblyRemediatedIssueIds);
+        this.coveredByPriorFixIssues = immutableListMap(coveredByPriorFixIssues);
+        this.supersededByPriorFixIssues = immutableListMap(supersededByPriorFixIssues);
+        this.implicitlyAppliedIssueIds = immutableSet(implicitlyAppliedIssueIds);
         this.issueSkipReasons = immutableStringMap(issueSkipReasons);
         this.previewDetails = previewDetails == null ? List.of() : List.copyOf(previewDetails);
     }
@@ -105,6 +123,15 @@ public final class RemediationMetric {
         return values == null ? Map.of() : Collections.unmodifiableMap(new LinkedHashMap<>(values));
     }
 
+    private static Map<String, List<String>> immutableListMap(Map<String, List<String>> values) {
+        if (values == null) {
+            return Map.of();
+        }
+        Map<String, List<String>> copy = new LinkedHashMap<>();
+        values.forEach((key, list) -> copy.put(key, list == null ? List.of() : List.copyOf(list)));
+        return Collections.unmodifiableMap(copy);
+    }
+
     private static Map<String, String> immutableStringMap(Map<String, String> values) {
         return values == null ? Map.of() : Collections.unmodifiableMap(new LinkedHashMap<>(values));
     }
@@ -120,6 +147,9 @@ public final class RemediationMetric {
             this.identicalIssueIds = new LinkedHashSet<>();
             this.supersededIssueIds = new LinkedHashSet<>();
             this.possiblyRemediatedIssueIds = new LinkedHashSet<>();
+            this.coveredByPriorFixIssues = new LinkedHashMap<>();
+            this.supersededByPriorFixIssues = new LinkedHashMap<>();
+            this.implicitlyAppliedIssueIds = new LinkedHashSet<>();
             this.issueSkipReasons = new LinkedHashMap<>();
             this.previewDetails = new ArrayList<>();
         }
@@ -130,6 +160,9 @@ public final class RemediationMetric {
             this.identicalRemediations += metric.identicalRemediations;
             this.supersededRemediations += metric.supersededRemediations;
             this.possiblyRemediatedRemediations += metric.possiblyRemediatedRemediations;
+            this.coveredByPriorFixRemediations += metric.coveredByPriorFixRemediations;
+            this.supersedesPriorFixRemediations += metric.supersedesPriorFixRemediations;
+            this.remediatedRemediations += metric.remediatedRemediations;
             this.skippedRemediations += metric.skippedRemediations;
             this.modifiedFiles.addAll(metric.modifiedFiles());
             metric.skippedByReason().forEach((reason, count) ->
@@ -141,6 +174,9 @@ public final class RemediationMetric {
             this.identicalIssueIds.addAll(metric.identicalIssueIds());
             this.supersededIssueIds.addAll(metric.supersededIssueIds());
             this.possiblyRemediatedIssueIds.addAll(metric.possiblyRemediatedIssueIds());
+            this.coveredByPriorFixIssues.putAll(metric.coveredByPriorFixIssues());
+            this.supersededByPriorFixIssues.putAll(metric.supersededByPriorFixIssues());
+            this.implicitlyAppliedIssueIds.addAll(metric.implicitlyAppliedIssueIds());
             this.issueSkipReasons.putAll(metric.issueSkipReasons());
             this.previewDetails.addAll(metric.previewDetails());
             if (metric.isPreview()) {
