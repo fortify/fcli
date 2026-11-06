@@ -92,9 +92,14 @@ public class AuditProcessor {
     private final ISourceDecoder sourceDecoder;
     private RemediationGenerationMetric lastRemediationGenerationMetric = RemediationGenerationMetric.empty();
 
-    public record RemediationGenerationMetric(int skippedRemediations, Map<String, Integer> skippedByReason) {
+    /**
+     * Per-save metrics. {@code legacyStatusFallbacks} counts issues with remediation that were
+     * marked {@link Constants#PROCESSED_BY_AVIATOR} because the caller requested the legacy status.
+     */
+    public record RemediationGenerationMetric(int skippedRemediations, Map<String, Integer> skippedByReason,
+            int legacyStatusFallbacks) {
         public static RemediationGenerationMetric empty() {
-            return new RemediationGenerationMetric(0, Map.of());
+            return new RemediationGenerationMetric(0, Map.of(), 0);
         }
     }
 
@@ -145,11 +150,13 @@ public class AuditProcessor {
     private static final class AuditXmlUpdateResult {
         private final Map<String, String> remediationCommentTimestamps;
         private final Set<String> writtenInstanceIds;
+        private final int legacyStatusFallbacks;
 
         private AuditXmlUpdateResult(Map<String, String> remediationCommentTimestamps,
-                Set<String> writtenInstanceIds) {
+                Set<String> writtenInstanceIds, int legacyStatusFallbacks) {
             this.remediationCommentTimestamps = remediationCommentTimestamps;
             this.writtenInstanceIds = writtenInstanceIds;
+            this.legacyStatusFallbacks = legacyStatusFallbacks;
         }
     }
 
@@ -177,9 +184,11 @@ public class AuditProcessor {
     }
 
     private AuditXmlUpdateResult updateAuditXml(Map<String, AuditResponse> auditResponses,
-            TagMappingConfig tagMappingConfig, Map<String, String> issueCategoryLookup) throws AviatorTechnicalException {
+            TagMappingConfig tagMappingConfig, Map<String, String> issueCategoryLookup,
+            boolean useLegacyStatusForRemediation) throws AviatorTechnicalException {
         Map<String, String> remediationCommentTimestamps = new HashMap<>();
         Set<String> writtenInstanceIds = new HashSet<>();
+        int legacyStatusFallbacks = 0;
         for (Map.Entry<String, AuditResponse> entry : auditResponses.entrySet()) {
             String instanceId = entry.getKey();
             AuditResponse response = entry.getValue();
@@ -198,24 +207,28 @@ public class AuditProcessor {
             String commentTimestamp;
 
             if (response.getAuditResult() != null) {
+                String aviatorStatus = aviatorStatus(response, useLegacyStatusForRemediation);
                 if (issueElement != null) {
-                    commentTimestamp = updateIssueElement(issueElement, response, tagMappingConfig, issueCategoryLookup);
+                    commentTimestamp = updateIssueElement(issueElement, response, tagMappingConfig, issueCategoryLookup,
+                            aviatorStatus);
                 } else {
-                    commentTimestamp = addNewIssueElement(instanceId, response, tagMappingConfig, issueCategoryLookup);
+                    commentTimestamp = addNewIssueElement(instanceId, response, tagMappingConfig, issueCategoryLookup,
+                            aviatorStatus);
                 }
                 // Local retain set for this save only — instance IDs successfully written here.
                 writtenInstanceIds.add(instanceId);
-                if (commentTimestamp != null &&
-                        response.getAuditResult().getAutoremediation() != null &&
-                        response.getAuditResult().getAutoremediation().getChanges() != null &&
-                        !response.getAuditResult().getAutoremediation().getChanges().isEmpty()) {
+                boolean hasRemediationChanges = hasRemediationChanges(response);
+                if (hasRemediationChanges && useLegacyStatusForRemediation) {
+                    legacyStatusFallbacks++;
+                }
+                if (commentTimestamp != null && hasRemediationChanges) {
                     remediationCommentTimestamps.put(instanceId, commentTimestamp);
                 }
             } else {
                 logger.debug("Issue {} skipped or no audit result provided.", response.getIssueId());
             }
         }
-        return new AuditXmlUpdateResult(remediationCommentTimestamps, writtenInstanceIds);
+        return new AuditXmlUpdateResult(remediationCommentTimestamps, writtenInstanceIds, legacyStatusFallbacks);
     }
     public Element findIssueElement(String instanceId) {
         NodeList issueNodes = auditDoc.getElementsByTagNameNS(AUDIT_NAMESPACE_URI, "Issue");
@@ -230,10 +243,15 @@ public class AuditProcessor {
 
     public String updateIssueElement(Element issueElement, AuditResponse response, TagMappingConfig tagMappingConfig,
             Map<String, String> issueCategoryLookup) throws AviatorTechnicalException {
+        return updateIssueElement(issueElement, response, tagMappingConfig, issueCategoryLookup,
+                aviatorStatus(response, false));
+    }
+
+    private String updateIssueElement(Element issueElement, AuditResponse response, TagMappingConfig tagMappingConfig,
+            Map<String, String> issueCategoryLookup, String aviatorStatus) throws AviatorTechnicalException {
         int revision = Integer.parseInt(issueElement.getAttribute("revision"));
         issueElement.setAttribute("revision", String.valueOf(++revision));
         String commentTimestamp = null;
-        String aviatorStatus = aviatorStatus(response);
         Boolean suppressedHistoryValue = null;
 
         if (response != null && response.getAuditResult() != null) {
@@ -277,14 +295,17 @@ public class AuditProcessor {
         return commentTimestamp;
     }
 
-    private static String aviatorStatus(AuditResponse response) {
-        if (response == null || response.getAuditResult() == null
-                || response.getAuditResult().getAutoremediation() == null
-                || response.getAuditResult().getAutoremediation().getChanges() == null
-                || response.getAuditResult().getAutoremediation().getChanges().isEmpty()) {
-            return Constants.PROCESSED_BY_AVIATOR;
-        }
-        return Constants.PROCESSED_BY_AVIATOR_WITH_REMEDIATION;
+    private static String aviatorStatus(AuditResponse response, boolean useLegacyStatusForRemediation) {
+        return hasRemediationChanges(response) && !useLegacyStatusForRemediation
+                ? Constants.PROCESSED_BY_AVIATOR_WITH_REMEDIATION
+                : Constants.PROCESSED_BY_AVIATOR;
+    }
+
+    private static boolean hasRemediationChanges(AuditResponse response) {
+        return response != null && response.getAuditResult() != null
+                && response.getAuditResult().getAutoremediation() != null
+                && response.getAuditResult().getAutoremediation().getChanges() != null
+                && !response.getAuditResult().getAutoremediation().getChanges().isEmpty();
     }
 
     private void updateClientAuditTrail(Element issueElement, AuditResponse response, TagMappingConfig tagMappingConfig,
@@ -456,6 +477,12 @@ public class AuditProcessor {
 
     public String addNewIssueElement(String instanceId, AuditResponse response, TagMappingConfig tagMappingConfig,
             Map<String, String> issueCategoryLookup) throws AviatorTechnicalException {
+        return addNewIssueElement(instanceId, response, tagMappingConfig, issueCategoryLookup,
+                aviatorStatus(response, false));
+    }
+
+    private String addNewIssueElement(String instanceId, AuditResponse response, TagMappingConfig tagMappingConfig,
+            Map<String, String> issueCategoryLookup, String aviatorStatus) throws AviatorTechnicalException {
         Element issueList = (Element) auditDoc.getElementsByTagNameNS(AUDIT_NAMESPACE_URI, "IssueList").item(0);
         if (issueList == null) {
             issueList = auditDoc.createElementNS(AUDIT_NAMESPACE_URI, "IssueList");
@@ -497,7 +524,6 @@ public class AuditProcessor {
             suppressedHistoryValue = applySuppressionDecision(newIssue, instanceId, resultConfig, tagMappingConfig, issueCategoryLookup);
         }
 
-        String aviatorStatus = aviatorStatus(response);
         updateOrAddTag(newIssue, Constants.AVIATOR_STATUS_TAG_ID, aviatorStatus);
 
         if (response != null && response.getAuditResult() != null) {
@@ -633,17 +659,26 @@ public class AuditProcessor {
     public File updateAndSaveAuditAndRemediationsXml(Map<String, AuditResponse> auditResponses,
             TagMappingConfig tagMappingConfig, Map<String, String> issueCategoryLookup,
             FPRInfo fprInfo) throws AviatorTechnicalException {
-        return updateAndSaveAuditAndRemediationsXml(auditResponses, tagMappingConfig, issueCategoryLookup, fprInfo, null);
+        return updateAndSaveAuditAndRemediationsXml(auditResponses, tagMappingConfig, issueCategoryLookup, fprInfo,
+                null, false);
     }
 
+    /**
+     * Applies audit responses and writes audit.xml, remediations.xml and filtertemplate.xml back into the FPR.
+     *
+     * @param useLegacyStatusForRemediation when {@code true}, issues with remediation are marked
+     *        {@link Constants#PROCESSED_BY_AVIATOR} instead of {@link Constants#PROCESSED_BY_AVIATOR_WITH_REMEDIATION};
+     *        remediation data is still written
+     */
     public File updateAndSaveAuditAndRemediationsXml(Map<String, AuditResponse> auditResponses,
             TagMappingConfig tagMappingConfig, Map<String, String> issueCategoryLookup,
-            FPRInfo fprInfo, FVDLMetadata fvdlMetadata) throws AviatorTechnicalException {
+            FPRInfo fprInfo, FVDLMetadata fvdlMetadata, boolean useLegacyStatusForRemediation)
+            throws AviatorTechnicalException {
         lastRemediationGenerationMetric = RemediationGenerationMetric.empty();
         // Step 1: Apply this save's audit responses. writtenInstanceIds is the local retain set.
         Map<String, String> effectiveIssueCategoryLookup = issueCategoryLookup == null ? Map.of() : issueCategoryLookup;
         AuditXmlUpdateResult updateResult = updateAuditXml(
-                auditResponses, tagMappingConfig, effectiveIssueCategoryLookup);
+                auditResponses, tagMappingConfig, effectiveIssueCategoryLookup, useLegacyStatusForRemediation);
         Map<String, String> remediationCommentTimestamps = updateResult.remediationCommentTimestamps;
 
         // Step 2: Keep only Issue nodes written in this save so SSC does not overwrite concurrent
@@ -651,24 +686,20 @@ public class AuditProcessor {
         AuditXmlIssuePruner.retainOnly(auditDoc, updateResult.writtenInstanceIds);
 
         // Step 3: Check if there are any remediations to generate.
-        boolean hasRemediations = auditResponses.values().stream()
-                .anyMatch(ar -> ar.getAuditResult() != null &&
-                        ar.getAuditResult().getAutoremediation() != null &&
-                        ar.getAuditResult().getAutoremediation().getChanges() != null &&
-                        !ar.getAuditResult().getAutoremediation().getChanges().isEmpty());
+        boolean hasRemediations = auditResponses.values().stream().anyMatch(AuditProcessor::hasRemediationChanges);
 
         // Step 4: Generate the in-memory remediations.xml document if needed.
+        Map<String, Integer> skippedByReason = new LinkedHashMap<>();
         if (hasRemediations && !remediationCommentTimestamps.isEmpty()) {
-            Map<String, Integer> skippedByReason = new LinkedHashMap<>();
             this.remediationsDoc = generateRemediationsXml(auditResponses, remediationCommentTimestamps, fprInfo,
                     fvdlMetadata, skippedByReason);
-            lastRemediationGenerationMetric = toRemediationGenerationMetric(skippedByReason);
         } else {
             this.remediationsDoc = null;
             if (hasRemediations) {
                 logger.info("WARN: Remediation data found, but could not associate timestamps for all. remediations.xml will not be generated.");
             }
         }
+        lastRemediationGenerationMetric = toRemediationGenerationMetric(skippedByReason, updateResult.legacyStatusFallbacks);
 
         // Step 5: Write the modified XML documents directly back into the open FPR file system.
         try {
@@ -952,9 +983,10 @@ public class AuditProcessor {
         }
     }
 
-    private RemediationGenerationMetric toRemediationGenerationMetric(Map<String, Integer> skippedByReason) {
+    private RemediationGenerationMetric toRemediationGenerationMetric(Map<String, Integer> skippedByReason,
+            int legacyStatusFallbacks) {
         int skippedRemediations = skippedByReason.values().stream().mapToInt(Integer::intValue).sum();
-        return new RemediationGenerationMetric(skippedRemediations, Map.copyOf(skippedByReason));
+        return new RemediationGenerationMetric(skippedRemediations, Map.copyOf(skippedByReason), legacyStatusFallbacks);
     }
 
     private void recordSkipped(Map<String, Integer> skippedByReason, RemediationSkipReason reason) {

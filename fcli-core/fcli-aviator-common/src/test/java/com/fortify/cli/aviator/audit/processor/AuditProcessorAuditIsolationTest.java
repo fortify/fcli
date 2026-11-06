@@ -122,6 +122,57 @@ class AuditProcessorAuditIsolationTest {
     }
 
     @Test
+    void legacyRemediationStatusFallbackPreservesRemediationsAndHistoricalStatusOnReaudit() throws Exception {
+        createTestFprWithSource(multiIssueAuditXml("instance-A"));
+        AuditProcessor auditProcessor = new AuditProcessor(fprHandle);
+        auditProcessor.processAuditXML();
+        List<Change> changes = List.of(
+            Change.builder().file("src/Example.java").fromLine("1").toLine("1").replaceWith("fixed").build());
+
+        auditProcessor.updateAndSaveAuditAndRemediationsXml(
+            Map.of("instance-A", responseWithChanges("instance-A", changes)),
+            createTagMappingConfig(),
+            Map.of("instance-A", "SQL Injection"),
+            new FPRInfo(fprHandle));
+        assertEquals(Constants.PROCESSED_BY_AVIATOR_WITH_REMEDIATION,
+            readAviatorStatus(readIssueElement("instance-A")));
+        assertEquals(0, auditProcessor.getLastRemediationGenerationMetric().legacyStatusFallbacks());
+
+        auditProcessor.updateAndSaveAuditAndRemediationsXml(
+            Map.of("instance-A", responseWithChanges("instance-A", changes)),
+            createTagMappingConfig(),
+            Map.of("instance-A", "SQL Injection"),
+            new FPRInfo(fprHandle), null, true);
+
+        assertEquals(1, auditProcessor.getLastRemediationGenerationMetric().legacyStatusFallbacks());
+        Element audited = readIssueElement("instance-A");
+        assertEquals(Constants.PROCESSED_BY_AVIATOR, readAviatorStatus(audited));
+        assertEquals(List.of(
+            Constants.PROCESSED_BY_AVIATOR_WITH_REMEDIATION,
+            Constants.PROCESSED_BY_AVIATOR), readAviatorStatusHistory(audited));
+        assertTrue(Files.exists(fprHandle.getPath("/remediations.xml")));
+        String remediationsXml = Files.readString(fprHandle.getPath("/remediations.xml"));
+        assertTrue(remediationsXml.contains("instance-A"));
+        assertTrue(remediationsXml.contains("fixed"));
+    }
+
+    @Test
+    void legacyStatusFallbackWithoutRemediationIsNotCounted() throws Exception {
+        createTestFpr(multiIssueAuditXml("instance-A"));
+        AuditProcessor auditProcessor = new AuditProcessor(fprHandle);
+        auditProcessor.processAuditXML();
+
+        auditProcessor.updateAndSaveAuditAndRemediationsXml(
+            Map.of("instance-A", responseWithChanges("instance-A", List.of())),
+            createTagMappingConfig(),
+            Map.of("instance-A", "SQL Injection"),
+            new FPRInfo(fprHandle), null, true);
+
+        assertEquals(Constants.PROCESSED_BY_AVIATOR, readAviatorStatus(readIssueElement("instance-A")));
+        assertEquals(0, auditProcessor.getLastRemediationGenerationMetric().legacyStatusFallbacks());
+    }
+
+    @Test
     void doesNotResolveExternalEntityInAuditXml() throws Exception {
         Path secret = Files.createTempFile("audit-xxe-sentinel", ".txt");
         try {
@@ -283,6 +334,14 @@ class AuditProcessorAuditIsolationTest {
     }
 
     private void createTestFpr(String auditXml) throws Exception {
+        createTestFpr(auditXml, false);
+    }
+
+    private void createTestFprWithSource(String auditXml) throws Exception {
+        createTestFpr(auditXml, true);
+    }
+
+    private void createTestFpr(String auditXml, boolean includeSource) throws Exception {
         tempFprFile = Files.createTempFile("audit-processor-isolation", ".fpr");
         try (ZipOutputStream zipOutputStream = new ZipOutputStream(Files.newOutputStream(tempFprFile))) {
             zipOutputStream.putNextEntry(new ZipEntry("audit.fvdl"));
@@ -294,8 +353,17 @@ class AuditProcessorAuditIsolationTest {
             zipOutputStream.closeEntry();
 
             zipOutputStream.putNextEntry(new ZipEntry("src-archive/index.xml"));
-            zipOutputStream.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?><index/>".getBytes(StandardCharsets.UTF_8));
+            String sourceIndex = includeSource
+                ? "<?xml version=\"1.0\" encoding=\"UTF-8\"?><properties>"
+                    + "<entry key=\"src/Example.java\">src-archive/1</entry></properties>"
+                : "<?xml version=\"1.0\" encoding=\"UTF-8\"?><index/>";
+            zipOutputStream.write(sourceIndex.getBytes(StandardCharsets.UTF_8));
             zipOutputStream.closeEntry();
+            if (includeSource) {
+                zipOutputStream.putNextEntry(new ZipEntry("src-archive/1"));
+                zipOutputStream.write("class Example { int value = 1; }".getBytes(StandardCharsets.UTF_8));
+                zipOutputStream.closeEntry();
+            }
         }
         fprHandle = new FprHandle(tempFprFile);
     }

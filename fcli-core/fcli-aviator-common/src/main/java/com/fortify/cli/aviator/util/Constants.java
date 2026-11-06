@@ -12,6 +12,7 @@
  */
 package com.fortify.cli.aviator.util;
 
+import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
@@ -38,6 +39,9 @@ public class Constants {
     public static final String AVIATOR_LIKELY_FP = "AVIATOR:Proposed Not an Issue";
     public static final String PROCESSED_BY_AVIATOR = "PROCESSED_BY_AVIATOR";
     public static final String PROCESSED_BY_AVIATOR_WITH_REMEDIATION = "PROCESSED_BY_AVIATOR_WITH_REMEDIATION";
+    /** All values of the Aviator status tag, in display order. */
+    public static final List<String> AVIATOR_STATUS_VALUES = List.of(
+            PROCESSED_BY_AVIATOR, PROCESSED_BY_AVIATOR_WITH_REMEDIATION);
     public static final String REMEDIATION_REQUIRED = "Remediation Required";
     public static final String PROPOSED_NOT_AN_ISSUE = "Proposed Not an Issue";
     public static final String UNSURE = "Unsure";
@@ -63,6 +67,11 @@ public class Constants {
 
     public static boolean isAviatorAuditUsername(String username) {
         return username != null && AVIATOR_AUDIT_USERNAMES.contains(username.trim().toLowerCase(Locale.ROOT));
+    }
+
+    /** Returns whether {@code status} is any Aviator status value, ignoring case. */
+    public static boolean isAviatorStatus(String status) {
+        return status != null && AVIATOR_STATUS_VALUES.stream().anyMatch(status::equalsIgnoreCase);
     }
 
     // Other Constants

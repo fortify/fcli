@@ -29,6 +29,8 @@ public class FPRAuditResult {
     private Map<String, Integer> skippedByReason;
     private int remediationGenerationSkipped;
     private Map<String, Integer> remediationGenerationSkippedByReason;
+    /** Issues with remediation marked with the legacy Aviator status because the target does not support the new value. */
+    private int legacyStatusFallbacks;
 
     public FPRAuditResult(File updatedFile, String status, String message,
                         int issuesSuccessfullyAudited, int totalIssuesToAudit) {
@@ -48,6 +50,14 @@ public class FPRAuditResult {
                         int issuesSuccessfullyAudited, int totalIssuesToAudit, int issuesSubmitted,
                         int issuesSkipped, Map<String, Integer> skippedByReason, int remediationGenerationSkipped,
                         Map<String, Integer> remediationGenerationSkippedByReason) {
+        this(updatedFile, status, message, issuesSuccessfullyAudited, totalIssuesToAudit, issuesSubmitted,
+            issuesSkipped, skippedByReason, remediationGenerationSkipped, remediationGenerationSkippedByReason, 0);
+    }
+
+    public FPRAuditResult(File updatedFile, String status, String message,
+                        int issuesSuccessfullyAudited, int totalIssuesToAudit, int issuesSubmitted,
+                        int issuesSkipped, Map<String, Integer> skippedByReason, int remediationGenerationSkipped,
+                        Map<String, Integer> remediationGenerationSkippedByReason, int legacyStatusFallbacks) {
         this.updatedFile = updatedFile;
         this.status = status;
         this.message = message;
@@ -58,5 +68,6 @@ public class FPRAuditResult {
         this.skippedByReason = skippedByReason == null ? Map.of() : Map.copyOf(skippedByReason);
         this.remediationGenerationSkipped = remediationGenerationSkipped;
         this.remediationGenerationSkippedByReason = remediationGenerationSkippedByReason == null ? Map.of() : Map.copyOf(remediationGenerationSkippedByReason);
+        this.legacyStatusFallbacks = legacyStatusFallbacks;
     }
 }

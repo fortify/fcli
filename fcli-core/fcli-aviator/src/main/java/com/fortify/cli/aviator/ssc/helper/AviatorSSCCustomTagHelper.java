@@ -13,6 +13,7 @@
 package com.fortify.cli.aviator.ssc.helper;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -35,7 +36,6 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class AviatorSSCCustomTagHelper {
     private static final Logger LOG = LoggerFactory.getLogger(AviatorSSCCustomTagHelper.class);
-    private static final String SYSTEM_MANAGED_TAG_TYPE = "AVIATOR";
     private final UnirestInstance unirest;
     private final TagDefinition tagDef;
 
@@ -118,10 +118,10 @@ public class AviatorSSCCustomTagHelper {
             return null;
         }
 
-        JsonNode response;
+        ArrayNode internalTags;
         try {
             LOG.debug("Checking /internalCustomTags for system-managed tag '{}'", tagDef.getName());
-            response = unirest.get(SSCUrls.INTERNAL_CUSTOM_TAGS).asObject(JsonNode.class).getBody();
+            internalTags = AviatorSSCTagJsonHelper.fetchInternalCustomTags(unirest);
         } catch (UnexpectedHttpResponseException e) {
             if (e.getStatus() == 404 || e.getStatus() == 405) {
                 LOG.debug("/internalCustomTags is not supported by this SSC version");
@@ -130,22 +130,18 @@ public class AviatorSSCCustomTagHelper {
             throw e;
         }
 
-        JsonNode data = response == null ? null : response.get("data");
-        if (data == null || !data.isArray()) {
+        if (internalTags == null) {
             LOG.error("Invalid /internalCustomTags response while checking '{}'", tagDef.getName());
             result.addEntry("Custom Tag", "FAILED",
                     "Unable to verify whether '" + tagDef.getName() + "' is system-managed.");
             return SynchronizationResult.failure();
         }
 
-        JsonNode internalTag = JsonHelper.stream((ArrayNode) data)
-                .filter(tag -> tagDef.getGuid().equalsIgnoreCase(tag.path("guid").asText()))
-                .findFirst()
-                .orElse(null);
+        JsonNode internalTag = AviatorSSCTagJsonHelper.findByGuid(internalTags, tagDef.getGuid());
         if (internalTag == null) {
             return null;
         }
-        if (!SYSTEM_MANAGED_TAG_TYPE.equalsIgnoreCase(internalTag.path("customTagType").asText())) {
+        if (!AviatorSSCTagJsonHelper.isSystemManaged(internalTag)) {
             LOG.error("Unexpected tag type in /internalCustomTags for '{}'", tagDef.getName());
             result.addEntry("Custom Tag", "FAILED",
                     "Unable to verify whether '" + tagDef.getName() + "' is system-managed.");
@@ -195,14 +191,8 @@ public class AviatorSSCCustomTagHelper {
             return fullTagDetails;
         }
 
-        JsonNode valueListNode = fullTagDetails.get("valueList");
-        ArrayNode valueListArray = (valueListNode != null && valueListNode.isArray())
-            ? (ArrayNode) valueListNode
-            : JsonHelper.getObjectMapper().createArrayNode();
-
-        Set<String> existingValues = JsonHelper.stream(valueListArray)
-            .map(v -> v.get("lookupValue").asText())
-            .collect(Collectors.toSet());
+        Set<String> existingValues = Objects.requireNonNullElse(
+            AviatorSSCTagJsonHelper.lookupValues(fullTagDetails), Set.of());
         List<String> missingValues = tagDef.getValues().stream()
             .filter(v -> !existingValues.contains(v))
             .collect(Collectors.toList());
