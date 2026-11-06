@@ -1938,6 +1938,24 @@ class RemediationProcessorTest {
     }
 
     @Test
+    void dependentIssuesOfAFailedSelectedFixAreCountedInTheTotalAndTheSkipDetails() throws Exception {
+        // The source no longer contains the code fix-A wants to replace, so fix-A cannot be applied.
+        writeSourceFile("before\nSOMETHING ELSE\nafter\n");
+        Path fprPath = createReferenceFpr("fix-A", "superseded-D", true);
+
+        RemediationMetric metric;
+        try (FprHandle fprHandle = new FprHandle(fprPath)) {
+            metric = new RemediationProcessor(fprHandle, tempDir.toString(),
+                options(Set.of("fix-A"), RemediationExecutionMode.APPLY)).processRemediationXML();
+        }
+
+        assertEquals(0, metric.remediatedRemediations());
+        assertEquals(Set.of("fix-A", "superseded-D"), metric.issueSkipReasons().keySet());
+        assertEquals(metric.issueSkipReasons().size(), metric.totalRemediations());
+        assertEquals(metric.totalRemediations(), metric.skippedRemediations());
+    }
+
+    @Test
     void supersededIssueWhoseSupersedingFixIsMissingIsSkipped() throws Exception {
         writeSourceFile("before\nTARGET\nafter\n");
         Path fprPath = createReferenceFpr("no-such-fix", "superseded-D", true);
