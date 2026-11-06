@@ -218,7 +218,17 @@ public class AviatorSSCCustomTagHelper {
         LOG.info("Updating custom tag '{}' to add missing values.", tagDef.getName());
         ObjectNode updatedTagBody = fullTagDetails.deepCopy();
         ArrayNode valuesArray = updatedTagBody.withArray("valueList");
-        missingValues.forEach(v -> valuesArray.add(JsonHelper.getObjectMapper().createObjectNode().put("lookupValue", v)));
+        long nextLookupIndex = JsonHelper.stream(valuesArray)
+                .mapToLong(value -> value.path("lookupIndex").asLong(0))
+                .max()
+                .orElse(0) + 1;
+        for (String value : missingValues) {
+            valuesArray.add(JsonHelper.getObjectMapper().createObjectNode()
+                    .put("lookupValue", value)
+                    .put("lookupIndex", nextLookupIndex)
+                    .put("seqNumber", nextLookupIndex));
+            nextLookupIndex++;
+        }
         LOG.debug("Update payload for tag '{}': {}", tagDef.getName(), updatedTagBody.toPrettyString());
 
         JsonNode updatedTag = unirest.put(SSCUrls.CUSTOM_TAG(existingTag.get("id").asText())).body(updatedTagBody).asObject(JsonNode.class).getBody().get("data");

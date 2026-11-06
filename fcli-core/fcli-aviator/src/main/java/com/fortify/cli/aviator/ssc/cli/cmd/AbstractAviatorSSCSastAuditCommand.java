@@ -341,7 +341,7 @@ abstract class AbstractAviatorSSCSastAuditCommand extends AbstractSSCJsonNodeOut
         Set<String> analysisTagValues = tagMappingConfig.getMappedValues();
         LOG.info("Analysis tag values to validate: {}", analysisTagValues);
         List<String> warnings = AviatorSSCTagValidator.validatePreUpload(
-            unirest, av.getVersionId(), tagMappingConfig.getTag_id(), analysisTagValues, logger);
+            unirest, av.getVersionId(), tagMappingConfig.getTag_id(), analysisTagValues, true, logger);
         LOG.info("Tag validation complete. {} warning(s) found.", warnings.size());
     }
 
