@@ -284,7 +284,7 @@ public final class DastAuditFPR {
 
     private static boolean isProcessedByAviator(AuditIssue auditIssue) {
         Map<String, String> tags = getTags(auditIssue);
-        return Constants.PROCESSED_BY_AVIATOR.equalsIgnoreCase(tags.get(Constants.AVIATOR_STATUS_TAG_ID))
+        return Constants.isAviatorStatus(tags.get(Constants.AVIATOR_STATUS_TAG_ID))
             || tags.containsKey(Constants.AVIATOR_EXPECTED_OUTCOME_TAG_ID);
     }
 

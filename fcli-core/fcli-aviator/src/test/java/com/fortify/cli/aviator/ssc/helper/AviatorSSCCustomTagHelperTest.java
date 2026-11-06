@@ -28,6 +28,8 @@ import java.util.Map;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -332,6 +334,43 @@ class AviatorSSCCustomTagHelperTest {
             }
         }
 
+        @ParameterizedTest
+        @ValueSource(ints = {404, 405})
+        void testUnsupportedInternalCatalogUsesCustomTagPath(int status) throws Exception {
+            try (var server = new TestSscServer().withInternalTagsFailure(status)) {
+                server.withCreateResponse(createdTag("2003", AviatorSSCTagDefs.AVIATOR_STATUS_TAG));
+
+                try (var unirest = newUnirest(server)) {
+                    var result = new AviatorSSCPrepareHelper.PrepareResult();
+                    SynchronizationResult syncResult = new AviatorSSCCustomTagHelper(
+                            unirest, AviatorSSCTagDefs.AVIATOR_STATUS_TAG).synchronize(result);
+
+                    assertTrue(syncResult.isSuccessful());
+                    assertFalse(syncResult.isSystemManaged());
+                    assertEquals(1, server.getInternalTagsGetCount());
+                    assertEquals(1, server.getCustomTagsGetCount());
+                    assertEquals(1, server.getCustomTagCreateCount());
+                    assertEquals("CREATED", result.toJsonNode().get(0).get("status").asText());
+                }
+            }
+        }
+
+        @Test
+        void testInternalCatalogWithoutDataArrayFails() throws Exception {
+            try (var server = new TestSscServer().withoutInternalTagsData()) {
+                try (var unirest = newUnirest(server)) {
+                    var result = new AviatorSSCPrepareHelper.PrepareResult();
+                    SynchronizationResult syncResult = new AviatorSSCCustomTagHelper(
+                            unirest, AviatorSSCTagDefs.AVIATOR_STATUS_TAG).synchronize(result);
+
+                    assertFalse(syncResult.isSuccessful());
+                    assertEquals(0, server.getCustomTagsGetCount());
+                    assertEquals(0, server.getCustomTagCreateCount());
+                    assertEquals("FAILED", result.toJsonNode().get(0).get("status").asText());
+                }
+            }
+        }
+
         @Test
         void testInternalCatalogFailureDoesNotFallBackToCustomTagMutation() throws Exception {
             try (var server = new TestSscServer().withInternalTagsFailure(500)) {
@@ -467,12 +506,19 @@ class AviatorSSCCustomTagHelperTest {
             return this;
         }
 
+        private TestSscServer withoutInternalTagsData() {
+            this.internalTagsFailureStatus = 0;
+            this.omitInternalTagsData = true;
+            return this;
+        }
+
         private TestSscServer withInternalTagsFailure(int status) {
             this.internalTagsFailureStatus = status;
             return this;
         }
 
         private int internalTagsFailureStatus = 404;
+        private boolean omitInternalTagsData;
         private int getInternalTagsGetCount() { return internalTagsGetCount; }
         private int getCustomTagsGetCount() { return customTagsGetCount; }
         private int getCustomTagDetailsGetCount() { return customTagDetailsGetCount; }
@@ -486,6 +532,15 @@ class AviatorSSCCustomTagHelperTest {
             if (internalTagsFailureStatus != 0) {
                 exchange.sendResponseHeaders(internalTagsFailureStatus, -1);
                 exchange.close();
+                return;
+            }
+            if (omitInternalTagsData) {
+                byte[] body = "{}".getBytes(StandardCharsets.UTF_8);
+                exchange.getResponseHeaders().add("Content-Type", "application/json");
+                exchange.sendResponseHeaders(200, body.length);
+                try (OutputStream out = exchange.getResponseBody()) {
+                    out.write(body);
+                }
                 return;
             }
             writeJson(exchange, internalTags);
