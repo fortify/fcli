@@ -123,6 +123,23 @@ class AviatorSSCTagValidatorTest {
     }
 
     @Test
+    @DisplayName("DAST validation does not warn about the SAST remediation status value")
+    void dastValidationDoesNotWarnForMissingRemediationStatusValue() throws IOException {
+        String statusGuid = AviatorSSCTagDefs.AVIATOR_STATUS_TAG.getGuid();
+        server = new TestSscServer()
+            .withTags(
+                customTag(AviatorSSCTagDefs.AVIATOR_PREDICTION_TAG.getGuid(), "Aviator prediction"),
+                customTag(statusGuid, "Aviator status"))
+            .withCustomTagDetails(statusGuid, tagDetails(statusGuid, "PROCESSED_BY_AVIATOR"));
+        unirest = newUnirest(server);
+
+        List<String> warnings = validate(false);
+
+        assertFalse(warnings.stream().anyMatch(w -> w.contains("PROCESSED_BY_AVIATOR_WITH_REMEDIATION")));
+        assertEquals(0, server.statusTagDetailsRequests);
+    }
+
+    @Test
     @DisplayName("built-in AVIATOR tags in the includeall response do not warn")
     void builtInAviatorTagsDoNotWarn() throws IOException {
         server = new TestSscServer()
@@ -138,6 +155,62 @@ class AviatorSSCTagValidatorTest {
         assertTrue(server.includeAllRequests == 1);
         assertTrue(server.plainRequests == 0);
         assertTrue(server.internalCatalogRequests == 0);
+    }
+
+    @Test
+    @DisplayName("system-managed status values are checked from the internal catalog")
+    void systemManagedStatusValuesUseInternalCatalogWhenVersionTagOmitsValueList() throws IOException {
+        server = new TestSscServer()
+            .withTags(
+                tag(AviatorSSCTagDefs.AVIATOR_PREDICTION_TAG.getGuid(), "Aviator prediction", "AVIATOR"),
+                tag(AviatorSSCTagDefs.AVIATOR_STATUS_TAG.getGuid(), "Aviator status", "AVIATOR"))
+            .withBuiltInAviatorCatalog();
+        unirest = newUnirest(server);
+
+        List<String> warnings = validate();
+
+        assertTrue(warnings.isEmpty(), warnings.toString());
+        assertEquals(1, server.internalCatalogRequests);
+    }
+
+    @Test
+    @DisplayName("missing system-managed status value in the internal catalog warns")
+    void systemManagedStatusValueMissingFromInternalCatalogWarns() throws IOException {
+        ObjectNode statusTag = tag(
+            AviatorSSCTagDefs.AVIATOR_STATUS_TAG.getGuid(), "Aviator status", "AVIATOR");
+        statusTag.putArray("valueList")
+            .add(JsonHelper.getObjectMapper().createObjectNode().put("lookupValue", "PROCESSED_BY_AVIATOR"));
+        server = new TestSscServer()
+            .withTags(
+                tag(AviatorSSCTagDefs.AVIATOR_PREDICTION_TAG.getGuid(), "Aviator prediction", "AVIATOR"),
+                tag(AviatorSSCTagDefs.AVIATOR_STATUS_TAG.getGuid(), "Aviator status", "AVIATOR"))
+            .withInternalCatalog(
+                tag(AviatorSSCTagDefs.AVIATOR_PREDICTION_TAG.getGuid(), "Aviator prediction", "AVIATOR"),
+                statusTag);
+        unirest = newUnirest(server);
+
+        List<String> warnings = validate();
+
+        assertTrue(warnings.stream().anyMatch(w -> w.contains("PROCESSED_BY_AVIATOR_WITH_REMEDIATION")));
+        assertTrue(warnings.stream().anyMatch(w -> w.contains("Configure the system-managed tag through SSC")));
+    }
+
+    @Test
+    @DisplayName("unavailable system-managed status value list warns and continues")
+    void unavailableSystemManagedStatusValueListWarns() throws IOException {
+        server = new TestSscServer()
+            .withTags(
+                tag(AviatorSSCTagDefs.AVIATOR_PREDICTION_TAG.getGuid(), "Aviator prediction", "AVIATOR"),
+                tag(AviatorSSCTagDefs.AVIATOR_STATUS_TAG.getGuid(), "Aviator status", "AVIATOR"))
+            .withInternalCatalog(
+                tag(AviatorSSCTagDefs.AVIATOR_PREDICTION_TAG.getGuid(), "Aviator prediction", "AVIATOR"),
+                tag(AviatorSSCTagDefs.AVIATOR_STATUS_TAG.getGuid(), "Aviator status", "AVIATOR"));
+        unirest = newUnirest(server);
+
+        List<String> warnings = validate();
+
+        assertTrue(warnings.stream().anyMatch(w -> w.contains("Could not verify the value list for 'Aviator status'")));
+        assertEquals(1, server.internalCatalogRequests);
     }
 
     @Test
@@ -229,9 +302,18 @@ class AviatorSSCTagValidatorTest {
     }
 
     private List<String> validate(String analysisTagId, Set<String> analysisTagValues) {
+        return validate(true, analysisTagId, analysisTagValues);
+    }
+
+    private List<String> validate(boolean validateSastStatusValues) {
+        return validate(validateSastStatusValues, null, Set.of());
+    }
+
+    private List<String> validate(boolean validateSastStatusValues, String analysisTagId,
+            Set<String> analysisTagValues) {
         CollectingLogger logger = new CollectingLogger();
         List<String> warnings = AviatorSSCTagValidator.validatePreUpload(
-            unirest, VERSION_ID, analysisTagId, analysisTagValues, logger);
+            unirest, VERSION_ID, analysisTagId, analysisTagValues, validateSastStatusValues, logger);
         assertEquals(warnings, logger.warnings);
         return warnings;
     }

@@ -270,6 +270,10 @@ class AviatorSSCCustomTagHelperTest {
                             "PROCESSED_BY_AVIATOR_WITH_REMEDIATION"));
                     assertEquals(1, server.getCustomTagUpdateCount());
                     assertEquals(0, server.getCustomTagCreateCount());
+                    JsonNode addedValue = findLookupValue(server.getLastUpdatedTag().get("valueList"),
+                            "PROCESSED_BY_AVIATOR_WITH_REMEDIATION");
+                    assertEquals(2, addedValue.path("lookupIndex").asInt());
+                    assertEquals(2, addedValue.path("seqNumber").asInt());
                 }
             }
         }
@@ -370,8 +374,11 @@ class AviatorSSCCustomTagHelperTest {
                 .put("valueType", "LIST")
                 .put("customTagType", "CUSTOM");
             ArrayNode valueList = result.putArray("valueList");
-            for (String value : values) {
-                valueList.add(JsonHelper.getObjectMapper().createObjectNode().put("lookupValue", value));
+            for (int i = 0; i < values.length; i++) {
+                valueList.add(JsonHelper.getObjectMapper().createObjectNode()
+                        .put("lookupValue", values[i])
+                        .put("lookupIndex", i + 1)
+                        .put("seqNumber", i + 1));
             }
             return result;
         }
@@ -395,6 +402,15 @@ class AviatorSSCCustomTagHelperTest {
                 }
             }
             return false;
+        }
+
+        private static JsonNode findLookupValue(JsonNode valueList, String lookupValue) {
+            for (JsonNode value : valueList) {
+                if (lookupValue.equals(value.path("lookupValue").asText())) {
+                    return value;
+                }
+            }
+            throw new AssertionError("Value not found: " + lookupValue);
         }
     }
 

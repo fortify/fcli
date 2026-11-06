@@ -64,11 +64,13 @@ public final class AviatorSSCTagValidator {
      * @param versionId application version whose tags are checked
      * @param analysisTagId GUID of the tag that receives audit results, or blank when that check is not required
      * @param analysisTagValues values the audit may write to {@code analysisTagId}
+     * @param validateSastStatusValues whether to check for SAST-only Aviator status values
      * @param logger receives progress messages and warnings shown to the user
      * @return warnings, empty when validation passes
      */
     public static List<String> validatePreUpload(UnirestInstance unirest, String versionId,
-            String analysisTagId, Set<String> analysisTagValues, IAviatorLogger logger) {
+            String analysisTagId, Set<String> analysisTagValues, boolean validateSastStatusValues,
+            IAviatorLogger logger) {
         LOG.info("Starting pre-upload tag validation for app version id={}. analysisTagId='{}', analysisTagValues={}",
             versionId, analysisTagId, analysisTagValues);
         logger.progress("Status: Validating SSC custom tags for app version before uploading audited FPR...");
@@ -84,7 +86,7 @@ public final class AviatorSSCTagValidator {
             LOG.info("Fetched {} custom tags for app version id={} from SSC.", tags.size(), versionId);
             LOG.debug("Version custom tags: {}", tags);
 
-            validateAviatorTags(tags, unirest, warnings);
+            validateAviatorTags(tags, unirest, warnings, validateSastStatusValues);
             validateAnalysisTag(tags, unirest, analysisTagId, analysisTagValues, warnings);
 
             if (warnings.isEmpty()) {
@@ -139,7 +141,8 @@ public final class AviatorSSCTagValidator {
      * Either one is enough. A missing tag tells the user to enable Aviator when SSC publishes
      * that tag as built-in, and to run prepare otherwise.
      */
-    private static void validateAviatorTags(ArrayNode tags, UnirestInstance unirest, List<String> warnings) {
+    private static void validateAviatorTags(ArrayNode tags, UnirestInstance unirest, List<String> warnings,
+            boolean validateSastStatusValues) {
         List<TagDefinition> missing = new ArrayList<>();
         for (TagDefinition tag : AVIATOR_TAGS) {
             if (containsGuid(tags, tag.getGuid())) {
@@ -155,7 +158,8 @@ public final class AviatorSSCTagValidator {
                 warnings.add(missingTagWarning(tag, resolution));
             }
         }
-        if (findByGuid(tags, AviatorSSCTagDefs.AVIATOR_STATUS_TAG.getGuid()) != null) {
+        if (validateSastStatusValues
+                && findByGuid(tags, AviatorSSCTagDefs.AVIATOR_STATUS_TAG.getGuid()) != null) {
             validateAviatorStatusValues(tags, unirest, warnings);
         }
     }
