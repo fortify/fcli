@@ -42,9 +42,10 @@ public final class FoDSsoLoginHelper {
      * @param browserProfile Persistent browser profile directory, or blank to use a temporary profile
      */
     public static String acquireSamlAssertion(URI samlIdpUri, String browserType, String browserPath, String browserProfile, Duration timeout) {
+        var ssoUri = prepareSsoUri(samlIdpUri);
+        System.err.println("SSO URL: " + ssoUri);
         var browser = FoDSsoBrowserLocator.locate(browserType, browserPath);
         var profileDir = StringUtils.isBlank(browserProfile) ? null : Path.of(browserProfile.trim());
-        var ssoUri = prepareSsoUri(samlIdpUri);
         System.err.println("Opening " + browser.getFileName() + " to complete SSO login (timeout: "
                 + timeout.toSeconds() + "s). Close the browser window to cancel.");
         try ( var session = FoDSsoBrowser.launch(browser, profileDir, ssoUri) ) {

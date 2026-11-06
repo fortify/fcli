@@ -18,11 +18,14 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.PrintStream;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
@@ -59,6 +62,22 @@ class FoDSsoLoginTest {
         assertEquals(URI.create("https://fod.example.com/SSO/Login/abc?token=x&saml=1#return"),
                 FoDSsoLoginHelper.prepareSsoUri(URI.create("https://fod.example.com/SSO/Login/abc?token=x&saml=1&saml#return")));
     }
+    @Test
+    void shouldPrintPreparedSsoUriBeforeBrowserLookup() {
+        var originalErr = System.err;
+        var errorOutput = new ByteArrayOutputStream();
+        try ( var capturedErr = new PrintStream(errorOutput, true, StandardCharsets.UTF_8) ) {
+            System.setErr(capturedErr);
+            assertThrows(FcliSimpleException.class, () -> FoDSsoLoginHelper.acquireSamlAssertion(
+                    URI.create("https://fod.example.com/SSO/Login/abc?token=x"), null, "does-not-exist-browser", null,
+                    Duration.ofSeconds(1)));
+        } finally {
+            System.setErr(originalErr);
+        }
+        assertTrue(errorOutput.toString(StandardCharsets.UTF_8)
+                .contains("SSO URL: https://fod.example.com/SSO/Login/abc?token=x&saml=1"));
+    }
+
 
     @Test
     void shouldDetectAssertionPage() {
@@ -164,9 +183,8 @@ class FoDSsoLoginTest {
 
     @Test
     void shouldDeriveApiUrlFromSsoUrl() {
-        var options = parse("--sso-url", "https://ams.fortify.com:8443/SSO/Login/abc?saml=1", "--tenant", "acme");
+        var options = parse("--sso-url", "https://ams.fortify.com:8443/SSO/Login/abc?saml=1");
         assertEquals("https://api.ams.fortify.com:8443", options.getUrlConfig().getUrl());
-        assertEquals("acme", options.getTenant());
     }
 
     @Test

@@ -49,10 +49,6 @@ public class FoDSessionLoginSsoOptions {
     @MaskValue(sensitivity = LogSensitivityLevel.low, description = "HOST NAME", pattern = MaskValue.URL_HOSTNAME_PATTERN)
     @Getter private String url;
 
-    @Option(names = {"-t", "--tenant"}, order = 2)
-    @MaskValue(sensitivity = LogSensitivityLevel.low, description = "FOD TENANT")
-    @Getter private String tenant;
-
     @Option(names = "--sso-timeout", defaultValue = "5m", order = 4)
     private String ssoTimeout;
 
@@ -101,9 +97,6 @@ public class FoDSessionLoginSsoOptions {
         return FoDProductHelper.INSTANCE.getApiUrl(baseUrl.toString());
     }
 
-    public final boolean hasTenant() {
-        return StringUtils.isNotBlank(tenant);
-    }
 
     @Command
     public static final class FoDSsoConnectionOptions extends ConnectionConfigOptions {
