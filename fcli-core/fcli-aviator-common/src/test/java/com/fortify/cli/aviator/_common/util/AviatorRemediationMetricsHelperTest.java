@@ -27,6 +27,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.aviator.fpr.remediation.RemediationExecutionMode;
 import com.fortify.cli.aviator.fpr.remediation.model.RemediationMetric;
 import com.fortify.cli.aviator.fpr.remediation.preview.PreviewDetail;
+import com.fortify.cli.common.json.JsonHelper;
 
 class AviatorRemediationMetricsHelperTest {
 
@@ -179,23 +180,23 @@ class AviatorRemediationMetricsHelperTest {
                                 .build();
     }
 
-    @org.junit.jupiter.api.Test
+    @Test
     void resolvedIssueIdsListsEverythingEachFixResolvesAndHow() {
         var node = AviatorRemediationMetricsHelper.toResolvedIssueIdsNode(
-            java.util.Map.of("covered-B", java.util.List.of("fix-A")),
-            java.util.Map.of("superseded-D", java.util.List.of("fix-A")));
+            Map.of("covered-B", List.of("fix-A")),
+            Map.of("superseded-D", List.of("fix-A")));
 
-        org.junit.jupiter.api.Assertions.assertEquals(1, node.size());
-        org.junit.jupiter.api.Assertions.assertEquals("fix-A", node.get(0).get("issueId").asText());
+        assertEquals(1, node.size());
+        assertEquals("fix-A", node.get(0).get("issueId").asText());
         var resolves = node.get(0).get("resolves");
-        org.junit.jupiter.api.Assertions.assertEquals(2, resolves.size());
-        org.junit.jupiter.api.Assertions.assertEquals("covered-B", resolves.get(0).get("issueId").asText());
-        org.junit.jupiter.api.Assertions.assertEquals("coveredByPriorFix", resolves.get(0).get("via").asText());
-        org.junit.jupiter.api.Assertions.assertEquals("superseded-D", resolves.get(1).get("issueId").asText());
-        org.junit.jupiter.api.Assertions.assertEquals("supersedesPriorFix", resolves.get(1).get("via").asText());
+        assertEquals(2, resolves.size());
+        assertEquals("covered-B", resolves.get(0).get("issueId").asText());
+        assertEquals("coveredByPriorFix", resolves.get(0).get("via").asText());
+        assertEquals("superseded-D", resolves.get(1).get("issueId").asText());
+        assertEquals("supersedesPriorFix", resolves.get(1).get("via").asText());
     }
 
-    @org.junit.jupiter.api.Test
+    @Test
     void implicitlyAppliedIssueIdsIsOnlyReportedWhenApplyingIssueByIssue() {
         RemediationMetric all = RemediationMetric.builder()
             .executionMode(RemediationExecutionMode.APPLY)
@@ -206,12 +207,37 @@ class AviatorRemediationMetricsHelperTest {
             .implicitlyAppliedIssueIds(Set.of("A"))
             .build();
 
-        ObjectNode allResult = com.fortify.cli.common.json.JsonHelper.getObjectMapper().createObjectNode();
+        ObjectNode allResult = JsonHelper.getObjectMapper().createObjectNode();
         AviatorRemediationMetricsHelper.putRemediationMetricFields(allResult, all);
-        ObjectNode byIssueResult = com.fortify.cli.common.json.JsonHelper.getObjectMapper().createObjectNode();
+        ObjectNode byIssueResult = JsonHelper.getObjectMapper().createObjectNode();
         AviatorRemediationMetricsHelper.putRemediationMetricFields(byIssueResult, byIssue);
 
-        org.junit.jupiter.api.Assertions.assertFalse(allResult.has("implicitlyAppliedIssueIds"));
-        org.junit.jupiter.api.Assertions.assertEquals("A", byIssueResult.get("implicitlyAppliedIssueIds").get(0).asText());
+        assertFalse(allResult.has("implicitlyAppliedIssueIds"));
+        assertEquals("A", byIssueResult.get("implicitlyAppliedIssueIds").get(0).asText());
+    }
+
+    @Test
+    void remediationCountFieldsAreReportedInTheResult() {
+        RemediationMetric metric = RemediationMetric.builder()
+            .executionMode(RemediationExecutionMode.APPLY)
+            .totalRemediations(8)
+            .appliedRemediations(3)
+            .supersededRemediations(1)
+            .supersedesPriorFixRemediations(1)
+            .coveredByPriorFixRemediations(4)
+            .remediatedRemediations(8)
+            .skippedRemediations(0)
+            .build();
+
+        ObjectNode result = JsonHelper.getObjectMapper().createObjectNode();
+        AviatorRemediationMetricsHelper.putRemediationMetricFields(result, metric);
+
+        assertEquals(8, result.get("totalRemediation").asInt());
+        assertEquals(3, result.get("appliedRemediation").asInt());
+        assertEquals(1, result.get("supersededRemediation").asInt());
+        assertEquals(1, result.get("supersedesPriorFixRemediation").asInt());
+        assertEquals(4, result.get("coveredByPriorFixRemediation").asInt());
+        assertEquals(8, result.get("remediatedRemediation").asInt());
+        assertTrue(result.get("resolvedIssueIds").isArray());
     }
 }

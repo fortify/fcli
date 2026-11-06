@@ -17,40 +17,30 @@ import java.util.List;
 import java.util.Set;
 
 import com.fortify.cli.aviator.fpr.remediation.ImplicitFixApprover;
+import com.fortify.cli.common.cli.mixin.CommonOptionMixins.RequireConfirmation;
 
 /**
- * Asks the user whether a fix that was not requested may be applied because it is the only way to resolve a requested
- * issue. {@code --confirm} approves without asking; without a console and without {@code --confirm} nothing is approved.
+ * Asks the user, through the standard fcli confirmation ({@code -y/--confirm} or an interactive prompt), whether a fix
+ * that was not requested may be applied because it is the only way to resolve a requested issue. A fix that is not
+ * confirmed is simply not applied: the issues that need it are skipped, with a reason, and the rest of the run continues.
+ * The prompt text comes from the command's {@code confirmPrompt} message.
  */
 public final class ConsoleImplicitFixApprover implements ImplicitFixApprover {
-    private final boolean confirmed;
+    private final RequireConfirmation confirmation;
 
-    public ConsoleImplicitFixApprover(boolean confirmed) {
-        this.confirmed = confirmed;
+    public ConsoleImplicitFixApprover(RequireConfirmation confirmation) {
+        this.confirmation = confirmation;
     }
 
     @Override
     public Set<String> approve(List<ImplicitFix> proposals) {
         Set<String> approved = new LinkedHashSet<>();
         for (ImplicitFix proposal : proposals) {
-            if (confirmed || askUser(proposal)) {
+            if (confirmation.isConfirmed(String.join(", ", proposal.requestedIssueIds()), proposal.fixId(),
+                    String.join(", ", proposal.resolvedIssueIds()))) {
                 approved.add(proposal.fixId());
             }
         }
         return approved;
-    }
-
-    private boolean askUser(ImplicitFix proposal) {
-        if (System.console() == null) {
-            return false;
-        }
-        Set<String> others = new LinkedHashSet<>(proposal.resolvedIssueIds());
-        others.removeAll(proposal.requestedIssueIds());
-        String prompt = String.format(
-            "Issue(s) %s have no fix of their own; they are resolved by the wider fix for issue %s%s.%nApply the fix for issue %s? (y/N) ",
-            String.join(", ", proposal.requestedIssueIds()), proposal.fixId(),
-            others.isEmpty() ? "" : ", which also resolves " + String.join(", ", others), proposal.fixId());
-        String response = System.console().readLine(prompt);
-        return response != null && (response.trim().equalsIgnoreCase("y") || response.trim().equalsIgnoreCase("yes"));
     }
 }

@@ -25,6 +25,7 @@ import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -1871,7 +1872,7 @@ class RemediationProcessorTest {
     void requestingOnlyTheSupersededIssueAppliesTheSupersedingFixWhenApproved() throws Exception {
         Path sourceFile = writeSourceFile("before\nTARGET\nafter\n");
         Path fprPath = createReferenceFpr("fix-A", "superseded-D", true);
-        List<ImplicitFixApprover.ImplicitFix> asked = new java.util.ArrayList<>();
+        List<ImplicitFixApprover.ImplicitFix> asked = new ArrayList<>();
 
         RemediationMetric metric;
         try (FprHandle fprHandle = new FprHandle(fprPath)) {
