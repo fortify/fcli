@@ -153,9 +153,10 @@ class AuditProcessorAuditIsolationTest {
         responses.put("E", fixResponse("E", 1, 5, "e", List.of("A")));
         Map<String, String> timestamps = Map.of("D", "t", "A", "t", "E", "t");
 
-        Map<String, String> resolved = AuditProcessor.resolveSupersededByFix(responses, timestamps::containsKey);
+        Map<String, String> direct = SupersedeGraph.resolveDirectSupersededBy(responses, timestamps::containsKey);
 
-        assertEquals(Map.of("D", "E", "A", "E"), resolved);
+        assertEquals(Map.of("D", "A", "A", "E"), direct);
+        assertEquals("E", SupersedeGraph.writtenFixFrom("D", direct, Set.of("E")));
     }
 
     @Test
@@ -165,7 +166,7 @@ class AuditProcessorAuditIsolationTest {
         responses.put("B", fixResponse("B", 1, 3, "b", List.of("A")));
         Map<String, String> timestamps = Map.of("A", "t", "B", "t");
 
-        assertEquals(Map.of(), AuditProcessor.resolveSupersededByFix(responses, timestamps::containsKey));
+        assertEquals(Map.of(), SupersedeGraph.resolveDirectSupersededBy(responses, timestamps::containsKey));
     }
 
     @Test
@@ -181,7 +182,7 @@ class AuditProcessorAuditIsolationTest {
         responses.put("F", coveredResponse("F", List.of("X")));
         responses.get("F").getAuditResult().setComment("Note: It is already addressed by the fix for issue X.");
 
-        Map<String, AuditResponse> resolved = AuditProcessor.withResolvedPriorFixNotes(responses, Set.of("B"));
+        Map<String, AuditResponse> resolved = PriorFixNotes.withResolvedPriorFixNotes(responses, Set.of("B"));
 
         assertEquals("Text. Note: No separate automated remediation was generated for this finding because it is "
                 + "already addressed by the fix for issue B.", resolved.get("C").getAuditResult().getComment());
@@ -198,7 +199,7 @@ class AuditProcessorAuditIsolationTest {
         responses.get("E").getAuditResult().setComment("Note: The automated remediation for this finding also contains "
                 + "the fix for issue A, which falls within the lines it changes.");
 
-        Map<String, AuditResponse> resolved = AuditProcessor.withResolvedPriorFixNotes(responses, Set.of("E"));
+        Map<String, AuditResponse> resolved = PriorFixNotes.withResolvedPriorFixNotes(responses, Set.of("E"));
 
         assertEquals("Note: The automated remediation for this finding also contains the fixes for issues A, D, "
                 + "which falls within the lines it changes.", resolved.get("E").getAuditResult().getComment());
@@ -211,7 +212,7 @@ class AuditProcessorAuditIsolationTest {
         responses.put("C", coveredResponse("C", List.of("A")));
         responses.get("C").getAuditResult().setComment("Note: It is already addressed by the fix for issue A.");
 
-        Map<String, AuditResponse> resolved = AuditProcessor.withResolvedPriorFixNotes(responses, Set.of("A"));
+        Map<String, AuditResponse> resolved = PriorFixNotes.withResolvedPriorFixNotes(responses, Set.of("A"));
 
         assertEquals("Note: It is already addressed by the fix for issue A.", resolved.get("C").getAuditResult().getComment());
     }
@@ -284,7 +285,7 @@ class AuditProcessorAuditIsolationTest {
         responses.get("C").getAuditResult().setComment("Note: It is already addressed by the fix for issue D.");
 
         // A could not be written, so D keeps its own fix: C stays covered by D and A claims nothing.
-        Map<String, AuditResponse> resolved = AuditProcessor.withResolvedPriorFixNotes(responses, Set.of("D"));
+        Map<String, AuditResponse> resolved = PriorFixNotes.withResolvedPriorFixNotes(responses, Set.of("D"));
 
         assertEquals("Note: It is already addressed by the fix for issue D.", resolved.get("C").getAuditResult().getComment());
         assertEquals("Fix.", resolved.get("A").getAuditResult().getComment());
@@ -296,7 +297,7 @@ class AuditProcessorAuditIsolationTest {
         responses.put("C", coveredResponse("C", List.of("A")));
         responses.get("C").getAuditResult().setComment("Note: It is already addressed by the fix for issue A.");
 
-        Map<String, AuditResponse> resolved = AuditProcessor.withResolvedPriorFixNotes(responses, null);
+        Map<String, AuditResponse> resolved = PriorFixNotes.withResolvedPriorFixNotes(responses, null);
 
         assertEquals("Note: It is already addressed by the fix for issue A.", resolved.get("C").getAuditResult().getComment());
     }
@@ -344,8 +345,8 @@ class AuditProcessorAuditIsolationTest {
         wideFirst.put("A-narrow", narrowFirst.get("A-narrow"));
         wideFirst.put("X", narrowFirst.get("X"));
 
-        assertEquals(Map.of("X", "B-wide"), AuditProcessor.resolveDirectSupersededBy(narrowFirst, id -> true));
-        assertEquals(Map.of("X", "B-wide"), AuditProcessor.resolveDirectSupersededBy(wideFirst, id -> true));
+        assertEquals(Map.of("X", "B-wide"), SupersedeGraph.resolveDirectSupersededBy(narrowFirst, id -> true));
+        assertEquals(Map.of("X", "B-wide"), SupersedeGraph.resolveDirectSupersededBy(wideFirst, id -> true));
     }
 
     @Test
@@ -359,8 +360,8 @@ class AuditProcessorAuditIsolationTest {
         second.put("X", first.get("X"));
         second.put("F2", first.get("F2"));
 
-        assertEquals(Map.of("X", "F1"), AuditProcessor.resolveDirectSupersededBy(first, id -> true));
-        assertEquals(Map.of("X", "F1"), AuditProcessor.resolveDirectSupersededBy(second, id -> true));
+        assertEquals(Map.of("X", "F1"), SupersedeGraph.resolveDirectSupersededBy(first, id -> true));
+        assertEquals(Map.of("X", "F1"), SupersedeGraph.resolveDirectSupersededBy(second, id -> true));
     }
 
     @Test
@@ -380,7 +381,7 @@ class AuditProcessorAuditIsolationTest {
         responses.get("C").getAuditResult().setComment("Covered.\n\n" + serverCoveredNote);
         responses.put("X", fixResponse("X", 20, 21, "x", List.of()));
 
-        Map<String, AuditResponse> resolved = AuditProcessor.withResolvedPriorFixNotes(responses, Set.of("A", "X"));
+        Map<String, AuditResponse> resolved = PriorFixNotes.withResolvedPriorFixNotes(responses, Set.of("A", "X"));
 
         assertEquals("Covered.\n\nNote: No separate automated remediation was generated for this finding because it is "
                 + "already addressed by the fixes for issues A, X.", resolved.get("C").getAuditResult().getComment());
@@ -396,7 +397,7 @@ class AuditProcessorAuditIsolationTest {
         responses.put("C", coveredResponse("C", List.of("D")));
         responses.get("C").getAuditResult().setComment("Note: It is already addressed by the fix for issue D.");
 
-        Map<String, AuditResponse> resolved = AuditProcessor.withResolvedPriorFixNotes(responses, Set.of("A"));
+        Map<String, AuditResponse> resolved = PriorFixNotes.withResolvedPriorFixNotes(responses, Set.of("A"));
 
         assertEquals("Note: It is already addressed by the fix for issue A.", resolved.get("C").getAuditResult().getComment());
         assertEquals("Note: It is already addressed by the fix for issue D.", responses.get("C").getAuditResult().getComment());
@@ -410,7 +411,7 @@ class AuditProcessorAuditIsolationTest {
         responses.put("C", coveredResponse("C", List.of("D")));
         responses.get("C").getAuditResult().setComment("Reworded: this is covered by the fix for D.");
 
-        Map<String, AuditResponse> resolved = AuditProcessor.withResolvedPriorFixNotes(responses, Set.of("A"));
+        Map<String, AuditResponse> resolved = PriorFixNotes.withResolvedPriorFixNotes(responses, Set.of("A"));
 
         assertEquals("Reworded: this is covered by the fix for D.", resolved.get("C").getAuditResult().getComment());
     }

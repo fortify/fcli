@@ -23,24 +23,21 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Base64;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.TreeMap;
-import java.util.function.Predicate;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+
+import static com.fortify.cli.aviator.fpr.processor.RemediationResponses.coveredByPriorFixIds;
+import static com.fortify.cli.aviator.fpr.processor.RemediationResponses.hasRemediationChanges;
 
 import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
@@ -64,7 +61,6 @@ import org.xml.sax.SAXException;
 
 import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
 import com.fortify.cli.aviator.audit.model.AuditResponse;
-import com.fortify.cli.aviator.audit.model.AuditResult;
 import com.fortify.cli.aviator.audit.model.AuditTier;
 import com.fortify.cli.aviator.audit.model.Change;
 import com.fortify.cli.aviator.config.TagMappingConfig;
@@ -86,7 +82,6 @@ import lombok.Setter;
 public class AuditProcessor {
 
     Logger logger = LoggerFactory.getLogger(AuditProcessor.class);
-    private static final Logger NOTE_LOGGER = LoggerFactory.getLogger(AuditProcessor.class);
     private static final String AUDIT_NAMESPACE_URI = "xmlns://www.fortify.com/schema/audit";
     private static final String REMEDIATIONS_NAMESPACE_URI = "xmlns://www.fortify.com/schema/remediations";
 
@@ -767,7 +762,7 @@ public class AuditProcessor {
             TagMappingConfig tagMappingConfig, Map<String, String> issueCategoryLookup,
             FPRInfo fprInfo, FVDLMetadata fvdlMetadata) throws AviatorTechnicalException {
         lastRemediationGenerationMetric = RemediationGenerationMetric.empty();
-        Map<String, AuditResponse> responses = withResolvedPriorFixNotes(auditResponses,
+        Map<String, AuditResponse> responses = PriorFixNotes.withResolvedPriorFixNotes(auditResponses,
                 writtenFixIdsForNotes(auditResponses, fprInfo, fvdlMetadata));
         // Step 1: Apply this save's audit responses. writtenInstanceIds is the local retain set.
         Map<String, String> effectiveIssueCategoryLookup = issueCategoryLookup == null ? Map.of() : issueCategoryLookup;
@@ -944,7 +939,7 @@ public class AuditProcessor {
             // An issue superseded by another issue's fix keeps no fix of its own, but only once the fix that supersedes it
             // was actually written. A fix that cannot be written (for example when its source file is unreadable) must not
             // take the narrower fixes down with it, so superseded issues are resolved after all other fixes are written.
-            Map<String, String> directSupersededBy = resolveDirectSupersededBy(auditResponses, remediationCommentTimestamps::containsKey);
+            Map<String, String> directSupersededBy = SupersedeGraph.resolveDirectSupersededBy(auditResponses, remediationCommentTimestamps::containsKey);
             Map<String, List<String>> coveredEntries = new LinkedHashMap<>();
             Map<String, Element> writtenFixElements = new LinkedHashMap<>();
 
@@ -977,9 +972,9 @@ public class AuditProcessor {
             // If none was written, the issue keeps its own fix, which can then be referenced by the issues below it.
             Map<String, String> supersededReferences = new LinkedHashMap<>();
             List<String> supersededIds = new ArrayList<>(directSupersededBy.keySet());
-            supersededIds.sort(Comparator.comparingInt(id -> supersedeDepth(id, directSupersededBy)));
+            supersededIds.sort(Comparator.comparingInt(id -> SupersedeGraph.supersedeDepth(id, directSupersededBy)));
             for (String supersededId : supersededIds) {
-                String fixId = writtenFixFrom(directSupersededBy.get(supersededId), directSupersededBy, writtenFixElements.keySet());
+                String fixId = SupersedeGraph.writtenFixFrom(directSupersededBy.get(supersededId), directSupersededBy, writtenFixElements.keySet());
                 if (fixId != null) {
                     supersededReferences.put(supersededId, fixId);
                 } else {
@@ -1001,7 +996,7 @@ public class AuditProcessor {
                 references.put(supersededId, List.of(fixId));
             });
             coveredEntries.forEach((coveredId, coveringIds) -> references.put(coveredId, coveringIds.stream()
-                    .map(id -> writtenFixFrom(id, directSupersededBy, writtenFixElements.keySet()))
+                    .map(id -> SupersedeGraph.writtenFixFrom(id, directSupersededBy, writtenFixElements.keySet()))
                     .filter(Objects::nonNull).distinct().toList()));
 
             for (Map.Entry<String, List<String>> reference : references.entrySet()) {
@@ -1158,31 +1153,6 @@ public class AuditProcessor {
         return null;
     }
 
-    private static boolean hasRemediationChanges(AuditResponse response) {
-        return response != null && response.getAuditResult() != null
-                && response.getAuditResult().getAutoremediation() != null
-                && response.getAuditResult().getAutoremediation().getChanges() != null
-                && !response.getAuditResult().getAutoremediation().getChanges().isEmpty();
-    }
-
-    /** Issue ids whose own fix the server reports as contained in this issue's fix. */
-    private static List<String> supersededIssueIds(AuditResponse response) {
-        if (!hasRemediationChanges(response)) {
-            return List.of();
-        }
-        List<String> ids = response.getAuditResult().getAutoremediation().getSupersededIssueIds();
-        return ids == null ? List.of() : ids.stream().filter(id -> id != null && !id.isBlank()).toList();
-    }
-
-    private static final Pattern COVERED_NOTE = Pattern.compile(
-            "(already addressed by )(?:the fix for issue |the fixes for issues )([\\w-]+(?:, [\\w-]+)*)(\\.)");
-    private static final Pattern SUPERSEDE_NOTE = Pattern.compile(
-            "(also contains )(?:the fix for issue |the fixes for issues )([\\w-]+(?:, [\\w-]+)*)(, which falls within the lines it changes\\.)");
-
-    private static final Pattern SUPERSEDE_NOTE_SENTENCE = Pattern.compile(
-            "\\s*Note: The automated remediation for this finding also contains (?:the fix for issue |the fixes for issues )"
-            + "[\\w-]+(?:, [\\w-]+)*, which falls within the lines it changes\\.");
-
     /**
      * The server words the notes in audit comments before it knows which fix finally wins, and the writer only supersedes
      * an issue when a fix above it is actually written. When something was superseded this dry-runs the writer to learn
@@ -1193,7 +1163,7 @@ public class AuditProcessor {
      */
     private Set<String> writtenFixIdsForNotes(Map<String, AuditResponse> auditResponses, FPRInfo fprInfo,
             FVDLMetadata fvdlMetadata) {
-        if (resolveDirectSupersededBy(auditResponses, id -> true).isEmpty()) {
+        if (SupersedeGraph.resolveDirectSupersededBy(auditResponses, id -> true).isEmpty()) {
             return null;
         }
         String now = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX").format(new Date());
@@ -1217,184 +1187,6 @@ public class AuditProcessor {
             }
         }
         return written;
-    }
-
-    /**
-     * Returns the responses to write, with the notes in their audit comments rewritten so they name fixes that are written to
-     * remediations.xml: a covering fix that was superseded is replaced by the nearest written fix above it (the same one the
-     * writer references), a superseding fix lists every issue it absorbed, including through chains, and the supersede
-     * sentence is dropped from a fix that was not written. Notes that name an issue without a written fix above it are left
-     * as they are. The responses passed in are not modified: a changed response is a copy.
-     * <p>
-     * The notes are English text written by the server, so the rewrite depends on its wording (pinned by tests). The ids
-     * themselves are always available structurally; when they say a note needs rewriting but no note is found in the
-     * comment, a warning is logged and the comment is left unchanged.
-     *
-     * @param writtenFixIds the fixes that are written, or null when nothing was superseded
-     */
-    static Map<String, AuditResponse> withResolvedPriorFixNotes(Map<String, AuditResponse> auditResponses,
-            Set<String> writtenFixIds) {
-        if (writtenFixIds == null) {
-            return auditResponses;
-        }
-        Map<String, String> direct = resolveDirectSupersededBy(auditResponses, id -> true);
-        if (direct.isEmpty()) {
-            return auditResponses;
-        }
-        Map<String, AuditResponse> resolved = new LinkedHashMap<>();
-        for (Map.Entry<String, AuditResponse> entry : auditResponses.entrySet()) {
-            AuditResponse response = entry.getValue();
-            AuditResult result = response == null ? null : response.getAuditResult();
-            String comment = result == null ? null : result.getComment();
-            String rewritten = comment == null ? null : rewriteNotes(entry.getKey(), response, comment, direct, writtenFixIds);
-            if (rewritten != null && !rewritten.equals(comment)) {
-                resolved.put(entry.getKey(),
-                        response.toBuilder().auditResult(result.toBuilder().comment(rewritten).build()).build());
-            } else {
-                resolved.put(entry.getKey(), response);
-            }
-        }
-        return resolved;
-    }
-
-    private static String rewriteNotes(String issueId, AuditResponse response, String comment, Map<String, String> direct,
-            Set<String> writtenFixIds) {
-        boolean coveredNeedsRewrite = coveredByPriorFixIds(response).stream().anyMatch(id -> {
-            String written = writtenFixFrom(id, direct, writtenFixIds);
-            return written != null && !written.equals(id);
-        });
-        if (coveredNeedsRewrite && !COVERED_NOTE.matcher(comment).find()) {
-            NOTE_LOGGER.warn("Issue {} is covered by a fix that was superseded, but its audit comment has no recognizable "
-                    + "covered-by-prior-fix note (the server wording may have changed); the comment is left unchanged", issueId);
-        }
-        String rewritten = COVERED_NOTE.matcher(comment).replaceAll(match -> {
-            List<String> fixIds = Arrays.stream(match.group(2).split(", "))
-                    .map(id -> {
-                        String written = writtenFixFrom(id, direct, writtenFixIds);
-                        return written != null ? written : id;
-                    }).distinct().toList();
-            return Matcher.quoteReplacement(match.group(1) + noteSubject(fixIds) + match.group(3));
-        });
-        if (!writtenFixIds.contains(issueId)) {
-            return SUPERSEDE_NOTE_SENTENCE.matcher(rewritten).replaceAll("");
-        }
-        List<String> absorbed = direct.keySet().stream()
-                .filter(supersededId -> issueId.equals(writtenFixFrom(direct.get(supersededId), direct, writtenFixIds)))
-                .toList();
-        if (absorbed.isEmpty()) {
-            return rewritten;
-        }
-        if (!SUPERSEDE_NOTE.matcher(rewritten).find()) {
-            NOTE_LOGGER.warn("Issue {} supersedes {} but its audit comment has no recognizable supersede note "
-                    + "(the server wording may have changed); the comment is left unchanged", issueId, absorbed);
-            return rewritten;
-        }
-        return SUPERSEDE_NOTE.matcher(rewritten).replaceAll(match -> {
-            Set<String> ids = new LinkedHashSet<>(List.of(match.group(2).split(", ")));
-            ids.addAll(absorbed);
-            return Matcher.quoteReplacement(match.group(1) + noteSubject(new ArrayList<>(ids)) + match.group(3));
-        });
-    }
-
-    private static String noteSubject(List<String> ids) {
-        return (ids.size() == 1 ? "the fix for issue " : "the fixes for issues ") + String.join(", ", ids);
-    }
-
-    /**
-     * Maps each superseded issue to the fix that directly supersedes it. Issues that are part of a supersede cycle, or
-     * lead into one, are left out so every involved issue simply keeps its own fix.
-     */
-    static Map<String, String> resolveDirectSupersededBy(Map<String, AuditResponse> auditResponses,
-            Predicate<String> hasWritableEntry) {
-        // The responses come from a concurrent map, so nothing here may depend on iteration order: when several fixes
-        // claim the same issue the widest one wins (fcli applies the widest fix first), ties are broken by id, and the
-        // result is sorted by issue id.
-        Map<String, List<String>> claimedBy = new TreeMap<>();
-        for (Map.Entry<String, AuditResponse> entry : auditResponses.entrySet()) {
-            String fixId = entry.getKey();
-            if (!hasRemediationChanges(entry.getValue()) || !hasWritableEntry.test(fixId)) {
-                continue;
-            }
-            for (String supersededId : supersededIssueIds(entry.getValue())) {
-                AuditResponse supersededResponse = auditResponses.get(supersededId);
-                if (!supersededId.equals(fixId) && hasRemediationChanges(supersededResponse)
-                        && hasWritableEntry.test(supersededId)) {
-                    claimedBy.computeIfAbsent(supersededId, k -> new ArrayList<>()).add(fixId);
-                }
-            }
-        }
-        Map<String, String> direct = new TreeMap<>();
-        claimedBy.forEach((supersededId, fixIds) -> direct.put(supersededId, fixIds.stream()
-                .min(Comparator.comparingInt((String id) -> -fixWidth(auditResponses.get(id))).thenComparing(Comparator.naturalOrder()))
-                .orElseThrow()));
-        Map<String, String> acyclic = new TreeMap<>();
-        for (String supersededId : direct.keySet()) {
-            Set<String> visited = new HashSet<>(Set.of(supersededId));
-            String fixId = direct.get(supersededId);
-            while (direct.containsKey(fixId) && visited.add(fixId)) {
-                fixId = direct.get(fixId);
-            }
-            if (!direct.containsKey(fixId)) {
-                acyclic.put(supersededId, direct.get(supersededId));
-            }
-        }
-        return acyclic;
-    }
-
-    /** Widest change of a fix in lines (lineTo - lineFrom), the same measure fcli uses to apply the widest fix first. */
-    private static int fixWidth(AuditResponse response) {
-        int width = 0;
-        for (Change change : response.getAuditResult().getAutoremediation().getChanges()) {
-            try {
-                width = Math.max(width, Integer.parseInt(change.getToLine().trim()) - Integer.parseInt(change.getFromLine().trim()));
-            } catch (NumberFormatException | NullPointerException e) {
-                // an unparsable range does not make the fix wider
-            }
-        }
-        return width;
-    }
-
-    /** Like {@link #resolveDirectSupersededBy} but maps each superseded issue straight to the widest fix above it. */
-    static Map<String, String> resolveSupersededByFix(Map<String, AuditResponse> auditResponses,
-            Predicate<String> hasWritableEntry) {
-        Map<String, String> direct = resolveDirectSupersededBy(auditResponses, hasWritableEntry);
-        Map<String, String> resolved = new LinkedHashMap<>();
-        for (String supersededId : direct.keySet()) {
-            String fixId = direct.get(supersededId);
-            while (direct.containsKey(fixId)) {
-                fixId = direct.get(fixId);
-            }
-            resolved.put(supersededId, fixId);
-        }
-        return resolved;
-    }
-
-    /** The first issue at or above {@code startId} in a supersede chain whose fix was written, or null if none was. */
-    private static String writtenFixFrom(String startId, Map<String, String> directSupersededBy, Set<String> writtenFixIds) {
-        String id = startId;
-        while (id != null && !writtenFixIds.contains(id)) {
-            id = directSupersededBy.get(id);
-        }
-        return id;
-    }
-
-    private static int supersedeDepth(String id, Map<String, String> directSupersededBy) {
-        int depth = 0;
-        for (String above = directSupersededBy.get(id); above != null; above = directSupersededBy.get(above)) {
-            depth++;
-        }
-        return depth;
-    }
-
-    /** Issue ids whose prior fix already covers this issue; empty when the issue has its own changes or none apply. */
-    private static List<String> coveredByPriorFixIds(AuditResponse response) {
-        if (response == null || response.getAuditResult() == null
-                || response.getAuditResult().getAutoremediation() == null
-                || hasRemediationChanges(response)) {
-            return List.of();
-        }
-        List<String> ids = response.getAuditResult().getAutoremediation().getCoveredByIssueIds();
-        return ids == null ? List.of() : ids.stream().filter(id -> id != null && !id.isBlank()).toList();
     }
 
     private Element createCoveredByPriorFixElement(Document doc, String instanceId, AuditResponse auditResponse,
