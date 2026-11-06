@@ -22,6 +22,7 @@ import com.fortify.cli.aviator._common.remediations_cache.IApplyRemediationsOpti
 import com.fortify.cli.aviator.fpr.remediation.ImplicitFixApprover;
 import com.fortify.cli.aviator.fpr.remediation.RemediationExecutionMode;
 import com.fortify.cli.aviator.fpr.utils.ISourceDecoder;
+import com.fortify.cli.common.cli.mixin.CommonOptionMixins;
 import com.fortify.cli.common.exception.FcliSimpleException;
 
 import lombok.Getter;
@@ -46,12 +47,12 @@ public abstract class AbstractApplyRemediationsOptionsMixin implements IApplyRem
     @Option(names = {"--preview"})
     private boolean previewMode = false;
 
-    @Option(names = {"-y", "--confirm"})
-    private boolean confirmImplicitFixes;
+    @Mixin
+    private CommonOptionMixins.RequireConfirmation confirmation;
 
     @Override
     public ImplicitFixApprover getImplicitFixApprover() {
-        return new ConsoleImplicitFixApprover(confirmImplicitFixes);
+        return new ConsoleImplicitFixApprover(confirmation);
     }
 
     public RemediationExecutionMode executionMode() {

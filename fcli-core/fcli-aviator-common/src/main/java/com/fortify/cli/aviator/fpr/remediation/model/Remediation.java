@@ -24,14 +24,6 @@ public final class Remediation {
     private final List<String> coveredByInstanceIds;
     private final List<String> supersedesInstanceIds;
 
-    public Remediation(String instanceId, List<FileChange> fileChanges) {
-        this(instanceId, fileChanges, List.of(), List.of());
-    }
-
-    public Remediation(String instanceId, List<FileChange> fileChanges, List<String> coveredByInstanceIds) {
-        this(instanceId, fileChanges, coveredByInstanceIds, List.of());
-    }
-
     public Remediation(String instanceId, List<FileChange> fileChanges, List<String> coveredByInstanceIds,
             List<String> supersedesInstanceIds) {
         this.instanceId = instanceId;

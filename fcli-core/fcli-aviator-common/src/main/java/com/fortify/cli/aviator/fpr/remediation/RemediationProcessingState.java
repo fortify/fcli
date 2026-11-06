@@ -223,7 +223,7 @@ final class RemediationProcessingState {
     private String unresolvedReason(List<String> fixIds) {
         String joined = String.join(", ", fixIds);
         return fixIds.stream().anyMatch(declinedFixIds::contains)
-            ? "Fix " + joined + " was not confirmed"
+            ? "Fix " + joined + " was not confirmed; confirm it interactively or use --confirm"
             : "Prior fix " + joined + " was not applied";
     }
 
