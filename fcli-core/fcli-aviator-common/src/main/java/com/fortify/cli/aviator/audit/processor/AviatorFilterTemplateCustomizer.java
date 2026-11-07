@@ -12,9 +12,12 @@
  */
 package com.fortify.cli.aviator.audit.processor;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.w3c.dom.Document;
@@ -55,11 +58,95 @@ public final class AviatorFilterTemplateCustomizer implements FilterTemplateCust
         Node lastTagDefNode = tagDefNodes.getLength() > 0 ? tagDefNodes.item(tagDefNodes.getLength() - 1) : null;
 
         boolean needsUpdate = ensureTagDefinitionPresent(filterTemplate, Constants.AVIATOR_PREDICTION_TAG_ID, "Aviator prediction", Arrays.asList(Constants.AVIATOR_NOT_AN_ISSUE, Constants.AVIATOR_REMEDIATION_REQUIRED, Constants.AVIATOR_UNSURE, Constants.AVIATOR_EXCLUDED, Constants.AVIATOR_LIKELY_TP, Constants.AVIATOR_LIKELY_FP), doc, namespaceURI, lastTagDefNode);
-        needsUpdate |= ensureTagDefinitionPresent(filterTemplate, Constants.AVIATOR_STATUS_TAG_ID, "Aviator status", Arrays.asList(Constants.PROCESSED_BY_AVIATOR), doc, namespaceURI, lastTagDefNode);
+        needsUpdate |= ensureTagDefinitionPresent(filterTemplate, Constants.AVIATOR_STATUS_TAG_ID, "Aviator status",
+                Constants.AVIATOR_STATUS_VALUES, doc, namespaceURI, lastTagDefNode);
+        needsUpdate |= ensureTagValuesPresent(filterTemplate, Constants.AVIATOR_STATUS_TAG_ID, Constants.AVIATOR_STATUS_VALUES,
+                doc, namespaceURI);
         needsUpdate |= ensureTagDefinitionPresent(filterTemplate, Constants.FOD_TAG_ID, "FoD", Arrays.asList(Constants.PENDING_REVIEW, Constants.FALSE_POSITIVE, Constants.EXPLOITABLE, Constants.SUSPICIOUS, Constants.SANITIZED), doc, namespaceURI, lastTagDefNode);
         needsUpdate |= ensureTagDefinitionPresent(filterTemplate, Constants.AUDITOR_STATUS_TAG_ID, "Auditor Status", Arrays.asList(Constants.PENDING_REVIEW, Constants.NOT_AN_ISSUE, Constants.UNSURE, Constants.REMEDIATION_REQUIRED, Constants.PROPOSED_NOT_AN_ISSUE, Constants.SUSPICIOUS), doc, namespaceURI, lastTagDefNode);
 
         return needsUpdate;
+    }
+
+    private boolean ensureTagValuesPresent(FilterTemplate filterTemplate, String tagId, List<String> requiredValues,
+            Document doc, String namespaceURI) {
+        TagDefinition tagDefinition = filterTemplate.getTagDefinitions().stream()
+                .filter(tag -> tagId.equalsIgnoreCase(tag.getId()))
+                .findFirst()
+                .orElse(null);
+        if (tagDefinition == null) {
+            return false;
+        }
+
+        if (tagDefinition.getValues() == null) {
+            tagDefinition.setValues(new ArrayList<>());
+        }
+        Set<String> modelValues = new HashSet<>(tagDefinition.getTagValuesAsString());
+        Set<String> modelValueIds = tagDefinition.getValues().stream()
+                .map(TagValue::getId)
+                .collect(Collectors.toCollection(HashSet::new));
+        Element tagElement = findTagDefinitionElement(doc, namespaceURI, tagId);
+        if (tagElement == null) {
+            return false;
+        }
+
+        NodeList xmlValueNodes = tagElement.getElementsByTagNameNS(namespaceURI != null ? namespaceURI : "", "value");
+        Set<String> xmlValues = new HashSet<>();
+        Set<String> xmlValueIds = new HashSet<>();
+        for (int i = 0; i < xmlValueNodes.getLength(); i++) {
+            Node valueNode = xmlValueNodes.item(i);
+            xmlValues.add(valueNode.getTextContent());
+            if (valueNode instanceof Element valueElement) {
+                xmlValueIds.add(valueElement.getAttribute("id"));
+            }
+        }
+
+        boolean updated = false;
+        for (String value : requiredValues) {
+            if (!modelValues.contains(value)) {
+                TagValue modelValue = new TagValue();
+                String valueId = nextAvailableValueId(modelValueIds);
+                modelValue.setId(valueId);
+                modelValue.setHidden(false);
+                modelValue.setValue(value);
+                tagDefinition.getValues().add(modelValue);
+                modelValueIds.add(valueId);
+                modelValues.add(value);
+                updated = true;
+            }
+            if (!xmlValues.contains(value)) {
+                Element valueElement = doc.createElementNS(namespaceURI, "value");
+                String valueId = nextAvailableValueId(xmlValueIds);
+                valueElement.setAttribute("id", valueId);
+                valueElement.setAttribute("hidden", "false");
+                valueElement.setTextContent(value);
+                tagElement.appendChild(valueElement);
+                xmlValueIds.add(valueId);
+                xmlValues.add(value);
+                updated = true;
+            }
+        }
+        return updated;
+    }
+
+    private String nextAvailableValueId(Set<String> existingIds) {
+        int nextId = 0;
+        while (existingIds.contains(String.valueOf(nextId))) {
+            nextId++;
+        }
+        return String.valueOf(nextId);
+    }
+
+    private Element findTagDefinitionElement(Document doc, String namespaceURI, String tagId) {
+        NodeList tags = doc.getDocumentElement().getElementsByTagNameNS(namespaceURI != null ? namespaceURI : "",
+                "TagDefinition");
+        for (int i = 0; i < tags.getLength(); i++) {
+            Element tag = (Element) tags.item(i);
+            if (tagId.equalsIgnoreCase(tag.getAttribute("id"))) {
+                return tag;
+            }
+        }
+        return null;
     }
 
     private boolean ensureTagDefinitionPresent(FilterTemplate filterTemplate, String tagId, String tagName, List<String> tagValues, Document doc, String namespaceURI, Node insertAfterNode) {

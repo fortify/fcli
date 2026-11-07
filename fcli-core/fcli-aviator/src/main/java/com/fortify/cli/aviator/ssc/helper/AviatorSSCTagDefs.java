@@ -15,6 +15,7 @@ package com.fortify.cli.aviator.ssc.helper;
 import java.util.List;
 
 import com.formkiq.graalvm.annotations.Reflectable;
+import com.fortify.cli.aviator.util.Constants;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -45,7 +46,7 @@ public final class AviatorSSCTagDefs {
             "FB7B0462-2C2E-46D9-811A-DCC1F3C83051",
             "Aviator status",
             "LIST",
-            List.of("PROCESSED_BY_AVIATOR")
+            Constants.AVIATOR_STATUS_VALUES
     );
 
     /**

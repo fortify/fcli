@@ -291,6 +291,8 @@ abstract class AbstractAviatorSSCSastAuditCommand extends AbstractSSCJsonNodeOut
     @SneakyThrows
     private JsonNode processFpr(UnirestInstance unirest, SSCAppVersionDescriptor av, String token, String url, AviatorLoggerImpl logger, Path downloadedFprPath) {
         FPRAuditResult auditResult;
+        boolean useLegacySastStatusForRemediation =
+            AviatorSSCTagValidator.shouldUseLegacySastStatus(unirest, av.getVersionId(), logger);
 
         try (FprHandle fprHandle = new FprHandle(downloadedFprPath)) {
             auditResult = AuditFPR.auditFPR(AuditFprOptions.builder()
@@ -305,6 +307,7 @@ abstract class AbstractAviatorSSCSastAuditCommand extends AbstractSSCJsonNodeOut
                     .folderNames(folderNames)
                     .folderPriorityOrder(getFolderPriorityOrder())
                     .forceReaudit(forceReaudit)
+                    .useLegacySastStatusForRemediation(useLegacySastStatusForRemediation)
                     .sourceDecoder(sourceEncodingsMixin.getSourceDecoder())
                     .build());
         }
@@ -314,7 +317,11 @@ abstract class AbstractAviatorSSCSastAuditCommand extends AbstractSSCJsonNodeOut
 
         String artifactId = null;
         if (auditResult.getUpdatedFile() != null && !"SKIPPED".equals(action) && !"FAILED".equals(action)) {
-            validateSSCTagsBeforeUpload(unirest, av, logger);
+            if (auditResult.getLegacyStatusFallbacks() > 0) {
+                logger.warn("%s", AviatorSSCTagValidator.legacyStatusFallbackWarning(auditResult.getLegacyStatusFallbacks()));
+            }
+            validateSSCTagsBeforeUpload(unirest, av, logger,
+                AviatorSSCTagValidator.sastStatusValues(useLegacySastStatusForRemediation));
             try {
                 artifactId = uploadAuditedFprToSSC(unirest, auditResult.getUpdatedFile(), av);
             } catch (Exception e) {
@@ -334,14 +341,14 @@ abstract class AbstractAviatorSSCSastAuditCommand extends AbstractSSCJsonNodeOut
      * values so the user can take corrective action.
      */
     private void validateSSCTagsBeforeUpload(UnirestInstance unirest, SSCAppVersionDescriptor av,
-            AviatorLoggerImpl logger) {
+            AviatorLoggerImpl logger, List<String> statusValues) {
         LOG.info("Starting SSC tag validation before FPR upload for app version id={}.", av.getVersionId());
         TagMappingConfig tagMappingConfig = loadTagMappingForValidation();
         LOG.debug("Tag mapping config loaded: tag_id='{}', mapping={}", tagMappingConfig.getTag_id(), tagMappingConfig.getMapping());
         Set<String> analysisTagValues = tagMappingConfig.getMappedValues();
         LOG.info("Analysis tag values to validate: {}", analysisTagValues);
         List<String> warnings = AviatorSSCTagValidator.validatePreUpload(
-            unirest, av.getVersionId(), tagMappingConfig.getTag_id(), analysisTagValues, logger);
+            unirest, av.getVersionId(), tagMappingConfig.getTag_id(), analysisTagValues, statusValues, logger);
         LOG.info("Tag validation complete. {} warning(s) found.", warnings.size());
     }
 
