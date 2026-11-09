@@ -33,6 +33,7 @@ import org.junit.jupiter.params.provider.CsvSource;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fortify.cli.aviator.audit.model.FPRAuditResult;
 import com.fortify.cli.aviator.config.AviatorLoggerImpl;
 import com.fortify.cli.aviator.ssc.helper.AviatorSSCAuditHelper.AuditableIssuePresence;
 import com.fortify.cli.aviator.util.Constants;
@@ -47,6 +48,34 @@ import com.sun.net.httpserver.HttpServer;
 import kong.unirest.UnirestInstance;
 
 class AviatorSSCAuditHelperTest {
+
+    @Test
+    void progressMessageUploadsAResultThatOnlyRecordedEvidenceBaselines() {
+        var result = new FPRAuditResult(new java.io.File("audited.fpr"), "SKIPPED", "baselines", 0, 0, 0, 0, Map.of(), 0, Map.of());
+
+        assertEquals("Status: Uploading FPR with recorded evidence baselines to SSC",
+                AviatorSSCAuditHelper.getProgressMessage(result));
+    }
+
+    @Test
+    void progressMessageStillSkipsUploadWhenNothingWasSaved() {
+        var result = new FPRAuditResult(null, "SKIPPED", "No issues to audit", 0, 0, 0, 0, Map.of(), 0, Map.of());
+
+        assertEquals("No issues to audit, skipping upload", AviatorSSCAuditHelper.getProgressMessage(result));
+    }
+
+    @Test
+    void auditStatsReportReauditedAndBaselinedIssues() {
+        var result = new FPRAuditResult(null, "AUDITED", null, 3, 3, 3, 0, Map.of(), 0, Map.of());
+        result.setReauditedIssues(2);
+        result.setEvidenceBaselines(5);
+        ObjectNode node = AviatorSSCAuditHelper.buildResultNode(appVersion(), null, "AUDITED");
+
+        AviatorSSCAuditHelper.setAuditStats(node, result);
+
+        assertEquals(2, node.path("operation").path("audit").path("reaudited").asInt());
+        assertEquals(5, node.path("operation").path("audit").path("baselined").asInt());
+    }
 
     @Test
     void excludesPreviouslyProcessedIssuesFromNormalPreflightCount() throws Exception {

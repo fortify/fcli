@@ -146,6 +146,8 @@ public final class AviatorSSCAuditHelper {
         audit.put("submitted", auditResult.getIssuesSubmitted());
         audit.put("succeeded", auditResult.getIssuesSuccessfullyAudited());
         audit.put("skipped", auditResult.getIssuesSkipped());
+        audit.put("reaudited", auditResult.getReauditedIssues());
+        audit.put("baselined", auditResult.getEvidenceBaselines());
         audit.put("skippedReasons", formatSkippedReasons(auditResult.getSkippedByReason()));
         audit.set("skippedByReason", toObjectNode(auditResult.getSkippedByReason()));
         audit.put("remediationGenerationSkipped", auditResult.getRemediationGenerationSkipped());
@@ -234,6 +236,9 @@ public final class AviatorSSCAuditHelper {
     public static String getProgressMessage(FPRAuditResult auditResult) {
         switch (auditResult.getStatus()) {
             case "SKIPPED":
+                if (auditResult.getUpdatedFile() != null) {
+                    return "Status: Uploading FPR with recorded evidence baselines to SSC";
+                }
                 return (auditResult.getMessage() != null ? auditResult.getMessage() : "No issues to audit")
                         + ", skipping upload";
             case "FAILED":

@@ -77,6 +77,7 @@ abstract class AbstractAviatorSSCSastAuditCommand extends AbstractSSCJsonNodeOut
     @Option(names = {"--test-exceeding-quota"}) private boolean testExceedingQuota;
     @Option(names = {"--default-quota-fallback"}) private boolean defaultQuotaFallback;
     @Option(names = {"--force-reaudit"}) private boolean forceReaudit;
+    @Option(names = {"--all-issues"}) private boolean allIssues;
     @Mixin private SourceEncodingsMixin sourceEncodingsMixin;
     private static final Logger LOG = LoggerFactory.getLogger(AbstractAviatorSSCSastAuditCommand.class);
     private Long checkedQuotaBefore;
@@ -101,7 +102,7 @@ abstract class AbstractAviatorSSCSastAuditCommand extends AbstractSSCJsonNodeOut
                 unirest, av, refreshOptions.isRefresh(), refreshOptions.getRefreshTimeout(), logger);
 
             long auditableIssueCount = getPreflightIssueCount(unirest, av, logger);
-            if (auditableIssueCount == 0) {
+            if (auditableIssueCount == 0 && !mayHaveReauditCandidates(unirest, av, logger)) {
                 logger.progress("Audit skipped - no auditable issues found matching the specified filters.");
                 ObjectNode result = AviatorSSCAuditHelper.buildResultNode(av, null, "SKIPPED");
                 AviatorSSCAuditHelper.setOperationMessage(result, "No auditable issues found matching the specified filters");
@@ -157,6 +158,24 @@ abstract class AbstractAviatorSSCSastAuditCommand extends AbstractSSCJsonNodeOut
 
     private boolean isSkipIfExceedingQuota() {
         return quotaHandlingArgGroup.skipIfExceedingQuota;
+    }
+
+    /**
+     * An audit with no new issues can still have work to do: already-audited issues whose source code changed are
+     * re-audited, and the FPR must be downloaded to know which. That is only possible when Aviator has processed
+     * issues, or when --all-issues widens the scope. --force-reaudit already counts Aviator-processed issues.
+     * An unknown answer proceeds, so a failed SSC lookup never hides re-audit work.
+     */
+    boolean mayHaveReauditCandidates(UnirestInstance unirest, SSCAppVersionDescriptor av, AviatorLoggerImpl logger) {
+        if (allIssues) {
+            return true;
+        }
+        if (forceReaudit) {
+            return false;
+        }
+        return AviatorSSCAuditHelper.getAuditableIssuePresence(
+                unirest, av, logger, isNoFilterSet(), getFilterSetTitleOrId(), folderNames, true)
+                != AuditableIssuePresence.NONE;
     }
 
     private List<String> getFolderPriorityOrder() {
@@ -305,6 +324,7 @@ abstract class AbstractAviatorSSCSastAuditCommand extends AbstractSSCJsonNodeOut
                     .folderNames(folderNames)
                     .folderPriorityOrder(getFolderPriorityOrder())
                     .forceReaudit(forceReaudit)
+                    .allIssues(allIssues)
                     .sourceDecoder(sourceEncodingsMixin.getSourceDecoder())
                     .build());
         }
@@ -313,7 +333,7 @@ abstract class AbstractAviatorSSCSastAuditCommand extends AbstractSSCJsonNodeOut
         logger.progress(AviatorSSCAuditHelper.getProgressMessage(auditResult));
 
         String artifactId = null;
-        if (auditResult.getUpdatedFile() != null && !"SKIPPED".equals(action) && !"FAILED".equals(action)) {
+        if (auditResult.getUpdatedFile() != null && !"FAILED".equals(action)) {
             validateSSCTagsBeforeUpload(unirest, av, logger);
             try {
                 artifactId = uploadAuditedFprToSSC(unirest, auditResult.getUpdatedFile(), av);

@@ -37,5 +37,6 @@ public class AuditFprOptions {
     private final List<String> folderNames;
     private final List<String> folderPriorityOrder;
     @Builder.Default private final boolean forceReaudit = false;
+    @Builder.Default private final boolean allIssues = false;
     @Builder.Default private final ISourceDecoder sourceDecoder = SourceDecoders.defaults();
 }

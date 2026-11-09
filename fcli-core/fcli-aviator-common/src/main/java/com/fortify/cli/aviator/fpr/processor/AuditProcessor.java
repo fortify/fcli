@@ -12,6 +12,9 @@
  */
 package com.fortify.cli.aviator.fpr.processor;
 
+import static com.fortify.cli.aviator.fpr.processor.RemediationResponses.coveredByPriorFixIds;
+import static com.fortify.cli.aviator.fpr.processor.RemediationResponses.hasRemediationChanges;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -34,10 +37,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
-
-import static com.fortify.cli.aviator.fpr.processor.RemediationResponses.coveredByPriorFixIds;
-import static com.fortify.cli.aviator.fpr.processor.RemediationResponses.hasRemediationChanges;
 
 import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
@@ -56,6 +57,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
@@ -98,7 +100,9 @@ public class AuditProcessor {
     private final FprHandle fprHandle;
     private final ISourceDecoder sourceDecoder;
     private RemediationGenerationMetric lastRemediationGenerationMetric = RemediationGenerationMetric.empty();
-
+    private final Map<String, String> evidenceFingerprints = new ConcurrentHashMap<>();
+    private final Map<String, String> reauditPreviousVerdicts = new ConcurrentHashMap<>();
+    private final Set<String> baselinedInstanceIds = ConcurrentHashMap.newKeySet();
     public record RemediationGenerationMetric(int skippedRemediations, Map<String, Integer> skippedByReason) {
         public static RemediationGenerationMetric empty() {
             return new RemediationGenerationMetric(0, Map.of());
@@ -129,6 +133,104 @@ public class AuditProcessor {
 
     public RemediationGenerationMetric getLastRemediationGenerationMetric() {
         return lastRemediationGenerationMetric;
+    }
+
+    /** Records the evidence fingerprint to store if this issue's audit result is written. */
+    public void registerEvidenceFingerprint(String instanceId, String fingerprint) {
+        if (instanceId != null && fingerprint != null && !fingerprint.isBlank()) {
+            evidenceFingerprints.put(instanceId, fingerprint);
+        }
+    }
+
+    /** Marks an issue as being re-audited because its evidence changed, remembering its previous verdict. */
+    public void registerReaudit(String instanceId, String previousVerdict) {
+        if (instanceId != null) {
+            reauditPreviousVerdicts.put(instanceId, previousVerdict == null ? "" : previousVerdict);
+        }
+    }
+
+    /**
+     * Stores the evidence fingerprint of an already-audited issue that has none yet, without changing its audit.
+     *
+     * @return true if the fingerprint was written
+     */
+    public boolean writeBaselineFingerprint(String instanceId, String fingerprint) {
+        if (auditDoc == null || instanceId == null || fingerprint == null || fingerprint.isBlank()) {
+            return false;
+        }
+        Element issueElement = findIssueElement(instanceId);
+        if (issueElement == null) {
+            return false;
+        }
+        if (setEvidenceFingerprint(issueElement, fingerprint)) {
+            int revision = parseRevision(issueElement.getAttribute("revision"));
+            issueElement.setAttribute("revision", String.valueOf(revision + 1));
+        }
+        baselinedInstanceIds.add(instanceId);
+        return true;
+    }
+
+    public int getBaselinedCount() {
+        return baselinedInstanceIds.size();
+    }
+
+    public boolean isReaudit(String instanceId) {
+        return instanceId != null && reauditPreviousVerdicts.containsKey(instanceId);
+    }
+
+    private static int parseRevision(String revision) {
+        return revision == null || revision.isEmpty() ? 0 : Integer.parseInt(revision);
+    }
+
+    private boolean setEvidenceFingerprint(Element issueElement, String fingerprint) {
+        Element liveTag = findLiveTag(issueElement, Constants.AVIATOR_SOURCE_FINGERPRINT_TAG_ID);
+        if (liveTag != null && fingerprint.equals(getTagValue(liveTag))) {
+            return false;
+        }
+        updateOrAddTag(issueElement, Constants.AVIATOR_SOURCE_FINGERPRINT_TAG_ID, fingerprint);
+        addTagHistory(getClientAuditTrailElement(issueElement), Constants.AVIATOR_SOURCE_FINGERPRINT_TAG_ID, fingerprint);
+        return true;
+    }
+
+    private void writeRegisteredFingerprint(Element issueElement) {
+        String fingerprint = evidenceFingerprints.get(issueElement.getAttribute("instanceId"));
+        if (fingerprint != null) {
+            setEvidenceFingerprint(issueElement, fingerprint);
+        }
+    }
+
+    private void addReauditNote(Element issueElement, AuditResponse response) {
+        String previous = reauditPreviousVerdicts.get(issueElement.getAttribute("instanceId"));
+        if (previous == null) {
+            return;
+        }
+        String current = response == null || response.getAuditResult() == null ? null : response.getAuditResult().tagValue;
+        addCommentToIssueElement(issueElement,
+                "Re-audited by " + Constants.USER_NAME + " because the source code behind this issue changed since the previous audit. "
+                        + "Previous verdict: " + (previous.isBlank() ? "none recorded" : previous)
+                        + ". New verdict: " + (current == null || current.isBlank() ? "none" : current) + ".",
+                Constants.USER_NAME);
+    }
+
+    private static List<Element> directChildren(Element parent, String localName) {
+        List<Element> children = new ArrayList<>();
+        for (Node child = parent.getFirstChild(); child != null; child = child.getNextSibling()) {
+            if (child instanceof Element element && AUDIT_NAMESPACE_URI.equals(element.getNamespaceURI())
+                    && localName.equals(element.getLocalName())) {
+                children.add(element);
+            }
+        }
+        return children;
+    }
+
+    /** Finds a tag that is a direct child of the issue; tags nested in ClientAuditTrail history are not live values. */
+    private static Element findLiveTag(Element issueElement, String tagId) {
+        for (Element tag : directChildren(issueElement, "Tag")) {
+            if (tag.getAttribute("id").equalsIgnoreCase(tagId)) {
+                return tag;
+            }
+        }
+        return null;
     }
 
     /**
@@ -235,9 +337,7 @@ public class AuditProcessor {
         auditIssueBuilder.revision(Optional.of(revisionStr).filter(str -> !str.isEmpty()).map(Integer::parseInt).orElse(0));
 
         Map<String, String> tags = new HashMap<>();
-        NodeList tagNodes = issueElement.getElementsByTagNameNS(AUDIT_NAMESPACE_URI, "Tag");
-        for (int j = 0; j < tagNodes.getLength(); j++) {
-            Element tagElement = (Element) tagNodes.item(j);
+        for (Element tagElement : directChildren(issueElement, "Tag")) {
             String tagId = tagElement.getAttribute("id");
             String tagValue = Optional.ofNullable(getTagValue(tagElement)).orElse("");
             tags.put(tagId, tagValue);
@@ -406,6 +506,8 @@ public class AuditProcessor {
         }
 
         updateClientAuditTrail(issueElement, response, tagMappingConfig, suppressedHistoryValue);
+        writeRegisteredFingerprint(issueElement);
+        addReauditNote(issueElement, response);
 
         return commentTimestamp;
     }
@@ -517,16 +619,7 @@ public class AuditProcessor {
     }
 
     private void updateOrAddTag(Element issueElement, String tagId, String tagValue) {
-        NodeList tagNodes = issueElement.getElementsByTagNameNS(AUDIT_NAMESPACE_URI, "Tag");
-        Element tagElement = null;
-
-        for (int i = 0; i < tagNodes.getLength(); i++) {
-            Element currentTag = (Element) tagNodes.item(i);
-            if (currentTag.getAttribute("id").equalsIgnoreCase(tagId)) {
-                tagElement = currentTag;
-                break;
-            }
-        }
+        Element tagElement = findLiveTag(issueElement, tagId);
 
         if (tagElement == null) {
             tagElement = auditDoc.createElementNS(AUDIT_NAMESPACE_URI, "Tag");
@@ -627,6 +720,7 @@ public class AuditProcessor {
         }
 
         updateClientAuditTrail(newIssue, response, tagMappingConfig, suppressedHistoryValue);
+        writeRegisteredFingerprint(newIssue);
 
         issueList.appendChild(newIssue);
         return commentTimestamp;
@@ -769,6 +863,7 @@ public class AuditProcessor {
         AuditXmlUpdateResult updateResult = updateAuditXml(
                 responses, tagMappingConfig, effectiveIssueCategoryLookup);
         Map<String, String> remediationCommentTimestamps = updateResult.remediationCommentTimestamps;
+        updateResult.writtenInstanceIds.addAll(baselinedInstanceIds);
 
         // Step 2: Keep only Issue nodes written in this save so SSC does not overwrite concurrent
         // tag edits on Non-SAST / non-audited SAST findings. In-memory only — before any zip I/O.
