@@ -313,6 +313,10 @@ public class IssueAuditor {
     }
 
     private boolean isReauditEligible(AuditIssue auditIssue) {
+        if (auditIssue.getTags() != null
+                && Constants.AVIATOR_EXCLUDED.equalsIgnoreCase(auditIssue.getTags().get(Constants.AVIATOR_PREDICTION_TAG_ID))) {
+            return false; // skipped by the issue limits: it never received a verdict to re-audit
+        }
         return options.isAllIssues() || (isAviatorWork(auditIssue) && !hasHumanTriage(auditIssue));
     }
 

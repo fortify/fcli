@@ -873,18 +873,19 @@ public class AuditProcessor {
         boolean hasRemediations = responses.values().stream()
                 .anyMatch(ar -> hasRemediationChanges(ar) || !coveredByPriorFixIds(ar).isEmpty());
 
-        // Step 4: Generate the in-memory remediations.xml document if needed.
+        // Step 4: Build remediations.xml from this save's responses only. Advice from an earlier run is not carried
+        // over: the upload holds only the issues written in this save, and a re-audit that no longer needs a fix
+        // must not keep its old advice. A save that produced no advice gets an empty list.
+        Document generatedRemediations = null;
         if (hasRemediations && !remediationCommentTimestamps.isEmpty()) {
             Map<String, Integer> skippedByReason = new LinkedHashMap<>();
-            this.remediationsDoc = generateRemediationsXml(responses, remediationCommentTimestamps, fprInfo,
+            generatedRemediations = generateRemediationsXml(responses, remediationCommentTimestamps, fprInfo,
                     fvdlMetadata, skippedByReason);
             lastRemediationGenerationMetric = toRemediationGenerationMetric(skippedByReason);
-        } else {
-            this.remediationsDoc = null;
-            if (hasRemediations) {
-                logger.info("WARN: Remediation data found, but could not associate timestamps for all. remediations.xml will not be generated.");
-            }
+        } else if (hasRemediations) {
+            logger.info("WARN: Remediation data found, but could not associate timestamps for all. remediations.xml will contain no entries.");
         }
+        this.remediationsDoc = generatedRemediations != null ? generatedRemediations : emptyRemediationsDocument(fprInfo);
 
         // Step 5: Write the modified XML documents directly back into the open FPR file system.
         try {
@@ -1003,30 +1004,44 @@ public class AuditProcessor {
         return tagMappingConfig.getResult(tierOne, TagMappingConfig.ResultType.UNSURE);
     }
 
+    private Document emptyRemediationsDocument(FPRInfo fprInfo) throws AviatorTechnicalException {
+        try {
+            return newRemediationsDocument(fprInfo);
+        } catch (ParserConfigurationException e) {
+            throw new AviatorTechnicalException("Error creating XML document for remediations", e);
+        }
+    }
+
+    /** A remediations.xml document with its project info and an empty remediation list. */
+    private Document newRemediationsDocument(FPRInfo fprInfo) throws ParserConfigurationException {
+        var docFactory = SecureXmlParserFactory.newDocumentBuilderFactory(true);
+        DocumentBuilder docBuilder = docFactory.newDocumentBuilder();
+
+        Document doc = docBuilder.newDocument();
+        Element rootElement = doc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "Remediations");
+        doc.appendChild(rootElement);
+
+        Element projectInfoElement = doc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "ProjectInfo");
+        Element projectNameElement = doc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "Name");
+        projectNameElement.setTextContent(fprInfo.getBuildId() != null ? fprInfo.getBuildId() : "UnknownProject");
+        Element projectWriteDateElement = doc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "WriteDate");
+        SimpleDateFormat dateTimeFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
+        projectWriteDateElement.setTextContent(dateTimeFormat.format(new Date()));
+        projectInfoElement.appendChild(projectNameElement);
+        projectInfoElement.appendChild(projectWriteDateElement);
+        rootElement.appendChild(projectInfoElement);
+
+        rootElement.appendChild(doc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "RemediationList"));
+        return doc;
+    }
+
     private Document generateRemediationsXml(Map<String, AuditResponse> auditResponses,
                                             Map<String, String> remediationCommentTimestamps,
                                             FPRInfo fprInfo, FVDLMetadata fvdlMetadata,
                                             Map<String, Integer> skippedByReason) throws AviatorTechnicalException {
         try {
-            var docFactory = SecureXmlParserFactory.newDocumentBuilderFactory(true);
-            DocumentBuilder docBuilder = docFactory.newDocumentBuilder();
-
-            Document finalDoc = docBuilder.newDocument();
-            Element rootElement = finalDoc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "Remediations");
-            finalDoc.appendChild(rootElement);
-
-            Element projectInfoElement = finalDoc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "ProjectInfo");
-            Element projectNameElement = finalDoc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "Name");
-            projectNameElement.setTextContent(fprInfo.getBuildId() != null ? fprInfo.getBuildId() : "UnknownProject");
-            Element projectWriteDateElement = finalDoc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "WriteDate");
-            SimpleDateFormat dateTimeFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
-            projectWriteDateElement.setTextContent(dateTimeFormat.format(new Date()));
-            projectInfoElement.appendChild(projectNameElement);
-            projectInfoElement.appendChild(projectWriteDateElement);
-            rootElement.appendChild(projectInfoElement);
-
-            Element remediationListElement = finalDoc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "RemediationList");
-            rootElement.appendChild(remediationListElement);
+            Document finalDoc = newRemediationsDocument(fprInfo);
+            Element remediationListElement = (Element) finalDoc.getElementsByTagNameNS(REMEDIATIONS_NAMESPACE_URI, "RemediationList").item(0);
 
             FileUtils fileUtils = new FileUtils(this.sourceDecoder, fvdlMetadata);
             int validRemediationCount = 0;

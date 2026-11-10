@@ -171,6 +171,18 @@ class ReauditOnCodeChangeTest {
     }
 
     @Test
+    void neverReauditsOrBaselinesAnIssueTheLimitsSkippedBecauseItHasNoVerdict() throws Exception {
+        Map<String, String> tags = aviatorTags();
+        tags.put(Constants.AVIATOR_SOURCE_FINGERPRINT_TAG_ID, STALE_FINGERPRINT);
+        tags.put(Constants.AVIATOR_PREDICTION_TAG_ID, Constants.AVIATOR_EXCLUDED);
+        setUp(issueXml(ISSUE_ID, false, tags, aviatorHistory()), "Main.java");
+
+        assertTrue(prepare(false, true, "Main.java").isEmpty());
+        assertEquals(0, auditProcessor.getBaselinedCount());
+        assertFalse(auditProcessor.isReaudit(ISSUE_ID));
+    }
+
+    @Test
     void issueWithoutReadableSourceIsNeitherBaselinedNorReaudited() throws Exception {
         setUp(issueXml(ISSUE_ID, false, aviatorTags(), aviatorHistory()), "Main.java");
 

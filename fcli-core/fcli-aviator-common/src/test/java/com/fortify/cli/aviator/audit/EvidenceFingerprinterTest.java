@@ -35,8 +35,9 @@ import com.fortify.cli.aviator.fpr.utils.FileUtils;
 import com.fortify.cli.aviator.util.FprHandle;
 
 /**
- * The expected values are produced by an independent reference implementation of EVIDENCE_HASH_SPEC.md
- * (ref_evidence_hash.py), so these tests check the Java code against the specification, not against itself.
+ * The expected values were computed with a separate implementation of the version 1 rules described in
+ * {@link EvidenceFingerprinter}, written independently of that class, so these tests check the Java code against
+ * the rules and not against itself.
  */
 class EvidenceFingerprinterTest {
     private static final String V1_BASIC = "v1:0db51319abef8b1af41c51a2cc224bcb0609d2be3a198f9de9f7c64e9a76f243";

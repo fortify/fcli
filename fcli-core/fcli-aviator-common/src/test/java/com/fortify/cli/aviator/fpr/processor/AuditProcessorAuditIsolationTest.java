@@ -30,7 +30,10 @@ import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
+import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.transform.stream.StreamSource;
+import javax.xml.validation.SchemaFactory;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -105,7 +108,48 @@ class AuditProcessorAuditIsolationTest {
                 new FPRInfo(fprHandle));
 
         // instance-A has no entry of its own, so the covered issue would reference nothing and is not written.
-        assertTrue(!Files.exists(fprHandle.getPath("/remediations.xml")));
+        assertTrue(readRemediationEntries().isEmpty());
+    }
+
+    @Test
+    void testFlippingExploitableToNotAnIssueRemovesTheIssuesOldAdviceFromTheUpload() throws Exception {
+        createTestFprWithSource(multiIssueAuditXml("instance-A"), "Example.java", "line1\nline2\nline3\nline4\n");
+        saveWithFreshProcessor(Map.of("instance-A", exploitableFixResponse("instance-A", 2, "A-CODE")));
+        assertEquals(Set.of("instance-A"), readRemediationEntries().keySet(), "the first run leaves advice in the FPR");
+
+        // A later run starts from an FPR that already carries that advice and flips the verdict without new advice.
+        reopenFpr();
+        saveWithFreshProcessor(Map.of("instance-A", successResponse("instance-A")));
+
+        assertEquals(Set.of(), readRemediationEntries().keySet());
+        assertRemediationsFileIsSchemaValid();
+    }
+
+    @Test
+    void testRemediationsXmlHoldsOnlyTheAdviceFromTheCurrentRun() throws Exception {
+        createTestFprWithSource(multiIssueAuditXml("instance-A", "instance-B"), "Example.java",
+                "line1\nline2\nline3\nline4\n");
+        saveWithFreshProcessor(Map.of("instance-A", exploitableFixResponse("instance-A", 2, "A-CODE")));
+        assertEquals(Set.of("instance-A"), readRemediationEntries().keySet());
+
+        reopenFpr();
+        saveWithFreshProcessor(Map.of("instance-B", exploitableFixResponse("instance-B", 3, "B-CODE")));
+
+        assertEquals(Set.of("instance-B"), readRemediationEntries().keySet());
+        assertRemediationsFileIsSchemaValid();
+    }
+
+    @Test
+    void testRunThatOnlyRecordsBaselinesDoesNotCarryOverOldAdvice() throws Exception {
+        createTestFprWithSource(multiIssueAuditXml("instance-A"), "Example.java", "line1\nline2\nline3\nline4\n");
+        saveWithFreshProcessor(Map.of("instance-A", exploitableFixResponse("instance-A", 2, "A-CODE")));
+        assertEquals(Set.of("instance-A"), readRemediationEntries().keySet());
+
+        reopenFpr();
+        saveWithFreshProcessor(Map.of());
+
+        assertEquals(Set.of(), readRemediationEntries().keySet());
+        assertRemediationsFileIsSchemaValid();
     }
 
     @Test
@@ -458,6 +502,50 @@ class AuditProcessorAuditIsolationTest {
                                 .build())
                         .build())
                 .build();
+    }
+
+    private void saveWithFreshProcessor(Map<String, AuditResponse> responses) throws Exception {
+        AuditProcessor auditProcessor = new AuditProcessor(fprHandle);
+        auditProcessor.processAuditXML();
+        Map<String, String> categories = new HashMap<>();
+        responses.keySet().forEach(id -> categories.put(id, "SQL Injection"));
+        auditProcessor.updateAndSaveAuditAndRemediationsXml(responses, createTagMappingConfig(), categories,
+                new FPRInfo(fprHandle));
+    }
+
+    /** Closes and reopens the FPR so the next save starts from what the previous save wrote to disk. */
+    private void reopenFpr() throws Exception {
+        fprHandle.close();
+        fprHandle = new FprHandle(tempFprFile);
+    }
+
+    private static AuditResponse exploitableFixResponse(String issueId, int line, String newCode) {
+        return AuditResponse.builder()
+                .issueId(issueId)
+                .status("SUCCESS")
+                .tier("GOLD")
+                .auditResult(AuditResult.builder()
+                        .tagValue(Constants.EXPLOITABLE)
+                        .comment("Fix for " + issueId)
+                        .autoremediation(Autoremediation.builder()
+                                .changes(List.of(Change.builder()
+                                        .file("Example.java")
+                                        .fromLine(String.valueOf(line))
+                                        .toLine(String.valueOf(line))
+                                        .replaceWith(newCode)
+                                        .build()))
+                                .supersededIssueIds(List.of())
+                                .build())
+                        .build())
+                .build();
+    }
+
+    private void assertRemediationsFileIsSchemaValid() throws Exception {
+        var schemaFactory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
+        try (var xsd = AuditProcessor.class.getResourceAsStream("/remediations.xsd");
+                var xml = Files.newInputStream(fprHandle.getPath("/remediations.xml"))) {
+            schemaFactory.newSchema(new StreamSource(xsd)).newValidator().validate(new StreamSource(xml));
+        }
     }
 
     private Map<String, Element> readRemediationEntries() throws Exception {

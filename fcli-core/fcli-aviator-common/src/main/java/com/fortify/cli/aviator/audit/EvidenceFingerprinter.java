@@ -25,9 +25,51 @@ import com.fortify.cli.aviator.util.FprHandle;
 import com.fortify.cli.aviator.util.StringUtil;
 
 /**
- * Computes the version 1 evidence fingerprint of an issue: a hash of the customer source code around every
- * trace location, independent of file paths, line numbers, prompts and models. The algorithm is specified in
- * {@code EVIDENCE_HASH_SPEC.md}; every client must produce identical values for identical source.
+ * Computes the version 1 evidence fingerprint of an issue: a hash of the customer source code around the frames of
+ * its stack traces. It changes only when that code changes. Every client must apply exactly these rules, otherwise
+ * an issue audited by one tool would look changed to another and be re-audited for nothing.
+ *
+ * <p><b>What is hashed.</b> For every frame of every stack trace, the lines of the frame's source file from
+ * {@value #WINDOW} lines before the frame's line to {@value #WINDOW} lines after it, clamped to the file. Only these
+ * windows are hashed, not the whole file, so a change more than {@value #WINDOW} lines away from every frame does not
+ * change the fingerprint and does not trigger a re-audit. File paths, line numbers, prompts and model versions are
+ * not hashed, so inserting lines above a frame or upgrading a prompt or model never changes it either.
+ *
+ * <p><b>Source lines.</b> The file is the decoded text with a leading BOM removed, split on {@code \n} with a
+ * {@code \r} dropped before each {@code \n}, and with trailing empty lines dropped. Each line has trailing space,
+ * tab, vertical tab, form feed and carriage return characters removed. A frame whose line is 0 or less contributes
+ * the single line {@code -} instead of a window.
+ *
+ * <p><b>Canonical text.</b> The hash input is built from these markers, each written on its own line:
+ * <ul>
+ * <li>{@code T} starts a stack trace. It is written once per trace, in order, before the trace's frames.</li>
+ * <li>{@code E} starts a frame. It is written directly before that frame's window lines. A frame whose file is not
+ * in the source archive is skipped together with its inner trace, and writes nothing.</li>
+ * <li>{@code I} and {@code /I} wrap the frames of a frame's inner stack trace, which follow the frame's own window
+ * lines.</li>
+ * </ul>
+ * For example, a first trace with two frames, the first of which has one inner frame, and a second trace with one
+ * frame:
+ * <pre>
+ * T
+ * E
+ * (window lines of frame 1)
+ * I
+ * E
+ * (window lines of the inner frame)
+ * /I
+ * E
+ * (window lines of frame 2)
+ * T
+ * E
+ * (window lines of frame 3)
+ * </pre>
+ * The fingerprint is {@code v1:} followed by the lowercase hexadecimal SHA-256 of the UTF-8 bytes of this text. The
+ * markers keep the boundaries unambiguous: the same lines grouped into different frames or traces give a different
+ * fingerprint.
+ *
+ * <p>If no frame contributes because none has a file in the source archive, or if a source file that is in the
+ * archive cannot be read, there is no fingerprint and the issue is neither baselined nor re-audited.
  */
 public final class EvidenceFingerprinter {
     public static final String VERSION_PREFIX = "v1:";
