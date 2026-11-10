@@ -24,6 +24,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.BiFunction;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -64,6 +65,8 @@ import com.fortify.cli.aviator.fpr.utils.ISourceDecoder;
 import com.fortify.cli.aviator.util.Constants;
 import com.fortify.cli.aviator.util.FprHandle;
 import com.fortify.cli.aviator.util.StringUtil;
+import com.fortify.cli.common.progress.helper.IProgressWriter;
+import com.fortify.cli.common.progress.helper.ProgressWriterType;
 import com.fortify.grpc.token.DeleteTokenRequest;
 import com.fortify.grpc.token.DeleteTokenResponse;
 import com.fortify.grpc.token.ListTokensByDeveloperRequest;
@@ -77,13 +80,16 @@ import com.fortify.grpc.token.TokenServiceGrpc;
 import com.fortify.grpc.token.TokenValidationRequest;
 import com.fortify.grpc.token.TokenValidationResponse;
 import com.fortify.grpc.token.ValidateUserTokenRequest;
+import com.google.protobuf.Empty;
 
 import io.grpc.CompressorRegistry;
 import io.grpc.DecompressorRegistry;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import io.grpc.MethodDescriptor;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
+import io.grpc.stub.AbstractBlockingStub;
 
 public class AviatorGrpcClient implements AutoCloseable {
     private static final Logger LOG = LoggerFactory.getLogger(AviatorGrpcClient.class);
@@ -200,27 +206,30 @@ public class AviatorGrpcClient implements AutoCloseable {
     // Replay protection: capability negotiation and state-changing calls
     // ------------------------------------------------------------------------------------------------
 
-    private volatile Optional<ServerCapabilities> serverCapabilities;
+    /** Result of the capability probe; {@code capabilities} is null when the server predates replay protection. */
+    private record CapabilitiesProbe(ServerCapabilities capabilities) {}
+
+    private volatile CapabilitiesProbe capabilitiesProbe;
 
     /**
      * Capabilities advertised by the server, or empty when the server predates replay protection
      * ({@code UNIMPLEMENTED}). Cached for the lifetime of the client.
      */
     public Optional<ServerCapabilities> getServerCapabilities() {
-        Optional<ServerCapabilities> cached = serverCapabilities;
-        if (cached == null) {
+        CapabilitiesProbe probe = capabilitiesProbe;
+        if (probe == null) {
             try {
-                cached = Optional.of(blockingStub.withDeadlineAfter(Constants.DEFAULT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
-                        .getServerCapabilities(com.google.protobuf.Empty.getDefaultInstance()));
+                probe = new CapabilitiesProbe(blockingStub.withDeadlineAfter(Constants.DEFAULT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+                        .getServerCapabilities(Empty.getDefaultInstance()));
             } catch (StatusRuntimeException e) {
                 if (e.getStatus().getCode() != Status.Code.UNIMPLEMENTED) {
                     throw GrpcUtil.toAviatorException(e, Constants.OP_GET_SERVER_CAPABILITIES, null);
                 }
-                cached = Optional.empty();
+                probe = new CapabilitiesProbe(null);
             }
-            serverCapabilities = cached;
+            capabilitiesProbe = probe;
         }
-        return cached;
+        return Optional.ofNullable(probe.capabilities());
     }
 
     /**
@@ -235,7 +244,8 @@ public class AviatorGrpcClient implements AutoCloseable {
                 throw new AviatorSimpleException("This Aviator server does not support operation IDs, so --operation-id cannot be honored. "
                         + "Upgrade the Aviator server, or omit --operation-id (the command then cannot be retried safely).");
             }
-            LOG.warn("The Aviator server does not support operation IDs; this request cannot be retried safely after an unknown outcome.");
+            warnUser("The Aviator server does not support operation IDs; this request cannot be retried safely after an unknown outcome. "
+                    + "Upgrade the Aviator server to enable safe retries.");
             return null;
         }
         if (requestedOperationId == null) {
@@ -255,21 +265,28 @@ public class AviatorGrpcClient implements AutoCloseable {
         return requestedOperationId;
     }
 
-    private <S extends io.grpc.stub.AbstractBlockingStub<S>, T, R> R executeMutation(S stub, String operation, String fullMethodName,
-            String requestedOperationId, AviatorRequestSigner signer,
-            java.util.function.BiFunction<AviatorRequestSigner.SignedRequest, String, T> requestFactory,
+    /** Shown to the user regardless of log level, because the user has to know the request cannot be retried safely. */
+    private static void warnUser(String message) {
+        try (IProgressWriter progressWriter = ProgressWriterType.auto.create()) {
+            progressWriter.writeWarning(message);
+        }
+    }
+
+    private <S extends AbstractBlockingStub<S>, T, R> R executeMutation(S stub, String operation, MethodDescriptor<?, ?> method,
+            String requestedOperationId, AviatorRequestSigner signer, BiFunction<AviatorRequestSigner.SignedRequest, String, T> requestFactory,
             GrpcUtil.GrpcCall<S, T, R> call) {
         String operationId = resolveOperationId(requestedOperationId);
         if (operationId != null) {
             LOG.info("{} uses operation ID {}", operation, operationId);
         }
+        String fullMethodName = method.getFullMethodName();
         return GrpcUtil.executeMutationCall(stub, call,
                 () -> requestFactory.apply(signer.sign(fullMethodName, operationId), operationId), operation, operationId);
     }
 
     public Application createApplication(String name, String tenantName, String requestedOperationId, AviatorRequestSigner signer) {
         return executeMutation(blockingStub, Constants.OP_CREATE_APP,
-                ApplicationServiceGrpc.getCreateApplicationMethod().getFullMethodName(), requestedOperationId, signer,
+                ApplicationServiceGrpc.getCreateApplicationMethod(), requestedOperationId, signer,
                 (signed, operationId) -> withOperationId(CreateApplicationRequest.newBuilder().setName(name).setTenantName(tenantName)
                         .setSignature(signed.signature()).setMessage(signed.message()), operationId),
                 ApplicationServiceGrpc.ApplicationServiceBlockingStub::createApplication);
@@ -277,7 +294,7 @@ public class AviatorGrpcClient implements AutoCloseable {
 
     public Application updateApplication(String projectId, String newName, String tenantName, String requestedOperationId, AviatorRequestSigner signer) {
         return executeMutation(blockingStub, Constants.OP_UPDATE_APP,
-                ApplicationServiceGrpc.getUpdateApplicationMethod().getFullMethodName(), requestedOperationId, signer,
+                ApplicationServiceGrpc.getUpdateApplicationMethod(), requestedOperationId, signer,
                 (signed, operationId) -> withOperationId(UpdateApplicationRequest.newBuilder().setId(Long.parseLong(projectId)).setName(newName)
                         .setTenantName(tenantName).setSignature(signed.signature()).setMessage(signed.message()), operationId),
                 ApplicationServiceGrpc.ApplicationServiceBlockingStub::updateApplication);
@@ -285,21 +302,21 @@ public class AviatorGrpcClient implements AutoCloseable {
 
     public Application addEntitlement(String projectId, String tenantName, String requestedOperationId, AviatorRequestSigner signer) {
         return executeMutation(blockingStub, Constants.OP_ADD_APP_ENTITLEMENT,
-                ApplicationServiceGrpc.getAddEntitlementMethod().getFullMethodName(), requestedOperationId, signer,
+                ApplicationServiceGrpc.getAddEntitlementMethod(), requestedOperationId, signer,
                 (signed, operationId) -> applicationById(projectId, tenantName, signed, operationId),
                 ApplicationServiceGrpc.ApplicationServiceBlockingStub::addEntitlement);
     }
 
     public ApplicationMultiplierOperationResponse reduceEntitlement(String projectId, String tenantName, String requestedOperationId, AviatorRequestSigner signer) {
         return executeMutation(blockingStub, Constants.OP_REDUCE_APP_ENTITLEMENT,
-                ApplicationServiceGrpc.getReduceEntitlementMethod().getFullMethodName(), requestedOperationId, signer,
+                ApplicationServiceGrpc.getReduceEntitlementMethod(), requestedOperationId, signer,
                 (signed, operationId) -> applicationById(projectId, tenantName, signed, operationId),
                 ApplicationServiceGrpc.ApplicationServiceBlockingStub::reduceEntitlement);
     }
 
     public ApplicationResponseMessage deleteApplication(String projectId, String tenantName, String requestedOperationId, AviatorRequestSigner signer) {
         return executeMutation(blockingStub, Constants.OP_DELETE_APP,
-                ApplicationServiceGrpc.getDeleteApplicationMethod().getFullMethodName(), requestedOperationId, signer,
+                ApplicationServiceGrpc.getDeleteApplicationMethod(), requestedOperationId, signer,
                 (signed, operationId) -> applicationById(projectId, tenantName, signed, operationId),
                 ApplicationServiceGrpc.ApplicationServiceBlockingStub::deleteApplication);
     }
@@ -376,7 +393,7 @@ public class AviatorGrpcClient implements AutoCloseable {
 
     public TokenGenerationResponse generateToken(String email, String tokenName, String endDate, String tenantName, String requestedOperationId, AviatorRequestSigner signer) {
         return executeMutation(tokenServiceBlockingStub, Constants.OP_GENERATE_TOKEN,
-                TokenServiceGrpc.getGenerateTokenMethod().getFullMethodName(), requestedOperationId, signer,
+                TokenServiceGrpc.getGenerateTokenMethod(), requestedOperationId, signer,
                 (signed, operationId) -> {
                     TokenGenerationRequest.Builder builder = TokenGenerationRequest.newBuilder().setEmail(email != null ? email : "")
                             .setCustomTokenName(tokenName != null ? tokenName : "").setRequestSignature(signed.signature())
@@ -402,7 +419,7 @@ public class AviatorGrpcClient implements AutoCloseable {
 
     public RevokeTokenResponse revokeToken(String token, String tenantName, String requestedOperationId, AviatorRequestSigner signer) {
         return executeMutation(tokenServiceBlockingStub, Constants.OP_REVOKE_TOKEN,
-                TokenServiceGrpc.getRevokeTokenMethod().getFullMethodName(), requestedOperationId, signer,
+                TokenServiceGrpc.getRevokeTokenMethod(), requestedOperationId, signer,
                 (signed, operationId) -> {
                     RevokeTokenRequest.Builder builder = RevokeTokenRequest.newBuilder().setToken(token).setTenantName(tenantName)
                             .setRequestSignature(signed.signature()).setMessage(signed.message());
@@ -413,7 +430,7 @@ public class AviatorGrpcClient implements AutoCloseable {
 
     public DeleteTokenResponse deleteToken(String token, String tenantName, String requestedOperationId, AviatorRequestSigner signer) {
         return executeMutation(tokenServiceBlockingStub, Constants.OP_DELETE_TOKEN,
-                TokenServiceGrpc.getDeleteTokenMethod().getFullMethodName(), requestedOperationId, signer,
+                TokenServiceGrpc.getDeleteTokenMethod(), requestedOperationId, signer,
                 (signed, operationId) -> {
                     DeleteTokenRequest.Builder builder = DeleteTokenRequest.newBuilder().setToken(token).setTenantName(tenantName)
                             .setRequestSignature(signed.signature()).setMessage(signed.message());

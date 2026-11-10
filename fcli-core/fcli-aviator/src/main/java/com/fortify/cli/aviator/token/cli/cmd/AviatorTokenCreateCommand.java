@@ -34,6 +34,8 @@ import com.fortify.cli.aviator._common.util.AviatorGrpcUtils;
 import com.fortify.cli.aviator._common.util.AviatorSignatureUtils;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClient;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClientHelper;
+import com.fortify.cli.aviator.grpc.AviatorOperationId;
+import com.fortify.cli.aviator.grpc.AviatorRequestSigner;
 import com.fortify.cli.aviator.util.FileUtil;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
@@ -66,12 +68,18 @@ public class AviatorTokenCreateCommand extends AbstractAviatorAdminSessionOutput
     }
 
     private TokenGenerationResponse generateToken(AviatorGrpcClient client, AviatorAdminConfigDescriptor configDescriptor) {
-        // The message carries the creation date; it is fixed per run so that every retry signs the same payload.
-        String currentDate = CURRENT_DATE_FORMATTER.format(Instant.now().atOffset(ZoneOffset.UTC));
         String safeCustomTokenName = customTokenName == null ? "" : customTokenName;
         String safeEndDate = endDate == null ? "" : endDate;
-        return client.generateToken(email, customTokenName, endDate, configDescriptor.getTenant(), operationIdMixin.getOperationId(),
-                AviatorSignatureUtils.operationSigner(configDescriptor, email, safeCustomTokenName, currentDate, safeEndDate));
+        // The signed start date is part of the payload the server deduplicates on. Deriving it from the operation id
+        // keeps every attempt, including a later re-run with --operation-id across UTC midnight, on the same payload.
+        AviatorRequestSigner signer = (fullMethodName, operationId) -> AviatorSignatureUtils.operationSigner(configDescriptor,
+                email, safeCustomTokenName, startDate(operationId), safeEndDate).sign(fullMethodName, operationId);
+        return client.generateToken(email, customTokenName, endDate, configDescriptor.getTenant(), operationIdMixin.getOperationId(), signer);
+    }
+
+    static String startDate(String operationId) {
+        Instant reference = operationId == null ? Instant.now() : AviatorOperationId.issuedAt(operationId);
+        return CURRENT_DATE_FORMATTER.format(reference.atOffset(ZoneOffset.UTC));
     }
 
     private JsonNode processTokenResponse(TokenGenerationResponse response) {

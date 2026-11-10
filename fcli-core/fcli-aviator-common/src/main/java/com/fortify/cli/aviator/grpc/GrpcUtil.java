@@ -170,7 +170,7 @@ class GrpcUtil {
                     } catch (InterruptedException interrupted) {
                         Thread.currentThread().interrupt();
                         throw new AviatorTechnicalException("Interrupted while retrying " + operation
-                                + unknownOutcomeHint(operationId), interrupted);
+                                + unknownOutcomeHint(operationId, operation), interrupted);
                     }
                     continue;
                 }
@@ -244,10 +244,33 @@ class GrpcUtil {
     }
 
     static String unknownOutcomeHint(String operationId) {
+        return unknownOutcomeHint(operationId, null);
+    }
+
+    static String unknownOutcomeHint(String operationId, String operation) {
+        if (Constants.OP_GENERATE_TOKEN.equals(operation)) {
+            return "\nThe outcome of this operation is unknown: the server may already have created the token. A created token "
+                    + "cannot be shown again. Re-run the same command with --operation-id " + operationId + " to find out: the "
+                    + "token is created only if the first attempt did not create it. If the server reports that the operation was "
+                    + "already completed, run 'fcli aviator token list', revoke the affected token and create a new one. "
+                    + "Operation IDs are honored for " + AviatorOperationId.DEFAULT_MAX_AGE.toHours() + " hours.";
+        }
         return "\nThe outcome of this operation is unknown: the server may already have applied it. Do not start a new "
                 + "operation. Re-run the same command with --operation-id " + operationId + " to retry safely: the server "
                 + "applies the operation at most once and returns the original result if it was already applied. "
                 + "Operation IDs are honored for " + AviatorOperationId.DEFAULT_MAX_AGE.toHours() + " hours.";
+    }
+
+    private static String alreadyCompletedMessage(String operation, String description) {
+        if (Constants.OP_GENERATE_TOKEN.equals(operation)) {
+            return "The token was already created by an earlier attempt with this operation ID, and a created token cannot be "
+                    + "shown again. Run 'fcli aviator token list', revoke the affected token and create a new one.";
+        }
+        if (description != null && !description.isBlank()) {
+            return description;
+        }
+        return String.format("The %s operation was already completed by an earlier attempt with this operation ID. "
+                + "Check the current state with the corresponding list or get command.", operation);
     }
 
     private static <S extends AbstractBlockingStub<S>> RuntimeException toMutationException(StatusRuntimeException e, S stub,
@@ -266,7 +289,7 @@ class GrpcUtil {
                 case "OPERATION_ID_REUSED" -> new AviatorSimpleException(String.format(
                         "Operation ID %s was already used for a different request. Use a new operation ID for a new request.",
                         operationId));
-                case "OPERATION_ALREADY_COMPLETED" -> new AviatorSimpleException(description);
+                case "OPERATION_ALREADY_COMPLETED" -> new AviatorSimpleException(alreadyCompletedMessage(operation, description));
                 default -> new AviatorSimpleException(String.format(
                         "The server refused the %s request (%s: %s). This usually means fcli and the Aviator server are not on compatible versions.",
                         operation, reason, description));
@@ -276,7 +299,7 @@ class GrpcUtil {
         if (operationId == null || !isUnknownOutcome(e)) {
             return mapped;
         }
-        String hint = unknownOutcomeHint(operationId);
+        String hint = unknownOutcomeHint(operationId, operation);
         if (mapped instanceof AviatorSimpleException) {
             return new AviatorSimpleException(mapped.getMessage() + hint, mapped.getCause());
         }
@@ -285,6 +308,7 @@ class GrpcUtil {
         }
         return mapped;
     }
+
     static AuditRequest convertToAuditRequest(UserPrompt userPrompt, String streamId, String requestId) {
         List<StackTraceElementList> stackTraceElementLists = new ArrayList<>();
         if (userPrompt.getStackTrace() != null) {

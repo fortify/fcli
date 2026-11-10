@@ -26,6 +26,7 @@ import org.junit.jupiter.api.Test;
 import com.fortify.aviator.application.ApplicationServiceGrpc;
 import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
 import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
+import com.fortify.cli.aviator.util.Constants;
 import com.google.protobuf.Any;
 import com.google.rpc.ErrorInfo;
 import com.google.rpc.RetryInfo;
@@ -44,13 +45,18 @@ class GrpcUtilMutationTest {
     private final AtomicInteger calls = new AtomicInteger();
 
     private String execute(String operationId, GrpcUtil.GrpcCall<ApplicationServiceGrpc.ApplicationServiceBlockingStub, String, String> call) {
+        return executeFor("test mutation", operationId, call);
+    }
+
+    private String executeFor(String operation, String operationId,
+            GrpcUtil.GrpcCall<ApplicationServiceGrpc.ApplicationServiceBlockingStub, String, String> call) {
         var channel = NettyChannelBuilder.forAddress("127.0.0.1", 1).usePlaintext().build();
         try {
             var stub = ApplicationServiceGrpc.newBlockingStub(channel);
             return GrpcUtil.executeMutationCall(stub, (s, request) -> {
                 calls.incrementAndGet();
                 return call.call(s, request);
-            }, () -> "signed-attempt-" + signings.incrementAndGet(), "test mutation", operationId, sleeps::add);
+            }, () -> "signed-attempt-" + signings.incrementAndGet(), operation, operationId, sleeps::add);
         } finally {
             channel.shutdownNow();
         }
@@ -165,6 +171,29 @@ class GrpcUtilMutationTest {
             throw operationFailure(Status.Code.PERMISSION_DENIED, "OPERATION_BINDING_MISMATCH", "binding", null);
         }));
         assertTrue(mismatch.getMessage().contains("compatible versions"), mismatch.getMessage());
+    }
+
+    @Test
+    void tokenCreationNeverPromisesThatTheOriginalTokenIsReturned() {
+        var unknown = assertThrows(RuntimeException.class, () -> executeFor(Constants.OP_GENERATE_TOKEN, OPERATION_ID,
+            (stub, request) -> { throw Status.DEADLINE_EXCEEDED.asRuntimeException(); }));
+        assertTrue(unknown.getMessage().contains("cannot be shown again"), unknown.getMessage());
+        assertTrue(unknown.getMessage().contains("--operation-id " + OPERATION_ID), unknown.getMessage());
+        assertFalse(unknown.getMessage().contains("returns the original result"), unknown.getMessage());
+
+        var completed = assertThrows(AviatorSimpleException.class, () -> executeFor(Constants.OP_GENERATE_TOKEN, OPERATION_ID,
+            (stub, request) -> { throw operationFailure(Status.Code.ALREADY_EXISTS, "OPERATION_ALREADY_COMPLETED", "", null); }));
+        assertTrue(completed.getMessage().contains("fcli aviator token list"), completed.getMessage());
+        assertTrue(completed.getMessage().contains("revoke"), completed.getMessage());
+    }
+
+    @Test
+    void alreadyCompletedFallsBackToAFixedMessageWhenTheServerSendsNoDescription() {
+        var completed = assertThrows(AviatorSimpleException.class, () -> execute(OPERATION_ID,
+            (stub, request) -> { throw operationFailure(Status.Code.ALREADY_EXISTS, "OPERATION_ALREADY_COMPLETED", "", null); }));
+
+        assertTrue(completed.getMessage().contains("already completed"), completed.getMessage());
+        assertTrue(completed.getMessage().contains("test mutation"), completed.getMessage());
     }
 
     @Test
