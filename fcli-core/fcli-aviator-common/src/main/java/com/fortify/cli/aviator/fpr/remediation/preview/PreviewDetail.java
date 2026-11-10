@@ -42,6 +42,14 @@ public record PreviewDetail(String issueId, String status, String description, M
         return new PreviewDetail(issueId, "skipped", description, Map.of());
     }
 
+    public static PreviewDetail coveredByPriorFix(String issueId, String description) {
+        return new PreviewDetail(issueId, "coveredByPriorFix", description, Map.of());
+    }
+
+    public static PreviewDetail supersededByPriorFix(String issueId, String description) {
+        return new PreviewDetail(issueId, "supersededByPriorFix", description, Map.of());
+    }
+
     @JsonIgnore
     public boolean isAvailable() {
         return "available".equals(status);

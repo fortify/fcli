@@ -63,11 +63,12 @@ public class AviatorSSCPrepareHelper {
         public void incrementSkipped() { this.skipped++; }
     }
 
-    /** Groups the synchronization results of the three Aviator custom tags. */
+    /** Groups the synchronization results of the four Aviator custom tags. */
     private record TagSynchronizationResults(
             SynchronizationResult prediction,
             SynchronizationResult status,
-            SynchronizationResult dastCorrelation
+            SynchronizationResult dastCorrelation,
+            SynchronizationResult sourceFingerprint
     ) {}
 
     public PrepareResult prepare(PrepareOptions options) {
@@ -92,17 +93,19 @@ public class AviatorSSCPrepareHelper {
         return result;
     }
 
-    /** Synchronizes all three Aviator custom tags (prediction, status, DAST correlation). */
+    /** Synchronizes all four Aviator custom tags (prediction, status, DAST correlation, source fingerprint). */
     private TagSynchronizationResults synchronizeTags(PrepareResult result, IProgressWriter progress) {
         progress.writeProgress("Synchronizing Aviator custom tags...");
         var tagHelperPrediction = new AviatorSSCCustomTagHelper(unirest, AviatorSSCTagDefs.AVIATOR_PREDICTION_TAG);
         var tagHelperStatus     = new AviatorSSCCustomTagHelper(unirest, AviatorSSCTagDefs.AVIATOR_STATUS_TAG);
         var tagHelperDastCorr   = new AviatorSSCCustomTagHelper(unirest, AviatorSSCTagDefs.DAST_CORRELATION_STATUS_TAG);
+        var tagHelperFingerprint = new AviatorSSCCustomTagHelper(unirest, AviatorSSCTagDefs.AVIATOR_SOURCE_FINGERPRINT_TAG);
 
         return new TagSynchronizationResults(
                 tagHelperPrediction.synchronize(result),
                 tagHelperStatus.synchronize(result),
-                tagHelperDastCorr.synchronize(result)
+                tagHelperDastCorr.synchronize(result),
+                tagHelperFingerprint.synchronize(result)
         );
     }
 
@@ -121,6 +124,10 @@ public class AviatorSSCPrepareHelper {
             result.addEntry("DAST Correlation Tag", "WARNING",
                 "Failed to synchronize 'DAST correlation status' tag. SAST-DAST correlation feature may not be fully visible in SSC UI.");
         }
+        if (!tagResults.sourceFingerprint().isSuccessful()) {
+            result.addEntry("Source Fingerprint Tag", "WARNING",
+                "Failed to synchronize 'Aviator source fingerprint' tag. Re-audit on code change cannot detect code changes without it.");
+        }
     }
 
     /** Synchronizes Aviator custom attributes. */
@@ -134,7 +141,8 @@ public class AviatorSSCPrepareHelper {
 
     /** Returns tags that require manual association (excludes system-managed tags). */
     private List<JsonNode> getTagsRequiringAssociation(TagSynchronizationResults tagResults) {
-        return List.of(tagResults.prediction(), tagResults.status(), tagResults.dastCorrelation()).stream()
+        return List.of(tagResults.prediction(), tagResults.status(), tagResults.dastCorrelation(),
+                tagResults.sourceFingerprint()).stream()
                 .filter(SynchronizationResult::requiresAssociation)
                 .map(SynchronizationResult::getTag)
                 .collect(Collectors.toList());

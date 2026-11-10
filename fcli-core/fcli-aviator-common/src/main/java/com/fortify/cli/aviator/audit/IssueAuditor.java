@@ -26,6 +26,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -54,6 +55,7 @@ import com.fortify.cli.aviator.fpr.model.AuditIssue;
 import com.fortify.cli.aviator.fpr.model.FPRInfo;
 import com.fortify.cli.aviator.fpr.model.FVDLMetadata;
 import com.fortify.cli.aviator.fpr.processor.AuditProcessor;
+import com.fortify.cli.aviator.fpr.utils.FileUtils;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClient;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClientHelper;
 import com.fortify.cli.aviator.util.Constants;
@@ -90,6 +92,8 @@ public class IssueAuditor {
     private final FVDLMetadata fvdlMetadata;
     private final AuditFprOptions options;
     private final Set<String> resultTagIds;
+    private final EvidenceFingerprinter fingerprinter;
+    private final Map<String, Optional<String>> fingerprintCache = new ConcurrentHashMap<>();
 
     @Builder
     public IssueAuditor(List<Vulnerability> vulnerabilities, AuditProcessor auditProcessor, Map<String, AuditIssue> auditIssueMap,
@@ -115,6 +119,8 @@ public class IssueAuditor {
         this.analysisTag = fprInfo.getFilterTemplate().getTagDefinitions().stream().filter(t -> "Analysis".equalsIgnoreCase(t.getName())).findFirst().orElse(null);
         this.resultsTag = resolveResultTag("", "", analysisTag);
         this.resultTagIds = resolveResultTagIds();
+        this.fingerprinter = new EvidenceFingerprinter(options.getFprHandle(),
+                new FileUtils(options.getSourceDecoder(), fvdlMetadata));
     }
 
     private TagDefinition resolveResultTag(String tagName, String tagGuid, TagDefinition analysisTag) {
@@ -227,11 +233,108 @@ public class IssueAuditor {
                 .collect(Collectors.toList());
 
         // Apply secondary checks (like 'isAudited')
-        prompts = prompts.stream()
+        List<UserPrompt> promptsToAudit = prompts.stream()
                 .filter(this::shouldInclude)
                 .collect(Collectors.toList());
 
-        return prompts.stream().collect(Collectors.toCollection(ConcurrentLinkedDeque::new));
+        // Already-audited issues whose source evidence changed since they were last audited
+        Set<String> includedIds = promptsToAudit.stream().map(IssueAuditor::instanceId).collect(Collectors.toSet());
+        List<UserPrompt> reauditPrompts = selectReauditPrompts(prompts, includedIds);
+        Set<String> reauditIds = reauditPrompts.stream().map(IssueAuditor::instanceId).collect(Collectors.toSet());
+        promptsToAudit.addAll(reauditPrompts);
+
+        promptsToAudit.forEach(prompt -> {
+            prompt.setReaudit(reauditIds.contains(instanceId(prompt)) || isAviatorWork(auditIssue(prompt)));
+            if (auditProcessor != null) {
+                fingerprintFor(prompt).ifPresent(fingerprint ->
+                        auditProcessor.registerEvidenceFingerprint(instanceId(prompt), fingerprint));
+            }
+        });
+
+        return promptsToAudit.stream().collect(Collectors.toCollection(ConcurrentLinkedDeque::new));
+    }
+
+    private static String instanceId(UserPrompt userPrompt) {
+        return userPrompt.getIssueData().getInstanceID();
+    }
+
+    private Optional<String> fingerprintFor(UserPrompt userPrompt) {
+        return fingerprintCache.computeIfAbsent(instanceId(userPrompt),
+                id -> fingerprinter.compute(userPrompt.getStackTrace()));
+    }
+
+    /**
+     * Finds already-audited issues whose source evidence changed since the stored fingerprint was recorded and
+     * returns them for auditing again. Issues that have no usable stored fingerprint get one recorded now instead
+     * of being re-audited, so only changes made after the fingerprint was first recorded trigger a re-audit.
+     */
+    private List<UserPrompt> selectReauditPrompts(List<UserPrompt> candidates, Set<String> includedIds) {
+        List<UserPrompt> selected = new ArrayList<>();
+        int baselined = 0;
+        int unchanged = 0;
+        int unavailable = 0;
+        int notEligible = 0;
+        for (UserPrompt prompt : candidates) {
+            String id = instanceId(prompt);
+            AuditIssue auditIssue = auditIssueMap.get(id);
+            if (includedIds.contains(id) || auditIssue == null) {
+                continue;
+            }
+            if (!isReauditEligible(auditIssue)) {
+                notEligible++;
+                continue;
+            }
+            Optional<String> current = fingerprintFor(prompt);
+            String stored = auditIssue.getTags() == null ? null
+                    : auditIssue.getTags().get(Constants.AVIATOR_SOURCE_FINGERPRINT_TAG_ID);
+            switch (ReauditClassifier.classify(current, stored)) {
+                case UNAVAILABLE -> unavailable++;
+                case SKIP -> unchanged++;
+                case BASELINE -> {
+                    if (auditProcessor != null && auditProcessor.writeBaselineFingerprint(id, current.get())) {
+                        baselined++;
+                    }
+                }
+                case REAUDIT -> {
+                    selected.add(prompt);
+                    if (auditProcessor != null) {
+                        auditProcessor.registerReaudit(id, previousVerdict(auditIssue));
+                    }
+                }
+            }
+        }
+        LOG.info("Re-audit on code change: {} changed, {} baselined, {} unchanged, {} not eligible, {} without readable source",
+                selected.size(), baselined, unchanged, notEligible, unavailable);
+        if (!selected.isEmpty() || baselined > 0) {
+            options.getLogger().progress("Re-audit on code change: %d issue(s) changed since their last audit, "
+                    + "%d issue(s) had their source baseline recorded.", selected.size(), baselined);
+        }
+        return selected;
+    }
+
+    private boolean isReauditEligible(AuditIssue auditIssue) {
+        if (auditIssue.getTags() != null
+                && Constants.AVIATOR_EXCLUDED.equalsIgnoreCase(auditIssue.getTags().get(Constants.AVIATOR_PREDICTION_TAG_ID))) {
+            return false; // skipped by the issue limits: it never received a verdict to re-audit
+        }
+        return options.isAllIssues() || (isAviatorWork(auditIssue) && !hasHumanTriage(auditIssue));
+    }
+
+    private String previousVerdict(AuditIssue auditIssue) {
+        Map<String, String> tags = auditIssue.getTags();
+        if (tags == null) {
+            return "";
+        }
+        String prediction = tags.get(Constants.AVIATOR_PREDICTION_TAG_ID);
+        if (!StringUtil.isEmpty(prediction)) {
+            return prediction;
+        }
+        for (String tagId : resultTagIds) {
+            if (isResultTagSet(auditIssue, tagId)) {
+                return tags.get(tagId);
+            }
+        }
+        return "";
     }
 
 
@@ -291,7 +394,8 @@ public class IssueAuditor {
         if (auditIssue == null) {
             return false;
         }
-        if (auditIssue.isSuppressed()) {
+        if (auditIssue.isSuppressed()
+                && !Constants.isAviatorAuditUsername(lastWriterUsername(auditIssue, Constants.SUPPRESSED_TAG_ID))) {
             return true;
         }
         boolean processedByAviator = isProcessedByAviator(auditIssue);

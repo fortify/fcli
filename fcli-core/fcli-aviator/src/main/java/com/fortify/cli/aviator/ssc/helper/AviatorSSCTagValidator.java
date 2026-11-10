@@ -85,6 +85,7 @@ public final class AviatorSSCTagValidator {
             LOG.debug("Version custom tags: {}", tags);
 
             validateAviatorTags(tags, unirest, warnings);
+            validateSourceFingerprintTag(tags, warnings);
             validateAnalysisTag(tags, unirest, analysisTagId, analysisTagValues, warnings);
 
             if (warnings.isEmpty()) {
@@ -276,6 +277,22 @@ public final class AviatorSSCTagValidator {
                 + "These audit results will not be reflected in SSC. "
                 + "Verify the tag configuration or use --tag-mapping to customize value mapping.",
             tagDetails.path("name").asText("Analysis"), analysisTagId, missingValues));
+    }
+
+    /**
+     * Adds a warning when the source fingerprint tag is not assigned to the version. Without it the audit still
+     * works, but code changes cannot be detected, so re-audit on code change never triggers for this version.
+     */
+    private static void validateSourceFingerprintTag(ArrayNode tags, List<String> warnings) {
+        TagDefinition tag = AviatorSSCTagDefs.AVIATOR_SOURCE_FINGERPRINT_TAG;
+        if (containsGuid(tags, tag.getGuid())) {
+            LOG.info("Custom tag '{}' (GUID: {}) is available on this app version — OK.", tag.getName(), tag.getGuid());
+            return;
+        }
+        warnings.add(String.format(
+            "WARN: Custom tag '%s' (GUID: %s) is not associated with this application version. "
+                + "Re-audit on code change cannot detect code changes for this version without it. %s",
+            tag.getName(), tag.getGuid(), RUN_PREPARE));
     }
 
     /**

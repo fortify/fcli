@@ -69,7 +69,8 @@ class AviatorSSCTagValidatorTest {
     void assignedCustomTagsDoNotWarn() throws IOException {
         server = new TestSscServer()
             .withTags(customTag(AviatorSSCTagDefs.AVIATOR_PREDICTION_TAG.getGuid(), "Aviator prediction"),
-                customTag(AviatorSSCTagDefs.AVIATOR_STATUS_TAG.getGuid(), "Aviator status"));
+                customTag(AviatorSSCTagDefs.AVIATOR_STATUS_TAG.getGuid(), "Aviator status"),
+                customTag(AviatorSSCTagDefs.AVIATOR_SOURCE_FINGERPRINT_TAG.getGuid(), "Aviator source fingerprint"));
         unirest = newUnirest(server);
 
         List<String> warnings = validate();
@@ -87,7 +88,8 @@ class AviatorSSCTagValidatorTest {
             .withTags(
                 customTag(ANALYSIS_GUID, "Analysis"),
                 aviatorTag(AviatorSSCTagDefs.AVIATOR_PREDICTION_TAG.getGuid(), "Aviator prediction"),
-                aviatorTag(AviatorSSCTagDefs.AVIATOR_STATUS_TAG.getGuid(), "Aviator status"));
+                aviatorTag(AviatorSSCTagDefs.AVIATOR_STATUS_TAG.getGuid(), "Aviator status"),
+                customTag(AviatorSSCTagDefs.AVIATOR_SOURCE_FINGERPRINT_TAG.getGuid(), "Aviator source fingerprint"));
         unirest = newUnirest(server);
 
         List<String> warnings = validate();
@@ -103,7 +105,8 @@ class AviatorSSCTagValidatorTest {
     void ssc26MissingAviatorTagsSayEnableAviator() throws IOException {
         server = new TestSscServer()
             .withBuiltInAviatorCatalog()
-            .withTags(customTag(ANALYSIS_GUID, "Analysis"));
+            .withTags(customTag(ANALYSIS_GUID, "Analysis"),
+                customTag(AviatorSSCTagDefs.AVIATOR_SOURCE_FINGERPRINT_TAG.getGuid(), "Aviator source fingerprint"));
         unirest = newUnirest(server);
 
         List<String> warnings = validate();
@@ -140,7 +143,8 @@ class AviatorSSCTagValidatorTest {
             .withTags(
                 customTag(ANALYSIS_GUID, "Analysis"),
                 aviatorTag(AviatorSSCTagDefs.AVIATOR_PREDICTION_TAG.getGuid(), "Aviator prediction"),
-                aviatorTag(AviatorSSCTagDefs.AVIATOR_STATUS_TAG.getGuid(), "Aviator status"));
+                aviatorTag(AviatorSSCTagDefs.AVIATOR_STATUS_TAG.getGuid(), "Aviator status"),
+                customTag(AviatorSSCTagDefs.AVIATOR_SOURCE_FINGERPRINT_TAG.getGuid(), "Aviator source fingerprint"));
         unirest = newUnirest(server);
 
         List<String> warnings = validate(ANALYSIS_GUID, Set.of("Not an Issue"));
@@ -165,6 +169,22 @@ class AviatorSSCTagValidatorTest {
         assertFalse(warnings.stream().anyMatch(w -> w.contains("Aviator prediction")));
         assertFalse(warnings.stream().anyMatch(w -> w.contains("Aviator status")));
         assertTrue(server.plainRequests == 0);
+    }
+
+    @Test
+    @DisplayName("missing source fingerprint tag warns with prepare guidance and nothing else")
+    void missingSourceFingerprintTagWarns() throws IOException {
+        server = new TestSscServer()
+            .withTags(customTag(AviatorSSCTagDefs.AVIATOR_PREDICTION_TAG.getGuid(), "Aviator prediction"),
+                customTag(AviatorSSCTagDefs.AVIATOR_STATUS_TAG.getGuid(), "Aviator status"));
+        unirest = newUnirest(server);
+
+        List<String> warnings = validate();
+
+        assertEquals(1, warnings.size(), warnings.toString());
+        assertTrue(warnings.get(0).contains("Aviator source fingerprint"));
+        assertTrue(warnings.get(0).contains(AviatorSSCTagDefs.AVIATOR_SOURCE_FINGERPRINT_TAG.getGuid()));
+        assertTrue(warnings.get(0).contains("fcli aviator ssc prepare"));
     }
 
     @Test

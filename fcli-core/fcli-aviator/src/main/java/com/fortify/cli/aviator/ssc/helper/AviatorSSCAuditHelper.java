@@ -146,6 +146,8 @@ public final class AviatorSSCAuditHelper {
         audit.put("submitted", auditResult.getIssuesSubmitted());
         audit.put("succeeded", auditResult.getIssuesSuccessfullyAudited());
         audit.put("skipped", auditResult.getIssuesSkipped());
+        audit.put("reaudited", auditResult.getReauditedIssues());
+        audit.put("baselined", auditResult.getEvidenceBaselines());
         audit.put("skippedReasons", formatSkippedReasons(auditResult.getSkippedByReason()));
         audit.set("skippedByReason", toObjectNode(auditResult.getSkippedByReason()));
         audit.put("remediationGenerationSkipped", auditResult.getRemediationGenerationSkipped());
@@ -234,6 +236,9 @@ public final class AviatorSSCAuditHelper {
     public static String getProgressMessage(FPRAuditResult auditResult) {
         switch (auditResult.getStatus()) {
             case "SKIPPED":
+                if (auditResult.getUpdatedFile() != null) {
+                    return "Status: Uploading FPR with recorded evidence baselines to SSC";
+                }
                 return (auditResult.getMessage() != null ? auditResult.getMessage() : "No issues to audit")
                         + ", skipping upload";
             case "FAILED":
@@ -313,11 +318,46 @@ public final class AviatorSSCAuditHelper {
             long auditedWithoutAnalysis = fetchServerIssueCount(
                     createServerCountRequest(query, analysis.notSetFilter()).queryString("q", "audited:true"),
                     issue -> issue.path("audited").asBoolean(false) && !hasAnalysisTag(issue));
-            return auditedWithoutAnalysis == 0 ? total : -1;
+            if (auditedWithoutAnalysis != 0) {
+                return -1;
+            }
+            // The server counts above exclude suppressed issues, so add the Aviator-suppressed candidates.
+            long suppressedCandidates = countSuppressedForceCandidates(query);
+            return suppressedCandidates < 0 ? -1 : total + suppressedCandidates;
         } catch (RuntimeException e) {
             LOG.debug("SSC force count unavailable for version {}; using paginated eligibility check", query.av().getVersionId(), e);
             return -1;
         }
+    }
+
+    /**
+     * Counts suppressed issues that carry an Aviator result. Suppressed issues are normally few, so they are
+     * paged through directly instead of being counted with server-side selectors. Returns -1 when SSC
+     * responses are inconsistent.
+     */
+    private static long countSuppressedForceCandidates(AuditableIssueCountQuery query) {
+        long candidates = 0;
+        long start = 0;
+        long total;
+        do {
+            JsonNode response = createScopedIssuesRequest(query)
+                    .queryString("q", "suppressed:true").queryString("showsuppressed", "true")
+                    .queryString("limit", PAGE_LIMIT).queryString("embed", "auditValues")
+                    .queryString("start", start).asObject(JsonNode.class).getBody();
+            total = getReportedIssueCount(response);
+            if (total < 0) {
+                return -1;
+            }
+            ArrayNode issues = (ArrayNode) response.get("data");
+            if (issues.isEmpty()) {
+                return start < total ? -1 : candidates;
+            }
+            candidates += JsonHelper.stream(issues)
+                    .filter(issue -> issue.path("suppressed").asBoolean(false) && isEligibleForRequestedAudit(issue, true))
+                    .count();
+            start += issues.size();
+        } while (start < total);
+        return candidates;
     }
 
     /**
@@ -578,8 +618,12 @@ public final class AviatorSSCAuditHelper {
     private static JsonNode fetchAuditableIssuesPage(AuditableIssueCountQuery query, long start) {
         LOG.debug("Requesting SSC issues page for version {} with start={} and limit={}",
                 query.av().getVersionId(), start, PAGE_LIMIT);
-        return createAuditableIssuesRequest(query)
-                .queryString("limit", PAGE_LIMIT)
+        GetRequest request = createAuditableIssuesRequest(query);
+        if (query.forceReaudit()) {
+            // SSC hides suppressed issues by default, but Aviator-suppressed issues are re-audit candidates.
+            request.queryString("showsuppressed", "true");
+        }
+        return request.queryString("limit", PAGE_LIMIT)
                 .queryString("embed", "auditValues")
                 .queryString("start", start).asObject(JsonNode.class).getBody();
     }
@@ -616,12 +660,15 @@ public final class AviatorSSCAuditHelper {
 
     /**
      * Force re-audit includes previously processed Aviator issues and legacy
-     * Analysis-tag candidates even when SSC already marks them audited. Normal audit
-     * still excludes processed issues.
+     * Analysis-tag candidates even when SSC already marks them audited, and also
+     * when they are suppressed. Normal audit still excludes processed and suppressed issues.
      */
     private static boolean isEligibleForRequestedAudit(JsonNode issue, boolean forceReaudit) {
         if (issue.path("suppressed").asBoolean(false)) {
-            return false;
+            // Aviator may have suppressed the issue itself, in which case it is re-audited like any other
+            // Aviator result. Who suppressed it is only known from TagHistory in the FPR, so any suppressed
+            // issue carrying an Aviator result is a download candidate. Normal audit never touches suppressed issues.
+            return forceReaudit && (isProcessedByAviator(issue) || hasAnalysisTag(issue));
         }
         if (isProcessedByAviator(issue)) {
             return forceReaudit;

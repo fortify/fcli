@@ -13,6 +13,7 @@
 package com.fortify.cli.aviator.audit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
@@ -142,6 +143,27 @@ class IssueAuditorTest {
                 Constants.AVIATOR_EXPECTED_OUTCOME_TAG_ID, Constants.EXPLOITABLE));
 
         assertEquals(List.of(TEST_ISSUE_ID), prepareIssueIds(auditor));
+    }
+
+    @Test
+    void forceReauditMarksIncludedAviatorIssueAsReaudit() throws Exception {
+        IssueAuditor auditor = createIssueAuditor(true, false,
+                Map.of(Constants.AVIATOR_STATUS_TAG_ID, Constants.PROCESSED_BY_AVIATOR));
+
+        List<UserPrompt> prompts = preparePrompts(auditor);
+
+        assertEquals(1, prompts.size());
+        assertTrue(prompts.get(0).isReaudit());
+    }
+
+    @Test
+    void neverAuditedIssueIsNotMarkedAsReauditEvenWithForceReaudit() throws Exception {
+        IssueAuditor auditor = createIssueAuditor(true, false, Map.of());
+
+        List<UserPrompt> prompts = preparePrompts(auditor);
+
+        assertEquals(1, prompts.size());
+        assertFalse(prompts.get(0).isReaudit());
     }
 
     @Test
@@ -332,11 +354,14 @@ class IssueAuditorTest {
     }
 
     @SuppressWarnings("unchecked")
-    private List<String> prepareIssueIds(IssueAuditor auditor) throws Exception {
+    private List<UserPrompt> preparePrompts(IssueAuditor auditor) throws Exception {
         Method prepareMethod = IssueAuditor.class.getDeclaredMethod("prepareAndFilterPrompts");
         prepareMethod.setAccessible(true);
-        ConcurrentLinkedDeque<UserPrompt> prompts = (ConcurrentLinkedDeque<UserPrompt>) prepareMethod.invoke(auditor);
-        return prompts.stream()
+        return new ArrayList<>((ConcurrentLinkedDeque<UserPrompt>) prepareMethod.invoke(auditor));
+    }
+
+    private List<String> prepareIssueIds(IssueAuditor auditor) throws Exception {
+        return preparePrompts(auditor).stream()
                 .map(prompt -> prompt.getIssueData().getInstanceID())
                 .collect(Collectors.toList());
     }

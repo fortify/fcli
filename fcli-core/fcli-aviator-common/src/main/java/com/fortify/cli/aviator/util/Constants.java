@@ -47,7 +47,8 @@ public class Constants {
     public static final String SUPPRESSED_TAG_ID = "22222222-2222-2222-2222-222222222222";
     public static final String AUDITOR_STATUS_TAG_ID = "ACB05E55-E74D-468C-8501-52E1FDC27D71";
     public static final String FOD_TAG_ID = "604f0fbe-b5fe-47cd-a9cb-587ad8ebe93a";
-
+    public static final String AVIATOR_SOURCE_FINGERPRINT_TAG_ID = "2F049165-CC3C-4FF0-ACFC-6FF251461E25";
+    public static final String AVIATOR_SOURCE_FINGERPRINT_TAG_NAME = "Aviator source fingerprint";
     // User Names written into audit.xml TagHistory / comments
     public static final String USER_NAME = "Fortify Remediation Aviator";
     public static final String USER_NAME_LEGACY_FORTIFY_AVIATOR = "Fortify Aviator";

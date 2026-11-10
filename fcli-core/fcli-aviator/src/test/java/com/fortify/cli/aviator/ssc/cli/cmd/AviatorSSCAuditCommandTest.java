@@ -38,6 +38,7 @@ import com.fortify.cli.aviator._common.session.user.helper.AviatorUserSessionDes
 import com.fortify.cli.aviator.audit.model.FPRAuditResult;
 import com.fortify.cli.aviator.config.AviatorLoggerImpl;
 import com.fortify.cli.aviator.ssc.helper.AviatorSSCAuditHelper;
+import com.fortify.cli.aviator.ssc.helper.AviatorSSCTagDefs;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.progress.helper.IProgressWriter;
@@ -268,6 +269,93 @@ class AviatorSSCAuditCommandTest {
         } finally {
             server.stop(0);
         }
+    }
+
+    @Test
+    void testAllowsAllIssuesOption() throws Exception {
+        var cmd = parse("--all-issues");
+        Field field = AbstractAviatorSSCSastAuditCommand.class.getDeclaredField("allIssues");
+        field.setAccessible(true);
+        assertTrue((boolean) field.get(cmd));
+        assertFalse((boolean) field.get(parse()));
+    }
+
+    @Test
+    void allIssuesAlwaysProceedsToDownloadWithoutAnSscLookup() {
+        assertTrue(parse("--no-filterset", "--all-issues").mayHaveReauditCandidates(null, null, null));
+    }
+
+    @Test
+    void forceReauditAlreadyCountedAviatorProcessedIssuesSoNeedsNoExtraLookup() {
+        assertFalse(parse("--no-filterset", "--force-reaudit").mayHaveReauditCandidates(null, null, null));
+    }
+
+    @Test
+    void defaultRunProceedsWhenAviatorHasProcessedIssuesThatCouldBeReaudited() throws Exception {
+        var server = issuesServer(processedIssue());
+        try (var unirest = unirestFor(server)) {
+            assertTrue(parse("--no-filterset").mayHaveReauditCandidates(unirest, versionDescriptor(),
+                    new AviatorLoggerImpl(new RecordingProgressWriter())));
+        } finally {
+            server.stop(0);
+        }
+    }
+
+    @Test
+    void defaultRunStillSkipsWhenThereAreNoAviatorProcessedIssues() throws Exception {
+        var server = issuesServer(auditedWithoutAviator());
+        try (var unirest = unirestFor(server)) {
+            assertFalse(parse("--no-filterset").mayHaveReauditCandidates(unirest, versionDescriptor(),
+                    new AviatorLoggerImpl(new RecordingProgressWriter())));
+        } finally {
+            server.stop(0);
+        }
+    }
+
+    private static ObjectNode processedIssue() {
+        ObjectNode issue = JsonHelper.getObjectMapper().createObjectNode().put("audited", true);
+        issue.putObject("_embed").putArray("auditValues").addObject()
+                .put("customTagGuid", AviatorSSCTagDefs.AVIATOR_STATUS_TAG.getGuid())
+                .put("customTagIndex", 0);
+        return issue;
+    }
+
+    private static ObjectNode auditedWithoutAviator() {
+        ObjectNode issue = JsonHelper.getObjectMapper().createObjectNode().put("audited", true);
+        issue.putObject("_embed").putArray("auditValues");
+        return issue;
+    }
+
+    private static SSCAppVersionDescriptor versionDescriptor() {
+        var av = new SSCAppVersionDescriptor();
+        av.setVersionId("42");
+        return av;
+    }
+
+    private static HttpServer issuesServer(ObjectNode... issues) throws Exception {
+        var server = HttpServer.create(new InetSocketAddress(0), 0);
+        server.createContext("/api/v1/projectVersions/42/issues", exchange -> {
+            var data = JsonHelper.getObjectMapper().createArrayNode();
+            for (ObjectNode issue : issues) {
+                data.add(issue);
+            }
+            byte[] response = JsonHelper.getObjectMapper().createObjectNode().put("count", issues.length)
+                    .set("data", data).toString().getBytes(StandardCharsets.UTF_8);
+            exchange.getResponseHeaders().set("Content-Type", "application/json");
+            exchange.sendResponseHeaders(200, response.length);
+            try (var output = exchange.getResponseBody()) {
+                output.write(response);
+            }
+        });
+        server.start();
+        return server;
+    }
+
+    private static UnirestInstance unirestFor(HttpServer server) {
+        return UnirestHelper.createUnirestInstance(instance -> {
+            UnirestJsonHeaderConfigurer.configure(instance);
+            instance.config().defaultBaseUrl("http://localhost:" + server.getAddress().getPort());
+        });
     }
 
     private static final class RecordingProgressWriter implements IProgressWriter {
