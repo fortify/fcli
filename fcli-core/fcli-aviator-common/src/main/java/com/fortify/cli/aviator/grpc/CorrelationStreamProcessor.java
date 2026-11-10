@@ -207,6 +207,7 @@ public class CorrelationStreamProcessor implements AutoCloseable {
             .setApplicationName(state.applicationName != null ? state.applicationName : "")
             .setStreamId(state.streamId)
             .setRequestId(UUID.randomUUID().toString())
+            .setOperationId(AviatorOperationId.generate())
             .setTotalReportedIssues(state.totalCorrelationRequests)
             .setTotalIssuesToCorrelate(state.totalCorrelationRequests);
 

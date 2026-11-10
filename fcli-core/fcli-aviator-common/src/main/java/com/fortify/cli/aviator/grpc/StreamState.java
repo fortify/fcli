@@ -28,6 +28,8 @@ class StreamState {
     final Set<String> processedIssueIds = ConcurrentHashMap.newKeySet();
     final Set<String> pendingIssueIds = ConcurrentHashMap.newKeySet();
     volatile int streamRetryCount = 0;
+    /** Operation id of the current stream attempt; every (re)connect is a new stream operation. */
+    volatile String operationId;
     volatile boolean isStreamInitialized = false;
     volatile long quota = -1;
     volatile String quotaLastUpdated = null;

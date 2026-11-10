@@ -16,8 +16,11 @@ import java.nio.charset.StandardCharsets;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
+import java.util.stream.Stream;
 
 import com.fortify.cli.aviator._common.config.admin.helper.AviatorAdminConfigDescriptor;
+import com.fortify.cli.aviator.grpc.AviatorRequestSigner;
 import com.fortify.cli.common.crypto.helper.SignatureHelper;
 import com.fortify.cli.common.exception.FcliSimpleException;
 
@@ -25,6 +28,30 @@ public class AviatorSignatureUtils {
     public static String createMessage(String... params) {
         String timestamp = ZonedDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.ISO_INSTANT);
         return String.join(";", params) + ";" + timestamp;
+    }
+
+    /**
+     * Builds the signed message of a state-changing request.
+     * <ul>
+     *   <li>operation id present: {@code params;fullMethodName;operationId;timestamp}, so the signature binds the
+     *       method and the operation id in addition to the business parameters;</li>
+     *   <li>operation id {@code null} (server without replay protection): the legacy {@code params;timestamp}.</li>
+     * </ul>
+     * A fresh timestamp is used on every call; retries keep their operation id but are always re-signed.
+     */
+    public static String createOperationMessage(String fullMethodName, String operationId, String... params) {
+        if (operationId == null) {
+            return createMessage(params);
+        }
+        return createMessage(Stream.concat(Arrays.stream(params), Stream.of(fullMethodName, operationId)).toArray(String[]::new));
+    }
+
+    /** Signer that re-signs with a fresh timestamp for every attempt of one logical operation. */
+    public static AviatorRequestSigner operationSigner(AviatorAdminConfigDescriptor configDescriptor, String... params) {
+        return (fullMethodName, operationId) -> {
+            String message = createOperationMessage(fullMethodName, operationId, params);
+            return new AviatorRequestSigner.SignedRequest(message, createSignature(message, configDescriptor));
+        };
     }
 
     public static String createSignature(String message, AviatorAdminConfigDescriptor configDescriptor) {
