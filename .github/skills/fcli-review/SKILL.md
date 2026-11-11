@@ -8,7 +8,7 @@ disable-model-invocation: true
 One review standard for everyone. The same checklist (Step 5) applies whether you review your own change before raising a PR or someone else's PR. Only how the code is obtained and how findings are delivered differ. Review as a lead engineer: be specific, constructive, no nitpicks.
 
 ## Inputs (ask for anything missing before starting)
-- `mode`: `self` or `peer`. If not given: a local diff, the current branch or a PR you authored is `self`; a PR authored by someone else is `peer` (compare the PR author with `gh api user --jq .login`).
+- `mode`: `self` or `peer`. If not given, **always ask the user (use the ask_user tool) before doing anything else**; never infer it. Offer `self` (review my current branch or my own PR) and `peer` (review someone else's PR), and ask for the PR number or URL when one applies. If the user gives a PR number, you may suggest a mode by comparing the PR author with `gh api user --jq .login`, but still confirm it.
 - `self`: nothing else is needed (reviews the current branch against its base), or a PR number.
 - `peer`: PR URL or number and, for fork branches, `owner:branch`. If helpful and available, surface candidate open PRs first.
 
@@ -21,6 +21,7 @@ One review standard for everyone. The same checklist (Step 5) applies whether yo
 6. **Be kind and specific.** Explain why, suggest the smallest safe fix, and phrase uncertain points as requests to confirm.
 7. **Post only comments that add value.** Each pending comment must be a specific, verified review comment or question on a line of code, written as a fellow peer would. Do not post praise, thanks, a verdict, a summary or an "approve with changes" note. Drop nits, duplicates of existing threads, and points you cannot verify or that change nothing for the author.
 8. **Verify delegated findings.** Treat the output of any sub-agent or tool pass (security, performance) as unverified. Re-read each cited location yourself before it becomes a finding, and say which points you could not confirm.
+9. **Follow the review conversation protocol** in `.github/instructions/review-conversation.instructions.md`, so reviewer and author never argue in a thread.
 
 ## Step 1: Detect context
 - Determine the target branch and base. Default base is `dev/v3.x`; release work targets its feature branch (for example `feat/v3.x/<area>/<release>`).
