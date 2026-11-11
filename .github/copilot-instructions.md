@@ -28,6 +28,7 @@ Fcli is a modular Java 17 CLI (Picocli + Gradle) for Fortify products (FoD, SSC,
 - Analyze existing code before implementing; trace callers of anything you change
 - Prefer existing abstractions over creating new ones
 - After edits: run `get_errors`, build with Gradle if appropriate
+- Work autonomously on an approved plan. Do not ask yes/no questions to read, search, run tests, switch to a worktree or edit within scope. Ask only for design or approach decisions, contract changes, scope growth, and irreversible or externally visible actions (push, PR, backlog writes). See the Autonomy section in .github/skills/fcli-story-to-code/SKILL.md.
 
 ## Agent Routing
 
