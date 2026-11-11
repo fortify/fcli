@@ -33,8 +33,8 @@ Fcli is a modular Java 17 CLI (Picocli + Gradle) for Fortify products (FoD, SSC,
 ## Agent Routing
 
 - Use `fcli-dev` agent for implementation work, tests, and simple edits.
-- Use `/fcli-review` skill for local review (self) and PR review (peer).
+- Use `/fcli-code-review` skill for local review (self) and PR review (peer).
 - If the active agent is not a good fit for the task, switch to the matching agent before continuing.
 - Before handoff on non-trivial changes, do a quick self-review for: command/business logic split, long argument lists that need a builder or data object, package/type mismatches, dead code or unused APIs, and security/input validation gaps.
-- If the change is broad or security-sensitive, use `/fcli-review` skill before you finalize the response.
+- If the change is broad or security-sensitive, use `/fcli-code-review` skill before you finalize the response.
 

@@ -5,7 +5,7 @@ description: "Shared rules for pull request review threads between a reviewer an
 
 # Review conversation protocol
 
-Reviewers (`/fcli-review peer`) and authors (`/fcli-address-review-comments`) work from this same protocol, so two people using AI never end up arguing in a thread. Both skills follow it and do not restate it. The review checklist and severity levels live in `.github/skills/fcli-review/SKILL.md`.
+Reviewers (`/fcli-code-review peer`) and authors (`/fcli-address-review-comments`) work from this same protocol, so two people using AI never end up arguing in a thread. Both skills follow it and do not restate it. The review checklist and severity levels live in `.github/skills/fcli-code-review/SKILL.md`.
 
 1. **One basis for decisions, in this order:** the requirement and acceptance criteria, then the repository instruction files (`.github/instructions`, `CODE_STYLE.md`), then the review checklist, then personal preference. A comment or reply that rests only on preference is at most a Low or a Question, and may be declined without further discussion.
 2. **Argue with evidence only:** file and line, test output, a documented rule, or observed behavior. Never argue from tone, assumption or "best practice" with no source.

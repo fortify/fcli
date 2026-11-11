@@ -8,7 +8,7 @@ disable-model-invocation: true
 
 Use this skill to turn a requirement into an agreed approach and then into the smallest tested, standards-compliant change that satisfies its acceptance criteria. The developer running the skill makes every decision.
 
-Related skills: `fcli-bug-triage` (root cause of a defect, before its fix), `fcli-review` (reviews the result), `fcli-address-review-comments` (after reviewers respond), `fcli-command-patterns` and `fcli-utilities` (implementation patterns).
+Related skills: `fcli-bug-triage` (root cause of a defect, before its fix), `fcli-code-review` (reviews the result), `fcli-address-review-comments` (after reviewers respond), `fcli-command-patterns` and `fcli-utilities` (implementation patterns).
 
 ## Input
 
@@ -46,7 +46,7 @@ Apply these in every step. They never replace the approval gates.
 - **Split implementation into independent tasks** (for example command/model, action YAML, ftests, docs) recorded in the session `todos` table with real dependencies. Run independent tasks in parallel with `general-purpose` agents, each owning a disjoint set of files. Tasks that touch the same file run sequentially. Documentation-only stories need no code agents.
 - **Keep agent prompts lean:** requirement, approved design, the files they own, the standards file names to read, and the exact test command. Ask for a short report (changed files, test result), not a transcript.
 - **Cheap verification first:** targeted test classes, then the module test task. Run the full build once, at the end.
-- **Review once, in parallel:** at the end run the `fcli-review` self mode and any relevant reviewer agents together.
+- **Review once, in parallel:** at the end run the `fcli-code-review` self mode and any relevant reviewer agents together.
 - **Read narrowly:** use grep and `view_range`; do not read whole large files.
 - **Stories whose acceptance criteria depend on an external agreement** (for example a contract with the server team) are not coded. Draft the deliverable, list the open decisions with owners, and ask the developer who can answer them.
 
@@ -121,7 +121,7 @@ Give a recommendation with the reason, and list any remaining questions. For a r
 
 ### 7. Self-review and report
 
-- Run `/fcli-review self` on the diff and fix what it finds, so your change is held to the standard a reviewer will apply. Also run a code-review agent on the diff: it starts without your reasoning, so it catches assumptions you cannot see. Re-read each finding in the code before acting on it.
+- Run `/fcli-code-review self` on the diff and fix what it finds, so your change is held to the standard a reviewer will apply. Also run a code-review agent on the diff: it starts without your reasoning, so it catches assumptions you cannot see. Re-read each finding in the code before acting on it.
 - Give a traceability table: each acceptance criterion, the change that satisfies it, and the test that proves it. State clearly any criterion not met and any open question.
 - List the test commands and results, anything not verified, and anything noticed but deliberately left out of scope.
 

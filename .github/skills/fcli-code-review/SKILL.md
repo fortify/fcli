@@ -1,5 +1,5 @@
 ---
-name: fcli-review
+name: fcli-code-review
 description: 'Review an fcli local change (self-review before raising a PR) or a pull request (peer review), with test execution and draft comments, against one shared checklist'
 disable-model-invocation: true
 ---
@@ -9,6 +9,7 @@ One review standard for everyone. The same checklist (Step 5) applies whether yo
 
 ## Inputs (ask for anything missing before starting)
 - `mode`: `self` or `peer`. If not given, **always ask the user (use the ask_user tool) before doing anything else**; never infer it. Offer `self` (review my current branch or my own PR) and `peer` (review someone else's PR), and ask for the PR number or URL when one applies. If the user gives a PR number, you may suggest a mode by comparing the PR author with `gh api user --jq .login`, but still confirm it.
+  - Once in `peer` mode, do not ask whether it is a first review or a re-review: Step 0 detects it.
 - `self`: nothing else is needed (reviews the current branch against its base), or a PR number.
 - `peer`: PR URL or number and, for fork branches, `owner:branch`. If helpful and available, surface candidate open PRs first.
 
@@ -22,6 +23,18 @@ One review standard for everyone. The same checklist (Step 5) applies whether yo
 7. **Post only comments that add value.** Each pending comment must be a specific, verified review comment or question on a line of code, written as a fellow peer would. Do not post praise, thanks, a verdict, a summary or an "approve with changes" note. Drop nits, duplicates of existing threads, and points you cannot verify or that change nothing for the author.
 8. **Verify delegated findings.** Treat the output of any sub-agent or tool pass (security, performance) as unverified. Re-read each cited location yourself before it becomes a finding, and say which points you could not confirm.
 9. **Follow the review conversation protocol** in `.github/instructions/review-conversation.instructions.md`, so reviewer and author never argue in a thread.
+
+## Step 0: Detect the review state (peer, automatic, before reading any code)
+
+Do not ask the reviewer whether this is a first review or a re-review. Work it out from evidence, then say which it is in one line.
+
+1. **Who is who.** `gh api user --jq .login` gives the current user. Compare it with the PR author. If they match, the PR is the user's own: suggest `self` and ask once, as part of the mode question.
+2. **Prior review by me.** Read the review state note `%USERPROFILE%\.copilot\notes\review-pr-<N>.md` if it exists (see below), the PR's reviews (`gh api repos/<owner>/<repo>/pulls/<N>/reviews`) and review comments (`.../pulls/<N>/comments`) written by the current user, including my PENDING review (pending comments are only visible to me). If any exist, this is a **re-review**. If none exist, it is a **first review**.
+3. **Reviews by others.** List other reviewers' comments, requested changes and approvals. In a first review, still read them (Step 4) and avoid repeating points; note in the report that others have already reviewed.
+4. **What changed since.** For a re-review, take the last reviewed head SHA from the note (or, with no note, the `commit_id` of my oldest comment) and list the commits and diff since then (`git log <old>..<head>`, `git diff <old>..<head>`). If the head SHA is unchanged and no thread has a new reply, say "nothing new since <sha>" and stop, without re-running tests.
+5. **Route.** First review: run Steps 1 to 7. Re-review: run Step 8 automatically.
+
+**Review state note** (private, outside every repo, never committed or posted): `%USERPROFILE%\.copilot\notes\review-pr-<N>.md` with `PR` (URL, title, author), `Reviewed heads` (sha, date, verdict), `My comments` (file:line, concern, pending or submitted, status: open, addressed, declined, withdrawn), `Next step`. Create it after the first report is approved and update it after every posting and every re-review. If it is missing but the GitHub comments exist, rebuild it from GitHub. GitHub is the source of truth.
 
 ## Step 1: Detect context
 - Determine the target branch and base. Default base is `dev/v3.x`; release work targets its feature branch (for example `feat/v3.x/<area>/<release>`).
@@ -130,11 +143,18 @@ Read, then review explicitly against them. Do not restate their rules; cite them
   - Finish with the review URL, the comment count and confirmation that the state is PENDING/draft. Remind the user which review branch is checked out and how to return to their previous branch.
 
 ## Step 8: Re-review after the author updates the PR
-- Fetch and verify the head SHA again (Step 2) before reading anything.
-- Re-read every existing thread, including resolved ones, with the author's replies and the commits made after each comment (Step 4). Check in the head code that each reply is really implemented, and update each thread's status.
-- Review the new commits compared with the previously reviewed SHA. Also look at the rest of the change for anything the earlier pass missed, including problems the new commits introduce next to the fixes.
+Run this whenever Step 0 finds earlier comments or a pending review by the current user and the head has moved or a thread has a new reply. The reviewer does not have to ask for it. Its job is to evaluate, comment by comment, whether each earlier point has been fixed correctly, and to catch what the fixes broke.
+
+- Fetch fresh and verify the head SHA before reading anything (local HEAD, the remote branch and the PR head must agree).
+- For each of my comments, in order: read the author's reply and the commits after the comment, then read the head code and decide fixed, partly fixed, declined with a reason, or still open. Run or add the check that proves it (the test the author says covers it, or a quick run of the changed path). Do not trust the reply text.
+- Report a table: comment, file:line, my concern, author's response, verdict, evidence. Say which conversations the reviewer can resolve in the GitHub UI. Never resolve them yourself.
+- Review the commits compared with the previously reviewed SHA, and the rest of the change for anything the earlier pass missed, including problems the fixes introduce.
+- Re-run the affected tests and report the counts.
+- Also re-read other reviewers' comments and resolved threads (Step 4) for replies that now affect my points.
 - Withdraw or correct any earlier comment that turns out to be wrong, plainly and politely.
+- Reopen a declined or partly addressed point only with new evidence, once.
 - Do not repeat comments that were already addressed, and do not post replies that only confirm a fix or say thanks. Post a reply only when it adds a new, verified point.
+- Update the review state note, then recommend Approve, Approve with changes or Request changes, in chat only. Never submit the review.
 
 ## Cleanup
 - Never commit or push from a review checkout. When finished, offer to remove the review branch or worktree and let the user decide.

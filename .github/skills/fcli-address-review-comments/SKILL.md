@@ -8,7 +8,7 @@ disable-model-invocation: true
 
 Use this skill when you are the author and reviewers have commented on your pull request. It turns each comment into a verified decision, a minimal fix and a short draft reply. The developer running it makes every decision.
 
-Related skills: `fcli-review` (the reviewer side), `fcli-story-to-code` (implementation rules and commit practice). Both sides follow `.github/instructions/review-conversation.instructions.md`.
+Related skills: `fcli-code-review` (the reviewer side), `fcli-story-to-code` (implementation rules and commit practice). Both sides follow `.github/instructions/review-conversation.instructions.md`.
 
 ## Input
 
@@ -82,7 +82,7 @@ Present the table of threads with verdicts and proposals. Ask about anything unc
 ### 6. Verify
 
 - Run the tests for each changed module with Gradle, and each new test class on its own (`./gradlew :fcli-core:<module>:test`). Report skipped tests as behavior not verified.
-- Run `/fcli-review self` on the new commits, to catch anything the fixes introduced next to the original issue.
+- Run `/fcli-code-review self` on the new commits, to catch anything the fixes introduced next to the original issue.
 
 ### 7. Draft the replies
 

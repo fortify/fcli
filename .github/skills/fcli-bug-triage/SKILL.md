@@ -8,7 +8,7 @@ disable-model-invocation: true
 
 Use this skill to move from a reported defect to a verified root cause and a recommended fix, before any code is changed. The developer running it makes every decision.
 
-Related skills: `fcli-story-to-code` (the fix, once approved), `fcli-review` (review of the fix).
+Related skills: `fcli-story-to-code` (the fix, once approved), `fcli-code-review` (review of the fix).
 
 ## Input
 
