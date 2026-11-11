@@ -55,7 +55,7 @@ bin/
 _gitignored/
 
 ### Internal-only skills
-.github/skills/fcli-octane-story/
+.github/skills/fcli-valueedge/
 
 ### Sample scans & logs ###
 samples/**/scans/**
