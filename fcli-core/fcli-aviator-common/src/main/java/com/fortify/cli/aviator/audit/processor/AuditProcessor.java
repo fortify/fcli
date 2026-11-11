@@ -93,7 +93,7 @@ public class AuditProcessor {
     private RemediationGenerationMetric lastRemediationGenerationMetric = RemediationGenerationMetric.empty();
 
     /**
-     * Per-save metrics. {@code legacyStatusFallbacks} counts issues with remediation that were
+     * Per-save metrics. {@code legacyStatusFallbacks} counts issues with emitted remediation that were
      * marked {@link Constants#PROCESSED_BY_AVIATOR} because the caller requested the legacy status.
      */
     public record RemediationGenerationMetric(int skippedRemediations, Map<String, Integer> skippedByReason,
@@ -150,13 +150,11 @@ public class AuditProcessor {
     private static final class AuditXmlUpdateResult {
         private final Map<String, String> remediationCommentTimestamps;
         private final Set<String> writtenInstanceIds;
-        private final int legacyStatusFallbacks;
 
         private AuditXmlUpdateResult(Map<String, String> remediationCommentTimestamps,
-                Set<String> writtenInstanceIds, int legacyStatusFallbacks) {
+                Set<String> writtenInstanceIds) {
             this.remediationCommentTimestamps = remediationCommentTimestamps;
             this.writtenInstanceIds = writtenInstanceIds;
-            this.legacyStatusFallbacks = legacyStatusFallbacks;
         }
     }
 
@@ -184,11 +182,9 @@ public class AuditProcessor {
     }
 
     private AuditXmlUpdateResult updateAuditXml(Map<String, AuditResponse> auditResponses,
-            TagMappingConfig tagMappingConfig, Map<String, String> issueCategoryLookup,
-            boolean useLegacyStatusForRemediation) throws AviatorTechnicalException {
+            TagMappingConfig tagMappingConfig, Map<String, String> issueCategoryLookup) throws AviatorTechnicalException {
         Map<String, String> remediationCommentTimestamps = new HashMap<>();
         Set<String> writtenInstanceIds = new HashSet<>();
-        int legacyStatusFallbacks = 0;
         for (Map.Entry<String, AuditResponse> entry : auditResponses.entrySet()) {
             String instanceId = entry.getKey();
             AuditResponse response = entry.getValue();
@@ -207,20 +203,16 @@ public class AuditProcessor {
             String commentTimestamp;
 
             if (response.getAuditResult() != null) {
-                String aviatorStatus = aviatorStatus(response, useLegacyStatusForRemediation);
                 if (issueElement != null) {
                     commentTimestamp = updateIssueElement(issueElement, response, tagMappingConfig, issueCategoryLookup,
-                            aviatorStatus);
+                            false);
                 } else {
                     commentTimestamp = addNewIssueElement(instanceId, response, tagMappingConfig, issueCategoryLookup,
-                            aviatorStatus);
+                            false);
                 }
                 // Local retain set for this save only — instance IDs successfully written here.
                 writtenInstanceIds.add(instanceId);
                 boolean hasRemediationChanges = hasRemediationChanges(response);
-                if (hasRemediationChanges && useLegacyStatusForRemediation) {
-                    legacyStatusFallbacks++;
-                }
                 if (commentTimestamp != null && hasRemediationChanges) {
                     remediationCommentTimestamps.put(instanceId, commentTimestamp);
                 }
@@ -228,7 +220,7 @@ public class AuditProcessor {
                 logger.debug("Issue {} skipped or no audit result provided.", response.getIssueId());
             }
         }
-        return new AuditXmlUpdateResult(remediationCommentTimestamps, writtenInstanceIds, legacyStatusFallbacks);
+        return new AuditXmlUpdateResult(remediationCommentTimestamps, writtenInstanceIds);
     }
     public Element findIssueElement(String instanceId) {
         NodeList issueNodes = auditDoc.getElementsByTagNameNS(AUDIT_NAMESPACE_URI, "Issue");
@@ -241,14 +233,16 @@ public class AuditProcessor {
         return null;
     }
 
+    /**
+     * Applies audit state only; without remediation generation, the status is {@code PROCESSED_BY_AVIATOR}.
+     */
     public String updateIssueElement(Element issueElement, AuditResponse response, TagMappingConfig tagMappingConfig,
             Map<String, String> issueCategoryLookup) throws AviatorTechnicalException {
-        return updateIssueElement(issueElement, response, tagMappingConfig, issueCategoryLookup,
-                aviatorStatus(response, false));
+        return updateIssueElement(issueElement, response, tagMappingConfig, issueCategoryLookup, true);
     }
 
     private String updateIssueElement(Element issueElement, AuditResponse response, TagMappingConfig tagMappingConfig,
-            Map<String, String> issueCategoryLookup, String aviatorStatus) throws AviatorTechnicalException {
+            Map<String, String> issueCategoryLookup, boolean writeStatus) throws AviatorTechnicalException {
         int revision = Integer.parseInt(issueElement.getAttribute("revision"));
         issueElement.setAttribute("revision", String.valueOf(++revision));
         String commentTimestamp = null;
@@ -284,21 +278,21 @@ public class AuditProcessor {
                     tagMappingConfig, issueCategoryLookup);
         }
 
-        updateOrAddTag(issueElement, Constants.AVIATOR_STATUS_TAG_ID, aviatorStatus);
-
         if (response != null && response.getAuditResult() != null) {
             commentTimestamp = updateOrAddComment(issueElement, response.getAuditResult().comment);
         }
 
-        updateClientAuditTrail(issueElement, response, tagMappingConfig, suppressedHistoryValue, aviatorStatus);
+        updateClientAuditTrail(issueElement, response, tagMappingConfig, suppressedHistoryValue);
+        if (writeStatus) {
+            updateAviatorStatus(issueElement, Constants.PROCESSED_BY_AVIATOR);
+        }
 
         return commentTimestamp;
     }
 
-    private static String aviatorStatus(AuditResponse response, boolean useLegacyStatusForRemediation) {
-        return hasRemediationChanges(response) && !useLegacyStatusForRemediation
-                ? Constants.PROCESSED_BY_AVIATOR_WITH_REMEDIATION
-                : Constants.PROCESSED_BY_AVIATOR;
+    private void updateAviatorStatus(Element issueElement, String aviatorStatus) {
+        updateOrAddTag(issueElement, Constants.AVIATOR_STATUS_TAG_ID, aviatorStatus);
+        addTagHistory(getClientAuditTrailElement(issueElement), Constants.AVIATOR_STATUS_TAG_ID, aviatorStatus);
     }
 
     private static boolean hasRemediationChanges(AuditResponse response) {
@@ -309,7 +303,7 @@ public class AuditProcessor {
     }
 
     private void updateClientAuditTrail(Element issueElement, AuditResponse response, TagMappingConfig tagMappingConfig,
-            Boolean suppressedHistoryValue, String aviatorStatus) {
+            Boolean suppressedHistoryValue) {
         Element clientAuditTrail = getClientAuditTrailElement(issueElement);
 
         if (response != null && response.getAuditResult() != null) {
@@ -342,7 +336,6 @@ public class AuditProcessor {
                 addTagHistory(clientAuditTrail, Constants.SUPPRESSED_TAG_ID, suppressedHistoryValue.toString());
             }
         }
-        addTagHistory(clientAuditTrail, Constants.AVIATOR_STATUS_TAG_ID, aviatorStatus);
     }
 
     private Boolean applySuppressionDecision(Element issueElement, String instanceId, TagMappingConfig.Result resultConfig,
@@ -420,7 +413,7 @@ public class AuditProcessor {
 
         for (int i = 0; i < tagNodes.getLength(); i++) {
             Element currentTag = (Element) tagNodes.item(i);
-            if (currentTag.getAttribute("id").equalsIgnoreCase(tagId)) {
+            if (currentTag.getParentNode() == issueElement && currentTag.getAttribute("id").equalsIgnoreCase(tagId)) {
                 tagElement = currentTag;
                 break;
             }
@@ -429,7 +422,7 @@ public class AuditProcessor {
         if (tagElement == null) {
             tagElement = auditDoc.createElementNS(AUDIT_NAMESPACE_URI, "Tag");
             tagElement.setAttribute("id", tagId);
-            issueElement.appendChild(tagElement);
+            issueElement.insertBefore(tagElement, issueElement.getFirstChild());
         }
 
         NodeList valueNodes = tagElement.getElementsByTagNameNS(AUDIT_NAMESPACE_URI, "Value");
@@ -475,14 +468,16 @@ public class AuditProcessor {
         return timestamp;
     }
 
+    /**
+     * Adds audit state only; without remediation generation, the status is {@code PROCESSED_BY_AVIATOR}.
+     */
     public String addNewIssueElement(String instanceId, AuditResponse response, TagMappingConfig tagMappingConfig,
             Map<String, String> issueCategoryLookup) throws AviatorTechnicalException {
-        return addNewIssueElement(instanceId, response, tagMappingConfig, issueCategoryLookup,
-                aviatorStatus(response, false));
+        return addNewIssueElement(instanceId, response, tagMappingConfig, issueCategoryLookup, true);
     }
 
     private String addNewIssueElement(String instanceId, AuditResponse response, TagMappingConfig tagMappingConfig,
-            Map<String, String> issueCategoryLookup, String aviatorStatus) throws AviatorTechnicalException {
+            Map<String, String> issueCategoryLookup, boolean writeStatus) throws AviatorTechnicalException {
         Element issueList = (Element) auditDoc.getElementsByTagNameNS(AUDIT_NAMESPACE_URI, "IssueList").item(0);
         if (issueList == null) {
             issueList = auditDoc.createElementNS(AUDIT_NAMESPACE_URI, "IssueList");
@@ -524,13 +519,14 @@ public class AuditProcessor {
             suppressedHistoryValue = applySuppressionDecision(newIssue, instanceId, resultConfig, tagMappingConfig, issueCategoryLookup);
         }
 
-        updateOrAddTag(newIssue, Constants.AVIATOR_STATUS_TAG_ID, aviatorStatus);
-
         if (response != null && response.getAuditResult() != null) {
             commentTimestamp = updateOrAddComment(newIssue, response.getAuditResult().comment);
         }
 
-        updateClientAuditTrail(newIssue, response, tagMappingConfig, suppressedHistoryValue, aviatorStatus);
+        updateClientAuditTrail(newIssue, response, tagMappingConfig, suppressedHistoryValue);
+        if (writeStatus) {
+            updateAviatorStatus(newIssue, Constants.PROCESSED_BY_AVIATOR);
+        }
 
         issueList.appendChild(newIssue);
         return commentTimestamp;
@@ -678,7 +674,7 @@ public class AuditProcessor {
         // Step 1: Apply this save's audit responses. writtenInstanceIds is the local retain set.
         Map<String, String> effectiveIssueCategoryLookup = issueCategoryLookup == null ? Map.of() : issueCategoryLookup;
         AuditXmlUpdateResult updateResult = updateAuditXml(
-                auditResponses, tagMappingConfig, effectiveIssueCategoryLookup, useLegacyStatusForRemediation);
+                auditResponses, tagMappingConfig, effectiveIssueCategoryLookup);
         Map<String, String> remediationCommentTimestamps = updateResult.remediationCommentTimestamps;
 
         // Step 2: Keep only Issue nodes written in this save so SSC does not overwrite concurrent
@@ -699,7 +695,20 @@ public class AuditProcessor {
                 logger.info("WARN: Remediation data found, but could not associate timestamps for all. remediations.xml will not be generated.");
             }
         }
-        lastRemediationGenerationMetric = toRemediationGenerationMetric(skippedByReason, updateResult.legacyStatusFallbacks);
+        Set<String> remediatedInstanceIds = new HashSet<>();
+        if (remediationsDoc != null) {
+            NodeList remediations = remediationsDoc.getElementsByTagNameNS(REMEDIATIONS_NAMESPACE_URI, "Remediation");
+            for (int i = 0; i < remediations.getLength(); i++) {
+                remediatedInstanceIds.add(((Element) remediations.item(i)).getAttribute("instanceId"));
+            }
+        }
+        for (String instanceId : updateResult.writtenInstanceIds) {
+            String status = remediatedInstanceIds.contains(instanceId) && !useLegacyStatusForRemediation
+                    ? Constants.PROCESSED_BY_AVIATOR_WITH_REMEDIATION : Constants.PROCESSED_BY_AVIATOR;
+            updateAviatorStatus(findIssueElement(instanceId), status);
+        }
+        int legacyStatusFallbacks = useLegacyStatusForRemediation ? remediatedInstanceIds.size() : 0;
+        lastRemediationGenerationMetric = toRemediationGenerationMetric(skippedByReason, legacyStatusFallbacks);
 
         // Step 5: Write the modified XML documents directly back into the open FPR file system.
         try {
@@ -899,6 +908,10 @@ public class AuditProcessor {
                                 Element changeElement = finalDoc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "Change");
                                 int lineFromNum = parseLineNumber(change.getFromLine(), filename, instanceId, "FromLine");
                                 int lineToNum = parseLineNumber(change.getToLine(), filename, instanceId, "ToLine");
+                                if (lineFromNum < 0 || lineToNum < 0) {
+                                    recordSkipped(skippedByReason, RemediationSkipReason.STRUCTURALLY_INVALID);
+                                    continue;
+                                }
 
                                 Element lineFromElement = finalDoc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "LineFrom");
                                 lineFromElement.setTextContent(String.valueOf(lineFromNum));
