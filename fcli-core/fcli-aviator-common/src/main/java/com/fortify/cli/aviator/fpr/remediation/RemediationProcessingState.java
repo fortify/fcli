@@ -13,8 +13,10 @@
 package com.fortify.cli.aviator.fpr.remediation;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -33,6 +35,13 @@ final class RemediationProcessingState {
     private final Set<String> identicalIssueIds = new LinkedHashSet<>();
     private final Set<String> supersededIssueIds = new LinkedHashSet<>();
     private final Set<String> possiblyRemediatedIssueIds = new LinkedHashSet<>();
+    private final Map<String, List<String>> coveredByPriorFixIssues = new LinkedHashMap<>();
+    private final Map<String, List<String>> supersededByPriorFixIssues = new LinkedHashMap<>();
+    private final Set<String> dependentIssueIds = new LinkedHashSet<>();
+    private final Set<String> declinedFixIds = new LinkedHashSet<>();
+    private final Set<String> implicitIssueIds = new LinkedHashSet<>();
+    private final Set<String> implicitlyAppliedIssueIds = new LinkedHashSet<>();
+    private final Set<String> implicitlySatisfiedIssueIds = new LinkedHashSet<>();
     private final Set<String> modifiedFiles = new LinkedHashSet<>();
     private final Map<String, Integer> skippedByReason = new LinkedHashMap<>();
     private final Map<String, String> issueSkipReasons = new LinkedHashMap<>();
@@ -53,7 +62,44 @@ final class RemediationProcessingState {
     }
 
     boolean shouldProcess(String instanceId) {
-        return !options.isFiltered() || options.issueIdFilter().contains(instanceId);
+        return !options.isFiltered() || options.issueIdFilter().contains(instanceId)
+            || implicitIssueIds.contains(instanceId) || dependentIssueIds.contains(instanceId);
+    }
+
+    /** A fix that is requested, or approved to be applied implicitly, and so resolves the issues that reference it. */
+    boolean isFixSelected(String instanceId) {
+        return !options.isFiltered() || options.issueIdFilter().contains(instanceId)
+            || implicitIssueIds.contains(instanceId);
+    }
+
+    /** Issues without a fix of their own that a selected fix resolves; they are processed and counted with it. */
+    void addDependentIssueId(String instanceId) {
+        if (options.isFiltered() && instanceId != null) {
+            dependentIssueIds.add(instanceId);
+        }
+    }
+
+    void recordDeclinedFix(String instanceId) {
+        declinedFixIds.add(instanceId);
+    }
+
+    /**
+     * Fixes that a requested issue is covered by must be applied even if the user did not request
+     * them; they are tracked as implicit so they don't distort the requested-issue counts.
+     */
+    void addImplicitIssueIds(Collection<String> instanceIds) {
+        if (!options.isFiltered()) {
+            return;
+        }
+        for (String instanceId : instanceIds) {
+            if (instanceId != null && !options.issueIdFilter().contains(instanceId)) {
+                implicitIssueIds.add(instanceId);
+            }
+        }
+    }
+
+    private boolean isImplicit(String instanceId) {
+        return instanceId != null && implicitIssueIds.contains(instanceId);
     }
 
     void recordSeen(String instanceId) {
@@ -73,6 +119,14 @@ final class RemediationProcessingState {
         recordSatisfied(instanceId);
         appliedIssueIds.add(instanceId);
         issueSkipReasons.remove(instanceId);
+        markImplicitlySatisfied(instanceId);
+    }
+
+    private void markImplicitlySatisfied(String instanceId) {
+        if (isImplicit(instanceId)) {
+            implicitlyAppliedIssueIds.add(instanceId);
+            implicitlySatisfiedIssueIds.add(instanceId);
+        }
     }
 
     void recordPreviewAvailable(String instanceId, Map<String, FilePreview> files) {
@@ -88,15 +142,20 @@ final class RemediationProcessingState {
         identicalRemediations++;
         identicalIssueIds.add(instanceId);
         recordSatisfied(instanceId);
+        markImplicitlySatisfied(instanceId);
     }
 
     void recordSuperseded(String instanceId) {
         supersededRemediations++;
         supersededIssueIds.add(instanceId);
         recordSatisfied(instanceId);
+        markImplicitlySatisfied(instanceId);
     }
 
     void recordPossiblyRemediated(String instanceId) {
+        if (isImplicit(instanceId)) {
+            return;
+        }
         possiblyRemediatedRemediations++;
         possiblyRemediatedIssueIds.add(instanceId);
         issueSkipReasons.put(instanceId, POSSIBLY_REMEDIATED_REASON);
@@ -107,6 +166,9 @@ final class RemediationProcessingState {
     }
 
     void recordSkipped(String instanceId, String reason) {
+        if (isImplicit(instanceId)) {
+            return;
+        }
         skippedByReason.merge(reason, 1, Integer::sum);
         if (instanceId != null && !instanceId.isBlank()) {
             issueSkipReasons.put(instanceId, reason);
@@ -115,6 +177,54 @@ final class RemediationProcessingState {
                     PreviewDetail.skipped(instanceId, descriptionsByIssue.get(instanceId)));
             }
         }
+    }
+
+    /**
+     * Resolves an issue that has no fix of its own because another issue's fix already covers it exactly. Must run
+     * after all fixes were processed. Reported as covered if a covering fix was applied (or was itself already
+     * satisfied); otherwise skipped, because nothing in the sources addresses this issue.
+     */
+    void recordCoveredByPriorFix(String instanceId, List<String> coveredByInstanceIds) {
+        if (!anyFixSatisfied(coveredByInstanceIds)) {
+            recordSkipped(instanceId, unresolvedReason(coveredByInstanceIds));
+            return;
+        }
+        coveredByPriorFixIssues.put(instanceId, List.copyOf(coveredByInstanceIds));
+        recordSatisfied(instanceId);
+        if (options.isPreview()) {
+            previewDetailsByIssue.put(instanceId,
+                PreviewDetail.coveredByPriorFix(instanceId, descriptionsByIssue.get(instanceId)));
+        }
+    }
+
+    /**
+     * Resolves an issue whose own fix is contained in a wider fix (the issue has no fix of its own). Counted as
+     * superseded, which is a kind of remediated, once the wider fix was applied; skipped otherwise.
+     */
+    void recordSupersededByPriorFix(String instanceId, List<String> supersededByInstanceIds) {
+        if (!anyFixSatisfied(supersededByInstanceIds)) {
+            recordSkipped(instanceId, unresolvedReason(supersededByInstanceIds));
+            return;
+        }
+        supersededRemediations++;
+        supersededIssueIds.add(instanceId);
+        supersededByPriorFixIssues.put(instanceId, List.copyOf(supersededByInstanceIds));
+        recordSatisfied(instanceId);
+        if (options.isPreview()) {
+            previewDetailsByIssue.put(instanceId,
+                PreviewDetail.supersededByPriorFix(instanceId, descriptionsByIssue.get(instanceId)));
+        }
+    }
+
+    private boolean anyFixSatisfied(List<String> fixIds) {
+        return fixIds.stream().anyMatch(satisfiedIssueIds::contains);
+    }
+
+    private String unresolvedReason(List<String> fixIds) {
+        String joined = String.join(", ", fixIds);
+        return fixIds.stream().anyMatch(declinedFixIds::contains)
+            ? "Fix " + joined + " was not confirmed; confirm it interactively or use --confirm"
+            : "Prior fix " + joined + " was not applied";
     }
 
     Set<String> modifiedFiles() {
@@ -127,18 +237,26 @@ final class RemediationProcessingState {
 
     RemediationMetric toMetric() {
         recordMissingRequestedIssues();
-        int totalRemediations = options.isFiltered() ? options.issueIdFilter().size() : xmlEntryCount;
+        // Every issue that was requested, resolved, or reported with a skip reason is part of the total, so the skip
+        // details always add up (an issue that depends on a selected fix that failed has a skip reason but was not requested).
+        Set<String> filteredTotal = new LinkedHashSet<>(options.issueIdFilter());
+        filteredTotal.addAll(satisfiedIssueIds);
+        filteredTotal.addAll(issueSkipReasons.keySet());
+        int totalRemediations = options.isFiltered() ? filteredTotal.size() : xmlEntryCount;
         int applied = options.isFiltered() ? appliedIssueIds.size() : appliedRemediations;
         int skipped = options.isFiltered()
             ? totalRemediations - satisfiedIssueIds.size()
             : totalRemediations - appliedRemediations - identicalRemediations - supersededRemediations
-                - possiblyRemediatedRemediations;
+                - possiblyRemediatedRemediations - coveredByPriorFixIssues.size();
         return RemediationMetric.builder()
                 .totalRemediations(totalRemediations)
                 .appliedRemediations(applied)
                 .identicalRemediations(identicalRemediations)
                 .supersededRemediations(supersededRemediations)
                 .possiblyRemediatedRemediations(possiblyRemediatedRemediations)
+                .coveredByPriorFixRemediations(coveredByPriorFixIssues.size())
+                .supersedesPriorFixRemediations(supersededByPriorFixIssues.size())
+                .remediatedRemediations(satisfiedIssueIds.size())
                 .skippedRemediations(skipped)
                 .modifiedFiles(modifiedFiles)
                 .skippedByReason(skippedByReason)
@@ -150,6 +268,9 @@ final class RemediationProcessingState {
                 .identicalIssueIds(identicalIssueIds)
                 .supersededIssueIds(supersededIssueIds)
                 .possiblyRemediatedIssueIds(possiblyRemediatedIssueIds)
+                .coveredByPriorFixIssues(coveredByPriorFixIssues)
+                .supersededByPriorFixIssues(supersededByPriorFixIssues)
+                .implicitlyAppliedIssueIds(implicitlyAppliedIssueIds)
                 .issueSkipReasons(issueSkipReasons)
                 .previewDetails(new ArrayList<>(previewDetailsByIssue.values()))
                 .build();

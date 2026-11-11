@@ -28,4 +28,7 @@ import lombok.NoArgsConstructor;
 @Reflectable
 public class Autoremediation {
     private List<Change> changes;
+    private String skipReason;
+    private List<String> coveredByIssueIds;
+    private List<String> supersededIssueIds;
 }
