@@ -12,6 +12,9 @@
  */
 package com.fortify.cli.aviator.fpr.processor;
 
+import static com.fortify.cli.aviator.fpr.processor.RemediationResponses.coveredByPriorFixIds;
+import static com.fortify.cli.aviator.fpr.processor.RemediationResponses.hasRemediationChanges;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -35,9 +38,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
-
-import static com.fortify.cli.aviator.fpr.processor.RemediationResponses.coveredByPriorFixIds;
-import static com.fortify.cli.aviator.fpr.processor.RemediationResponses.hasRemediationChanges;
 
 import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
