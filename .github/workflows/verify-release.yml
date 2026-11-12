@@ -36,8 +36,17 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        os: [ubuntu-latest, ubuntu-24.04-arm, windows-latest, macos-latest]
         type: [jar, native]
+        include:
+          - os: ubuntu-latest
+            native_artifact: fcli-linux
+          - os: ubuntu-24.04-arm
+            native_artifact: fcli-linux-arm64
+          - os: windows-latest
+            native_artifact: fcli-windows
+          - os: macos-latest
+            native_artifact: fcli-mac
     
     runs-on: ${{ matrix.os }}
 
@@ -53,7 +62,7 @@ jobs:
         uses: fortify/shared-github/actions/3rdparty/actions/download-artifact/v8@5ad1afec0f56a21b03f0887eea35505cb6a66554
         with:
           run-id: ${{ inputs.runId }}
-          name: ${{ matrix.type == 'jar' && 'fcli-jar' || matrix.os == 'ubuntu-latest' && 'fcli-linux' || matrix.os == 'windows-latest' && 'fcli-windows' || 'fcli-mac' }}
+          name: ${{ matrix.type == 'jar' && 'fcli-jar' || matrix.native_artifact }}
           path: ./artifacts
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
@@ -69,22 +78,19 @@ jobs:
         shell: bash
         run: |
           find ./artifacts -type f -exec mv {} . \;
-          case "${{ matrix.type }}" in
-            "jar" )
-              java -jar fcli-ftest.jar -Dft.fcli=fcli.jar -Dft.run=core,config,tool ;;
-            "native" )
-              case "${{ matrix.os }}" in
-                "ubuntu-latest" ) 
-                  tar -zxvf fcli-linux.tgz
-                  java -jar fcli-ftest.jar -Dft.fcli=./fcli -Dft.run=core,config,tool ;;
-                "windows-latest" )
-                  7z e fcli-windows.zip
-                  java -jar fcli-ftest.jar -Dft.fcli=fcli.exe -Dft.run=core,config,tool ;;
-                "macos-latest" )
-                  tar -zxvf fcli-mac.tgz
-                  java -jar fcli-ftest.jar -Dft.fcli=./fcli -Dft.run=core,config,tool ;;
-              esac ;;
-          esac 
+          if [ "${TYPE}" == "jar" ]; then
+            fcli=fcli.jar
+          elif [ -f "${NATIVE_ARTIFACT}.zip" ]; then
+            7z e "${NATIVE_ARTIFACT}.zip"
+            fcli=fcli.exe
+          else
+            tar -zxvf "${NATIVE_ARTIFACT}.tgz"
+            fcli=./fcli
+          fi
+          java -jar fcli-ftest.jar -Dft.fcli="${fcli}" -Dft.run=core,config,tool
+        env:
+          TYPE: ${{ matrix.type }}
+          NATIVE_ARTIFACT: ${{ matrix.native_artifact }}
             
       - name: Rename test log
         if: always()
