@@ -63,7 +63,7 @@ For every unresolved thread, read the full file at the head and the relevant cal
 | Not valid | Wrong, based on old code, or conflicts with the requirement | Reply with evidence and ask the reviewer to confirm |
 | Unclear | Cannot tell what is wanted | Ask the reviewer a specific question |
 | Out of scope | A good idea that does not belong in this PR | Agree to track it separately; offer a follow-up, but never create an issue or work item without approval |
-
+| Escalate | The comment turns on a decision, convention or agreement the reviewer cannot see in the PR | Do not argue or reply on the evidence. Tell the developer, and draft a reply only after they decide |
 For each thread, show the developer: the comment (short), your verdict with evidence, the proposed fix (files and tests) or reply, and any risk to contracts or other threads.
 
 A comment marked Question is answered with evidence, not treated as a defect. A Low or nit may be declined with a short reason. Use the protocol's thread states in replies: fixed is addressed, fixed another way is partly addressed, not changed with evidence is declined, and a question back is open. If the thread already had a reviewer follow-up after your reply, do not draft another reply; tell the developer it needs a human conversation.
