@@ -100,6 +100,8 @@ tasks.named<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("shadowJ
     archiveVersion.set("")
     from(generatedReflectConfigDir)
     exclude("META-INF/*.SF", "META-INF/*.DSA", "META-INF/*.RSA")
+    // Allow Jansi to load its native library without restricted-method warnings on Java 24+ (JEP 472)
+    manifest { attributes["Enable-Native-Access"] = "ALL-UNNAMED" }
 }
 
 // Third-party helper
