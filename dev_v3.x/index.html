@@ -1,6 +1,6 @@
 ---
 title: 'Fortify CLI (fcli) Installation &amp; Usage'
-fcli_version: 0.20261103.112243-dev_v3.x
+fcli_version: 0.20261112.082057-dev_v3.x
 ---
 
 <!DOCTYPE html>
@@ -17,13 +17,13 @@ fcli_version: 0.20261103.112243-dev_v3.x
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20261103.112243-dev_v3.x" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20261112.082057-dev_v3.x" %}
 
 
 <div id="header">
 <h1>Fortify CLI (fcli) Installation &amp; Usage</h1>
 <div class="details">
-<span id="revnumber">version 0.20261103.112243-dev_v3.x</span>
+<span id="revnumber">version 0.20261112.082057-dev_v3.x</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -287,32 +287,56 @@ fcli_version: 0.20261103.112243-dev_v3.x
 <p>Release assets for fcli are available on the <a href="https://github.com/fortify/fcli/releases">Releases</a> page. This page lists both development releases (named <code>Development Release - &lt;branch&gt; branch</code>) and final releases. In general, the use of a final release is recommended, unless you want to use any functionality that hasn’t made it into a final release yet.</p>
 </div>
 <div class="paragraph">
-<p>Each release comes with a list of assets:</p>
+<p>Each release provides the following fcli executables:</p>
 </div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 22.2222%;">
+<col style="width: 22.2222%;">
+<col style="width: 55.5556%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Asset</th>
+<th class="tableblock halign-left valign-top">Platform</th>
+<th class="tableblock halign-left valign-top">Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>fcli-linux.tgz</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Linux x64</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Fully statically linked native binary; runs on any Linux x64 distribution, including musl-based distributions like Alpine</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>fcli-linux-arm64.tgz</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Linux arm64</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Native binary that requires glibc 2.34 or later; can&#8217;t be used on musl-based distributions like Alpine</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>fcli-mac.tgz</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">macOS arm64</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Native binary for Apple Silicon</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>fcli-windows.zip</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Windows x64</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Native binary; note that some browsers by default will disallow downloading of <code>fcli-windows.zip</code>, please bypass the warning</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>fcli.jar</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Any platform with Java 17+</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Java version of fcli</p></td>
+</tr>
+</tbody>
+</table>
 <div class="ulist">
 <ul>
 <li>
-<p><code>docs-html.zip</code> &amp; <code>docs-manpage.zip</code>: Manual pages in either HTML or manpage format</p>
+<p>Linux and Mac native binary downloads include an <code>auto-completion</code> script that makes interactive fcli usage easier</p>
 </li>
 <li>
-<p><code>fcli-linux.tgz</code>, <code>fcli-mac.tgz</code> &amp; <code>fcli-windows.zip</code>: Native binaries for each of the mentioned platforms</p>
-<div class="ulist">
-<ul>
-<li>
-<p>Note that some browsers by default will disallow downloading of <code>fcli-windows.zip</code>; please bypass the warning</p>
-</li>
-<li>
-<p>Linux and Mac downloads include an <code>auto-completion</code> script that makes interactive fcli usage easier</p>
-</li>
-</ul>
-</div>
-</li>
-<li>
-<p><code>fcli.jar</code>: Java version of fcli, which should be runnable on any platform that has Java 17+ installed</p>
-<div class="ulist">
-<ul>
-<li>
-<p>Note that in general, the native binaries are easier to invoke, offer better performance, and have the benefit of auto-completion capabilities on Linux &amp; Mac</p>
+<p>In general, the native binaries are easier to invoke, offer better performance, and have the benefit of auto-completion capabilities on Linux &amp; Mac</p>
 </li>
 <li>
 <p>If you experience any unexpected behavior with native binaries, like commands or command line options not being listed or recognized, or technical error messages about methods, constructors or serializers not being
@@ -320,6 +344,13 @@ found, please try with the Java version as it may be an issue specific to the na
 </li>
 </ul>
 </div>
+<div class="paragraph">
+<p>Each release also provides the following assets:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>docs-html.zip</code> &amp; <code>docs-manpage.zip</code>: Manual pages in either HTML or manpage format</p>
 </li>
 <li>
 <p><code>fcli-thirdparty.zip</code>: Third-party licenses and sources for license purposes; usually no need to download</p>
@@ -1850,8 +1881,8 @@ may experience any of the following behavior:</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20261103.112243-dev_v3.x<br>
-Last updated 2026-11-03 11:26:48 UTC
+Version 0.20261112.082057-dev_v3.x<br>
+Last updated 2026-11-12 08:24:12 UTC
 </div>
 </div>
 </body>
