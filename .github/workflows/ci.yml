@@ -40,7 +40,7 @@ permissions: read-all
 env:
   native_image_opts: --verbose -H:Log=registerResource:verbose -H:+PrintClassInitialization -march=compatibility
   graal_distribution: graalvm-community
-  graal_java_version: 21
+  graal_java_version: 25
           
 jobs:
   check-duplicate-run:
@@ -208,15 +208,13 @@ jobs:
           # requires glibc on the target system, the resulting binary can't be used on musl-based
           # distributions like Alpine, nor in 'FROM scratch' Docker images. The build host glibc
           # version (ubuntu-22.04) determines the minimum glibc version required on target systems.
-          # Note that GraalVM for JDK 21 doesn't support the --static-nolibc option yet, hence the
-          # -H:+StaticExecutableWithDynamicLibC option. For consistency with the Linux x64 image, we
-          # disable Jansi and exclude Jansi native libraries.
+          # For consistency with the Linux x64 image, we disable Jansi and exclude Jansi native libraries.
           - name: linux-arm64
             runner: ubuntu-22.04-arm
             asset: fcli-linux-arm64.tgz
             upx: true
             native_image_opts: >-
-              -H:+StaticExecutableWithDynamicLibC -Djansi.disable=true
+              --static-nolibc -Djansi.disable=true
               --initialize-at-build-time=com.fortify.cli.common.util.JAnsiConfig
               -H:ExcludeResources="org/fusesource/jansi/internal/native/.*"
           # For MacOS, we build a dynamically linked image. Jansi by default provides a resource-config.json
