@@ -107,6 +107,8 @@ Only when the developer asks, and after they have reviewed the changes: push the
 
 Report: threads handled by verdict, commits made, tests run and results, replies drafted (count, in pending state), the PR URL, and anything left open or waiting on a reviewer. Offer to re-run the check after the reviewer responds. A new review round is a new pass of this skill from Step 1.
 
+If this run used a worktree, keep it until the reviewer has responded. When the developer says the PR is merged or done, offer to remove the worktree and any scratch branch, say whether each is safe (clean, nothing unpushed), and let the developer decide.
+
 ## Output style
 
 Be concise and specific. Lead with the decisions needed. Use a table of threads, verdicts and proposed actions.

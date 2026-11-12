@@ -145,6 +145,7 @@ Only when the developer asks, and after they have reviewed the changes. Ask firs
    - **Related**: links to a companion change when the work spans repositories (for example the server side of a `.proto` change). Create both, keep the contracts in sync, state in each description which side needs the other, then update each description with the other's link.
    - Nothing from the internal-details rule (ground rule 7): no secrets, tokens, customer data, internal hostnames or tracker links.
 6. Give the developer the pull request link and the check status. Do not merge or approve. Review comments on other people's pull requests are drafts for the developer to submit.
+7. **Clean up when the work is finished.** The pull request is usually still in review, so keep its worktree and branch until the developer says it is merged or done. At that point, list the worktrees and local branches this work created (`git worktree list`, `git branch -vv`) and offer to remove them. Say which are safe (clean, nothing unpushed, branch merged or pushed) and which are not (uncommitted changes, or commits that exist only locally), and delete nothing without the developer's decision.
 
 ## Output style
 
