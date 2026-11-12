@@ -12,6 +12,7 @@ One review standard for everyone. The same checklist (Step 5) applies whether yo
   - Once in `peer` mode, do not ask whether it is a first review or a re-review: Step 0 detects it.
 - `self`: nothing else is needed (reviews the current branch against its base), or a PR number.
 - `peer`: PR URL or number and, for fork branches, `owner:branch`. If helpful and available, surface candidate open PRs first.
+- Requirement: the developer can paste it or give a work item link or ID. If a link or ID is given and the local `fcli-valueedge` skill is available (internal, not part of this repository), use it read-only to fetch the requirement and show what was fetched. If it is missing or fails, ask for the details. Do not put work item links or IDs in PR comments.
 
 ## Ground rules
 1. **Never assume. Ask.** If the requirement, intent, expected behavior or target branch is unclear, ask the user, or raise it as a **Question** to the author.

@@ -17,7 +17,7 @@ Work from plain text. The developer can paste it, or answer your questions for i
 - **Title and description**, including the command that was run, the actual result and the expected result.
 - Optional: fcli version, product and server version, operating system, logs (`--log-level`, `--log-file` output), whether it is a regression, and customer impact.
 
-Ask for what the report lacks. Triage one defect per run. If the environment provides a read-only tool that can fetch the report from the team's tracker, you may use it and show what was fetched, but never depend on it and never mention the tracker in repository files.
+Ask for what the report lacks. Triage one defect per run. If the developer gives a defect link or ID and the local `fcli-valueedge` skill is available, use it, read-only, to fetch the report and show what was fetched. It is internal and not part of this repository. If it is missing, the session has expired or the read fails, ask the developer to paste the report and continue. Do not put defect links, IDs or tracker details in commits, PR text or other repository files.
 
 ## Ground rules
 

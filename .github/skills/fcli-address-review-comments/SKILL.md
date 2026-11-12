@@ -14,6 +14,7 @@ Related skills: `fcli-code-review` (the reviewer side), `fcli-story-to-code` (im
 
 - `PR`: the pull request URL or number of your own PR. If it is missing, ask.
 - Optional: which threads to handle (for example only unresolved ones, or one reviewer).
+- Optional: the requirement behind the PR. If the developer gives a work item link or ID and the local `fcli-valueedge` skill is available (internal, not part of this repository), use it read-only and show what was fetched. If it is missing or fails, ask the developer to paste the requirement. Do not put work item links or IDs in replies.
 
 ## Ground rules
 

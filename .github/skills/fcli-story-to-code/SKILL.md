@@ -21,7 +21,7 @@ Work from plain text. The developer can paste it, or answer your questions for i
 
 If the title, description or acceptance criteria are missing, ask for them with the `ask_user` tool. Do not guess them.
 
-Optional enrichment: if the environment provides a tool or local helper that can read the same fields from the team's work-item tracker, you may use it, read-only, to fill them in. Show the developer exactly what was fetched. Never depend on it, never name or mention the tracker in repository files, and fall back to asking when it is unavailable or the session has expired.
+Optional enrichment: if the developer gives a work item link or ID and the local `fcli-valueedge` skill is available, use it, read-only, to fetch the same fields. It is internal and not part of this repository. Show the developer exactly what was fetched. Never depend on it: if the skill is missing, the session has expired or the read fails, ask the developer to paste the details and continue as normal. Do not put work item links, IDs or tracker details in commits, PR text or other repository files.
 
 ## Ground rules
 
