@@ -571,6 +571,766 @@ formatters:
         |Review environment variables against this documentation; behavior should be similar but variable names may differ slightly
         |===
       versions:
+        v3.2.x:
+          resources:
+            - title: Marketplace Listing
+              url: https://github.com/marketplace/actions/fortify-ast-scan
+            - title: Action Repository
+              url: https://www.github.com/fortify/github-action
+            - title: Starter workflow
+              url: https://github.com/actions/starter-workflows/blob/main/code-scanning/fortify.yml
+          bootstrap:
+            component: fortifySetup
+            version: v2.1.x
+            overview: |
+              The environment variables in this section allow you to customize bootstrapping behavior
+              of fcli and supporting tools like ScanCentral Client.
+
+              $eval{snippets.bootstrapNotes?:''}
+          # Shared content reused across the three scan action outputs
+          commonTipsSection: |
+            === Centralized Configuration Management
+
+            For enterprise environments with multiple repositories, consider creating
+            link:https://docs.github.com/en/actions/using-workflows/reusing-workflows[reusable workflows] or
+            link:https://docs.github.com/en/actions/creating-actions/creating-a-composite-action[composite actions]
+            to wrap the Fortify integration. This approach provides:
+
+            * **Version stability**: Pin specific Fortify action and fcli versions (e.g., `FCLI_BOOTSTRAP_VERSION: v3.15.0`) across all pipelines
+            * **Consistent configuration**: Centrally manage common settings like tool versions and scan parameters
+            * **Controlled upgrades**: Test new versions centrally before rolling out to all repositories
+
+            $eval{snippets.tipsTemplateExample}
+
+            === Air-Gapped Environments
+
+            For air-gapped or restricted network environments, host custom tool definitions and tool bundles in an internal
+            SCM repository or artifact registry. Configure the integration to use these internal resources:
+
+            * Set `TOOL_DEFINITIONS` to point to your internally hosted tool definitions file
+            * Set `FCLI_BOOTSTRAP_URL` to download fcli from your internal mirror
+
+            This ensures all required tools are accessible without external internet access.
+          artifactStorageSection: |
+            If debugging is enabled (either via the `debug: true` action input or by re-running the workflow with GitHub's "Enable debug logging" option), debug artifacts are collected during workflow execution and optionally uploaded after the scan completes. As debug artifacts may contain sensitive data like scan results or credentials that weren't redacted from log files, debug artifacts are only collected if the `debug-artifact-password` action input is set, and packaged as an AES-256 encrypted zip file protected by this password. If debugging is enabled but this input isn't set, debug artifacts are not collected and a warning is logged.
+
+            When debugging is requested but no encrypted zip is available (for example, because no password is set, no files were collected, or encryption failed), an unencrypted zip containing only a `README.txt` explanation is provided instead. Both the current zip output and the legacy directory output support this fallback without exposing debug data. If even the README-only zip cannot be prepared, or the artifact name is invalid, a warning is logged and the upload is skipped. No artifact is uploaded when debugging is disabled.
+
+            [source,yaml]
+            ----
+            - uses: $eval{outputDef.doc.title}@v3
+              with:
+                debug-artifact-password: ${'$'}{{ secrets.FORTIFY_DEBUG_ARTIFACT_PASSWORD }}
+            ----
+
+            Use a strong, randomly generated password stored as a GitHub secret, for example generated using `openssl rand -base64 24`. Not all zip tools support AES encryption; use for example 7-Zip, WinRAR, PeaZip or Keka to extract the debug artifacts. Note that file names and sizes are visible without the password.
+
+            NOTE: Versions prior to v3.2.0 collected and uploaded debug artifacts without password protection. When upgrading from such versions, add the `debug-artifact-password` input to any workflows that rely on debug artifacts being collected.
+
+            Depending on what GitHub Action variant is being used, the zip file (encrypted debug data or README-only fallback) is uploaded as shown in the following table:
+
+            [%autowidth]
+            |===
+            |Sub-action|Description
+
+            |ciOutputRef:ast-action
+            |Default. Uploads the zip file as-is to GitHub.com artifact storage using `actions/upload-artifact@v7`.
+
+            |ciOutputRef:ast-action-with-github-artifacts
+            |Identical to the default; use this when you want to make the artifact storage choice explicit in your workflow.
+
+            |ciOutputRef:ast-action-with-ghes-artifacts
+            |Uploads to GHES-compatible artifact storage using `actions/upload-artifact@v3`, which wraps the zip file in another zip file. Use this on GitHub Enterprise Server.
+
+            |ciOutputRef:ast-action-without-artifacts
+            |Does not upload artifacts. Exposes `upload-debug-artifacts` and `debug-artifacts-zip` outputs so you can add your own upload step targeting any storage backend. The `debug-artifacts-dir` output is deprecated; for backward compatibility, it points to a directory containing the encrypted or README-only zip file, or a plain `README.txt` file when no zip is created. It never contains unencrypted debug data.
+            |===
+          # Shared snippets for the with-*-artifacts wrappers (anchor defined on github-action output)
+          outputs:
+            ast-action:
+              filePattern: ast-action-$eval{product}.adoc
+              products: ${{'fod', 'ssc'}}
+              doc:
+                title: fortify/github-action
+                description: Run OpenText Application Security Testing (AST) scans in GitHub Actions workflows
+                contents: |
+                  == Overview
+
+                  The `fortify/github-action@v3` GitHub Action provides seamless integration of $eval{fortifyProductName}
+                  for automated Application Security Testing (AST) into your CI/CD workflows. It runs the full AST scan
+                  workflow and automatically uploads password-protected debug artifacts to GitHub.com artifact storage when
+                  debug mode is enabled (either via the `debug` input or GitHub's "Enable debug logging" re-run option) and
+                  a password is set through the `debug-artifact-password` input.
+                  If debugging is requested but no encrypted zip is available, an unencrypted README-only zip is uploaded instead.
+                  For alternative artifact storage options, see the <<_artifact_storage,Artifact Storage>> section.
+
+                  == Quick Start Example
+
+                  Minimal configuration for running OpenText Fortify AST scans.
+
+                  $eval{snippets.quickstart}
+
+                  == Artifact Storage
+
+                  $eval{ciSystemIntegrationVersionDef.artifactStorageSection}
+
+                  == Tips & Recommendations
+
+                  $eval{ciSystemIntegrationVersionDef.commonTipsSection}
+
+                  == Configuration
+
+                  Configuration is accomplished through action inputs and environment variables set in your CI workflow file. The following sections document all available configuration options organized by their purpose.
+
+                  === Action Inputs
+
+                  [%autowidth]
+                  |===
+                  |Input|Description
+
+                  |`debug`
+                  |Whether to generate and collect debug artifacts; note that these may contain sensitive data like access tokens or credentials. Automatically enabled when workflow is re-run with "Enable debug logging" checked. Allowed values: `true` or `false` (default). Debug artifacts are only collected if `debug-artifact-password` is set.
+
+                  |`debug-artifact-password`
+                  |Password for encrypting debug artifacts using AES-256. Without a password, debug data is not collected and requested debug output is an unencrypted README-only zip. Use a strong, randomly generated password stored as a GitHub secret, for example `${'$'}{{ secrets.FORTIFY_DEBUG_ARTIFACT_PASSWORD }}`. See <<_artifact_storage,Artifact Storage>> for details.
+
+                  |`debug-artifact-name`
+                  |Name for the debug artifacts archive. Default value: `fortify-debug-artifacts`.
+
+                  |`debug-retention-days`
+                  |Number of days to retain debug artifacts. Default value: `1` (one day, due to potential sensitive data).
+                  |===
+
+                  $eval{bootstrapSection}
+
+                  $eval{fcliCiActionSections}
+
+                  == Migrating from fortify/github-action@v2
+
+                  $eval{ciSystemDef.migrationFromV2SectionContents}
+
+                  $eval{resourcesSection}
+                snippets:
+                  generic:
+                    bootstrapNotes: |
+                      NOTE: This GitHub Action requires at least fcli v3.15.0 to function correctly.
+
+                      NOTE: Environment variables listed in the subsequent sections are for fcli ${fcliVersion}; if your bootstrap settings install another fcli version, please refer to to the fcli actionRef:generic:ci action documentation for that version.
+                    tipsTemplateExample: |
+                      Example reusable workflow structure:
+                      [source,yaml]
+                      ----
+                      # .github/workflows/fortify-scan.yml (in your organization's shared workflow repository)
+                      name: Fortify Scan Reusable
+                      on:
+                        workflow_call:
+                          inputs:
+                      $eval{#indent(snippets.workflowInputs, '      ')}
+                      jobs:
+                        scan:
+                          runs-on: ubuntu-latest
+                          steps:
+                            - uses: actions/checkout@v6
+                            - uses: fortify/github-action@v3.2.0 # Centrally managed version
+                              env:
+                      $eval{#indent(snippets.tipsEnvVars, '          ')}
+                      ----
+                    quickstart: |
+                      [source,yaml]
+                      ----
+                      name: $eval{fortifyProductName} Scan
+                      on:
+                        push:
+                          branches: [main]
+                        pull_request:
+                          branches: [main]
+
+                      jobs:
+                        fortify:
+                          runs-on: ubuntu-latest
+                          # permissions:               # When overriding default permissions, following are required:
+                          #   contents: read           # Required for checkout action
+                          #   security-events: write   # Required for publishing security reports to GitHub Security tab
+                          #   pull-requests: write     # Required if DO_PR_COMMENT is set to true
+                          steps:
+                            - uses: actions/checkout@v6            # Check out source code
+                            - uses: actions/setup-<build-tool>@vX  # Set up build tool(s) required to build your project
+                              # Bootstrap fcli, run the fcli-based Fortify CI workflow, and upload any debug artifacts
+                              # to GitHub artifact storage (see artifact storage section below for alternative options)
+                            - uses: fortify/github-action@v3
+                              name: Run Fortify Scan
+                              env:
+                      $eval{#indent(snippets.envVars, '          ')}
+                      ----
+                  fod:
+                    envVars: |
+                      FOD_URL: ${'$'}{{ vars.FOD_URL }}
+                      FOD_CLIENT_ID: ${'$'}{{ secrets.FOD_CLIENT_ID }}
+                      FOD_CLIENT_SECRET: ${'$'}{{ secrets.FOD_CLIENT_SECRET }}
+                      # FOD_RELEASE: MyApp:main        # Optional: defaults to repo:branch
+                      # FCLI_BOOTSTRAP_VERSION: v3.15  # Optional if you prefer stability over latest
+                    workflowInputs: |
+                      fod-release:
+                        description: 'Optional FoD release, defaults to <repo>:<branch>'
+                        required: false
+                        type: string
+                    tipsEnvVars: |
+                      FOD_URL: ${'$'}{{ vars.FOD_URL }}
+                      FOD_CLIENT_ID: ${'$'}{{ secrets.FOD_CLIENT_ID }}
+                      FOD_CLIENT_SECRET: ${'$'}{{ secrets.FOD_CLIENT_SECRET }}
+                      FOD_RELEASE: ${'$'}{{ inputs.fod-release }}
+                      FCLI_BOOTSTRAP_VERSION: v3.15.0  # Centrally managed version
+                  ssc:
+                    envVars: |
+                      SSC_URL: ${'$'}{{ vars.SSC_URL }}
+                      SSC_TOKEN: ${'$'}{{ secrets.SSC_TOKEN }}
+                      SC_SAST_TOKEN: ${'$'}{{ secrets.SC_SAST_TOKEN }}
+                      # SSC_APPVERSION: MyApp:main  # Optional: defaults to repo:branch
+                    workflowInputs: |
+                      ssc-appversion:
+                        description: 'Optional SSC application version, defaults to <repo>:<branch>'
+                        required: false
+                        type: string
+                    tipsEnvVars: |
+                      SSC_URL: ${'$'}{{ vars.SSC_URL }}
+                      SSC_TOKEN: ${'$'}{{ secrets.SSC_TOKEN }}
+                      SC_SAST_TOKEN: ${'$'}{{ secrets.SC_SAST_TOKEN }}
+                      SSC_APPVERSION: ${'$'}{{ inputs.ssc-appversion }}
+                      FCLI_BOOTSTRAP_VERSION: v3.15.0  # Centrally managed version
+            ast-action-with-github-artifacts:
+              filePattern: ast-action-with-github-artifacts-$eval{product}.adoc
+              # Upload artifact version for GitHub.com
+              uploadArtifactRef: v7
+              # Target platform label used in prose
+              uploadArtifactTarget: GitHub.com
+              products: ${{'fod', 'ssc'}}
+              doc:
+                title: fortify/github-action/with-github-artifacts
+                description: Run OpenText AST scans and upload debug artifacts to GitHub.com artifact storage
+                contents: $eval{ciSystemIntegrationVersionDef.withDebugCommonContents}
+                snippets:
+                  generic:
+                    bootstrapNotes: |
+                      NOTE: This GitHub Action requires at least fcli v3.15.0 to function correctly.
+
+                      NOTE: Environment variables listed in the subsequent sections are for fcli ${fcliVersion}; if your bootstrap settings install another fcli version, please refer to to the fcli actionRef:generic:ci action documentation for that version.
+                    tipsTemplateExample: |
+                      Example reusable workflow structure:
+                      [source,yaml]
+                      ----
+                      # .github/workflows/fortify-scan.yml (in your organization's shared workflow repository)
+                      name: Fortify Scan Reusable
+                      on:
+                        workflow_call:
+                          inputs:
+                      $eval{#indent(snippets.workflowInputs, '      ')}
+                      jobs:
+                        scan:
+                          runs-on: ubuntu-latest
+                          steps:
+                            - uses: actions/checkout@v6
+                            - uses: fortify/github-action/with-github-artifacts@v3.2.0 # Centrally managed version
+                              env:
+                      $eval{#indent(snippets.tipsEnvVars, '          ')}
+                      ----
+                    quickstart: |
+                      [source,yaml]
+                      ----
+                      name: $eval{fortifyProductName} Scan
+                      on:
+                        push:
+                          branches: [main]
+                        pull_request:
+                          branches: [main]
+
+                      jobs:
+                        fortify:
+                          runs-on: ubuntu-latest
+                          # permissions:               # When overriding default permissions, following are required:
+                          #   contents: read           # Required for checkout action
+                          #   security-events: write   # Required for publishing security reports to GitHub Security tab
+                          #   pull-requests: write     # Required if DO_PR_COMMENT is set to true
+                          steps:
+                            - uses: actions/checkout@v6            # Check out source code
+                            - uses: actions/setup-<build-tool>@vX  # Set up build tool(s) required to build your project
+                              # Bootstrap fcli, run the fcli-based Fortify CI workflow, and upload any debug artifacts
+                              # to GitHub artifact storage (see artifact storage section below for alternative options)
+                            - uses: fortify/github-action/with-github-artifacts@v3
+                              name: Run Fortify Scan
+                              env:
+                      $eval{#indent(snippets.envVars, '          ')}
+                      ----
+                  fod:
+                    envVars: |
+                      FOD_URL: ${'$'}{{ vars.FOD_URL }}
+                      FOD_CLIENT_ID: ${'$'}{{ secrets.FOD_CLIENT_ID }}
+                      FOD_CLIENT_SECRET: ${'$'}{{ secrets.FOD_CLIENT_SECRET }}
+                      # FOD_RELEASE: MyApp:main        # Optional: defaults to repo:branch
+                      # FCLI_BOOTSTRAP_VERSION: v3.15  # Optional if you prefer stability over latest
+                    workflowInputs: |
+                      fod-release:
+                        description: 'Optional FoD release, defaults to <repo>:<branch>'
+                        required: false
+                        type: string
+                    tipsEnvVars: |
+                      FOD_URL: ${'$'}{{ vars.FOD_URL }}
+                      FOD_CLIENT_ID: ${'$'}{{ secrets.FOD_CLIENT_ID }}
+                      FOD_CLIENT_SECRET: ${'$'}{{ secrets.FOD_CLIENT_SECRET }}
+                      FOD_RELEASE: ${'$'}{{ inputs.fod-release }}
+                      FCLI_BOOTSTRAP_VERSION: v3.15.0  # Centrally managed version
+                  ssc:
+                    envVars: |
+                      SSC_URL: ${'$'}{{ vars.SSC_URL }}
+                      SSC_TOKEN: ${'$'}{{ secrets.SSC_TOKEN }}
+                      SC_SAST_TOKEN: ${'$'}{{ secrets.SC_SAST_TOKEN }}
+                      # SSC_APPVERSION: MyApp:main  # Optional: defaults to repo:branch
+                    workflowInputs: |
+                      ssc-appversion:
+                        description: 'Optional SSC application version, defaults to <repo>:<branch>'
+                        required: false
+                        type: string
+                    tipsEnvVars: |
+                      SSC_URL: ${'$'}{{ vars.SSC_URL }}
+                      SSC_TOKEN: ${'$'}{{ secrets.SSC_TOKEN }}
+                      SC_SAST_TOKEN: ${'$'}{{ secrets.SC_SAST_TOKEN }}
+                      SSC_APPVERSION: ${'$'}{{ inputs.ssc-appversion }}
+                      FCLI_BOOTSTRAP_VERSION: v3.15.0  # Centrally managed version
+            ast-action-with-ghes-artifacts:
+              filePattern: ast-action-with-ghes-artifacts-$eval{product}.adoc
+              # Upload artifact version for GHES
+              uploadArtifactRef: v3
+              # Target platform label used in prose
+              uploadArtifactTarget: GitHub Enterprise Server (GHES)
+              products: ${{'fod', 'ssc'}}
+              doc:
+                title: fortify/github-action/with-ghes-artifacts
+                description: Run OpenText AST scans and upload debug artifacts to GHES-compatible artifact storage
+                contents: $eval{ciSystemIntegrationVersionDef.withDebugCommonContents}
+                snippets:
+                  generic:
+                    bootstrapNotes: |
+                      NOTE: This GitHub Action requires at least fcli v3.15.0 to function correctly.
+
+                      NOTE: Environment variables listed in the subsequent sections are for fcli ${fcliVersion}; if your bootstrap settings install another fcli version, please refer to to the fcli actionRef:generic:ci action documentation for that version.
+                    tipsTemplateExample: |
+                      Example reusable workflow structure:
+                      [source,yaml]
+                      ----
+                      # .github/workflows/fortify-scan.yml (in your organization's shared workflow repository)
+                      name: Fortify Scan Reusable
+                      on:
+                        workflow_call:
+                          inputs:
+                      $eval{#indent(snippets.workflowInputs, '      ')}
+                      jobs:
+                        scan:
+                          runs-on: ubuntu-latest
+                          steps:
+                            - uses: actions/checkout@v6
+                            - uses: fortify/github-action/with-ghes-artifacts@v3.2.0 # Centrally managed version
+                              env:
+                      $eval{#indent(snippets.tipsEnvVars, '          ')}
+                      ----
+                    quickstart: |
+                      [source,yaml]
+                      ----
+                      name: $eval{fortifyProductName} Scan
+                      on:
+                        push:
+                          branches: [main]
+                        pull_request:
+                          branches: [main]
+
+                      jobs:
+                        fortify:
+                          runs-on: ubuntu-latest
+                          # permissions:               # When overriding default permissions, following are required:
+                          #   contents: read           # Required for checkout action
+                          #   security-events: write   # Required for publishing security reports to GitHub Security tab
+                          #   pull-requests: write     # Required if DO_PR_COMMENT is set to true
+                          steps:
+                            - uses: actions/checkout@v6            # Check out source code
+                            - uses: actions/setup-<build-tool>@vX  # Set up build tool(s) required to build your project
+                              # Bootstrap fcli, run the fcli-based Fortify CI workflow, and upload any debug artifacts
+                              # to GHES artifact storage (see artifact storage section below for alternative options)
+                            - uses: fortify/github-action/with-ghes-artifacts@v3
+                              name: Run Fortify Scan
+                              env:
+                      $eval{#indent(snippets.envVars, '          ')}
+                      ----
+                  fod:
+                    envVars: |
+                      FOD_URL: ${'$'}{{ vars.FOD_URL }}
+                      FOD_CLIENT_ID: ${'$'}{{ secrets.FOD_CLIENT_ID }}
+                      FOD_CLIENT_SECRET: ${'$'}{{ secrets.FOD_CLIENT_SECRET }}
+                      # FOD_RELEASE: MyApp:main        # Optional: defaults to repo:branch
+                      # FCLI_BOOTSTRAP_VERSION: v3.15  # Optional if you prefer stability over latest
+                    workflowInputs: |
+                      fod-release:
+                        description: 'Optional FoD release, defaults to <repo>:<branch>'
+                        required: false
+                        type: string
+                    tipsEnvVars: |
+                      FOD_URL: ${'$'}{{ vars.FOD_URL }}
+                      FOD_CLIENT_ID: ${'$'}{{ secrets.FOD_CLIENT_ID }}
+                      FOD_CLIENT_SECRET: ${'$'}{{ secrets.FOD_CLIENT_SECRET }}
+                      FOD_RELEASE: ${'$'}{{ inputs.fod-release }}
+                      FCLI_BOOTSTRAP_VERSION: v3.15.0  # Centrally managed version
+                  ssc:
+                    envVars: |
+                      SSC_URL: ${'$'}{{ vars.SSC_URL }}
+                      SSC_TOKEN: ${'$'}{{ secrets.SSC_TOKEN }}
+                      SC_SAST_TOKEN: ${'$'}{{ secrets.SC_SAST_TOKEN }}
+                      # SSC_APPVERSION: MyApp:main  # Optional: defaults to repo:branch
+                    workflowInputs: |
+                      ssc-appversion:
+                        description: 'Optional SSC application version, defaults to <repo>:<branch>'
+                        required: false
+                        type: string
+                    tipsEnvVars: |
+                      SSC_URL: ${'$'}{{ vars.SSC_URL }}
+                      SSC_TOKEN: ${'$'}{{ secrets.SSC_TOKEN }}
+                      SC_SAST_TOKEN: ${'$'}{{ secrets.SC_SAST_TOKEN }}
+                      SSC_APPVERSION: ${'$'}{{ inputs.ssc-appversion }}
+                      FCLI_BOOTSTRAP_VERSION: v3.15.0  # Centrally managed version
+            ast-action-without-artifacts:
+              filePattern: ast-action-without-artifacts-$eval{product}.adoc
+              products: ${{'fod', 'ssc'}}
+              doc:
+                title: fortify/github-action/without-artifacts
+                description: Run OpenText AST scans without uploading debug artifacts; use this sub-action to implement a custom artifact upload mechanism.
+                contents: |
+                  == Overview
+
+                  The `fortify/github-action/without-artifacts@v3` sub-action runs the full $eval{fortifyProductName} AST scan
+                  but does not upload debug artifacts itself. Instead it exposes the `upload-debug-artifacts` and
+                  `debug-artifacts-zip` outputs that you can use in a subsequent step to upload the zip file to any storage backend
+                  of your choice. It contains either password-protected debug data or an unencrypted README-only fallback.
+                  For a comparison of all available artifact storage options, see the <<_artifact_storage,Artifact Storage>> section.
+
+                  == Quick Start Example
+
+                  Minimal configuration for running OpenText Fortify AST scans with a custom artifact upload step.
+
+                  $eval{snippets.quickstart}
+
+                  == Artifact Storage
+
+                  $eval{ciSystemIntegrationVersionDef.artifactStorageSection}
+
+                  == Tips & Recommendations
+
+                  $eval{ciSystemIntegrationVersionDef.commonTipsSection}
+
+                  == Configuration
+
+                  Configuration is accomplished through action inputs and environment variables set in your CI workflow file. The following sections document all available configuration options organized by their purpose.
+
+                  === Action Inputs
+
+                  [%autowidth]
+                  |===
+                  |Input|Description
+
+                  |`debug`
+                  |Whether to generate and collect debug artifacts; note that these may contain sensitive data like access tokens or credentials. Automatically enabled when workflow is re-run with "Enable debug logging" checked. Allowed values: `true` or `false` (default). Debug artifacts are only collected if `debug-artifact-password` is set.
+
+                  |`debug-artifact-password`
+                  |Password for encrypting debug artifacts using AES-256. Without a password, debug data is not collected and requested debug output is an unencrypted README-only zip. Use a strong, randomly generated password stored as a GitHub secret, for example `${'$'}{{ secrets.FORTIFY_DEBUG_ARTIFACT_PASSWORD }}`. See <<_artifact_storage,Artifact Storage>> for details.
+                  |===
+
+                  === Action Outputs
+
+                  [%autowidth]
+                  |===
+                  |Output|Description
+
+                  |`upload-debug-artifacts`
+                  |Set to `true` if debugging is requested (`inputs.debug` is `true` or `runner.debug` is `1`) and a zip file is available to upload, including the unencrypted README-only fallback. Remains `false` if debugging is disabled, the artifact name is invalid, or no zip can be prepared. Use this in a subsequent step's `if:` condition to conditionally upload artifacts.
+
+                  |`debug-artifacts-zip`
+                  |Path to the zip file containing either password-protected (AES-256) debug data or only an unencrypted `README.txt` file explaining why no debug artifacts are available; empty if not created. Pass this as the `path:` input to your upload action.
+
+                  |`debug-artifacts-dir`
+                  |Deprecated; upload `debug-artifacts-zip` instead. For backward compatibility, path to a directory containing the encrypted or README-only zip file, or a plain `README.txt` file when no zip is created. It never contains unencrypted debug data.
+                  |===
+
+                  $eval{bootstrapSection}
+
+                  $eval{fcliCiActionSections}
+
+                  == Migrating from fortify/github-action@v2
+
+                  $eval{ciSystemDef.migrationFromV2SectionContents}
+
+                  $eval{resourcesSection}
+                snippets:
+                  generic:
+                    bootstrapNotes: |
+                      NOTE: This GitHub Action requires at least fcli v3.15.0 to function correctly.
+
+                      NOTE: Environment variables listed in the subsequent sections are for fcli ${fcliVersion}; if your bootstrap settings install another fcli version, please refer to to the fcli actionRef:generic:ci action documentation for that version.
+                    tipsTemplateExample: |
+                      Example reusable workflow structure:
+                      [source,yaml]
+                      ----
+                      # .github/workflows/fortify-scan.yml (in your organization's shared workflow repository)
+                      name: Fortify Scan Reusable
+                      on:
+                        workflow_call:
+                          inputs:
+                      $eval{#indent(snippets.workflowInputs, '      ')}
+                      jobs:
+                        scan:
+                          runs-on: ubuntu-latest
+                          steps:
+                            - uses: actions/checkout@v6
+                            - uses: fortify/github-action/without-artifacts@v3.2.0 # Centrally managed version
+                              id: fortify_scan
+                              with:
+                                debug-artifact-password: ${'$'}{{ secrets.FORTIFY_DEBUG_ARTIFACT_PASSWORD }}
+                              env:
+                      $eval{#indent(snippets.tipsEnvVars, '          ')}
+                            - name: Upload debug artifacts (custom)
+                              if: ${'$'}{{ always() && steps.fortify_scan.outputs.upload-debug-artifacts == 'true' }}
+                              uses: <your-upload-action>
+                              with:
+                                path: ${'$'}{{ steps.fortify_scan.outputs.debug-artifacts-zip }}
+                      ----
+                    quickstart: |
+                      [source,yaml]
+                      ----
+                      name: $eval{fortifyProductName} Scan
+                      on:
+                        push:
+                          branches: [main]
+                        pull_request:
+                          branches: [main]
+
+                      jobs:
+                        fortify:
+                          runs-on: ubuntu-latest
+                          # permissions:               # When overriding default permissions, following are required:
+                          #   contents: read           # Required for checkout action
+                          #   security-events: write   # Required for publishing security reports to GitHub Security tab
+                          #   pull-requests: write     # Required if DO_PR_COMMENT is set to true
+                          steps:
+                            - uses: actions/checkout@v6            # Check out source code
+                            - uses: actions/setup-<build-tool>@vX  # Set up build tool(s) required to build your project
+                              # Bootstrap fcli, run the fcli-based Fortify CI workflow, and collect any debug artifacts
+                              # for a custom upload step (see artifact storage section below)
+                            - uses: fortify/github-action/without-artifacts@v3
+                              name: Run Fortify Scan
+                              id: fortify_scan
+                              with:
+                                debug-artifact-password: ${'$'}{{ secrets.FORTIFY_DEBUG_ARTIFACT_PASSWORD }}
+                              env:
+                      $eval{#indent(snippets.envVars, '          ')}
+                            - name: Upload debug artifacts (custom)
+                              if: ${'$'}{{ always() && steps.fortify_scan.outputs.upload-debug-artifacts == 'true' }}
+                              uses: <your-upload-action>
+                              with:
+                                path: ${'$'}{{ steps.fortify_scan.outputs.debug-artifacts-zip }}
+                      ----
+                  fod:
+                    envVars: |
+                      FOD_URL: ${'$'}{{ vars.FOD_URL }}
+                      FOD_CLIENT_ID: ${'$'}{{ secrets.FOD_CLIENT_ID }}
+                      FOD_CLIENT_SECRET: ${'$'}{{ secrets.FOD_CLIENT_SECRET }}
+                      # FOD_RELEASE: MyApp:main        # Optional: defaults to repo:branch
+                      # FCLI_BOOTSTRAP_VERSION: v3.15  # Optional if you prefer stability over latest
+                    workflowInputs: |
+                      fod-release:
+                        description: 'Optional FoD release, defaults to <repo>:<branch>'
+                        required: false
+                        type: string
+                    tipsEnvVars: |
+                      FOD_URL: ${'$'}{{ vars.FOD_URL }}
+                      FOD_CLIENT_ID: ${'$'}{{ secrets.FOD_CLIENT_ID }}
+                      FOD_CLIENT_SECRET: ${'$'}{{ secrets.FOD_CLIENT_SECRET }}
+                      FOD_RELEASE: ${'$'}{{ inputs.fod-release }}
+                      FCLI_BOOTSTRAP_VERSION: v3.15.0  # Centrally managed version
+                  ssc:
+                    envVars: |
+                      SSC_URL: ${'$'}{{ vars.SSC_URL }}
+                      SSC_TOKEN: ${'$'}{{ secrets.SSC_TOKEN }}
+                      SC_SAST_TOKEN: ${'$'}{{ secrets.SC_SAST_TOKEN }}
+                      # SSC_APPVERSION: MyApp:main  # Optional: defaults to repo:branch
+                    workflowInputs: |
+                      ssc-appversion:
+                        description: 'Optional SSC application version, defaults to <repo>:<branch>'
+                        required: false
+                        type: string
+                    tipsEnvVars: |
+                      SSC_URL: ${'$'}{{ vars.SSC_URL }}
+                      SSC_TOKEN: ${'$'}{{ secrets.SSC_TOKEN }}
+                      SC_SAST_TOKEN: ${'$'}{{ secrets.SC_SAST_TOKEN }}
+                      SSC_APPVERSION: ${'$'}{{ inputs.ssc-appversion }}
+                      FCLI_BOOTSTRAP_VERSION: v3.15.0  # Centrally managed version
+            setup-action:
+              filePattern: setup-action.adoc
+              doc:
+                title: fortify/github-action/setup
+                description: Bootstrap fcli and Fortify tools for custom CI/CD workflows.
+                contents: |
+                  == Overview
+
+                  The `fortify/github-action/setup@v3` action allows for setting up fcli and various other Fortify tools for use in custom CI/CD workflows.
+                  This allows you to implement fully customized AST scan workflows or other automation workflows that interact with Fortify products.
+
+                  The Fortify tools to be installed are specified through action inputs, whereas optional bootstrapping behavior for fcli and supporting
+                  tools can be controlled through environment variables.
+
+                  == Quick Start Example
+
+                  Basic setup for custom workflows with fcli version pinning.
+
+                  $eval{snippets.quickstart}
+
+                  == Tips & Recommendations
+
+                  === Air-Gapped Environments
+
+                  For air-gapped or restricted network environments, host custom tool definitions and tool bundles in an internal
+                  SCM repository or artifact registry. Configure the integration to use these internal resources:
+
+                  * Set `TOOL_DEFINITIONS` to point to your internally hosted tool definitions file
+                  * Set `FCLI_BOOTSTRAP_URL` to download fcli from your internal mirror
+
+                  This ensures all required tools are accessible without external internet access.
+
+                  == Configuration
+
+                  Specifying the tools to be installed is done through action inputs, whereas bootstrapping behavior can be controlled through environment variables
+                  as shown in the following sections.
+
+                  === Action Inputs
+
+                  Action inputs allow you to specify which Fortify tool versions to install, and whether the corresponding binaries
+                  should be added to the system `PATH`. The following action inputs are supported:
+
+                  [%autowidth]
+                  |===
+                  |Input|Description
+
+                  |`export-path`
+                  |Whether to add the installed tools to the system PATH variable. Allowed values: `true` (default) or `false`
+
+                  |`fcli`
+                  |The fcli version to install. Allowed values: `skip` (default value, do not install), `bootstrapped` (use the bootstrapped fcli version), `latest`, or specific version number. Supports semantic versioning, for example `23.1` will install the latest known `23.1.y` patch version. Version may be specified either with or without the `v` prefix, for example `v23.1` and `23.1` are semantically the same. Recommended value: `bootstrapped`.
+
+                  |`sc-client`
+                  |The ScanCentral Client version to install. Allowed values: `skip` (default value, do not install), `latest`, or specific version number.
+
+                  |`fod-uploader`
+                  |The FoDUploader version to install. Allowed values: `skip` (default value, do not install), `latest`, or specific version number. Supports semantic versioning, for example `v5` will install the latest known `5.x.y` version. Version may be specified either with or without the `v` prefix, for example `v5.4.0` and `5.4.0` are semantically the same.
+
+                  |`vuln-exporter`
+                  |The FortifyVulnerabilityExporter version to install. Allowed values: `skip` (default value, do not install), `latest`, or specific version number. Supports semantic versioning, for example `v2` will install the latest known `2.x.y` version. Version may be specified either with or without the `v` prefix, for example `v2.0.4` and `2.0.4` are semantically the same.
+
+                  |`bugtracker-utility`
+                  |The FortifyBugTrackerUtility version to install. Allowed values: `skip` (default value, do not install), `latest`, or specific version number. Supports semantic versioning, for example `v4` will install the latest known `4.x` version. Version may be specified either with or without the `v` prefix, for example `v4.12` and `4.12` are semantically the same.
+
+                  |`debricked-cli`
+                  |The Debricked CLI version to install. Allowed values: `skip` (default value, do not install), `latest`, or specific version number. Supports semantic versioning, for example `v1` will install the latest known `1.x` version. Version may be specified either with or without the `v` prefix, for example `v1.7` and `1.7` are semantically the same.
+                  |===
+
+                  $eval{bootstrapSection}
+
+                  == Migrating from fortify/github-action/setup@v3
+
+                  The `fortify/github-action/setup@v3` action v3.2.x is functionally identical to v3.1.x and v3.0.x versions — no
+                  changes to action inputs, environment variables, or bootstrapping behavior. No workflow changes are required; the
+                  `@v3` tag now points to v3.2.x.
+
+                  $eval{resourcesSection}
+                snippets:
+                  generic:
+                    bootstrapNotes: |
+                      NOTE: This GitHub Action requires at least fcli v3.15.0 to function correctly.
+                    quickstart: |
+                      [source,yaml]
+                      ----
+                      name: Custom Fortify Workflow
+                      on: [push]
+
+                      jobs:
+                        custom-scan:
+                          runs-on: ubuntu-latest
+                          steps:
+                            - uses: actions/checkout@v6
+                            - uses: fortify/github-action/setup@v3
+                              with:
+                                fcli: bootstrapped               # Set up bootstrapped fcli version. May also specify specific version, but
+                                                                 # then fcli may be downloaded twice (bootstrap version and requested version).
+                              env:
+                                FCLI_BOOTSTRAP_VERSION: v3.15.0  # Defaults to latest v3.x.y, pin to specific version for stability
+                            - name: Run custom fcli commands
+                              run: |
+                                fcli fod session login ...
+                                # Your custom workflow here
+                                fcli fod session logout ...
+                      ----
+          # Shared document body for both with-*-artifacts wrappers.
+          # Differences accessed via $eval{outputDef.uploadArtifactRef} and $eval{outputDef.uploadArtifactTarget}.
+          withDebugCommonContents: |
+            == Overview
+
+            The `$eval{outputDef.doc.title}@v3` GitHub Action runs the full $eval{fortifyProductName} AST scan and then
+            automatically uploads password-protected debug artifacts to $eval{outputDef.uploadArtifactTarget} artifact storage
+            using `actions/upload-artifact@$eval{outputDef.uploadArtifactRef}` when debug output is enabled
+            (either via the `debug` input or GitHub's "Enable debug logging" re-run option) and a password is set
+            through the `debug-artifact-password` input.
+            If debugging is requested but no encrypted zip is available, an unencrypted README-only zip is uploaded instead.
+            For alternative artifact storage options, see the <<_artifact_storage,Artifact Storage>> section.
+
+            == Quick Start Example
+
+            Minimal configuration for running OpenText Fortify AST scans.
+
+            $eval{snippets.quickstart}
+
+            == Artifact Storage
+
+            $eval{ciSystemIntegrationVersionDef.artifactStorageSection}
+
+            == Tips & Recommendations
+
+            $eval{ciSystemIntegrationVersionDef.commonTipsSection}
+
+            == Configuration
+
+            Configuration is accomplished through action inputs and environment variables set in your CI workflow file. The following sections document all available configuration options organized by their purpose.
+
+            === Action Inputs
+
+            [%autowidth]
+            |===
+            |Input|Description
+
+            |`debug`
+            |Whether to generate and collect debug artifacts; note that these may contain sensitive data like access tokens or credentials. Automatically enabled when workflow is re-run with "Enable debug logging" checked. Allowed values: `true` or `false` (default). Debug artifacts are only collected if `debug-artifact-password` is set.
+
+            |`debug-artifact-password`
+            |Password for encrypting debug artifacts using AES-256. Without a password, debug data is not collected and requested debug output is an unencrypted README-only zip. Use a strong, randomly generated password stored as a GitHub secret, for example `${'$'}{{ secrets.FORTIFY_DEBUG_ARTIFACT_PASSWORD }}`. See <<_artifact_storage,Artifact Storage>> for details.
+
+            |`debug-artifact-name`
+            |Name for the debug artifacts archive. Default value: `fortify-debug-artifacts`.
+
+            |`debug-retention-days`
+            |Number of days to retain debug artifacts. Default value: `1` (one day, due to potential sensitive data).
+            |===
+
+            $eval{bootstrapSection}
+
+            $eval{fcliCiActionSections}
+
+            == Migrating from fortify/github-action@v2
+
+            $eval{ciSystemDef.migrationFromV2SectionContents}
+
+            $eval{resourcesSection}
+
         v3.1.x:
           resources:
             - title: Marketplace Listing
