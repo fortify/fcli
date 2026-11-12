@@ -1,0 +1,157 @@
+# yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-dev-2.x.json
+
+author: Fortify
+usage:
+  header: (PREVIEW) Run Fortify Agentic Analyzer Scan
+  description: |
+    This action runs a Fortify Agentic Analyzer (FAA) scan on the project source code
+    and uploads the results to SSC as a SARIF report.
+    
+    The action automatically downloads the latest processed SAST scan results for the
+    specified application version. FAA uses this context to avoid reporting duplicate
+    issues that were already found by SAST, resulting in higher quality analysis results.
+    If no processed SAST results are available, FAA runs without SAST context.
+    
+    NOTE: SAST context is taken from the latest SAST artifact that has been fully processed
+    by SSC at the time this action runs. If a more recent SAST scan hasn't been processed
+    yet, results from an earlier SAST scan will be used. The fcli 'ci' action waits for SAST
+    scan completion (unless waiting is disabled) before running this action.
+
+config:
+  output: immediate
+  rest.target.default: ssc
+  run.fcli.status.log.default: true
+  run.fcli.status.check.default: true
+  mcp: exclude # FAA is a specialized tool requiring specific setup
+
+cli.options:
+  sourceDir:
+    names: --source-dir, -d
+    description: >-
+      Source directory on which to run Fortify Agentic Analyzer scan.
+      Defaults to environment variable `SOURCE_DIR` if not specified.
+    default: ${#env('SOURCE_DIR')}
+    required: false 
+  appVersion:
+    names: --app-version, --av
+    description: >-
+      SSC application version for which to download SAST results and upload FAA scan results.
+      Application version must already exist in SSC.
+    required: true
+    default: ${#env('APP_VERSION')}
+  faaOutput:
+    names: --output, -o
+    description: >-
+      Output SARIF file path where FAA scan results will be written.
+      Defaults to fortifyaa-scan.sarif in the current working directory.
+    required: false 
+    default: fortifyaa-scan.sarif
+  faaPath:
+    names: --faa-path, -p
+    description: >-
+      Path to a pre-installed Fortify Agentic Analyzer (FAA) installation. 
+      FAA must be pre-installed on the system before running this action; 
+      this action only registers the existing installation with fcli.
+      Defaults to the FAA_HOME environment variable.
+      If not specified and FAA_HOME is not set, the system PATH will be searched.
+    required: false
+    default: ${#env('FAA_HOME')}
+  extraScanOpts:
+    names: --extra-scan-opts
+    description: >-
+      Extra options to be passed to the 'fortifyaa -scan' command.
+    required: false
+  skipWait:
+    names: --skip-wait
+    description: >-
+      By default, the action will wait for the uploaded SARIF artifact to be processed by SSC. Use this
+      option to skip waiting for artifact processing to complete.
+    required: false 
+    type: boolean
+
+steps:
+  - var.set:
+      # Used for passing extra options from ci action without bothering about escaping
+      extraScanOpts: ${#join(" ", {cli.extraScanOpts, global.faaScan?.extraOpts})}
+      sastFprFile: faa_input_${#action.runID().replace('-','_')}.fpr
+      fprArg: ''
+      sastArtifactId: null
+      # fcli variable storing the uploaded artifact, used for waiting for artifact processing
+      faaArtifactVarName: faa_scan_${#action.runID().replace('-','_')}
+  
+  # Register FAA with self-test to fail early if FAA is not found or not properly configured
+  - run.fcli:
+      SETUP_TOOLS: 
+        cmd: >-
+          fcli tool env init "--tools=fortifyaa${#isNotBlank(cli.faaPath) ? ':' + cli.faaPath : ''}"
+  
+  # Determine latest processed SAST artifact for the application version (optional)
+  - do:
+      - var.set:
+          sastAv: ${#ssc.appVersion(cli.appVersion)}
+      - rest.call:
+          sastArtifacts:
+            uri: /api/v1/projectVersions/${sastAv.id}/artifacts
+            type: paged
+            query:
+              embed: scans
+              orderby: uploadDate DESC
+            records.for-each:
+              record.var-name: artifact
+              breakIf: ${sastArtifactId!=null}
+              do:
+                - if: >-
+                    ${artifact.status=='PROCESS_COMPLETE' && artifact._embed.scans?.^[type=='SCA']!=null}
+                  var.set:
+                    sastArtifactId: ${artifact.id}
+      - if: ${sastArtifactId==null}
+        log.info: No processed SAST artifact found for application version '${cli.appVersion}'; FAA scan will run without SAST context.
+    on.fail:
+      - log.warn:
+          msg: Unable to query SAST artifacts for application version '${cli.appVersion}'; FAA scan will run without SAST context.
+          cause: ${lastException}
+  
+  - if: ${sastArtifactId!=null}
+    run.fcli:
+      DOWNLOAD_SAST_FPR:
+        cmd: fcli ssc artifact download "${sastArtifactId}" -f "${sastFprFile}"
+        on.success:
+          - var.set:
+              fprArg: '--fpr "${sastFprFile}"'
+        on.fail:
+          - log.warn:
+              msg: Failed to download SAST FPR artifact; FAA scan will run without SAST context.
+              cause: ${lastException}
+  
+  # Run FAA scan with SAST FPR context if SAST results are available, otherwise run without SAST context
+  - run.fcli:
+      RUN_FAA_SCAN:
+        cmd: >
+          fcli tool fortifyaa run --
+          -clean
+          -scan "${cli.sourceDir}"
+          ${fprArg}
+          -o "${cli.faaOutput}"
+          ${extraScanOpts}
+        stdout: collect
+        stderr: collect
+        on.success:
+          - out.write:
+              stdout: ${RUN_FAA_SCAN.stdout}
+              stderr: ${RUN_FAA_SCAN.stderr}
+        on.fail:
+          - out.write:
+              stdout: ${RUN_FAA_SCAN.stdout}
+              stderr: ${RUN_FAA_SCAN.stderr}
+          - throw: FAA Scan failed with errors.
+      UPLOAD_SARIF:
+        cmd: >
+          fcli ssc artifact upload 
+          --av "${cli.appVersion}" 
+          --engine-type Fortify_AA 
+          -f "${cli.faaOutput}"
+          --store "${faaArtifactVarName}"
+  
+  - if: ${!cli.skipWait}
+    run.fcli:
+      WAIT: "fcli ssc artifact wait-for ::${faaArtifactVarName}::"
