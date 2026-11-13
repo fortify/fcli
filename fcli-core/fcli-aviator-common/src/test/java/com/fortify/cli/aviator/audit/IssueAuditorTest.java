@@ -136,10 +136,26 @@ class IssueAuditorTest {
     }
 
     @Test
+    void skipsPreviouslyProcessedAviatorIssueWithRemediationWithoutForceReaudit() throws Exception {
+        IssueAuditor auditor = createIssueAuditor(false, false,
+                Map.of(Constants.AVIATOR_STATUS_TAG_ID, Constants.PROCESSED_BY_AVIATOR_WITH_REMEDIATION));
+
+        assertTrue(prepareIssueIds(auditor).isEmpty());
+    }
+
+    @Test
     void forceReauditIncludesProcessedAviatorIssueAndIgnoresAviatorOutcomeTag() throws Exception {
         IssueAuditor auditor = createIssueAuditor(true, false, Map.of(
                 Constants.AVIATOR_STATUS_TAG_ID, Constants.PROCESSED_BY_AVIATOR,
                 Constants.AVIATOR_EXPECTED_OUTCOME_TAG_ID, Constants.EXPLOITABLE));
+
+        assertEquals(List.of(TEST_ISSUE_ID), prepareIssueIds(auditor));
+    }
+
+    @Test
+    void forceReauditIncludesProcessedAviatorIssueWithRemediation() throws Exception {
+        IssueAuditor auditor = createIssueAuditor(true, false, Map.of(
+                Constants.AVIATOR_STATUS_TAG_ID, Constants.PROCESSED_BY_AVIATOR_WITH_REMEDIATION));
 
         assertEquals(List.of(TEST_ISSUE_ID), prepareIssueIds(auditor));
     }
@@ -165,6 +181,15 @@ class IssueAuditorTest {
     void forceReauditStillSkipsHumanTriagedIssue() throws Exception {
         IssueAuditor auditor = createIssueAuditor(true, false, Map.of(
                 Constants.AVIATOR_STATUS_TAG_ID, Constants.PROCESSED_BY_AVIATOR,
+                Constants.FOD_TAG_ID, Constants.EXPLOITABLE));
+
+        assertTrue(prepareIssueIds(auditor).isEmpty());
+    }
+
+    @Test
+    void forceReauditStillSkipsHumanTriagedIssueWithRemediationStatus() throws Exception {
+        IssueAuditor auditor = createIssueAuditor(true, false, Map.of(
+                Constants.AVIATOR_STATUS_TAG_ID, Constants.PROCESSED_BY_AVIATOR_WITH_REMEDIATION,
                 Constants.FOD_TAG_ID, Constants.EXPLOITABLE));
 
         assertTrue(prepareIssueIds(auditor).isEmpty());

@@ -142,8 +142,7 @@ public class IssueAuditor {
         String name = "Aviator status";
         String id = "FB7B0462-2C2E-46D9-811A-DCC1F3C83051";
 
-        List<String> values = List.of(Constants.PROCESSED_BY_AVIATOR);
-        return new TagDefinition(name, id, values, false);
+        return new TagDefinition(name, id, Constants.AVIATOR_STATUS_VALUES, false);
     }
 
     private TagDefinition resolveHumanAuditStatus() {
@@ -279,8 +278,7 @@ public class IssueAuditor {
         if (auditIssue == null || auditIssue.getTags() == null) {
             return false;
         }
-        String status = auditIssue.getTags().get(Constants.AVIATOR_STATUS_TAG_ID);
-        return !StringUtil.isEmpty(status) && Constants.PROCESSED_BY_AVIATOR.equalsIgnoreCase(status);
+        return Constants.isAviatorStatus(auditIssue.getTags().get(Constants.AVIATOR_STATUS_TAG_ID));
     }
 
     private boolean hasHumanTriage(AuditIssue auditIssue) {

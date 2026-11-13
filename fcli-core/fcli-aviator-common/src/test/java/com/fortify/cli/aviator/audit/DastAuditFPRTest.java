@@ -63,7 +63,8 @@ class DastAuditFPRTest {
             String auditXml = Files.readString(zip.getPath("/audit.xml"));
             assertTrue(auditXml.contains("instanceId=\"DAST-1\""));
             assertTrue(auditXml.contains("suppressed=\"true\""));
-            assertTrue(auditXml.contains("PROCESSED_BY_AVIATOR"));
+            assertTrue(auditXml.contains("<Value>PROCESSED_BY_AVIATOR</Value>"));
+            assertFalse(auditXml.contains("PROCESSED_BY_AVIATOR_WITH_REMEDIATION"));
             assertFalse(Files.exists(zip.getPath("/remediations.xml")));
         }
     }
@@ -166,9 +167,9 @@ class DastAuditFPRTest {
                         .build());
                 });
 
-            assertEquals(5, result.totalReported());
+            assertEquals(6, result.totalReported());
             assertEquals(1, result.submitted());
-            assertEquals(4, result.skipped());
+            assertEquals(5, result.skipped());
         }
     }
 
@@ -291,6 +292,7 @@ class DastAuditFPRTest {
                 <Issue id="DAST-3"><Name>Legacy Aviator outcome</Name><Severity>4</Severity></Issue>
                 <Issue id="DAST-4"><Name>Human audited</Name><Severity>4</Severity></Issue>
                 <Issue id="DAST-5"><Name>Eligible</Name><Severity>4</Severity></Issue>
+                <Issue id="DAST-6"><Name>Aviator status with remediation</Name><Severity>4</Severity></Issue>
                 </Issues></Session></WebInspectScan>
                 """, StandardCharsets.UTF_8);
             Files.writeString(zip.getPath("/audit.xml"), """
@@ -304,6 +306,9 @@ class DastAuditFPRTest {
                     </Issue>
                     <Issue instanceId="DAST-4" revision="0" suppressed="false">
                         <Tag id="ACB05E55-E74D-468C-8501-52E1FDC27D71"><Value>Exploitable</Value></Tag>
+                    </Issue>
+                    <Issue instanceId="DAST-6" revision="0" suppressed="false">
+                        <Tag id="FB7B0462-2C2E-46D9-811A-DCC1F3C83051"><Value>PROCESSED_BY_AVIATOR_WITH_REMEDIATION</Value></Tag>
                     </Issue>
                 </IssueList></Audit>
                 """, StandardCharsets.UTF_8);
