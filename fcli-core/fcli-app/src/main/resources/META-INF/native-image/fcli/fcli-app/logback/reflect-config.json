@@ -191,6 +191,14 @@
         "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"setTarget","parameterTypes":["java.lang.String"] }]
     },
     {
+        "name": "com.fortify.cli.common.progress.helper.ProgressAwareConsoleAppender",
+        "queryAllPublicMethods": true,
+        "methods": [
+            {"name":"<init>","parameterTypes":[]},
+            {"name":"setEncoder","parameterTypes":["ch.qos.logback.core.encoder.Encoder"]}
+        ]
+    },
+    {
         "name":"ch.qos.logback.core.OutputStreamAppender",
         "methods":[{"name":"setEncoder","parameterTypes":["ch.qos.logback.core.encoder.Encoder"] }]
     },
@@ -204,7 +212,7 @@
     },
     {
         "name":"ch.qos.logback.core.encoder.LayoutWrappingEncoder",
-        "methods":[{"name":"setParent","parameterTypes":["ch.qos.logback.core.spi.ContextAware"] }]
+        "methods":[{"name":"setParent","parameterTypes":["ch.qos.logback.core.spi.ContextAware"] }, {"name":"setCharset","parameterTypes":["java.nio.charset.Charset"] }]
     },
     {
         "name":"ch.qos.logback.core.filter.Filter",
