@@ -762,8 +762,10 @@ public class AuditProcessor {
             TagMappingConfig tagMappingConfig, Map<String, String> issueCategoryLookup,
             FPRInfo fprInfo, FVDLMetadata fvdlMetadata) throws AviatorTechnicalException {
         lastRemediationGenerationMetric = RemediationGenerationMetric.empty();
+        // Shared by the dry run for the notes and the real build: it caches the source files it reads, so each is read once.
+        FileUtils fileUtils = new FileUtils(this.sourceDecoder, fvdlMetadata);
         Map<String, AuditResponse> responses = PriorFixNotes.withResolvedPriorFixNotes(auditResponses,
-                writtenFixIdsForNotes(auditResponses, fprInfo, fvdlMetadata));
+                writtenFixIdsForNotes(auditResponses, fprInfo, fileUtils));
         // Step 1: Apply this save's audit responses. writtenInstanceIds is the local retain set.
         Map<String, String> effectiveIssueCategoryLookup = issueCategoryLookup == null ? Map.of() : issueCategoryLookup;
         AuditXmlUpdateResult updateResult = updateAuditXml(
@@ -782,7 +784,7 @@ public class AuditProcessor {
         if (hasRemediations && !remediationCommentTimestamps.isEmpty()) {
             Map<String, Integer> skippedByReason = new LinkedHashMap<>();
             this.remediationsDoc = generateRemediationsXml(responses, remediationCommentTimestamps, fprInfo,
-                    fvdlMetadata, skippedByReason);
+                    fileUtils, skippedByReason);
             lastRemediationGenerationMetric = toRemediationGenerationMetric(skippedByReason);
         } else {
             this.remediationsDoc = null;
@@ -910,7 +912,7 @@ public class AuditProcessor {
 
     private Document generateRemediationsXml(Map<String, AuditResponse> auditResponses,
                                             Map<String, String> remediationCommentTimestamps,
-                                            FPRInfo fprInfo, FVDLMetadata fvdlMetadata,
+                                            FPRInfo fprInfo, FileUtils fileUtils,
                                             Map<String, Integer> skippedByReason) throws AviatorTechnicalException {
         try {
             var docFactory = SecureXmlParserFactory.newDocumentBuilderFactory(true);
@@ -933,7 +935,6 @@ public class AuditProcessor {
             Element remediationListElement = finalDoc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "RemediationList");
             rootElement.appendChild(remediationListElement);
 
-            FileUtils fileUtils = new FileUtils(this.sourceDecoder, fvdlMetadata);
             int validRemediationCount = 0;
 
             // An issue superseded by another issue's fix keeps no fix of its own, but only once the fix that supersedes it
@@ -1162,7 +1163,7 @@ public class AuditProcessor {
      *         rewriting
      */
     private Set<String> writtenFixIdsForNotes(Map<String, AuditResponse> auditResponses, FPRInfo fprInfo,
-            FVDLMetadata fvdlMetadata) {
+            FileUtils fileUtils) {
         if (SupersedeGraph.resolveDirectSupersededBy(auditResponses, id -> true).isEmpty()) {
             return null;
         }
@@ -1175,7 +1176,7 @@ public class AuditProcessor {
                 timestamps.put(id, now);
             }
         });
-        Document dryRun = generateRemediationsXml(auditResponses, timestamps, fprInfo, fvdlMetadata, new HashMap<>());
+        Document dryRun = generateRemediationsXml(auditResponses, timestamps, fprInfo, fileUtils, new HashMap<>());
         Set<String> written = new HashSet<>();
         if (dryRun != null) {
             NodeList entries = dryRun.getElementsByTagNameNS(REMEDIATIONS_NAMESPACE_URI, "Remediation");
