@@ -97,6 +97,14 @@ public class AviatorSSCAttributeHelper {
     }
 
     /**
+     * Writes the current UTC timestamp to the {@code last_sast_audit} attribute.
+     * Same value shape as {@link #writeLastCorrelationTimestamp}: {@code Instant.now()}.
+     */
+    public static void writeLastSastAuditTimestamp(UnirestInstance unirest, String versionId) {
+        writeTimestamp(unirest, versionId, AviatorSSCAttributeDefinitions.LAST_SAST_AUDIT_ATTR);
+    }
+
+    /**
      * Writes the current UTC timestamp to the given attribute on the application version.
      *
      * <p>A rejected update is logged and swallowed so the completed audit or correlation

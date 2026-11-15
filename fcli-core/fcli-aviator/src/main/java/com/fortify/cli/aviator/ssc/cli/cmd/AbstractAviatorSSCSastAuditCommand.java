@@ -34,6 +34,7 @@ import com.fortify.cli.aviator.audit.model.AuditFprOptions;
 import com.fortify.cli.aviator.audit.model.FPRAuditResult;
 import com.fortify.cli.aviator.config.AviatorLoggerImpl;
 import com.fortify.cli.aviator.config.TagMappingConfig;
+import com.fortify.cli.aviator.ssc.helper.AviatorSSCAttributeHelper;
 import com.fortify.cli.aviator.ssc.helper.AviatorSSCAuditHelper;
 import com.fortify.cli.aviator.ssc.helper.AviatorSSCAuditHelper.AuditableIssuePresence;
 import com.fortify.cli.aviator.ssc.helper.AviatorSSCRefreshHelper;
@@ -106,6 +107,7 @@ abstract class AbstractAviatorSSCSastAuditCommand extends AbstractSSCJsonNodeOut
                 logger.progress("Audit skipped - no auditable issues found matching the specified filters.");
                 ObjectNode result = AviatorSSCAuditHelper.buildResultNode(av, null, "SKIPPED");
                 AviatorSSCAuditHelper.setOperationMessage(result, "No auditable issues found matching the specified filters");
+                recordLastAuditDate(unirest, av);
                 return result;
             }
 
@@ -343,9 +345,37 @@ abstract class AbstractAviatorSSCSastAuditCommand extends AbstractSSCJsonNodeOut
             }
         }
 
+        // The date is only written when the run completely evaluated the version and, if an audited FPR
+        // was produced, it reached SSC. Otherwise bulk audit must select the version again.
+        if (isAuditRunComplete(auditResult)
+                && (auditResult.getUpdatedFile() == null || (artifactId != null && !"UPLOAD_FAILED".equals(artifactId)))) {
+            recordLastAuditDate(unirest, av);
+        }
+
         ObjectNode result = AviatorSSCAuditHelper.buildResultNode(av, artifactId, action);
         AviatorSSCAuditHelper.setAuditStats(result, auditResult);
         return result;
+    }
+
+    /**
+     * A run completely evaluated the version when all issues were audited, or when there was nothing to audit.
+     * A run that audited only some issues, for example because the Aviator quota ran out part-way, or that
+     * skipped or failed on all of them, is not complete.
+     */
+    static boolean isAuditRunComplete(FPRAuditResult auditResult) {
+        return "AUDITED".equals(auditResult.getStatus())
+                || "SKIPPED".equals(auditResult.getStatus()) && auditResult.getTotalIssuesToAudit() == 0;
+    }
+
+    /**
+     * Records when this version was last completely audited, for bulk audit to compare with the newest scan
+     * date. A run limited to some folders, or a quota test, did not look at the whole version.
+     */
+    private void recordLastAuditDate(UnirestInstance unirest, SSCAppVersionDescriptor av) {
+        if (testExceedingQuota || folderNames != null && !folderNames.isEmpty()) {
+            return;
+        }
+        AviatorSSCAttributeHelper.writeLastSastAuditTimestamp(unirest, av.getVersionId());
     }
 
     /**

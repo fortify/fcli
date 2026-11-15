@@ -137,6 +137,8 @@ public class AviatorSSCPrepareHelper {
             .synchronize(result);
         new AviatorSSCAttributeHelper(unirest, AviatorSSCAttributeDefinitions.LAST_DAST_AUDIT_ATTR)
             .synchronize(result);
+        new AviatorSSCAttributeHelper(unirest, AviatorSSCAttributeDefinitions.LAST_SAST_AUDIT_ATTR)
+            .synchronize(result);
     }
 
     /** Returns tags that require manual association (excludes system-managed tags). */

@@ -280,6 +280,21 @@ class AviatorSSCAuditCommandTest {
         assertFalse((boolean) field.get(parse()));
     }
 
+    @ParameterizedTest
+    @CsvSource({
+        "AUDITED, 3, true",
+        "SKIPPED, 0, true",
+        "SKIPPED, 3, false",
+        "PARTIALLY_AUDITED, 3, false",
+        "FAILED, 3, false",
+        "FAILED, 0, false"
+    })
+    void lastAuditDateIsOnlyRecordedForARunThatEvaluatedTheWholeVersion(String status, int totalIssues, boolean complete) {
+        var result = new FPRAuditResult(null, status, null, 0, totalIssues);
+
+        assertEquals(complete, AbstractAviatorSSCSastAuditCommand.isAuditRunComplete(result));
+    }
+
     @Test
     void allIssuesAlwaysProceedsToDownloadWithoutAnSscLookup() {
         assertTrue(parse("--no-filterset", "--all-issues").mayHaveReauditCandidates(null, null, null));
