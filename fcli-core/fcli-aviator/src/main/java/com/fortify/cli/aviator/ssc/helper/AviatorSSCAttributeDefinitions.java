@@ -77,4 +77,25 @@ public final class AviatorSSCAttributeDefinitions {
         "TEXT",
         "Timestamp of the last successful DAST audit evaluation (ISO-8601 UTC). Written by fcli aviator ssc audit-dast."
     );
+
+    /**
+     * Free-text attribute written after a SAST audit has completely evaluated an application
+     * version: every issue was audited or checked for changed source code, or there was nothing
+     * to do. It is not written when the run stopped early, for example because the Aviator quota
+     * ran out part-way through the version, so that the version is selected again.
+     *
+     * <p>Value is an ISO-8601 UTC timestamp produced by {@code Instant.now().toString()}.
+     * Bulk SAST audit selects a version without pending issues only when the newest SAST scan
+     * date is later than this timestamp, or when the attribute has not been written yet.
+     *
+     * <p>TEXT type is used rather than DATE because SSC's DATE type only accepts
+     * {@code yyyy-MM-dd}, which loses the time-of-day precision required for reliable
+     * comparison with artifact {@code lastScanDate} values.
+     */
+    public static final AttributeDefinition LAST_SAST_AUDIT_ATTR = new AttributeDefinition(
+        "last_sast_audit",
+        "TECHNICAL",
+        "TEXT",
+        "Timestamp of the last complete SAST audit evaluation (ISO-8601 UTC). Written by fcli aviator ssc audit-sast."
+    );
 }

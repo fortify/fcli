@@ -131,7 +131,7 @@ public class AuditFPR {
         return issueAuditor.performAudit(auditResponsesToFill);
     }
 
-    private static FPRAuditResult finalizeFprAudit(
+    static FPRAuditResult finalizeFprAudit(
             AuditOutcome auditOutcome, Map<String, AuditResponse> auditResponses,
             AuditProcessor auditProcessor, TagMappingConfig tagMappingConfig,
             Map<String, String> issueCategoryLookup, FPRInfo fprInfo, StreamingFVDLProcessor streamingFVDLProcessor) {
@@ -140,6 +140,18 @@ public class AuditFPR {
         int issuesSubmitted = getSubmittedAuditCount(auditResponses);
         if (auditResponses.isEmpty()) {
             if (totalIssuesToAudit == 0) {
+                int baselines = auditProcessor.getBaselinedCount();
+                if (baselines > 0) {
+                    LOG.info("No issues were audited; saving evidence baselines recorded for {} issue(s)", baselines);
+                    File baselineFile = auditProcessor.updateAndSaveAuditAndRemediationsXml(
+                            Map.of(), tagMappingConfig, issueCategoryLookup, fprInfo,
+                            streamingFVDLProcessor.getFvdlMetadata());
+                    FPRAuditResult baselineResult = new FPRAuditResult(baselineFile, "SKIPPED",
+                            String.format("No issues to audit; recorded evidence baselines for %d issue(s)", baselines),
+                            0, 0, issuesSubmitted, 0, Map.of(), 0, Map.of());
+                    baselineResult.setEvidenceBaselines(baselines);
+                    return baselineResult;
+                }
                 LOG.info("No issues were audited, skipping update and upload");
             return new FPRAuditResult(null, "SKIPPED", "No issues to audit", 0, totalIssuesToAudit,
                 issuesSubmitted, 0, Map.of(), 0, Map.of());
@@ -193,9 +205,14 @@ public class AuditFPR {
         }
 
         LOG.info("FPR audit process completed with status: {}", status);
-        return new FPRAuditResult(updatedFile, status, message, (int) issuesSuccessfullyAudited, totalIssuesToAudit,
+        FPRAuditResult result = new FPRAuditResult(updatedFile, status, message, (int) issuesSuccessfullyAudited, totalIssuesToAudit,
             issuesSubmitted, issuesSkipped, skippedByReason, remediationGenerationMetric.skippedRemediations(),
                 remediationGenerationMetric.skippedByReason());
+        result.setReauditedIssues((int) auditResponses.entrySet().stream()
+                .filter(entry -> "SUCCESS".equalsIgnoreCase(entry.getValue().getStatus()) && auditProcessor.isReaudit(entry.getKey()))
+                .count());
+        result.setEvidenceBaselines(updatedFile != null ? auditProcessor.getBaselinedCount() : 0);
+        return result;
     }
 
     static int getSubmittedAuditCount(Map<String, AuditResponse> auditResponses) {

@@ -117,6 +117,7 @@ public class RemediationProcessor {
             RemediationDocument remediations = documentMapper.map(remediationDoc);
             RemediationProcessingState state = new RemediationProcessingState(options);
             recordDescriptions(remediationDoc, state);
+            planDependentFixes(remediations, state);
             if (options.isPreview()) {
                 return previewRemediations(remediations, sourceBasePath, fvdlMetadata, state);
             }
@@ -145,12 +146,17 @@ public class RemediationProcessor {
         List<Remediation> remediations = remediationDocument.remediations();
         state.setXmlEntryCount(remediations.size());
         LOG.debug("Previewing {} remediation entries from remediations.xml", remediations.size());
+        List<Remediation> coveredRemediations = new ArrayList<>();
         for (Remediation remediation : remediations) {
             String instanceId = remediation.instanceId();
             if (!state.shouldProcess(instanceId)) {
                 continue;
             }
             state.recordSeen(instanceId);
+            if (remediation.isCoveredByPriorFix()) {
+                coveredRemediations.add(remediation);
+                continue;
+            }
             try {
                 Map<String, FilePreview> files = xmlFilePreviews(remediation, sourceBasePath, fvdlMetadata);
                 state.recordPreviewAvailable(instanceId, files);
@@ -164,6 +170,7 @@ public class RemediationProcessor {
                 LOG.debug("Unexpected error while previewing remediation {}", instanceId, e);
             }
         }
+        resolveReferenceRemediations(coveredRemediations, declaredSuperseded(remediationDocument), state);
         return finish(state);
     }
 
@@ -226,6 +233,7 @@ public class RemediationProcessor {
             LOG.debug("Unable to sort remediations by width; proceeding with original order", e);
         }
         Map<RemediationKey, String> remediationLookup = new LinkedHashMap<>();
+        List<Remediation> coveredRemediations = new ArrayList<>();
 
         for (Remediation remediation : orderedRemediations) {
             String instanceId = remediation.instanceId();
@@ -233,6 +241,10 @@ public class RemediationProcessor {
                 continue;
             }
             state.recordSeen(instanceId);
+            if (remediation.isCoveredByPriorFix()) {
+                coveredRemediations.add(remediation);
+                continue;
+            }
             List<RemediationKey> remediationKeys;
             try {
                 remediationKeys = remediation.createRemediationKeys(sourceBasePath);
@@ -331,14 +343,99 @@ public class RemediationProcessor {
             }
         }
 
+        resolveReferenceRemediations(coveredRemediations, declaredSuperseded(remediationDocument), state);
         return finish(state);
+    }
+
+    /**
+     * Prepares a filtered run. A requested issue that has no fix of its own (it is covered by, or superseded by, another
+     * fix) can only be resolved by applying that fix. Such fixes are proposed to the approver; approved ones are applied
+     * implicitly, and every issue they resolve is processed and counted with them.
+     */
+    private void planDependentFixes(RemediationDocument remediations, RemediationProcessingState state) {
+        if (!options.isFiltered()) {
+            return;
+        }
+        Set<String> requested = options.issueIdFilter();
+        Map<String, Remediation> byId = new LinkedHashMap<>();
+        Map<String, Set<String>> referencedBy = new LinkedHashMap<>();
+        for (Remediation remediation : remediations.remediations()) {
+            byId.put(remediation.instanceId(), remediation);
+            if (remediation.isCoveredByPriorFix()) {
+                for (String fixId : remediation.coveredByInstanceIds()) {
+                    referencedBy.computeIfAbsent(fixId, k -> new LinkedHashSet<>()).add(remediation.instanceId());
+                }
+            }
+        }
+        Map<String, Set<String>> neededFor = new LinkedHashMap<>();
+        for (String requestedId : requested) {
+            Remediation remediation = byId.get(requestedId);
+            if (remediation == null || !remediation.isCoveredByPriorFix()) {
+                continue;
+            }
+            for (String fixId : remediation.coveredByInstanceIds()) {
+                if (!requested.contains(fixId) && byId.containsKey(fixId)) {
+                    neededFor.computeIfAbsent(fixId, k -> new LinkedHashSet<>()).add(requestedId);
+                }
+            }
+        }
+        if (!neededFor.isEmpty()) {
+            List<ImplicitFixApprover.ImplicitFix> proposals = new ArrayList<>();
+            neededFor.forEach((fixId, requestedIds) -> {
+                Set<String> resolved = new LinkedHashSet<>(referencedBy.getOrDefault(fixId, Set.of()));
+                resolved.addAll(byId.get(fixId).supersedesInstanceIds());
+                proposals.add(new ImplicitFixApprover.ImplicitFix(fixId, requestedIds, resolved));
+            });
+            Set<String> approved = options.isPreview()
+                ? ImplicitFixApprover.approveAll().approve(proposals)
+                : options.implicitFixApprover().approve(proposals);
+            for (ImplicitFixApprover.ImplicitFix proposal : proposals) {
+                if (approved.contains(proposal.fixId())) {
+                    state.addImplicitIssueIds(List.of(proposal.fixId()));
+                } else {
+                    state.recordDeclinedFix(proposal.fixId());
+                    LOG.info("Fix {} was not confirmed; requested issues {} are not remediated",
+                        proposal.fixId(), proposal.requestedIssueIds());
+                }
+            }
+        }
+        for (Remediation remediation : remediations.remediations()) {
+            if (remediation.isCoveredByPriorFix()
+                    && remediation.coveredByInstanceIds().stream().anyMatch(state::isFixSelected)) {
+                state.addDependentIssueId(remediation.instanceId());
+            }
+        }
+    }
+
+    private Set<String> declaredSuperseded(RemediationDocument remediationDocument) {
+        Set<String> superseded = new LinkedHashSet<>();
+        for (Remediation remediation : remediationDocument.remediations()) {
+            superseded.addAll(remediation.supersedesInstanceIds());
+        }
+        return superseded;
+    }
+
+    /** Resolves issues without a fix of their own: superseded by a wider fix, or covered by another issue's fix. */
+    private void resolveReferenceRemediations(List<Remediation> references, Set<String> declaredSuperseded,
+            RemediationProcessingState state) {
+        for (Remediation reference : references) {
+            if (declaredSuperseded.contains(reference.instanceId())) {
+                state.recordSupersededByPriorFix(reference.instanceId(), reference.coveredByInstanceIds());
+                LOG.info("Remediation {} has no fix of its own; it is superseded by the fix for {}",
+                    reference.instanceId(), reference.coveredByInstanceIds());
+            } else {
+                state.recordCoveredByPriorFix(reference.instanceId(), reference.coveredByInstanceIds());
+                LOG.info("Remediation {} has no fix of its own; it is covered by the fix for {}",
+                    reference.instanceId(), reference.coveredByInstanceIds());
+            }
+        }
     }
 
     private RemediationMetric finish(RemediationProcessingState state) {
         RemediationMetric metric = state.toMetric();
-        LOG.info("Auto-remediation summary: total={}, applied={}, identical={}, superseded={}, possiblyRemediated={}, skipped={}",
+        LOG.info("Auto-remediation summary: total={}, applied={}, identical={}, superseded={}, possiblyRemediated={}, coveredByPriorFix={}, skipped={}",
             metric.totalRemediations(), metric.appliedRemediations(), metric.identicalRemediations(), metric.supersededRemediations(),
-            metric.possiblyRemediatedRemediations(), metric.skippedRemediations());
+            metric.possiblyRemediatedRemediations(), metric.coveredByPriorFixRemediations(), metric.skippedRemediations());
         if (!metric.skippedByReason().isEmpty()) {
             LOG.info("Skipped remediations by reason: {}", formatSkippedReasons(metric.skippedByReason()));
         }

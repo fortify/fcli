@@ -20,13 +20,19 @@ import java.util.Set;
 import com.fortify.cli.aviator.fpr.utils.ISourceDecoder;
 
 public record RemediationProcessingOptions(Set<String> issueIdFilter, RemediationExecutionMode executionMode,
-        ISourceDecoder sourceDecoder) {
+        ISourceDecoder sourceDecoder, ImplicitFixApprover implicitFixApprover) {
+    public RemediationProcessingOptions(Set<String> issueIdFilter, RemediationExecutionMode executionMode,
+            ISourceDecoder sourceDecoder) {
+        this(issueIdFilter, executionMode, sourceDecoder, ImplicitFixApprover.approveAll());
+    }
+
     public RemediationProcessingOptions {
         issueIdFilter = issueIdFilter == null
             ? Set.of()
             : Collections.unmodifiableSet(new LinkedHashSet<>(issueIdFilter));
         executionMode = Objects.requireNonNull(executionMode, "executionMode");
         sourceDecoder = Objects.requireNonNull(sourceDecoder, "sourceDecoder");
+        implicitFixApprover = Objects.requireNonNull(implicitFixApprover, "implicitFixApprover");
     }
 
     public boolean isFiltered() {

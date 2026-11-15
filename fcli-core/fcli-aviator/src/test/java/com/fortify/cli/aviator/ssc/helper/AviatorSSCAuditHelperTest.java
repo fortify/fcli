@@ -33,6 +33,7 @@ import org.junit.jupiter.params.provider.CsvSource;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fortify.cli.aviator.audit.model.FPRAuditResult;
 import com.fortify.cli.aviator.config.AviatorLoggerImpl;
 import com.fortify.cli.aviator.ssc.helper.AviatorSSCAuditHelper.AuditableIssuePresence;
 import com.fortify.cli.aviator.util.Constants;
@@ -47,6 +48,34 @@ import com.sun.net.httpserver.HttpServer;
 import kong.unirest.UnirestInstance;
 
 class AviatorSSCAuditHelperTest {
+
+    @Test
+    void progressMessageUploadsAResultThatOnlyRecordedEvidenceBaselines() {
+        var result = new FPRAuditResult(new java.io.File("audited.fpr"), "SKIPPED", "baselines", 0, 0, 0, 0, Map.of(), 0, Map.of());
+
+        assertEquals("Status: Uploading FPR with recorded evidence baselines to SSC",
+                AviatorSSCAuditHelper.getProgressMessage(result));
+    }
+
+    @Test
+    void progressMessageStillSkipsUploadWhenNothingWasSaved() {
+        var result = new FPRAuditResult(null, "SKIPPED", "No issues to audit", 0, 0, 0, 0, Map.of(), 0, Map.of());
+
+        assertEquals("No issues to audit, skipping upload", AviatorSSCAuditHelper.getProgressMessage(result));
+    }
+
+    @Test
+    void auditStatsReportReauditedAndBaselinedIssues() {
+        var result = new FPRAuditResult(null, "AUDITED", null, 3, 3, 3, 0, Map.of(), 0, Map.of());
+        result.setReauditedIssues(2);
+        result.setEvidenceBaselines(5);
+        ObjectNode node = AviatorSSCAuditHelper.buildResultNode(appVersion(), null, "AUDITED");
+
+        AviatorSSCAuditHelper.setAuditStats(node, result);
+
+        assertEquals(2, node.path("operation").path("audit").path("reaudited").asInt());
+        assertEquals(5, node.path("operation").path("audit").path("baselined").asInt());
+    }
 
     @Test
     void excludesPreviouslyProcessedIssuesFromNormalPreflightCount() throws Exception {
@@ -98,10 +127,42 @@ class AviatorSSCAuditHelperTest {
     }
 
     @Test
-    void forceReauditPreflightExcludesSuppressedAviatorIssues() throws Exception {
-        try (var server = new TestSscServer(processedIssue(), suppressedProcessedIssue(), suppressedLegacyAnalysisIssue());
+    void forceReauditPreflightIncludesSuppressedAviatorIssues() throws Exception {
+        try (var server = new TestSscServer(processedIssue(), suppressedProcessedIssue(), suppressedLegacyAnalysisIssue(),
+                suppressedHumanIssue());
                 var unirest = newUnirest(server)) {
-            assertEquals(1, AviatorSSCAuditHelper.getAuditableIssueCount(
+            assertEquals(3, AviatorSSCAuditHelper.getAuditableIssueCount(
+                    unirest, appVersion(), logger(), true, null, null, true));
+            assertTrue(server.getLastIssueQuery().contains("showsuppressed=true"));
+        }
+    }
+
+    @Test
+    void normalPreflightStillExcludesSuppressedAviatorIssues() throws Exception {
+        try (var server = new TestSscServer(suppressedProcessedIssue(), suppressedLegacyAnalysisIssue());
+                var unirest = newUnirest(server)) {
+            assertEquals(0, AviatorSSCAuditHelper.getAuditableIssueCount(
+                    unirest, appVersion(), logger(), true, null, null, false));
+        }
+    }
+
+    @Test
+    void forcePresenceFindsVersionWithOnlySuppressedAviatorIssues() throws Exception {
+        try (var server = new TestSscServer(suppressedProcessedIssue()); var unirest = newUnirest(server)) {
+            // SSC hides suppressed issues unless asked for them
+            server.respectVisibility = true;
+
+            assertEquals(AuditableIssuePresence.PRESENT, AviatorSSCAuditHelper.getAuditableIssuePresence(
+                    unirest, appVersion(), logger(), true, null, null, true));
+        }
+    }
+
+    @Test
+    void forcePresenceIgnoresVersionWithOnlySuppressedHumanIssues() throws Exception {
+        try (var server = new TestSscServer(suppressedHumanIssue()); var unirest = newUnirest(server)) {
+            server.respectVisibility = true;
+
+            assertEquals(AuditableIssuePresence.NONE, AviatorSSCAuditHelper.getAuditableIssuePresence(
                     unirest, appVersion(), logger(), true, null, null, true));
         }
     }
@@ -178,7 +239,7 @@ class AviatorSSCAuditHelperTest {
     void forcePresenceExhaustsPagesBeforeReportingNoCandidates() throws Exception {
         ObjectNode[] issues = new ObjectNode[401];
         Arrays.fill(issues, humanAuditedIssue());
-        issues[199] = suppressedProcessedIssue();
+        issues[199] = suppressedHumanIssue();
         // SSC AV 26 issue 27248 is suppressed but unaudited, with no audit tags.
         issues[400] = unprocessedIssue().put("id", 27248).put("suppressed", true).putNull("primaryTag");
         try (var server = new TestSscServer(issues); var unirest = newUnirest(server)) {
@@ -305,7 +366,8 @@ class AviatorSSCAuditHelperTest {
 
     @Test
     void serverCountsMatchRecordedSscReferenceForNormalAndForceModes() throws Exception {
-        // Uploaded SSC counts: 171 unprocessed + 46 processed with Analysis set + 4 suppressed.
+        // Uploaded SSC counts: 171 unprocessed + 46 processed with Analysis set + 4 suppressed with Analysis set.
+        // Force re-audit also counts the suppressed ones, as they may have been suppressed by Aviator.
         ObjectNode[] issues = new ObjectNode[221];
         Arrays.fill(issues, 0, 171, unprocessedIssue());
         Arrays.fill(issues, 171, 217, processedWithAnalysisIssue());
@@ -314,9 +376,9 @@ class AviatorSSCAuditHelperTest {
             server.tagSelectorsAvailable = true;
             assertEquals(171, AviatorSSCAuditHelper.getAuditableIssueCount(
                     unirest, appVersion(), logger(), false, null, null, false));
-            assertEquals(217, AviatorSSCAuditHelper.getAuditableIssueCount(
+            assertEquals(221, AviatorSSCAuditHelper.getAuditableIssueCount(
                     unirest, appVersion(), logger(), false, null, null, true));
-            assertEquals(9, server.issueRequestCount);
+            assertEquals(10, server.issueRequestCount);
             assertTrue(server.issueQueries.stream().allMatch(q -> q.contains("filterset=default-guid")));
             assertTrue(server.issueQueries.stream().allMatch(q -> Arrays.stream(q.split("&"))
                     .filter(parameter -> parameter.startsWith("q=")).count() <= 1));
@@ -442,9 +504,24 @@ class AviatorSSCAuditHelperTest {
             long optimized = AviatorSSCAuditHelper.getAuditableIssueCount(
                     unirest, appVersion(), logger(), true, null, null, true);
             assertEquals(1, optimized);
-            assertEquals(4, server.issueRequestCount);
+            assertEquals(5, server.issueRequestCount);
             assertTrue(server.issueQueries.stream().filter(q -> !q.contains("q=suppressed:true"))
                     .allMatch(q -> q.contains("showsuppressed=false")));
+
+            server.tagSelectorsAvailable = false;
+            assertEquals(optimized, AviatorSSCAuditHelper.getAuditableIssueCount(
+                    unirest, appVersion(), logger(), true, null, null, true));
+        }
+    }
+
+    @Test
+    void forceServerCountIncludesSuppressedAviatorIssues() throws Exception {
+        try (var server = new TestSscServer(unprocessedIssue(), suppressedProcessedIssue(), suppressedHumanIssue());
+                var unirest = newUnirest(server)) {
+            server.tagSelectorsAvailable = true;
+            long optimized = AviatorSSCAuditHelper.getAuditableIssueCount(
+                    unirest, appVersion(), logger(), true, null, null, true);
+            assertEquals(2, optimized);
 
             server.tagSelectorsAvailable = false;
             assertEquals(optimized, AviatorSSCAuditHelper.getAuditableIssueCount(
@@ -458,12 +535,14 @@ class AviatorSSCAuditHelperTest {
                 var unirest = newUnirest(server)) {
             server.tagSelectorsAvailable = true;
             server.rejectSuppressionFlag = true;
-            for (boolean force : List.of(false, true)) {
-                assertEquals(1, AviatorSSCAuditHelper.getAuditableIssueCount(
-                        unirest, appVersion(), logger(), true, null, null, force));
-                assertTrue(server.getLastIssueQuery().contains("limit=200"));
-                assertFalse(server.getLastIssueQuery().contains("showsuppressed"));
-            }
+            assertEquals(1, AviatorSSCAuditHelper.getAuditableIssueCount(
+                    unirest, appVersion(), logger(), true, null, null, false));
+            assertTrue(server.getLastIssueQuery().contains("limit=200"));
+            assertFalse(server.getLastIssueQuery().contains("showsuppressed"));
+            // Force re-audit must ask for suppressed issues; if SSC rejects that, the count is unknown
+            // (callers then proceed) rather than silently omitting suppressed issues.
+            assertEquals(-1, AviatorSSCAuditHelper.getAuditableIssueCount(
+                    unirest, appVersion(), logger(), true, null, null, true));
         }
     }
 
@@ -487,8 +566,8 @@ class AviatorSSCAuditHelperTest {
             server.addSuppressedControl();
             assertEquals(3, AviatorSSCAuditHelper.getAuditableIssueCount(
                     unirest, appVersion(), logger(), true, null, null, true));
-            assertEquals(4, server.issueRequestCount);
-            assertTrue(server.getLastIssueQuery().contains("q=audited:true"));
+            assertEquals(5, server.issueRequestCount);
+            assertTrue(server.issueQueries.stream().anyMatch(q -> q.contains("q=audited:true")));
             assertFalse(server.issueQueries.stream().anyMatch(q -> q.contains("(") || q.contains(")")));
         }
     }
@@ -515,7 +594,7 @@ class AviatorSSCAuditHelperTest {
             server.countByFilter.put("", 1_000_000L);
             assertEquals(1_000_000L, AviatorSSCAuditHelper.getAuditableIssueCount(
                     unirest, appVersion(), logger(), true, null, null, true));
-            assertEquals(4, server.issueRequestCount);
+            assertEquals(5, server.issueRequestCount);
         }
     }
 
@@ -561,7 +640,7 @@ class AviatorSSCAuditHelperTest {
             server.respectVisibility = defaultExcludesSuppressed;
             assertEquals(1L, AviatorSSCAuditHelper.getAuditableIssueCount(
                     unirest, appVersion(), logger(), true, null, null, force));
-            assertEquals(!defaultExcludesSuppressed, server.getLastIssueQuery().contains("limit=200"));
+            assertEquals(!defaultExcludesSuppressed, server.usedPagination());
         }
     }
 
@@ -575,7 +654,7 @@ class AviatorSSCAuditHelperTest {
             server.tagSelectorsAvailable = true;
             assertEquals(1L, AviatorSSCAuditHelper.getAuditableIssueCount(
                     unirest, appVersion(), logger(), true, null, null, force));
-            assertFalse(server.getLastIssueQuery().contains("limit=200"));
+            assertFalse(server.usedPagination());
         }
     }
 
@@ -599,7 +678,8 @@ class AviatorSSCAuditHelperTest {
             server.tagSelectorsAvailable = true;
             server.ignoreSuppressionQuery = ignoreQuery;
             server.rejectSuppressionQuery = !ignoreQuery;
-            assertEquals(1L, AviatorSSCAuditHelper.getAuditableIssueCount(
+            // The suppressed legacy issue is only a candidate when force re-audit asks for suppressed issues
+            assertEquals(force ? 2L : 1L, AviatorSSCAuditHelper.getAuditableIssueCount(
                     unirest, appVersion(), logger(), true, null, null, force));
             assertTrue(server.getLastIssueQuery().contains("limit=200"));
         }
@@ -634,7 +714,7 @@ class AviatorSSCAuditHelperTest {
             server.countByFilter.put(statusFilter(""), Long.MAX_VALUE);
             assertEquals(Long.MAX_VALUE, AviatorSSCAuditHelper.getAuditableIssueCount(
                     unirest, appVersion(), logger(), true, null, null, force));
-            assertEquals(force ? 4 : 5, server.issueRequestCount);
+            assertEquals(5, server.issueRequestCount);
         }
     }
 
@@ -727,6 +807,12 @@ class AviatorSSCAuditHelperTest {
         return issue;
     }
 
+    private static ObjectNode suppressedHumanIssue() {
+        ObjectNode issue = humanAuditedIssue();
+        issue.put("suppressed", true);
+        return issue;
+    }
+
     private static ObjectNode suppressedLegacyAnalysisIssue() {
         ObjectNode issue = legacyAnalysisIssue();
         issue.put("suppressed", true);
@@ -773,7 +859,8 @@ class AviatorSSCAuditHelperTest {
         }
 
         private void addSuppressedControl() {
-            issues.add(suppressedLegacyAnalysisIssue());
+            // A suppressed issue that is not an Aviator candidate: it only proves that the suppression flag is honored.
+            issues.add(suppressedHumanIssue());
         }
 
         private void handleIssues(HttpExchange exchange) throws IOException {
@@ -893,6 +980,11 @@ class AviatorSSCAuditHelperTest {
             try (var outputStream = exchange.getResponseBody()) {
                 outputStream.write(response);
             }
+        }
+
+        /** Whether issues were paged through to count them, as opposed to only being counted with server-side queries. */
+        private boolean usedPagination() {
+            return issueQueries.stream().filter(q -> !q.contains("q=suppressed:true")).anyMatch(q -> q.contains("limit=200"));
         }
 
         private String getLastIssueQuery() {

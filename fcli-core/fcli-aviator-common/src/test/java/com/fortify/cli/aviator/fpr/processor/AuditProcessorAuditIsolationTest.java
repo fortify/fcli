@@ -23,13 +23,17 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
+import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.transform.stream.StreamSource;
+import javax.xml.validation.SchemaFactory;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -39,6 +43,8 @@ import org.w3c.dom.NodeList;
 
 import com.fortify.cli.aviator.audit.model.AuditResponse;
 import com.fortify.cli.aviator.audit.model.AuditResult;
+import com.fortify.cli.aviator.audit.model.Autoremediation;
+import com.fortify.cli.aviator.audit.model.Change;
 import com.fortify.cli.aviator.config.TagMappingConfig;
 import com.fortify.cli.aviator.fpr.model.FPRInfo;
 import com.fortify.cli.aviator.util.Constants;
@@ -87,6 +93,507 @@ class AuditProcessorAuditIsolationTest {
                 || readTagValues(audited).contains(Constants.AVIATOR_NOT_AN_ISSUE));
         assertTrue(readComments(audited).stream().anyMatch(c -> c.contains("Reviewed by Aviator")));
         assertTrue(hasTagHistory(audited));
+    }
+
+    @Test
+    void testCoveredIssueWhoseFixIsNotWrittenIsNotWrittenToRemediationsXml() throws Exception {
+        createTestFpr(multiIssueAuditXml("instance-B"));
+        AuditProcessor auditProcessor = new AuditProcessor(fprHandle);
+        auditProcessor.processAuditXML();
+
+        auditProcessor.updateAndSaveAuditAndRemediationsXml(
+                Map.of("instance-B", coveredResponse("instance-B", List.of("instance-A"))),
+                createTagMappingConfig(),
+                Map.of("instance-B", "SQL Injection"),
+                new FPRInfo(fprHandle));
+
+        // instance-A has no entry of its own, so the covered issue would reference nothing and is not written.
+        assertTrue(readRemediationEntries().isEmpty());
+    }
+
+    @Test
+    void testFlippingExploitableToNotAnIssueRemovesTheIssuesOldAdviceFromTheUpload() throws Exception {
+        createTestFprWithSource(multiIssueAuditXml("instance-A"), "Example.java", "line1\nline2\nline3\nline4\n");
+        saveWithFreshProcessor(Map.of("instance-A", exploitableFixResponse("instance-A", 2, "A-CODE")));
+        assertEquals(Set.of("instance-A"), readRemediationEntries().keySet(), "the first run leaves advice in the FPR");
+
+        // A later run starts from an FPR that already carries that advice and flips the verdict without new advice.
+        reopenFpr();
+        saveWithFreshProcessor(Map.of("instance-A", successResponse("instance-A")));
+
+        assertEquals(Set.of(), readRemediationEntries().keySet());
+        assertRemediationsFileIsSchemaValid();
+    }
+
+    @Test
+    void testRemediationsXmlHoldsOnlyTheAdviceFromTheCurrentRun() throws Exception {
+        createTestFprWithSource(multiIssueAuditXml("instance-A", "instance-B"), "Example.java",
+                "line1\nline2\nline3\nline4\n");
+        saveWithFreshProcessor(Map.of("instance-A", exploitableFixResponse("instance-A", 2, "A-CODE")));
+        assertEquals(Set.of("instance-A"), readRemediationEntries().keySet());
+
+        reopenFpr();
+        saveWithFreshProcessor(Map.of("instance-B", exploitableFixResponse("instance-B", 3, "B-CODE")));
+
+        assertEquals(Set.of("instance-B"), readRemediationEntries().keySet());
+        assertRemediationsFileIsSchemaValid();
+    }
+
+    @Test
+    void testRunThatOnlyRecordsBaselinesDoesNotCarryOverOldAdvice() throws Exception {
+        createTestFprWithSource(multiIssueAuditXml("instance-A"), "Example.java", "line1\nline2\nline3\nline4\n");
+        saveWithFreshProcessor(Map.of("instance-A", exploitableFixResponse("instance-A", 2, "A-CODE")));
+        assertEquals(Set.of("instance-A"), readRemediationEntries().keySet());
+
+        reopenFpr();
+        saveWithFreshProcessor(Map.of());
+
+        assertEquals(Set.of(), readRemediationEntries().keySet());
+        assertRemediationsFileIsSchemaValid();
+    }
+
+    @Test
+    void testSupersededAndCoveredIssuesAreWrittenAsReferencesToTheSupersedingFix() throws Exception {
+        createTestFprWithSource(multiIssueAuditXml("instance-A", "instance-D", "instance-C"),
+                "Example.java", "line1\nline2\nline3\nline4\n");
+        AuditProcessor auditProcessor = new AuditProcessor(fprHandle);
+        auditProcessor.processAuditXML();
+
+        Map<String, AuditResponse> responses = new LinkedHashMap<>();
+        responses.put("instance-D", fixResponse("instance-D", 2, 2, "D-CODE", List.of()));
+        responses.put("instance-A", fixResponse("instance-A", 1, 3, "A-CODE", List.of("instance-D")));
+        responses.put("instance-C", coveredResponse("instance-C", List.of("instance-D")));
+
+        auditProcessor.updateAndSaveAuditAndRemediationsXml(
+                responses,
+                createTagMappingConfig(),
+                Map.of("instance-A", "SQL Injection", "instance-D", "SQL Injection", "instance-C", "SQL Injection"),
+                new FPRInfo(fprHandle));
+
+        Map<String, Element> entries = readRemediationEntries();
+        assertEquals(Set.of("instance-A", "instance-D", "instance-C"), entries.keySet());
+
+        Element fix = entries.get("instance-A");
+        assertEquals(1, fix.getElementsByTagNameNS(REMEDIATIONS_NS, "FileChanges").getLength());
+        assertEquals(List.of("instance-D"), referencedIds(fix, "SupersedesPriorFix"));
+        assertEquals(List.of(), referencedIds(fix, "CoveredByPriorFix"));
+
+        // The superseded issue keeps no fix of its own, only a reference to the superseding fix.
+        Element superseded = entries.get("instance-D");
+        assertEquals(0, superseded.getElementsByTagNameNS(REMEDIATIONS_NS, "FileChanges").getLength());
+        assertEquals(List.of("instance-A"), referencedIds(superseded, "CoveredByPriorFix"));
+
+        // A reference to a superseded issue is redirected to the fix that superseded it.
+        Element covered = entries.get("instance-C");
+        assertEquals(0, covered.getElementsByTagNameNS(REMEDIATIONS_NS, "FileChanges").getLength());
+        assertEquals(List.of("instance-A"), referencedIds(covered, "CoveredByPriorFix"));
+    }
+
+    @Test
+    void testSupersededIssueIsResolvedToTheWidestFixInAChain() {
+        Map<String, AuditResponse> responses = new LinkedHashMap<>();
+        responses.put("D", fixResponse("D", 2, 2, "d", List.of()));
+        responses.put("A", fixResponse("A", 1, 3, "a", List.of("D")));
+        responses.put("E", fixResponse("E", 1, 5, "e", List.of("A")));
+        Map<String, String> timestamps = Map.of("D", "t", "A", "t", "E", "t");
+
+        Map<String, String> direct = SupersedeGraph.resolveDirectSupersededBy(responses, timestamps::containsKey);
+
+        assertEquals(Map.of("D", "A", "A", "E"), direct);
+        assertEquals("E", SupersedeGraph.writtenFixFrom("D", direct, Set.of("E")));
+    }
+
+    @Test
+    void testSupersedeCyclesAndUnknownIssuesAreIgnored() {
+        Map<String, AuditResponse> responses = new LinkedHashMap<>();
+        responses.put("A", fixResponse("A", 1, 3, "a", List.of("B", "MISSING")));
+        responses.put("B", fixResponse("B", 1, 3, "b", List.of("A")));
+        Map<String, String> timestamps = Map.of("A", "t", "B", "t");
+
+        assertEquals(Map.of(), SupersedeGraph.resolveDirectSupersededBy(responses, timestamps::containsKey));
+    }
+
+    @Test
+    void testCoveredNoteNamesTheFixThatSupersededTheCoveringFix() {
+        Map<String, AuditResponse> responses = new LinkedHashMap<>();
+        responses.put("A", fixResponse("A", 1, 3, "a", List.of()));
+        responses.put("B", fixResponse("B", 1, 3, "b", List.of("A")));
+        responses.put("C", coveredResponse("C", List.of("A")));
+        responses.get("C").getAuditResult().setComment("Text. Note: No separate automated remediation was generated "
+                + "for this finding because it is already addressed by the fix for issue A.");
+        responses.put("E", coveredResponse("E", List.of("A", "B")));
+        responses.get("E").getAuditResult().setComment("Note: It is already addressed by the fixes for issues A, B.");
+        responses.put("F", coveredResponse("F", List.of("X")));
+        responses.get("F").getAuditResult().setComment("Note: It is already addressed by the fix for issue X.");
+
+        Map<String, AuditResponse> resolved = PriorFixNotes.withResolvedPriorFixNotes(responses, Set.of("B"));
+
+        assertEquals("Text. Note: No separate automated remediation was generated for this finding because it is "
+                + "already addressed by the fix for issue B.", resolved.get("C").getAuditResult().getComment());
+        assertEquals("Note: It is already addressed by the fix for issue B.", resolved.get("E").getAuditResult().getComment());
+        assertEquals("Note: It is already addressed by the fix for issue X.", resolved.get("F").getAuditResult().getComment());
+    }
+
+    @Test
+    void testSupersedeNoteListsEveryAbsorbedIssueIncludingChains() {
+        Map<String, AuditResponse> responses = new LinkedHashMap<>();
+        responses.put("D", fixResponse("D", 2, 2, "d", List.of()));
+        responses.put("A", fixResponse("A", 1, 3, "a", List.of("D")));
+        responses.put("E", fixResponse("E", 1, 5, "e", List.of("A")));
+        responses.get("E").getAuditResult().setComment("Note: The automated remediation for this finding also contains "
+                + "the fix for issue A, which falls within the lines it changes.");
+
+        Map<String, AuditResponse> resolved = PriorFixNotes.withResolvedPriorFixNotes(responses, Set.of("E"));
+
+        assertEquals("Note: The automated remediation for this finding also contains the fixes for issues A, D, "
+                + "which falls within the lines it changes.", resolved.get("E").getAuditResult().getComment());
+    }
+
+    @Test
+    void testNotesAreLeftAloneWhenNothingWasSuperseded() {
+        Map<String, AuditResponse> responses = new LinkedHashMap<>();
+        responses.put("A", fixResponse("A", 1, 3, "a", List.of()));
+        responses.put("C", coveredResponse("C", List.of("A")));
+        responses.get("C").getAuditResult().setComment("Note: It is already addressed by the fix for issue A.");
+
+        Map<String, AuditResponse> resolved = PriorFixNotes.withResolvedPriorFixNotes(responses, Set.of("A"));
+
+        assertEquals("Note: It is already addressed by the fix for issue A.", resolved.get("C").getAuditResult().getComment());
+    }
+
+    @Test
+    void testNarrowerFixIsKeptWhenTheWiderFixCannotBeWritten() throws Exception {
+        createTestFprWithSource(multiIssueAuditXml("instance-A", "instance-D", "instance-C"),
+                "Example.java", "line1\nline2\nline3\nline4\n");
+        AuditProcessor auditProcessor = new AuditProcessor(fprHandle);
+        auditProcessor.processAuditXML();
+
+        Map<String, AuditResponse> responses = new LinkedHashMap<>();
+        responses.put("instance-D", fixResponse("instance-D", 2, 2, "D-CODE", List.of()));
+        // The wider fix is for a file that is not in the source archive, so it cannot be written.
+        responses.put("instance-A", fixResponse("instance-A", "Missing.java", 1, 3, "A-CODE", List.of("instance-D")));
+        responses.put("instance-C", coveredResponse("instance-C", List.of("instance-D")));
+
+        auditProcessor.updateAndSaveAuditAndRemediationsXml(
+                responses,
+                createTagMappingConfig(),
+                Map.of("instance-A", "SQL Injection", "instance-D", "SQL Injection", "instance-C", "SQL Injection"),
+                new FPRInfo(fprHandle));
+
+        Map<String, Element> entries = readRemediationEntries();
+        assertEquals(Set.of("instance-D", "instance-C"), entries.keySet());
+        Element narrower = entries.get("instance-D");
+        assertEquals(1, narrower.getElementsByTagNameNS(REMEDIATIONS_NS, "FileChanges").getLength());
+        assertEquals(List.of(), referencedIds(narrower, "CoveredByPriorFix"));
+        assertEquals(List.of(), referencedIds(narrower, "SupersedesPriorFix"));
+        assertEquals(List.of("instance-D"), referencedIds(entries.get("instance-C"), "CoveredByPriorFix"));
+    }
+
+    @Test
+    void testSupersededChainFallsBackToTheNearestWrittenFix() throws Exception {
+        createTestFprWithSource(multiIssueAuditXml("instance-A", "instance-D", "instance-E"),
+                "Example.java", "line1\nline2\nline3\nline4\n");
+        AuditProcessor auditProcessor = new AuditProcessor(fprHandle);
+        auditProcessor.processAuditXML();
+
+        Map<String, AuditResponse> responses = new LinkedHashMap<>();
+        responses.put("instance-D", fixResponse("instance-D", 2, 2, "D-CODE", List.of()));
+        responses.put("instance-A", fixResponse("instance-A", 1, 3, "A-CODE", List.of("instance-D")));
+        // The widest fix cannot be written, so A stays a fix and D references A instead of E.
+        responses.put("instance-E", fixResponse("instance-E", "Missing.java", 1, 4, "E-CODE", List.of("instance-A")));
+
+        auditProcessor.updateAndSaveAuditAndRemediationsXml(
+                responses,
+                createTagMappingConfig(),
+                Map.of("instance-A", "SQL Injection", "instance-D", "SQL Injection", "instance-E", "SQL Injection"),
+                new FPRInfo(fprHandle));
+
+        Map<String, Element> entries = readRemediationEntries();
+        assertEquals(Set.of("instance-A", "instance-D"), entries.keySet());
+        Element fix = entries.get("instance-A");
+        assertEquals(1, fix.getElementsByTagNameNS(REMEDIATIONS_NS, "FileChanges").getLength());
+        assertEquals(List.of("instance-D"), referencedIds(fix, "SupersedesPriorFix"));
+        Element narrower = entries.get("instance-D");
+        assertEquals(0, narrower.getElementsByTagNameNS(REMEDIATIONS_NS, "FileChanges").getLength());
+        assertEquals(List.of("instance-A"), referencedIds(narrower, "CoveredByPriorFix"));
+    }
+
+    @Test
+    void testNotesFollowTheFixesThatWereActuallyWritten() {
+        Map<String, AuditResponse> responses = new LinkedHashMap<>();
+        responses.put("D", fixResponse("D", 2, 2, "d", List.of()));
+        responses.put("A", fixResponse("A", 1, 3, "a", List.of("D")));
+        responses.get("A").getAuditResult().setComment("Fix.\n\nNote: The automated remediation for this finding also "
+                + "contains the fix for issue D, which falls within the lines it changes.");
+        responses.put("C", coveredResponse("C", List.of("D")));
+        responses.get("C").getAuditResult().setComment("Note: It is already addressed by the fix for issue D.");
+
+        // A could not be written, so D keeps its own fix: C stays covered by D and A claims nothing.
+        Map<String, AuditResponse> resolved = PriorFixNotes.withResolvedPriorFixNotes(responses, Set.of("D"));
+
+        assertEquals("Note: It is already addressed by the fix for issue D.", resolved.get("C").getAuditResult().getComment());
+        assertEquals("Fix.", resolved.get("A").getAuditResult().getComment());
+    }
+
+    @Test
+    void testNotesAreNotRewrittenWhenNothingWasSuperseded() {
+        Map<String, AuditResponse> responses = new LinkedHashMap<>();
+        responses.put("C", coveredResponse("C", List.of("A")));
+        responses.get("C").getAuditResult().setComment("Note: It is already addressed by the fix for issue A.");
+
+        Map<String, AuditResponse> resolved = PriorFixNotes.withResolvedPriorFixNotes(responses, null);
+
+        assertEquals("Note: It is already addressed by the fix for issue A.", resolved.get("C").getAuditResult().getComment());
+    }
+
+    @Test
+    void testAuditCommentsNameTheFixThatIsWrittenWhenTheWiderFixCannotBeWritten() throws Exception {
+        createTestFprWithSource(multiIssueAuditXml("instance-A", "instance-D", "instance-C"),
+                "Example.java", "line1\nline2\nline3\nline4\n");
+        AuditProcessor auditProcessor = new AuditProcessor(fprHandle);
+        auditProcessor.processAuditXML();
+
+        Map<String, AuditResponse> responses = new LinkedHashMap<>();
+        responses.put("instance-D", fixResponse("instance-D", 2, 2, "D-CODE", List.of()));
+        // The wider fix is for a file that is not in the source archive, so it cannot be written.
+        responses.put("instance-A", fixResponse("instance-A", "Missing.java", 1, 3, "A-CODE", List.of("instance-D")));
+        responses.get("instance-A").getAuditResult().setComment("Wider fix.\n\nNote: The automated remediation for this "
+                + "finding also contains the fix for issue instance-D, which falls within the lines it changes.");
+        responses.put("instance-C", coveredResponse("instance-C", List.of("instance-D")));
+        responses.get("instance-C").getAuditResult().setComment("Covered.\n\nNote: No separate automated remediation was "
+                + "generated for this finding because it is already addressed by the fix for issue instance-D.");
+
+        auditProcessor.updateAndSaveAuditAndRemediationsXml(
+                responses,
+                createTagMappingConfig(),
+                Map.of("instance-A", "SQL Injection", "instance-D", "SQL Injection", "instance-C", "SQL Injection"),
+                new FPRInfo(fprHandle));
+
+        // remediations.xml has the narrower fix and the issue it covers, and no entry for the wider fix.
+        assertEquals(Set.of("instance-D", "instance-C"), readRemediationEntries().keySet());
+        // The covered note must keep naming instance-D (it was not redirected to the unwritten instance-A) and the
+        // unwritten wider fix must not claim to contain it.
+        assertTrue(readComments(readIssueElement("instance-C")).stream()
+                .anyMatch(c -> c.contains("fix for issue instance-D.")));
+        assertTrue(readComments(readIssueElement("instance-A")).stream().noneMatch(c -> c.contains("also contains")));
+    }
+
+    @Test
+    void testIssueClaimedByTwoFixesGoesToTheWidestRegardlessOfIterationOrder() {
+        Map<String, AuditResponse> narrowFirst = new LinkedHashMap<>();
+        narrowFirst.put("X", fixResponse("X", 4, 4, "x", List.of()));
+        narrowFirst.put("A-narrow", fixResponse("A-narrow", 3, 5, "n", List.of("X")));
+        narrowFirst.put("B-wide", fixResponse("B-wide", 1, 9, "w", List.of("X")));
+        Map<String, AuditResponse> wideFirst = new LinkedHashMap<>();
+        wideFirst.put("B-wide", narrowFirst.get("B-wide"));
+        wideFirst.put("A-narrow", narrowFirst.get("A-narrow"));
+        wideFirst.put("X", narrowFirst.get("X"));
+
+        assertEquals(Map.of("X", "B-wide"), SupersedeGraph.resolveDirectSupersededBy(narrowFirst, id -> true));
+        assertEquals(Map.of("X", "B-wide"), SupersedeGraph.resolveDirectSupersededBy(wideFirst, id -> true));
+    }
+
+    @Test
+    void testIssueClaimedByEquallyWideFixesGoesToTheSmallestId() {
+        Map<String, AuditResponse> first = new LinkedHashMap<>();
+        first.put("X", fixResponse("X", 4, 4, "x", List.of()));
+        first.put("F2", fixResponse("F2", 1, 9, "b", List.of("X")));
+        first.put("F1", fixResponse("F1", 1, 9, "a", List.of("X")));
+        Map<String, AuditResponse> second = new LinkedHashMap<>();
+        second.put("F1", first.get("F1"));
+        second.put("X", first.get("X"));
+        second.put("F2", first.get("F2"));
+
+        assertEquals(Map.of("X", "F1"), SupersedeGraph.resolveDirectSupersededBy(first, id -> true));
+        assertEquals(Map.of("X", "F1"), SupersedeGraph.resolveDirectSupersededBy(second, id -> true));
+    }
+
+    @Test
+    void testServerNoteWordingIsPinned() {
+        // The exact sentences the aviator server appends (PriorFixSkipSupport and PriorFixSupersedeSupport). If the server
+        // changes them, the audit comment rewrite stops working, so this test must be updated together with the server.
+        String serverCoveredNote = "Note: No separate automated remediation was generated for this finding because it is "
+                + "already addressed by the fixes for issues D, X.";
+        String serverSupersedeNote = "Note: The automated remediation for this finding also contains the fix for issue D, "
+                + "which falls within the lines it changes.";
+
+        Map<String, AuditResponse> responses = new LinkedHashMap<>();
+        responses.put("D", fixResponse("D", 2, 2, "d", List.of()));
+        responses.put("A", fixResponse("A", 1, 3, "a", List.of("D")));
+        responses.get("A").getAuditResult().setComment("Wider fix.\n\n" + serverSupersedeNote);
+        responses.put("C", coveredResponse("C", List.of("D", "X")));
+        responses.get("C").getAuditResult().setComment("Covered.\n\n" + serverCoveredNote);
+        responses.put("X", fixResponse("X", 20, 21, "x", List.of()));
+
+        Map<String, AuditResponse> resolved = PriorFixNotes.withResolvedPriorFixNotes(responses, Set.of("A", "X"));
+
+        assertEquals("Covered.\n\nNote: No separate automated remediation was generated for this finding because it is "
+                + "already addressed by the fixes for issues A, X.", resolved.get("C").getAuditResult().getComment());
+        assertEquals("Wider fix.\n\nNote: The automated remediation for this finding also contains the fix for issue D, "
+                + "which falls within the lines it changes.", resolved.get("A").getAuditResult().getComment());
+    }
+
+    @Test
+    void testResolvingNotesDoesNotModifyTheCallersResponses() {
+        Map<String, AuditResponse> responses = new LinkedHashMap<>();
+        responses.put("D", fixResponse("D", 2, 2, "d", List.of()));
+        responses.put("A", fixResponse("A", 1, 3, "a", List.of("D")));
+        responses.put("C", coveredResponse("C", List.of("D")));
+        responses.get("C").getAuditResult().setComment("Note: It is already addressed by the fix for issue D.");
+
+        Map<String, AuditResponse> resolved = PriorFixNotes.withResolvedPriorFixNotes(responses, Set.of("A"));
+
+        assertEquals("Note: It is already addressed by the fix for issue A.", resolved.get("C").getAuditResult().getComment());
+        assertEquals("Note: It is already addressed by the fix for issue D.", responses.get("C").getAuditResult().getComment());
+    }
+
+    @Test
+    void testCommentWithoutARecognizableNoteIsLeftUnchanged() {
+        Map<String, AuditResponse> responses = new LinkedHashMap<>();
+        responses.put("D", fixResponse("D", 2, 2, "d", List.of()));
+        responses.put("A", fixResponse("A", 1, 3, "a", List.of("D")));
+        responses.put("C", coveredResponse("C", List.of("D")));
+        responses.get("C").getAuditResult().setComment("Reworded: this is covered by the fix for D.");
+
+        Map<String, AuditResponse> resolved = PriorFixNotes.withResolvedPriorFixNotes(responses, Set.of("A"));
+
+        assertEquals("Reworded: this is covered by the fix for D.", resolved.get("C").getAuditResult().getComment());
+    }
+
+    private static final String REMEDIATIONS_NS = "xmlns://www.fortify.com/schema/remediations";
+
+    private static AuditResponse coveredResponse(String issueId, List<String> coveredBy) {
+        return AuditResponse.builder()
+                .issueId(issueId)
+                .status("SUCCESS")
+                .tier("GOLD")
+                .auditResult(AuditResult.builder()
+                        .tagValue(Constants.NOT_AN_ISSUE)
+                        .comment("Covered by the fix for " + coveredBy)
+                        .autoremediation(Autoremediation.builder()
+                                .skipReason("Covered by prior fix")
+                                .coveredByIssueIds(coveredBy)
+                                .build())
+                        .build())
+                .build();
+    }
+
+    private static AuditResponse fixResponse(String issueId, int from, int to, String newCode, List<String> supersedes) {
+        return fixResponse(issueId, "Example.java", from, to, newCode, supersedes);
+    }
+
+    private static AuditResponse fixResponse(String issueId, String file, int from, int to, String newCode,
+            List<String> supersedes) {
+        return AuditResponse.builder()
+                .issueId(issueId)
+                .status("SUCCESS")
+                .tier("GOLD")
+                .auditResult(AuditResult.builder()
+                        .tagValue(Constants.NOT_AN_ISSUE)
+                        .comment("Fix for " + issueId)
+                        .autoremediation(Autoremediation.builder()
+                                .changes(List.of(Change.builder()
+                                        .file(file)
+                                        .fromLine(String.valueOf(from))
+                                        .toLine(String.valueOf(to))
+                                        .replaceWith(newCode)
+                                        .build()))
+                                .supersededIssueIds(supersedes)
+                                .build())
+                        .build())
+                .build();
+    }
+
+    private void saveWithFreshProcessor(Map<String, AuditResponse> responses) throws Exception {
+        AuditProcessor auditProcessor = new AuditProcessor(fprHandle);
+        auditProcessor.processAuditXML();
+        Map<String, String> categories = new HashMap<>();
+        responses.keySet().forEach(id -> categories.put(id, "SQL Injection"));
+        auditProcessor.updateAndSaveAuditAndRemediationsXml(responses, createTagMappingConfig(), categories,
+                new FPRInfo(fprHandle));
+    }
+
+    /** Closes and reopens the FPR so the next save starts from what the previous save wrote to disk. */
+    private void reopenFpr() throws Exception {
+        fprHandle.close();
+        fprHandle = new FprHandle(tempFprFile);
+    }
+
+    private static AuditResponse exploitableFixResponse(String issueId, int line, String newCode) {
+        return AuditResponse.builder()
+                .issueId(issueId)
+                .status("SUCCESS")
+                .tier("GOLD")
+                .auditResult(AuditResult.builder()
+                        .tagValue(Constants.EXPLOITABLE)
+                        .comment("Fix for " + issueId)
+                        .autoremediation(Autoremediation.builder()
+                                .changes(List.of(Change.builder()
+                                        .file("Example.java")
+                                        .fromLine(String.valueOf(line))
+                                        .toLine(String.valueOf(line))
+                                        .replaceWith(newCode)
+                                        .build()))
+                                .supersededIssueIds(List.of())
+                                .build())
+                        .build())
+                .build();
+    }
+
+    private void assertRemediationsFileIsSchemaValid() throws Exception {
+        var schemaFactory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
+        try (var xsd = AuditProcessor.class.getResourceAsStream("/remediations.xsd");
+                var xml = Files.newInputStream(fprHandle.getPath("/remediations.xml"))) {
+            schemaFactory.newSchema(new StreamSource(xsd)).newValidator().validate(new StreamSource(xml));
+        }
+    }
+
+    private Map<String, Element> readRemediationEntries() throws Exception {
+        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+        factory.setNamespaceAware(true);
+        Document remediations;
+        try (var inputStream = Files.newInputStream(fprHandle.getPath("/remediations.xml"))) {
+            remediations = factory.newDocumentBuilder().parse(inputStream);
+        }
+        Map<String, Element> entries = new LinkedHashMap<>();
+        NodeList nodes = remediations.getElementsByTagNameNS(REMEDIATIONS_NS, "Remediation");
+        for (int i = 0; i < nodes.getLength(); i++) {
+            Element entry = (Element) nodes.item(i);
+            entries.put(entry.getAttribute("instanceId"), entry);
+        }
+        return entries;
+    }
+
+    private static List<String> referencedIds(Element entry, String elementName) {
+        List<String> ids = new ArrayList<>();
+        NodeList nodes = entry.getElementsByTagNameNS(REMEDIATIONS_NS, elementName);
+        for (int i = 0; i < nodes.getLength(); i++) {
+            ids.add(((Element) nodes.item(i)).getAttribute("instanceId"));
+        }
+        return ids;
+    }
+
+    private void createTestFprWithSource(String auditXml, String fileName, String content) throws Exception {
+        tempFprFile = Files.createTempFile("audit-processor-isolation", ".fpr");
+        try (ZipOutputStream zipOutputStream = new ZipOutputStream(Files.newOutputStream(tempFprFile))) {
+            zipOutputStream.putNextEntry(new ZipEntry("audit.fvdl"));
+            zipOutputStream.write(minimalAuditFvdl().getBytes(StandardCharsets.UTF_8));
+            zipOutputStream.closeEntry();
+
+            zipOutputStream.putNextEntry(new ZipEntry("audit.xml"));
+            zipOutputStream.write(auditXml.getBytes(StandardCharsets.UTF_8));
+            zipOutputStream.closeEntry();
+
+            zipOutputStream.putNextEntry(new ZipEntry("src-archive/index.xml"));
+            zipOutputStream.write(("<?xml version=\"1.0\" encoding=\"UTF-8\"?><index><entry key=\"" + fileName
+                    + "\">src-archive/" + fileName + "</entry></index>").getBytes(StandardCharsets.UTF_8));
+            zipOutputStream.closeEntry();
+
+            zipOutputStream.putNextEntry(new ZipEntry("src-archive/" + fileName));
+            zipOutputStream.write(content.getBytes(StandardCharsets.UTF_8));
+            zipOutputStream.closeEntry();
+        }
+        fprHandle = new FprHandle(tempFprFile);
     }
 
     @Test

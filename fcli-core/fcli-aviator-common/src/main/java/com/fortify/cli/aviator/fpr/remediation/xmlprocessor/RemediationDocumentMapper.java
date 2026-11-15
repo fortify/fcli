@@ -50,7 +50,21 @@ public final class RemediationDocumentMapper {
         for (int i = 0; i < fileChangesNodes.getLength(); i++) {
             fileChanges.add(mapFileChange((Element) fileChangesNodes.item(i)));
         }
-        return new Remediation(instanceId, fileChanges);
+        List<String> coveredBy = referencedInstanceIds(remediationElement, "CoveredByPriorFix");
+        List<String> supersedes = referencedInstanceIds(remediationElement, "SupersedesPriorFix");
+        return new Remediation(instanceId, fileChanges, coveredBy, supersedes);
+    }
+
+    private List<String> referencedInstanceIds(Element remediationElement, String elementName) {
+        List<String> ids = new ArrayList<>();
+        NodeList nodes = remediationElement.getElementsByTagNameNS(NAMESPACE_URI, elementName);
+        for (int i = 0; i < nodes.getLength(); i++) {
+            String id = ((Element) nodes.item(i)).getAttribute("instanceId");
+            if (!id.isBlank()) {
+                ids.add(id);
+            }
+        }
+        return ids;
     }
 
     private FileChange mapFileChange(Element fileChangesElement) {

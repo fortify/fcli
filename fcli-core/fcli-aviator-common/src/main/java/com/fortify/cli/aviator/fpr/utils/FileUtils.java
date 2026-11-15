@@ -95,6 +95,19 @@ public class FileUtils {
     }
 
     /**
+     * Returns the decoded lines of a source file from the FPR, or empty when the file is not in the source
+     * archive, cannot be read or decoded, exceeds the size limit, or has no lines. Results are cached.
+     */
+    public Optional<List<String>> readSourceLines(FprHandle fprHandle, String relativePath) {
+        Path fullSourcePath = resolveFullPath(fprHandle, relativePath);
+        if (fullSourcePath == null) {
+            return Optional.empty();
+        }
+        List<String> lines = readFileWithFallback(fullSourcePath, relativePath);
+        return lines.isEmpty() ? Optional.empty() : Optional.of(lines);
+    }
+
+    /**
      * Counts lines in a file using cached content.
      *
      * @param filePath Path to the file

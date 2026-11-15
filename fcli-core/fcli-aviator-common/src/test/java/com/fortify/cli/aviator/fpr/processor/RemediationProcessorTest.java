@@ -25,6 +25,7 @@ import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -40,6 +41,7 @@ import org.junit.jupiter.api.condition.OS;
 import org.junit.jupiter.api.io.TempDir;
 
 import com.fortify.cli.aviator.applyRemediation.ApplyAutoRemediationOnSource;
+import com.fortify.cli.aviator.fpr.remediation.ImplicitFixApprover;
 import com.fortify.cli.aviator.fpr.remediation.RemediationExecutionMode;
 import com.fortify.cli.aviator.fpr.remediation.RemediationProcessingOptions;
 import com.fortify.cli.aviator.fpr.remediation.RemediationProcessor;
@@ -1747,6 +1749,267 @@ class RemediationProcessorTest {
                 </r:Remediations>
                 """.formatted(REMEDIATIONS_NAMESPACE, remediationsXml);
 
+        try (ZipOutputStream zipOutputStream = new ZipOutputStream(Files.newOutputStream(fprPath))) {
+            zipOutputStream.putNextEntry(new ZipEntry("remediations.xml"));
+            zipOutputStream.write(remediationXml.getBytes(StandardCharsets.UTF_8));
+            zipOutputStream.closeEntry();
+        }
+        return fprPath;
+    }
+
+    @Test
+    void coveredByPriorFixIsReportedAndNotCountedAsSkipped() throws Exception {
+        Path sourceFile = writeSourceFile("before\nTARGET\nafter\n");
+        Path fprPath = createCoveredByFpr("fix-A");
+
+        RemediationMetric metric;
+        try (FprHandle fprHandle = new FprHandle(fprPath)) {
+            metric = new RemediationProcessor(fprHandle, tempDir.toString()).processRemediationXML();
+        }
+
+        assertEquals(2, metric.totalRemediations());
+        assertEquals(1, metric.appliedRemediations());
+        assertEquals(1, metric.coveredByPriorFixRemediations());
+        assertEquals(Map.of("covered-B", List.of("fix-A")), metric.coveredByPriorFixIssues());
+        assertEquals(0, metric.skippedRemediations());
+        assertEquals("before\nREPLACED\nafter\n", Files.readString(sourceFile));
+    }
+
+    @Test
+    void coveredIssueWithoutAppliedCoveringFixIsSkipped() throws Exception {
+        Path sourceFile = writeSourceFile("before\nTARGET\nafter\n");
+        Path fprPath = createCoveredByFpr("no-such-fix");
+
+        RemediationMetric metric;
+        try (FprHandle fprHandle = new FprHandle(fprPath)) {
+            metric = new RemediationProcessor(fprHandle, tempDir.toString()).processRemediationXML();
+        }
+
+        assertEquals(0, metric.coveredByPriorFixRemediations());
+        assertEquals(1, metric.skippedRemediations());
+        assertEquals(1, metric.appliedRemediations());
+        assertEquals("before\nREPLACED\nafter\n", Files.readString(sourceFile));
+    }
+
+    @Test
+    void requestingOnlyTheCoveredIssueAppliesTheCoveringFixImplicitly() throws Exception {
+        Path sourceFile = writeSourceFile("before\nTARGET\nafter\n");
+        Path fprPath = createCoveredByFpr("fix-A");
+
+        RemediationMetric metric;
+        try (FprHandle fprHandle = new FprHandle(fprPath)) {
+            metric = new RemediationProcessor(fprHandle, tempDir.toString(),
+                options(Set.of("covered-B"), RemediationExecutionMode.APPLY)).processRemediationXML();
+        }
+
+        assertEquals(2, metric.totalRemediations());
+        assertEquals(1, metric.appliedRemediations());
+        assertEquals(1, metric.coveredByPriorFixRemediations());
+        assertEquals(2, metric.remediatedRemediations());
+        assertEquals(Set.of("fix-A"), metric.implicitlyAppliedIssueIds());
+        assertEquals(0, metric.skippedRemediations());
+        assertEquals("before\nREPLACED\nafter\n", Files.readString(sourceFile));
+    }
+
+    @Test
+    void requestingTheCoveringIssueAlsoResolvesTheCoveredOne() throws Exception {
+        writeSourceFile("before\nTARGET\nafter\n");
+        Path fprPath = createCoveredByFpr("fix-A");
+
+        RemediationMetric metric;
+        try (FprHandle fprHandle = new FprHandle(fprPath)) {
+            metric = new RemediationProcessor(fprHandle, tempDir.toString(),
+                options(Set.of("fix-A"), RemediationExecutionMode.APPLY)).processRemediationXML();
+        }
+
+        assertEquals(2, metric.totalRemediations());
+        assertEquals(1, metric.appliedRemediations());
+        assertEquals(1, metric.coveredByPriorFixRemediations());
+        assertEquals(2, metric.remediatedRemediations());
+        assertEquals(Set.of(), metric.implicitlyAppliedIssueIds());
+    }
+
+    @Test
+    void supersededIssueIsResolvedByTheSupersedingFixAndCountedAsRemediated() throws Exception {
+        Path sourceFile = writeSourceFile("before\nTARGET\nafter\n");
+        Path fprPath = createReferenceFpr("fix-A", "superseded-D", true);
+
+        RemediationMetric metric;
+        try (FprHandle fprHandle = new FprHandle(fprPath)) {
+            metric = new RemediationProcessor(fprHandle, tempDir.toString()).processRemediationXML();
+        }
+
+        assertEquals(2, metric.totalRemediations());
+        assertEquals(1, metric.appliedRemediations());
+        assertEquals(1, metric.supersededRemediations());
+        assertEquals(1, metric.supersedesPriorFixRemediations());
+        assertEquals(0, metric.coveredByPriorFixRemediations());
+        assertEquals(2, metric.remediatedRemediations());
+        assertEquals(0, metric.skippedRemediations());
+        assertEquals(Map.of("superseded-D", List.of("fix-A")), metric.supersededByPriorFixIssues());
+        assertEquals("before\nREPLACED\nafter\n", Files.readString(sourceFile));
+    }
+
+    @Test
+    void requestingTheSupersedingFixAlsoResolvesTheSupersededIssue() throws Exception {
+        writeSourceFile("before\nTARGET\nafter\n");
+        Path fprPath = createReferenceFpr("fix-A", "superseded-D", true);
+
+        RemediationMetric metric;
+        try (FprHandle fprHandle = new FprHandle(fprPath)) {
+            metric = new RemediationProcessor(fprHandle, tempDir.toString(),
+                options(Set.of("fix-A"), RemediationExecutionMode.APPLY)).processRemediationXML();
+        }
+
+        assertEquals(2, metric.totalRemediations());
+        assertEquals(1, metric.appliedRemediations());
+        assertEquals(1, metric.supersedesPriorFixRemediations());
+        assertEquals(2, metric.remediatedRemediations());
+        assertEquals(Set.of(), metric.implicitlyAppliedIssueIds());
+    }
+
+    @Test
+    void requestingOnlyTheSupersededIssueAppliesTheSupersedingFixWhenApproved() throws Exception {
+        Path sourceFile = writeSourceFile("before\nTARGET\nafter\n");
+        Path fprPath = createReferenceFpr("fix-A", "superseded-D", true);
+        List<ImplicitFixApprover.ImplicitFix> asked = new ArrayList<>();
+
+        RemediationMetric metric;
+        try (FprHandle fprHandle = new FprHandle(fprPath)) {
+            metric = new RemediationProcessor(fprHandle, tempDir.toString(), new RemediationProcessingOptions(
+                Set.of("superseded-D"), RemediationExecutionMode.APPLY, SourceDecoders.defaults(), proposals -> {
+                    asked.addAll(proposals);
+                    return Set.of("fix-A");
+                })).processRemediationXML();
+        }
+
+        assertEquals(1, asked.size());
+        assertEquals("fix-A", asked.get(0).fixId());
+        assertEquals(Set.of("superseded-D"), asked.get(0).requestedIssueIds());
+        assertEquals(Set.of("superseded-D"), asked.get(0).resolvedIssueIds());
+        assertEquals(2, metric.totalRemediations());
+        assertEquals(1, metric.appliedRemediations());
+        assertEquals(1, metric.supersedesPriorFixRemediations());
+        assertEquals(2, metric.remediatedRemediations());
+        assertEquals(Set.of("fix-A"), metric.implicitlyAppliedIssueIds());
+        assertEquals("before\nREPLACED\nafter\n", Files.readString(sourceFile));
+    }
+
+    @Test
+    void requestingOnlyTheSupersededIssueIsSkippedWhenTheSupersedingFixIsNotConfirmed() throws Exception {
+        Path sourceFile = writeSourceFile("before\nTARGET\nafter\n");
+        Path fprPath = createReferenceFpr("fix-A", "superseded-D", true);
+
+        RemediationMetric metric;
+        try (FprHandle fprHandle = new FprHandle(fprPath)) {
+            metric = new RemediationProcessor(fprHandle, tempDir.toString(), new RemediationProcessingOptions(
+                Set.of("superseded-D"), RemediationExecutionMode.APPLY, SourceDecoders.defaults(),
+                ImplicitFixApprover.denyAll())).processRemediationXML();
+        }
+
+        assertEquals(1, metric.totalRemediations());
+        assertEquals(0, metric.appliedRemediations());
+        assertEquals(0, metric.remediatedRemediations());
+        assertEquals(1, metric.skippedRemediations());
+        assertTrue(metric.issueSkipReasons().get("superseded-D").contains("not confirmed"));
+        assertEquals(Set.of(), metric.implicitlyAppliedIssueIds());
+        assertEquals("before\nTARGET\nafter\n", Files.readString(sourceFile));
+    }
+
+    @Test
+    void previewNeverAsksForConfirmationAndReportsTheSupersedingFix() throws Exception {
+        writeSourceFile("before\nTARGET\nafter\n");
+        Path fprPath = createReferenceFpr("fix-A", "superseded-D", true);
+        boolean[] asked = {false};
+
+        RemediationMetric metric;
+        try (FprHandle fprHandle = new FprHandle(fprPath)) {
+            metric = new RemediationProcessor(fprHandle, tempDir.toString(), new RemediationProcessingOptions(
+                Set.of("superseded-D"), RemediationExecutionMode.PREVIEW, SourceDecoders.defaults(), proposals -> {
+                    asked[0] = true;
+                    return Set.of();
+                })).processRemediationXML();
+        }
+
+        assertTrue(!asked[0]);
+        assertEquals(1, metric.supersedesPriorFixRemediations());
+        assertEquals(Set.of("fix-A"), metric.implicitlyAppliedIssueIds());
+        assertTrue(metric.previewDetails().stream()
+            .anyMatch(d -> d.issueId().equals("superseded-D") && d.status().equals("supersededByPriorFix")));
+    }
+
+    @Test
+    void dependentIssuesOfAFailedSelectedFixAreCountedInTheTotalAndTheSkipDetails() throws Exception {
+        // The source no longer contains the code fix-A wants to replace, so fix-A cannot be applied.
+        writeSourceFile("before\nSOMETHING ELSE\nafter\n");
+        Path fprPath = createReferenceFpr("fix-A", "superseded-D", true);
+
+        RemediationMetric metric;
+        try (FprHandle fprHandle = new FprHandle(fprPath)) {
+            metric = new RemediationProcessor(fprHandle, tempDir.toString(),
+                options(Set.of("fix-A"), RemediationExecutionMode.APPLY)).processRemediationXML();
+        }
+
+        assertEquals(0, metric.remediatedRemediations());
+        assertEquals(Set.of("fix-A", "superseded-D"), metric.issueSkipReasons().keySet());
+        assertEquals(metric.issueSkipReasons().size(), metric.totalRemediations());
+        assertEquals(metric.totalRemediations(), metric.skippedRemediations());
+    }
+
+    @Test
+    void supersededIssueWhoseSupersedingFixIsMissingIsSkipped() throws Exception {
+        writeSourceFile("before\nTARGET\nafter\n");
+        Path fprPath = createReferenceFpr("no-such-fix", "superseded-D", true);
+
+        RemediationMetric metric;
+        try (FprHandle fprHandle = new FprHandle(fprPath)) {
+            metric = new RemediationProcessor(fprHandle, tempDir.toString()).processRemediationXML();
+        }
+
+        assertEquals(0, metric.supersedesPriorFixRemediations());
+        assertEquals(1, metric.skippedRemediations());
+        assertTrue(metric.issueSkipReasons().get("superseded-D").contains("no-such-fix"));
+    }
+
+    private Path createCoveredByFpr(String coveringId) throws Exception {
+        return createReferenceFpr(coveringId, "covered-B", false);
+    }
+
+    /** fix-A has a fix of its own; the stub issue has none and references {@code coveringId}. */
+    private Path createReferenceFpr(String coveringId, String stubId, boolean fixSupersedesStub) throws Exception {
+        Path fprPath = tempDir.resolve("covered.fpr");
+        String remediationXml = """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <r:Remediations xmlns:r="%s">
+                  <r:ProjectInfo>
+                    <r:Name>test</r:Name>
+                    <r:WriteDate>2026-08-26T00:00:00Z</r:WriteDate>
+                  </r:ProjectInfo>
+                  <r:RemediationList>
+                    <r:Remediation instanceId="fix-A">
+                      <r:AuditComment>test</r:AuditComment>
+                      <r:FileChanges>
+                        <r:Filename>Example.java</r:Filename>
+                        <r:Hash type="SHA-256">not-the-source-hash</r:Hash>
+                        <r:Change>
+                          <r:LineFrom>2</r:LineFrom>
+                          <r:LineTo>2</r:LineTo>
+                          <r:Context before="1" after="1">before\nTARGET\nafter</r:Context>
+                          <r:OriginalCode>TARGET</r:OriginalCode>
+                          <r:NewCode>REPLACED</r:NewCode>
+                        </r:Change>
+                      </r:FileChanges>
+                      %s
+                    </r:Remediation>
+                    <r:Remediation instanceId="%s">
+                      <r:AuditComment>test</r:AuditComment>
+                      <r:CoveredByPriorFix instanceId="%s"/>
+                    </r:Remediation>
+                  </r:RemediationList>
+                </r:Remediations>
+                """.formatted(REMEDIATIONS_NAMESPACE,
+                        fixSupersedesStub ? "<r:SupersedesPriorFix instanceId=\"" + stubId + "\"/>" : "",
+                        stubId, coveringId);
         try (ZipOutputStream zipOutputStream = new ZipOutputStream(Files.newOutputStream(fprPath))) {
             zipOutputStream.putNextEntry(new ZipEntry("remediations.xml"));
             zipOutputStream.write(remediationXml.getBytes(StandardCharsets.UTF_8));

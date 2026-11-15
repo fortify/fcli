@@ -29,6 +29,10 @@ public class FPRAuditResult {
     private Map<String, Integer> skippedByReason;
     private int remediationGenerationSkipped;
     private Map<String, Integer> remediationGenerationSkippedByReason;
+    /** Issues successfully audited again because their source evidence changed since the previous audit. */
+    private int reauditedIssues;
+    /** Already-audited issues that only had their source evidence fingerprint recorded. */
+    private int evidenceBaselines;
 
     public FPRAuditResult(File updatedFile, String status, String message,
                         int issuesSuccessfullyAudited, int totalIssuesToAudit) {

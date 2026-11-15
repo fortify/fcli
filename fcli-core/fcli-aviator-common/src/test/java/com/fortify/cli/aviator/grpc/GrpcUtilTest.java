@@ -13,6 +13,8 @@
 package com.fortify.cli.aviator.grpc;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 import java.util.Set;
@@ -26,6 +28,16 @@ import com.fortify.cli.aviator.audit.model.File;
 import com.fortify.cli.aviator.audit.model.UserPrompt;
 
 class GrpcUtilTest {
+
+    @Test
+    void shouldMarkAuditRequestAsReauditOnlyWhenPromptIsReaudit() {
+        UserPrompt firstTime = UserPrompt.builder().category("SQL Injection").build();
+        UserPrompt reaudit = UserPrompt.builder().category("SQL Injection").build();
+        reaudit.setReaudit(true);
+
+        assertFalse(GrpcUtil.convertToAuditRequest(firstTime, "stream-1", "request-1").getIsReaudit());
+        assertTrue(GrpcUtil.convertToAuditRequest(reaudit, "stream-1", "request-2").getIsReaudit());
+    }
 
     @Test
     void shouldPreserveResolvedProgrammingLanguages() {

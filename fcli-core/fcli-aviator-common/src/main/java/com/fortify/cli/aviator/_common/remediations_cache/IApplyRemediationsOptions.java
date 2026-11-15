@@ -14,6 +14,7 @@ package com.fortify.cli.aviator._common.remediations_cache;
 
 import java.util.List;
 
+import com.fortify.cli.aviator.fpr.remediation.ImplicitFixApprover;
 import com.fortify.cli.aviator.fpr.utils.ISourceDecoder;
 
 /** Abstraction over the shared apply-remediations CLI options, allowing RemediationsApplyHelper
@@ -23,5 +24,10 @@ public interface IApplyRemediationsOptions {
     List<String> getIssueIds();
     ISourceDecoder getSourceDecoder();
     boolean isPreviewMode();
+
+    /** Decides whether fixes that were not requested but are needed to resolve requested issues may be applied. */
+    default ImplicitFixApprover getImplicitFixApprover() {
+        return ImplicitFixApprover.approveAll();
+    }
     void validate();
 }

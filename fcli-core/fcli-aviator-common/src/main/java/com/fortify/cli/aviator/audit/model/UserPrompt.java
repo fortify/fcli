@@ -19,6 +19,7 @@ import com.formkiq.graalvm.annotations.Reflectable;
 
 import lombok.Builder;
 import lombok.Getter;
+import lombok.Setter;
 
 @Getter
 @Builder
@@ -39,4 +40,5 @@ public class UserPrompt {
     private StackTraceElement source;
     private StackTraceElement sink;
     private String categoryLevel;
+    @Setter private boolean reaudit;
 }

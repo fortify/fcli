@@ -12,6 +12,9 @@
  */
 package com.fortify.cli.aviator.fpr.processor;
 
+import static com.fortify.cli.aviator.fpr.processor.RemediationResponses.coveredByPriorFixIds;
+import static com.fortify.cli.aviator.fpr.processor.RemediationResponses.hasRemediationChanges;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -24,6 +27,7 @@ import java.security.NoSuchAlgorithmException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -33,6 +37,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 import javax.xml.XMLConstants;
@@ -52,12 +57,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
 import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
 import com.fortify.cli.aviator.audit.model.AuditResponse;
 import com.fortify.cli.aviator.audit.model.AuditTier;
+import com.fortify.cli.aviator.audit.model.Change;
 import com.fortify.cli.aviator.config.TagMappingConfig;
 import com.fortify.cli.aviator.fpr.model.AuditIssue;
 import com.fortify.cli.aviator.fpr.model.FPRInfo;
@@ -93,7 +100,9 @@ public class AuditProcessor {
     private final FprHandle fprHandle;
     private final ISourceDecoder sourceDecoder;
     private RemediationGenerationMetric lastRemediationGenerationMetric = RemediationGenerationMetric.empty();
-
+    private final Map<String, String> evidenceFingerprints = new ConcurrentHashMap<>();
+    private final Map<String, String> reauditPreviousVerdicts = new ConcurrentHashMap<>();
+    private final Set<String> baselinedInstanceIds = ConcurrentHashMap.newKeySet();
     public record RemediationGenerationMetric(int skippedRemediations, Map<String, Integer> skippedByReason) {
         public static RemediationGenerationMetric empty() {
             return new RemediationGenerationMetric(0, Map.of());
@@ -124,6 +133,104 @@ public class AuditProcessor {
 
     public RemediationGenerationMetric getLastRemediationGenerationMetric() {
         return lastRemediationGenerationMetric;
+    }
+
+    /** Records the evidence fingerprint to store if this issue's audit result is written. */
+    public void registerEvidenceFingerprint(String instanceId, String fingerprint) {
+        if (instanceId != null && fingerprint != null && !fingerprint.isBlank()) {
+            evidenceFingerprints.put(instanceId, fingerprint);
+        }
+    }
+
+    /** Marks an issue as being re-audited because its evidence changed, remembering its previous verdict. */
+    public void registerReaudit(String instanceId, String previousVerdict) {
+        if (instanceId != null) {
+            reauditPreviousVerdicts.put(instanceId, previousVerdict == null ? "" : previousVerdict);
+        }
+    }
+
+    /**
+     * Stores the evidence fingerprint of an already-audited issue that has none yet, without changing its audit.
+     *
+     * @return true if the fingerprint was written
+     */
+    public boolean writeBaselineFingerprint(String instanceId, String fingerprint) {
+        if (auditDoc == null || instanceId == null || fingerprint == null || fingerprint.isBlank()) {
+            return false;
+        }
+        Element issueElement = findIssueElement(instanceId);
+        if (issueElement == null) {
+            return false;
+        }
+        if (setEvidenceFingerprint(issueElement, fingerprint)) {
+            int revision = parseRevision(issueElement.getAttribute("revision"));
+            issueElement.setAttribute("revision", String.valueOf(revision + 1));
+        }
+        baselinedInstanceIds.add(instanceId);
+        return true;
+    }
+
+    public int getBaselinedCount() {
+        return baselinedInstanceIds.size();
+    }
+
+    public boolean isReaudit(String instanceId) {
+        return instanceId != null && reauditPreviousVerdicts.containsKey(instanceId);
+    }
+
+    private static int parseRevision(String revision) {
+        return revision == null || revision.isEmpty() ? 0 : Integer.parseInt(revision);
+    }
+
+    private boolean setEvidenceFingerprint(Element issueElement, String fingerprint) {
+        Element liveTag = findLiveTag(issueElement, Constants.AVIATOR_SOURCE_FINGERPRINT_TAG_ID);
+        if (liveTag != null && fingerprint.equals(getTagValue(liveTag))) {
+            return false;
+        }
+        updateOrAddTag(issueElement, Constants.AVIATOR_SOURCE_FINGERPRINT_TAG_ID, fingerprint);
+        addTagHistory(getClientAuditTrailElement(issueElement), Constants.AVIATOR_SOURCE_FINGERPRINT_TAG_ID, fingerprint);
+        return true;
+    }
+
+    private void writeRegisteredFingerprint(Element issueElement) {
+        String fingerprint = evidenceFingerprints.get(issueElement.getAttribute("instanceId"));
+        if (fingerprint != null) {
+            setEvidenceFingerprint(issueElement, fingerprint);
+        }
+    }
+
+    private void addReauditNote(Element issueElement, AuditResponse response) {
+        String previous = reauditPreviousVerdicts.get(issueElement.getAttribute("instanceId"));
+        if (previous == null) {
+            return;
+        }
+        String current = response == null || response.getAuditResult() == null ? null : response.getAuditResult().tagValue;
+        addCommentToIssueElement(issueElement,
+                "Re-audited by " + Constants.USER_NAME + " because the source code behind this issue changed since the previous audit. "
+                        + "Previous verdict: " + (previous.isBlank() ? "none recorded" : previous)
+                        + ". New verdict: " + (current == null || current.isBlank() ? "none" : current) + ".",
+                Constants.USER_NAME);
+    }
+
+    private static List<Element> directChildren(Element parent, String localName) {
+        List<Element> children = new ArrayList<>();
+        for (Node child = parent.getFirstChild(); child != null; child = child.getNextSibling()) {
+            if (child instanceof Element element && AUDIT_NAMESPACE_URI.equals(element.getNamespaceURI())
+                    && localName.equals(element.getLocalName())) {
+                children.add(element);
+            }
+        }
+        return children;
+    }
+
+    /** Finds a tag that is a direct child of the issue; tags nested in ClientAuditTrail history are not live values. */
+    private static Element findLiveTag(Element issueElement, String tagId) {
+        for (Element tag : directChildren(issueElement, "Tag")) {
+            if (tag.getAttribute("id").equalsIgnoreCase(tagId)) {
+                return tag;
+            }
+        }
+        return null;
     }
 
     /**
@@ -230,9 +337,7 @@ public class AuditProcessor {
         auditIssueBuilder.revision(Optional.of(revisionStr).filter(str -> !str.isEmpty()).map(Integer::parseInt).orElse(0));
 
         Map<String, String> tags = new HashMap<>();
-        NodeList tagNodes = issueElement.getElementsByTagNameNS(AUDIT_NAMESPACE_URI, "Tag");
-        for (int j = 0; j < tagNodes.getLength(); j++) {
-            Element tagElement = (Element) tagNodes.item(j);
+        for (Element tagElement : directChildren(issueElement, "Tag")) {
             String tagId = tagElement.getAttribute("id");
             String tagValue = Optional.ofNullable(getTagValue(tagElement)).orElse("");
             tags.put(tagId, tagValue);
@@ -336,10 +441,8 @@ public class AuditProcessor {
                 }
                 // Local retain set for this save only — instance IDs successfully written here.
                 writtenInstanceIds.add(instanceId);
-                if (commentTimestamp != null &&
-                        response.getAuditResult().getAutoremediation() != null &&
-                        response.getAuditResult().getAutoremediation().getChanges() != null &&
-                        !response.getAuditResult().getAutoremediation().getChanges().isEmpty()) {
+                if (commentTimestamp != null
+                        && (hasRemediationChanges(response) || !coveredByPriorFixIds(response).isEmpty())) {
                     remediationCommentTimestamps.put(instanceId, commentTimestamp);
                 }
             } else {
@@ -403,6 +506,8 @@ public class AuditProcessor {
         }
 
         updateClientAuditTrail(issueElement, response, tagMappingConfig, suppressedHistoryValue);
+        writeRegisteredFingerprint(issueElement);
+        addReauditNote(issueElement, response);
 
         return commentTimestamp;
     }
@@ -514,16 +619,7 @@ public class AuditProcessor {
     }
 
     private void updateOrAddTag(Element issueElement, String tagId, String tagValue) {
-        NodeList tagNodes = issueElement.getElementsByTagNameNS(AUDIT_NAMESPACE_URI, "Tag");
-        Element tagElement = null;
-
-        for (int i = 0; i < tagNodes.getLength(); i++) {
-            Element currentTag = (Element) tagNodes.item(i);
-            if (currentTag.getAttribute("id").equalsIgnoreCase(tagId)) {
-                tagElement = currentTag;
-                break;
-            }
-        }
+        Element tagElement = findLiveTag(issueElement, tagId);
 
         if (tagElement == null) {
             tagElement = auditDoc.createElementNS(AUDIT_NAMESPACE_URI, "Tag");
@@ -624,6 +720,7 @@ public class AuditProcessor {
         }
 
         updateClientAuditTrail(newIssue, response, tagMappingConfig, suppressedHistoryValue);
+        writeRegisteredFingerprint(newIssue);
 
         issueList.appendChild(newIssue);
         return commentTimestamp;
@@ -759,35 +856,36 @@ public class AuditProcessor {
             TagMappingConfig tagMappingConfig, Map<String, String> issueCategoryLookup,
             FPRInfo fprInfo, FVDLMetadata fvdlMetadata) throws AviatorTechnicalException {
         lastRemediationGenerationMetric = RemediationGenerationMetric.empty();
+        Map<String, AuditResponse> responses = PriorFixNotes.withResolvedPriorFixNotes(auditResponses,
+                writtenFixIdsForNotes(auditResponses, fprInfo, fvdlMetadata));
         // Step 1: Apply this save's audit responses. writtenInstanceIds is the local retain set.
         Map<String, String> effectiveIssueCategoryLookup = issueCategoryLookup == null ? Map.of() : issueCategoryLookup;
         AuditXmlUpdateResult updateResult = updateAuditXml(
-                auditResponses, tagMappingConfig, effectiveIssueCategoryLookup);
+                responses, tagMappingConfig, effectiveIssueCategoryLookup);
         Map<String, String> remediationCommentTimestamps = updateResult.remediationCommentTimestamps;
+        updateResult.writtenInstanceIds.addAll(baselinedInstanceIds);
 
         // Step 2: Keep only Issue nodes written in this save so SSC does not overwrite concurrent
         // tag edits on Non-SAST / non-audited SAST findings. In-memory only — before any zip I/O.
         AuditXmlIssuePruner.retainOnly(auditDoc, updateResult.writtenInstanceIds);
 
         // Step 3: Check if there are any remediations to generate.
-        boolean hasRemediations = auditResponses.values().stream()
-                .anyMatch(ar -> ar.getAuditResult() != null &&
-                        ar.getAuditResult().getAutoremediation() != null &&
-                        ar.getAuditResult().getAutoremediation().getChanges() != null &&
-                        !ar.getAuditResult().getAutoremediation().getChanges().isEmpty());
+        boolean hasRemediations = responses.values().stream()
+                .anyMatch(ar -> hasRemediationChanges(ar) || !coveredByPriorFixIds(ar).isEmpty());
 
-        // Step 4: Generate the in-memory remediations.xml document if needed.
+        // Step 4: Build remediations.xml from this save's responses only. Advice from an earlier run is not carried
+        // over: the upload holds only the issues written in this save, and a re-audit that no longer needs a fix
+        // must not keep its old advice. A save that produced no advice gets an empty list.
+        Document generatedRemediations = null;
         if (hasRemediations && !remediationCommentTimestamps.isEmpty()) {
             Map<String, Integer> skippedByReason = new LinkedHashMap<>();
-            this.remediationsDoc = generateRemediationsXml(auditResponses, remediationCommentTimestamps, fprInfo,
+            generatedRemediations = generateRemediationsXml(responses, remediationCommentTimestamps, fprInfo,
                     fvdlMetadata, skippedByReason);
             lastRemediationGenerationMetric = toRemediationGenerationMetric(skippedByReason);
-        } else {
-            this.remediationsDoc = null;
-            if (hasRemediations) {
-                logger.info("WARN: Remediation data found, but could not associate timestamps for all. remediations.xml will not be generated.");
-            }
+        } else if (hasRemediations) {
+            logger.info("WARN: Remediation data found, but could not associate timestamps for all. remediations.xml will contain no entries.");
         }
+        this.remediationsDoc = generatedRemediations != null ? generatedRemediations : emptyRemediationsDocument(fprInfo);
 
         // Step 5: Write the modified XML documents directly back into the open FPR file system.
         try {
@@ -906,162 +1004,126 @@ public class AuditProcessor {
         return tagMappingConfig.getResult(tierOne, TagMappingConfig.ResultType.UNSURE);
     }
 
+    private Document emptyRemediationsDocument(FPRInfo fprInfo) throws AviatorTechnicalException {
+        try {
+            return newRemediationsDocument(fprInfo);
+        } catch (ParserConfigurationException e) {
+            throw new AviatorTechnicalException("Error creating XML document for remediations", e);
+        }
+    }
+
+    /** A remediations.xml document with its project info and an empty remediation list. */
+    private Document newRemediationsDocument(FPRInfo fprInfo) throws ParserConfigurationException {
+        var docFactory = SecureXmlParserFactory.newDocumentBuilderFactory(true);
+        DocumentBuilder docBuilder = docFactory.newDocumentBuilder();
+
+        Document doc = docBuilder.newDocument();
+        Element rootElement = doc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "Remediations");
+        doc.appendChild(rootElement);
+
+        Element projectInfoElement = doc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "ProjectInfo");
+        Element projectNameElement = doc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "Name");
+        projectNameElement.setTextContent(fprInfo.getBuildId() != null ? fprInfo.getBuildId() : "UnknownProject");
+        Element projectWriteDateElement = doc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "WriteDate");
+        SimpleDateFormat dateTimeFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
+        projectWriteDateElement.setTextContent(dateTimeFormat.format(new Date()));
+        projectInfoElement.appendChild(projectNameElement);
+        projectInfoElement.appendChild(projectWriteDateElement);
+        rootElement.appendChild(projectInfoElement);
+
+        rootElement.appendChild(doc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "RemediationList"));
+        return doc;
+    }
+
     private Document generateRemediationsXml(Map<String, AuditResponse> auditResponses,
                                             Map<String, String> remediationCommentTimestamps,
                                             FPRInfo fprInfo, FVDLMetadata fvdlMetadata,
                                             Map<String, Integer> skippedByReason) throws AviatorTechnicalException {
         try {
-            var docFactory = SecureXmlParserFactory.newDocumentBuilderFactory(true);
-            DocumentBuilder docBuilder = docFactory.newDocumentBuilder();
-
-            Document finalDoc = docBuilder.newDocument();
-            Element rootElement = finalDoc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "Remediations");
-            finalDoc.appendChild(rootElement);
-
-            Element projectInfoElement = finalDoc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "ProjectInfo");
-            Element projectNameElement = finalDoc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "Name");
-            projectNameElement.setTextContent(fprInfo.getBuildId() != null ? fprInfo.getBuildId() : "UnknownProject");
-            Element projectWriteDateElement = finalDoc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "WriteDate");
-            SimpleDateFormat dateTimeFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
-            projectWriteDateElement.setTextContent(dateTimeFormat.format(new Date()));
-            projectInfoElement.appendChild(projectNameElement);
-            projectInfoElement.appendChild(projectWriteDateElement);
-            rootElement.appendChild(projectInfoElement);
-
-            Element remediationListElement = finalDoc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "RemediationList");
-            rootElement.appendChild(remediationListElement);
+            Document finalDoc = newRemediationsDocument(fprInfo);
+            Element remediationListElement = (Element) finalDoc.getElementsByTagNameNS(REMEDIATIONS_NAMESPACE_URI, "RemediationList").item(0);
 
             FileUtils fileUtils = new FileUtils(this.sourceDecoder, fvdlMetadata);
             int validRemediationCount = 0;
+
+            // An issue superseded by another issue's fix keeps no fix of its own, but only once the fix that supersedes it
+            // was actually written. A fix that cannot be written (for example when its source file is unreadable) must not
+            // take the narrower fixes down with it, so superseded issues are resolved after all other fixes are written.
+            Map<String, String> directSupersededBy = SupersedeGraph.resolveDirectSupersededBy(auditResponses, remediationCommentTimestamps::containsKey);
+            Map<String, List<String>> coveredEntries = new LinkedHashMap<>();
+            Map<String, Element> writtenFixElements = new LinkedHashMap<>();
 
             for (Map.Entry<String, AuditResponse> entry : auditResponses.entrySet()) {
                 String instanceId = entry.getKey();
                 AuditResponse auditResponse = entry.getValue();
 
-                if (auditResponse.getAuditResult() != null &&
-                        auditResponse.getAuditResult().getAutoremediation() != null &&
-                        auditResponse.getAuditResult().getAutoremediation().getChanges() != null &&
-                        !auditResponse.getAuditResult().getAutoremediation().getChanges().isEmpty() &&
-                        remediationCommentTimestamps.containsKey(instanceId)) {
+                if (directSupersededBy.containsKey(instanceId)) {
+                    continue; // resolved below, once the fixes above it have been written
+                }
 
-                    Element remediationElement = finalDoc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "Remediation");
-                    remediationElement.setAttribute("instanceId", instanceId);
-                    remediationElement.setAttribute("writeDate", remediationCommentTimestamps.get(instanceId));
+                List<String> coveredByIds = coveredByPriorFixIds(auditResponse);
+                if (!hasRemediationChanges(auditResponse) && !coveredByIds.isEmpty()
+                        && remediationCommentTimestamps.containsKey(instanceId)) {
+                    coveredEntries.put(instanceId, coveredByIds);
+                    continue;
+                }
 
-                    Element auditCommentElement = finalDoc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "AuditComment");
-                    String auditComment = auditResponse.getAuditResult().getComment() != null ? auditResponse.getAuditResult().getComment() : "";
-                    auditCommentElement.appendChild(finalDoc.createCDATASection(auditComment));
-                    remediationElement.appendChild(auditCommentElement);
-
-                    Map<String, List<com.fortify.cli.aviator.audit.model.Change>> changesByFile =
-                            auditResponse.getAuditResult().getAutoremediation().getChanges().stream()
-                                    .collect(Collectors.groupingBy(com.fortify.cli.aviator.audit.model.Change::getFile));
-
-                    for (Map.Entry<String, List<com.fortify.cli.aviator.audit.model.Change>> fileChangeEntry : changesByFile.entrySet()) {
-                        String filename = fileChangeEntry.getKey();
-                        List<com.fortify.cli.aviator.audit.model.Change> fileSpecificChanges = fileChangeEntry.getValue();
-
-                        Element fileChangesElement = finalDoc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "FileChanges");
-                        Element filenameElement = finalDoc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "Filename");
-                        filenameElement.setTextContent(filename);
-                        fileChangesElement.appendChild(filenameElement);
-
-                        Optional<String> originalFileContentOptional = fileUtils.getSourceFileContent(fprHandle, filename);
-
-                        if (originalFileContentOptional.isEmpty()) {
-                            logger.warn("WARN: Could not retrieve source code for file '{}'. Skipping remediation generation for this file for instanceId '{}'.", filename, instanceId);
-                            recordSkipped(skippedByReason, RemediationSkipReason.SOURCE_READ_OR_DECODE_FAILED);
-                            continue;
-                        }
-
-                        String originalFileContent = originalFileContentOptional.get();
-                        Element hashElement = finalDoc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "Hash");
-                        hashElement.setAttribute("type", HASHING_ALGORITHM_SHA_256);
-                        hashElement.setTextContent(calculateHashBase64(originalFileContent, HASHING_ALGORITHM_SHA_256));
-                        fileChangesElement.appendChild(hashElement);
-
-                        String[] allLines = originalFileContent.split("\\r?\\n|\\r|\\n");
-
-                        for (com.fortify.cli.aviator.audit.model.Change change : fileSpecificChanges) {
-                            try {
-                                Element changeElement = finalDoc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "Change");
-                                int lineFromNum = parseLineNumber(change.getFromLine(), filename, instanceId, "FromLine");
-                                int lineToNum = parseLineNumber(change.getToLine(), filename, instanceId, "ToLine");
-
-                                Element lineFromElement = finalDoc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "LineFrom");
-                                lineFromElement.setTextContent(String.valueOf(lineFromNum));
-                                changeElement.appendChild(lineFromElement);
-
-                                Element lineToElement = finalDoc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "LineTo");
-                                lineToElement.setTextContent(String.valueOf(lineToNum));
-                                changeElement.appendChild(lineToElement);
-
-                                StringBuilder originalCodeSb = new StringBuilder();
-                                if (lineFromNum >= 1 && lineToNum >= lineFromNum && lineFromNum <= allLines.length) {
-                                    for (int k = lineFromNum - 1; k < Math.min(lineToNum, allLines.length); k++) {
-                                        originalCodeSb.append(allLines[k]);
-                                        if (k < Math.min(lineToNum, allLines.length) - 1) {
-                                            originalCodeSb.append('\n');
-                                        }
-                                    }
-                                }
-                                Element originalCodeElement = finalDoc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "OriginalCode");
-                                originalCodeElement.appendChild(finalDoc.createCDATASection(originalCodeSb.toString()));
-                                changeElement.appendChild(originalCodeElement);
-
-                                Element newCodeElement = finalDoc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "NewCode");
-                                String sanitizedNewCode = FileUtil.stripSyntheticLineMarkers(
-                                    change.getReplaceWith() != null ? change.getReplaceWith() : "", filename);
-                                newCodeElement.appendChild(finalDoc.createCDATASection(sanitizedNewCode));
-                                changeElement.appendChild(newCodeElement);
-
-                                final int CONTEXT_LINES = 3;
-                                int contextStartLineIndex = Math.max(0, lineFromNum - 1 - CONTEXT_LINES);
-                                if (lineFromNum == 0) contextStartLineIndex = 0;
-                                int contextEndLineIndex = Math.min(allLines.length - 1, lineToNum - 1 + CONTEXT_LINES);
-                                if (lineToNum == 0) contextEndLineIndex = -1;
-                                int actualBeforeLines = (lineFromNum > 0) ? (lineFromNum - 1 - contextStartLineIndex) : 0;
-                                int actualAfterLines = (lineToNum > 0) ? (contextEndLineIndex - (lineToNum - 1)) : 0;
-
-                                StringBuilder contextSb = new StringBuilder();
-                                for (int i = contextStartLineIndex; i <= contextEndLineIndex; i++) {
-                                    contextSb.append(allLines[i]);
-                                    if (i < contextEndLineIndex) {
-                                        contextSb.append('\n');
-                                    }
-                                }
-                                Element contextElement = finalDoc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "Context");
-                                contextElement.setAttribute("before", String.valueOf(actualBeforeLines));
-                                contextElement.setAttribute("after", String.valueOf(actualAfterLines));
-                                contextElement.appendChild(finalDoc.createCDATASection(contextSb.toString()));
-                                changeElement.appendChild(contextElement);
-
-                                fileChangesElement.appendChild(changeElement);
-                            } catch (NumberFormatException e) {
-                                logger.error("Skipping change for issue {} due to invalid line number format. Details: {}", instanceId, e.getMessage());
-                                recordSkipped(skippedByReason, RemediationSkipReason.INVALID_LINE_NUMBER);
-                            }
-                        }
-                        if (fileChangesElement.getElementsByTagNameNS(REMEDIATIONS_NAMESPACE_URI, "Change").getLength() > 0) {
-                            remediationElement.appendChild(fileChangesElement);
-                        }
+                if (hasRemediationChanges(auditResponse) && remediationCommentTimestamps.containsKey(instanceId)) {
+                    Element written = appendFixEntry(finalDoc, remediationListElement, instanceId, auditResponse,
+                            remediationCommentTimestamps.get(instanceId), fileUtils, fprInfo, skippedByReason);
+                    if (written != null) {
+                        writtenFixElements.put(instanceId, written);
+                        validRemediationCount++;
                     }
+                }
+            }
 
-                    // Check if any FileChanges were actually added to the remediation element.
-                    // This prevents validation errors if all changes for an issue were skipped.
-                    if (remediationElement.getElementsByTagNameNS(REMEDIATIONS_NAMESPACE_URI, "FileChanges").getLength() > 0) {
-                        if (isRemediationElementValid(remediationElement, fprInfo)) {
-                            remediationListElement.appendChild(remediationElement);
-                            validRemediationCount++;
-                        } else {
-                            logger.warn("WARN: Skipping structurally invalid remediation for issue instanceId: {}", instanceId);
-                            recordSkipped(skippedByReason, RemediationSkipReason.STRUCTURALLY_INVALID);
-                        }
-                    } else {
-                        logger.warn("WARN: Skipping remediation for instanceId '{}' because all of its proposed changes were invalid and could not be processed.", instanceId);
-                        recordSkipped(skippedByReason, RemediationSkipReason.NO_VALID_CHANGES);
+            // Superseded issues, nearest to the top of their chain first: reference the closest fix above that was written.
+            // If none was written, the issue keeps its own fix, which can then be referenced by the issues below it.
+            Map<String, String> supersededReferences = new LinkedHashMap<>();
+            List<String> supersededIds = new ArrayList<>(directSupersededBy.keySet());
+            supersededIds.sort(Comparator.comparingInt(id -> SupersedeGraph.supersedeDepth(id, directSupersededBy)));
+            for (String supersededId : supersededIds) {
+                String fixId = SupersedeGraph.writtenFixFrom(directSupersededBy.get(supersededId), directSupersededBy, writtenFixElements.keySet());
+                if (fixId != null) {
+                    supersededReferences.put(supersededId, fixId);
+                } else {
+                    Element written = appendFixEntry(finalDoc, remediationListElement, supersededId,
+                            auditResponses.get(supersededId), remediationCommentTimestamps.get(supersededId),
+                            fileUtils, fprInfo, skippedByReason);
+                    if (written != null) {
+                        writtenFixElements.put(supersededId, written);
+                        validRemediationCount++;
                     }
+                }
+            }
 
+            Map<String, List<String>> references = new LinkedHashMap<>();
+            supersededReferences.forEach((supersededId, fixId) -> {
+                Element supersedesElement = finalDoc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "SupersedesPriorFix");
+                supersedesElement.setAttribute("instanceId", supersededId);
+                writtenFixElements.get(fixId).appendChild(supersedesElement);
+                references.put(supersededId, List.of(fixId));
+            });
+            coveredEntries.forEach((coveredId, coveringIds) -> references.put(coveredId, coveringIds.stream()
+                    .map(id -> SupersedeGraph.writtenFixFrom(id, directSupersededBy, writtenFixElements.keySet()))
+                    .filter(Objects::nonNull).distinct().toList()));
+
+            for (Map.Entry<String, List<String>> reference : references.entrySet()) {
+                String instanceId = reference.getKey();
+                List<String> fixIds = reference.getValue();
+                if (fixIds.isEmpty()) {
+                    logger.warn("WARN: Skipping issue instanceId '{}': none of the fixes it is covered by could be written "
+                            + "to remediations.xml.", instanceId);
+                    continue;
+                }
+                Element referenceElement = createCoveredByPriorFixElement(finalDoc, instanceId, auditResponses.get(instanceId),
+                        fixIds, remediationCommentTimestamps.get(instanceId));
+                if (isRemediationElementValid(referenceElement, fprInfo)) {
+                    remediationListElement.appendChild(referenceElement);
+                    validRemediationCount++;
+                } else {
+                    logger.warn("WARN: Skipping structurally invalid covered-by-prior-fix entry for issue instanceId: {}", instanceId);
                 }
             }
 
@@ -1069,6 +1131,189 @@ public class AuditProcessor {
         } catch (ParserConfigurationException e) {
             throw new AviatorTechnicalException("Error creating XML document for remediations", e);
         }
+    }
+
+    /**
+     * Writes the fix entry (AuditComment and FileChanges) for one issue.
+     *
+     * @return the element that was appended to the remediation list, or null if nothing valid could be written
+     */
+    private Element appendFixEntry(Document finalDoc, Element remediationListElement, String instanceId,
+            AuditResponse auditResponse, String writeDate, FileUtils fileUtils, FPRInfo fprInfo,
+            Map<String, Integer> skippedByReason) {
+
+        Element remediationElement = finalDoc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "Remediation");
+        remediationElement.setAttribute("instanceId", instanceId);
+        remediationElement.setAttribute("writeDate", writeDate);
+
+        Element auditCommentElement = finalDoc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "AuditComment");
+        String auditComment = auditResponse.getAuditResult().getComment() != null ? auditResponse.getAuditResult().getComment() : "";
+        auditCommentElement.appendChild(finalDoc.createCDATASection(auditComment));
+        remediationElement.appendChild(auditCommentElement);
+
+        Map<String, List<Change>> changesByFile =
+                auditResponse.getAuditResult().getAutoremediation().getChanges().stream()
+                        .collect(Collectors.groupingBy(Change::getFile));
+
+        for (Map.Entry<String, List<Change>> fileChangeEntry : changesByFile.entrySet()) {
+            String filename = fileChangeEntry.getKey();
+            List<Change> fileSpecificChanges = fileChangeEntry.getValue();
+
+            Element fileChangesElement = finalDoc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "FileChanges");
+            Element filenameElement = finalDoc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "Filename");
+            filenameElement.setTextContent(filename);
+            fileChangesElement.appendChild(filenameElement);
+
+            Optional<String> originalFileContentOptional = fileUtils.getSourceFileContent(fprHandle, filename);
+
+            if (originalFileContentOptional.isEmpty()) {
+                logger.warn("WARN: Could not retrieve source code for file '{}'. Skipping remediation generation for this file for instanceId '{}'.", filename, instanceId);
+                recordSkipped(skippedByReason, RemediationSkipReason.SOURCE_READ_OR_DECODE_FAILED);
+                continue;
+            }
+
+            String originalFileContent = originalFileContentOptional.get();
+            Element hashElement = finalDoc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "Hash");
+            hashElement.setAttribute("type", HASHING_ALGORITHM_SHA_256);
+            hashElement.setTextContent(calculateHashBase64(originalFileContent, HASHING_ALGORITHM_SHA_256));
+            fileChangesElement.appendChild(hashElement);
+
+            String[] allLines = originalFileContent.split("\\r?\\n|\\r|\\n");
+
+            for (Change change : fileSpecificChanges) {
+                try {
+                    Element changeElement = finalDoc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "Change");
+                    int lineFromNum = parseLineNumber(change.getFromLine(), filename, instanceId, "FromLine");
+                    int lineToNum = parseLineNumber(change.getToLine(), filename, instanceId, "ToLine");
+
+                    Element lineFromElement = finalDoc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "LineFrom");
+                    lineFromElement.setTextContent(String.valueOf(lineFromNum));
+                    changeElement.appendChild(lineFromElement);
+
+                    Element lineToElement = finalDoc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "LineTo");
+                    lineToElement.setTextContent(String.valueOf(lineToNum));
+                    changeElement.appendChild(lineToElement);
+
+                    StringBuilder originalCodeSb = new StringBuilder();
+                    if (lineFromNum >= 1 && lineToNum >= lineFromNum && lineFromNum <= allLines.length) {
+                        for (int k = lineFromNum - 1; k < Math.min(lineToNum, allLines.length); k++) {
+                            originalCodeSb.append(allLines[k]);
+                            if (k < Math.min(lineToNum, allLines.length) - 1) {
+                                originalCodeSb.append('\n');
+                            }
+                        }
+                    }
+                    Element originalCodeElement = finalDoc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "OriginalCode");
+                    originalCodeElement.appendChild(finalDoc.createCDATASection(originalCodeSb.toString()));
+                    changeElement.appendChild(originalCodeElement);
+
+                    Element newCodeElement = finalDoc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "NewCode");
+                    String sanitizedNewCode = FileUtil.stripSyntheticLineMarkers(
+                        change.getReplaceWith() != null ? change.getReplaceWith() : "", filename);
+                    newCodeElement.appendChild(finalDoc.createCDATASection(sanitizedNewCode));
+                    changeElement.appendChild(newCodeElement);
+
+                    final int CONTEXT_LINES = 3;
+                    int contextStartLineIndex = Math.max(0, lineFromNum - 1 - CONTEXT_LINES);
+                    if (lineFromNum == 0) contextStartLineIndex = 0;
+                    int contextEndLineIndex = Math.min(allLines.length - 1, lineToNum - 1 + CONTEXT_LINES);
+                    if (lineToNum == 0) contextEndLineIndex = -1;
+                    int actualBeforeLines = (lineFromNum > 0) ? (lineFromNum - 1 - contextStartLineIndex) : 0;
+                    int actualAfterLines = (lineToNum > 0) ? (contextEndLineIndex - (lineToNum - 1)) : 0;
+
+                    StringBuilder contextSb = new StringBuilder();
+                    for (int i = contextStartLineIndex; i <= contextEndLineIndex; i++) {
+                        contextSb.append(allLines[i]);
+                        if (i < contextEndLineIndex) {
+                            contextSb.append('\n');
+                        }
+                    }
+                    Element contextElement = finalDoc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "Context");
+                    contextElement.setAttribute("before", String.valueOf(actualBeforeLines));
+                    contextElement.setAttribute("after", String.valueOf(actualAfterLines));
+                    contextElement.appendChild(finalDoc.createCDATASection(contextSb.toString()));
+                    changeElement.appendChild(contextElement);
+
+                    fileChangesElement.appendChild(changeElement);
+                } catch (NumberFormatException e) {
+                    logger.error("Skipping change for issue {} due to invalid line number format. Details: {}", instanceId, e.getMessage());
+                    recordSkipped(skippedByReason, RemediationSkipReason.INVALID_LINE_NUMBER);
+                }
+            }
+            if (fileChangesElement.getElementsByTagNameNS(REMEDIATIONS_NAMESPACE_URI, "Change").getLength() > 0) {
+                remediationElement.appendChild(fileChangesElement);
+            }
+        }
+
+        // Check if any FileChanges were actually added to the remediation element.
+        // This prevents validation errors if all changes for an issue were skipped.
+        if (remediationElement.getElementsByTagNameNS(REMEDIATIONS_NAMESPACE_URI, "FileChanges").getLength() > 0) {
+            if (isRemediationElementValid(remediationElement, fprInfo)) {
+                remediationListElement.appendChild(remediationElement);
+                return remediationElement;
+            } else {
+                logger.warn("WARN: Skipping structurally invalid remediation for issue instanceId: {}", instanceId);
+                recordSkipped(skippedByReason, RemediationSkipReason.STRUCTURALLY_INVALID);
+            }
+        } else {
+            logger.warn("WARN: Skipping remediation for instanceId '{}' because all of its proposed changes were invalid and could not be processed.", instanceId);
+            recordSkipped(skippedByReason, RemediationSkipReason.NO_VALID_CHANGES);
+        }
+
+        return null;
+    }
+
+    /**
+     * The server words the notes in audit comments before it knows which fix finally wins, and the writer only supersedes
+     * an issue when a fix above it is actually written. When something was superseded this dry-runs the writer to learn
+     * which fixes are written, so the notes can name the fix that really is in remediations.xml.
+     *
+     * @return the ids of the fixes written to remediations.xml, or null when nothing was superseded and the notes need no
+     *         rewriting
+     */
+    private Set<String> writtenFixIdsForNotes(Map<String, AuditResponse> auditResponses, FPRInfo fprInfo,
+            FVDLMetadata fvdlMetadata) {
+        if (SupersedeGraph.resolveDirectSupersededBy(auditResponses, id -> true).isEmpty()) {
+            return null;
+        }
+        String now = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX").format(new Date());
+        Map<String, String> timestamps = new HashMap<>();
+        auditResponses.forEach((id, response) -> {
+            if (response != null && response.getAuditResult() != null
+                    && response.getAuditResult().getComment() != null && !response.getAuditResult().getComment().isBlank()
+                    && (hasRemediationChanges(response) || !coveredByPriorFixIds(response).isEmpty())) {
+                timestamps.put(id, now);
+            }
+        });
+        Document dryRun = generateRemediationsXml(auditResponses, timestamps, fprInfo, fvdlMetadata, new HashMap<>());
+        Set<String> written = new HashSet<>();
+        if (dryRun != null) {
+            NodeList entries = dryRun.getElementsByTagNameNS(REMEDIATIONS_NAMESPACE_URI, "Remediation");
+            for (int i = 0; i < entries.getLength(); i++) {
+                Element entry = (Element) entries.item(i);
+                if (entry.getElementsByTagNameNS(REMEDIATIONS_NAMESPACE_URI, "FileChanges").getLength() > 0) {
+                    written.add(entry.getAttribute("instanceId"));
+                }
+            }
+        }
+        return written;
+    }
+
+    private Element createCoveredByPriorFixElement(Document doc, String instanceId, AuditResponse auditResponse,
+            List<String> coveredByIds, String writeDate) {
+        Element remediationElement = doc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "Remediation");
+        remediationElement.setAttribute("instanceId", instanceId);
+        remediationElement.setAttribute("writeDate", writeDate);
+        Element auditCommentElement = doc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "AuditComment");
+        String auditComment = auditResponse.getAuditResult().getComment() != null ? auditResponse.getAuditResult().getComment() : "";
+        auditCommentElement.appendChild(doc.createCDATASection(auditComment));
+        remediationElement.appendChild(auditCommentElement);
+        for (String coveredById : coveredByIds) {
+            Element coveredByElement = doc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "CoveredByPriorFix");
+            coveredByElement.setAttribute("instanceId", coveredById);
+            remediationElement.appendChild(coveredByElement);
+        }
+        return remediationElement;
     }
 
     private RemediationGenerationMetric toRemediationGenerationMetric(Map<String, Integer> skippedByReason) {
