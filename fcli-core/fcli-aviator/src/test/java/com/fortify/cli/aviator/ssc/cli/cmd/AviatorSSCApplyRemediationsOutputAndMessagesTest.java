@@ -13,6 +13,7 @@
 package com.fortify.cli.aviator.ssc.cli.cmd;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -27,6 +28,8 @@ import org.junit.jupiter.api.Test;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.aviator._common.util.AviatorRemediationMetricsHelper;
+import com.fortify.cli.aviator.fpr.remediation.RemediationExecutionMode;
+import com.fortify.cli.aviator.fpr.remediation.model.RemediationMetric;
 import com.fortify.cli.common.json.JsonHelper;
 
 import picocli.CommandLine;
@@ -36,7 +39,7 @@ class AviatorSSCApplyRemediationsOutputAndMessagesTest {
     private static final String MESSAGES = "com/fortify/cli/aviator/i18n/AviatorMessages.properties";
     private static final String PREFIX = "fcli.aviator.ssc.apply-remediations.";
     private static final Set<String> REMEDIATION_COLUMNS = Set.of(
-        "totalRemediation", "remediatedRemediation", "appliedRemediation", "identicalRemediation",
+        "totalRemediation", "remediatedRemediation", "appliedRemediation", "availableRemediation", "identicalRemediation",
         "supersededRemediation", "supersedesPriorFixRemediation", "possiblyRemediatedRemediation",
         "coveredByPriorFixRemediation", "skippedRemediation", "skippedReasons");
 
@@ -49,16 +52,51 @@ class AviatorSSCApplyRemediationsOutputAndMessagesTest {
         return properties;
     }
 
+    private static ObjectNode resultFor(RemediationExecutionMode mode) {
+        ObjectNode result = JsonHelper.getObjectMapper().createObjectNode();
+        AviatorRemediationMetricsHelper.putRemediationMetricFields(result, RemediationMetric.builder()
+            .executionMode(mode)
+            .totalRemediations(1)
+            .appliedRemediations(1)
+            .build());
+        return result;
+    }
+
     @Test
     void tableShowsEveryRemediationCountAndEachOneIsInTheResult() throws IOException {
         List<String> columns = Arrays.asList(messages().getProperty(PREFIX + "output.table.args").split(","));
-        ObjectNode result = JsonHelper.getObjectMapper().createObjectNode();
-        AviatorRemediationMetricsHelper.putRemediationMetricFields(result, null);
+        ObjectNode apply = resultFor(RemediationExecutionMode.APPLY);
+        ObjectNode preview = resultFor(RemediationExecutionMode.PREVIEW);
 
         assertTrue(columns.containsAll(REMEDIATION_COLUMNS), "table columns: " + columns);
         for (String column : REMEDIATION_COLUMNS) {
-            assertTrue(result.has(column), "result is missing the table column " + column);
+            assertTrue(apply.has(column) || preview.has(column), "neither result has the table column " + column);
         }
+    }
+
+    @Test
+    void everyCountFieldOfTheResultIsAColumnOfTheTable() throws IOException {
+        List<String> columns = Arrays.asList(messages().getProperty(PREFIX + "output.table.args").split(","));
+
+        for (RemediationExecutionMode mode : RemediationExecutionMode.values()) {
+            ObjectNode result = resultFor(mode);
+            result.fieldNames().forEachRemaining(field -> {
+                if (field.endsWith("Remediation") && !columns.contains(field)) {
+                    throw new AssertionError(mode + " result field " + field + " is not a table column: " + columns);
+                }
+            });
+        }
+    }
+
+    @Test
+    void previewReportsTheCountAsAvailableAndApplyAsApplied() {
+        ObjectNode preview = resultFor(RemediationExecutionMode.PREVIEW);
+        ObjectNode apply = resultFor(RemediationExecutionMode.APPLY);
+
+        assertEquals(1, preview.get("availableRemediation").asInt());
+        assertFalse(preview.has("appliedRemediation"));
+        assertEquals(1, apply.get("appliedRemediation").asInt());
+        assertFalse(apply.has("availableRemediation"));
     }
 
     @Test
