@@ -591,12 +591,6 @@
     "allDeclaredFields": true, "allPublicFields": true
   },
   {
-    "name": "com.fortify.cli.aviator.util.ExtensionsConfig",
-    "allDeclaredConstructors": true, "allPublicConstructors": true,
-    "allDeclaredMethods": true, "allPublicMethods": true,
-    "allDeclaredFields": true, "allPublicFields": true
-  },
-  {
     "name":"com.fortify.cli.aviator.config.TagMappingConfig",
     "allDeclaredFields":true,
     "queryAllPublicMethods":true,

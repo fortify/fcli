@@ -25,7 +25,6 @@ import com.fortify.cli.aviator._common.output.cli.cmd.AbstractAviatorAdminSessio
 import com.fortify.cli.aviator._common.session.user.cli.mixin.AviatorUserTokenResolverMixin;
 import com.fortify.cli.aviator._common.util.AviatorSignatureUtils;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClient;
-import com.fortify.cli.aviator.grpc.AviatorGrpcClientHelper;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.grpc.token.DeleteTokenResponse;
 
@@ -45,7 +44,7 @@ public class AviatorTokenDeleteCommand extends AbstractAviatorAdminSessionOutput
     protected JsonNode getJsonNode(AviatorAdminConfigDescriptor configDescriptor) throws AviatorSimpleException, AviatorTechnicalException {
         String tokenToDelete = tokenResolver.getToken();
 
-        try (AviatorGrpcClient client = AviatorGrpcClientHelper.createClient(configDescriptor.getAviatorUrl())) {
+        try (AviatorGrpcClient client = createGrpcClient(configDescriptor)) {
             String[] messageAndSignature = createMessageAndSignature(configDescriptor, tokenToDelete);
             DeleteTokenResponse response = deleteToken(client, configDescriptor, messageAndSignature, tokenToDelete);
             return processDeleteResponse(response, tokenToDelete);

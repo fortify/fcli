@@ -20,15 +20,15 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.expression.spel.standard.SpelExpressionParser;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.exception.FcliBugException;
+import com.fortify.cli.common.spel.FcliSpelExpressionParser;
 
 public class QueryExpressionCompositeTest {
     private final ObjectMapper om = new ObjectMapper();
-    private final SpelExpressionParser parser = new SpelExpressionParser();
+    private final FcliSpelExpressionParser parser = new FcliSpelExpressionParser();
     
     private ObjectNode record(String json) throws Exception { return (ObjectNode)om.readTree(json); }
     private QueryExpression qe(String spel) { return new QueryExpression(parser.parseExpression(spel)); }
@@ -57,5 +57,13 @@ public class QueryExpressionCompositeTest {
     public void testCompositeRequiresAtLeastOneExpression() {
         var e = assertThrows(FcliBugException.class, () -> QueryExpressionComposite.and(List.of()));
         assertTrue(e.getMessage().contains("at least one"));
+    }
+
+    @Test
+    public void testCompositeReparsesOriginalLargeLiterals() throws Exception {
+        var node = record("{\"a\":3000000000,\"b\":4000000000}");
+        var composite = QueryExpressionComposite.and(List.of(qe("a==3000000000"), qe("b==4000000000")));
+        assertTrue(composite.matches(node));
+        assertEquals("(a==3000000000) and (b==4000000000)", composite.getExpression().getExpressionString());
     }
 }

@@ -34,6 +34,7 @@ import com.fortify.cli.aviator.config.AviatorLoggerImpl;
 import com.fortify.cli.aviator.config.IAviatorLogger;
 import com.fortify.cli.aviator.config.TagMappingConfig;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClientHelper;
+import com.fortify.cli.aviator.grpc.AviatorRequestPolicy;
 import com.fortify.cli.aviator.grpc.DastAuditStreamConfig;
 import com.fortify.cli.aviator.grpc.DastAuditStreamProcessor;
 import com.fortify.cli.aviator.ssc.helper.AviatorSSCAttributeHelper;
@@ -41,9 +42,9 @@ import com.fortify.cli.aviator.ssc.helper.AviatorSSCAuditHelper;
 import com.fortify.cli.aviator.ssc.helper.AviatorSSCFprTransferHelper;
 import com.fortify.cli.aviator.ssc.helper.AviatorSSCRefreshHelper;
 import com.fortify.cli.aviator.ssc.helper.AviatorSSCTagValidator;
-import com.fortify.cli.aviator.util.FprHandle;
 import com.fortify.cli.aviator.util.ResourceUtil;
 import com.fortify.cli.common.exception.FcliTechnicalException;
+import com.fortify.cli.common.fpr.util.FprHandle;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.progress.cli.mixin.ProgressWriterFactoryMixin;
@@ -62,6 +63,8 @@ import picocli.CommandLine.Option;
 @Command(name = "audit-dast")
 public class AviatorSSCDastAuditCommand extends AbstractSSCJsonNodeOutputCommand implements IActionCommandResultSupplier {
     private static final Logger LOG = LoggerFactory.getLogger(AviatorSSCDastAuditCommand.class);
+    // Same overall limit as the SAST audit (IssueAuditor), so large runs are not cut off mid-stream.
+    private static final long AUDIT_TIMEOUT_MINUTES = 500;
 
     @Getter @Mixin private OutputHelperMixins.DetailsNoQuery outputHelper;
     @Mixin private ProgressWriterFactoryMixin progressWriterFactoryMixin;
@@ -88,8 +91,7 @@ public class AviatorSSCDastAuditCommand extends AbstractSSCJsonNodeOutputCommand
             downloadedFpr = AviatorSSCFprTransferHelper.downloadCurrentStateFpr(
                 unirest, appVersion, logger, progressWriter);
 
-            DastAuditFprResult result = auditFpr(
-                downloadedFpr, appVersion, session, logger, tagMappingConfig);
+            DastAuditFprResult result = auditFpr(downloadedFpr, appVersion, session, logger, tagMappingConfig);
             actionResult = result.status().name();
             String artifactId = null;
             if (result.updatedFile() != null && result.succeeded() > 0) {
@@ -134,12 +136,12 @@ public class AviatorSSCDastAuditCommand extends AbstractSSCJsonNodeOutputCommand
             .sscApplicationName(appVersion.getApplicationName())
             .sscApplicationVersion(appVersion.getVersionName())
             .build();
-        try (var grpcClient = AviatorGrpcClientHelper.createClient(session.getAviatorUrl(), logger, 30);
+        try (var grpcClient = AviatorGrpcClientHelper.createClient(session.getAviatorUrl(), logger, 30, AviatorRequestPolicy.WAIT_FOR_READY);
              var streamProcessor = new DastAuditStreamProcessor(
                  logger, grpcClient.getDastAuditAsyncStub(), grpcClient.getPingScheduler(),
                  grpcClient.getPingIntervalSeconds());
              var fprHandle = new FprHandle(fprPath)) {
-            long timeout = Math.max(grpcClient.getDefaultTimeoutSeconds(), 300);
+            long timeout = Math.max(grpcClient.getDefaultTimeoutSeconds(), TimeUnit.MINUTES.toSeconds(AUDIT_TIMEOUT_MINUTES));
             return DastAuditFPR.audit(fprHandle, config, tagMappingConfig, (streamConfig, workItems, totalReported) ->
                 streamProcessor.process(streamConfig, workItems, totalReported)
                     .orTimeout(timeout, TimeUnit.SECONDS));

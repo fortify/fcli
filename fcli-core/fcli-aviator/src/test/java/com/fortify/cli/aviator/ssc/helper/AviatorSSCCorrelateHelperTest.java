@@ -28,11 +28,11 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.aviator.fpr.Vulnerability;
-import com.fortify.cli.aviator.fpr.model.AuditIssue;
 import com.fortify.cli.aviator.grpc.CorrelatedPair;
 import com.fortify.cli.aviator.grpc.CorrelationResult;
 import com.fortify.cli.common.exception.FcliSimpleException;
+import com.fortify.cli.common.fpr.Vulnerability;
+import com.fortify.cli.common.fpr.model.AuditIssue;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.ssc.appversion.helper.SSCAppVersionDescriptor;
 import com.fortify.cli.ssc.artifact.helper.SSCArtifactDescriptor;

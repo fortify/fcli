@@ -19,7 +19,8 @@ import java.util.stream.Collectors;
 
 import com.fortify.cli.aviator.fpr.remediation.SkipReason;
 import com.fortify.cli.aviator.fpr.remediation.exception.SkipRemediationException;
-import com.fortify.cli.aviator.util.FuzzyContextSearcher;
+import com.fortify.cli.common.fpr.util.FuzzyContextSearcher;
+import com.fortify.cli.common.fpr.util.LineRange;
 
 /** Wraps the FuzzyContextSearcher utility's context/original-code matching, unmodified from the original. */
 public final class FuzzyAnchorLocator {

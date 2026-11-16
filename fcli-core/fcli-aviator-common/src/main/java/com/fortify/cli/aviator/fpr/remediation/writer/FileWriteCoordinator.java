@@ -26,7 +26,6 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.fortify.cli.aviator.fpr.model.FVDLMetadata;
 import com.fortify.cli.aviator.fpr.remediation.SkipReason;
 import com.fortify.cli.aviator.fpr.remediation.applier.AppliedChangeResult;
 import com.fortify.cli.aviator.fpr.remediation.applier.RemediationApplier;
@@ -38,11 +37,12 @@ import com.fortify.cli.aviator.fpr.remediation.model.FileChange;
 import com.fortify.cli.aviator.fpr.remediation.model.Hunk;
 import com.fortify.cli.aviator.fpr.remediation.model.Remediation;
 import com.fortify.cli.aviator.fpr.remediation.model.RemediationKey;
-import com.fortify.cli.aviator.fpr.utils.ISourceDecoder;
-import com.fortify.cli.aviator.fpr.utils.ISourceDecoder.DecodeResult;
-import com.fortify.cli.aviator.fpr.utils.ISourceDecoder.SourceDecodeException;
-import com.fortify.cli.aviator.fpr.utils.SourceEncoder;
-import com.fortify.cli.aviator.fpr.utils.SourceEncoder.SourceEncodeException;
+import com.fortify.cli.common.fpr.model.FVDLMetadata;
+import com.fortify.cli.common.fpr.utils.ISourceDecoder;
+import com.fortify.cli.common.fpr.utils.ISourceDecoder.DecodeResult;
+import com.fortify.cli.common.fpr.utils.ISourceDecoder.SourceDecodeException;
+import com.fortify.cli.common.fpr.utils.SourceEncoder;
+import com.fortify.cli.common.fpr.utils.SourceEncoder.SourceEncodeException;
 
 /** Houses the original prepareFileChanges/processFileChanges/commit/rollback/read/encode logic, unmodified. */
 public final class FileWriteCoordinator {

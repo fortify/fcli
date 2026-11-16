@@ -27,17 +27,17 @@ import org.slf4j.LoggerFactory;
 import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
 import com.fortify.cli.aviator.audit.model.AuditResponse;
 import com.fortify.cli.aviator.audit.model.AuditTier;
+import com.fortify.cli.aviator.audit.processor.AuditProcessor;
 import com.fortify.cli.aviator.config.TagMappingConfig;
-import com.fortify.cli.aviator.dast.DastSession;
-import com.fortify.cli.aviator.dast.StreamingWebInspectParser;
-import com.fortify.cli.aviator.fpr.model.AuditIssue;
-import com.fortify.cli.aviator.fpr.processor.AuditProcessor;
 import com.fortify.cli.aviator.grpc.DastAuditResult;
 import com.fortify.cli.aviator.grpc.DastAuditStreamConfig;
 import com.fortify.cli.aviator.grpc.DastAuditStreamResult;
 import com.fortify.cli.aviator.grpc.DastAuditWorkItem;
 import com.fortify.cli.aviator.util.Constants;
-import com.fortify.cli.aviator.util.FprHandle;
+import com.fortify.cli.common.fpr.dast.DastSession;
+import com.fortify.cli.common.fpr.dast.StreamingWebInspectParser;
+import com.fortify.cli.common.fpr.model.AuditIssue;
+import com.fortify.cli.common.fpr.util.FprHandle;
 
 import lombok.Builder;
 
@@ -113,6 +113,7 @@ public final class DastAuditFPR {
             TagMappingConfig tagMappingConfig,
             StreamRunner streamRunner) {
         tagMappingConfig.validateForDast();
+        fprHandle.validateDast();
         var auditProcessor = new AuditProcessor(fprHandle);
         Map<String, AuditIssue> auditIssues = auditProcessor.processAuditXML();
         var sessions = new StreamingWebInspectParser(fprHandle).parseSessions();

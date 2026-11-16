@@ -19,7 +19,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import com.fortify.cli.aviator.audit.model.UserPrompt;
-import com.fortify.cli.aviator.util.StringUtil;
+import com.fortify.cli.common.fpr.util.StringUtil;
 
 /**
  * Utility class for filtering UserPrompts based on quota constraints.

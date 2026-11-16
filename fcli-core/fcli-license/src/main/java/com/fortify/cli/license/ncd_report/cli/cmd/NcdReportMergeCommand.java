@@ -29,7 +29,6 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.expression.Expression;
-import org.springframework.expression.spel.standard.SpelExpressionParser;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.MappingIterator;
@@ -47,6 +46,7 @@ import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.writer.record.RecordWriterFactory;
 import com.fortify.cli.common.report.cli.cmd.AbstractReportGenerateCommand;
 import com.fortify.cli.common.report.writer.IReportWriter;
+import com.fortify.cli.common.spel.FcliSpelExpressionParser;
 import com.fortify.cli.license.ncd_report.config.NcdReportConfig;
 import com.fortify.cli.license.ncd_report.config.NcdReportContributorConfig;
 import com.fortify.cli.license.ncd_report.descriptor.NcdReportSummaryDescriptor;
@@ -205,7 +205,7 @@ public final class NcdReportMergeCommand extends AbstractReportGenerateCommand {
         allContributors = aggregateByAuthorId(allContributors);
         allContributors.forEach(c -> c.dormantStatus(c.sourceDormantStatus()));
 
-        var parser = new SpelExpressionParser();
+        var parser = new FcliSpelExpressionParser();
         var ignoreExpression = mergedContributorConfig
                 .flatMap(NcdReportContributorConfig::getIgnoreExpression)
                 .map(parser::parseExpression);

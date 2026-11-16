@@ -40,6 +40,7 @@ public final class RestResponseBodyHelper {
     private static final String TEMP_FILE_SUFFIX = ".part";
     private static final int BINARY_SNIFF_LENGTH = 8192;
     private static final int HTTP_ACCEPTED = 202;
+    public static final int UNLIMITED_ATTEMPTS = 0;
     private static final Set<String> TEXT_MEDIA_TYPES = Set.of(
             "application/xml", "application/json", "application/csv",
             "application/yaml", "application/x-yaml", "application/javascript");
@@ -50,12 +51,27 @@ public final class RestResponseBodyHelper {
         return saveToFile(request, getTarget(destination), monitor, false);
     }
 
+    /** Polls indefinitely while the server responds with HTTP 202. */
     public static RestResponseFileRecord saveToFileWhenReady(HttpRequest<?> request, Path destination, ProgressMonitor monitor, Duration pollInterval, Duration initialDelay) {
+        return saveToFileWhenReady(request, destination, monitor, pollInterval, initialDelay, UNLIMITED_ATTEMPTS);
+    }
+
+    /**
+     * Polls while the server responds with HTTP 202, sleeping {@code pollInterval} between requests.
+     * If {@code maxAttempts} is positive, at most that many requests are sent; if the last one
+     * still returns HTTP 202, an {@link FcliSimpleException} is thrown. Existing destination files
+     * are only replaced once a successful, non-202 response has been fully received.
+     */
+    public static RestResponseFileRecord saveToFileWhenReady(HttpRequest<?> request, Path destination, ProgressMonitor monitor,
+            Duration pollInterval, Duration initialDelay, int maxAttempts) {
         var target = getTarget(destination);
         sleep(initialDelay);
-        while ( true ) {
+        for ( int attempt = 1; ; attempt++ ) {
             var result = saveToFile(request, target, monitor, true);
             if ( result!=null ) { return result; }
+            if ( maxAttempts>0 && attempt>=maxAttempts ) {
+                throw new FcliSimpleException("Timed out waiting for file to become available after "+maxAttempts+" attempts");
+            }
             sleep(pollInterval);
         }
     }

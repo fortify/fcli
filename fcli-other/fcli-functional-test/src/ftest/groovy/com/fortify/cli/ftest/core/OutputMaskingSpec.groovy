@@ -51,6 +51,20 @@ class OutputMaskingSpec extends FcliBaseSpec {
 
     // ==================== Direct CLI: masking and channel routing ====================
 
+    def "unsigned action SLF4J warning is routed to stderr only"() {
+        when:
+            def result = Fcli.run("action run ${actionPath} --progress=none --on-unsigned=warn --on-invalid-version=ignore --mode stdout --secret ${SECRET}",
+                { it.expectZeroExitCode() })
+        then:
+            verifyAll(result) {
+                stderr.any { it.contains("WARN: Action") && it.contains("is not signed") }
+                !stdout.any { it.contains("WARN: Action") }
+                stdout.any { it.contains(MASKED) }
+                !stdout.any { it.contains(SECRET) }
+                !stderr.any { it.contains(SECRET) }
+            }
+    }
+
     def "out.write to stdout: secret is masked, output appears on stdout only"() {
         // out.write stdout → System.out → DelegatingPrintStream → stack → MaskingPrintStream
         when:

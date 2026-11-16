@@ -16,9 +16,9 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.springframework.expression.Expression;
-import org.springframework.expression.spel.standard.SpelExpressionParser;
 
 import com.fortify.cli.common.exception.FcliBugException;
+import com.fortify.cli.common.spel.FcliSpelExpressionParser;
 
 import lombok.Getter;
 import lombok.ToString;
@@ -40,7 +40,7 @@ public class QueryExpressionComposite extends QueryExpression {
     @Getter private final List<QueryExpression> children;
     @Getter private final LogicalOperator operator;
 
-    private static final SpelExpressionParser parser = new SpelExpressionParser();
+    private static final FcliSpelExpressionParser parser = new FcliSpelExpressionParser();
 
     private QueryExpressionComposite(Expression expression, List<QueryExpression> children, LogicalOperator operator) {
         super(expression);

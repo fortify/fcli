@@ -36,8 +36,9 @@ import com.fortify.cli.aviator.config.TagMappingConfig;
 import com.fortify.cli.aviator.grpc.DastAuditResult;
 import com.fortify.cli.aviator.grpc.DastAuditStreamConfig;
 import com.fortify.cli.aviator.grpc.DastAuditStreamResult;
-import com.fortify.cli.aviator.util.FprHandle;
 import com.fortify.cli.aviator.util.ResourceUtil;
+import com.fortify.cli.common.exception.FcliSimpleException;
+import com.fortify.cli.common.fpr.util.FprHandle;
 
 class DastAuditFPRTest {
     @TempDir Path tempDir;
@@ -218,6 +219,24 @@ class DastAuditFPRTest {
                     (ignoredConfig, items, total) -> CompletableFuture.completedFuture(null)));
 
             assertEquals("DAST audit stream completed without a result", exception.getMessage());
+        }
+    }
+
+    @Test
+    void sastFprIsRejectedWithValidationErrorBeforeStreaming() throws Exception {
+        Path fpr = tempDir.resolve("sast.fpr");
+        try (FileSystem zip = FileSystems.newFileSystem(fpr, Map.of("create", "true"))) {
+            Files.writeString(zip.getPath("/audit.fvdl"), "<FVDL/>");
+        }
+        boolean[] streamStarted = {false};
+
+        try (FprHandle handle = new FprHandle(fpr)) {
+            var exception = assertThrows(FcliSimpleException.class,
+                () -> DastAuditFPR.audit(handle, streamConfig(), defaultTagMapping(),
+                    (ignoredConfig, items, total) -> { streamStarted[0] = true; return null; }));
+
+            assertTrue(exception.getMessage().contains("webinspect.xml"));
+            assertFalse(streamStarted[0]);
         }
     }
 
