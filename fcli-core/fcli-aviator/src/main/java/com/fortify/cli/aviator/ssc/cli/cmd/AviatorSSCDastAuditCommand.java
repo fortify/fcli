@@ -41,11 +41,14 @@ import com.fortify.cli.aviator.ssc.helper.AviatorSSCAttributeHelper;
 import com.fortify.cli.aviator.ssc.helper.AviatorSSCAuditHelper;
 import com.fortify.cli.aviator.ssc.helper.AviatorSSCFprFilterHelper;
 import com.fortify.cli.aviator.ssc.helper.AviatorSSCFprTransferHelper;
+import com.fortify.cli.aviator.ssc.helper.AviatorSSCFprTransferHelper.UploadResult;
 import com.fortify.cli.aviator.ssc.helper.AviatorSSCRefreshHelper;
 import com.fortify.cli.aviator.ssc.helper.AviatorSSCTagValidator;
 import com.fortify.cli.aviator.util.ResourceUtil;
 import com.fortify.cli.common.exception.FcliTechnicalException;
 import com.fortify.cli.common.fpr.util.FprHandle;
+import com.fortify.cli.common.json.producer.IObjectNodeProducer;
+import com.fortify.cli.common.json.producer.ObjectNodeProducerApplyFrom;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.progress.cli.mixin.ProgressWriterFactoryMixin;
@@ -74,6 +77,13 @@ public class AviatorSSCDastAuditCommand extends AbstractSSCJsonNodeOutputCommand
     @Option(names = {"--tag-mapping"}) private String tagMapping;
 
     private String actionResult = "SKIPPED";
+
+    @Override
+    protected IObjectNodeProducer getObjectNodeProducer(UnirestInstance unirest) {
+        JsonNode result = getJsonNode(unirest);
+        return simpleObjectNodeProducerBuilder(ObjectNodeProducerApplyFrom.SPEC)
+            .source(result).exitCode(AviatorSSCAuditHelper.getAuditExitCode(result)).build();
+    }
 
     @Override
     public JsonNode getJsonNode(UnirestInstance unirest) {
@@ -119,20 +129,26 @@ public class AviatorSSCDastAuditCommand extends AbstractSSCJsonNodeOutputCommand
         DastAuditFprResult result = auditFpr(downloadedFpr, appVersion, session, logger, tagMappingConfig);
         actionResult = result.status().name();
         boolean uploadRequired = result.updatedFile() != null && result.succeeded() > 0;
+        ObjectNode output = buildOutput(appVersion, result, null);
         String artifactId = null;
         if (uploadRequired) {
-            artifactId = uploadAuditedDastFprToSSC(
+            UploadResult upload = uploadAuditedDastFprToSSC(
                 unirest, appVersion, downloadedFpr, logger, tagMappingConfig, progressWriter);
+            AviatorSSCAuditHelper.setUploadResult(output, upload);
+            artifactId = upload.artifactId();
+            if (artifactId == null) {
+                actionResult = AviatorSSCAuditHelper.AUDITED_NOT_UPLOADED;
+            }
         }
         if ((!uploadRequired || artifactId != null)
                 && (result.status() == DastAuditFprStatus.AUDITED
                     || result.status() == DastAuditFprStatus.SKIPPED)) {
             AviatorSSCAttributeHelper.writeLastDastAuditTimestamp(unirest, appVersion.getVersionId());
         }
-        return buildOutput(appVersion, result, artifactId);
+        return output;
     }
 
-    private String uploadAuditedDastFprToSSC(
+    private UploadResult uploadAuditedDastFprToSSC(
             UnirestInstance unirest,
             SSCAppVersionDescriptor appVersion,
             Path downloadedFpr,

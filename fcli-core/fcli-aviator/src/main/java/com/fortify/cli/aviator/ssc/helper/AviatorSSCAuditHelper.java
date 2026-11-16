@@ -17,6 +17,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.ResourceBundle;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -56,6 +57,7 @@ import kong.unirest.UnirestInstance;
  * result message formatting, JSON output construction, and pre-audit checks.
  */
 public final class AviatorSSCAuditHelper {
+    public static final String AUDITED_NOT_UPLOADED = "AUDITED_NOT_UPLOADED";
     private static final Logger LOG = LoggerFactory.getLogger(AviatorSSCAuditHelper.class);
     private static final int PAGE_LIMIT = 200;
     private static final String SSC_SCAN_TYPE_SAST = "SCA";
@@ -191,6 +193,23 @@ public final class AviatorSSCAuditHelper {
         audit.put("failed", auditResult.failed());
         ((ObjectNode) result.get("operation")).set("audit", audit);
         result.remove("state");
+    }
+
+    public static void setUploadResult(ObjectNode result, AviatorSSCFprTransferHelper.UploadResult upload) {
+        if (upload.artifactId() != null) {
+            result.put("artifactId", upload.artifactId());
+        } else {
+            result.putNull("artifactId");
+            result.put(IActionCommandResultSupplier.actionFieldName, AUDITED_NOT_UPLOADED);
+            ObjectNode audit = (ObjectNode) result.path("operation").path("audit");
+            var messages = ResourceBundle.getBundle("com.fortify.cli.aviator.i18n.AviatorMessages");
+            audit.put("message", String.format(messages.getString("fcli.aviator.ssc.audit.upload.audit-result"),
+                upload.failureMessage(), audit.path("message").asText()));
+        }
+    }
+
+    public static int getAuditExitCode(JsonNode result) {
+        return AUDITED_NOT_UPLOADED.equals(result.path(IActionCommandResultSupplier.actionFieldName).asText()) ? 1 : 0;
     }
 
     private static String getDastAuditMessage(DastAuditFprResult auditResult) {

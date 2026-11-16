@@ -36,10 +36,13 @@ import com.fortify.cli.aviator.ssc.helper.AviatorSSCAuditHelper;
 import com.fortify.cli.aviator.ssc.helper.AviatorSSCAuditHelper.AuditableIssuePresence;
 import com.fortify.cli.aviator.ssc.helper.AviatorSSCFprFilterHelper;
 import com.fortify.cli.aviator.ssc.helper.AviatorSSCFprTransferHelper;
+import com.fortify.cli.aviator.ssc.helper.AviatorSSCFprTransferHelper.UploadResult;
 import com.fortify.cli.aviator.ssc.helper.AviatorSSCRefreshHelper;
 import com.fortify.cli.aviator.ssc.helper.AviatorSSCTagValidator;
 import com.fortify.cli.aviator.util.ResourceUtil;
 import com.fortify.cli.common.fpr.util.FprHandle;
+import com.fortify.cli.common.json.producer.IObjectNodeProducer;
+import com.fortify.cli.common.json.producer.ObjectNodeProducerApplyFrom;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.progress.cli.mixin.ProgressWriterFactoryMixin;
@@ -80,6 +83,13 @@ abstract class AbstractAviatorSSCSastAuditCommand extends AbstractSSCJsonNodeOut
     @Mixin private SourceEncodingsMixin sourceEncodingsMixin;
     private static final Logger LOG = LoggerFactory.getLogger(AbstractAviatorSSCSastAuditCommand.class);
     private Long checkedQuotaBefore;
+
+    @Override
+    protected IObjectNodeProducer getObjectNodeProducer(UnirestInstance unirest) {
+        JsonNode result = getJsonNode(unirest);
+        return simpleObjectNodeProducerBuilder(ObjectNodeProducerApplyFrom.SPEC)
+            .source(result).exitCode(AviatorSSCAuditHelper.getAuditExitCode(result)).build();
+    }
 
     private static final class QuotaHandlingArgGroup {
         @Option(names = {"--skip-if-exceeding-quota"}) private boolean skipIfExceedingQuota;
@@ -314,13 +324,12 @@ abstract class AbstractAviatorSSCSastAuditCommand extends AbstractSSCJsonNodeOut
         String action = auditResult.getStatus();
         logger.progress(AviatorSSCAuditHelper.getProgressMessage(auditResult));
 
-        String artifactId = null;
+        ObjectNode result = AviatorSSCAuditHelper.buildResultNode(av, null, action);
+        AviatorSSCAuditHelper.setAuditStats(result, auditResult);
         if (auditResult.getUpdatedFile() != null && !"SKIPPED".equals(action) && !"FAILED".equals(action)) {
-            artifactId = uploadAuditedFprToSSC(unirest, downloadedFprPath, av, logger);
+            AviatorSSCAuditHelper.setUploadResult(result, uploadAuditedFprToSSC(unirest, downloadedFprPath, av, logger));
         }
 
-        ObjectNode result = AviatorSSCAuditHelper.buildResultNode(av, artifactId, action);
-        AviatorSSCAuditHelper.setAuditStats(result, auditResult);
         return result;
     }
 
@@ -378,7 +387,7 @@ abstract class AbstractAviatorSSCSastAuditCommand extends AbstractSSCJsonNodeOut
     }
 
     @SneakyThrows
-    private String uploadAuditedFprToSSC(
+    private UploadResult uploadAuditedFprToSSC(
             UnirestInstance unirest, Path auditedFpr, SSCAppVersionDescriptor av, AviatorLoggerImpl logger) {
         try (IProgressWriter progressWriter = progressWriterFactoryMixin.create()) {
             validateSSCTagsBeforeUpload(unirest, av, logger);

@@ -34,8 +34,10 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.aviator._common.config.AviatorConfigManager;
 import com.fortify.cli.aviator._common.session.user.helper.AviatorUserSessionDescriptor;
 import com.fortify.cli.aviator.audit.DastAuditFprResult;
@@ -43,6 +45,9 @@ import com.fortify.cli.aviator.audit.DastAuditFprStatus;
 import com.fortify.cli.aviator.config.AviatorLoggerImpl;
 import com.fortify.cli.aviator.config.IAviatorLogger;
 import com.fortify.cli.aviator.config.TagMappingConfig;
+import com.fortify.cli.aviator.ssc.helper.AviatorSSCFprTransferHelper;
+import com.fortify.cli.common.cli.mixin.ICommandAware;
+import com.fortify.cli.common.cli.util.FcliCommandSpecHelper;
 import com.fortify.cli.common.fpr.util.FprHandle;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.progress.helper.IProgressWriter;
@@ -53,6 +58,11 @@ import com.fortify.cli.ssc.appversion.helper.SSCAppVersionDescriptor;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
+import kong.unirest.UnirestInstance;
 import picocli.CommandLine;
 
 class AviatorSSCDastAuditCommandTest {
@@ -126,6 +136,10 @@ class AviatorSSCDastAuditCommandTest {
         "AUDITED, true, 4, missing-id, 0",
         "PARTIALLY_AUDITED, true, 4, missing-id, 0",
         "AUDITED, true, 4, http-error, 0",
+        "PARTIALLY_AUDITED, true, 4, http-error, 0",
+        "AUDITED, true, 4, rejected, 0",
+        "AUDITED, true, 4, filter, 1",
+        "PARTIALLY_AUDITED, true, 4, filter, 0",
         "AUDITED, true, 4, none, 1",
         "PARTIALLY_AUDITED, true, 4, none, 0",
         "SKIPPED, false, 0, none, 1",
@@ -148,8 +162,8 @@ class AviatorSSCDastAuditCommandTest {
         var auditResult = DastAuditFprResult.builder()
             .status(status).updatedFile(updated ? fpr.toFile() : null)
             .totalReported(8).eligible(6).submitted(6).succeeded(succeeded).skipped(6 - succeeded)
+            .failed(status == DastAuditFprStatus.PARTIALLY_AUDITED ? 1 : 0)
             .reservedQuota(6).exceededCount(2).build();
-        var command = new CompletedAuditCommand(auditResult);
         var appVersion = new SSCAppVersionDescriptor();
         appVersion.setVersionId("42");
         appVersion.setApplicationName("WebGoat");
@@ -171,8 +185,9 @@ class AviatorSSCDastAuditCommandTest {
         });
         server.createContext("/api/v1/projectVersions/42/artifacts", exchange -> {
             uploads.incrementAndGet();
-            uploadedBody.set(new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8));
-            respond(exchange, "http-error".equals(uploadFailure) ? 500 : 200,
+            uploadedBody.set(new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.ISO_8859_1));
+            int httpStatus = "http-error".equals(uploadFailure) ? 500 : "rejected".equals(uploadFailure) ? 400 : 200;
+            respond(exchange, httpStatus,
                 "missing-id".equals(uploadFailure) ? "{\"data\":{}}" : "{\"data\":{\"id\":\"2786\"}}");
         });
         server.createContext("/api/v1/attributeDefinitions", exchange -> respond(exchange, 200, """
@@ -188,6 +203,12 @@ class AviatorSSCDastAuditCommandTest {
             timestampUpdate.set(JsonHelper.getObjectMapper().readTree(exchange.getRequestBody()));
             respond(exchange, 200, "{}");
         });
+        var uploadLog = (Logger) LoggerFactory.getLogger(AviatorSSCFprTransferHelper.class);
+        Level previousLevel = uploadLog.getLevel();
+        var warnings = new ListAppender<ILoggingEvent>();
+        warnings.start();
+        uploadLog.setLevel(Level.WARN);
+        uploadLog.addAppender(warnings);
         server.start();
         try (var unirest = UnirestHelper.createUnirestInstance(instance -> {
             UnirestJsonHeaderConfigurer.configure(instance);
@@ -195,18 +216,41 @@ class AviatorSSCDastAuditCommandTest {
             instance.config().defaultBaseUrl("http://localhost:" + server.getAddress().getPort());
         })) {
             var tagMapping = AviatorConfigManager.getInstance().getDefaultDastTagMappingConfig().resolveForDast();
-            var result = command.processFpr(unirest, appVersion, fpr, new AviatorUserSessionDescriptor(),
-                new AviatorLoggerImpl(progress), tagMapping, progress);
+            var command = new CompletedAuditCommand(auditResult, "filter".equals(uploadFailure)) {
+                @Override public UnirestInstance getUnirestInstance() { return unirest; }
+                @Override public JsonNode getJsonNode(UnirestInstance instance) {
+                    try {
+                        return processFpr(instance, appVersion, fpr, new AviatorUserSessionDescriptor(),
+                            new AviatorLoggerImpl(progress), tagMapping, progress);
+                    } catch (Exception e) {
+                        throw new AssertionError(e);
+                    }
+                }
+            };
+            var commandLine = new CommandLine(command);
+            commandLine.parseArgs("--av", "WebGoat:1.0", "--progress", "none");
+            FcliCommandSpecHelper.getAllUserObjectsStream(commandLine.getCommandSpec()).forEach(object -> {
+                if (object instanceof ICommandAware commandAware) {
+                    commandAware.setCommandSpec(commandLine.getCommandSpec());
+                }
+            });
+            var records = new ArrayList<ObjectNode>();
+            command.setRecordConsumer(records::add, true);
 
             boolean uploadRequired = updated && succeeded > 0;
-            boolean uploadSucceeded = uploadRequired && "none".equals(uploadFailure);
-            assertEquals(status.name(), result.path("__action__").asText());
-            assertEquals(status.name(), command.getActionCommandResult());
+            boolean uploadSucceeded = uploadRequired && List.of("none", "filter").contains(uploadFailure);
+            boolean uploadFailed = uploadRequired && !uploadSucceeded;
+            assertEquals(uploadFailed ? 1 : 0, command.call());
+            assertEquals(1, records.size(), "Emit the audit record even when the command exits nonzero");
+            var result = records.get(0);
+            String expectedAction = uploadFailed ? "AUDITED_NOT_UPLOADED" : status.name();
+            assertEquals(expectedAction, result.path("__action__").asText());
+            assertEquals(expectedAction, command.getActionCommandResult());
             assertEquals("42", result.path("id").asText());
             assertEquals(6, result.path("operation").path("audit").path("submitted").asInt());
             assertEquals(succeeded, result.path("operation").path("audit").path("succeeded").asInt());
             assertEquals(6 - succeeded, result.path("operation").path("audit").path("skipped").asInt());
-            assertEquals(0, result.path("operation").path("audit").path("failed").asInt());
+            assertEquals(auditResult.failed(), result.path("operation").path("audit").path("failed").asInt());
             if (uploadSucceeded) {
                 assertEquals("2786", result.path("artifactId").asText());
             } else {
@@ -221,17 +265,48 @@ class AviatorSSCDastAuditCommandTest {
             }
             if (uploadRequired) {
                 assertEquals(0, candidatesAtValidation.get(), "Validate tags before candidate creation/pruning");
-                assertTrue(uploadedBody.get().contains("webinspect.xml"));
+                boolean pruneFailed = "filter".equals(uploadFailure);
+                assertEquals(!pruneFailed, uploadedBody.get().contains("webinspect.xml"));
                 assertTrue(uploadedBody.get().contains("audit.xml"));
-                assertFalse(uploadedBody.get().contains("audit.fvdl"));
-                if (!uploadSucceeded) {
+                assertEquals(pruneFailed, uploadedBody.get().contains("audit.fvdl"));
+                if (pruneFailed) {
+                    assertTrue(uploadedBody.get().contains(new String(Files.readAllBytes(fpr), StandardCharsets.ISO_8859_1)),
+                        "Pruning failure must upload the byte-for-byte untouched full audited FPR");
                     assertTrue(progress.messages.stream().anyMatch(message ->
-                        message.startsWith("WARN: Upload of audited DAST FPR to SSC failed:")));
+                        message.startsWith("WARN: Could not prune DAST FPR; uploading the full original FPR")));
+                }
+                if (!uploadSucceeded) {
+                    String message = result.path("operation").path("audit").path("message").asText();
+                    String uploadMessage = "rejected".equals(uploadFailure)
+                        ? "Audit finished, but SSC rejected the upload request (HTTP 400)."
+                        : "Audit finished, but fcli could not confirm the upload to SSC.";
+                    assertTrue(message.startsWith(uploadMessage));
+                    String auditMessage = status == DastAuditFprStatus.PARTIALLY_AUDITED
+                        ? "DAST audit partially completed" : "DAST audit completed successfully";
+                    assertTrue(message.endsWith(". Audit result: " + auditMessage));
+                    assertTrue(message.contains("Quota may have been consumed"));
+                    assertTrue(message.contains("Retrying the audit may consume more quota"));
+                    String cause = "missing-id".equals(uploadFailure)
+                        ? "SSC FPR upload response did not contain an artifact ID"
+                        : "HTTP " + ("rejected".equals(uploadFailure) ? 400 : 500);
+                    assertTrue(message.contains(cause), message);
+                    if ("rejected".equals(uploadFailure)) {
+                        assertTrue(message.contains("SSC rejected the upload request (HTTP 400)"), message);
+                    } else {
+                        assertFalse(message.contains("rejected"), message);
+                        assertTrue(message.contains("Check the artifact history before retrying."), message);
+                    }
+                    assertTrue(progress.messages.stream().anyMatch(warning ->
+                        warning.startsWith("WARN: Upload of audited DAST FPR to SSC:")
+                            && warning.contains(uploadMessage) && warning.contains(cause)));
+                    assertTrue(warnings.list.stream().anyMatch(event -> event.getLevel() == Level.WARN
+                        && event.getThrowableProxy() != null && event.getThrowableProxy().getMessage().contains(cause)),
+                        "Upload warning must retain the exception cause");
                 }
             }
             try (var handle = new FprHandle(fpr)) {
                 assertTrue(Files.exists(handle.getPath("/audit.fvdl")));
-                assertTrue(Files.exists(handle.getPath("/webinspect.xml")));
+                assertEquals(!"filter".equals(uploadFailure), Files.exists(handle.getPath("/webinspect.xml")));
                 assertEquals("updated audit", Files.readString(handle.getPath("/audit.xml")));
             }
             try (var paths = Files.list(tempDir)) {
@@ -239,14 +314,19 @@ class AviatorSSCDastAuditCommandTest {
             }
         } finally {
             server.stop(0);
+            uploadLog.detachAppender(warnings);
+            uploadLog.setLevel(previousLevel);
+            warnings.stop();
         }
     }
 
-    private static final class CompletedAuditCommand extends AviatorSSCDastAuditCommand {
+    private static class CompletedAuditCommand extends AviatorSSCDastAuditCommand {
         private final DastAuditFprResult result;
+        private final boolean removeDastPayload;
 
-        private CompletedAuditCommand(DastAuditFprResult result) {
+        private CompletedAuditCommand(DastAuditFprResult result, boolean removeDastPayload) {
             this.result = result;
+            this.removeDastPayload = removeDastPayload;
         }
 
         @Override
@@ -254,7 +334,13 @@ class AviatorSSCDastAuditCommandTest {
                 AviatorUserSessionDescriptor session, IAviatorLogger logger, TagMappingConfig tagMappingConfig)
                 throws Exception {
             try (var handle = new FprHandle(fpr)) {
+                assertTrue(Files.exists(handle.getPath("/audit.fvdl")),
+                    "Audit the full current-state FPR before pruning an upload candidate");
+                assertTrue(Files.exists(handle.getPath("/webinspect.xml")));
                 Files.writeString(handle.getPath("/audit.xml"), "updated audit");
+                if (removeDastPayload) {
+                    Files.delete(handle.getPath("/webinspect.xml"));
+                }
             }
             return result;
         }

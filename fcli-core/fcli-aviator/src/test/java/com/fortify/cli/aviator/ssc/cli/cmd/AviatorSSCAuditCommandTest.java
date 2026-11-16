@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -38,7 +39,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
-import org.junit.jupiter.params.provider.ValueSource;
+import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -48,6 +49,7 @@ import com.fortify.cli.aviator.audit.model.AuditFprOptions;
 import com.fortify.cli.aviator.audit.model.FPRAuditResult;
 import com.fortify.cli.aviator.config.AviatorLoggerImpl;
 import com.fortify.cli.aviator.ssc.helper.AviatorSSCAuditHelper;
+import com.fortify.cli.aviator.ssc.helper.AviatorSSCFprTransferHelper;
 import com.fortify.cli.common.cli.mixin.ICommandAware;
 import com.fortify.cli.common.cli.util.FcliCommandSpecHelper;
 import com.fortify.cli.common.fpr.util.FprHandle;
@@ -56,9 +58,14 @@ import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.progress.helper.IProgressWriter;
 import com.fortify.cli.common.rest.unirest.UnirestHelper;
 import com.fortify.cli.common.rest.unirest.config.UnirestJsonHeaderConfigurer;
+import com.fortify.cli.common.rest.unirest.config.UnirestUnexpectedHttpResponseConfigurer;
 import com.fortify.cli.ssc.appversion.helper.SSCAppVersionDescriptor;
 import com.sun.net.httpserver.HttpServer;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import kong.unirest.UnirestInstance;
 import picocli.CommandLine;
 
@@ -173,23 +180,19 @@ class AviatorSSCAuditCommandTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"AUDITED", "PARTIALLY_AUDITED"})
-    void preservesCompletedAuditWhenSastUploadFails(String status) throws Exception {
-        assertPostAuditResult(status, "upload");
-    }
-
-    @ParameterizedTest
-    @ValueSource(strings = {"AUDITED", "PARTIALLY_AUDITED"})
-    void preservesCompletedAuditWhenSastFilteringFails(String status) throws Exception {
-        assertPostAuditResult(status, "filter");
-    }
-
-    @Test
-    void returnsUploadedArtifactWithCompletedAudit() throws Exception {
-        assertPostAuditResult("AUDITED", "none");
-    }
-
-    private void assertPostAuditResult(String status, String failure) throws Exception {
+    @CsvSource({
+        "true, AUDITED, missing-id", "false, AUDITED, missing-id",
+        "true, PARTIALLY_AUDITED, missing-id", "false, PARTIALLY_AUDITED, missing-id",
+        "true, AUDITED, http-error", "false, AUDITED, http-error",
+        "true, PARTIALLY_AUDITED, http-error", "false, PARTIALLY_AUDITED, http-error",
+        "true, AUDITED, rejected", "false, AUDITED, rejected",
+        "true, AUDITED, filter", "false, AUDITED, filter",
+        "true, PARTIALLY_AUDITED, filter", "false, PARTIALLY_AUDITED, filter",
+        "true, AUDITED, none", "false, AUDITED, none",
+        "true, SKIPPED, none", "false, SKIPPED, none",
+        "true, FAILED, none", "false, FAILED, none"
+    })
+    void emitsCompletedAuditAndExitCodeForBothCommandNames(boolean canonical, String status, String failure) throws Exception {
         Path fpr = tempDir.resolve("audited.fpr");
         try (var zip = new ZipOutputStream(Files.newOutputStream(fpr))) {
             for (String entry : List.of("audit.fvdl", "webinspect.xml")) {
@@ -198,25 +201,23 @@ class AviatorSSCAuditCommandTest {
                 zip.closeEntry();
             }
         }
-        int succeeded = "AUDITED".equals(status) ? 3 : 2;
+        int succeeded = switch (status) {
+            case "AUDITED" -> 3;
+            case "PARTIALLY_AUDITED" -> 2;
+            default -> 0;
+        };
         int skipped = 3 - succeeded;
         Map<String, Integer> skippedByReason = skipped == 0 ? Map.of() : Map.of("Skipped by Aviator", skipped);
         var auditResult = new FPRAuditResult(fpr.toFile(), status, "Audit finished", succeeded, 3, 3, skipped,
             skippedByReason, 1, Map.of("No remediation available", 1));
-        var command = new CompletedAuditCommand(auditResult, "filter".equals(failure));
-        var commandLine = new CommandLine(command);
-        commandLine.parseArgs("--av", "TestApp:1.0", "--progress", "none");
-        FcliCommandSpecHelper.getAllUserObjectsStream(commandLine.getCommandSpec()).forEach(object -> {
-            if (object instanceof ICommandAware commandAware) {
-                commandAware.setCommandSpec(commandLine.getCommandSpec());
-            }
-        });
+        var completedAudit = new CompletedAudit(auditResult, "filter".equals(failure));
         var av = new SSCAppVersionDescriptor();
         av.setVersionId("42");
         av.setApplicationName("TestApp");
         av.setVersionName("1.0");
         var progress = new RecordingProgressWriter();
         var uploads = new AtomicInteger();
+        var uploadedBody = new AtomicReference<String>();
         var server = HttpServer.create(new InetSocketAddress(0), 0);
         server.createContext("/api/v1/projectVersions/42/customTags", exchange -> {
             byte[] response = "{}".getBytes(StandardCharsets.UTF_8);
@@ -228,72 +229,151 @@ class AviatorSSCAuditCommandTest {
         });
         server.createContext("/api/v1/projectVersions/42/artifacts", exchange -> {
             uploads.incrementAndGet();
-            exchange.getRequestBody().readAllBytes();
-            byte[] response = ("upload".equals(failure) ? "{\"data\":{}}" : "{\"data\":{\"id\":\"2786\"}}")
+            uploadedBody.set(new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.ISO_8859_1));
+            byte[] response = ("missing-id".equals(failure) ? "{\"data\":{}}" : "{\"data\":{\"id\":\"2786\"}}")
                 .getBytes(StandardCharsets.UTF_8);
             exchange.getResponseHeaders().set("Content-Type", "application/json");
-            exchange.sendResponseHeaders(200, response.length);
+            int httpStatus = "http-error".equals(failure) ? 500 : "rejected".equals(failure) ? 400 : 200;
+            exchange.sendResponseHeaders(httpStatus, response.length);
             try (var output = exchange.getResponseBody()) {
                 output.write(response);
             }
         });
+        var uploadLog = (Logger) LoggerFactory.getLogger(AviatorSSCFprTransferHelper.class);
+        Level previousLevel = uploadLog.getLevel();
+        var warnings = new ListAppender<ILoggingEvent>();
+        warnings.start();
+        uploadLog.setLevel(Level.WARN);
+        uploadLog.addAppender(warnings);
         server.start();
         try (var unirest = UnirestHelper.createUnirestInstance(instance -> {
             UnirestJsonHeaderConfigurer.configure(instance);
+            UnirestUnexpectedHttpResponseConfigurer.configure(instance);
             instance.config().defaultBaseUrl("http://localhost:" + server.getAddress().getPort());
         })) {
-            var result = command.processFpr(unirest, av, "unused", "unused",
-                new AviatorLoggerImpl(progress), fpr);
+            var logger = new AviatorLoggerImpl(progress);
+            AbstractAviatorSSCSastAuditCommand command = canonical ? new AviatorSSCSastAuditCommand() {
+                @Override public UnirestInstance getUnirestInstance() { return unirest; }
+                @Override public JsonNode getJsonNode(UnirestInstance instance) {
+                    return processFpr(instance, av, "unused", "unused", logger, fpr);
+                }
+                @Override FPRAuditResult auditFpr(AuditFprOptions options) { return completedAudit.auditFpr(options); }
+            } : new AviatorSSCAuditCommand() {
+                @Override public UnirestInstance getUnirestInstance() { return unirest; }
+                @Override public JsonNode getJsonNode(UnirestInstance instance) {
+                    return processFpr(instance, av, "unused", "unused", logger, fpr);
+                }
+                @Override FPRAuditResult auditFpr(AuditFprOptions options) { return completedAudit.auditFpr(options); }
+            };
+            var commandLine = new CommandLine(command);
+            commandLine.parseArgs("--av", "TestApp:1.0", "--progress", "none");
+            FcliCommandSpecHelper.getAllUserObjectsStream(commandLine.getCommandSpec()).forEach(object -> {
+                if (object instanceof ICommandAware commandAware) {
+                    commandAware.setCommandSpec(commandLine.getCommandSpec());
+                }
+            });
+            var records = new ArrayList<ObjectNode>();
+            command.setRecordConsumer(records::add, true);
+            boolean uploadRequired = List.of("AUDITED", "PARTIALLY_AUDITED").contains(status);
+            boolean uploadFailed = uploadRequired && List.of("missing-id", "http-error", "rejected").contains(failure);
 
-            assertEquals(status, result.path(IActionCommandResultSupplier.actionFieldName).asText());
-            assertFalse(command.auditPayloadPath.getFileSystem().isOpen(),
+            assertEquals(uploadFailed ? 1 : 0, command.call());
+            assertEquals(1, records.size(), "Emit the audit record even when the command exits nonzero");
+            var result = records.get(0);
+            assertEquals(uploadFailed ? "AUDITED_NOT_UPLOADED" : status,
+                result.path(IActionCommandResultSupplier.actionFieldName).asText());
+            assertEquals("AUDITED", command.getActionCommandResult(),
+                "The default action supplier must not overwrite the explicit audit outcome");
+            assertFalse(completedAudit.auditPayloadPath.getFileSystem().isOpen(),
                 "Audit handle must close before filtering/upload");
             var audit = result.path("operation").path("audit");
             assertEquals(3, audit.path("submitted").asInt());
             assertEquals(succeeded, audit.path("succeeded").asInt());
             assertEquals(skipped, audit.path("skipped").asInt());
             assertEquals(JsonHelper.getObjectMapper().valueToTree(skippedByReason), audit.path("skippedByReason"));
+            assertEquals(skipped == 0 ? "" : "Skipped by Aviator=" + skipped, audit.path("skippedReasons").asText());
             assertEquals(1, audit.path("remediationGenerationSkipped").asInt());
             assertEquals(1, audit.path("remediationGenerationSkippedByReason").path("No remediation available").asInt());
-            assertEquals("AUDITED".equals(status) ? "Audit completed successfully" : "Audit finished",
-                audit.path("message").asText());
-            assertEquals(1, uploads.get());
-            if ("none".equals(failure)) {
+            assertEquals("No remediation available=1", audit.path("remediationGenerationSkippedReasons").asText());
+            String auditMessage = "AUDITED".equals(status) ? "Audit completed successfully" : "Audit finished";
+            String uploadMessage = "rejected".equals(failure)
+                ? "Audit finished, but SSC rejected the upload request (HTTP 400)."
+                : "Audit finished, but fcli could not confirm the upload to SSC.";
+            if (uploadFailed) {
+                assertTrue(audit.path("message").asText().startsWith(uploadMessage));
+                assertTrue(audit.path("message").asText().endsWith(". Audit result: " + auditMessage));
+            } else {
+                assertEquals(auditMessage, audit.path("message").asText());
+            }
+            assertEquals(uploadRequired ? 1 : 0, uploads.get());
+            if (!uploadRequired) {
+                assertTrue(result.path("artifactId").isNull());
+            } else if ("none".equals(failure)) {
                 assertEquals("2786", result.path("artifactId").asText());
                 assertFalse(progress.messages.stream().anyMatch(message -> message.startsWith("WARN: Upload")));
             } else if ("filter".equals(failure)) {
                 assertEquals("2786", result.path("artifactId").asText());
+                assertTrue(uploadedBody.get().contains(new String(Files.readAllBytes(fpr), StandardCharsets.ISO_8859_1)),
+                    "Pruning failure must upload the byte-for-byte untouched full audited FPR");
                 assertTrue(progress.messages.stream().anyMatch(message ->
                     message.startsWith("WARN: Could not prune SAST FPR; uploading the full original FPR including all engines")));
             } else {
                 assertTrue(result.path("artifactId").isNull());
-                String warning = "SSC FPR upload response did not contain an artifact ID";
-                assertTrue(progress.messages.contains("WARN: Upload of audited SAST FPR to SSC failed: " + warning),
-                    progress.messages.toString());
+                String message = audit.path("message").asText();
+                assertTrue(message.contains(uploadMessage));
+                assertTrue(message.contains("Quota may have been consumed"));
+                assertTrue(message.contains("Retrying the audit may consume more quota"));
+                String cause = "missing-id".equals(failure)
+                    ? "SSC FPR upload response did not contain an artifact ID"
+                    : "HTTP " + ("rejected".equals(failure) ? 400 : 500);
+                assertTrue(message.contains(cause), message);
+                if ("rejected".equals(failure)) {
+                    assertTrue(message.contains("SSC rejected the upload request (HTTP 400)"), message);
+                } else {
+                    assertFalse(message.contains("rejected"), message);
+                    assertTrue(message.contains("Check the artifact history before retrying."), message);
+                }
+                assertTrue(progress.messages.stream().anyMatch(warning ->
+                    warning.startsWith("WARN: Upload of audited SAST FPR to SSC:")
+                        && warning.contains(uploadMessage) && warning.contains(cause)));
+                assertTrue(warnings.list.stream().anyMatch(event -> event.getLevel() == Level.WARN
+                    && event.getThrowableProxy() != null && event.getThrowableProxy().getMessage().contains(cause)),
+                    "Upload warning must retain the exception cause");
+            }
+            if (uploadRequired && !"filter".equals(failure)) {
+                assertTrue(uploadedBody.get().contains("audit.fvdl"));
+                assertFalse(uploadedBody.get().contains("webinspect.xml"));
             }
             try (var handle = new FprHandle(fpr)) {
                 assertTrue(Files.exists(handle.getPath("/webinspect.xml")));
                 assertEquals("updated audit", Files.readString(handle.getPath("/audit.xml")));
             }
+            try (var paths = Files.list(tempDir)) {
+                assertEquals(List.of(fpr), paths.toList(), "Always clean the upload candidate");
+            }
         } finally {
             server.stop(0);
+            uploadLog.detachAppender(warnings);
+            uploadLog.setLevel(previousLevel);
+            warnings.stop();
         }
     }
 
-    private static final class CompletedAuditCommand extends AviatorSSCSastAuditCommand {
+    private static final class CompletedAudit {
         private final FPRAuditResult auditResult;
         private final boolean removeSastPayload;
         private Path auditPayloadPath;
 
-        private CompletedAuditCommand(FPRAuditResult auditResult, boolean removeSastPayload) {
+        private CompletedAudit(FPRAuditResult auditResult, boolean removeSastPayload) {
             this.auditResult = auditResult;
             this.removeSastPayload = removeSastPayload;
         }
 
-        @Override
         FPRAuditResult auditFpr(AuditFprOptions options) {
             auditPayloadPath = options.getFprHandle().getPath("/audit.fvdl");
             assertTrue(auditPayloadPath.getFileSystem().isOpen());
+            assertTrue(Files.exists(options.getFprHandle().getPath("/webinspect.xml")),
+                "Audit the full current-state FPR before pruning an upload candidate");
             try {
                 Files.writeString(options.getFprHandle().getPath("/audit.xml"), "updated audit");
                 if (removeSastPayload) {
