@@ -13,7 +13,6 @@
 package com.fortify.cli.aviator.grpc;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
@@ -51,7 +50,6 @@ import com.fortify.aviator.grpc.AuditorServiceGrpc;
 import com.fortify.aviator.grpc.CorrelationServiceGrpc;
 import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
 import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
-import com.fortify.cli.aviator.audit.model.AuditResponse;
 import com.fortify.cli.aviator.audit.model.UserPrompt;
 import com.fortify.cli.aviator.config.IAviatorLogger;
 import com.fortify.cli.aviator.util.Constants;
@@ -133,12 +131,19 @@ public class AviatorGrpcClient implements AutoCloseable {
         });
     }
 
-    public CompletableFuture<Map<String, AuditResponse>> processBatchRequests(Queue<UserPrompt> requests, String projectName,
+    /**
+     * Processes SAST requests, returning received responses and explicit stream completion or failure.
+     * Quota filtering, interruption and unexpected local failures complete the future exceptionally.
+     *
+     * @return the stream outcome; normal stream completion does not imply every audit succeeded
+     */
+    public CompletableFuture<SastStreamOutcome> processBatchRequests(Queue<UserPrompt> requests, String projectName,
             String FPRBuildId, String SSCApplicationName, String SSCApplicationVersion, String token, FprHandle fprHandle,
             List<String> customPriorityOrder, ISourceDecoder sourceDecoder, FVDLMetadata fvdlMetadata) {
         AviatorStreamProcessor processor = new AviatorStreamProcessor(this, logger, asyncStub, processingExecutor, pingScheduler,
                 pingIntervalSeconds, defaultTimeoutSeconds, fprHandle, sourceDecoder, fvdlMetadata);
-        CompletableFuture<Map<String, AuditResponse>> future = processor.processBatchRequests(requests, projectName, FPRBuildId, SSCApplicationName, SSCApplicationVersion, token, customPriorityOrder);
+        CompletableFuture<SastStreamOutcome> future = processor.processBatchRequests(requests, projectName, FPRBuildId,
+                SSCApplicationName, SSCApplicationVersion, token, customPriorityOrder);
         future.whenComplete((res, th) -> processor.close());
         return future.exceptionally(ex -> {
             Throwable cause = (ex instanceof CompletionException || ex instanceof ExecutionException) && ex.getCause() != null ? ex.getCause() : ex;

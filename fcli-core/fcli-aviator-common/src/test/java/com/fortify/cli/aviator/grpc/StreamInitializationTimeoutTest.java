@@ -14,6 +14,7 @@ package com.fortify.cli.aviator.grpc;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -41,6 +42,7 @@ import com.fortify.aviator.grpc.AuditorServiceGrpc;
 import com.fortify.aviator.grpc.CorrelationInitResponse;
 import com.fortify.aviator.grpc.CorrelationServerMessage;
 import com.fortify.aviator.grpc.CorrelationServiceGrpc;
+import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
 import com.fortify.cli.aviator.audit.model.IssueData;
 import com.fortify.cli.aviator.audit.model.UserPrompt;
 import com.fortify.cli.aviator.config.IAviatorLogger;
@@ -213,7 +215,9 @@ class StreamInitializationTimeoutTest {
                 assertFalse(invocation.isDone(), "The caller waits for initialization");
                 scheduler.fire();
                 var result = invocation.get(5, TimeUnit.SECONDS);
-                assertThrows(CompletionException.class, result::join);
+                var failure = assertInstanceOf(SastStreamOutcome.Failed.class, result.join());
+                assertInstanceOf(AviatorSimpleException.class, failure.failure());
+                assertTrue(failure.responses().isEmpty());
                 assertTrue(channel.cancelled);
             }
         } finally {
@@ -245,8 +249,10 @@ class StreamInitializationTimeoutTest {
                 assertFalse(invocation.isDone(), "The caller waits for initialization");
                 scheduler.fire();
                 var result = invocation.get(10, TimeUnit.SECONDS);
-                var failure = assertThrows(CompletionException.class, result::join);
-                assertTrue(failure.getCause().getMessage().contains("initialization timed out"));
+                var failure = assertInstanceOf(SastStreamOutcome.Failed.class, result.join());
+                assertInstanceOf(AviatorSimpleException.class, failure.failure());
+                assertTrue(failure.failure().getMessage().contains("initialization timed out"));
+                assertTrue(failure.responses().isEmpty());
             } finally {
                 channel.shutdownNow();
             }

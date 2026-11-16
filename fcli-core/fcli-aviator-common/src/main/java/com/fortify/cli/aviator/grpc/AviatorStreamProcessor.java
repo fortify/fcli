@@ -13,7 +13,6 @@
 package com.fortify.cli.aviator.grpc;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -123,10 +122,12 @@ class AviatorStreamProcessor implements AutoCloseable {
         this.sourceCodeEnricher = new SourceCodeEnricher(fprHandle, this.sourceDecoder, fvdlMetadata);
     }
 
-    public CompletableFuture<Map<String, AuditResponse>> processBatchRequests(Queue<UserPrompt> requests, String projectName, String FPRBuildId, String SSCApplicationName, String SSCApplicationVersion, String token, List<String> customPriorityOrder) {
+    public CompletableFuture<SastStreamOutcome> processBatchRequests(Queue<UserPrompt> requests, String projectName,
+            String FPRBuildId, String SSCApplicationName, String SSCApplicationVersion, String token,
+            List<String> customPriorityOrder) {
         if (requests == null || requests.isEmpty()) {
             LOG.info("No issues to process");
-            return CompletableFuture.completedFuture(new HashMap<>());
+            return CompletableFuture.completedFuture(new SastStreamOutcome.Completed(Map.of()));
         }
 
         String streamId = UUID.randomUUID().toString();
@@ -140,7 +141,7 @@ class AviatorStreamProcessor implements AutoCloseable {
 
         final int totalRequests = processingQueue.size();
         logger.info("Starting processing - Total Issues: " + totalRequests);
-        final CompletableFuture<Map<String, AuditResponse>> resultFuture = new CompletableFuture<>();
+        final CompletableFuture<SastStreamOutcome> resultFuture = new CompletableFuture<>();
         final Map<String, AuditResponse> responses = new ConcurrentHashMap<>();
         final AtomicInteger processedRequests = new AtomicInteger(0);
 
@@ -155,7 +156,8 @@ class AviatorStreamProcessor implements AutoCloseable {
         });
     }
 
-    private void startStreamWithRetry(Map<String, AuditResponse> responses, AtomicInteger processedRequests, CompletableFuture<Map<String, AuditResponse>> resultFuture) {
+    private void startStreamWithRetry(Map<String, AuditResponse> responses, AtomicInteger processedRequests,
+            CompletableFuture<SastStreamOutcome> resultFuture) {
         synchronized (retryLock) {
             if (client.isShutdown.get() || resultFuture.isDone()) {
                 return;
@@ -192,6 +194,7 @@ class AviatorStreamProcessor implements AutoCloseable {
 
             requestHandler = new RequestHandler<>(currentStreamState.streamId);
             this.streamLatch = new CountDownLatch(1);
+            var attemptLatch = this.streamLatch;
             CountDownLatch initLatch = new CountDownLatch(1);
 
             var attemptHandler = requestHandler;
@@ -201,6 +204,7 @@ class AviatorStreamProcessor implements AutoCloseable {
             resultFuture.whenComplete((result, error) -> {
                 initializationTimeout.close();
                 initLatch.countDown();
+                attemptLatch.countDown();
             });
             ClientResponseObserver<UserPromptRequest, AuditorResponse> responseObserver = createResponseObserver(
                     responses, processedRequests, resultFuture, this.streamLatch, initLatch, initializationTimeout);
@@ -278,7 +282,8 @@ class AviatorStreamProcessor implements AutoCloseable {
                             if (newCount >= 3) {
                                 String msg = "No progress after multiple retries due to persistent stream errors. Aborting.";
                                 logger.error(msg);
-                                resultFuture.completeExceptionally(new AviatorTechnicalException(msg, e));
+                                resultFuture.complete(new SastStreamOutcome.Failed(responses,
+                                        new AviatorTechnicalException(msg, e)));
                                 return;
                             }
                         } else {
@@ -295,16 +300,17 @@ class AviatorStreamProcessor implements AutoCloseable {
 
                         startStreamWithRetry(responses, processedRequests, resultFuture);
                     } else {
+                        resultFuture.complete(new SastStreamOutcome.Failed(responses,
+                                new AviatorTechnicalException("Error initiating batch processing", e)));
                         if (requestHandler != null) {
                             requestHandler.sendError(e);
                         }
-                        resultFuture.completeExceptionally(new AviatorTechnicalException("Error initiating batch processing", e));
                     }
                 } else {
+                    resultFuture.completeExceptionally(new AviatorTechnicalException("Error initiating batch processing", e));
                     if (requestHandler != null) {
                         requestHandler.sendError(e);
                     }
-                    resultFuture.completeExceptionally(new AviatorTechnicalException("Error initiating batch processing", e));
                 }
             }
         }
@@ -312,7 +318,7 @@ class AviatorStreamProcessor implements AutoCloseable {
 
     private ClientResponseObserver<UserPromptRequest, AuditorResponse> createResponseObserver(
             Map<String, AuditResponse> responses, AtomicInteger processedRequests,
-            CompletableFuture<Map<String, AuditResponse>> resultFuture,
+            CompletableFuture<SastStreamOutcome> resultFuture,
             CountDownLatch streamLatch, CountDownLatch initLatch, StreamInitializationTimeout initializationTimeout) {
 
         return new ClientResponseObserver<UserPromptRequest, AuditorResponse>() {
@@ -343,7 +349,7 @@ class AviatorStreamProcessor implements AutoCloseable {
                 if ("INTERNAL_ERROR".equals(response.getStatus())) {
                     String cliMessage = "Internal server error occurred";
                     logger.error(cliMessage);
-                    resultFuture.completeExceptionally(new AviatorTechnicalException(cliMessage));
+                    resultFuture.complete(new SastStreamOutcome.Failed(responses, new AviatorTechnicalException(cliMessage)));
                     if (requestHandler != null) {
                         requestHandler.complete();
                     }
@@ -359,7 +365,8 @@ class AviatorStreamProcessor implements AutoCloseable {
                         requestHandler.complete();
                     }
                     if (!resultFuture.isDone()) {
-                        resultFuture.completeExceptionally(new AviatorTechnicalException("Stream terminated by server: " + response.getStatusMessage()));
+                        resultFuture.complete(new SastStreamOutcome.Failed(responses,
+                                new AviatorTechnicalException("Stream terminated by server: " + response.getStatusMessage())));
                     }
                     streamLatch.countDown();
                     return;
@@ -393,7 +400,8 @@ class AviatorStreamProcessor implements AutoCloseable {
                         } else {
                             String errorMessage = "Stream initialization failed: " + response.getStatusMessage();
                             if (!resultFuture.isDone()) {
-                                resultFuture.completeExceptionally(new AviatorTechnicalException(errorMessage));
+                                resultFuture.complete(new SastStreamOutcome.Failed(responses,
+                                        new AviatorTechnicalException(errorMessage)));
                             }
                             if (requestHandler != null) {
                                 requestHandler.complete();
@@ -432,7 +440,7 @@ class AviatorStreamProcessor implements AutoCloseable {
                         requestHandler.complete();
                     }
                     if (!resultFuture.isDone()) {
-                        resultFuture.complete(responses);
+                        resultFuture.complete(new SastStreamOutcome.Completed(responses));
                     }
                     streamLatch.countDown();
                 }
@@ -445,7 +453,8 @@ class AviatorStreamProcessor implements AutoCloseable {
                 initLatch.countDown();
                 stopPingPong();
                 if (initializationExpired) {
-                    resultFuture.completeExceptionally(StreamInitializationTimeout.expiredError("Audit"));
+                    resultFuture.complete(new SastStreamOutcome.Failed(responses,
+                            StreamInitializationTimeout.expiredError("Audit")));
                     streamLatch.countDown();
                     return;
                 }
@@ -459,7 +468,8 @@ class AviatorStreamProcessor implements AutoCloseable {
                                 String msg = "No progress after multiple retries due to persistent stream errors. Aborting.";
                                 logger.error(msg);
                                 if (!resultFuture.isDone()) {
-                                    resultFuture.completeExceptionally(new AviatorTechnicalException(msg, t));
+                                    resultFuture.complete(new SastStreamOutcome.Failed(responses,
+                                            new AviatorTechnicalException(msg, t)));
                                 }
                                 streamLatch.countDown();
                                 return;
@@ -495,7 +505,8 @@ class AviatorStreamProcessor implements AutoCloseable {
                         } else {
                             LOG.warn("Cannot retry stream, as the processing executor is already shut down.");
                             if (!resultFuture.isDone()) {
-                                resultFuture.completeExceptionally(new AviatorTechnicalException("Cannot retry stream, executor is shut down.", t));
+                                resultFuture.complete(new SastStreamOutcome.Failed(responses,
+                                        new AviatorTechnicalException("Cannot retry stream, executor is shut down.", t)));
                             }
                         }
                     } else {
@@ -506,7 +517,8 @@ class AviatorStreamProcessor implements AutoCloseable {
                                         sre.getStatus().getDescription() : "Unknown gRPC error";
                                 String techMessage = String.format("gRPC stream failed: %s (Status: %s)",
                                         description, sre.getStatus().getCode());
-                                resultFuture.completeExceptionally(new AviatorTechnicalException(techMessage, t));
+                                resultFuture.complete(new SastStreamOutcome.Failed(responses,
+                                        new AviatorTechnicalException(techMessage, t)));
                             } else {
                                 resultFuture.completeExceptionally(new AviatorTechnicalException("Stream error", t));
                             }
@@ -521,7 +533,8 @@ class AviatorStreamProcessor implements AutoCloseable {
                                     sre.getStatus().getDescription() : "Unknown gRPC error";
                             String techMessage = String.format("gRPC stream failed: %s (Status: %s)",
                                     description, sre.getStatus().getCode());
-                            resultFuture.completeExceptionally(new AviatorTechnicalException(techMessage, t));
+                            resultFuture.complete(new SastStreamOutcome.Failed(responses,
+                                    new AviatorTechnicalException(techMessage, t)));
                         } else {
                             resultFuture.completeExceptionally(new AviatorTechnicalException("Stream error", t));
                         }
@@ -537,7 +550,7 @@ class AviatorStreamProcessor implements AutoCloseable {
                 stopPingPong();
                 logger.progress("Stream completed by server");
                 if (!resultFuture.isDone()) {
-                    resultFuture.complete(responses);
+                    resultFuture.complete(new SastStreamOutcome.Completed(responses));
                 }
                 streamLatch.countDown();
             }
@@ -707,7 +720,8 @@ class AviatorStreamProcessor implements AutoCloseable {
     }
 
     private void processRequestQueue(int totalRequests, AtomicInteger processedRequests,
-                                    Map<String, AuditResponse> responses, CompletableFuture<Map<String, AuditResponse>> resultFuture,
+                                    Map<String, AuditResponse> responses,
+                                    CompletableFuture<SastStreamOutcome> resultFuture,
                                     CountDownLatch streamLatch) {
         logger.progress("Starting to process issues...");
 
@@ -819,7 +833,7 @@ class AviatorStreamProcessor implements AutoCloseable {
 
         if (!resultFuture.isDone() && (processedRequests.get() >= totalRequests || (processingQueue.isEmpty() && outstandingRequests.get() == 0))) {
             logger.info("All requests have been accounted for. Completing operation and closing stream.");
-            resultFuture.complete(responses);
+            resultFuture.complete(new SastStreamOutcome.Completed(responses));
             if (requestHandler != null && !requestHandler.isCompleted()) {
                 requestHandler.complete();
             }
@@ -868,7 +882,7 @@ class AviatorStreamProcessor implements AutoCloseable {
 
     private void completeSkippedRequest(RequestWrapper wrapper, SourceCodeEnricher.EnrichmentResult enrichmentResult,
                                         Map<String, AuditResponse> responses, AtomicInteger processedRequests,
-                                        int totalRequests, CompletableFuture<Map<String, AuditResponse>> resultFuture,
+                                        int totalRequests, CompletableFuture<SastStreamOutcome> resultFuture,
                                         CountDownLatch streamLatch) {
         String instanceId = wrapper.userPrompt.getIssueData().getInstanceID();
         AuditSkipReason skipReason = enrichmentResult.failures().get(0).reason();
@@ -897,7 +911,7 @@ class AviatorStreamProcessor implements AutoCloseable {
             }
             streamLatch.countDown();
             if (!resultFuture.isDone()) {
-                resultFuture.complete(responses);
+                resultFuture.complete(new SastStreamOutcome.Completed(responses));
             }
         }
     }
@@ -922,7 +936,8 @@ class AviatorStreamProcessor implements AutoCloseable {
         };
     }
 
-    private void handleServerBusy(String requestId, int totalRequests, AtomicInteger processedRequests, Map<String, AuditResponse> responses, CompletableFuture<Map<String, AuditResponse>> resultFuture, CountDownLatch streamLatch) {
+    private void handleServerBusy(String requestId, int totalRequests, AtomicInteger processedRequests,
+            Map<String, AuditResponse> responses, CompletableFuture<SastStreamOutcome> resultFuture, CountDownLatch streamLatch) {
         RequestWrapper wrapperToRetry = inflightRequests.remove(requestId);
         if (wrapperToRetry == null) {
             LOG.warn("WARN: Received SERVER_BUSY for unknown or already completed requestId: {}", requestId);
@@ -954,7 +969,7 @@ class AviatorStreamProcessor implements AutoCloseable {
                 if (requestHandler != null && !requestHandler.isCompleted()) {
                     requestHandler.complete();
                 }
-                if (!resultFuture.isDone()) resultFuture.complete(responses);
+                if (!resultFuture.isDone()) resultFuture.complete(new SastStreamOutcome.Completed(responses));
                 streamLatch.countDown();
             }
         } else {

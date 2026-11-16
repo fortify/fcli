@@ -47,6 +47,7 @@ import com.fortify.cli.aviator.config.TagMappingConfig;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClient;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClientHelper;
 import com.fortify.cli.aviator.grpc.AviatorRequestPolicy;
+import com.fortify.cli.aviator.grpc.SastStreamOutcome;
 import com.fortify.cli.aviator.util.Constants;
 import com.fortify.cli.aviator.util.ResourceUtil;
 import com.fortify.cli.common.fpr.Vulnerability;
@@ -161,44 +162,65 @@ public class IssueAuditor {
         ConcurrentLinkedDeque<UserPrompt> promptsToAudit = prepareAndFilterPrompts();
         int totalIssuesToAudit = promptsToAudit.size();
         options.getLogger().progress("Final count of issues to be audited: %d", totalIssuesToAudit);
+        AuditOutcome outcome = new AuditOutcome(auditResponses, totalIssuesToAudit);
 
         if (promptsToAudit.isEmpty()) {
             options.getLogger().progress("Audit skipped - no issues to process after filtering.");
         } else {
             try (AviatorGrpcClient client = AviatorGrpcClientHelper.createClient(options.getUrl(), options.getLogger(), DEFAULT_PING_INTERVAL_SECONDS, AviatorRequestPolicy.WAIT_FOR_READY)) {
-                CompletableFuture<Map<String, AuditResponse>> future =
+                CompletableFuture<SastStreamOutcome> future =
                         client.processBatchRequests(promptsToAudit, projectName, fprInfo.getBuildId(), SSCApplicationName,
                             SSCApplicationVersion, options.getToken(), options.getFprHandle(),
                             options.getFolderPriorityOrder(), options.getSourceDecoder(), fvdlMetadata);
-                Map<String, AuditResponse> responses = future.get(500, TimeUnit.MINUTES);
-                responses.forEach((requestId, response) -> auditResponses.put(response.getIssueId(), response));
-                options.getLogger().progress("Audit completed");
-            } catch (ExecutionException e) {
-                Throwable cause = e.getCause();
-                // Handle quota filtering exception (all issues filtered out)
-                if (cause instanceof AviatorQuotaFilterException) {
-                    options.getLogger().progress("All issues filtered out due to quota constraints: %s", cause.getMessage());
-                    // Update totalIssuesToAudit to reflect actual auditable count (0)
-                    totalIssuesToAudit = 0;
-                } else if (cause instanceof AviatorSimpleException) {
-                    throw (AviatorSimpleException) cause;
-                } else if (cause instanceof AviatorTechnicalException) {
-                    throw (AviatorTechnicalException) cause;
-                } else {
-                    throw new AviatorTechnicalException("Unexpected error during audit execution", cause);
-                }
-            } catch (TimeoutException e) {
-                options.getLogger().error("Audit failed due to timeout after 500 minutes");
-                throw new AviatorTechnicalException("Audit timed out after 500 minutes", e);
-            } catch (InterruptedException e) {
-                options.getLogger().error("Audit failed due to interruption");
-                Thread.currentThread().interrupt();
-                throw new AviatorTechnicalException("Audit interrupted", e);
+                outcome = collectAuditOutcome(future, auditResponses, totalIssuesToAudit);
             }
         }
 
         if (resultsTag != null) {
             fprInfo.setResultsTag(resultsTag.getId());
+        }
+        return outcome;
+    }
+
+    AuditOutcome collectAuditOutcome(CompletableFuture<SastStreamOutcome> future,
+            Map<String, AuditResponse> auditResponses, int totalIssuesToAudit) {
+        try {
+            SastStreamOutcome streamOutcome = future.get(500, TimeUnit.MINUTES);
+            if (streamOutcome instanceof SastStreamOutcome.Failed failed) {
+                boolean hasUsableSuccess = failed.responses().values().stream().anyMatch(response ->
+                        "SUCCESS".equalsIgnoreCase(response.getStatus())
+                                && response.getAuditResult() != null
+                                && !StringUtil.isEmpty(response.getAuditResult().getTagValue()));
+                if (!hasUsableSuccess) {
+                    throw failed.failure();
+                }
+                LOG.debug("Audit stream failure details", failed.failure());
+                options.getLogger().warn(
+                        "Audit stream failed. Retaining %d received results; other results are unavailable.",
+                        failed.responses().size());
+            } else {
+                options.getLogger().progress("Audit stream completed");
+            }
+            auditResponses.putAll(streamOutcome.responses());
+        } catch (ExecutionException e) {
+            Throwable cause = e.getCause();
+            if (cause instanceof AviatorQuotaFilterException) {
+                options.getLogger().progress("All issues filtered out due to quota constraints: %s", cause.getMessage());
+                totalIssuesToAudit = 0;
+            } else if (cause instanceof AviatorSimpleException) {
+                throw (AviatorSimpleException) cause;
+            } else if (cause instanceof AviatorTechnicalException) {
+                throw (AviatorTechnicalException) cause;
+            } else {
+                throw new AviatorTechnicalException("Unexpected error during audit execution", cause);
+            }
+        } catch (TimeoutException e) {
+            options.getLogger().error("Audit failed due to timeout after 500 minutes");
+            throw new AviatorTechnicalException("Audit timed out after 500 minutes", e);
+        } catch (InterruptedException e) {
+            options.getLogger().error("Audit failed due to interruption");
+            Thread.currentThread().interrupt();
+            throw new AviatorTechnicalException("Audit interrupted", e);
         }
         return new AuditOutcome(auditResponses, totalIssuesToAudit);
     }
