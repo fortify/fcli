@@ -20,6 +20,7 @@ import javax.net.ssl.SSLHandshakeException;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
 
+import com.fortify.cli.common.http.ssl.trust.CertificateDistrustPolicy;
 /**
  * Utility for formatting exception details. Provides consistent exception formatting
  * across fcli for both terminal output and programmatic access (e.g., MCP responses).
@@ -41,6 +42,12 @@ public final class FcliExceptionHelper {
      */
     public static String formatException(Exception e) {
         if ( e==null ) { return null; }
+        for (Throwable cause = e; cause != null; cause = cause.getCause()) {
+            if (cause.getMessage() != null && cause.getMessage().contains(CertificateDistrustPolicy.REJECTION_MESSAGE)) {
+                return cause.getMessage() + "\nThe endpoint must use a certificate chain without distrusted CA keys."
+                        + "\nAdding certificates to a trust store or trusted URLs cannot override this policy.";
+            }
+        }
         if ( isPkixRelatedException(e) ) {
             return formatPkixRelatedException(e);
         }

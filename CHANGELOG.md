@@ -1,5 +1,62 @@
 # Changelog
 
+## [3.30.0](https://github.com/fortify/fcli/compare/v3.29.1...v3.30.0) (2026-11-12)
+
+
+### Features
+
+* Add Linux/arm64 release asset ([494a653](https://github.com/fortify/fcli/commit/494a653f14b9b3642da124e84ada72e316a24afb))
+
+## [3.29.1](https://github.com/fortify/fcli/compare/v3.29.0...v3.29.1) (2026-11-02)
+
+
+### Bug Fixes
+
+* `fcli aviator ssc audit-dast`: Improve reliability for large DAST FPRs and avoid failures caused by server overload ([43607ce](https://github.com/fortify/fcli/commit/43607ceef19c83e9b77580a6c82527a6b1efc2ea))
+* `fcli aviator ssc audit-sast`: Fix inconsistency in error handling of mismatched audit types ([1a73e8f](https://github.com/fortify/fcli/commit/1a73e8f9a8dad6a9372b608074516362cacf90c5))
+* `fcli aviator ssc correlate-sast-dast`: Improve reliability for large correlations and report partial results when individual requests fail ([43607ce](https://github.com/fortify/fcli/commit/43607ceef19c83e9b77580a6c82527a6b1efc2ea))
+
+## [3.29.0](https://github.com/fortify/fcli/compare/v3.28.3...v3.29.0) (2026-10-28)
+
+
+### Features
+
+* `fcli sc-sast scan prioritize`: New command to prioritize SC-SAST scan ([#1140](https://github.com/fortify/fcli/issues/1140)) ([d8c2cfd](https://github.com/fortify/fcli/commit/d8c2cfd07e9406a9d1a0467114ebce050c4c4466))
+
+
+### Bug Fixes
+
+* `fcli aviator`: Do not show credentials from the Aviator URL in messages and logs ([bb10f54](https://github.com/fortify/fcli/commit/bb10f54717aa785f39baf99bbc9cb0aba2860a12))
+* `fcli aviator`: Fail fast with clear messages when ordinary commands cannot connect ([bb10f54](https://github.com/fortify/fcli/commit/bb10f54717aa785f39baf99bbc9cb0aba2860a12))
+* `fcli aviator`: Keep the existing user session and admin config when validation fails ([bb10f54](https://github.com/fortify/fcli/commit/bb10f54717aa785f39baf99bbc9cb0aba2860a12))
+* Enforce built-in CA-key distrust for certificate-verified fcli connections in JAR and native distributions, including default, custom, OS and trusted-URL stores, while preserving original trust-manager validation (CVE-2026-91403 and CVE-2026-114820) ([25a3752](https://github.com/fortify/fcli/commit/25a37525adb4256dcbd876f7d89616a8c8f264de))
+* Remove distrusted CA certificates from the embedded default trust store in native binaries (CVE-2026-91403 and CVE-2026-114820) ([25a3752](https://github.com/fortify/fcli/commit/25a37525adb4256dcbd876f7d89616a8c8f264de))
+* Upgrade dependencies ([e4a2aa2](https://github.com/fortify/fcli/commit/e4a2aa21e171bb25ea428bc6a885927537db11a4))
+
+## [3.28.3](https://github.com/fortify/fcli/compare/v3.28.2...v3.28.3) (2026-10-21)
+
+
+### Bug Fixes
+
+* Don't attempt to load MacOS platform trust store in native binaries as this is broken (see https://github.com/oracle/graal/issues/10387) ([4aeade1](https://github.com/fortify/fcli/commit/4aeade13c74882e7f4da3a20becb5efeff3539b5))
+* Fix warning messages not appearing on console ([4aeade1](https://github.com/fortify/fcli/commit/4aeade13c74882e7f4da3a20becb5efeff3539b5))
+* SpEL expressions & queries: Automatically convert integer literals that exceed the maximum integer range to long values, to prevent expression parsing errors when the `L` (long) suffix is omitted by the user ([2f8cf43](https://github.com/fortify/fcli/commit/2f8cf43ea815e9f8448c042931c0c8af35b4e879))
+
+## [3.28.2](https://github.com/fortify/fcli/compare/v3.28.1...v3.28.2) (2026-10-16)
+
+
+### Bug Fixes
+
+* `fcli aviator ssc audit-dast`: Improve exception output for non-technical errors; for example, report a clear message instead of a stack trace when the FPR is not a DAST FPR ([ff9fff9](https://github.com/fortify/fcli/commit/ff9fff9e8cb4080c1ae22c5c7e3457b1fe133e8c))
+* `fcli aviator ssc audit-sast`: Report unavailable counts and quota decisions accurately ([6587f4f](https://github.com/fortify/fcli/commit/6587f4f2e0ceec5546d85ef852c5ed00b7f5ea5b))
+* `fcli aviator ssc audit-sast`: Stop the presence check after the first eligible issue and validate counts for quota checks ([6587f4f](https://github.com/fortify/fcli/commit/6587f4f2e0ceec5546d85ef852c5ed00b7f5ea5b))
+* `fcli aviator ssc audit-sast`: Throw exception & return non-zero exit code on failure, instead of returning a `FAILED` result with exit code 0                                                                              ([ff9fff9](https://github.com/fortify/fcli/commit/ff9fff9e8cb4080c1ae22c5c7e3457b1fe133e8c))
+* `fcli aviator ssc audit`: Throw exception & return non-zero exit code on failure, instead of returning a `FAILED` result with exit code 0                                                                                   ([ff9fff9](https://github.com/fortify/fcli/commit/ff9fff9e8cb4080c1ae22c5c7e3457b1fe133e8c))
+* `fcli aviator ssc audit`: Use the same preflight and quota checks as `audit-sast` ([6587f4f](https://github.com/fortify/fcli/commit/6587f4f2e0ceec5546d85ef852c5ed00b7f5ea5b))
+* `fcli aviator ssc correlate-sast-dast`: Improve exception output for non-technical errors; for example, show the server error message (such as another operation already running for the application) without a stack trace ([ff9fff9](https://github.com/fortify/fcli/commit/ff9fff9e8cb4080c1ae22c5c7e3457b1fe133e8c))
+* `fcli aviator`: Reduce repeated work and object retention during FPR parsing ([6587f4f](https://github.com/fortify/fcli/commit/6587f4f2e0ceec5546d85ef852c5ed00b7f5ea5b))
+* `fcli aviator`: Resolve forward Reason trace references and parse ExternalEntries fields ([6587f4f](https://github.com/fortify/fcli/commit/6587f4f2e0ceec5546d85ef852c5ed00b7f5ea5b))
+
 ## [3.28.1](https://github.com/fortify/fcli/compare/v3.28.0...v3.28.1) (2026-10-09)
 
 

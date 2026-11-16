@@ -66,6 +66,7 @@ public class SSCUrls {
     public static final String BULK = ApiBase + "/bulk";
     public static final String CLOUD_JOBS = ApiBase + "/cloudjobs";
     public static final String CLOUD_JOBS_ACTION_CANCEL = ApiBase + "/cloudjobs/action/cancel";
+    public static final String CLOUD_JOBS_ACTION_PRIORITIZE_JOB = ApiBase + "/cloudjobs/action/prioritizeJob";
     public static String CLOUD_JOB(String cloudJobId) {
         return String.format(ApiBase + "/cloudjobs/%s", cloudJobId);
     }

@@ -12,8 +12,8 @@
  */
 package com.fortify.cli.aviator.grpc;
 
-import com.fortify.cli.aviator.dast.DastIssue;
-import com.fortify.cli.aviator.dast.DastSession;
+import com.fortify.cli.common.fpr.dast.DastIssue;
+import com.fortify.cli.common.fpr.dast.DastSession;
 
 /**
  * Associates a DAST finding with the WebInspect session that contains its HTTP evidence.

@@ -14,6 +14,7 @@ package com.fortify.cli.aviator.grpc;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
@@ -53,10 +54,11 @@ import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
 import com.fortify.cli.aviator.audit.model.AuditResponse;
 import com.fortify.cli.aviator.audit.model.UserPrompt;
 import com.fortify.cli.aviator.config.IAviatorLogger;
-import com.fortify.cli.aviator.fpr.model.FVDLMetadata;
-import com.fortify.cli.aviator.fpr.utils.ISourceDecoder;
 import com.fortify.cli.aviator.util.Constants;
-import com.fortify.cli.aviator.util.FprHandle;
+import com.fortify.cli.common.fpr.model.FVDLMetadata;
+import com.fortify.cli.common.fpr.util.FprHandle;
+import com.fortify.cli.common.fpr.util.StringUtil;
+import com.fortify.cli.common.fpr.utils.ISourceDecoder;
 import com.fortify.grpc.token.DeleteTokenRequest;
 import com.fortify.grpc.token.DeleteTokenResponse;
 import com.fortify.grpc.token.ListTokensByDeveloperRequest;
@@ -71,10 +73,7 @@ import com.fortify.grpc.token.TokenValidationRequest;
 import com.fortify.grpc.token.TokenValidationResponse;
 import com.fortify.grpc.token.ValidateUserTokenRequest;
 
-import io.grpc.CompressorRegistry;
-import io.grpc.DecompressorRegistry;
 import io.grpc.ManagedChannel;
-import io.grpc.ManagedChannelBuilder;
 
 public class AviatorGrpcClient implements AutoCloseable {
     private static final Logger LOG = LoggerFactory.getLogger(AviatorGrpcClient.class);
@@ -94,15 +93,26 @@ public class AviatorGrpcClient implements AutoCloseable {
     private final java.util.concurrent.ScheduledExecutorService pingScheduler;
     final AtomicBoolean isShutdown = new AtomicBoolean(false);
 
-    public AviatorGrpcClient(ManagedChannel channel, long defaultTimeoutSeconds, IAviatorLogger logger, long pingIntervalSeconds) {
+    /** Fail-fast clients require a connection context for error messages. */
+    AviatorGrpcClient(ManagedChannel channel, long defaultTimeoutSeconds, IAviatorLogger logger, long pingIntervalSeconds,
+            AviatorRequestPolicy requestPolicy, AviatorConnectionContext connectionContext) {
         LOG.debug("Initializing AviatorGrpcClient with ManagedChannel");
+        Objects.requireNonNull(requestPolicy, "requestPolicy");
         this.logger = logger;
         this.channel = channel;
         this.asyncStub = AuditorServiceGrpc.newStub(channel).withCompression("gzip").withMaxInboundMessageSize(Constants.MAX_MESSAGE_SIZE).withMaxOutboundMessageSize(Constants.MAX_MESSAGE_SIZE).withWaitForReady();
-        this.blockingStub = ApplicationServiceGrpc.newBlockingStub(channel).withCompression("gzip").withMaxInboundMessageSize(Constants.MAX_MESSAGE_SIZE).withMaxOutboundMessageSize(Constants.MAX_MESSAGE_SIZE).withWaitForReady();
-        this.tokenServiceBlockingStub = TokenServiceGrpc.newBlockingStub(channel).withCompression("gzip").withMaxInboundMessageSize(Constants.MAX_MESSAGE_SIZE).withMaxOutboundMessageSize(Constants.MAX_MESSAGE_SIZE).withWaitForReady();
-        this.entitlementServiceBlockingStub = EntitlementServiceGrpc.newBlockingStub(channel).withCompression("gzip").withMaxInboundMessageSize(Constants.MAX_MESSAGE_SIZE).withMaxOutboundMessageSize(Constants.MAX_MESSAGE_SIZE).withWaitForReady();
-        this.dastEntitlementServiceBlockingStub = DastEntitlementServiceGrpc.newBlockingStub(channel).withCompression("gzip").withMaxInboundMessageSize(Constants.MAX_MESSAGE_SIZE).withMaxOutboundMessageSize(Constants.MAX_MESSAGE_SIZE).withWaitForReady();
+        this.blockingStub = requestPolicy.configureNewStub(ApplicationServiceGrpc.newBlockingStub(channel)
+            .withCompression("gzip").withMaxInboundMessageSize(Constants.MAX_MESSAGE_SIZE)
+            .withMaxOutboundMessageSize(Constants.MAX_MESSAGE_SIZE), connectionContext);
+        this.tokenServiceBlockingStub = requestPolicy.configureNewStub(TokenServiceGrpc.newBlockingStub(channel)
+            .withCompression("gzip").withMaxInboundMessageSize(Constants.MAX_MESSAGE_SIZE)
+            .withMaxOutboundMessageSize(Constants.MAX_MESSAGE_SIZE), connectionContext);
+        this.entitlementServiceBlockingStub = requestPolicy.configureNewStub(EntitlementServiceGrpc.newBlockingStub(channel)
+            .withCompression("gzip").withMaxInboundMessageSize(Constants.MAX_MESSAGE_SIZE)
+            .withMaxOutboundMessageSize(Constants.MAX_MESSAGE_SIZE), connectionContext);
+        this.dastEntitlementServiceBlockingStub = requestPolicy.configureNewStub(DastEntitlementServiceGrpc.newBlockingStub(channel)
+            .withCompression("gzip").withMaxInboundMessageSize(Constants.MAX_MESSAGE_SIZE)
+            .withMaxOutboundMessageSize(Constants.MAX_MESSAGE_SIZE), connectionContext);
         this.correlationAsyncStub = CorrelationServiceGrpc.newStub(channel).withCompression("gzip").withMaxInboundMessageSize(Constants.MAX_MESSAGE_SIZE).withMaxOutboundMessageSize(Constants.MAX_MESSAGE_SIZE).withWaitForReady();
         this.dastAuditAsyncStub = DastAuditServiceGrpc.newStub(channel)
             .withCompression("gzip")
@@ -121,15 +131,6 @@ public class AviatorGrpcClient implements AutoCloseable {
             t.setDaemon(true);
             return t;
         });
-    }
-
-    public AviatorGrpcClient(String host, int port, long defaultTimeoutSeconds, IAviatorLogger logger, long pingIntervalSeconds) {
-        this(ManagedChannelBuilder.forAddress(host, port).useTransportSecurity().maxInboundMessageSize(Constants.MAX_MESSAGE_SIZE).keepAliveTime(30, TimeUnit.SECONDS).keepAliveTimeout(10, TimeUnit.SECONDS).keepAliveWithoutCalls(true).enableRetry().compressorRegistry(CompressorRegistry.getDefaultInstance()).decompressorRegistry(DecompressorRegistry.getDefaultInstance()).build(), defaultTimeoutSeconds, logger, pingIntervalSeconds);
-        LOG.debug("Initialized AviatorGrpcClient - Host: {}, Port: {}", host, port);
-    }
-
-    public AviatorGrpcClient(ManagedChannel channel, long defaultTimeoutSeconds, IAviatorLogger logger) {
-        this(channel, defaultTimeoutSeconds, logger, 30);
     }
 
     public CompletableFuture<Map<String, AuditResponse>> processBatchRequests(Queue<UserPrompt> requests, String projectName,
@@ -255,7 +256,7 @@ public class AviatorGrpcClient implements AutoCloseable {
     }
 
     public TokenGenerationResponse generateToken(String email, String tokenName, String signature, String message, String tenantName, String endDate) {
-        TokenGenerationRequest request = TokenGenerationRequest.newBuilder().setEmail(email != null ? email : "").setCustomTokenName(tokenName != null ? tokenName : "").setRequestSignature(signature).setEndDate(com.fortify.cli.aviator.util.StringUtil.isEmpty(endDate) ? "" : endDate).setMessage(message).setTenantName(tenantName).build();
+        TokenGenerationRequest request = TokenGenerationRequest.newBuilder().setEmail(email != null ? email : "").setCustomTokenName(tokenName != null ? tokenName : "").setRequestSignature(signature).setEndDate(StringUtil.isEmpty(endDate) ? "" : endDate).setMessage(message).setTenantName(tenantName).build();
         return GrpcUtil.executeGrpcCall(tokenServiceBlockingStub, TokenServiceGrpc.TokenServiceBlockingStub::generateToken, request, Constants.OP_GENERATE_TOKEN);
     }
 

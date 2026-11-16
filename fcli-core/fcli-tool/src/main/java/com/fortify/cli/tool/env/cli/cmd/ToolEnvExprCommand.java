@@ -28,13 +28,13 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.expression.Expression;
 import org.springframework.expression.common.TemplateParserContext;
-import org.springframework.expression.spel.standard.SpelExpressionParser;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.cli.mixin.CommonOptionMixins;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.exception.FcliTechnicalException;
 import com.fortify.cli.common.json.JsonHelper;
+import com.fortify.cli.common.spel.FcliSpelExpressionParser;
 import com.fortify.cli.common.util.DisableTest;
 import com.fortify.cli.common.util.DisableTest.TestType;
 import com.fortify.cli.tool.env.helper.ToolEnvContext;
@@ -45,7 +45,7 @@ import picocli.CommandLine.Option;
 
 @Command(name = "expr")
 public final class ToolEnvExprCommand extends AbstractToolEnvCommand {
-    private static final SpelExpressionParser PARSER = new SpelExpressionParser();
+    private static final FcliSpelExpressionParser PARSER = new FcliSpelExpressionParser();
     private static final TemplateParserContext TEMPLATE_CONTEXT = new TemplateParserContext("{", "}");
     private static final Map<String, Expression> EXPRESSION_CACHE = new ConcurrentHashMap<>();
 

@@ -1,5 +1,13 @@
 [
     {
+        "name": "ch.qos.logback.classic.util.DefaultJoranConfigurator",
+        "methods": [{"name": "<init>", "parameterTypes": []}]
+    },
+    {
+        "name": "ch.qos.logback.classic.BasicConfigurator",
+        "methods": [{"name": "<init>", "parameterTypes": []}]
+    },
+    {
         "name":  "org.slf4j.impl.StaticLoggerBinder",
         "allDeclaredConstructors": true
     },

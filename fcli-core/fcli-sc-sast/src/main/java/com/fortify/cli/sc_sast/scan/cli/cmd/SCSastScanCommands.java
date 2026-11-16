@@ -23,6 +23,7 @@ import picocli.CommandLine.Command;
                 SCSastScanCancelCommand.class,
                 SCSastScanDownloadCommand.class,
                 SCSastScanListCommand.class,
+                SCSastScanPrioritizeCommand.class,
                 SCSastScanStartCommand.class,
                 SCSastScanStatusCommand.class,
                 SCSastScanWaitForCommand.class

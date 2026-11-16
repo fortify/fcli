@@ -17,7 +17,7 @@ import java.util.LinkedHashSet;
 import java.util.Objects;
 import java.util.Set;
 
-import com.fortify.cli.aviator.fpr.utils.ISourceDecoder;
+import com.fortify.cli.common.fpr.utils.ISourceDecoder;
 
 public record RemediationProcessingOptions(Set<String> issueIdFilter, RemediationExecutionMode executionMode,
         ISourceDecoder sourceDecoder) {

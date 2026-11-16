@@ -14,6 +14,7 @@ package com.fortify.cli.aviator._common.session.user.helper;
 
 import com.fortify.cli.aviator._common.util.AviatorJwtUtils;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClientHelper;
+import com.fortify.cli.aviator.grpc.AviatorRequestPolicy;
 import com.fortify.cli.common.session.helper.AbstractSessionHelper;
 import com.fortify.grpc.token.TokenValidationResponse;
 
@@ -37,13 +38,9 @@ public class AviatorUserSessionHelper extends AbstractSessionHelper<AviatorUserS
         return AviatorUserSessionDescriptor.class;
     }
 
-    public AviatorUserTokenValidationResult validateToken(AviatorUserSessionDescriptor sessionDescriptor) {
-        return validateToken(sessionDescriptor.getAviatorUrl(), sessionDescriptor.getAviatorToken());
-    }
-
-    public AviatorUserTokenValidationResult validateToken(String aviatorUrl, String token) {
+    public AviatorUserTokenValidationResult validateToken(String aviatorUrl, String token, AviatorRequestPolicy policy) {
         var tenantName = AviatorJwtUtils.extractTenantNameFromToken(token);
-        try (var client = AviatorGrpcClientHelper.createClient(aviatorUrl)) {
+        try (var client = AviatorGrpcClientHelper.createClient(aviatorUrl, policy)) {
             var response = client.validateUserToken(token, tenantName);
             return new AviatorUserTokenValidationResult(tenantName, response);
         }
