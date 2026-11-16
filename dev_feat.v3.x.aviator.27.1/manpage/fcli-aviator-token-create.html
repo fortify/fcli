@@ -17,7 +17,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20261105.120657-dev_feat.v3.x.aviator.27.1" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20261116.055935-dev_feat.v3.x.aviator.27.1" %}
 
 
 <div id="header">
@@ -45,12 +45,13 @@ fcli_version:
 <div class="sectionbody">
 <div class="paragraph">
 <p><strong>fcli aviator token create</strong> <strong>-e</strong>=<em>&lt;email&gt;</em> [<strong>--end-date</strong>=<em>&lt;endDate&gt;</em>]
-                          [<strong>-n</strong>=<em>&lt;customTokenName&gt;</em>] [<strong>--save-token</strong>=<em>&lt;file&gt;</em>] [[<strong>-h</strong>]
-                          [<strong>--env-prefix</strong>=<em>&lt;prefix&gt;</em>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
-                          [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>] [<strong>--log-mask</strong>=<em>&lt;level&gt;</em>]
-                          [<strong>--debug</strong>]] [[<strong>--admin-config</strong>=<em>&lt;configName&gt;</em>]]
-                          [[<strong>-o</strong>=<em>&lt;type+args&gt;</em>] [<strong>--style*<em>=&lt;style&gt;,&#8230;&#8203;</em>]&#8230;&#8203;
-                          <em class="</strong>--store*=_&lt;var&gt;[:&lt;prop&gt;">] [<strong>--to-file</strong>=</em>&lt;outputFile&gt;_]]</p>
+                          [<strong>-n</strong>=<em>&lt;customTokenName&gt;</em>] [<strong>--operation-id</strong>=<em>&lt;id&gt;</em>]
+                          [<strong>--save-token</strong>=<em>&lt;file&gt;</em>] [[<strong>-h</strong>] [<strong>--env-prefix</strong>=<em>&lt;prefix&gt;</em>]
+                          [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>] [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]
+                          [<strong>--log-mask</strong>=<em>&lt;level&gt;</em>] [<strong>--debug</strong>]]
+                          [[<strong>--admin-config</strong>=<em>&lt;configName&gt;</em>]] [[<strong>-o</strong>=<em>&lt;type+args&gt;</em>]
+                          [<strong>--style*<em>=&lt;style&gt;,&#8230;&#8203;</em>]&#8230;&#8203; <em class="</strong>--store*=_&lt;var&gt;[:&lt;prop&gt;">]
+                          [<strong>--to-file</strong>=</em>&lt;outputFile&gt;_]]</p>
 </div>
 </div>
 </div>
@@ -94,6 +95,10 @@ fcli_version:
 <dt class="hdlist1"><strong>-n</strong>, <strong>--name</strong>=<em>&lt;customTokenName&gt;</em></dt>
 <dd>
 <p>Optional custom name for the token.</p>
+</dd>
+<dt class="hdlist1"><strong>--operation-id</strong>=<em>&lt;id&gt;</em></dt>
+<dd>
+<p>Operation ID of an earlier run of this exact command whose outcome was unknown (for example after a timeout). The failed run prints its operation ID. Reusing it makes the server apply the change at most once; if it was already applied the server reports the original outcome (for 'token create' the token itself cannot be shown again, so list the tokens, revoke the affected one and create a new one). IDs are honored for 24 hours; check the current state before retrying after that. Omit to start a new operation.</p>
 </dd>
 <dt class="hdlist1"><strong>--save-token</strong>=<em>&lt;file&gt;</em></dt>
 <dd>
@@ -179,7 +184,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2026-11-05 12:09:06 UTC
+Last updated 2026-11-16 06:02:09 UTC
 </div>
 </div>
 </body>
