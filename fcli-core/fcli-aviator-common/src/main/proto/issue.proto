@@ -61,7 +61,9 @@ message StreamInitRequest {
   optional string fprBuildId = 7;
   optional string sscApplicationName = 8;
   optional string sscApplicationVersion = 9;
-
+  // Lowercase UUIDv7 identifying this stream operation. A duplicate init with the same id never reserves
+  // quota a second time. An id is single-use once its stream ran; reconnect with a new id.
+  string operation_id = 10;
 }
 message UserPromptRequest {
   oneof request_type {
