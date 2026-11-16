@@ -295,9 +295,39 @@ class ReauditOnCodeChangeTest {
         assertEquals(0, result.getEvidenceBaselines());
     }
 
+    @Test
+    void reauditsAnIssueWhoseSourceFileWasEmptiedAfterTheAudit() throws Exception {
+        Map<String, String> tags = aviatorTags();
+        tags.put(Constants.AVIATOR_SOURCE_FINGERPRINT_TAG_ID, SOURCE_FINGERPRINT);
+
+        setUp(issueXml(ISSUE_ID, false, tags, aviatorHistory()), "Main.java");
+        assertTrue(prepare(false, false, "Main.java").isEmpty());
+
+        setUp(issueXml(ISSUE_ID, false, tags, aviatorHistory()), "Main.java", "");
+        List<UserPrompt> prompts = prepare(false, false, "Main.java");
+
+        assertEquals(1, prompts.size());
+        assertTrue(prompts.get(0).isReaudit());
+        assertEquals(0, auditProcessor.getBaselinedCount());
+    }
+
+    @Test
+    void baselinesAnAuditedIssueWhoseSourceFileHasNoLines() throws Exception {
+        setUp(issueXml(ISSUE_ID, false, aviatorTags(), aviatorHistory()), "Main.java", "\n\n");
+
+        List<UserPrompt> prompts = prepare(false, false, "Main.java");
+
+        assertTrue(prompts.isEmpty());
+        assertEquals(1, auditProcessor.getBaselinedCount());
+    }
+
     // ---------------------------------------------------------------- fixtures
 
     private void setUp(String auditXml, String sourceFile) throws Exception {
+        setUp(auditXml, sourceFile, numbered(60));
+    }
+
+    private void setUp(String auditXml, String sourceFile, String sourceContent) throws Exception {
         if (fprHandle != null) {
             fprHandle.close();
             Files.deleteIfExists(fprPath);
@@ -310,7 +340,7 @@ class ReauditOnCodeChangeTest {
             put(zip, "audit.xml", auditXml);
             put(zip, "src-archive/index.xml", "<?xml version=\"1.0\" encoding=\"UTF-8\"?><index><entry key=\""
                     + sourceFile + "\">src-archive/" + sourceFile + "</entry></index>");
-            put(zip, "src-archive/" + sourceFile, numbered(60));
+            put(zip, "src-archive/" + sourceFile, sourceContent);
         }
         fprHandle = new FprHandle(fprPath);
         auditProcessor = new AuditProcessor(fprHandle);

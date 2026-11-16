@@ -47,6 +47,7 @@ class EvidenceFingerprinterTest {
     private static final String V10_UNICODE = "v1:5161604aff0fa18c220670c8cc805ba8becd8b80c3e4b17e8b3252cbb32529a3";
     private static final String V11_NEAR_END = "v1:9df994232b48540d93e0863b83e2e7db4fc016c13262b7c822b46f64e12419b5";
     private static final String V12_TRAILING_BLANK_LINES = "v1:d6b25c74959b308db176dbaaf57780291f274b29d34caa315127646b40f81f05";
+    private static final String V14_NO_LINES = "v1:5eaa5daf63bc16215ec00fa8bfad042e17e54f70643e753cc950545a4287fecb";
 
     private Path fprPath;
     private FprHandle fprHandle;
@@ -159,6 +160,16 @@ class EvidenceFingerprinterTest {
         assertFalse(EvidenceFingerprinter.isCurrentVersion(""));
         assertFalse(EvidenceFingerprinter.isCurrentVersion(null));
         assertNotEquals(V1_BASIC, V4_CHANGE_INSIDE_WINDOW);
+    }
+
+    @Test
+    void fileWithoutLinesContributesAnEmptyWindow() throws Exception {
+        // Empty and line-break-only files have no lines. They are readable, so there is a fingerprint, made of the
+        // frame marker only; it differs from the fingerprint of the same file before it was emptied.
+        for (String content : new String[] {"", "\n", "\r\n\r\n", "\n\n\n"}) {
+            assertEquals(Optional.of(V14_NO_LINES), fingerprint(files("Main.java", content), trace(el("Main.java", 5))), content);
+        }
+        assertNotEquals(V1_BASIC, V14_NO_LINES);
     }
 
     private Optional<String> fingerprint(Map<String, String> files, List<List<StackTraceElement>> traces) throws Exception {

@@ -68,8 +68,11 @@ import com.fortify.cli.aviator.util.StringUtil;
  * markers keep the boundaries unambiguous: the same lines grouped into different frames or traces give a different
  * fingerprint.
  *
+ * <p>A source file that is read successfully but has no lines, because it is empty or only contains line breaks,
+ * contributes an empty window: just its {@code E} marker. Emptying a file therefore changes the fingerprint.
+ *
  * <p>If no frame contributes because none has a file in the source archive, or if a source file that is in the
- * archive cannot be read, there is no fingerprint and the issue is neither baselined nor re-audited.
+ * archive cannot be read or decoded, there is no fingerprint and the issue is neither baselined nor re-audited.
  */
 public final class EvidenceFingerprinter {
     public static final String VERSION_PREFIX = "v1:";
@@ -90,7 +93,7 @@ public final class EvidenceFingerprinter {
 
     /**
      * @return the fingerprint, or empty when there is no usable source evidence: no trace, no trace file in the
-     *         source archive, or a trace file that is in the archive but cannot be read.
+     *         source archive, or a trace file that is in the archive but cannot be read or decoded.
      */
     public Optional<String> compute(List<List<StackTraceElement>> stackTraces) {
         if (stackTraces == null || stackTraces.isEmpty()) {
@@ -142,8 +145,14 @@ public final class EvidenceFingerprinter {
             out.append("-\n");
             return;
         }
+        int size = lines.size();
+        // Trailing empty lines are not part of the file's lines. This also removes the single empty "line"
+        // that splitting an empty file produces.
+        while (size > 0 && lines.get(size - 1).isEmpty()) {
+            size--;
+        }
         int from = Math.max(1, line - WINDOW);
-        int to = Math.min(lines.size(), line + WINDOW);
+        int to = Math.min(size, line + WINDOW);
         for (int i = from; i <= to; i++) {
             String text = lines.get(i - 1);
             if (i == 1 && !text.isEmpty() && text.charAt(0) == BOM) {

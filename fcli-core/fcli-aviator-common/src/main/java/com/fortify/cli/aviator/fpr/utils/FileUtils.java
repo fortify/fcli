@@ -44,7 +44,8 @@ import com.fortify.cli.aviator.util.StringUtil;
 public class FileUtils {
     private static final Logger logger = LoggerFactory.getLogger(FileUtils.class);
     private static final Fragment EMPTY_FRAGMENT = new Fragment("", 0, 0);
-    private final Map<Path, List<String>> fileContentCache = new ConcurrentHashMap<>();
+    // An empty result means the file could not be read or decoded; a file without lines gives an empty list.
+    private final Map<Path, Optional<List<String>>> fileContentCache = new ConcurrentHashMap<>();
     // Many trace nodes share the same file/line; share the immutable results instead of copying text per node.
     private final Map<FragmentKey, Fragment> fragmentCache = new ConcurrentHashMap<>();
     private final Map<LineKey, String> lineCache = new ConcurrentHashMap<>();
@@ -76,35 +77,44 @@ public class FileUtils {
     }
 
     private List<String> readFileWithFallback(Path filePath, String filename) {
+        return readLines(filePath, filename).orElse(Collections.emptyList());
+    }
+
+    /**
+     * Reads and decodes all lines of a file, caching the result. Unlike {@link #readFileWithFallback(Path)}
+     * this tells a file that could not be read or decoded, or is too large (empty result), from a file that was
+     * read but has no lines (present, empty list).
+     */
+    private Optional<List<String>> readLines(Path filePath, String filename) {
         return fileContentCache.computeIfAbsent(filePath, path -> {
             try {
                 long fileSize = Files.size(path);
                 if (fileSize > Constants.MAX_SOURCE_FILE_SIZE) {
                     logger.warn("Source file exceeds maximum allowed size ({} bytes): {} (actual size: {} bytes)",
                         Constants.MAX_SOURCE_FILE_SIZE, path, fileSize);
-                    return Collections.emptyList();
+                    return Optional.empty();
                 }
                 byte[] fileBytes = Files.readAllBytes(path);
                 String content = sourceDecoder.decode(fileBytes, filename, fvdlMetadata).content();
-                return Arrays.asList(content.split("\\r?\\n"));
+                return Optional.of(Arrays.asList(content.split("\\r?\\n")));
             } catch (IOException | ISourceDecoder.SourceDecodeException e) {
                 logger.warn("Could not read or decode source file {}: {}", path, e.getMessage());
-                return Collections.emptyList();
+                return Optional.empty();
             }
         });
     }
 
     /**
      * Returns the decoded lines of a source file from the FPR, or empty when the file is not in the source
-     * archive, cannot be read or decoded, exceeds the size limit, or has no lines. Results are cached.
+     * archive, cannot be read or decoded, or exceeds the size limit. A file that was read but has no lines gives
+     * an empty list. Results are cached.
      */
     public Optional<List<String>> readSourceLines(FprHandle fprHandle, String relativePath) {
         Path fullSourcePath = resolveFullPath(fprHandle, relativePath);
         if (fullSourcePath == null) {
             return Optional.empty();
         }
-        List<String> lines = readFileWithFallback(fullSourcePath, relativePath);
-        return lines.isEmpty() ? Optional.empty() : Optional.of(lines);
+        return readLines(fullSourcePath, relativePath);
     }
 
     /**
