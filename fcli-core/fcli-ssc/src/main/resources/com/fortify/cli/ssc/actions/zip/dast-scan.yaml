@@ -1,0 +1,184 @@
+# yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-dev-2.x.json
+
+author: Fortify
+usage:
+  header: (PREVIEW) Run ScanCentral DAST scan
+  description: |
+    This action can be used to run a ScanCentral DAST scan using pre-existing SC-DAST scan settings,
+    wait for scan completion, and make the scan results available in SSC. Results are published to the
+    application version configured in the SC-DAST scan settings, either automatically (if 'Submit for
+    Triage' is enabled in the scan settings) or by this action (if `--publish` is specified).
+
+config:
+  output: immediate
+  rest.target.default: ssc
+  run.fcli.status.log.default: true    # By default, we log all exit statuses
+  run.fcli.status.check.default: true
+  mcp: exclude
+
+# NOTE: When updating any options, ci action may also need to be updated
+cli.options:
+  settings:
+    names: --settings
+    description: >-
+      CI/CD token or numeric id of the SC-DAST scan settings to use for starting the scan. Required unless
+      `--scan-id` is specified.
+    required: false
+  name:
+    names: --name
+    description: >-
+      Name for the new scan. Defaults to the scan name configured in the scan settings.
+    required: false
+  scanId:
+    names: --scan-id
+    description: >-
+      Id of an already started SC-DAST scan. If specified, no new scan will be started; the action will
+      only wait for this scan and process its results.
+    required: false
+  skipWait:
+    names: --skip-wait
+    description: >-
+      Only start the scan, without waiting for completion. The scan can later be processed by running
+      this action with the `--scan-id` option.
+    required: false
+    type: boolean
+  publish:
+    names: --publish
+    description: >-
+      Publish the scan results to SSC if 'Submit for Triage' is not enabled in the scan settings. Also
+      enabled if the `DO_DAST_PUBLISH` environment variable is set to `true`.
+    required: false
+    type: boolean
+  baselineArtifactId:
+    names: --baseline-artifact-id
+    description: >-
+      Highest WebInspect artifact id in the target SSC application version before this scan published its
+      results; only artifacts with a higher id are considered to be produced by this scan. Determined
+      automatically if the scan hasn't been published yet when this action starts processing it.
+    required: false
+
+steps:
+  # Start a new scan, unless we've been asked to process an existing scan
+  - var.set:
+      scanId: ${cli.scanId}
+      baselineArtifactId: ${cli.baselineArtifactId}
+  - if: ${#isNotBlank(baselineArtifactId) && !baselineArtifactId.matches('\d+')}
+    throw: "--baseline-artifact-id must be a numeric SSC artifact id: ${baselineArtifactId}"
+  - if: ${#isBlank(scanId)}
+    do:
+      - if: ${#isBlank(cli.settings)}
+        throw: Either --settings (to start a new scan) or --scan-id (to process an existing scan) must be specified.
+      - run.fcli:
+          START_SCAN: ${#fcliCmd('DAST_SCAN', 'sc-dast scan start')} "--settings=${cli.settings}" ${#opt('--name', cli.name)} --store sc_dast_scan
+      - var.set:
+          scanId: ${#var('sc_dast_scan').get('id').asText()}
+  - run.fcli:
+      GET_SCAN_INITIAL: fcli sc-dast scan get "${scanId}" --store dast_scan
+  - var.set:
+      appVersionId: ${#var('dast_scan').path('applicationVersionId').asText()}
+      global.dastScan.appVersionId: ${appVersionId}
+      global.dastScan.appName: ${#var('dast_scan').path('applicationName').asText()}
+      global.dastScan.appVersionName: "${#var('dast_scan').path('applicationName').asText()}:${#var('dast_scan').path('applicationVersionName').asText()}"
+  # Neither scan nor publish output contains the SSC artifact id, so we record the highest WebInspect artifact
+  # id before this scan can publish its results; artifacts with a higher id are the ones uploaded afterwards.
+  - if: "${#isBlank(baselineArtifactId) && #isNotBlank(appVersionId) && #var('dast_scan').path('publishStatusTypeDescription').asText()!='Published'}"
+    do:
+      - var.set:
+          baselineListed: ${false}
+      - run.fcli:
+          LIST_BASELINE_ARTIFACTS:
+            cmd: fcli ssc artifact list "--av=${appVersionId}" "--query=scanTypes.contains('WEBINSPECT')" --store dast_baseline_artifacts
+            # Scan has already been started, so don't fail; we'll fall back to the newest artifact later on
+            status.check: false
+            on.success:
+              - var.set:
+                  baselineListed: ${true}
+      - if: ${!baselineListed}
+        log.warn: "Unable to list WebInspect artifacts in SSC application version ${global.dastScan.appVersionName}; continuing without baseline artifact id."
+      - if: ${baselineListed}
+        do:
+          - var.set:
+              baselineArtifactId: ${0}
+          - records.for-each:
+              from: ${#var('dast_baseline_artifacts')}
+              record.var-name: artifact
+              do:
+                - if: ${artifact.id > baselineArtifactId}
+                  var.set:
+                    baselineArtifactId: ${artifact.id}
+          # Scan may have published its results while we were listing artifacts, in which case the new artifact
+          # may be included in the baseline; discard the baseline to fall back to the newest artifact instead.
+          - run.fcli:
+              GET_SCAN_AFTER_BASELINE: fcli sc-dast scan get "${scanId}" --store dast_scan_recheck
+          - if: "${#var('dast_scan_recheck').path('publishStatusTypeDescription').asText()=='Published'}"
+            var.set:
+              baselineArtifactId: ${''}
+  # Used by the `ci` action to run the remaining steps after other work has been done
+  - var.set:
+      global.dastScan.id: ${scanId}
+      global.dastScan.waitForCmd: "fcli ssc action run dast-scan \"--scan-id=${scanId}\" ${#opt('--baseline-artifact-id', baselineArtifactId)} ${cli.publish?'--publish':''}"
+      global.dastScan.published: false
+
+  - if: ${!cli.skipWait}
+    do:
+      - run.fcli:
+          WAIT: ${#fcliCmd('DAST_WAIT', 'sc-dast scan wait-for')} "${scanId}"
+          GET_SCAN: fcli sc-dast scan get "${scanId}" --store dast_scan
+      - var.set:
+          submitForAudit: ${#var('dast_scan').path('submitForAudit').asBoolean()}
+          alreadyPublished: ${#var('dast_scan').path('publishStatusTypeDescription').asText()=='Published'}
+          publishEnabled: "${cli.publish || #fcliCmdSkipFromEnvReason('DAST_PUBLISH', true)==null}"
+
+      # Publish decision: SC-DAST publishes automatically if 'Submit for Triage' is enabled in the scan
+      # settings; otherwise, this action publishes only if --publish or DO_DAST_PUBLISH=true is specified.
+      - if: ${!submitForAudit && publishEnabled && !alreadyPublished}
+        run.fcli:
+          PUBLISH: ${#fcliCmd('DAST_PUBLISH', 'sc-dast scan publish')} "${scanId}"
+
+      - if: ${!(submitForAudit || publishEnabled || alreadyPublished)}
+        log.info: >-
+          DAST scan results are not published to SSC, so DAST Aviator audit and other steps that require
+          published results will be skipped; enable 'Submit for Triage' in the scan settings or use the
+          --publish option (or DO_DAST_PUBLISH=true) to publish results.
+      - if: ${submitForAudit || publishEnabled || alreadyPublished}
+        do:
+          - if: ${#isBlank(appVersionId)}
+            throw: DAST scan ${scanId} is not associated with an SSC application version; unable to publish or locate scan results in SSC.
+          - run.fcli:
+              WAIT_PUBLISHED: ${#fcliCmd('DAST_PUBLISH_WAIT', 'sc-dast scan wait-for')} "${scanId}" --any-state=Published
+          - if: ${#isNotBlank(baselineArtifactId)}
+            do:
+              - run.fcli:
+                  LIST_ARTIFACTS: fcli ssc artifact list "--av=${appVersionId}" "--query=scanTypes.contains('WEBINSPECT') && id > ${baselineArtifactId}" --store dast_artifacts
+              - var.set:
+                  artifactIds: ${''}
+              - if: ${#var('dast_artifacts').size()>0}
+                do:
+                  - records.for-each:
+                      from: ${#var('dast_artifacts')}
+                      record.var-name: artifact
+                      do:
+                        - var.set:
+                            dastArtifactIds..: ${artifact.id}
+                  - var.set:
+                      artifactIds: ${#join(' ', dastArtifactIds)}
+              # Other scans may publish to the same application version concurrently; as we can't tell these
+              # apart, we wait for all of them to make sure that the artifact for this scan has been processed.
+              - if: ${#var('dast_artifacts').size()>1}
+                log.info: "Multiple WebInspect artifacts with id > ${baselineArtifactId} found (${artifactIds}), possibly from concurrent scans; waiting for all of them."
+          # Scan was already published before this action started processing it, so we can't distinguish its
+          # artifact from older ones; fall back to the newest WebInspect artifact (SSC lists newest first).
+          - if: ${#isBlank(baselineArtifactId)}
+            do:
+              - run.fcli:
+                  LIST_ARTIFACTS_NO_BASELINE: fcli ssc artifact list "--av=${appVersionId}" "--query=scanTypes.contains('WEBINSPECT')" --store dast_artifacts
+              - var.set:
+                  artifactIds: "${#var('dast_artifacts').size()>0 ? #var('dast_artifacts').get(0).get('id').asText() : ''}"
+              - if: ${#isNotBlank(artifactIds)}
+                log.warn: "Scan ${scanId} was already published and no --baseline-artifact-id was specified; assuming the newest WebInspect artifact (${artifactIds}) belongs to this scan."
+          - if: ${#isBlank(artifactIds)}
+            throw: No WebInspect artifact for DAST scan ${scanId} found in SSC application version ${global.dastScan.appVersionName}.
+          - run.fcli:
+              WAIT_ARTIFACTS: ${#fcliCmd('DAST_ARTIFACTS_WAIT', 'ssc artifact wait-for')} ${artifactIds}
+          - var.set:
+              global.dastScan.published: true
