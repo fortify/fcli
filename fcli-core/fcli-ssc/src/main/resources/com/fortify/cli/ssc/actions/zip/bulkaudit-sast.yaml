@@ -77,7 +77,7 @@ cli.options:
     type: boolean
   all-issues:
     names: --all-issues
-    description: "Also re-audit issues last audited by someone other than Fortify Remediation Aviator when their source code changed since they were audited, passed to 'fcli aviator ssc audit-sast --all-issues' for every audited version. Without this option only issues last audited by Fortify Remediation Aviator are re-audited. Re-audits use Fortify Remediation Aviator quota. Default: false"
+    description: "Also re-audit issues last audited by someone other than Fortify Remediation Aviator when their source code changed since they were audited, passed to 'fcli aviator ssc audit-sast --all-issues' for every audited version. Without this option only issues last audited by Fortify Remediation Aviator are re-audited. Re-audits use Fortify Remediation Aviator quota, and the number of issues to re-audit is only known after the FPR has been analyzed, so this option cannot be combined with --skip-if-exceeding-quota or --test-exceeding-quota. Default: false"
     required: false
     default: false
     type: boolean
@@ -164,6 +164,12 @@ steps:
   # Validate that at least one of --tag-mapping or --add-aviator-tags is specified
   - if: ${(cli['tag-mapping'] == null || cli['tag-mapping'] == '') && !cli['add-aviator-tags']}
     throw: "Either --tag-mapping or --add-aviator-tags must be specified."
+
+  # Validate that --all-issues is not used with the quota checks, which cannot count the issues it re-audits
+  - if: ${cli['all-issues'] && (cli['skip-if-exceeding-quota'] || cli['test-exceeding-quota'])}
+    do:
+      - log.progress: "ERROR: --all-issues cannot be combined with --skip-if-exceeding-quota or --test-exceeding-quota."
+      - throw: "--all-issues cannot be combined with --skip-if-exceeding-quota or --test-exceeding-quota, because the number of issues it re-audits is only known after the FPR has been analyzed and the quota check cannot count them."
 
   # Validate that --dry-run and --test-exceeding-quota are not used together
   - if: ${cli['dry-run'] && cli['test-exceeding-quota']}

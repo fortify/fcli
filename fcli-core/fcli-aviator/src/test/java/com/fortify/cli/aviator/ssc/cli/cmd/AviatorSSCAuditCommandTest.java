@@ -295,6 +295,48 @@ class AviatorSSCAuditCommandTest {
         assertEquals(complete, AbstractAviatorSSCSastAuditCommand.isAuditRunComplete(result));
     }
 
+    @ParameterizedTest
+    @CsvSource({"--skip-if-exceeding-quota", "--test-exceeding-quota"})
+    void quotaChecksTreatTheIssueCountAsUnknownWithAllIssues(String quotaOption) {
+        // The count cannot include already-audited issues whose source changed, so no SSC lookup is made
+        // (the null SSC arguments would fail) and the unknown count makes the quota check fail closed.
+        var cmd = parse("--no-filterset", "--all-issues", quotaOption);
+
+        assertEquals(-1, cmd.getPreflightIssueCount(null, null, new AviatorLoggerImpl(new RecordingProgressWriter())));
+    }
+
+    @ParameterizedTest
+    @CsvSource(value = {
+        "NONE, true", "--no-filterset, true", "Default, true", "Custom, false", "Unknown, false"
+    })
+    void lastAuditDateIsOnlyRecordedWhenTheAuditCoveredTheDefaultOrNoFilterSet(String option, boolean recorded) throws Exception {
+        var server = HttpServer.create(new InetSocketAddress(0), 0);
+        server.createContext("/api/v1/projectVersions/42/filterSets", exchange -> {
+            var data = JsonHelper.getObjectMapper().createArrayNode();
+            data.addObject().put("guid", "default-guid").put("title", "Default").put("defaultFilterSet", true);
+            data.addObject().put("guid", "custom-guid").put("title", "Custom").put("defaultFilterSet", false);
+            byte[] response = JsonHelper.getObjectMapper().createObjectNode().set("data", data).toString()
+                    .getBytes(StandardCharsets.UTF_8);
+            exchange.getResponseHeaders().set("Content-Type", "application/json");
+            exchange.sendResponseHeaders(200, response.length);
+            try (var output = exchange.getResponseBody()) {
+                output.write(response);
+            }
+        });
+        server.start();
+        try (var unirest = unirestFor(server)) {
+            var cmd = switch (option) {
+                case "NONE" -> parse();
+                case "--no-filterset" -> parse("--no-filterset");
+                default -> parse("--filterset", option);
+            };
+
+            assertEquals(recorded, cmd.auditsDefaultOrNoFilterSet(unirest, versionDescriptor()));
+        } finally {
+            server.stop(0);
+        }
+    }
+
     @Test
     void allIssuesAlwaysProceedsToDownloadWithoutAnSscLookup() {
         assertTrue(parse("--no-filterset", "--all-issues").mayHaveReauditCandidates(null, null, null));

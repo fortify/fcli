@@ -54,6 +54,7 @@ import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionRefreshOptions;
 import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionResolverMixin;
 import com.fortify.cli.ssc.appversion.helper.SSCAppVersionDescriptor;
 import com.fortify.cli.ssc.issue.cli.mixin.SSCIssueFilterSetOptionMixin;
+import com.fortify.cli.ssc.issue.helper.SSCIssueFilterSetHelper;
 
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
@@ -147,8 +148,19 @@ abstract class AbstractAviatorSSCSastAuditCommand extends AbstractSSCJsonNodeOut
      * Quota modes require the full count. Other audits only need a presence check:
      * return an exact zero to skip, or -1 when the total is unknown, including when
      * a candidate was found. This keeps a presence result out of quota comparisons.
+     *
+     * <p>With --all-issues the count is unknown in quota modes: issues audited by anyone are re-audited when
+     * their source code changed, and which ones changed is only known once the FPR has been downloaded. The SSC
+     * count cannot include them, so it could be zero or far too low, and the quota check would give the wrong
+     * answer. An unknown count makes --skip-if-exceeding-quota skip the audit and --test-exceeding-quota report
+     * that the quota could not be checked.
      */
     long getPreflightIssueCount(UnirestInstance unirest, SSCAppVersionDescriptor av, AviatorLoggerImpl logger) {
+        if ((isSkipIfExceedingQuota() || testExceedingQuota) && allIssues) {
+            logger.progress("Status: With --all-issues the number of issues to re-audit is only known after the FPR "
+                    + "has been analyzed, so the quota check cannot count them.");
+            return -1;
+        }
         if (isSkipIfExceedingQuota() || testExceedingQuota) {
             return AviatorSSCAuditHelper.getAuditableIssueCount(
                     unirest, av, logger, isNoFilterSet(), getFilterSetTitleOrId(), folderNames, forceReaudit);
@@ -369,13 +381,33 @@ abstract class AbstractAviatorSSCSastAuditCommand extends AbstractSSCJsonNodeOut
 
     /**
      * Records when this version was last completely audited, for bulk audit to compare with the newest scan
-     * date. A run limited to some folders, or a quota test, did not look at the whole version.
+     * date. A run limited to some folders or to a non-default filter set, or a quota test, did not look at the
+     * whole version.
      */
     private void recordLastAuditDate(UnirestInstance unirest, SSCAppVersionDescriptor av) {
-        if (testExceedingQuota || folderNames != null && !folderNames.isEmpty()) {
+        if (testExceedingQuota || folderNames != null && !folderNames.isEmpty() || !auditsDefaultOrNoFilterSet(unirest, av)) {
             return;
         }
         AviatorSSCAttributeHelper.writeLastSastAuditTimestamp(unirest, av.getVersionId());
+    }
+
+    /**
+     * Audits normally cover the default filter set, or every issue with --no-filterset. Any other filter set may
+     * exclude issues, so the version cannot be recorded as completely audited. If the filter set cannot be
+     * resolved, assume it is not the default one.
+     */
+    boolean auditsDefaultOrNoFilterSet(UnirestInstance unirest, SSCAppVersionDescriptor av) {
+        String filterSet = getFilterSetTitleOrId();
+        if (filterSet == null || filterSet.isBlank()) {
+            return true;
+        }
+        try {
+            var descriptor = new SSCIssueFilterSetHelper(unirest, av.getVersionId()).getDescriptorByTitleOrId(filterSet, false);
+            return descriptor != null && descriptor.isDefaultFilterSet();
+        } catch (RuntimeException e) {
+            LOG.debug("Could not resolve filter set '{}' for version {}", filterSet, av.getVersionId(), e);
+            return false;
+        }
     }
 
     /**
