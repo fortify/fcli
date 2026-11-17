@@ -23,6 +23,8 @@ message CorrelationStreamInitRequest {
   optional string sscApplicationVersion = 9;
   // See issue.StreamInitRequest.operation_id.
   string operation_id = 10;
+  // See issue.StreamInitRequest.supports_flow_control.
+  bool supports_flow_control = 11;
 }
 
 message CorrelationClientMessage {
@@ -57,6 +59,7 @@ message CorrelationInitResponse {
   optional string nextQuotaUpdateMessage = 10;
   optional string reassignedEntitlementId = 11;
   repeated com.fortify.aviator.EntitlementReassignment entitlementReassignments = 12;
+  optional int32 recommended_window = 13;
 }
 
 message CorrelationErrorResponse {
@@ -65,6 +68,8 @@ message CorrelationErrorResponse {
   string serverStreamId = 3;
   string status = 4;
   string statusMessage = 5;
+  optional int32 recommended_window = 6;
+  optional int64 retry_after_ms = 7;
 }
 
 message CorrelationPingRequest {
@@ -76,6 +81,7 @@ message CorrelationPongResponse {
   string streamId = 1;
   int64 serverTimestamp = 2;
   int64 clientTimestamp = 3;
+  optional int32 recommended_window = 4;
 }
 
 message CorrelationRequest {
@@ -95,6 +101,7 @@ message CorrelationResponse {
   string statusMessage = 5;
   string noCorrelationReason = 6;
   repeated CorrelationCandidateMatch matches = 7;
+  optional int32 recommended_window = 8;
 }
 
 message CorrelationValidationRequest {
@@ -113,6 +120,7 @@ message CorrelationValidationResponse {
   string status = 5;
   string statusMessage = 6;
   CorrelationDecision decision = 7;
+  optional int32 recommended_window = 8;
 }
 
 message SastFindingContext {

@@ -59,6 +59,10 @@ class DastAuditStreamProcessorWindowTest {
     private final Set<String> busyOnce = ConcurrentHashMap.newKeySet();
     private final AtomicInteger busyResponses = new AtomicInteger();
     private volatile boolean rejectFirstAttemptAsBusy;
+    private final AtomicInteger busyStreamStartsRemaining = new AtomicInteger();
+    private final AtomicInteger streamStarts = new AtomicInteger();
+    private final AtomicInteger flowControlInits = new AtomicInteger();
+    private volatile int recommendedWindow;
     private Server server;
     private ManagedChannel channel;
 
@@ -98,6 +102,29 @@ class DastAuditStreamProcessorWindowTest {
         assertEquals(5, busyResponses.get());
     }
 
+    @Test
+    void reopensTheStreamWhenTheServerRefusesToStartIt() throws Exception {
+        busyStreamStartsRemaining.set(2);
+
+        var result = process(5);
+
+        assertEquals(5, result.results().size());
+        assertTrue(result.results().stream().allMatch(r -> r instanceof DastAuditResult.Success));
+        assertEquals(3, streamStarts.get(), "two refused starts, then one accepted");
+        assertEquals(3, flowControlInits.get(), "every init must declare flow-control support");
+    }
+
+    @Test
+    void followsAServerRecommendedWindowSmallerThanTheClientDefault() throws Exception {
+        recommendedWindow = 3;
+
+        var result = process(60);
+
+        assertEquals(60, result.results().size());
+        assertTrue(maxServerInFlight.get() <= 3,
+            "in-flight on server exceeded recommended window: " + maxServerInFlight.get());
+    }
+
     private DastAuditStreamResult process(int findings) throws Exception {
         var processor = new DastAuditStreamProcessor(
             new NoopLogger(), DastAuditServiceGrpc.newStub(channel), null, 0);
@@ -134,11 +161,26 @@ class DastAuditStreamProcessorWindowTest {
                 @Override
                 public void onNext(DastAuditClientMessage message) {
                     switch (message.getRequestTypeCase()) {
-                        case INIT -> send(DastAuditServerMessage.newBuilder().setInit(
-                            DastAuditInitResponse.newBuilder().setStatus("SUCCESS").setUnlimitedQuota(true)).build());
+                        case INIT -> handleInit(message.getInit().getSupportsFlowControl());
                         case AUDIT -> handleAudit(message.getAudit().getRequestId());
                         default -> { }
                     }
+                }
+
+                private void handleInit(boolean supportsFlowControl) {
+                    streamStarts.incrementAndGet();
+                    if (supportsFlowControl) flowControlInits.incrementAndGet();
+                    if (busyStreamStartsRemaining.getAndUpdate(n -> Math.max(0, n - 1)) > 0) {
+                        send(DastAuditServerMessage.newBuilder().setError(DastAuditErrorResponse.newBuilder()
+                            .setStatus("SERVER_BUSY").setStatusMessage("at capacity").setRetryAfterMs(50)).build());
+                        synchronized (call) {
+                            call.onCompleted();
+                        }
+                        return;
+                    }
+                    var init = DastAuditInitResponse.newBuilder().setStatus("SUCCESS").setUnlimitedQuota(true);
+                    if (recommendedWindow > 0) init.setRecommendedWindow(recommendedWindow);
+                    send(DastAuditServerMessage.newBuilder().setInit(init).build());
                 }
 
                 private void handleAudit(String requestId) {

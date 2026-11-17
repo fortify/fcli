@@ -104,6 +104,9 @@ public class CorrelationStreamProcessor implements AutoCloseable {
     private final Map<String, CorrelationClientMessage> requestMessages = new ConcurrentHashMap<>();
     private final Map<String, Integer> serverBusyAttempts = new ConcurrentHashMap<>();
     private volatile CompletableFuture<CorrelationResult> resultFuture;
+    private volatile CorrelationResponseObserver currentObserver;
+    private volatile String scanGuid;
+    private int busyStartRetryCount;
 
     /**
      * Keys of SAST–DAST pairs that were confirmed or rejected in a previous run.
@@ -151,6 +154,8 @@ public class CorrelationStreamProcessor implements AutoCloseable {
         sendWindow.clear();
         requestMessages.clear();
         serverBusyAttempts.clear();
+        this.scanGuid = scanGuid;
+        this.busyStartRetryCount = 0;
 
         // Build URL→DAST map first; needed to evaluate Phase 1 skip eligibility
         this.urlToDastIssues = buildUrlToDastMap(mixedBuckets);
@@ -205,9 +210,12 @@ public class CorrelationStreamProcessor implements AutoCloseable {
 
     private void startStream(CompletableFuture<CorrelationResult> resultFuture, String scanGuid) {
         requestHandler = new RequestHandler<>(state.streamId);
+        state.isStreamInitialized = false;
+        var observer = new CorrelationResponseObserver(resultFuture, scanGuid);
+        currentObserver = observer;
 
         StreamObserver<CorrelationClientMessage> requestObserver =
-            asyncStub.processCorrelationStream(new CorrelationResponseObserver(resultFuture, scanGuid));
+            asyncStub.processCorrelationStream(observer);
 
         requestHandler.initialize(requestObserver);
         startPingPong();
@@ -219,6 +227,7 @@ public class CorrelationStreamProcessor implements AutoCloseable {
             .setStreamId(state.streamId)
             .setRequestId(UUID.randomUUID().toString())
             .setOperationId(AviatorOperationId.generate())
+            .setSupportsFlowControl(true)
             .setTotalReportedIssues(state.totalCorrelationRequests)
             .setTotalIssuesToCorrelate(state.totalCorrelationRequests);
 
@@ -327,7 +336,7 @@ public class CorrelationStreamProcessor implements AutoCloseable {
      * window slot while waiting, so retries cannot push in-flight work above the window.
      * Returns false when the request is unknown or has exhausted its retries.
      */
-    private boolean scheduleServerBusyRetry(String requestId) {
+    private boolean scheduleServerBusyRetry(String requestId, long retryAfterMs) {
         CorrelationClientMessage message = requestMessages.get(requestId);
         if (message == null) return false;
 
@@ -337,7 +346,7 @@ public class CorrelationStreamProcessor implements AutoCloseable {
             return false;
         }
 
-        long delay = ServerBusyBackoff.delayMs(attempt);
+        long delay = ServerBusyBackoff.delayMs(attempt, retryAfterMs);
         LOG.warn("Server busy for correlation request {}; retrying in {} ms (attempt {}/{})",
             requestId, delay, attempt, Constants.MAX_RETRIES);
 
@@ -375,6 +384,7 @@ public class CorrelationStreamProcessor implements AutoCloseable {
 
         @Override
         public void onNext(CorrelationServerMessage message) {
+            if (this != currentObserver) return;
             try {
                 switch (message.getResponseTypeCase()) {
                     case INIT -> handleInitResponse(message.getInit());
@@ -391,6 +401,7 @@ public class CorrelationStreamProcessor implements AutoCloseable {
 
         @Override
         public void onError(Throwable t) {
+            if (this != currentObserver) return;
             stopPingPong();
             Status status = Status.fromThrowable(t);
             LOG.error("Correlation stream error: {} - {}", status.getCode(), status.getDescription(), t);
@@ -402,6 +413,7 @@ public class CorrelationStreamProcessor implements AutoCloseable {
 
         @Override
         public void onCompleted() {
+            if (this != currentObserver) return;
             stopPingPong();
             state.currentPhase = CorrelationStreamState.Phase.COMPLETE;
             logger.info("Correlation stream completed — " + state.confirmedPairs.size() + " confirmed pairs");
@@ -420,6 +432,7 @@ public class CorrelationStreamProcessor implements AutoCloseable {
 
         state.isStreamInitialized = true;
         state.quota = resp.getReservedQuota();
+        if (resp.hasRecommendedWindow()) sendWindow.recommend(resp.getRecommendedWindow());
 
         if (!"OK".equalsIgnoreCase(resp.getStatus()) && !"SUCCESS".equalsIgnoreCase(resp.getStatus())) {
             LOG.warn("Init response status: {} — {}", resp.getStatus(), resp.getStatusMessage());
@@ -430,6 +443,7 @@ public class CorrelationStreamProcessor implements AutoCloseable {
     }
 
     private void handleCorrelationResponse(CorrelationResponse resp) {
+        if (resp.hasRecommendedWindow()) sendWindow.recommend(resp.getRecommendedWindow());
         if (!pendingCorrelationRequestIds.remove(resp.getRequestId())) {
             LOG.warn("Ignoring correlation response for unknown or completed request {}", resp.getRequestId());
             return;
@@ -473,6 +487,7 @@ public class CorrelationStreamProcessor implements AutoCloseable {
     }
 
     private void handleValidationResponse(CorrelationValidationResponse resp, String scanGuid) {
+        if (resp.hasRecommendedWindow()) sendWindow.recommend(resp.getRecommendedWindow());
         if (!pendingValidationRequestIds.remove(resp.getRequestId())) {
             LOG.warn("Ignoring validation response for unknown or completed request {}", resp.getRequestId());
             return;
@@ -529,7 +544,13 @@ public class CorrelationStreamProcessor implements AutoCloseable {
     private void handleErrorResponse(CorrelationErrorResponse resp,
                                       CompletableFuture<CorrelationResult> resultFuture) {
         String requestId = resp.getRequestId();
-        if (ServerBusyBackoff.isServerBusy(resp.getStatus()) && scheduleServerBusyRetry(requestId)) {
+        if (resp.hasRecommendedWindow()) sendWindow.recommend(resp.getRecommendedWindow());
+        long retryAfterMs = resp.hasRetryAfterMs() ? resp.getRetryAfterMs() : 0;
+        if (ServerBusyBackoff.isServerBusy(resp.getStatus()) && !state.isStreamInitialized) {
+            retryBusyStreamStart(resp.getStatusMessage(), retryAfterMs, resultFuture);
+            return;
+        }
+        if (ServerBusyBackoff.isServerBusy(resp.getStatus()) && scheduleServerBusyRetry(requestId, retryAfterMs)) {
             return;
         }
         if (pendingCorrelationRequestIds.remove(requestId)) {
@@ -561,8 +582,36 @@ public class CorrelationStreamProcessor implements AutoCloseable {
     }
 
     private void handlePongResponse(CorrelationPongResponse pong) {
+        if (pong.hasRecommendedWindow()) sendWindow.recommend(pong.getRecommendedWindow());
         long latency = System.currentTimeMillis() - pong.getClientTimestamp();
         LOG.debug("Correlation pong received. Latency: {} ms", latency);
+    }
+
+    /** The server refused to start the stream because it is at capacity: re-open it after the hinted delay. */
+    private void retryBusyStreamStart(String statusMessage, long retryAfterMs,
+                                      CompletableFuture<CorrelationResult> resultFuture) {
+        int attempt = ++busyStartRetryCount;
+        if (attempt > Constants.MAX_BUSY_STREAM_START_RETRIES) {
+            resultFuture.completeExceptionally(new AviatorSimpleException(
+                "Correlation could not start, Aviator server is busy: " + statusMessage));
+            close();
+            streamLatch.countDown();
+            return;
+        }
+        // Ignore the refused stream's completion; a fresh stream takes over
+        currentObserver = null;
+        stopPingPong();
+        long delay = ServerBusyBackoff.streamStartDelayMs(attempt, retryAfterMs);
+        logger.info("Aviator server is busy (%s); retrying correlation start in %d ms (attempt %d/%d)",
+            statusMessage, delay, attempt, Constants.MAX_BUSY_STREAM_START_RETRIES);
+        Runnable restart = () -> {
+            if (resultFuture == this.resultFuture && !resultFuture.isDone()) startStream(resultFuture, scanGuid);
+        };
+        if (pingScheduler == null) {
+            CompletableFuture.delayedExecutor(delay, TimeUnit.MILLISECONDS).execute(restart);
+        } else {
+            pingScheduler.schedule(restart, delay, TimeUnit.MILLISECONDS);
+        }
     }
 
     // ─── Ping/pong keepalive ───────────────────────────────────────────

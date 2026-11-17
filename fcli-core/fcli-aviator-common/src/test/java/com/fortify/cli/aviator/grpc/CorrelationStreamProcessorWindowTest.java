@@ -67,6 +67,8 @@ class CorrelationStreamProcessorWindowTest {
     private volatile String failCorrelationForSast;
     private volatile String failValidationForSast;
     private volatile boolean failStreamOnFirstRequest;
+    private final AtomicInteger busyStreamStartsRemaining = new AtomicInteger();
+    private final AtomicInteger flowControlInits = new AtomicInteger();
     private Server server;
     private ManagedChannel channel;
 
@@ -121,6 +123,17 @@ class CorrelationStreamProcessorWindowTest {
     }
 
     @Test
+    void reopensTheStreamWhenTheServerRefusesToStartIt() throws Exception {
+        busyStreamStartsRemaining.set(2);
+
+        var result = process(5);
+
+        assertEquals(5, result.successfulCorrelationResponses());
+        assertEquals(5, result.confirmedPairs().size());
+        assertEquals(3, flowControlInits.get(), "two refused starts, then one accepted");
+    }
+
+    @Test
     void streamLevelErrorWithoutRequestIdFailsTheRun() {
         failStreamOnFirstRequest = true;
 
@@ -162,8 +175,19 @@ class CorrelationStreamProcessorWindowTest {
                 @Override
                 public void onNext(CorrelationClientMessage message) {
                     switch (message.getRequestTypeCase()) {
-                        case INIT -> send(CorrelationServerMessage.newBuilder().setInit(
-                            CorrelationInitResponse.newBuilder().setStatus("SUCCESS").setUnlimitedQuota(true)).build());
+                        case INIT -> {
+                            if (message.getInit().getSupportsFlowControl()) flowControlInits.incrementAndGet();
+                            if (busyStreamStartsRemaining.getAndUpdate(n -> Math.max(0, n - 1)) > 0) {
+                                send(CorrelationServerMessage.newBuilder().setError(CorrelationErrorResponse.newBuilder()
+                                    .setStatus("SERVER_BUSY").setStatusMessage("at capacity").setRetryAfterMs(50)).build());
+                                synchronized (call) {
+                                    call.onCompleted();
+                                }
+                                return;
+                            }
+                            send(CorrelationServerMessage.newBuilder().setInit(
+                                CorrelationInitResponse.newBuilder().setStatus("SUCCESS").setUnlimitedQuota(true)).build());
+                        }
                         case CORRELATION -> handle(message.getCorrelation().getRequestId(),
                             message.getCorrelation().getSastFinding().getInstanceId().equals(failCorrelationForSast),
                             () -> CorrelationServerMessage.newBuilder().setCorrelation(CorrelationResponse.newBuilder()

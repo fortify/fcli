@@ -74,6 +74,26 @@ class RequestSendWindowTest {
     }
 
     @Test
+    void serverRecommendationShrinksWindowWithoutCancellingInFlightAndNeverGrowsPastInitialSize() {
+        var window = new RequestSendWindow<>(10, ID);
+        window.enqueue(requests(30));
+        List<String> first = window.drainSendable();
+
+        window.recommend(3);
+        assertEquals(3, window.windowSize());
+        assertTrue(window.release(first.get(0)));
+        assertEquals(0, window.drainSendable().size(), "9 still in flight, above the new window of 3");
+
+        for (int i = 1; i <= 7; i++) window.release(first.get(i));
+        assertEquals(1, window.drainSendable().size());
+
+        window.recommend(50);
+        assertEquals(10, window.windowSize());
+        window.recommend(0);
+        assertEquals(10, window.windowSize());
+    }
+
+    @Test
     void releaseIsIdempotentAndIgnoresUnknownRequests() {
         var window = new RequestSendWindow<>(2, ID);
         window.enqueue(requests(2));

@@ -67,7 +67,9 @@ public class DastAuditStreamProcessor implements AutoCloseable {
     private final AtomicBoolean isRetryScheduled = new AtomicBoolean(false);
     private final AtomicInteger streamRetryCount = new AtomicInteger();
     private final AtomicInteger stagnantRetryCount = new AtomicInteger();
+    private final AtomicInteger busyStartRetryCount = new AtomicInteger();
     private final AtomicLong streamGeneration = new AtomicLong();
+    private volatile boolean streamInitialized;
 
     private RequestHandler<DastAuditClientMessage> requestHandler;
     private ScheduledFuture<?> pingTask;
@@ -118,6 +120,7 @@ public class DastAuditStreamProcessor implements AutoCloseable {
         this.results.clear();
         this.streamRetryCount.set(0);
         this.stagnantRetryCount.set(0);
+        this.busyStartRetryCount.set(0);
         this.lastRetryCompletedCount = 0;
         this.isClosed.set(false);
         this.quotaMetadataInitialized = false;
@@ -143,6 +146,7 @@ public class DastAuditStreamProcessor implements AutoCloseable {
         this.activeRequestStream = null;
         this.isRpcCompleted.set(false);
         this.isRetryScheduled.set(false);
+        this.streamInitialized = false;
         long generation = streamGeneration.incrementAndGet();
         LOG.debug("Starting DAST audit stream {} with {} pending findings and {} reported findings",
             streamId, pendingIssueIds.size(), totalReportedIssues);
@@ -165,6 +169,7 @@ public class DastAuditStreamProcessor implements AutoCloseable {
             .setStreamId(streamId)
             .setRequestId(UUID.randomUUID().toString())
             .setOperationId(AviatorOperationId.generate())
+            .setSupportsFlowControl(true)
             .setTotalReportedIssues(totalReportedIssues)
             .setTotalIssuesToAudit(pendingIssueIds.size());
         if (config.fprBuildId() != null) init.setFprBuildId(config.fprBuildId());
@@ -178,6 +183,8 @@ public class DastAuditStreamProcessor implements AutoCloseable {
             fail(new AviatorSimpleException("DAST audit initialization failed: " + response.getStatusMessage()));
             return;
         }
+        streamInitialized = true;
+        if (response.hasRecommendedWindow()) sendWindow.recommend(response.getRecommendedWindow());
         if (!quotaMetadataInitialized) {
             reservedQuota = response.getReservedQuota();
             exceededCount = response.getExceededCount();
@@ -244,6 +251,7 @@ public class DastAuditStreamProcessor implements AutoCloseable {
     }
 
     private void handleAudit(DastAuditResponse response) {
+        if (response.hasRecommendedWindow()) sendWindow.recommend(response.getRecommendedWindow());
         String issueId = completeRequest(response.getRequestId());
         if (issueId == null) {
             LOG.warn("Ignoring DAST audit response for unknown or completed request {}", response.getRequestId());
@@ -261,7 +269,14 @@ public class DastAuditStreamProcessor implements AutoCloseable {
     }
 
     private void handleError(DastAuditErrorResponse response) {
-        if (ServerBusyBackoff.isServerBusy(response.getStatus()) && scheduleServerBusyRetry(response.getRequestId())) {
+        if (response.hasRecommendedWindow()) sendWindow.recommend(response.getRecommendedWindow());
+        long retryAfterMs = response.hasRetryAfterMs() ? response.getRetryAfterMs() : 0;
+        if (ServerBusyBackoff.isServerBusy(response.getStatus()) && !streamInitialized) {
+            retryBusyStreamStart(response.getStatusMessage(), retryAfterMs);
+            return;
+        }
+        if (ServerBusyBackoff.isServerBusy(response.getStatus())
+                && scheduleServerBusyRetry(response.getRequestId(), retryAfterMs)) {
             return;
         }
         String issueId = completeRequest(response.getRequestId());
@@ -296,7 +311,7 @@ public class DastAuditStreamProcessor implements AutoCloseable {
      * window slot while waiting, so retries cannot push in-flight work above the window.
      * Returns false when the request is unknown or has exhausted its retries.
      */
-    private boolean scheduleServerBusyRetry(String requestId) {
+    private boolean scheduleServerBusyRetry(String requestId, long retryAfterMs) {
         DastAuditClientMessage message = requestMessages.get(requestId);
         if (message == null || !requestIssueIds.containsKey(requestId)) return false;
 
@@ -306,7 +321,7 @@ public class DastAuditStreamProcessor implements AutoCloseable {
             return false;
         }
 
-        long delay = ServerBusyBackoff.delayMs(attempt);
+        long delay = ServerBusyBackoff.delayMs(attempt, retryAfterMs);
         LOG.warn("Server busy for DAST audit request {}; retrying in {} ms (attempt {}/{})",
             requestId, delay, attempt, Constants.MAX_RETRIES);
 
@@ -325,7 +340,23 @@ public class DastAuditStreamProcessor implements AutoCloseable {
     }
 
     private void handlePong(DastAuditPongResponse response) {
+        if (response.hasRecommendedWindow()) sendWindow.recommend(response.getRecommendedWindow());
         LOG.debug("DAST audit pong received in {} ms", System.currentTimeMillis() - response.getClientTimestamp());
+    }
+
+    /** The server refused to start the stream because it is at capacity: re-open it after the hinted delay. */
+    private void retryBusyStreamStart(String statusMessage, long retryAfterMs) {
+        int attempt = busyStartRetryCount.incrementAndGet();
+        if (attempt > Constants.MAX_BUSY_STREAM_START_RETRIES) {
+            fail(new AviatorSimpleException("DAST audit could not start, Aviator server is busy: " + statusMessage));
+            return;
+        }
+        if (!isRetryScheduled.compareAndSet(false, true)) return;
+        long delay = ServerBusyBackoff.streamStartDelayMs(attempt, retryAfterMs);
+        logger.info("Aviator server is busy (%s); retrying DAST audit start in %d ms (attempt %d/%d)",
+            statusMessage, delay, attempt, Constants.MAX_BUSY_STREAM_START_RETRIES);
+        stopPingPong();
+        scheduleRetry(delay);
     }
 
     private void completeRequestsIfDone() {
