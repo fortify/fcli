@@ -19,6 +19,7 @@ import java.util.function.Consumer;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.cli.util.FcliCommandExecutorFactory;
+import com.fortify.cli.common.cli.util.FcliCommandExecutorFactory.FcliCommandExecutorFactoryBuilder;
 import com.fortify.cli.common.util.OutputHelper.OutputType;
 import com.fortify.cli.common.util.OutputHelper.Result;
 
@@ -41,8 +42,18 @@ public class FcliRunnerHelper {
      * Execute a command and collect stdout output with default options.
      */
     public static Result collectStdout(String fullCmd, Map<String, String> defaultOptions) {
-        var builder = FcliCommandExecutorFactory.builder()
-            .cmd(fullCmd)
+        return collectStdout(FcliCommandExecutorFactory.builder().cmd(fullCmd), defaultOptions);
+    }
+
+    /**
+     * Execute literal arguments without expanding Picocli argument files.
+     */
+    public static Result collectStdout(String[] args, Map<String, String> defaultOptions) {
+        return collectStdout(FcliCommandExecutorFactory.builder().args(args).literalArguments(true), defaultOptions);
+    }
+
+    private static Result collectStdout(FcliCommandExecutorFactoryBuilder builder, Map<String, String> defaultOptions) {
+        builder
             .stdoutOutputType(OutputType.collect)
             .stderrOutputType(OutputType.collect)
             .onFail(r -> {});
@@ -65,8 +76,19 @@ public class FcliRunnerHelper {
      * Execute a command and collect structured records with default options.
      */
     public static Result collectRecords(String fullCmd, Consumer<ObjectNode> recordConsumer, Map<String, String> defaultOptions) {
-        var builder = FcliCommandExecutorFactory.builder()
-            .cmd(fullCmd)
+        return collectRecords(FcliCommandExecutorFactory.builder().cmd(fullCmd), recordConsumer, defaultOptions);
+    }
+
+    /**
+     * Execute literal arguments and collect structured records.
+     */
+    public static Result collectRecords(String[] args, Consumer<ObjectNode> recordConsumer, Map<String, String> defaultOptions) {
+        return collectRecords(FcliCommandExecutorFactory.builder().args(args).literalArguments(true), recordConsumer, defaultOptions);
+    }
+
+    private static Result collectRecords(
+            FcliCommandExecutorFactoryBuilder builder, Consumer<ObjectNode> recordConsumer, Map<String, String> defaultOptions) {
+        builder
             .stdoutOutputTypeIfRecordCollectionSupported(OutputType.suppress)
             .stdoutOutputTypeIfRecordCollectionNotSupported(OutputType.collect)
             .stderrOutputType(OutputType.collect)

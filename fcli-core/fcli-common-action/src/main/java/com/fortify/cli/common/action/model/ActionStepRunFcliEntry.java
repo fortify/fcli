@@ -116,6 +116,21 @@ public final class ActionStepRunFcliEntry extends AbstractActionStepElement impl
         fcli fod rel ls
         """)
     @JsonProperty(value = "cmd", required = true) private TemplateExpression cmd;
+
+    @JsonPropertyDescription("""
+        Optional list of SpEL template expressions: Each entry is one literal command-line argument, \
+        or a list of arguments; null values are omitted. Use this for options with dynamic values, for example \
+        `"--name=${cli.name}"`, or `${#action.copyParameterArgsFromGroup('group')}`. The `cmd` \
+        property is still parsed as a legacy command string; do not interpolate untrusted values into it.
+        """)
+    @JsonProperty(value = "args", required = false) private ArrayList<TemplateExpression> args;
+
+    @JsonPropertyDescription("""
+        Optional list of SpEL template expressions: Each entry is a positional argument, or a list \
+        of positional arguments; null values are omitted. These follow all options and an end-of-options \
+        delimiter, so values beginning with '-' are treated as data.
+        """)
+    @JsonProperty(value = "positionals", required = false) private ArrayList<TemplateExpression> positionals;
     
     @JsonPropertyDescription("""
         Optional enum value: Specify how to handle output written to stdout by this fcli command:

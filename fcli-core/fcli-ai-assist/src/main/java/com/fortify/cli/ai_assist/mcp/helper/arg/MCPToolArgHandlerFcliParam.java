@@ -13,7 +13,7 @@
 package com.fortify.cli.ai_assist.mcp.helper.arg;
 
 import java.lang.reflect.Field;
-import java.util.stream.Collectors;
+import java.util.List;
 import java.util.stream.Stream;
 
 import lombok.Getter;
@@ -38,7 +38,7 @@ public final class MCPToolArgHandlerFcliParam extends AbstractMCPToolArgHandlerF
     return ((Field)argSpec.userObject()).getName();
     }
     @Override
-    protected String combineFcliCmdArgs(String name, Stream<String> values) {
-        return values.map(v->"\""+v+"\"").collect(Collectors.joining(" "));
+    protected List<String> combineFcliCmdArgs(String name, Stream<String> values) {
+        return values.toList();
     }
 }

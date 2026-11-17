@@ -12,6 +12,7 @@
  */
 package com.fortify.cli.ai_assist.mcp.helper.arg;
 
+import java.util.List;
 import java.util.Map;
 
 import com.fortify.cli.ai_assist.mcp.helper.runner.MCPToolFcliRunnerRecordsPaged;
@@ -67,6 +68,11 @@ public final class MCPToolArgHandlerPaging implements IMCPToolArgHandler {
     /** We always have fcli return full set of results, so there are no arguments to pass.
      *  Paging the results is handled by {@link MCPToolFcliRunnerRecordsPaged} */
     @Override
+    public List<String> getFcliArgs(Map<String, Object> toolArgs) {
+        return List.of();
+    }
+
+    @Override @Deprecated
     public String getFcliCmdArgs(Map<String, Object> toolArgs) {
         return "";
     }
