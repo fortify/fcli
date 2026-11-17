@@ -13,12 +13,10 @@
 package com.fortify.cli.aviator.grpc;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Queue;
-import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
@@ -36,12 +34,18 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.LongSupplier;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.fortify.aviator.grpc.*;
+import com.fortify.aviator.grpc.AuditRequest;
+import com.fortify.aviator.grpc.AuditorResponse;
+import com.fortify.aviator.grpc.AuditorServiceGrpc;
+import com.fortify.aviator.grpc.PingRequest;
+import com.fortify.aviator.grpc.StreamInitRequest;
+import com.fortify.aviator.grpc.UserPromptRequest;
 import com.fortify.cli.aviator._common.exception.AviatorQuotaFilterException;
 import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
 import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
@@ -64,8 +68,13 @@ import io.grpc.StatusRuntimeException;
 import io.grpc.stub.ClientCallStreamObserver;
 import io.grpc.stub.ClientResponseObserver;
 
+/**
+ * SAST streaming with a total 150 second connection recovery budget per outage, ending at accepted initialization.
+ * The ordinary initial initialization timeout and per-request SERVER_BUSY policy are independent of recovery.
+ */
 class AviatorStreamProcessor implements AutoCloseable {
     private static final Logger LOG = LoggerFactory.getLogger(AviatorStreamProcessor.class);
+    private static final long RECOVERY_TIMEOUT_SECONDS = 150;
 
     private final AviatorGrpcClient client;
     private final IAviatorLogger logger;
@@ -74,6 +83,7 @@ class AviatorStreamProcessor implements AutoCloseable {
     private final ScheduledExecutorService pingScheduler;
     private final long pingIntervalSeconds;
     private final long defaultTimeoutSeconds;
+    private final LongSupplier nanoTime;
 
     private final Map<String, RequestMetrics> requestMetricsMap = new ConcurrentHashMap<>();
     private final Map<String, RequestWrapper> inflightRequests = new ConcurrentHashMap<>();
@@ -88,16 +98,19 @@ class AviatorStreamProcessor implements AutoCloseable {
     private RequestHandler<UserPromptRequest> requestHandler;
 
     private ScheduledFuture<?> pingTask;
-    private volatile StreamInitializationTimeout initializationTimeout;
     private final AtomicBoolean isPinging = new AtomicBoolean(false);
 
     private final ConcurrentLinkedDeque<RequestWrapper> processingQueue = new ConcurrentLinkedDeque<>();
     private volatile StreamState currentStreamState;
-    private final AtomicInteger stagnantRetryCount = new AtomicInteger(0);
-    private final AtomicInteger lastProcessed = new AtomicInteger(0);
-    private CountDownLatch streamLatch;
-    private volatile Future<?> processingTask;
     private final Object retryLock = new Object();
+    private Attempt activeAttempt;
+    private CompletableFuture<SastStreamOutcome> activeResult;
+    private ScheduledFuture<?> recoveryTimeout;
+    private ScheduledFuture<?> retryDelay;
+    private CountDownLatch retryDelayLatch;
+    private Object recoveryEpisode;
+    private long recoveryDeadlineNanos;
+    private boolean closed;
     private final FprHandle fprHandle;
     private final ISourceDecoder sourceDecoder;
     private final FVDLMetadata fvdlMetadata;
@@ -105,10 +118,32 @@ class AviatorStreamProcessor implements AutoCloseable {
     private final AtomicInteger skippedRequests = new AtomicInteger();
     private final AtomicInteger failedRequests = new AtomicInteger();
 
+    private static final class Attempt {
+        final RequestHandler<UserPromptRequest> handler;
+        final CountDownLatch done = new CountDownLatch(1);
+        final CountDownLatch initialized = new CountDownLatch(1);
+        StreamInitializationTimeout timeout;
+        Future<?> processingTask;
+        RequestWrapper preparing;
+        boolean finished;
+
+        Attempt(String streamId) {
+            handler = new RequestHandler<>(streamId);
+        }
+    }
+
     public AviatorStreamProcessor(AviatorGrpcClient client, IAviatorLogger logger, AuditorServiceGrpc.AuditorServiceStub asyncStub,
             ExecutorService processingExecutor, ScheduledExecutorService pingScheduler, long pingIntervalSeconds,
             long defaultTimeoutSeconds, FprHandle fprHandle, ISourceDecoder sourceDecoder,
             FVDLMetadata fvdlMetadata) {
+        this(client, logger, asyncStub, processingExecutor, pingScheduler, pingIntervalSeconds, defaultTimeoutSeconds,
+                fprHandle, sourceDecoder, fvdlMetadata, System::nanoTime);
+    }
+
+    AviatorStreamProcessor(AviatorGrpcClient client, IAviatorLogger logger, AuditorServiceGrpc.AuditorServiceStub asyncStub,
+            ExecutorService processingExecutor, ScheduledExecutorService pingScheduler, long pingIntervalSeconds,
+            long defaultTimeoutSeconds, FprHandle fprHandle, ISourceDecoder sourceDecoder,
+            FVDLMetadata fvdlMetadata, LongSupplier nanoTime) {
         this.client = client;
         this.logger = logger;
         this.asyncStub = asyncStub;
@@ -116,6 +151,7 @@ class AviatorStreamProcessor implements AutoCloseable {
         this.pingScheduler = pingScheduler;
         this.pingIntervalSeconds = pingIntervalSeconds;
         this.defaultTimeoutSeconds = defaultTimeoutSeconds;
+        this.nanoTime = Objects.requireNonNull(nanoTime, "nanoTime");
         this.fprHandle = fprHandle;
         this.sourceDecoder = Objects.requireNonNull(sourceDecoder, "sourceDecoder");
         this.fvdlMetadata = fvdlMetadata;
@@ -145,6 +181,17 @@ class AviatorStreamProcessor implements AutoCloseable {
         final Map<String, AuditResponse> responses = new ConcurrentHashMap<>();
         final AtomicInteger processedRequests = new AtomicInteger(0);
 
+        activeResult = resultFuture;
+        resultFuture.whenComplete((result, error) -> {
+            synchronized (retryLock) {
+                endRecovery();
+                if (retryDelay != null) retryDelay.cancel(false);
+                if (retryDelayLatch != null) retryDelayLatch.countDown();
+                if (activeAttempt != null) {
+                    retireAttempt(activeAttempt, error == null && result instanceof SastStreamOutcome.Completed);
+                }
+            }
+        });
         startStreamWithRetry(responses, processedRequests, resultFuture);
 
         return resultFuture.exceptionally(ex -> {
@@ -158,179 +205,199 @@ class AviatorStreamProcessor implements AutoCloseable {
 
     private void startStreamWithRetry(Map<String, AuditResponse> responses, AtomicInteger processedRequests,
             CompletableFuture<SastStreamOutcome> resultFuture) {
-        synchronized (retryLock) {
-            if (client.isShutdown.get() || resultFuture.isDone()) {
-                return;
-            }
-
-            if (currentStreamState.streamRetryCount > 0) {
-                long delay = calculateStreamRetryDelay(currentStreamState.streamRetryCount);
-                boolean infinite = true; // Assume infinite for PROTOCOL_ERROR; adjust based on last error if needed
-                String maxStr = infinite ? "infinite" : String.valueOf(Constants.MAX_STREAM_RETRIES);
-                logger.info("Retrying stream connection (attempt {}/{}) after {} ms delay",
-                        currentStreamState.streamRetryCount + 1, maxStr, delay);
-
-                try {
-                    Thread.sleep(delay);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    resultFuture.completeExceptionally(new AviatorTechnicalException("Interrupted during stream retry delay", e));
-                    return;
+        try {
+            while (!resultFuture.isDone()) {
+                CountDownLatch delayLatch = null;
+                synchronized (retryLock) {
+                    if (resultFuture.isDone()) return;
+                    if (expireRecoveryIfOverdue(responses, resultFuture)) return;
+                    if (closed || client.isShutdown.get()) {
+                        resultFuture.completeExceptionally(new AviatorTechnicalException("Audit stream closed"));
+                        return;
+                    }
+                    if (currentStreamState.streamRetryCount > 0) {
+                        long delay = calculateStreamRetryDelay(currentStreamState.streamRetryCount);
+                        logger.info("Retrying stream connection after {} ms delay (150 second recovery budget)", delay);
+                        delayLatch = new CountDownLatch(1);
+                        retryDelayLatch = delayLatch;
+                        retryDelay = pingScheduler.schedule(delayLatch::countDown, delay, TimeUnit.MILLISECONDS);
+                    }
                 }
+                if (delayLatch != null) delayLatch.await();
 
-                currentStreamState.streamId = UUID.randomUUID().toString();
-
-                if (processingTask != null) {
-                    processingTask.cancel(true);
-                }
-
-                outstandingRequests.set(0);
-                requestSemaphore.drainPermits();
-                requestSemaphore.release(Constants.INITIAL_REQUEST_WINDOW);
-            }
-
-            currentStreamState.streamRetryCount++;
-            currentStreamState.isStreamInitialized = false;
-
-            requestHandler = new RequestHandler<>(currentStreamState.streamId);
-            this.streamLatch = new CountDownLatch(1);
-            var attemptLatch = this.streamLatch;
-            CountDownLatch initLatch = new CountDownLatch(1);
-
-            var attemptHandler = requestHandler;
-            var initializationTimeout = new StreamInitializationTimeout(pingScheduler,
-                () -> attemptHandler.sendError(StreamInitializationTimeout.expiredError("Audit")));
-            this.initializationTimeout = initializationTimeout;
-            resultFuture.whenComplete((result, error) -> {
-                initializationTimeout.close();
-                initLatch.countDown();
-                attemptLatch.countDown();
-            });
-            ClientResponseObserver<UserPromptRequest, AuditorResponse> responseObserver = createResponseObserver(
-                    responses, processedRequests, resultFuture, this.streamLatch, initLatch, initializationTimeout);
-
-            try {
-                asyncStub.processStream(responseObserver);
-
-                LOG.info("Sending initialization request for stream retry {}", currentStreamState.streamRetryCount);
-                sendInitRequest();
-                initializationTimeout.arm();
-
-                if (currentStreamState.streamRetryCount > 1) {
+                Attempt attempt;
+                synchronized (retryLock) {
+                    if (resultFuture.isDone() || closed) return;
+                    if (expireRecoveryIfOverdue(responses, resultFuture)) return;
+                    currentStreamState.streamRetryCount++;
+                    currentStreamState.streamId = UUID.randomUUID().toString();
+                    currentStreamState.isStreamInitialized = false;
+                    outstandingRequests.set(0);
                     requestSemaphore.drainPermits();
                     requestSemaphore.release(Constants.INITIAL_REQUEST_WINDOW);
-                    outstandingRequests.set(0);
+                    attempt = new Attempt(currentStreamState.streamId);
+                    activeAttempt = attempt;
+                    requestHandler = attempt.handler;
+                    attempt.handler.getSendFailure().thenAccept(error -> {
+                        synchronized (retryLock) {
+                            failAttempt(attempt, error, isRetryableError(error), responses, resultFuture);
+                        }
+                    });
+                    attempt.timeout = new StreamInitializationTimeout(pingScheduler, () -> {
+                        synchronized (retryLock) {
+                            failAttempt(attempt, StreamInitializationTimeout.expiredError("Audit"),
+                                    recoveryEpisode != null, responses, resultFuture);
+                        }
+                    });
                 }
-
-                processingExecutor.submit(() -> {
-                    try {  // Outer try to propagate to future
-                        initLatch.await();
-                        if (resultFuture.isDone() || !currentStreamState.isStreamInitialized) return;
-
-                        if (currentStreamState.streamRetryCount > 1) {
-                            reQueueUnprocessedRequests();
-                        }
-
-                        applyQuotaFilteringIfNeeded();
-
-                        processRequestQueue(currentStreamState.actualIssuesCount, processedRequests, responses, resultFuture, this.streamLatch);
-                    } catch (InterruptedException e) {
-                        Thread.currentThread().interrupt();
-                        // Check if interruption is due to normal shutdown
-                        if (client.isShutdown.get() || requestHandler.isCompleted()) {
-                            LOG.debug("Processing task interrupted during normal shutdown");
-                            return; // Exit gracefully without propagating exception
-                        }
-                        resultFuture.completeExceptionally(new AviatorTechnicalException("Interrupted during request processing", e));
-                    } catch (AviatorQuotaFilterException e) {
-                        // Special handling for quota filtering that results in zero issues
-                        logger.info("All issues filtered out by quota constraints, closing stream gracefully");
-
-                        // Clean up stream resources BEFORE completing exceptionally
-                        stopPingPong();
-                        if (requestHandler != null && !requestHandler.isCompleted()) {
-                            requestHandler.complete();
-                        }
-                        streamLatch.countDown();
-
-                        // Complete the future exceptionally so IssueAuditor can handle it
-                        if (!resultFuture.isDone()) {
-                            resultFuture.completeExceptionally(e);
-                        }
-
-                        logger.info("Stream closed successfully after quota filtering");
-                    } catch (Exception e) {
-                        // Only propagate exceptions if the stream hasn't completed successfully
-                        if (requestHandler != null && !requestHandler.isCompleted() && !resultFuture.isDone()) {
-                            resultFuture.completeExceptionally(new AviatorTechnicalException("Error during request processing execution", e));
-                        } else {
-                            LOG.debug("Exception caught after stream completion or shutdown: {}", e.getMessage());
+                try {
+                    asyncStub.processStream(createResponseObserver(responses, processedRequests, resultFuture, attempt));
+                    synchronized (retryLock) {
+                        if (isActive(attempt, resultFuture) && !expireRecoveryIfOverdue(responses, resultFuture)) {
+                            sendInitRequest(attempt, responses, resultFuture);
+                            attempt.timeout.arm();
+                            attempt.processingTask = processingExecutor.submit(
+                                    () -> processAttempt(attempt, responses, processedRequests, resultFuture));
                         }
                     }
-                });
-
-                this.streamLatch.await();
-
-            } catch (Exception e) {
-                LOG.error("Stream failed with error: {}", e.getMessage(), e);
-
-                if (isRetryableError(e)) {
-                    boolean infinite = isInfiniteRetryError(e);
-                    if (!infinite) {
-                        if (processedRequests.get() == lastProcessed.get()) {
-                            int newCount = stagnantRetryCount.incrementAndGet();
-                            if (newCount >= 3) {
-                                String msg = "No progress after multiple retries due to persistent stream errors. Aborting.";
-                                logger.error(msg);
-                                resultFuture.complete(new SastStreamOutcome.Failed(responses,
-                                        new AviatorTechnicalException(msg, e)));
-                                return;
-                            }
-                        } else {
-                            stagnantRetryCount.set(0);
-                        }
-                    }
-                    lastProcessed.set(processedRequests.get());
-                    if (infinite || currentStreamState.streamRetryCount < Constants.MAX_STREAM_RETRIES) {
-                        LOG.warn("WARN: Stream encountered a retryable error. Will attempt to reconnect...");
-                        if (requestHandler != null) {
-                            requestHandler.complete();
-                        }
-                        stopPingPong();
-
-                        startStreamWithRetry(responses, processedRequests, resultFuture);
-                    } else {
-                        resultFuture.complete(new SastStreamOutcome.Failed(responses,
-                                new AviatorTechnicalException("Error initiating batch processing", e)));
-                        if (requestHandler != null) {
-                            requestHandler.sendError(e);
-                        }
-                    }
-                } else {
-                    resultFuture.completeExceptionally(new AviatorTechnicalException("Error initiating batch processing", e));
-                    if (requestHandler != null) {
-                        requestHandler.sendError(e);
+                } catch (Exception e) {
+                    synchronized (retryLock) {
+                        failAttempt(attempt, e, isRetryableError(e), responses, resultFuture);
                     }
                 }
+                attempt.done.await();
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            resultFuture.completeExceptionally(new AviatorTechnicalException("Interrupted during stream recovery", e));
+        } catch (Exception e) {
+            resultFuture.completeExceptionally(new AviatorTechnicalException("Error initiating batch processing", e));
+        }
+    }
+
+    private boolean isActive(Attempt attempt, CompletableFuture<SastStreamOutcome> resultFuture) {
+        return activeAttempt == attempt && !attempt.finished && !closed && !resultFuture.isDone();
+    }
+
+    private void processAttempt(Attempt attempt, Map<String, AuditResponse> responses, AtomicInteger processedRequests,
+            CompletableFuture<SastStreamOutcome> resultFuture) {
+        try {
+            attempt.initialized.await();
+            synchronized (retryLock) {
+                if (!isActive(attempt, resultFuture) || !currentStreamState.isStreamInitialized) return;
+                applyQuotaFilteringIfNeeded(processedRequests.get());
+            }
+            processRequestQueue(currentStreamState.actualIssuesCount, processedRequests, responses, resultFuture, attempt);
+        } catch (Exception e) {
+            if (e instanceof InterruptedException) Thread.currentThread().interrupt();
+            synchronized (retryLock) {
+                if (!isActive(attempt, resultFuture)) return;
+                resultFuture.completeExceptionally(e instanceof AviatorQuotaFilterException ? e
+                        : new AviatorTechnicalException("Error during request processing execution", e));
             }
         }
     }
 
+    private void retireAttempt(Attempt attempt, boolean graceful) {
+        if (attempt.finished) return;
+        attempt.finished = true;
+        attempt.timeout.close();
+        attempt.initialized.countDown();
+        attempt.done.countDown();
+        if (attempt.processingTask != null) attempt.processingTask.cancel(true);
+        stopPingPong();
+        if (graceful) {
+            attempt.handler.complete();
+        } else {
+            attempt.handler.abort(new AviatorTechnicalException("Audit stream attempt closed"));
+        }
+    }
+
+    private void failAttempt(Attempt attempt, Throwable error, boolean retryable, Map<String, AuditResponse> responses,
+            CompletableFuture<SastStreamOutcome> resultFuture) {
+        if (!isActive(attempt, resultFuture)) return;
+        if (expireRecoveryIfOverdue(responses, resultFuture)) return;
+        if (!retryable) {
+            var failure = error instanceof AviatorSimpleException simple ? simple
+                    : new AviatorTechnicalException("gRPC stream failed: " + error.getMessage(), error);
+            if (error instanceof StatusRuntimeException || error instanceof AviatorSimpleException) {
+                resultFuture.complete(new SastStreamOutcome.Failed(responses, failure));
+            } else {
+                resultFuture.completeExceptionally(failure);
+            }
+            return;
+        }
+        if (recoveryEpisode == null) {
+            Object episode = new Object();
+            recoveryEpisode = episode;
+            recoveryDeadlineNanos = nanoTime.getAsLong() + TimeUnit.SECONDS.toNanos(RECOVERY_TIMEOUT_SECONDS);
+            currentStreamState.streamRetryCount = 1;
+            recoveryTimeout = pingScheduler.schedule(() -> {
+                synchronized (retryLock) {
+                    if (recoveryEpisode != episode || resultFuture.isDone()) return;
+                    resultFuture.complete(new SastStreamOutcome.Failed(responses,
+                            new AviatorTechnicalException("Audit connection recovery timed out after 150 seconds", error)));
+                }
+            }, RECOVERY_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+        }
+        retireAttempt(attempt, false);
+        if (attempt.preparing != null) {
+            processingQueue.addFirst(attempt.preparing);
+            attempt.preparing = null;
+        }
+        inflightRequests.values().forEach(wrapper -> {
+            wrapper.outstandingTracked = false;
+            processingQueue.addFirst(wrapper);
+        });
+        inflightRequests.clear();
+        requestMetricsMap.clear();
+        processingQueue.forEach(wrapper -> wrapper.outstandingTracked = false);
+    }
+
+    private boolean expireRecoveryIfOverdue(Map<String, AuditResponse> responses,
+            CompletableFuture<SastStreamOutcome> resultFuture) {
+        if (recoveryEpisode == null || nanoTime.getAsLong() - recoveryDeadlineNanos < 0) return false;
+        resultFuture.complete(new SastStreamOutcome.Failed(responses,
+                new AviatorTechnicalException("Audit connection recovery timed out after 150 seconds")));
+        return true;
+    }
+
+    private void endRecovery() {
+        recoveryEpisode = null;
+        if (recoveryTimeout != null) recoveryTimeout.cancel(false);
+        recoveryTimeout = null;
+    }
+
     private ClientResponseObserver<UserPromptRequest, AuditorResponse> createResponseObserver(
             Map<String, AuditResponse> responses, AtomicInteger processedRequests,
-            CompletableFuture<SastStreamOutcome> resultFuture,
-            CountDownLatch streamLatch, CountDownLatch initLatch, StreamInitializationTimeout initializationTimeout) {
+            CompletableFuture<SastStreamOutcome> resultFuture, Attempt attempt) {
+        var streamLatch = attempt.done;
+        var initLatch = attempt.initialized;
+        var initializationTimeout = attempt.timeout;
 
         return new ClientResponseObserver<UserPromptRequest, AuditorResponse>() {
             private final AtomicBoolean isInitialized = new AtomicBoolean(false);
 
             @Override
             public void beforeStart(ClientCallStreamObserver<UserPromptRequest> requestStream) {
-                requestHandler.initialize(requestStream);
+                synchronized (retryLock) {
+                    if (isActive(attempt, resultFuture) && !expireRecoveryIfOverdue(responses, resultFuture)) {
+                        attempt.handler.initialize(requestStream);
+                    } else {
+                        requestStream.cancel("Audit attempt closed", null);
+                    }
+                }
             }
 
             @Override
             public void onNext(AuditorResponse response) {
+                synchronized (retryLock) {
+                    if (isActive(attempt, resultFuture)) handleResponse(response);
+                }
+            }
+
+            private void handleResponse(AuditorResponse response) {
+                if (!isInitialized.get() && expireRecoveryIfOverdue(responses, resultFuture)) return;
                 logger.info("Received response - Status: " + response.getStatus() + ", RequestId: " + response.getRequestId());
 
                 if ("PONG".equals(response.getStatus())) {
@@ -340,7 +407,7 @@ class AviatorStreamProcessor implements AutoCloseable {
                     return;
                 }
 
-                if ("SERVER_BUSY".equals(response.getStatus())) {
+                if (isInitialized.get() && "SERVER_BUSY".equals(response.getStatus())) {
                     handleServerBusy(response.getRequestId(), currentStreamState.actualIssuesCount,
                             processedRequests, responses, resultFuture, streamLatch);
                     return;
@@ -350,9 +417,6 @@ class AviatorStreamProcessor implements AutoCloseable {
                     String cliMessage = "Internal server error occurred";
                     logger.error(cliMessage);
                     resultFuture.complete(new SastStreamOutcome.Failed(responses, new AviatorTechnicalException(cliMessage)));
-                    if (requestHandler != null) {
-                        requestHandler.complete();
-                    }
                     streamLatch.countDown();
                     return;
                 }
@@ -361,9 +425,6 @@ class AviatorStreamProcessor implements AutoCloseable {
                     handleBackpressureWarning();
                 } else if ("BACKPRESSURE_VIOLATION".equals(response.getStatus())) {
                     logger.error("Server terminated stream due to backpressure violations: {}", response.getStatusMessage());
-                    if (requestHandler != null) {
-                        requestHandler.complete();
-                    }
                     if (!resultFuture.isDone()) {
                         resultFuture.complete(new SastStreamOutcome.Failed(responses,
                                 new AviatorTechnicalException("Stream terminated by server: " + response.getStatusMessage())));
@@ -386,25 +447,28 @@ class AviatorStreamProcessor implements AutoCloseable {
                                     currentStreamState.quotaLastUpdated = response.getQuotaLastUpdated();
                                     logger.info("Server quota received: {} (last updated: {})",
                                         currentStreamState.quota, currentStreamState.quotaLastUpdated);
+                                } else {
+                                    logger.info("Server quota received: {}", currentStreamState.quota);
+                                }
                             } else {
-                                logger.info("Server quota received: {}", currentStreamState.quota);
+                                LOG.debug("No quota limit received from server (unlimited or feature disabled)");
                             }
-                        } else {
-                            LOG.debug("No quota limit received from server (unlimited or feature disabled)");
-                        }
+                            if (expireRecoveryIfOverdue(responses, resultFuture)) return;
                             isInitialized.set(true);
                             currentStreamState.isStreamInitialized = true;
+                            endRecovery();
                             initLatch.countDown();
                             logger.info("Stream initialized successfully");
-                            startPingPong();
+                            startPingPong(attempt);
                         } else {
+                            if ("APPLICATION_BUSY".equals(response.getStatus())) {
+                                failAttempt(attempt, new AviatorSimpleException("Application is busy"), true, responses, resultFuture);
+                                return;
+                            }
                             String errorMessage = "Stream initialization failed: " + response.getStatusMessage();
                             if (!resultFuture.isDone()) {
                                 resultFuture.complete(new SastStreamOutcome.Failed(responses,
                                         new AviatorTechnicalException(errorMessage)));
-                            }
-                            if (requestHandler != null) {
-                                requestHandler.complete();
                             }
                             streamLatch.countDown();
                         }
@@ -436,9 +500,6 @@ class AviatorStreamProcessor implements AutoCloseable {
 
                 if (completed >= currentStreamState.totalRequests) {
                     logger.info("All requests accounted for, completing stream.");
-                    if (requestHandler != null && !requestHandler.isCompleted()) {
-                        requestHandler.complete();
-                    }
                     if (!resultFuture.isDone()) {
                         resultFuture.complete(new SastStreamOutcome.Completed(responses));
                     }
@@ -448,116 +509,29 @@ class AviatorStreamProcessor implements AutoCloseable {
 
             @Override
             public void onError(Throwable t) {
-                boolean initializationExpired = initializationTimeout.isExpired();
-                initializationTimeout.close();
-                initLatch.countDown();
-                stopPingPong();
-                if (initializationExpired) {
-                    resultFuture.complete(new SastStreamOutcome.Failed(responses,
-                            StreamInitializationTimeout.expiredError("Audit")));
-                    streamLatch.countDown();
-                    return;
-                }
-
-                if (isRetryableError(t)) {
-                    boolean infinite = isInfiniteRetryError(t);
-                    if (!infinite) {
-                        if (processedRequests.get() == lastProcessed.get()) {
-                            int newCount = stagnantRetryCount.incrementAndGet();
-                            if (newCount >= 3) {
-                                String msg = "No progress after multiple retries due to persistent stream errors. Aborting.";
-                                logger.error(msg);
-                                if (!resultFuture.isDone()) {
-                                    resultFuture.complete(new SastStreamOutcome.Failed(responses,
-                                            new AviatorTechnicalException(msg, t)));
-                                }
-                                streamLatch.countDown();
-                                return;
-                            }
-                        } else {
-                            stagnantRetryCount.set(0);
-                        }
-                    }
-                    lastProcessed.set(processedRequests.get());
-
-                    if (infinite || currentStreamState.streamRetryCount < Constants.MAX_STREAM_RETRIES) {
-                        LOG.debug("Stream encountered retryable error: {}. Will retry...", t.getMessage());
-                        int requeuedRequestCount = inflightRequests.size();
-                        inflightRequests.values().forEach(wrapper -> {
-                            wrapper.outstandingTracked = false;
-                            processingQueue.addFirst(wrapper);
-                        });
-                        inflightRequests.clear();
-                        outstandingRequests.addAndGet(-requeuedRequestCount);
-                        requestSemaphore.release(requeuedRequestCount);
-                        if (outstandingRequests.get() < 0) {
-                            outstandingRequests.set(0);
-                        }
-                        if (requestHandler != null) {
-                            requestHandler.complete();
-                        }
-                        if (processingTask != null) {
-                            processingTask.cancel(true);
-                        }
-
-                        if (!processingExecutor.isShutdown()) {
-                            processingExecutor.submit(() -> startStreamWithRetry(responses, processedRequests, resultFuture));
-                        } else {
-                            LOG.warn("Cannot retry stream, as the processing executor is already shut down.");
-                            if (!resultFuture.isDone()) {
-                                resultFuture.complete(new SastStreamOutcome.Failed(responses,
-                                        new AviatorTechnicalException("Cannot retry stream, executor is shut down.", t)));
-                            }
-                        }
-                    } else {
-                        if (!resultFuture.isDone()) {
-                            LOG.error("Stream error occurred: {}", t.getMessage(), t);
-                            if (t instanceof StatusRuntimeException sre) {
-                                String description = sre.getStatus().getDescription() != null ?
-                                        sre.getStatus().getDescription() : "Unknown gRPC error";
-                                String techMessage = String.format("gRPC stream failed: %s (Status: %s)",
-                                        description, sre.getStatus().getCode());
-                                resultFuture.complete(new SastStreamOutcome.Failed(responses,
-                                        new AviatorTechnicalException(techMessage, t)));
-                            } else {
-                                resultFuture.completeExceptionally(new AviatorTechnicalException("Stream error", t));
-                            }
-                        }
-                    }
-                    streamLatch.countDown();
-                } else {
-                    LOG.error("Stream error occurred: {}", t.getMessage(), t);
-                    if (!resultFuture.isDone()) {
-                        if (t instanceof StatusRuntimeException sre) {
-                            String description = sre.getStatus().getDescription() != null ?
-                                    sre.getStatus().getDescription() : "Unknown gRPC error";
-                            String techMessage = String.format("gRPC stream failed: %s (Status: %s)",
-                                    description, sre.getStatus().getCode());
-                            resultFuture.complete(new SastStreamOutcome.Failed(responses,
-                                    new AviatorTechnicalException(techMessage, t)));
-                        } else {
-                            resultFuture.completeExceptionally(new AviatorTechnicalException("Stream error", t));
-                        }
-                    }
-                    streamLatch.countDown();
+                synchronized (retryLock) {
+                    failAttempt(attempt, t, isRetryableError(t), responses, resultFuture);
                 }
             }
 
             @Override
             public void onCompleted() {
-                initializationTimeout.close();
-                initLatch.countDown();
-                stopPingPong();
-                logger.progress("Stream completed by server");
-                if (!resultFuture.isDone()) {
+                synchronized (retryLock) {
+                    if (!isActive(attempt, resultFuture)) return;
+                    if (expireRecoveryIfOverdue(responses, resultFuture)) return;
+                    initializationTimeout.close();
+                    initLatch.countDown();
+                    stopPingPong();
+                    logger.progress("Stream completed by server");
                     resultFuture.complete(new SastStreamOutcome.Completed(responses));
+                    streamLatch.countDown();
                 }
-                streamLatch.countDown();
             }
         };
     }
 
-    private void sendInitRequest() throws Exception {
+    private void sendInitRequest(Attempt attempt, Map<String, AuditResponse> responses,
+            CompletableFuture<SastStreamOutcome> resultFuture) {
         String initRequestId = UUID.randomUUID().toString();
         StreamInitRequest.Builder initRequestBuilder = StreamInitRequest.newBuilder()
             .setStreamId(currentStreamState.streamId)
@@ -577,40 +551,11 @@ class AviatorStreamProcessor implements AutoCloseable {
             .setInit(initRequestBuilder.build())
             .build();
 
-        requestHandler.sendRequest(initRequest);
+        observeSend(attempt.handler.sendRequest(initRequest), attempt, responses, resultFuture);
         LOG.info("Client Id for stream initialization {}", currentStreamState.streamId);
     }
 
-    private void reQueueUnprocessedRequests() {
-        Set<String> unprocessedIds = new HashSet<>(currentStreamState.pendingIssueIds);
-        unprocessedIds.removeAll(currentStreamState.processedIssueIds);
-
-        if (!unprocessedIds.isEmpty()) {
-            logger.info("Re-queueing {} unprocessed requests after stream reconnection", unprocessedIds.size());
-
-            List<String> toRemove = new ArrayList<>();
-            int inFlightCount = 0;
-            for (Map.Entry<String, RequestWrapper> entry : inflightRequests.entrySet()) {
-                if (unprocessedIds.contains(entry.getValue().userPrompt.getIssueData().getInstanceID())) {
-                    toRemove.add(entry.getKey());
-                    inFlightCount++;
-                }
-            }
-            for (String key : toRemove) {
-                inflightRequests.remove(key);
-            }
-
-            outstandingRequests.addAndGet(-inFlightCount);
-
-            requestSemaphore.release(inFlightCount);
-
-            if (outstandingRequests.get() < 0) {
-                outstandingRequests.set(0);
-            }
-        }
-    }
-
-    private void applyQuotaFilteringIfNeeded() {
+    private void applyQuotaFilteringIfNeeded(int alreadyProcessed) {
         LOG.debug("Applying Quota based filter Quota for the application is {}", currentStreamState.quota);
         //currentStreamState.quota = 5;
         if (currentStreamState.quota <= 0) {
@@ -660,7 +605,7 @@ class AviatorStreamProcessor implements AutoCloseable {
                 currentStreamState.pendingIssueIds.add(wrapper.userPrompt.getIssueData().getInstanceID());
             });
 
-        currentStreamState.actualIssuesCount = filteredPrompts.size();
+        currentStreamState.actualIssuesCount = alreadyProcessed + filteredPrompts.size();
 
         // Check if filtering resulted in zero issues
         if (filteredPrompts.isEmpty()) {
@@ -703,17 +648,8 @@ class AviatorStreamProcessor implements AutoCloseable {
         return false;
     }
 
-    private boolean isInfiniteRetryError(Throwable t) {
-        if (t instanceof StatusRuntimeException sre) {
-            String description = sre.getStatus().getDescription();
-            return sre.getStatus().getCode() == Status.Code.INTERNAL && description != null &&
-                    description.contains("PROTOCOL_ERROR");
-        }
-        return false;
-    }
-
     private long calculateStreamRetryDelay(int retryCount) {
-        long delay = (long) (Constants.STREAM_RETRY_BASE_DELAY_MS * Math.pow(2, retryCount - 1));
+        long delay = (long) (Constants.STREAM_RETRY_BASE_DELAY_MS * Math.pow(2, Math.min(retryCount - 1, 10)));
         delay = Math.min(delay, Constants.STREAM_RETRY_MAX_DELAY_MS);
         delay += ThreadLocalRandom.current().nextLong(1000);
         return delay;
@@ -722,108 +658,107 @@ class AviatorStreamProcessor implements AutoCloseable {
     private void processRequestQueue(int totalRequests, AtomicInteger processedRequests,
                                     Map<String, AuditResponse> responses,
                                     CompletableFuture<SastStreamOutcome> resultFuture,
-                                    CountDownLatch streamLatch) {
+                                    Attempt attempt) {
+        var streamLatch = attempt.done;
         logger.progress("Starting to process issues...");
 
         LOG.info("Entering processRequestQueue loop, queue size: " + processingQueue.size() + ", permits: " + requestSemaphore.availablePermits() + ", outstanding: " + outstandingRequests.get());
 
-        while (!client.isShutdown.get() && !requestHandler.isCompleted() && !resultFuture.isDone()) {
+        while (!client.isShutdown.get() && !attempt.handler.isCompleted() && !resultFuture.isDone()) {
             RequestWrapper wrapper = null;
             try {
-                if (outstandingRequests.get() < 0) {
-                    outstandingRequests.set(0);
-                }
-
-                if (processingQueue.isEmpty()) {
-                    if (processedRequests.get() >= totalRequests || outstandingRequests.get() == 0) {
-                        logger.info("Processing complete as queue is empty with no outstanding requests. Exiting loop.");
-                        break;
+                synchronized (retryLock) {
+                    if (!isActive(attempt, resultFuture)) return;
+                    if (outstandingRequests.get() < 0) {
+                        outstandingRequests.set(0);
                     }
+
+                    if (processingQueue.isEmpty()) {
+                        if (processedRequests.get() >= totalRequests || outstandingRequests.get() == 0) {
+                            logger.info("Processing complete as queue is empty with no outstanding requests. Exiting loop.");
+                            break;
+                        }
+                    } else if (requestSemaphore.tryAcquire()) {
+                        wrapper = processingQueue.poll();
+                        if (wrapper == null) requestSemaphore.release();
+                        else attempt.preparing = wrapper;
+                    }
+                }
+                if (wrapper == null) {
                     Thread.sleep(100);
                     continue;
                 }
 
-                if (!requestSemaphore.tryAcquire(1, 10, TimeUnit.SECONDS)) {
-                    LOG.debug("Timed out waiting for semaphore permit. Will retry.");
-                    continue;
-                }
-
-                if (requestHandler.isCompleted()) {
-                    requestSemaphore.release();
-                    break;
-                }
-
-                wrapper = processingQueue.poll();
-
-                if (wrapper == null) {
-                    requestSemaphore.release();
-                    continue;
-                }
-
-                String instanceId = wrapper.userPrompt.getIssueData().getInstanceID();
-
                 SourceCodeEnricher.EnrichmentResult enrichmentResult = enrichSourceCode(wrapper);
-                if (enrichmentResult != null && enrichmentResult.hasFailures()) {
-                    completeSkippedRequest(wrapper, enrichmentResult, responses, processedRequests, totalRequests,
-                            resultFuture, streamLatch);
-                    continue;
-                }
-
                 logger.info("Size of files {}", wrapper.userPrompt.getFiles().size());
                 logger.info("Size of programming language {}", wrapper.userPrompt.getProgrammingLanguages().size());
-
-                if (currentStreamState.processedIssueIds.contains(instanceId)) {
-                    requestSemaphore.release();
-                    continue;
-                }
-
-                if (!wrapper.outstandingTracked) {
-                    incrementOutstanding(wrapper);
-                }
-
                 if (wrapper.attemptCount > 0) {
                     long delay = (long) (Constants.BASE_DELAY_MS * Math.pow(2, wrapper.attemptCount - 1));
                     delay = Math.min(delay, Constants.MAX_DELAY_MS) + ThreadLocalRandom.current().nextLong(100);
-                    LOG.warn("WARN: Applying retry delay of {}ms for instance {} (attempt {}/{})",
-                            delay, instanceId,
-                            wrapper.attemptCount + 1, Constants.MAX_RETRIES);
                     Thread.sleep(delay);
                 }
 
-                LOG.info("Submitting request for instance " + instanceId);
-                submitUserPrompt(wrapper);
+                synchronized (retryLock) {
+                    if (!isActive(attempt, resultFuture)) return;
+                    attempt.preparing = null;
+                    String instanceId = wrapper.userPrompt.getIssueData().getInstanceID();
+
+                    if (enrichmentResult != null && enrichmentResult.hasFailures()) {
+                        completeSkippedRequest(wrapper, enrichmentResult, responses, processedRequests, totalRequests,
+                                resultFuture, streamLatch);
+                        continue;
+                    }
+
+                    if (currentStreamState.processedIssueIds.contains(instanceId)) {
+                        requestSemaphore.release();
+                        continue;
+                    }
+
+                    if (!wrapper.outstandingTracked) {
+                        incrementOutstanding(wrapper);
+                    }
+
+                    LOG.info("Submitting request for instance " + instanceId);
+                    submitUserPrompt(wrapper, attempt, responses, resultFuture);
+                }
 
             } catch (InterruptedException ie) {
                 Thread.currentThread().interrupt();
-                if (!resultFuture.isDone()) {
+                synchronized (retryLock) {
+                    if (!isActive(attempt, resultFuture)) return;
                     resultFuture.completeExceptionally(new AviatorTechnicalException("Thread interrupted while processing queue", ie));
                 }
                 break;
             } catch (FcliSimpleException e) {
-                if (wrapper != null) {
-                    String instanceId = wrapper.userPrompt.getIssueData().getInstanceID();
-                    LOG.error("Permanently failing request for issue {} due to a client-side error: {}", instanceId, e.getMessage());
+                synchronized (retryLock) {
+                    if (!isActive(attempt, resultFuture)) return;
+                    attempt.preparing = null;
+                    if (wrapper != null) {
+                        String instanceId = wrapper.userPrompt.getIssueData().getInstanceID();
+                        LOG.error("Permanently failing request for issue {} due to a client-side error: {}", instanceId, e.getMessage());
 
-                    AuditResponse failedResponse = new AuditResponse();
-                    failedResponse.setIssueId(instanceId);
-                    failedResponse.setStatus("FAILED");
-                    failedResponse.setStatusMessage("Client-side pre-processing error: " + e.getMessage());
-                    responses.put(instanceId, failedResponse);
+                        AuditResponse failedResponse = new AuditResponse();
+                        failedResponse.setIssueId(instanceId);
+                        failedResponse.setStatus("FAILED");
+                        failedResponse.setStatusMessage("Client-side pre-processing error: " + e.getMessage());
+                        responses.put(instanceId, failedResponse);
 
-                    currentStreamState.processedIssueIds.add(instanceId);
-                    currentStreamState.pendingIssueIds.remove(instanceId);
+                        currentStreamState.processedIssueIds.add(instanceId);
+                        currentStreamState.pendingIssueIds.remove(instanceId);
 
-                    int completed = processedRequests.incrementAndGet();
-                    int failed = failedRequests.incrementAndGet();
-                    decrementOutstanding(wrapper);
-                    requestSemaphore.release();
+                        int completed = processedRequests.incrementAndGet();
+                        int failed = failedRequests.incrementAndGet();
+                        decrementOutstanding(wrapper);
+                        requestSemaphore.release();
 
-                    logger.progress("Processed " + completed + " out of " + totalRequests + " issues (" + failed + " failed).");
-                } else {
-                    LOG.error("Caught AviatorSimpleException but the request wrapper was null.", e);
+                        logger.progress("Processed " + completed + " out of " + totalRequests + " issues (" + failed + " failed).");
+                    } else {
+                        LOG.error("Caught AviatorSimpleException but the request wrapper was null.", e);
+                    }
                 }
             } catch (Exception e) {
-                if (!resultFuture.isDone()) {
+                synchronized (retryLock) {
+                    if (!isActive(attempt, resultFuture)) return;
                     LOG.error("Unexpected error in processing loop, failing entire operation.", e);
                     resultFuture.completeExceptionally(new AviatorTechnicalException("Unexpected error in processing loop", e));
                 }
@@ -831,19 +766,16 @@ class AviatorStreamProcessor implements AutoCloseable {
             }
         }
 
-        if (!resultFuture.isDone() && (processedRequests.get() >= totalRequests || (processingQueue.isEmpty() && outstandingRequests.get() == 0))) {
-            logger.info("All requests have been accounted for. Completing operation and closing stream.");
-            resultFuture.complete(new SastStreamOutcome.Completed(responses));
-            if (requestHandler != null && !requestHandler.isCompleted()) {
-                requestHandler.complete();
+        synchronized (retryLock) {
+            if (isActive(attempt, resultFuture)
+                    && (processedRequests.get() >= totalRequests || (processingQueue.isEmpty() && outstandingRequests.get() == 0))) {
+                logger.info("All requests have been accounted for. Completing operation and closing stream.");
+                resultFuture.complete(new SastStreamOutcome.Completed(responses));
             }
-            if (streamLatch != null) {
-                streamLatch.countDown();
-            }
-        }
 
-        logger.info("Processing queue loop completed. Queue size: {}, Processed: {}/{}, Outstanding: {}",
-                processingQueue.size(), processedRequests.get(), totalRequests, outstandingRequests.get());
+            logger.info("Processing queue loop completed. Queue size: {}, Processed: {}/{}, Outstanding: {}",
+                    processingQueue.size(), processedRequests.get(), totalRequests, outstandingRequests.get());
+        }
     }
 
     private SourceCodeEnricher.EnrichmentResult enrichSourceCode(RequestWrapper wrapper) {
@@ -906,9 +838,6 @@ class AviatorStreamProcessor implements AutoCloseable {
 
         if (completed >= totalRequests) {
             logger.info("All requests accounted for, completing stream.");
-            if (requestHandler != null && !requestHandler.isCompleted()) {
-                requestHandler.complete();
-            }
             streamLatch.countDown();
             if (!resultFuture.isDone()) {
                 resultFuture.complete(new SastStreamOutcome.Completed(responses));
@@ -966,9 +895,6 @@ class AviatorStreamProcessor implements AutoCloseable {
             LOG.warn("WARN: Request for instance {} permanently failed. Remaining outstanding requests: {}", wrapperToRetry.userPrompt.getIssueData().getInstanceID(), stillOutstanding);
             if (completed >= totalRequests) {
                 logger.info("All requests accounted for after permanent failure, completing stream.");
-                if (requestHandler != null && !requestHandler.isCompleted()) {
-                    requestHandler.complete();
-                }
                 if (!resultFuture.isDone()) resultFuture.complete(new SastStreamOutcome.Completed(responses));
                 streamLatch.countDown();
             }
@@ -981,7 +907,8 @@ class AviatorStreamProcessor implements AutoCloseable {
         }
     }
 
-    private void submitUserPrompt(RequestWrapper wrapper) {
+    private void submitUserPrompt(RequestWrapper wrapper, Attempt attempt, Map<String, AuditResponse> responses,
+            CompletableFuture<SastStreamOutcome> resultFuture) {
         String requestId = UUID.randomUUID().toString();
         inflightRequests.put(requestId, wrapper);
 
@@ -990,61 +917,25 @@ class AviatorStreamProcessor implements AutoCloseable {
 
         requestMetricsMap.put(requestId, new RequestMetrics());
 
-        boolean sent = sendRequestWithRetry(promptRequest, Constants.MAX_RETRIES);
-        if (!sent) {
-            LOG.error("Failed to send request for instance {} after all retries. Re-queueing for later attempt.", wrapper.userPrompt.getIssueData().getInstanceID());
-            inflightRequests.remove(requestId);
-            requestMetricsMap.remove(requestId);
-            decrementOutstanding(wrapper);
-            requestSemaphore.release();
-            wrapper.attemptCount++;
-            processingQueue.addLast(wrapper);
+        if (promptRequest.getSerializedSize() > Constants.MAX_MESSAGE_SIZE) {
+            throw new AviatorSimpleException("Message size exceeds maximum allowed limit");
         }
+        observeSend(attempt.handler.sendRequest(promptRequest), attempt, responses, resultFuture);
     }
 
-    private boolean sendRequestWithRetry(UserPromptRequest request, int maxRetries) {
-        for (int attempt = 0; attempt < maxRetries; attempt++) {
-            try {
-                if (requestHandler == null || !requestHandler.isReady()) {
-                    LOG.warn("WARN: Request handler not ready for send (attempt {}), aborting", attempt + 1);
-                    return false;
-                }
-
-                if (requestHandler.isCompleted()) {
-                    LOG.warn("WARN: Request handler completed, cannot send (attempt {})", attempt + 1);
-                    return false;
-                }
-
-                int messageSize = request.getSerializedSize();
-                if (messageSize > Constants.MAX_MESSAGE_SIZE) {
-                    LOG.error("Message size too large: {} bytes", messageSize);
-                    throw new AviatorSimpleException("Message size exceeds maximum allowed limit");
-                }
-
-                LOG.info("Sending requestId: " + request.getAudit().getRequestId());
-                requestHandler.sendRequest(request);
-                return true;
-            } catch (AviatorSimpleException e) {
-                throw e;
-            } catch (Exception e) {
-                if (requestHandler != null && !requestHandler.isCompleted()) {
-                    LOG.error("Error sending request (attempt {}): {}", attempt + 1, e.getMessage());
-                }
-                if (attempt == maxRetries - 1) {
-                    return false;
-                }
-                try {
-                    long baseBackoff = Constants.BASE_DELAY_MS * Math.min(10, currentBackoff.get() * (attempt + 1));
-                    long jitter = ThreadLocalRandom.current().nextLong(100);
-                    long backoffMs = Math.min(Constants.MAX_DELAY_MS, baseBackoff) + jitter;
-                    Thread.sleep(backoffMs);
-                } catch (InterruptedException ie) {
-                    Thread.currentThread().interrupt();
-                    throw new AviatorTechnicalException("Interrupted during retry backoff", ie);
+    private void observeSend(CompletableFuture<Boolean> send, Attempt attempt, Map<String, AuditResponse> responses,
+            CompletableFuture<SastStreamOutcome> resultFuture) {
+        send.whenComplete((sent, error) -> {
+            synchronized (retryLock) {
+                if (error != null || !Boolean.TRUE.equals(sent)) {
+                    Throwable failure = error != null ? error : attempt.handler.getSendFailure().getNow(null);
+                    if (failure == null) {
+                        failure = Status.UNAVAILABLE.withDescription("Audit request could not be sent").asRuntimeException();
+                    }
+                    failAttempt(attempt, failure, isRetryableError(failure), responses, resultFuture);
                 }
             }
-        }
-        return false;
+        });
     }
 
     private void handleBackpressureWarning() {
@@ -1068,10 +959,11 @@ class AviatorStreamProcessor implements AutoCloseable {
         }
     }
 
-    private void startPingPong() {
+    private void startPingPong(Attempt attempt) {
         if (isPinging.compareAndSet(false, true)) {
             logger.info("Starting ping-pong keepalive with interval of {} seconds", pingIntervalSeconds);
-            pingTask = pingScheduler.scheduleAtFixedRate(this::sendPing, pingIntervalSeconds, pingIntervalSeconds, TimeUnit.SECONDS);
+            pingTask = pingScheduler.scheduleAtFixedRate(() -> sendPing(attempt),
+                    pingIntervalSeconds, pingIntervalSeconds, TimeUnit.SECONDS);
         }
     }
 
@@ -1083,41 +975,40 @@ class AviatorStreamProcessor implements AutoCloseable {
         }
     }
 
-    private void sendPing() {
-        try {
-            if (requestHandler != null && requestHandler.isReady() && currentStreamState != null) {
-                PingRequest pingRequest = PingRequest.newBuilder()
-                        .setStreamId(currentStreamState.streamId)
-                        .setTimestamp(System.currentTimeMillis())
-                        .build();
+    private void sendPing(Attempt attempt) {
+        synchronized (retryLock) {
+            if (activeAttempt != attempt || attempt.finished || closed) return;
+            try {
+                if (requestHandler != null && requestHandler.isReady() && currentStreamState != null) {
+                    PingRequest pingRequest = PingRequest.newBuilder()
+                            .setStreamId(currentStreamState.streamId)
+                            .setTimestamp(System.currentTimeMillis())
+                            .build();
 
-                UserPromptRequest pingMsg = UserPromptRequest.newBuilder().setPing(pingRequest).build();
-                requestHandler.getRequestQueue().addFirst(pingMsg);
-                CompletableFuture.supplyAsync(() -> requestHandler.flush());
-                LOG.info("ping  streamId: {}", currentStreamState.streamId);
-            }
-        } catch (Exception e) {
-            if (requestHandler != null && !requestHandler.isCompleted()) {
-                LOG.warn("WARN: Failed to send ping: {}", e.getMessage());
+                    UserPromptRequest pingMsg = UserPromptRequest.newBuilder().setPing(pingRequest).build();
+                    requestHandler.getRequestQueue().addFirst(pingMsg);
+                    var handler = requestHandler;
+                    CompletableFuture.supplyAsync(handler::flush);
+                    LOG.info("ping  streamId: {}", currentStreamState.streamId);
+                }
+            } catch (Exception e) {
+                if (requestHandler != null && !requestHandler.isCompleted()) {
+                    LOG.warn("WARN: Failed to send ping: {}", e.getMessage());
+                }
             }
         }
     }
 
     @Override
     public void close() {
-        if (initializationTimeout != null) initializationTimeout.close();
-        stopPingPong();
-        if (requestHandler != null && !requestHandler.isCompleted()) {
-            requestHandler.complete();  // Flush remaining requests
-        }
-        if (streamLatch != null) {
-            try {
-                if (!streamLatch.await(10, TimeUnit.SECONDS)) {
-                    LOG.warn("WARN: Timed out waiting for stream completion in close");
-                }
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                LOG.warn("WARN: Interrupted during close await");
+        synchronized (retryLock) {
+            closed = true;
+            endRecovery();
+            if (retryDelay != null) retryDelay.cancel(false);
+            if (retryDelayLatch != null) retryDelayLatch.countDown();
+            if (activeAttempt != null) retireAttempt(activeAttempt, false);
+            if (activeResult != null && !activeResult.isDone()) {
+                activeResult.completeExceptionally(new AviatorTechnicalException("Audit stream closed"));
             }
         }
     }
