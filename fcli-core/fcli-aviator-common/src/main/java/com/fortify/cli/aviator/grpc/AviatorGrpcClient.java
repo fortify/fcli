@@ -345,8 +345,26 @@ public class AviatorGrpcClient implements AutoCloseable {
 
     public Application getApplicationByName(String applicationName, String signature, String message, String tenantName) {
         ApplicationByName request = ApplicationByName.newBuilder().setName(applicationName).setSignature(signature).setMessage(message).setTenantName(tenantName).build();
-        return GrpcUtil.executeGrpcCall(blockingStub, ApplicationServiceGrpc.ApplicationServiceBlockingStub::getApplicationByName, request, Constants.OP_GET_APP_BY_NAME,
+        return GrpcUtil.executeGrpcCall(blockingStub, (stub, req) -> getApplicationByName(stub, req, applicationName, tenantName), request, Constants.OP_GET_APP_BY_NAME,
                 "Specify the numeric application id instead of the application name.");
+    }
+
+    /**
+     * The server validates the signed message against the requested name and answers a name that it cannot match with
+     * a permission error. For a name lookup this means the application cannot be resolved, so report it like any other
+     * unknown application.
+     */
+    private static Application getApplicationByName(ApplicationServiceGrpc.ApplicationServiceBlockingStub stub, ApplicationByName request, String applicationName, String tenantName) {
+        try {
+            return stub.getApplicationByName(request);
+        } catch (StatusRuntimeException e) {
+            String description = e.getStatus().getDescription();
+            if ( e.getStatus().getCode()==Status.Code.PERMISSION_DENIED && description!=null && description.startsWith("Message part") ) {
+                LOG.debug("Application name lookup rejected by the server: {}", description);
+                throw Status.NOT_FOUND.withDescription(String.format("Application '%s' not found for tenant '%s'", applicationName, tenantName)).asRuntimeException();
+            }
+            throw e;
+        }
     }
 
     public Application getApplicationByToken(String token, String appName) {
