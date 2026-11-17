@@ -111,7 +111,8 @@ Read, then review explicitly against them. Do not restate their rules; cite them
 
 **Scope and hygiene**
 - Only intended changes: no unrelated formatting, message or import churn, and no commits that belong to another PR.
-- Commit history is clean: squash fix-ups and reversals, and keep commit messages in conventional style (`feat:`, `fix:`, `chore:`).
+- Commit history is clean: squash fix-ups and reversals, and keep commit messages in conventional style (`<type>: <description>`). The PR title is the future squash subject: conventional, `chore:` for `dev/v3.x` unless it is `ci:`, `refactor:` or similar, with no work item or ticket number (the PR number is appended on merge).
+- For a PR that targets `dev/v3.x` or a feature branch, the description has a fenced `text` changelog block of `fix:` and `feat:` lines (one per paragraph, command and option names in backticks) covering every user-facing change, or says that nothing is user-facing.
 - User-visible behaviour changes have doc or changelog updates (do not hand-edit `CHANGELOG.md` unless the repo says so).
 
 **Positives** (for the user only, never posted): note what is done well.
