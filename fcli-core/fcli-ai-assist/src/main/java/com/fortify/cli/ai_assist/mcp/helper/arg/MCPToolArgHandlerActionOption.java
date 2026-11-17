@@ -12,10 +12,8 @@
  */
 package com.fortify.cli.ai_assist.mcp.helper.arg;
 
-import java.util.Collection;
+import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import java.util.stream.Stream;
 
 import com.fortify.cli.common.json.JsonHelper;
 
@@ -50,44 +48,22 @@ public final class MCPToolArgHandlerActionOption implements IMCPToolArgHandler {
     }
 
     @Override
-    public String getFcliCmdArgs(Map<String, Object> toolArgs) {
+    public List<String> getFcliArgs(Map<String, Object> toolArgs) {
         var value = toolArgs==null?null:toolArgs.get(name);
         if ( value==null ) {
-            return "";
+            return List.of();
         }
-        var values = streamValueElements(value).toList();
+        var values = IMCPToolArgHandler.streamValues(value).toList();
         if ( values.isEmpty() ) {
-            return "";
+            return List.of();
         }
-        // Escape embedded quotes to prevent command injection via quote breakout
-        var escapedValues = values.stream()
-            .map(MCPToolArgHandlerActionOption::escapeQuotes)
-            .toList();
-        return String.format("\"%s=%s\"", name, String.join(",", escapedValues));
+        return List.of(name+"="+String.join(",", values));
     }
 
-    /**
-     * Escapes embedded double quotes by prefixing with backslash.
-     * Prevents command injection when this value is used in a quoted command string.
-     * @param value The unescaped value
-     * @return The value with embedded quotes escaped (e.g., " becomes \")
-     */
-    private static String escapeQuotes(String value) {
-        return value.replace("\"", "\\\"");
-    }
-    
-    private static Stream<String> streamValueElements(Object value) {
-        Stream<?> os;
-        if ( value==null ) {
-            os = Stream.empty();
-        } else if ( value.getClass().isArray() ) {
-            os = Stream.of((Object[])value);
-        } else if ( Collection.class.isAssignableFrom(value.getClass()) ) {
-            os = ((Collection<?>)value).stream();
-        } else {
-            os = Stream.of(value);
-        }
-        return os.filter(Objects::nonNull).map(Object::toString);
+    @Override @Deprecated
+    public String getFcliCmdArgs(Map<String, Object> toolArgs) {
+        var args = getFcliArgs(toolArgs).stream().map(arg->arg.replace("\"", "\\\"")).toList();
+        return IMCPToolArgHandler.toLegacyCmdArgs(args);
     }
     
     private static String mapType(String actionType) {

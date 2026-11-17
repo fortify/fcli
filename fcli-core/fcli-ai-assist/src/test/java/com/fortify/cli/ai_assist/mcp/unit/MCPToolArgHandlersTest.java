@@ -103,7 +103,7 @@ class MCPToolArgHandlersTest {
         );
         
         // Act
-        String cmdArgs = handlers.getFcliCmdArgs(toolArgs);
+        var cmdArgs = handlers.getFcliArgs(toolArgs);
         
         // Assert
         assertNotNull(cmdArgs);
@@ -120,7 +120,7 @@ class MCPToolArgHandlersTest {
         var handlers = new MCPToolArgHandlers(commandSpec);
         
         // Act
-        String cmdArgs = handlers.getFcliCmdArgs(Map.of());
+        var cmdArgs = handlers.getFcliArgs(Map.of());
         
         // Assert - Should not fail, may be empty or contain defaults
         assertNotNull(cmdArgs);
@@ -135,7 +135,7 @@ class MCPToolArgHandlersTest {
         var handlers = new MCPToolArgHandlers(commandSpec);
         
         // Act
-        String cmdArgs = handlers.getFcliCmdArgs(null);
+        var cmdArgs = handlers.getFcliArgs(null);
         
         // Assert - Should not fail
         assertNotNull(cmdArgs);

@@ -12,6 +12,9 @@
  */
 package com.fortify.cli.ai_assist.mcp.helper.runner;
 
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+
 import com.fortify.cli.ai_assist.mcp.helper.MCPJobManager;
 import com.fortify.cli.ai_assist.mcp.helper.arg.MCPToolArgHandlers;
 
@@ -34,12 +37,15 @@ abstract class AbstractMCPToolFcliRunner implements IMCPToolRunner {
     }
     
     /**
-     * Build full fcli command to execute, based on MCP tool arguments from the given request
+     * Build fcli arguments from the command identity and the given MCP tool arguments.
      */
-    protected final String getFullCmd(CallToolRequest request) {
-        var cmd = getCommandSpec().qualifiedName(" ");
-        var providedArgs = request==null ? null : request.arguments();
-        var args = providedArgs==null ? "" : getToolSpecArgHelper().getFcliCmdArgs(providedArgs);
-        return String.format("%s %s", cmd, args).trim();
+    protected final String[] getFullArgs(CallToolRequest request) {
+        var commandPath = new ArrayDeque<String>();
+        for ( var spec = getCommandSpec(); spec.parent()!=null; spec = spec.parent() ) {
+            commandPath.addFirst(spec.name());
+        }
+        var args = new ArrayList<>(commandPath);
+        args.addAll(getToolSpecArgHelper().getFcliArgs(request==null ? null : request.arguments()));
+        return args.toArray(String[]::new);
     }
 }

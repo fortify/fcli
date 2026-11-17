@@ -16,6 +16,8 @@ import static com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunction.
 import static com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunction.SpelFunctionCategory.internal;
 import static com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunction.SpelFunctionCategory.workflow;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -47,7 +49,8 @@ public final class ActionRunnerContextSpelFunctions {
         return RUN_ID;
     }
     
-    @SpelFunction(cat=workflow, returns="String listing non-blank command-line options copied from the given `cli.options` group")
+    @SpelFunction(cat=workflow, desc="Legacy command string; use copyParameterArgsFromGroup with run.fcli args for untrusted values",
+            returns="String listing non-blank command-line options copied from the given `cli.options` group")
     public final String copyParametersFromGroup(
         @SpelFunctionParam(name="group", desc="the `cli.options` group name from which to copy CLI options") String group) 
     {
@@ -68,6 +71,32 @@ public final class ActionRunnerContextSpelFunctions {
             }
         }
         return result.toString();
+    }
+
+    @SpelFunction(cat=workflow, returns="List of non-blank command-line arguments copied from the given `cli.options` group")
+    public final List<String> copyParameterArgsFromGroup(
+        @SpelFunctionParam(name="group", desc="the `cli.options` group name from which to copy CLI options") String group)
+    {
+        var result = new ArrayList<String>();
+        for ( var e : ctx.getConfig().getAction().getCliOptions().entrySet() ) {
+            if ( group==null || group.equals(e.getValue().getGroup()) ) {
+                var value = ctx.getParameterValues().get(e.getKey());
+                if ( value!=null ) {
+                    var text = parameterValueAsText(value);
+                    if ( StringUtils.isNotBlank(text) ) {
+                        result.add("--"+e.getKey()+"="+text);
+                    }
+                }
+            }
+        }
+        return result;
+    }
+
+    private static String parameterValueAsText(JsonNode value) {
+        if ( !value.isArray() ) { return value.asText(); }
+        var elements = new ArrayList<String>();
+        value.forEach(element->elements.add(element.asText()));
+        return String.join(",", elements);
     }
 
     @SpelFunction(cat=fcli, desc = "Formats the input value using the specified formatter as declared through the `formatters` YAML instruction",

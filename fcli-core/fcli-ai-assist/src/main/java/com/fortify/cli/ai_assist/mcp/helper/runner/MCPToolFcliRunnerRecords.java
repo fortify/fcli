@@ -46,13 +46,13 @@ public final class MCPToolFcliRunnerRecords extends AbstractMCPToolFcliRunner {
 
     @Override
     public CallToolResult run(McpSyncServerExchange exchange, CallToolRequest request) {
-        var fullCmd = getFullCmd(request);
-        var toolName = getCommandSpec().qualifiedName("_").replace('-', '_');
         try {
+            var args = getFullArgs(request);
+            var toolName = getCommandSpec().qualifiedName("_").replace('-', '_');
             var records = new ArrayList<JsonNode>();
             var counter = new AtomicInteger();
             Callable<CallToolResult> callable = () -> {
-                var result = MCPToolFcliRunnerHelper.collectRecords(fullCmd, r->{ counter.incrementAndGet(); records.add(r); }, getCommandSpec());
+                var result = MCPToolFcliRunnerHelper.collectRecords(args, r->{ counter.incrementAndGet(); records.add(r); }, getCommandSpec());
                 return MCPToolResult.fromRecords(result, records).asCallToolResult();
             };
             var progressStrategy = MCPJobManager.recordCounter(counter);

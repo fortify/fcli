@@ -12,9 +12,8 @@
  */
 package com.fortify.cli.ai_assist.mcp.helper.arg;
 
-import java.util.Collection;
+import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.stream.Stream;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -33,7 +32,7 @@ import picocli.CommandLine.Model.ITypeInfo;
  * This abstract class provides a partial implementation of the {@link IMCPToolArgHandler}
  * interface for fcli options and positional parameters. The {@link #updateSchema(JsonSchema)}
  * method adds the option or positional parameter as described by the {@link #getArgSpec()}
- * and {@link #getName()} methods as an MCP tool argument. The {@link #getFcliCmdArgs(Map)}
+ * and {@link #getName()} methods as an MCP tool argument. The {@link #getFcliArgs(Map)}
  * method in turn processes the given MCP tool arguments, utilizing the abstract 
  * {@link #combineFcliCmdArgs(String, Stream)} method to generate the actual fcli arguments.
  *
@@ -42,7 +41,7 @@ import picocli.CommandLine.Model.ITypeInfo;
 abstract class AbstractMCPToolArgHandlerFcli implements IMCPToolArgHandler { 
     protected abstract ArgSpec getArgSpec();
     protected abstract String getName();
-    protected abstract String combineFcliCmdArgs(String name, Stream<String> values);
+    protected abstract List<String> combineFcliCmdArgs(String name, Stream<String> values);
     @Override
     public void updateSchema(JsonSchema schema) {
         var argSpec = getArgSpec();
@@ -53,24 +52,15 @@ abstract class AbstractMCPToolArgHandlerFcli implements IMCPToolArgHandler {
     }
     
     @Override
-    public String getFcliCmdArgs(Map<String, Object> toolArgs) {
+    public List<String> getFcliArgs(Map<String, Object> toolArgs) {
         var name = getName();
-        var toolArgValue = toolArgs.get(name);
-        return toolArgValue==null ? "" : combineFcliCmdArgs(name, streamValueElts(toolArgValue));
+        var toolArgValue = toolArgs==null ? null : toolArgs.get(name);
+        return toolArgValue==null ? List.of() : combineFcliCmdArgs(name, IMCPToolArgHandler.streamValues(toolArgValue));
     }
-    
-    private static Stream<String> streamValueElts(Object value) {
-        Stream<?> os = null;
-        if ( value==null ) { 
-            os = Stream.empty(); 
-        } else if ( value.getClass().isArray() ) { 
-            os = Stream.of((Object[])value); 
-        } else if ( Collection.class.isAssignableFrom(value.getClass()) ) {
-            os = ((Collection<?>)value).stream();
-        } else {
-            os = Stream.of(value);
-        }
-        return os.filter(Objects::nonNull).map(Object::toString);
+
+    @Override @Deprecated
+    public String getFcliCmdArgs(Map<String, Object> toolArgs) {
+        return IMCPToolArgHandler.toLegacyCmdArgs(getFcliArgs(toolArgs));
     }
     
     private final ObjectNode createProperty(ArgSpec argSpec) {

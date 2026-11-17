@@ -50,8 +50,28 @@ public final class MCPToolArgHandlers {
         this.schema = createSchema(mcpToolArgHandlers);
     }
     
+    public final List<String> getFcliArgs(Map<String, Object> toolArgs) {
+        var options = new ArrayList<String>();
+        var positionals = new ArrayList<String>();
+        for ( var handler : mcpToolArgHandlers ) {
+            var target = handler instanceof MCPToolArgHandlerFcliParam ? positionals : options;
+            target.addAll(handler.getFcliArgs(toolArgs==null ? Map.of() : toolArgs));
+        }
+        if ( !positionals.isEmpty() ) {
+            options.add("--");
+            options.addAll(positionals);
+        }
+        return options;
+    }
+
+    /**
+     * Legacy command-string representation, retained for compatibility. Use {@link #getFcliArgs(Map)}
+     * when forwarding untrusted values to fcli.
+     */
+    @Deprecated
     public final String getFcliCmdArgs(Map<String, Object> toolArgs) {
-        return mcpToolArgHandlers.stream().map(h->h.getFcliCmdArgs(toolArgs==null?Map.of():toolArgs)).collect(Collectors.joining(" ")).trim();
+        var values = toolArgs==null ? Map.<String, Object>of() : toolArgs;
+        return mcpToolArgHandlers.stream().map(h->h.getFcliCmdArgs(values)).collect(Collectors.joining(" ")).trim();
     }
 
     private static final List<IMCPToolArgHandler> createToolSpecArgHelpers(CommandSpec spec, boolean paged) {

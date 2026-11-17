@@ -12,10 +12,11 @@
  */
 package com.fortify.cli.ai_assist.mcp.helper.runner;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 
 import com.fortify.cli.ai_assist.mcp.helper.MCPJobManager;
 import com.fortify.cli.ai_assist.mcp.helper.arg.IMCPToolArgHandler;
@@ -47,18 +48,18 @@ public final class MCPToolFcliRunnerAction implements IMCPToolRunner {
     @Override
     public CallToolResult run(McpSyncServerExchange exchange, CallToolRequest request) {
         try {
-            var fullCmd = buildFullCmd(request);
+            var args = buildArgs(request);
             var toolName = buildToolName();
-            var work = createActionWork(fullCmd);
+            var work = createActionWork(args);
             return jobManager.execute(exchange, toolName, work, MCPJobManager.ticking(new AtomicInteger()), true);
         } catch (Exception e) {
             return MCPToolResult.fromError(e).asCallToolResult();
         }
     }
     
-    private Callable<CallToolResult> createActionWork(String fullCmd) {
+    private Callable<CallToolResult> createActionWork(String[] args) {
         return () -> {
-            var result = MCPToolFcliRunnerHelper.collectStdout(fullCmd, getActionCommandSpec());
+            var result = MCPToolFcliRunnerHelper.collectStdout(args, getActionCommandSpec());
             return MCPToolResult.fromPlainText(result).asCallToolResult();
         };
     }
@@ -69,13 +70,11 @@ public final class MCPToolFcliRunnerAction implements IMCPToolRunner {
             action.getMetadata().getName().replace('-', '_'));
     }
     
-    private String buildFullCmd(CallToolRequest request) {
-        var base = String.format("fcli %s action run %s", module, action.getMetadata().getName());
-        var argStr = argHandlers.stream()
-                .map(h->h.getFcliCmdArgs(request==null?null:request.arguments()))
-                .filter(s->s!=null && !s.isBlank())
-                .collect(Collectors.joining(" "));
-        return argStr.isBlank()?base:String.format("%s %s", base, argStr);
+    private String[] buildArgs(CallToolRequest request) {
+        var args = new ArrayList<>(List.of(module, "action", "run", action.getMetadata().getName()));
+        var toolArgs = request==null || request.arguments()==null ? Map.<String, Object>of() : request.arguments();
+        argHandlers.forEach(h->args.addAll(h.getFcliArgs(toolArgs)));
+        return args.toArray(String[]::new);
     }
 
     private CommandSpec getActionCommandSpec() {

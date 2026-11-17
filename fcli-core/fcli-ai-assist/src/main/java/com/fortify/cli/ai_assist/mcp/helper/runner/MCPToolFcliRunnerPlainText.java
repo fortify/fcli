@@ -43,8 +43,8 @@ public final class MCPToolFcliRunnerPlainText extends AbstractMCPToolFcliRunner 
     @Override
     public CallToolResult run(McpSyncServerExchange exchange, CallToolRequest request) {
         try {
-            var fullCmd = getFullCmd(request);
-            var work = createCommandWork(fullCmd);
+            var args = getFullArgs(request);
+            var work = createCommandWork(args);
             var toolName = getCommandSpec().qualifiedName("_").replace('-', '_');
             return jobManager.execute(exchange, toolName, work, MCPJobManager.ticking(new AtomicInteger()), true);
         } catch (Exception e) {
@@ -52,9 +52,9 @@ public final class MCPToolFcliRunnerPlainText extends AbstractMCPToolFcliRunner 
         }
     }
     
-    private Callable<CallToolResult> createCommandWork(String fullCmd) {
+    private Callable<CallToolResult> createCommandWork(String[] args) {
         return () -> {
-            var result = MCPToolFcliRunnerHelper.collectStdout(fullCmd, commandSpec);
+            var result = MCPToolFcliRunnerHelper.collectStdout(args, commandSpec);
             return MCPToolResult.fromPlainText(result).asCallToolResult();
         };
     }

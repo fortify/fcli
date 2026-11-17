@@ -30,6 +30,7 @@ import com.fortify.cli.common.util.OutputHelper.Result;
  */
 public final class AsyncTaskFcliCommand implements IAsyncTask {
     private final String command;
+    private final String[] args;
     private final Map<String, String> defaultOptions;
     private final boolean collectRecords;
 
@@ -43,16 +44,28 @@ public final class AsyncTaskFcliCommand implements IAsyncTask {
 
     public AsyncTaskFcliCommand(String command, Map<String, String> defaultOptions, boolean collectRecords) {
         this.command = command;
+        this.args = null;
         this.defaultOptions = defaultOptions;
         this.collectRecords = collectRecords;
+    }
+
+    public AsyncTaskFcliCommand(String[] args, Map<String, String> defaultOptions) {
+        this.command = null;
+        this.args = args.clone();
+        this.defaultOptions = defaultOptions;
+        this.collectRecords = true;
     }
 
     @Override
     public Result run(Consumer<JsonNode> recordConsumer) {
         if (collectRecords) {
-            return FcliRunnerHelper.collectRecords(command, on -> recordConsumer.accept(on), defaultOptions);
+            return args==null
+                    ? FcliRunnerHelper.collectRecords(command, recordConsumer::accept, defaultOptions)
+                    : FcliRunnerHelper.collectRecords(args, recordConsumer::accept, defaultOptions);
         } else {
-            return FcliRunnerHelper.collectStdout(command, defaultOptions);
+            return args==null
+                    ? FcliRunnerHelper.collectStdout(command, defaultOptions)
+                    : FcliRunnerHelper.collectStdout(args, defaultOptions);
         }
     }
 }

@@ -14,6 +14,7 @@ package com.fortify.cli.common.cli.util;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -40,6 +41,7 @@ import lombok.Data;
 import picocli.CommandLine;
 import picocli.CommandLine.ExecutionException;
 import picocli.CommandLine.Model.CommandSpec;
+import picocli.CommandLine.Model.ParserSpec;
 import picocli.CommandLine.ParameterException;
 import picocli.CommandLine.ParseResult;
 
@@ -57,6 +59,11 @@ public final class FcliCommandExecutorFactory {
     private final Consumer<Throwable> onException;
     public final String progressOptionValueIfNotPresent; // TODO Should we integrate this into defaultOptionsIfNotPresent?
     public final Map<String, String> defaultOptionsIfNotPresent;
+    /**
+     * Treat argv values as data rather than shell-quoted strings or argument files.
+     * Callers must still place an end-of-options delimiter before untrusted positionals.
+     */
+    private final boolean literalArguments;
     
     private static final CommandLine getRootCommandLine() {
         return FcliCommandSpecHelper.getRootCommandLine();
@@ -69,11 +76,22 @@ public final class FcliCommandExecutorFactory {
         return new FcliCommandExecutor();
     }
 
+    /**
+     * Parse a legacy command string. Dynamic values should instead be passed as separate arguments.
+     */
+    public static String[] parseCommand(String cmd) {
+        var cmdWithoutFcli = cmd.replaceFirst("^fcli\s+", "");
+        List<String> argsList = new ArrayList<String>();
+        Matcher m = Pattern.compile("([^\"]\\S*|\".+?\")\\s*").matcher(cmdWithoutFcli);
+        while (m.find()) { argsList.add(m.group(1).replace("\"", "")); }
+        return argsList.toArray(String[]::new);
+    }
+
     // Partial builder class; Lombok adds the generated field methods to this.
     public static class FcliCommandExecutorFactoryBuilder {
         /** Convenience: parse a command string into args. Strips leading {@code fcli} prefix. */
         public FcliCommandExecutorFactoryBuilder cmd(String cmd) {
-            return args(parseCmd(cmd));
+            return args(parseCommand(cmd));
         }
         /** Convenience method: sets the same stdout type regardless of whether the command supports record collection. */
         public FcliCommandExecutorFactoryBuilder stdoutOutputType(OutputType type) {
@@ -81,13 +99,6 @@ public final class FcliCommandExecutorFactory {
                     .stdoutOutputTypeIfRecordCollectionNotSupported(type);
         }
 
-        private static final String[] parseCmd(String cmd) {
-            var cmdWithoutFcli = cmd.replaceFirst("^fcli\s+", "");
-            List<String> argsList = new ArrayList<String>();
-            Matcher m = Pattern.compile("([^\"]\\S*|\".+?\")\\s*").matcher(cmdWithoutFcli);
-            while (m.find()) { argsList.add(m.group(1).replace("\"", "")); }
-            return argsList.toArray(String[]::new);
-        }
     }
     
     public final class FcliCommandExecutor {
@@ -105,7 +116,16 @@ public final class FcliCommandExecutorFactory {
             try {
                 var root = getRootCommandLine();
                 synchronized (root) {
-                    return root.parseArgs(resolvedArgs);
+                    // This shared command tree is used only for the initial parse; restore its
+                    // settings before leaving the lock so legacy invocations keep their behavior.
+                    var parserSettings = literalArguments ? literalParserSettings(root.getCommandSpec()) : null;
+                    try {
+                        return root.parseArgs(toParserArgs(resolvedArgs, root));
+                    } finally {
+                        if ( parserSettings!=null ) {
+                            parserSettings.forEach((parser, trimQuotes)->parser.trimQuotes(trimQuotes));
+                        }
+                    }
                 }
             } catch ( ParameterException e ) {
                 this.parseErrorResult = call(()->handleParseException(resolvedArgs, e));
@@ -159,9 +179,36 @@ public final class FcliCommandExecutorFactory {
         private final int _execute() throws Exception {
             var args = addOptionsIfNotPresent(resolvedArgs);
             if ( LOG.isDebugEnabled() ) {
-                LOG.debug("Executing '{}'", String.join(" ", args));
+                if ( literalArguments ) {
+                    LOG.debug("Executing command with structured arguments");
+                } else {
+                    LOG.debug("Executing '{}'", String.join(" ", args));
+                }
             }
-            return createCommandLine().execute(args);
+            var commandLine = createCommandLine();
+            return commandLine.execute(toParserArgs(args, commandLine));
+        }
+
+        private String[] toParserArgs(String[] args, CommandLine commandLine) {
+            if ( !literalArguments || !commandLine.isExpandAtFiles() ) { return args; }
+            return Arrays.stream(args)
+                    .map(arg->arg.length()>1 && arg.startsWith("@") ? "@"+arg : arg)
+                    .toArray(String[]::new);
+        }
+
+        private Map<ParserSpec, Boolean> literalParserSettings(CommandSpec root) {
+            var settings = new IdentityHashMap<ParserSpec, Boolean>();
+            configureLiteralParser(root, settings);
+            return settings;
+        }
+
+        private void configureLiteralParser(CommandSpec spec, Map<ParserSpec, Boolean> settings) {
+            var parser = spec.parser();
+            if ( settings.containsKey(parser) ) { return; }
+            settings.put(parser, parser.trimQuotes());
+            // Quotes in structured arguments are data, not shell quoting.
+            parser.trimQuotes(false);
+            spec.subcommands().values().forEach(command->configureLiteralParser(command.getCommandSpec(), settings));
         }
 
         private String[] addOptionsIfNotPresent(String[] resolvedArgs) {
@@ -177,13 +224,20 @@ public final class FcliCommandExecutorFactory {
         
         private final void addOptionIfNotPresent(List<String> resolvedArgs, String optionName, String value) {
             if ( StringUtils.isNotBlank(value) && hasOption(optionName) && !hasOptionValue(resolvedArgs, optionName) ) {
-                resolvedArgs.add(String.format("%s=%s", optionName, value));
+                var separator = literalArguments ? resolvedArgs.indexOf("--") : -1;
+                var option = String.format("%s=%s", optionName, value);
+                if ( separator<0 ) {
+                    resolvedArgs.add(option);
+                } else {
+                    resolvedArgs.add(separator, option);
+                }
             }
         }
         
         private final boolean hasOptionValue(List<String> resolvedArgs, String optionName) {
             // TODO Do we manually check in resolvedArgs, or can we check using replicatedLeafCommandSpec.optionsMap()?
-            return resolvedArgs.stream().anyMatch(s->s.equals(optionName) || s.startsWith(optionName+"="));
+            var args = literalArguments ? resolvedArgs.stream().takeWhile(s->!s.equals("--")) : resolvedArgs.stream();
+            return args.anyMatch(s->s.equals(optionName) || s.startsWith(optionName+"="));
         }
         
         private final boolean hasOption(String optionName) {
@@ -192,6 +246,7 @@ public final class FcliCommandExecutorFactory {
 
         private CommandLine createCommandLine() {
             var cl = new CommandLine(replicatedLeafCommandSpec.root());
+            if ( literalArguments ) { literalParserSettings(cl.getCommandSpec()); }
             cl.setExecutionExceptionHandler(FcliExecutionExceptionHandler.INSTANCE);
             FcliExecutionStrategyFactory.configureCommandLine(cl);
             return cl;
