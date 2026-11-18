@@ -109,4 +109,6 @@ public class Constants {
     public static final int MAX_STREAM_RETRIES = 5;
     public static final long STREAM_RETRY_BASE_DELAY_MS = 2000;
     public static final long STREAM_RETRY_MAX_DELAY_MS = 30000;
+    // How often a stream refused at start (SERVER_BUSY) is re-opened before giving up
+    public static final int MAX_BUSY_STREAM_START_RETRIES = 60;
 }

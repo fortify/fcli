@@ -78,6 +78,8 @@ public class AviatorSSCCorrelateSastDastCommand extends AbstractSSCJsonNodeOutpu
     @Mixin private AviatorAppResolverMixin.NameOnlyOption appResolver;
 
     private static final Logger LOG = LoggerFactory.getLogger(AviatorSSCCorrelateSastDastCommand.class);
+    // Same overall limit as SAST/DAST audit; requests are now windowed so large runs take longer.
+    private static final long CORRELATION_TIMEOUT_MINUTES = 500;
     private String actionResult = "CORRELATED";
     private String actionMessage;
 
@@ -296,10 +298,11 @@ public class AviatorSSCCorrelateSastDastCommand extends AbstractSSCJsonNodeOutpu
             int succeeded = result.successfulCorrelationResponses();
             int skipped = result.skippedCorrelationResponses();
             int failed = result.failedCorrelationResponses();
+            int failedValidations = result.failedValidationResponses();
             return submitted == 0 ? "SKIPPED"
                 : failed == submitted ? "FAILED"
                 : succeeded == 0 ? "SKIPPED"
-                : failed > 0 || skipped > 0 ? "PARTIALLY_CORRELATED" : "CORRELATED";
+                : failed > 0 || skipped > 0 || failedValidations > 0 ? "PARTIALLY_CORRELATED" : "CORRELATED";
         }
 
         private String uploadCorrelationResults(Path statePath, CorrelationResult result) {
@@ -335,12 +338,12 @@ public class AviatorSSCCorrelateSastDastCommand extends AbstractSSCJsonNodeOutpu
         private CorrelationResult performCorrelation(AviatorGrpcClient grpcClient, CorrelationStreamConfig config,
                 List<CorrelationStreamProcessor.CorrelationBucketData> bucketData, String scanGuid,
                 Set<String> alreadyTriedKeys) {
-            try {
-                var processor = new CorrelationStreamProcessor(
+            try (var processor = new CorrelationStreamProcessor(
                     grpcClient, logger, grpcClient.getCorrelationAsyncStub(),
                     grpcClient.getPingScheduler(), grpcClient.getPingIntervalSeconds(),
-                    grpcClient.getDefaultTimeoutSeconds());
-                long timeoutSeconds = Math.max(grpcClient.getDefaultTimeoutSeconds(), 300);
+                    grpcClient.getDefaultTimeoutSeconds())) {
+                long timeoutSeconds = Math.max(grpcClient.getDefaultTimeoutSeconds(),
+                    TimeUnit.MINUTES.toSeconds(CORRELATION_TIMEOUT_MINUTES));
                 return processor.processCorrelation(config, bucketData, scanGuid, alreadyTriedKeys)
                     .get(timeoutSeconds, TimeUnit.SECONDS);
             } catch (TimeoutException e) {

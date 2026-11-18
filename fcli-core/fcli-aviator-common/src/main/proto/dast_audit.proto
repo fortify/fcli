@@ -21,6 +21,8 @@ message DastAuditStreamInitRequest {
   optional string sscApplicationVersion = 9;
   // See issue.StreamInitRequest.operation_id.
   string operation_id = 10;
+  // See issue.StreamInitRequest.supports_flow_control.
+  bool supports_flow_control = 11;
 }
 
 message DastAuditClientMessage {
@@ -52,6 +54,7 @@ message DastAuditInitResponse {
   optional string quotaLastUpdated = 9;
   optional string nextQuotaUpdateMessage = 10;
   optional string reassignedEntitlementId = 11;
+  optional int32 recommended_window = 13;
 }
 
 message DastAuditRequest {
@@ -106,6 +109,7 @@ message DastAuditResponse {
   string status = 4;
   string statusMessage = 5;
   DastAuditDecision decision = 6;
+  optional int32 recommended_window = 7;
 }
 
 message DastAuditDecision {
@@ -124,6 +128,8 @@ message DastAuditErrorResponse {
   string serverStreamId = 3;
   string status = 4;
   string statusMessage = 5;
+  optional int32 recommended_window = 6;
+  optional int64 retry_after_ms = 7;
 }
 
 message DastAuditPingRequest {
@@ -135,4 +141,5 @@ message DastAuditPongResponse {
   string streamId = 1;
   int64 serverTimestamp = 2;
   int64 clientTimestamp = 3;
+  optional int32 recommended_window = 4;
 }
