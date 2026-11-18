@@ -345,8 +345,27 @@ public class AviatorGrpcClient implements AutoCloseable {
 
     public Application getApplicationByName(String applicationName, String signature, String message, String tenantName) {
         ApplicationByName request = ApplicationByName.newBuilder().setName(applicationName).setSignature(signature).setMessage(message).setTenantName(tenantName).build();
-        return GrpcUtil.executeGrpcCall(blockingStub, ApplicationServiceGrpc.ApplicationServiceBlockingStub::getApplicationByName, request, Constants.OP_GET_APP_BY_NAME,
+        return GrpcUtil.executeGrpcCall(blockingStub, (stub, req) -> getApplicationByName(stub, req, applicationName, tenantName), request, Constants.OP_GET_APP_BY_NAME,
                 "Specify the numeric application id instead of the application name.");
+    }
+
+    /**
+     * Error-reporting workaround for the current signed-message format, which uses semicolons to separate fields.
+     * Names containing semicolons cannot be resolved through signed admin requests; the server rejects the mismatched
+     * signed fields before lookup. This remapping makes the lookup error consistent with other not-found results, but
+     * does not make those names usable.
+     */
+    private static Application getApplicationByName(ApplicationServiceGrpc.ApplicationServiceBlockingStub stub, ApplicationByName request, String applicationName, String tenantName) {
+        try {
+            return stub.getApplicationByName(request);
+        } catch (StatusRuntimeException e) {
+            String description = e.getStatus().getDescription();
+            if ( e.getStatus().getCode()==Status.Code.PERMISSION_DENIED && description!=null && description.startsWith("Message part") ) {
+                LOG.debug("Application name lookup rejected by the server: {}", description);
+                throw Status.NOT_FOUND.withDescription(String.format("Application '%s' not found for tenant '%s'", applicationName, tenantName)).asRuntimeException();
+            }
+            throw e;
+        }
     }
 
     public Application getApplicationByToken(String token, String appName) {

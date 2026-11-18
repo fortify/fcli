@@ -30,7 +30,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
+import com.fortify.aviator.application.Application;
 import com.fortify.aviator.application.ApplicationById;
+import com.fortify.aviator.application.ApplicationByName;
 import com.fortify.aviator.application.ApplicationMultiplierOperationResponse;
 import com.fortify.aviator.application.ApplicationServiceGrpc;
 import com.fortify.aviator.application.ServerCapabilities;
@@ -218,5 +220,40 @@ class AviatorGrpcClientOperationTest {
         }
         assertTrue(service.requests.isEmpty());
         assertNotEquals(0, service.capabilityCalls.get());
+    }
+
+    private static ApplicationServiceGrpc.ApplicationServiceImplBase nameLookupFailing(Status status) {
+        return new ApplicationServiceGrpc.ApplicationServiceImplBase() {
+            @Override
+            public void getApplicationByName(ApplicationByName request, StreamObserver<Application> observer) {
+                observer.onError(status.asRuntimeException());
+            }
+        };
+    }
+
+    private String nameLookupFailure(Status status, String name) throws Exception {
+        try (var client = client(nameLookupFailing(status))) {
+            return assertThrows(AviatorSimpleException.class, () -> client.getApplicationByName(name, "sig", "msg", "tenant")).getMessage();
+        } finally {
+            tearDown();
+        }
+    }
+
+    @Test
+    void nameRejectedByMessageValidationIsReportedLikeAnUnknownName() throws Exception {
+        String notFound = nameLookupFailure(Status.NOT_FOUND.withDescription("Application 'unknown' not found for tenant 'dp'"), "unknown");
+        String rejected = nameLookupFailure(Status.PERMISSION_DENIED.withDescription("Message part 2 mismatch"), "a;b");
+        assertTrue(notFound.startsWith("The requested resource was not found during retrieving application by name. The server reported: "), notFound);
+        assertTrue(rejected.startsWith("The requested resource was not found during retrieving application by name. The server reported: "), rejected);
+        assertTrue(rejected.contains("Application 'a;b' not found for tenant 'tenant'"), rejected);
+        assertFalse(rejected.contains("Permission Denied"), rejected);
+    }
+
+    @Test
+    void otherPermissionErrorsOfTheNameLookupStayPermissionErrors() throws Exception {
+        String tenant = nameLookupFailure(Status.PERMISSION_DENIED.withDescription("Message tenant name mismatch"), "app");
+        String roles = nameLookupFailure(Status.PERMISSION_DENIED.withDescription("Admin role required"), "app");
+        assertTrue(tenant.startsWith("Permission Denied for retrieving application by name"), tenant);
+        assertTrue(roles.startsWith("Permission Denied for retrieving application by name"), roles);
     }
 }
