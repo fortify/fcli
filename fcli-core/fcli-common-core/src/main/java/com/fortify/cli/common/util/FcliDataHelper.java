@@ -234,10 +234,12 @@ public class FcliDataHelper {
     }
     
     public static Path resolveFcliHomePath(Path relativePath) {
-        if ( relativePath.isAbsolute() && !relativePath.toAbsolutePath().startsWith(getFcliHomePath()) ) {
+        var fcliHomePath = getFcliHomePath();
+        var resolvedPath = fcliHomePath.resolve(relativePath).normalize();
+        if ( !resolvedPath.startsWith(fcliHomePath.normalize()) ) {
             throw new FcliBugException(String.format("Path %s is not within fcli home directory", relativePath));
         }
-        return getFcliHomePath().resolve(relativePath);
+        return resolvedPath;
     }
     
     /**
