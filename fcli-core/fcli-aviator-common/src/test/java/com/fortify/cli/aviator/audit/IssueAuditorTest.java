@@ -51,6 +51,7 @@ import com.fortify.cli.aviator.audit.model.AuditFprOptions;
 import com.fortify.cli.aviator.audit.model.AuditResponse;
 import com.fortify.cli.aviator.audit.model.AuditResult;
 import com.fortify.cli.aviator.audit.model.UserPrompt;
+import com.fortify.cli.aviator.config.AviatorLoggerImpl;
 import com.fortify.cli.aviator.config.IAviatorLogger;
 import com.fortify.cli.aviator.config.TagMappingConfig;
 import com.fortify.cli.aviator.grpc.SastStreamOutcome;
@@ -66,6 +67,7 @@ import com.fortify.cli.common.fpr.model.FPRInfo;
 import com.fortify.cli.common.fpr.model.FVDLMetadata;
 import com.fortify.cli.common.fpr.util.FprHandle;
 import com.fortify.cli.common.fpr.utils.SourceDecoders;
+import com.fortify.cli.common.progress.helper.IProgressWriter;
 
 
 class IssueAuditorTest {
@@ -82,12 +84,21 @@ class IssueAuditorTest {
     private FprHandle fprHandle;
     private final List<String> warnings = new ArrayList<>();
     private final List<String> progress = new ArrayList<>();
-    private final IAviatorLogger outcomeLogger = new IAviatorLogger() {
-        @Override public void progress(String format, Object... args) { progress.add(String.format(format, args)); }
-        @Override public void info(String format, Object... args) {}
-        @Override public void warn(String format, Object... args) { warnings.add(String.format(format, args)); }
-        @Override public void error(String format, Object... args) {}
-    };
+    private final IAviatorLogger outcomeLogger = new AviatorLoggerImpl(new IProgressWriter() {
+        @Override public boolean isMultiLineSupported() { return false; }
+        @Override public void writeProgress(String message, Object... args) {
+            progress.add(args == null || args.length == 0 ? message : String.format(message, args));
+        }
+        @Override public void writeInfo(String message, Object... args) {}
+        @Override public void writeInfoWithException(String message, Throwable cause, Object... args) {}
+        @Override public void writeWarning(String message, Object... args) {
+            warnings.add(args == null || args.length == 0 ? message : String.format(message, args));
+        }
+        @Override public void writeWarningWithException(String message, Throwable cause, Object... args) {}
+        @Override public void clearProgress() {}
+        @Override public void close() {}
+        @Override public String type() { return "test"; }
+    });
 
     @BeforeEach
     void setup() throws IOException {
@@ -137,8 +148,16 @@ class IssueAuditorTest {
         assertSame(response, responses.get(TEST_ISSUE_ID));
         assertSame(responses, outcome.getAuditResponses());
         assertEquals(2, outcome.getTotalIssuesToAudit());
-        assertEquals("PARTIALLY_AUDITED", AuditFPR.determineAuditStatus(1, 1, 2, responses.size()));
-        assertEquals(List.of("Audit stream failed. Retaining 1 received results; other results are unavailable."), warnings);
+        long successfulResponses = outcome.getAuditResponses().values().stream()
+                .filter(auditResponse -> "SUCCESS".equalsIgnoreCase(auditResponse.getStatus()))
+                .count();
+        int skippedResponses = (int) outcome.getAuditResponses().values().stream()
+                .filter(auditResponse -> "SKIPPED".equalsIgnoreCase(auditResponse.getStatus()))
+                .count();
+        assertEquals("PARTIALLY_AUDITED", AuditFPR.determineAuditStatus(successfulResponses, skippedResponses,
+                outcome.getTotalIssuesToAudit(), outcome.getAuditResponses().size()));
+        assertEquals(List.of("WARN: Audit stream failed. Received responses: 1. Remaining responses are unavailable."),
+                warnings);
         assertTrue(progress.isEmpty(), "A failed stream must not announce normal completion");
 
         var parsed = AviatorSastFprParser.parse(fprHandle, SourceDecoders.defaults());
@@ -154,6 +173,13 @@ class IssueAuditorTest {
         fprHandle = new FprHandle(tempFprFile);
         assertTrue(Files.readString(fprHandle.getPath("/audit.xml")).contains("Audit result"),
                 "The received audit must persist after closing and reopening the FPR");
+    }
+
+    @Test
+    void warningLoggerDoesNotDuplicateExistingWarnPrefix() {
+        outcomeLogger.warn("WARN: Existing warning");
+
+        assertEquals(List.of("WARN: Existing warning"), warnings);
     }
 
     @Test

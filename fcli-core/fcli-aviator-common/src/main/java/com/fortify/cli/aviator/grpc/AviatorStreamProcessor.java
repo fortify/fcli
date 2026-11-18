@@ -217,7 +217,8 @@ class AviatorStreamProcessor implements AutoCloseable {
                     }
                     if (currentStreamState.streamRetryCount > 0) {
                         long delay = calculateStreamRetryDelay(currentStreamState.streamRetryCount);
-                        logger.info("Retrying stream connection after {} ms delay (150 second recovery budget)", delay);
+                        logger.warn("WARN: Retrying stream connection after %d ms delay (recovery attempt %d)",
+                                delay, currentStreamState.streamRetryCount);
                         delayLatch = new CountDownLatch(1);
                         retryDelayLatch = delayLatch;
                         retryDelay = pingScheduler.schedule(delayLatch::countDown, delay, TimeUnit.MILLISECONDS);
@@ -557,7 +558,6 @@ class AviatorStreamProcessor implements AutoCloseable {
 
     private void applyQuotaFilteringIfNeeded(int alreadyProcessed) {
         LOG.debug("Applying Quota based filter Quota for the application is {}", currentStreamState.quota);
-        //currentStreamState.quota = 5;
         if (currentStreamState.quota <= 0) {
             LOG.debug("No quota filtering applied (quota not set or unlimited)");
             return;

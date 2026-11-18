@@ -196,7 +196,7 @@ public class IssueAuditor {
                 }
                 LOG.debug("Audit stream failure details", failed.failure());
                 options.getLogger().warn(
-                        "Audit stream failed. Retaining %d received results; other results are unavailable.",
+                        "WARN: Audit stream failed. Received responses: %d. Remaining responses are unavailable.",
                         failed.responses().size());
             } else {
                 options.getLogger().progress("Audit stream completed");

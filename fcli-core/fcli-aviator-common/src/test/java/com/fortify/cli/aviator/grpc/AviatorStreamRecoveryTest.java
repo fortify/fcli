@@ -53,10 +53,12 @@ import com.fortify.aviator.grpc.AuditorServiceGrpc;
 import com.fortify.aviator.grpc.UserPromptRequest;
 import com.fortify.cli.aviator.audit.model.IssueData;
 import com.fortify.cli.aviator.audit.model.UserPrompt;
+import com.fortify.cli.aviator.config.AviatorLoggerImpl;
 import com.fortify.cli.aviator.config.IAviatorLogger;
 import com.fortify.cli.common.fpr.model.StackTraceElement;
 import com.fortify.cli.common.fpr.util.FprHandle;
 import com.fortify.cli.common.fpr.utils.SourceDecoders;
+import com.fortify.cli.common.progress.helper.IProgressWriter;
 
 import io.grpc.CallOptions;
 import io.grpc.Channel;
@@ -77,6 +79,22 @@ class AviatorStreamRecoveryTest {
         public void warn(String format, Object... args) {}
         public void error(String format, Object... args) {}
     };
+
+    @Test
+    void recoveryRetryIsVisibleAsBoundedUserWarningWithoutServerDetails() throws Exception {
+        var progressWriter = new CapturingProgressWriter();
+        try (var fixture = new Fixture(1, new AviatorLoggerImpl(progressWriter))) {
+            fixture.initialized().fail(Status.UNAVAILABLE.withDescription("private stream detail"));
+            fixture.scheduler.awaitRetry();
+
+            assertEquals(1, progressWriter.warnings.size());
+            String warning = progressWriter.warnings.get(0);
+            assertTrue(warning.startsWith("WARN: Retrying stream connection"), warning);
+            assertFalse(warning.contains("150-second recovery budget"), warning);
+            assertTrue(warning.contains("recovery attempt 1"), warning);
+            assertFalse(warning.contains("private stream detail"), "Retry warnings must not expose transport details");
+        }
+    }
 
     @Test
     void successfulResultHalfClosesWithoutCancellingEvenWhenSendHasNotReturned() throws Exception {
@@ -492,6 +510,7 @@ class AviatorStreamRecoveryTest {
                         .accuracy("").confidence("").impact("").likelihood("").probability("").build())
                         .stackTrace(new ArrayList<>()).files(new ArrayList<>()).programmingLanguages(Set.of("java")).build());
             }
+
             result = CompletableFuture.supplyAsync(() -> processor.processBatchRequests(
                     prompts, "app", "build", "ssc-app", "version", "token", List.of()),
                     caller).thenCompose(future -> future);
@@ -512,6 +531,22 @@ class AviatorStreamRecoveryTest {
             scheduler.shutdownNow();
             client.close();
         }
+    }
+
+    private static final class CapturingProgressWriter implements IProgressWriter {
+        private final List<String> warnings = new java.util.concurrent.CopyOnWriteArrayList<>();
+
+        @Override public boolean isMultiLineSupported() { return false; }
+        @Override public void writeProgress(String message, Object... args) {}
+        @Override public void writeInfo(String message, Object... args) {}
+        @Override public void writeInfoWithException(String message, Throwable cause, Object... args) {}
+        @Override public void writeWarning(String message, Object... args) {
+            warnings.add(args == null || args.length == 0 ? message : String.format(message, args));
+        }
+        @Override public void writeWarningWithException(String message, Throwable cause, Object... args) {}
+        @Override public void clearProgress() {}
+        @Override public void close() {}
+        @Override public String type() { return "test"; }
     }
 
     private static final class ManualScheduler extends ScheduledThreadPoolExecutor {
