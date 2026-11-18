@@ -350,9 +350,10 @@ public class AviatorGrpcClient implements AutoCloseable {
     }
 
     /**
-     * The server validates the signed message against the requested name and answers a name that it cannot match with
-     * a permission error. For a name lookup this means the application cannot be resolved, so report it like any other
-     * unknown application.
+     * Error-reporting workaround for the current signed-message format, which uses semicolons to separate fields.
+     * Names containing semicolons cannot be resolved through signed admin requests; the server rejects the mismatched
+     * signed fields before lookup. This remapping makes the lookup error consistent with other not-found results, but
+     * does not make those names usable.
      */
     private static Application getApplicationByName(ApplicationServiceGrpc.ApplicationServiceBlockingStub stub, ApplicationByName request, String applicationName, String tenantName) {
         try {
