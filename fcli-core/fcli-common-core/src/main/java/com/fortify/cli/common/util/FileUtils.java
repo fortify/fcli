@@ -180,8 +180,9 @@ public final class FileUtils {
     public static final Function<Path,Path> defaultExtractPathResolver(Path targetPath, Function<Path,Path> sourcePathRewriter) {
         return sourcePath->{
             var newSourcePath = sourcePathRewriter==null ? sourcePath : sourcePathRewriter.apply(sourcePath);
-            var resolvedPath = targetPath.resolve(newSourcePath);
-            if (!resolvedPath.startsWith(targetPath.normalize())) {
+            var normalizedTargetPath = targetPath.toAbsolutePath().normalize();
+            var resolvedPath = normalizedTargetPath.resolve(newSourcePath).normalize();
+            if (!resolvedPath.startsWith(normalizedTargetPath)) {
                 // see: https://snyk.io/research/zip-slip-vulnerability
                 throw new FcliSimpleException("Entry with an illegal path: " + sourcePath);
             }

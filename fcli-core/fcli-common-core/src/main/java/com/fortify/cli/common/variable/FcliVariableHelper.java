@@ -246,6 +246,7 @@ public final class FcliVariableHelper {
     }
     
     private static final Path getVariablePath(String variableName) {
+        checkVariableName(variableName);
         return getVariablesPath().resolve(variableName);
     }
     
