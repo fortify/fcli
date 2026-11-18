@@ -420,7 +420,8 @@ public class DastAuditStreamProcessor implements AutoCloseable {
 
     private void startPingPong() {
         if (pingScheduler == null || pingIntervalSeconds <= 0) return;
-        pingTask = pingScheduler.scheduleAtFixedRate(() -> {
+        // Fixed delay: a fixed rate would replay every missed ping at once after a system sleep.
+        pingTask = pingScheduler.scheduleWithFixedDelay(() -> {
             if (isPinging.compareAndSet(false, true)) {
                 try {
                     if (requestHandler != null && requestHandler.isReady()) {
