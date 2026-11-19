@@ -418,6 +418,104 @@ class AuditProcessorAuditIsolationTest {
 
     private static final String REMEDIATIONS_NS = "xmlns://www.fortify.com/schema/remediations";
 
+    private static String linesWithControlCharacterOnLineTwo() {
+        StringBuilder source = new StringBuilder();
+        for (int line = 1; line <= 12; line++) {
+            source.append(line == 2 ? "li\u0018ne" + line : "line" + line).append('\n');
+        }
+        return source.toString();
+    }
+
+    @Test
+    void testFixWhoseSourceCodeContainsAControlCharacterIsSkippedAndTheFileStaysParseable() throws Exception {
+        createTestFprWithSource(multiIssueAuditXml("instance-A", "instance-B"), "Example.java",
+                linesWithControlCharacterOnLineTwo());
+        AuditProcessor auditProcessor = new AuditProcessor(fprHandle);
+        auditProcessor.processAuditXML();
+
+        Map<String, AuditResponse> responses = new LinkedHashMap<>();
+        responses.put("instance-A", fixResponse("instance-A", 2, 2, "A-CODE", List.of()));
+        responses.put("instance-B", fixResponse("instance-B", 12, 12, "B-CODE", List.of()));
+
+        auditProcessor.updateAndSaveAuditAndRemediationsXml(responses, createTagMappingConfig(),
+                Map.of("instance-A", "SQL Injection", "instance-B", "SQL Injection"), new FPRInfo(fprHandle));
+
+        // reading it parses the saved file, so a character reference XML does not allow would fail here
+        Map<String, Element> entries = readRemediationEntries();
+        assertEquals(Set.of("instance-B"), entries.keySet());
+        assertEquals(1, auditProcessor.getLastRemediationGenerationMetric().skippedRemediations());
+        assertEquals(Map.of("Contains a character that is not allowed in XML", 1),
+                auditProcessor.getLastRemediationGenerationMetric().skippedByReason());
+    }
+
+    @Test
+    void testFixWhoseNewCodeContainsAControlCharacterIsSkipped() throws Exception {
+        createTestFprWithSource(multiIssueAuditXml("instance-A", "instance-B"), "Example.java",
+                "line1\nline2\nline3\nline4\n");
+        AuditProcessor auditProcessor = new AuditProcessor(fprHandle);
+        auditProcessor.processAuditXML();
+
+        Map<String, AuditResponse> responses = new LinkedHashMap<>();
+        responses.put("instance-A", fixResponse("instance-A", 1, 1, "bad\u0018code", List.of()));
+        responses.put("instance-B", fixResponse("instance-B", 3, 3, "B-CODE", List.of()));
+
+        auditProcessor.updateAndSaveAuditAndRemediationsXml(responses, createTagMappingConfig(),
+                Map.of("instance-A", "SQL Injection", "instance-B", "SQL Injection"), new FPRInfo(fprHandle));
+
+        assertEquals(Set.of("instance-B"), readRemediationEntries().keySet());
+        assertEquals(1, auditProcessor.getLastRemediationGenerationMetric().skippedRemediations());
+    }
+
+    @Test
+    void testAFixWithSeveralChangesIsSkippedEntirelyWhenOneChangeContainsAControlCharacter() throws Exception {
+        createTestFprWithSource(multiIssueAuditXml("instance-A"), "Example.java", linesWithControlCharacterOnLineTwo());
+        AuditProcessor auditProcessor = new AuditProcessor(fprHandle);
+        auditProcessor.processAuditXML();
+
+        AuditResponse response = AuditResponse.builder()
+                .issueId("instance-A")
+                .status("SUCCESS")
+                .tier("GOLD")
+                .auditResult(AuditResult.builder()
+                        .tagValue(Constants.NOT_AN_ISSUE)
+                        .comment("Fix for instance-A")
+                        .autoremediation(Autoremediation.builder()
+                                .changes(List.of(
+                                        Change.builder().file("Example.java").fromLine("12").toLine("12").replaceWith("A-CODE").build(),
+                                        Change.builder().file("Example.java").fromLine("2").toLine("2").replaceWith("A-CODE-2").build()))
+                                .supersededIssueIds(List.of())
+                                .build())
+                        .build())
+                .build();
+
+        auditProcessor.updateAndSaveAuditAndRemediationsXml(new LinkedHashMap<>(Map.of("instance-A", response)),
+                createTagMappingConfig(), Map.of("instance-A", "SQL Injection"), new FPRInfo(fprHandle));
+
+        // no half of the fix is written
+        assertEquals(1, auditProcessor.getLastRemediationGenerationMetric().skippedRemediations());
+        assertTrue(!Files.exists(fprHandle.getPath("/remediations.xml")));
+    }
+
+    @Test
+    void testControlCharactersInAnAuditCommentAreLeftOutAndBothFilesStayParseable() throws Exception {
+        createTestFprWithSource(multiIssueAuditXml("instance-A"), "Example.java", "line1\nline2\nline3\n");
+        AuditProcessor auditProcessor = new AuditProcessor(fprHandle);
+        auditProcessor.processAuditXML();
+
+        AuditResponse response = fixResponse("instance-A", 2, 2, "A-CODE", List.of());
+        response.getAuditResult().setComment("bad\u0018 comment");
+
+        auditProcessor.updateAndSaveAuditAndRemediationsXml(new LinkedHashMap<>(Map.of("instance-A", response)),
+                createTagMappingConfig(), Map.of("instance-A", "SQL Injection"), new FPRInfo(fprHandle));
+
+        Element entry = readRemediationEntries().get("instance-A");
+        assertEquals("bad comment", entry.getElementsByTagNameNS(REMEDIATIONS_NS, "AuditComment").item(0).getTextContent());
+        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+        try (var auditStream = Files.newInputStream(fprHandle.getPath("/audit.xml"))) {
+            factory.newDocumentBuilder().parse(auditStream);
+        }
+    }
+
     private static AuditResponse coveredResponse(String issueId, List<String> coveredBy) {
         return AuditResponse.builder()
                 .issueId(issueId)

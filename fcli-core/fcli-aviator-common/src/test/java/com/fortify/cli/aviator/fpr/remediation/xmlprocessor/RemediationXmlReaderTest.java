@@ -13,12 +13,18 @@
 package com.fortify.cli.aviator.fpr.remediation.xmlprocessor;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+
+import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
 
 class RemediationXmlReaderTest {
     @TempDir
@@ -48,5 +54,41 @@ class RemediationXmlReaderTest {
 
         var document = new RemediationXmlReader().read(remediations);
         assertEquals("expected", document.getElementsByTagName("Comment").item(0).getTextContent());
+    }
+
+    @Test
+    void readsAWellFormedFile() throws Exception {
+        Path remediations = tempDir.resolve("remediations.xml");
+        Files.writeString(remediations, "<?xml version=\"1.0\"?>\n<Remediations><A>x</A></Remediations>");
+
+        assertNotNull(new RemediationXmlReader().read(remediations));
+    }
+
+    @Test
+    void anInvalidCharacterReferenceIsExplainedAndTheParserStaysStrict() throws Exception {
+        Path remediations = tempDir.resolve("remediations.xml");
+        Files.writeString(remediations,
+                "<?xml version=\"1.0\"?>\n<Remediations>\n<Code><![CDATA[int x;]]>&#24;<![CDATA[ // y]]></Code>\n</Remediations>");
+
+        AviatorTechnicalException thrown = assertThrows(AviatorTechnicalException.class,
+                () -> new RemediationXmlReader().read(remediations));
+
+        String message = thrown.getMessage();
+        assertTrue(message.contains("line 3"), message);
+        assertTrue(message.contains("column"), message);
+        assertTrue(message.contains("not allow"), message);
+        assertTrue(message.contains("Run the Aviator audit again"), message);
+    }
+
+    @Test
+    void otherParseErrorsKeepTheirLocationAndDetail() throws Exception {
+        Path remediations = tempDir.resolve("remediations.xml");
+        Files.writeString(remediations, "<?xml version=\"1.0\"?>\n<Remediations><A></Remediations>");
+
+        AviatorTechnicalException thrown = assertThrows(AviatorTechnicalException.class,
+                () -> new RemediationXmlReader().read(remediations));
+
+        assertTrue(thrown.getMessage().startsWith("Error processing remediation.xml file: line 2"), thrown.getMessage());
+        assertFalse(thrown.getMessage().contains("Run the Aviator audit again"));
     }
 }

@@ -109,7 +109,8 @@ public class AuditProcessor {
         SOURCE_READ_OR_DECODE_FAILED("Source file read/decode failed"),
         INVALID_LINE_NUMBER("Invalid line number"),
         STRUCTURALLY_INVALID("Structurally invalid remediation"),
-        NO_VALID_CHANGES("No valid changes");
+        NO_VALID_CHANGES("No valid changes"),
+        INVALID_XML_CHARACTER("Contains a character that is not allowed in XML");
 
         private final String label;
 
@@ -1094,13 +1095,13 @@ public class AuditProcessor {
                             }
                         }
                     }
+                    String sanitizedNewCode = FileUtil.stripSyntheticLineMarkers(
+                        change.getReplaceWith() != null ? change.getReplaceWith() : "", filename);
                     Element originalCodeElement = finalDoc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "OriginalCode");
                     originalCodeElement.appendChild(finalDoc.createCDATASection(originalCodeSb.toString()));
                     changeElement.appendChild(originalCodeElement);
 
                     Element newCodeElement = finalDoc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "NewCode");
-                    String sanitizedNewCode = FileUtil.stripSyntheticLineMarkers(
-                        change.getReplaceWith() != null ? change.getReplaceWith() : "", filename);
                     newCodeElement.appendChild(finalDoc.createCDATASection(sanitizedNewCode));
                     changeElement.appendChild(newCodeElement);
 
@@ -1118,6 +1119,17 @@ public class AuditProcessor {
                         if (i < contextEndLineIndex) {
                             contextSb.append('\n');
                         }
+                    }
+                    String invalidCharacters = XmlCharacters.describeInvalid(
+                            filename + originalCodeSb + sanitizedNewCode + contextSb);
+                    if (!invalidCharacters.isEmpty()) {
+                        // Code cannot be changed to fit XML without changing what the fix does, and applying part of a fix
+                        // is worse than none, so the whole fix is left out.
+                        logger.warn("WARN: Skipping remediation for issue instanceId '{}': the code in '{}' (lines {}-{}) contains "
+                                + "character(s) that are not allowed in XML 1.0 ({}), so it cannot be written to remediations.xml.",
+                                instanceId, filename, lineFromNum, lineToNum, invalidCharacters);
+                        recordSkipped(skippedByReason, RemediationSkipReason.INVALID_XML_CHARACTER);
+                        return null;
                     }
                     Element contextElement = finalDoc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "Context");
                     contextElement.setAttribute("before", String.valueOf(actualBeforeLines));
@@ -1354,6 +1366,11 @@ public class AuditProcessor {
     }
 
     private void transformDomToStream(Document doc, OutputStream os) throws TransformerException {
+        // Text such as audit comments is not code, so what XML 1.0 does not allow is left out of it rather than failing.
+        int removed = XmlCharacters.stripInvalid(doc);
+        if (removed > 0) {
+            logger.warn("WARN: Removed {} character(s) that are not allowed in XML 1.0 from the generated XML.", removed);
+        }
         TransformerFactory transformerFactory = TransformerFactory.newInstance();
         transformerFactory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
         transformerFactory.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
