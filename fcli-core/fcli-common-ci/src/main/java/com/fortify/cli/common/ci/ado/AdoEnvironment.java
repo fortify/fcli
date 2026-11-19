@@ -21,6 +21,9 @@ import com.fortify.cli.common.ci.CiCommitId;
 import com.fortify.cli.common.ci.CiPullRequest;
 import com.fortify.cli.common.ci.CiRepository;
 import com.fortify.cli.common.ci.CiRepositoryName;
+import com.fortify.cli.common.log.LogMaskHelper;
+import com.fortify.cli.common.log.LogMaskSource;
+import com.fortify.cli.common.log.LogSensitivityLevel;
 import com.fortify.cli.common.util.EnvHelper;
 
 import lombok.Builder;
@@ -138,11 +141,16 @@ public record AdoEnvironment(
             ? CiPullRequest.active(env(ENV_PR_ID), targetBranch)
             : CiPullRequest.inactive();
         
+        var token = env(ENV_TOKEN);
+        if (StringUtils.isNotBlank(token)) {
+            LogMaskHelper.INSTANCE.registerValue(LogSensitivityLevel.high, LogMaskSource.ENV_VAR, "ADO TOKEN", token, null);
+        }
+        
         return AdoEnvironment.builder()
             .organization(orgUrl)
             .project(env(ENV_PROJECT))
             .repositoryId(repositoryId)
-            .token(env(ENV_TOKEN))
+            .token(token)
             .buildId(buildId)
             .ciRepository(ciRepository)
             .ciBranch(ciBranch)

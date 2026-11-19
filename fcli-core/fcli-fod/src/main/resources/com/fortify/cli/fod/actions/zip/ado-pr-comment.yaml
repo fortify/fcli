@@ -56,10 +56,14 @@ cli.options:
     description: "Azure DevOps token used with Bearer auth by default. Auto-detected when running on Azure DevOps; provide for local testing."
     required: false
     default: "${#ado.env?.token}"
+    mask:
+      sensitivity: high
   ado-authorization:
     names: --ado-authorization
     description: "Optional full Authorization header value (for example, Basic <base64(:PAT)>), overriding `--ado-token`."
     required: false
+    mask:
+      sensitivity: high
   project:
     names: --project
     description: "Azure DevOps project name. Auto-detected when running on Azure DevOps; provide for local testing."

@@ -14,6 +14,7 @@ package com.fortify.cli.config.truststore.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.http.ssl.truststore.helper.TrustedUrlTrustStoreHelper;
+import com.fortify.cli.common.mcp.MCPExclude;
 import com.fortify.cli.common.output.cli.cmd.AbstractOutputCommand;
 import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
@@ -27,6 +28,7 @@ import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Parameters;
 
 @Command(name = "remove-trusted-url")
+@MCPExclude // Modifies trusted certificates; must not be invoked autonomously by MCP clients
 public class TrustStoreRemoveTrustedUrlCommand extends AbstractOutputCommand
     implements IJsonNodeSupplier, IActionCommandResultSupplier, IRecordTransformer
 {
