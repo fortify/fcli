@@ -77,6 +77,7 @@ public final class LogMaskHelper {
     }
 
     private final LogMaskHelper doRegisterValue(LogSensitivityLevel sensitivityLevel, LogMaskSource source, String description, Object value, String patternString, boolean maskFullValueOnNoMatch) {
+        if ( value==null ) { return this; }
         if ( value instanceof Collection<?> collection ) {
             collection.forEach(item -> doRegisterValue(sensitivityLevel, source, description, item, patternString, maskFullValueOnNoMatch));
             return this;
