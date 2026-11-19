@@ -15,7 +15,9 @@ package com.fortify.cli.aviator.grpc;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
@@ -40,9 +42,14 @@ import com.fortify.cli.aviator.audit.model.Change;
 import com.fortify.cli.aviator.audit.model.UserPrompt;
 import com.fortify.cli.aviator.util.Constants;
 import com.fortify.cli.common.fpr.model.StackTraceElement;
+import com.google.protobuf.Any;
+import com.google.protobuf.InvalidProtocolBufferException;
+import com.google.rpc.ErrorInfo;
+import com.google.rpc.RetryInfo;
 
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
+import io.grpc.protobuf.StatusProto;
 import io.grpc.stub.AbstractBlockingStub;
 
 class GrpcUtil {
@@ -60,11 +67,17 @@ class GrpcUtil {
      * Stubs without that option retain the existing status mapping.
      */
     static <S extends AbstractBlockingStub<S>, T, R> R executeGrpcCall(S stub, GrpcCall<S, T, R> call, T request, String operation) {
+        return executeGrpcCall(stub, call, request, operation, null);
+    }
+
+    /** @param unimplementedHint optional extra advice appended to the error message when the server does not implement the call */
+    static <S extends AbstractBlockingStub<S>, T, R> R executeGrpcCall(S stub, GrpcCall<S, T, R> call, T request, String operation, String unimplementedHint) {
         try {
             return call.call(stub.withDeadlineAfter(Constants.DEFAULT_TIMEOUT_SECONDS, TimeUnit.SECONDS), request);
         } catch (StatusRuntimeException e) {
-            throw toConnectivityException(e, stub.getCallOptions().getOption(AviatorConnectionContext.CALL_OPTION))
-                .orElseGet(() -> toAviatorException(e, operation));
+            AviatorConnectionContext context = stub.getCallOptions().getOption(AviatorConnectionContext.CALL_OPTION);
+            throw toConnectivityException(e, context)
+                .orElseGet(() -> toAviatorException(e, operation, unimplementedHint, context != null && unimplementedHint == null));
         } catch (Exception e) {
             String errorMessage = "An unexpected client-side error occurred during the " + operation + " operation.";
             LOG.error(errorMessage, e);
@@ -90,7 +103,13 @@ class GrpcUtil {
             .collect(Collectors.joining(" <- "));
     }
 
-    private static RuntimeException toAviatorException(StatusRuntimeException e, String operation) {
+    /** Maps a failed call to the user facing exception types. */
+    static RuntimeException toAviatorException(StatusRuntimeException e, String operation, String unimplementedHint) {
+        return toAviatorException(e, operation, unimplementedHint, false);
+    }
+
+    private static RuntimeException toAviatorException(StatusRuntimeException e, String operation, String unimplementedHint,
+            boolean preserveFailFastUnimplementedContract) {
         Status status = e.getStatus();
         String serverDescription = status.getDescription() != null && !status.getDescription().isBlank()
                 ? status.getDescription()
@@ -128,19 +147,214 @@ class GrpcUtil {
                 );
                 return new AviatorSimpleException(timeoutMessage);
 
+            case UNIMPLEMENTED:
+                if (preserveFailFastUnimplementedContract) {
+                    return toAviatorTechnicalException(e, operation, status);
+                }
+                LOG.warn("gRPC call for '{}' is not implemented by the server: {}", operation, serverDescription);
+                return new AviatorSimpleException(String.format(
+                        "The Aviator service does not support the %s operation.%s",
+                        operation, unimplementedHint == null ? "" : " " + unimplementedHint));
+
             case CANCELLED:
             case UNKNOWN:
             case ABORTED:
-            case UNIMPLEMENTED:
             case INTERNAL:
             case UNAVAILABLE:
             case DATA_LOSS:
             default:
-                String techMessage = String.format("The Aviator %s operation failed with status %s; check the Aviator URL and network access, run the command again with --log-level DEBUG to log details, and contact support if the problem continues", operation, status.getCode());
-                String logMessage = String.format("gRPC call for '%s' failed with status %s (%s): %s", operation, status.getCode(), status.getCode().name(), serverDescription);
-                LOG.error(logMessage, e);
-                return new AviatorTechnicalException(techMessage, e);
+                return toAviatorTechnicalException(e, operation, status);
         }
+    }
+
+    private static AviatorTechnicalException toAviatorTechnicalException(StatusRuntimeException e, String operation, Status status) {
+        String serverDescription = status.getDescription() != null && !status.getDescription().isBlank()
+                ? status.getDescription()
+                : "No additional details were provided by the server.";
+        String techMessage = String.format("The Aviator %s operation failed with status %s; check the Aviator URL and network access, run the command again with --log-level DEBUG to log details, and contact support if the problem continues", operation, status.getCode());
+        String logMessage = String.format("gRPC call for '%s' failed with status %s (%s): %s", operation, status.getCode(), status.getCode().name(), serverDescription);
+        LOG.error(logMessage, e);
+        return new AviatorTechnicalException(techMessage, e);
+    }
+
+    /** Maximum attempts (initial call plus retries) of one mutation; every attempt reuses the operation id. */
+    static final int MAX_MUTATION_ATTEMPTS = 4;
+    private static final String OPERATION_ERROR_DOMAIN = "aviator.operation";
+
+    @FunctionalInterface
+    interface Sleeper {
+        void sleep(long millis) throws InterruptedException;
+    }
+
+    static <S extends AbstractBlockingStub<S>, T, R> R executeMutationCall(S stub, GrpcCall<S, T, R> call,
+            Supplier<T> requests, String operation, String operationId) {
+        return executeMutationCall(stub, call, requests, operation, operationId, Thread::sleep);
+    }
+
+    /**
+     * Executes a state-changing call. When an operation id is in use, outcomes that may or may not have
+     * committed (deadline, unavailable, aborted/in progress) are retried with the <em>same</em> id; each attempt
+     * is re-signed through {@code requests} because the server re-checks signature and freshness every time.
+     * Without an operation id (legacy server) a mutation is never retried, because a retry could apply it twice.
+     */
+    static <S extends AbstractBlockingStub<S>, T, R> R executeMutationCall(S stub, GrpcCall<S, T, R> call,
+            Supplier<T> requests, String operation, String operationId, Sleeper sleeper) {
+        for (int attempt = 1;; attempt++) {
+            T request = requests.get();
+            try {
+                return call.call(stub.withDeadlineAfter(Constants.DEFAULT_TIMEOUT_SECONDS, TimeUnit.SECONDS), request);
+            } catch (StatusRuntimeException e) {
+                if (operationId != null && attempt < MAX_MUTATION_ATTEMPTS && isSafeToRetry(e)) {
+                    long delay = retryDelayMillis(e, attempt);
+                    LOG.debug("Retrying {} with the same operation id after status {} (attempt {}/{}, delay {} ms)",
+                            operation, e.getStatus().getCode(), attempt + 1, MAX_MUTATION_ATTEMPTS, delay);
+                    try {
+                        sleeper.sleep(delay);
+                    } catch (InterruptedException interrupted) {
+                        Thread.currentThread().interrupt();
+                        throw new AviatorTechnicalException("Interrupted while retrying " + operation
+                                + unknownOutcomeHint(operationId, operation), interrupted);
+                    }
+                    continue;
+                }
+                throw toMutationException(e, stub, operation, operationId);
+            } catch (RuntimeException e) {
+                String errorMessage = "An unexpected client-side error occurred during the " + operation + " operation.";
+                LOG.error(errorMessage, e);
+                throw new AviatorTechnicalException(errorMessage, e);
+            }
+        }
+    }
+
+    private static boolean isSafeToRetry(StatusRuntimeException e) {
+        return switch (e.getStatus().getCode()) {
+            case DEADLINE_EXCEEDED, UNAVAILABLE, ABORTED, UNKNOWN -> true;
+            default -> false;
+        };
+    }
+
+    private static boolean isUnknownOutcome(StatusRuntimeException e) {
+        return switch (e.getStatus().getCode()) {
+            case DEADLINE_EXCEEDED, UNAVAILABLE, ABORTED, UNKNOWN, CANCELLED, INTERNAL, DATA_LOSS -> true;
+            default -> false;
+        };
+    }
+
+    private static long retryDelayMillis(StatusRuntimeException e, int attempt) {
+        long serverHint = retryDelayHintMillis(e);
+        long backoff = Math.min(4000L, 500L << (attempt - 1));
+        long delay = serverHint > 0 ? serverHint : backoff;
+        return Math.max(200L, Math.min(5000L, delay)) + ThreadLocalRandom.current().nextLong(0, 150);
+    }
+
+    private static long retryDelayHintMillis(StatusRuntimeException e) {
+        com.google.rpc.Status status = StatusProto.fromThrowable(e);
+        if (status == null) {
+            return 0;
+        }
+        for (Any detail : status.getDetailsList()) {
+            if (detail.is(RetryInfo.class)) {
+                try {
+                    var delay = detail.unpack(RetryInfo.class).getRetryDelay();
+                    return delay.getSeconds() * 1000 + delay.getNanos() / 1_000_000;
+                } catch (InvalidProtocolBufferException ignored) {
+                    return 0;
+                }
+            }
+        }
+        return 0;
+    }
+
+    /** Reason from the server's {@code aviator.operation} ErrorInfo, or {@code null} for any other failure. */
+    static String operationReason(Throwable failure) {
+        com.google.rpc.Status status = StatusProto.fromThrowable(failure);
+        if (status == null) {
+            return null;
+        }
+        for (Any detail : status.getDetailsList()) {
+            if (detail.is(ErrorInfo.class)) {
+                try {
+                    ErrorInfo info = detail.unpack(ErrorInfo.class);
+                    if (OPERATION_ERROR_DOMAIN.equals(info.getDomain())) {
+                        return info.getReason();
+                    }
+                } catch (InvalidProtocolBufferException ignored) {
+                    return null;
+                }
+            }
+        }
+        return null;
+    }
+
+    static String unknownOutcomeHint(String operationId) {
+        return unknownOutcomeHint(operationId, null);
+    }
+
+    static String unknownOutcomeHint(String operationId, String operation) {
+        if (Constants.OP_GENERATE_TOKEN.equals(operation)) {
+            return "\nThe outcome of this operation is unknown: the server may already have created the token. A created token "
+                    + "cannot be shown again. Re-run the same command with --operation-id " + operationId + " to find out: the "
+                    + "token is created only if the first attempt did not create it. If the server reports that the operation was "
+                    + "already completed, run 'fcli aviator token list', revoke the affected token and create a new one. "
+                    + "Operation IDs are honored for " + AviatorOperationId.DEFAULT_MAX_AGE.toHours() + " hours.";
+        }
+        return "\nThe outcome of this operation is unknown: the server may already have applied it. Do not start a new "
+                + "operation. Re-run the same command with --operation-id " + operationId + " to retry safely: the server "
+                + "applies the operation at most once and returns the original result if it was already applied. "
+                + "Operation IDs are honored for " + AviatorOperationId.DEFAULT_MAX_AGE.toHours() + " hours.";
+    }
+
+    private static String alreadyCompletedMessage(String operation, String description) {
+        if (Constants.OP_GENERATE_TOKEN.equals(operation)) {
+            return "The token was already created by an earlier attempt with this operation ID, and a created token cannot be "
+                    + "shown again. Run 'fcli aviator token list', revoke the affected token and create a new one.";
+        }
+        if (description != null && !description.isBlank()) {
+            return description;
+        }
+        return String.format("The %s operation was already completed by an earlier attempt with this operation ID. "
+                + "Check the current state with the corresponding list or get command.", operation);
+    }
+
+    private static <S extends AbstractBlockingStub<S>> RuntimeException toMutationException(StatusRuntimeException e, S stub,
+            String operation, String operationId) {
+        String reason = operationReason(e);
+        String description = e.getStatus().getDescription() != null ? e.getStatus().getDescription() : "";
+        if (reason != null) {
+            return switch (reason) {
+                case "OPERATION_IN_PROGRESS" -> new AviatorSimpleException(String.format(
+                        "The %s operation is still being processed by the server. Wait a moment, then re-run the same command with --operation-id %s.",
+                        operation, operationId));
+                case "OPERATION_ID_EXPIRED" -> new AviatorSimpleException(String.format(
+                        "Operation ID %s is older than %d hours and can no longer be matched to a server record, so the %s operation was not applied again. "
+                                + "Check the current state with the corresponding list or get command before running the command again with a new operation ID.",
+                        operationId, AviatorOperationId.DEFAULT_MAX_AGE.toHours(), operation));
+                case "OPERATION_ID_REUSED" -> new AviatorSimpleException(String.format(
+                        "Operation ID %s was already used for a different request. Use a new operation ID for a new request.",
+                        operationId));
+                case "OPERATION_ALREADY_COMPLETED" -> new AviatorSimpleException(alreadyCompletedMessage(operation, description));
+                default -> new AviatorSimpleException(String.format(
+                        "The server refused the %s request (%s: %s). This usually means fcli and the Aviator server are not on compatible versions.",
+                        operation, reason, description));
+            };
+        }
+        AviatorConnectionContext context = stub.getCallOptions().getOption(AviatorConnectionContext.CALL_OPTION);
+        RuntimeException mapped = toConnectivityException(e, context)
+                .orElseGet(() -> toAviatorException(e, operation, null, context != null));
+        if (operationId == null || !isUnknownOutcome(e)) {
+            return mapped;
+        }
+        String hint = unknownOutcomeHint(operationId, operation);
+        if (mapped instanceof AviatorConnectivityException) {
+            return new AviatorConnectivityException(mapped.getMessage() + hint);
+        }
+        if (mapped instanceof AviatorSimpleException) {
+            return new AviatorSimpleException(mapped.getMessage() + hint, mapped.getCause());
+        }
+        if (mapped instanceof AviatorTechnicalException) {
+            return new AviatorTechnicalException(mapped.getMessage() + hint, mapped.getCause());
+        }
+        return mapped;
     }
 
     static AuditRequest convertToAuditRequest(UserPrompt userPrompt, String streamId, String requestId) {

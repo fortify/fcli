@@ -5,6 +5,8 @@ option java_package = "com.fortify.aviator.grpc";
 
 package issue;
 
+import "Entitlement.proto";
+
 service AuditorService {
   rpc ProcessStream (stream UserPromptRequest) returns (stream AuditorResponse);
 }
@@ -59,7 +61,9 @@ message StreamInitRequest {
   optional string fprBuildId = 7;
   optional string sscApplicationName = 8;
   optional string sscApplicationVersion = 9;
-
+  // Lowercase UUIDv7 identifying this stream operation. A duplicate init with the same id never reserves
+  // quota a second time. An id is single-use once its stream ran; reconnect with a new id.
+  string operation_id = 10;
 }
 message UserPromptRequest {
   oneof request_type {
@@ -125,6 +129,8 @@ message AuditorResponse {
   PongResponse pong = 14;
   optional int64 quota = 15;
   optional string quotaLastUpdated = 16;
+  repeated com.fortify.aviator.EntitlementReassignment entitlementReassignments = 17;
+  optional string reassignedEntitlementId = 18;
 }
 
 message AuditResult {

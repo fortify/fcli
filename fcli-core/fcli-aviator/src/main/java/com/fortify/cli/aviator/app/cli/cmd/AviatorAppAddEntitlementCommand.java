@@ -17,9 +17,11 @@ import com.fortify.aviator.application.Application;
 import com.fortify.cli.aviator._common.config.admin.helper.AviatorAdminConfigDescriptor;
 import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
 import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
+import com.fortify.cli.aviator._common.operation.cli.mixin.AviatorOperationIdMixin;
 import com.fortify.cli.aviator._common.output.cli.cmd.AbstractAviatorAdminSessionOutputCommand;
 import com.fortify.cli.aviator._common.util.AviatorGrpcUtils;
 import com.fortify.cli.aviator._common.util.AviatorSignatureUtils;
+import com.fortify.cli.aviator.app.cli.mixin.AviatorAppResolverMixin;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClient;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
@@ -27,24 +29,20 @@ import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
-import picocli.CommandLine.Parameters;
 
 @Command(name = "add-entitlement")
 public class AviatorAppAddEntitlementCommand extends AbstractAviatorAdminSessionOutputCommand implements IActionCommandResultSupplier {
     @Getter @Mixin private OutputHelperMixins.TableNoQuery outputHelper;
-    @Parameters(index = "0", descriptionKey = "fcli.aviator.app.add-entitlement.applicationId") private Long applicationId;
+    @Mixin private AviatorAppResolverMixin.NameOrIdParameter appResolver;
+    @Mixin private AviatorOperationIdMixin operationIdMixin;
 
     @Override
     protected JsonNode getJsonNode(AviatorAdminConfigDescriptor configDescriptor) throws AviatorSimpleException, AviatorTechnicalException {
         try (AviatorGrpcClient client = createGrpcClient(configDescriptor)) {
-            String[] messageAndSignature = AviatorSignatureUtils.createMessageAndSignature(
-                configDescriptor,
-                configDescriptor.getTenant(),
-                applicationId.toString(),
-                "add-entitlement");
-            String message = messageAndSignature[0];
-            String signature = messageAndSignature[1];
-            Application updatedApplication = client.addEntitlement(applicationId.toString(), signature, message, configDescriptor.getTenant());
+            String applicationId = appResolver.getApplicationId(client, configDescriptor);
+            Application updatedApplication = client.addEntitlement(applicationId, configDescriptor.getTenant(),
+                    operationIdMixin.getOperationId(),
+                    AviatorSignatureUtils.operationSigner(configDescriptor, configDescriptor.getTenant(), applicationId, "add-entitlement"));
             return AviatorGrpcUtils.grpcToJsonNode(updatedApplication);
         }
     }

@@ -5,6 +5,8 @@ option java_package = "com.fortify.aviator.grpc";
 
 package correlation;
 
+import "Entitlement.proto";
+
 service CorrelationService {
   rpc ProcessCorrelationStream (stream CorrelationClientMessage) returns (stream CorrelationServerMessage);
 }
@@ -19,6 +21,8 @@ message CorrelationStreamInitRequest {
   optional string fprBuildId = 7;
   optional string sscApplicationName = 8;
   optional string sscApplicationVersion = 9;
+  // See issue.StreamInitRequest.operation_id.
+  string operation_id = 10;
 }
 
 message CorrelationClientMessage {
@@ -52,6 +56,7 @@ message CorrelationInitResponse {
   optional string quotaLastUpdated = 9;
   optional string nextQuotaUpdateMessage = 10;
   optional string reassignedEntitlementId = 11;
+  repeated com.fortify.aviator.EntitlementReassignment entitlementReassignments = 12;
 }
 
 message CorrelationErrorResponse {
