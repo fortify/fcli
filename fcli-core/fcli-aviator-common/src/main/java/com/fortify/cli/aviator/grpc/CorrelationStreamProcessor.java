@@ -386,7 +386,7 @@ public class CorrelationStreamProcessor implements AutoCloseable {
                     case VALIDATION -> handleValidationResponse(message.getValidation(), scanGuid);
                     case ERROR -> handleErrorResponse(message.getError(), resultFuture);
                     case PONG -> handlePongResponse(message.getPong());
-                    default -> LOG.warn("Unknown correlation response type: {}", message.getResponseTypeCase());
+                    default -> logger.warn("Unknown correlation response type: %s", message.getResponseTypeCase());
                 }
             } catch (Exception e) {
                 LOG.error("Error handling correlation response", e);
@@ -432,7 +432,7 @@ public class CorrelationStreamProcessor implements AutoCloseable {
         state.quota = resp.getReservedQuota();
 
         if (!"OK".equalsIgnoreCase(resp.getStatus()) && !"SUCCESS".equalsIgnoreCase(resp.getStatus())) {
-            LOG.warn("Init response status: {} — {}", resp.getStatus(), resp.getStatusMessage());
+            logger.warn("Init response status: %s — %s", resp.getStatus(), resp.getStatusMessage());
         }
 
         // Start sending correlation requests
@@ -441,7 +441,7 @@ public class CorrelationStreamProcessor implements AutoCloseable {
 
     private void handleCorrelationResponse(CorrelationResponse resp) {
         if (!pendingCorrelationRequestIds.remove(resp.getRequestId())) {
-            LOG.warn("Ignoring correlation response for unknown or completed request {}", resp.getRequestId());
+            logger.warn("Ignoring correlation response for unknown or completed request %s", resp.getRequestId());
             return;
         }
         completeRequest(resp.getRequestId());

@@ -34,9 +34,11 @@ import com.fortify.cli.common.log.LogSensitivityLevel;
 import com.fortify.cli.common.log.MaskingLogMessageConverter;
 import com.fortify.cli.common.util.DebugHelper;
 
+import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.encoder.PatternLayoutEncoder;
+import ch.qos.logback.classic.filter.ThresholdFilter;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.CoreConstants;
 import ch.qos.logback.core.FileAppender;
@@ -92,10 +94,11 @@ public final class FortifyCLIDynamicInitializer {
         if ( logLevel!=LogLevel.NONE && (logFile!=null || logLevel!=null) ) {
             // Configure logging if logLevel is not set to NONE, and logFile and/or logLevel 
             // have been specified
+            LogLevel fileLogLevel = logLevel==null ? LogLevel.INFO : logLevel;
             LoggerContext loggerContext = initializeLoggerContext();
             Logger rootLogger = loggerContext.getLogger(ROOT_LOGGER_NAME);
-            configureLogFile(rootLogger, logFile==null ? "fcli.log" : logFile.getAbsolutePath());
-            configureLogLevel(rootLogger, logLevel==null ? LogLevel.INFO : logLevel);
+            configureLogFile(rootLogger, logFile==null ? "fcli.log" : logFile.getAbsolutePath(), fileLogLevel);
+            configureLogLevel(rootLogger, fileLogLevel);
         }
     }
 
@@ -121,11 +124,15 @@ public final class FortifyCLIDynamicInitializer {
         return lc;
     }
 
-    private void configureLogFile(Logger rootLogger, String logFile) {
+    private void configureLogFile(Logger rootLogger, String logFile, LogLevel level) {
         LoggerContext loggerContext = rootLogger.getLoggerContext();
         FileAppender<ILoggingEvent> fileAppender = new FileAppender<ILoggingEvent>();
         fileAppender.setFile(logFile);
         fileAppender.setAppend(false);
+        var thresholdFilter = new ThresholdFilter();
+        thresholdFilter.setLevel(level.getLogbackLevel().toString());
+        thresholdFilter.start();
+        fileAppender.addFilter(thresholdFilter);
         //LayoutWrappingEncoder<ILoggingEvent> encoder = new LayoutWrappingEncoder<ILoggingEvent>();
         //encoder.setContext(loggerContext);
         var ple = new PatternLayoutEncoder();
@@ -140,7 +147,8 @@ public final class FortifyCLIDynamicInitializer {
     }
 
     private void configureLogLevel(Logger rootLogger, LogLevel level) {
-        rootLogger.setLevel(level.getLogbackLevel());
+        Level fileLogbackLevel = level.getLogbackLevel();
+        rootLogger.setLevel(fileLogbackLevel.isGreaterOrEqual(Level.WARN) ? Level.WARN : fileLogbackLevel);
     }
     
     private CommandLine createGenericOptionsCommandLine() {

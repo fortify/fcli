@@ -14,6 +14,7 @@ package com.fortify.cli.common.cli.util;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
+import java.util.Objects;
 
 import com.fortify.cli.common.exception.FcliBugException;
 import com.fortify.cli.common.session.helper.ISessionDescriptor;
@@ -54,6 +55,25 @@ public final class FcliExecutionContextHolder {
     public static ContextFrame push(FcliExecutionContext ctx) {
         HOLDER.get().push(ctx);
         return new ContextFrame(ctx);
+    }
+
+    /**
+     * Run synchronous work with a borrowed context. The caller retains ownership of its resources.
+     * Unlike {@link #push}, this method restores the stack without closing the context.
+     * The work must balance any contexts it pushes.
+     */
+    public static void runWithContext(FcliExecutionContext ctx, Runnable work) {
+        var stack = HOLDER.get();
+        stack.push(Objects.requireNonNull(ctx));
+        try {
+            work.run();
+        } finally {
+            if (stack.peek() != ctx) {
+                throw new FcliBugException("Borrowed execution context stack is unbalanced");
+            }
+            stack.pop();
+            if (stack.isEmpty()) { HOLDER.remove(); }
+        }
     }
 
     /**

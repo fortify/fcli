@@ -245,15 +245,19 @@ public class DastAuditStreamProcessor implements AutoCloseable {
             completedRequestIds.add(requestId);
             requestMessages.remove(requestId);
             serverBusyAttempts.remove(requestId);
+            sendWindow.release(requestId);
         }
-        sendWindow.release(requestId);
         return issueId;
     }
 
     private void handleAudit(DastAuditResponse response) {
         String issueId = completeRequest(response.getRequestId());
         if (issueId == null) {
-            LOG.warn("Ignoring DAST audit response for unknown or completed request {}", response.getRequestId());
+            if (completedRequestIds.contains(response.getRequestId())) {
+                LOG.debug("Ignoring duplicate DAST audit response for completed request {}", response.getRequestId());
+            } else {
+                logger.warn("Ignoring DAST audit response for unrecognized request %s", response.getRequestId());
+            }
             return;
         }
         var decision = response.hasDecision() ? response.getDecision() : null;
@@ -367,7 +371,7 @@ public class DastAuditStreamProcessor implements AutoCloseable {
                 case AUDIT -> handleAudit(message.getAudit());
                 case ERROR -> handleError(message.getError());
                 case PONG -> handlePong(message.getPong());
-                default -> LOG.warn("Unknown DAST audit response type: {}", message.getResponseTypeCase());
+                default -> logger.warn("Unknown DAST audit response type: %s", message.getResponseTypeCase());
             }
         }
 

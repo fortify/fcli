@@ -207,7 +207,7 @@ public class FileUtils {
         String commentSymbol = LanguageCommentMapperUtil.getProgrammingLanguageComment(language);
         if(commentSymbol.equals("Unknown")) {
             if (languagesWithoutCommentSymbol.add(String.valueOf(language))) {
-                logger.warn("No comment symbol for language {}; line numbers not appended", language);
+                logger.debug("No comment symbol for language {}; line numbers not appended", language);
             }
             return content;
         }

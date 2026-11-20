@@ -108,7 +108,7 @@ public final class SastFprCorrelationRecorder {
                     keys.add(instanceId + "::" + dastId));
             }
         } catch (Exception e) {
-            LOG.warn("Could not read DAST_CORRELATION_STATUS tags from SAST FPR — pairs will be retried: {}", e.getMessage());
+            LOG.warn("WARN: Could not read DAST_CORRELATION_STATUS tags from SAST FPR — pairs will be retried: {}", e.getMessage());
         }
         LOG.debug("Read {} already-tried pair keys from SAST FPR audit.xml", keys.size());
         return keys;
@@ -142,7 +142,7 @@ public final class SastFprCorrelationRecorder {
         try (FprHandle fprHandle = new FprHandle(sastFprPath)) {
             Path auditPath = fprHandle.getPath("/audit.xml");
             if (!Files.exists(auditPath)) {
-                LOG.warn("audit.xml not found in SAST FPR; cannot write DAST_CORRELATION_STATUS tags.");
+                LOG.warn("WARN: audit.xml not found in SAST FPR; cannot write DAST_CORRELATION_STATUS tags.");
                 return;
             }
 
@@ -197,7 +197,8 @@ public final class SastFprCorrelationRecorder {
             String instanceId = entry.getKey();
             if (existingInstanceIds.contains(instanceId)) continue;
             if (issueList == null) {
-                LOG.warn("writeCorrelationTags: <IssueList> not found in audit.xml; cannot create entry for instanceId='{}'", instanceId);
+                LOG.warn("WARN: writeCorrelationTags: <IssueList> not found in audit.xml; cannot create entry for instanceId='{}'",
+                    instanceId);
                 continue;
             }
 
@@ -216,7 +217,7 @@ public final class SastFprCorrelationRecorder {
         mergeEntries(merged, newEntries);
         String value = buildTagValue(merged);
         if (value.length() > MAX_TAG_VALUE_LENGTH) {
-            LOG.warn("DAST_CORRELATION_STATUS tag value for SAST {} exceeds {} chars; truncating.", instanceId, MAX_TAG_VALUE_LENGTH);
+            LOG.warn("WARN: DAST_CORRELATION_STATUS tag value for SAST {} exceeds {} chars; truncating.", instanceId, MAX_TAG_VALUE_LENGTH);
             value = truncateTagValue(merged);
         }
         return value;

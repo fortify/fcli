@@ -92,7 +92,7 @@ public final class StdioHelper {
         }));
         System.setErr(new DelegatingPrintStream(() -> {
             var stack = errStack.get();
-            return stack.isEmpty() ? rawErr : stack.peek();
+            return stack.isEmpty() ? maskedErr : stack.peek();
         }));
         maskedOut = new MaskingPrintStream(rawOut, StdioHelper::mask);
         maskedErr = new MaskingPrintStream(rawErr, StdioHelper::mask);
@@ -197,17 +197,27 @@ public final class StdioHelper {
         return progressCallback.get();
     }
 
-    /** Return the current effective stdout for this thread (top of stack or raw). */
+    /** Return the current effective stdout for this thread. */
     public static PrintStream currentOut() {
         var stack = outStack.get();
-        return stack.isEmpty() ? rawOut : stack.peek();
+        return stack.isEmpty() ? (installed ? rawOut : System.out) : stack.peek();
     }
 
-    /** Return the current effective stderr for this thread (top of stack or raw). */
+    /** Return the current effective stderr for this thread. */
     public static PrintStream currentErr() {
         var stack = errStack.get();
-        return stack.isEmpty() ? rawErr : stack.peek();
+        return stack.isEmpty() ? (installed ? maskedErr : System.err) : stack.peek();
     }
+
+    /** Return whether a stream is an original stdout/stderr destination, rather than a command capture. */
+    public static boolean isOriginalStream(PrintStream stream) {
+        return installed
+                ? stream == rawOut || stream == rawErr || stream == maskedOut || stream == maskedErr
+                : stream == System.out || stream == System.err;
+    }
+
+    /** Whether this thread has explicitly installed a stderr stream. */
+    public static boolean hasErrRedirect() { return !errStack.get().isEmpty(); }
 
     /** Push a new stdout redirect onto this thread's stack. */
     public static void pushOut(PrintStream ps) {
