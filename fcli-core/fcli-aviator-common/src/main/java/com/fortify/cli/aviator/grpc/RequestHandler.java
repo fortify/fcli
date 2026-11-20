@@ -22,6 +22,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.grpc.stub.ClientCallStreamObserver;
 import io.grpc.stub.StreamObserver;
 import lombok.Getter;
 
@@ -40,6 +41,8 @@ public class RequestHandler<T> {
     private final AtomicBoolean isCompleted;
     private final AtomicBoolean isInitialized;
     private final AtomicInteger pendingRequests;
+    @Getter
+    private final CompletableFuture<Throwable> sendFailure = new CompletableFuture<>();
 
     // Metrics
     private long totalSent = 0;
@@ -119,6 +122,7 @@ public class RequestHandler<T> {
                         return false;
                     }
                 } catch (Exception e) {
+                    sendFailure.complete(e);
                     logger.error("Error sending request on stream {}: {}", streamId, e.getMessage());
                     totalErrors++;
                     return false;
@@ -188,6 +192,37 @@ public class RequestHandler<T> {
         } finally {
             sendLock.unlock();
         }
+    }
+
+    /**
+     * Discard pending sends and cancel a failed attempt without flushing or waiting for a send in progress.
+     */
+    public void abort(Throwable error) {
+        if (!isCompleted.compareAndSet(false, true)) {
+            return;
+        }
+        requestQueue.clear();
+        pendingRequests.set(0);
+        if (requestObserver instanceof ClientCallStreamObserver<?> stream) {
+            try {
+                stream.cancel("Stream attempt aborted", error);
+            } catch (Exception e) {
+                logger.debug("Error cancelling stream {}: {}", streamId, e.getMessage());
+            }
+            return;
+        }
+        CompletableFuture.runAsync(() -> {
+            sendLock.lock();
+            try {
+                if (requestObserver != null) {
+                    requestObserver.onError(error);
+                }
+            } catch (Exception e) {
+                logger.debug("Error cancelling stream {}: {}", streamId, e.getMessage());
+            } finally {
+                sendLock.unlock();
+            }
+        });
     }
 
     /**
