@@ -16,12 +16,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fortify.cli.aviator._common.exception.AviatorBugException;
-import com.fortify.cli.aviator.config.ExtensionsConfig;
-import com.fortify.cli.aviator.config.LanguagesCommentConfig;
 import com.fortify.cli.aviator.config.TagMappingConfig;
-import com.fortify.cli.aviator.util.FileTypeLanguageMapperUtil;
-import com.fortify.cli.aviator.util.LanguageCommentMapperUtil;
 import com.fortify.cli.aviator.util.ResourceUtil;
+import com.fortify.cli.common.fpr.config.ExtensionsConfig;
+import com.fortify.cli.common.fpr.config.LanguagesCommentConfig;
+import com.fortify.cli.common.fpr.util.FileTypeLanguageMapperUtil;
+import com.fortify.cli.common.fpr.util.LanguageCommentMapperUtil;
 
 public class AviatorConfigManager {
     private static final Logger LOG = LoggerFactory.getLogger(AviatorConfigManager.class);

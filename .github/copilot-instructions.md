@@ -15,7 +15,8 @@ Fcli is a modular Java 17 CLI (Picocli + Gradle) for Fortify products (FoD, SSC,
 - `fcli-common-core` — Core framework (output, REST, SpEL, sessions, exceptions)
 - `fcli-common-ci` / `fcli-common-action` / `fcli-common-tool` — CI, action engine, tool definitions
 - `fcli-fod`, `fcli-ssc`, `fcli-sc-sast`, `fcli-sc-dast` — Product modules
-- `fcli-aviator-common`, `fcli-aviator` — FPR parsing, Aviator CLI
+- `fcli-common-fpr` — Reusable, Aviator-independent SAST/DAST FPR parsing library (no `com.fortify.cli.aviator` imports allowed)
+- `fcli-aviator-common`, `fcli-aviator` — Aviator audit/remediation logic and CLI (builds on `fcli-common-fpr`)
 - `fcli-ai-assist` — MCP server (only module with MCP SDK dep)
 - `fcli-app` — Shadow jar assembly (only module with `picocli-codegen`)
 - `build-logic/` — `fcli.java-conventions` (all modules), `fcli.module-conventions` (product modules; auto-adds common-core + common-thirdparty)
@@ -27,12 +28,13 @@ Fcli is a modular Java 17 CLI (Picocli + Gradle) for Fortify products (FoD, SSC,
 - Analyze existing code before implementing; trace callers of anything you change
 - Prefer existing abstractions over creating new ones
 - After edits: run `get_errors`, build with Gradle if appropriate
+- Work autonomously on an approved plan. Do not ask yes/no questions to read, search, run tests, switch to a worktree or edit within scope. Ask only for design or approach decisions, contract changes, scope growth, and irreversible or externally visible actions (push, PR, backlog writes). See the Autonomy section in .github/skills/fcli-story-to-code/SKILL.md.
 
 ## Agent Routing
 
 - Use `fcli-dev` agent for implementation work, tests, and simple edits.
-- Use `/fcli-review` prompt for local review and PR review.
+- Use `/fcli-code-review` skill for local review (self) and PR review (peer).
 - If the active agent is not a good fit for the task, switch to the matching agent before continuing.
 - Before handoff on non-trivial changes, do a quick self-review for: command/business logic split, long argument lists that need a builder or data object, package/type mismatches, dead code or unused APIs, and security/input validation gaps.
-- If the change is broad or security-sensitive, use `/fcli-review` prompt before you finalize the response.
+- If the change is broad or security-sensitive, use `/fcli-code-review` skill before you finalize the response.
 

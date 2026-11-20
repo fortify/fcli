@@ -51,9 +51,10 @@ import com.fortify.aviator.grpc.SastFindingContext;
 import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
 import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
 import com.fortify.cli.aviator.config.IAviatorLogger;
-import com.fortify.cli.aviator.dast.DastIssue;
-import com.fortify.cli.aviator.fpr.Vulnerability;
 import com.fortify.cli.aviator.grpc.CorrelationStreamState.CandidateMatch;
+import com.fortify.cli.aviator.util.Constants;
+import com.fortify.cli.common.fpr.Vulnerability;
+import com.fortify.cli.common.fpr.dast.DastIssue;
 
 import io.grpc.Status;
 import io.grpc.stub.ClientCallStreamObserver;
@@ -96,8 +97,14 @@ public class CorrelationStreamProcessor implements AutoCloseable {
     private List<CorrelationWorkItem> correlationWorkItems;
     private Map<String, List<DastIssue>> urlToDastIssues;
     private final Set<String> pendingCorrelationRequestIds = ConcurrentHashMap.newKeySet();
+    private final Set<String> pendingValidationRequestIds = ConcurrentHashMap.newKeySet();
     private final ConcurrentHashMap<String, String> validationRequestToDastId = new ConcurrentHashMap<>();
+    private final RequestSendWindow<CorrelationClientMessage> sendWindow = new RequestSendWindow<>(
+        Constants.INITIAL_REQUEST_WINDOW, CorrelationStreamProcessor::requestIdOf);
+    private final Map<String, CorrelationClientMessage> requestMessages = new ConcurrentHashMap<>();
+    private final Map<String, Integer> serverBusyAttempts = new ConcurrentHashMap<>();
     private volatile CompletableFuture<CorrelationResult> resultFuture;
+    private volatile StreamInitializationTimeout initializationTimeout;
 
     /**
      * Keys of SAST–DAST pairs that were confirmed or rejected in a previous run.
@@ -140,7 +147,11 @@ public class CorrelationStreamProcessor implements AutoCloseable {
         this.previouslyTriedPairKeys =
             previouslyTriedPairKeys != null ? previouslyTriedPairKeys : Set.of();
         pendingCorrelationRequestIds.clear();
+        pendingValidationRequestIds.clear();
         validationRequestToDastId.clear();
+        sendWindow.clear();
+        requestMessages.clear();
+        serverBusyAttempts.clear();
 
         // Build URL→DAST map first; needed to evaluate Phase 1 skip eligibility
         this.urlToDastIssues = buildUrlToDastMap(mixedBuckets);
@@ -164,6 +175,9 @@ public class CorrelationStreamProcessor implements AutoCloseable {
         this.resultFuture = resultFuture;
         this.streamLatch = new CountDownLatch(1);
 
+        initializationTimeout = new StreamInitializationTimeout(pingScheduler,
+            () -> requestHandler.sendError(StreamInitializationTimeout.expiredError("Correlation")));
+        resultFuture.whenComplete((result, error) -> initializationTimeout.close());
         startStream(resultFuture, scanGuid);
 
         return resultFuture;
@@ -177,6 +191,7 @@ public class CorrelationStreamProcessor implements AutoCloseable {
             .successfulCorrelationResponses(state.successfulCorrelations.get())
             .skippedCorrelationResponses(state.skippedCorrelations.get())
             .failedCorrelationResponses(state.failedCorrelations.get())
+            .failedValidationResponses(state.failedValidations.get())
             .build();
     }
 
@@ -224,6 +239,7 @@ public class CorrelationStreamProcessor implements AutoCloseable {
         requestHandler.sendRequest(
             CorrelationClientMessage.newBuilder().setInit(initReq.build()).build()
         );
+        initializationTimeout.arm();
     }
 
     // ─── Phase 1: Send correlation requests ────────────────────────────
@@ -232,14 +248,14 @@ public class CorrelationStreamProcessor implements AutoCloseable {
         state.currentPhase = CorrelationStreamState.Phase.CORRELATING;
         logger.info("Sending " + correlationWorkItems.size() + " correlation requests...");
 
+        List<CorrelationClientMessage> messages = new ArrayList<>(correlationWorkItems.size());
         for (var item : correlationWorkItems) {
             var req = buildCorrelationRequest(state.streamId, item);
             pendingCorrelationRequestIds.add(req.getRequestId());
-            requestHandler.sendRequest(
-                CorrelationClientMessage.newBuilder().setCorrelation(req).build()
-            );
-            state.sentCorrelations.incrementAndGet();
+            messages.add(CorrelationClientMessage.newBuilder().setCorrelation(req).build());
         }
+        enqueueRequests(messages);
+        sendQueuedRequests();
     }
 
     // ─── Phase 2: Send validation requests ─────────────────────────────
@@ -261,15 +277,87 @@ public class CorrelationStreamProcessor implements AutoCloseable {
         }
 
         logger.info("Sending " + validationItems.size() + " validation requests...");
+        List<CorrelationClientMessage> messages = new ArrayList<>(validationItems.size());
         for (var item : validationItems) {
             var req = buildValidationRequest(state.streamId, item);
+            pendingValidationRequestIds.add(req.getRequestId());
             validationRequestToDastId.put(req.getRequestId(),
                 item.dastIssue().getId() != null ? item.dastIssue().getId() : "");
-            requestHandler.sendRequest(
-                CorrelationClientMessage.newBuilder().setValidation(req).build()
-            );
-            state.sentValidations.incrementAndGet();
+            messages.add(CorrelationClientMessage.newBuilder().setValidation(req).build());
         }
+        enqueueRequests(messages);
+        sendQueuedRequests();
+    }
+
+    // ─── Windowed sending ──────────────────────────────────────────────
+
+    private static String requestIdOf(CorrelationClientMessage message) {
+        return switch (message.getRequestTypeCase()) {
+            case CORRELATION -> message.getCorrelation().getRequestId();
+            case VALIDATION -> message.getValidation().getRequestId();
+            default -> "";
+        };
+    }
+
+    private void enqueueRequests(List<CorrelationClientMessage> messages) {
+        messages.forEach(message -> requestMessages.put(requestIdOf(message), message));
+        sendWindow.enqueue(messages);
+    }
+
+    /** Sends queued requests while the in-flight window has free slots. */
+    private void sendQueuedRequests() {
+        var currentFuture = resultFuture;
+        if (requestHandler == null || requestHandler.isCompleted() || currentFuture == null || currentFuture.isDone()) {
+            return;
+        }
+        for (var message : sendWindow.drainSendable()) {
+            requestHandler.sendRequest(message);
+            if (message.getRequestTypeCase() == CorrelationClientMessage.RequestTypeCase.CORRELATION) {
+                state.sentCorrelations.incrementAndGet();
+            } else {
+                state.sentValidations.incrementAndGet();
+            }
+        }
+    }
+
+    /** Marks a request as finished: frees its window slot and drops its retry state. */
+    private void completeRequest(String requestId) {
+        requestMessages.remove(requestId);
+        serverBusyAttempts.remove(requestId);
+        sendWindow.release(requestId);
+    }
+
+    /**
+     * Re-sends a request the server rejected as overloaded, after a backoff. The request keeps its
+     * window slot while waiting, so retries cannot push in-flight work above the window.
+     * Returns false when the request is unknown or has exhausted its retries.
+     */
+    private boolean scheduleServerBusyRetry(String requestId) {
+        CorrelationClientMessage message = requestMessages.get(requestId);
+        if (message == null) return false;
+
+        int attempt = serverBusyAttempts.merge(requestId, 1, Integer::sum);
+        if (attempt > Constants.MAX_RETRIES) {
+            LOG.warn("Correlation request {} rejected as server busy {} times; giving up", requestId, attempt - 1);
+            return false;
+        }
+
+        long delay = ServerBusyBackoff.delayMs(attempt);
+        LOG.warn("Server busy for correlation request {}; retrying in {} ms (attempt {}/{})",
+            requestId, delay, attempt, Constants.MAX_RETRIES);
+
+        var run = resultFuture;
+        Runnable resend = () -> {
+            if (run != resultFuture || run.isDone() || requestHandler.isCompleted()
+                    || !requestMessages.containsKey(requestId)) return;
+            requestHandler.sendRequest(message);
+        };
+        if (pingScheduler == null) {
+            CompletableFuture.delayedExecutor(delay, TimeUnit.MILLISECONDS).execute(resend);
+        } else {
+            pingScheduler.schedule(resend, delay, TimeUnit.MILLISECONDS);
+        }
+        return true;
     }
 
     // ─── Response observer ─────────────────────────────────────────────
@@ -309,6 +397,11 @@ public class CorrelationStreamProcessor implements AutoCloseable {
         @Override
         public void onError(Throwable t) {
             stopPingPong();
+            if (initializationTimeout.isExpired()) {
+                resultFuture.completeExceptionally(StreamInitializationTimeout.expiredError("Correlation"));
+                streamLatch.countDown();
+                return;
+            }
             Status status = Status.fromThrowable(t);
             LOG.error("Correlation stream error: {} - {}", status.getCode(), status.getDescription(), t);
             resultFuture.completeExceptionally(
@@ -332,6 +425,7 @@ public class CorrelationStreamProcessor implements AutoCloseable {
     // ─── Response handlers ─────────────────────────────────────────────
 
     private void handleInitResponse(CorrelationInitResponse resp) {
+        if (!initializationTimeout.initialized()) return;
         LOG.info("Correlation stream initialized. Server stream ID: {}, Reserved quota: {}, Status: {}",
             resp.getServerStreamId(), resp.getReservedQuota(), resp.getStatus());
 
@@ -351,6 +445,7 @@ public class CorrelationStreamProcessor implements AutoCloseable {
             LOG.warn("Ignoring correlation response for unknown or completed request {}", resp.getRequestId());
             return;
         }
+        completeRequest(resp.getRequestId());
         int received = state.receivedCorrelations.incrementAndGet();
         LOG.debug("Correlation response {}/{} for SAST {}: status={}",
             received, state.totalCorrelationRequests, resp.getSastId(), resp.getStatus());
@@ -375,17 +470,25 @@ public class CorrelationStreamProcessor implements AutoCloseable {
             LOG.debug("Non-OK correlation for SAST {}: {} — {}",
                 resp.getSastId(), resp.getStatus(), resp.getNoCorrelationReason());
         }
+        onCorrelationRequestFinished(received);
+    }
 
-        // Check if all correlation responses received → transition
+    private void onCorrelationRequestFinished(int received) {
         if (received >= state.totalCorrelationRequests) {
             logger.info("All " + received + " correlation responses received. " +
                 state.candidateMatches.size() + " candidate matches found.");
             // scanGuid is captured in the observer
             transitionToValidation(null); // scanGuid will come from observer; use state
         }
+        sendQueuedRequests();
     }
 
     private void handleValidationResponse(CorrelationValidationResponse resp, String scanGuid) {
+        if (!pendingValidationRequestIds.remove(resp.getRequestId())) {
+            LOG.warn("Ignoring validation response for unknown or completed request {}", resp.getRequestId());
+            return;
+        }
+        completeRequest(resp.getRequestId());
         int received = state.receivedValidations.incrementAndGet();
         LOG.info("Validation response {}/{} for SAST {}: confirmed={}",
             received, state.totalValidationRequests, resp.getSastId(),
@@ -416,27 +519,55 @@ public class CorrelationStreamProcessor implements AutoCloseable {
                 ));
             }
         }
+        onValidationRequestFinished(received);
+    }
 
-        // Check if all validations received → complete
+    private void onValidationRequestFinished(int received) {
         if (received >= state.totalValidationRequests) {
             logger.info("All " + received + " validation responses received. " +
                 state.confirmedPairs.size() + " confirmed pairs, " +
-                state.rejectedPairs.size() + " rejected pairs.");
+                state.rejectedPairs.size() + " rejected pairs, " +
+                state.failedValidations.get() + " failed.");
             if (!resultFuture.isDone()) {
                 resultFuture.complete(createResultSnapshot());
             }
             requestHandler.complete();
             streamLatch.countDown();
         }
+        sendQueuedRequests();
     }
 
     private void handleErrorResponse(CorrelationErrorResponse resp,
                                       CompletableFuture<CorrelationResult> resultFuture) {
+        String requestId = resp.getRequestId();
+        if (ServerBusyBackoff.isServerBusy(resp.getStatus()) && scheduleServerBusyRetry(requestId)) {
+            return;
+        }
+        if (pendingCorrelationRequestIds.remove(requestId)) {
+            completeRequest(requestId);
+            state.failedCorrelations.incrementAndGet();
+            int received = state.receivedCorrelations.incrementAndGet();
+            LOG.warn("Correlation request {} failed: {} — {}", requestId, resp.getStatus(), resp.getStatusMessage());
+            logger.progress("Correlating " + received + " of " + state.totalCorrelationRequests + " SAST findings");
+            onCorrelationRequestFinished(received);
+            return;
+        }
+        if (pendingValidationRequestIds.remove(requestId)) {
+            completeRequest(requestId);
+            // Not recorded as rejected, so the pair is retried on the next run
+            state.failedValidations.incrementAndGet();
+            int received = state.receivedValidations.incrementAndGet();
+            LOG.warn("Validation request {} failed: {} — {}", requestId, resp.getStatus(), resp.getStatusMessage());
+            logger.progress("Validating " + received + " of " + state.totalValidationRequests + " correlation candidates");
+            onValidationRequestFinished(received);
+            return;
+        }
         LOG.error("Correlation stream error from server: {} — {}",
             resp.getStatus(), resp.getStatusMessage());
         resultFuture.completeExceptionally(
             new AviatorSimpleException("Correlation error: " + resp.getStatusMessage())
         );
+        close();
         streamLatch.countDown();
     }
 
@@ -718,6 +849,7 @@ public class CorrelationStreamProcessor implements AutoCloseable {
 
     @Override
     public void close() {
+        if (initializationTimeout != null) initializationTimeout.close();
         stopPingPong();
         if (requestHandler != null && !requestHandler.isCompleted()) {
             requestHandler.complete();

@@ -16,6 +16,7 @@ import java.time.Clock;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
@@ -60,11 +61,11 @@ import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
 import com.fortify.cli.aviator.audit.model.AuditResponse;
 import com.fortify.cli.aviator.audit.model.UserPrompt;
 import com.fortify.cli.aviator.config.IAviatorLogger;
-import com.fortify.cli.aviator.fpr.model.FVDLMetadata;
-import com.fortify.cli.aviator.fpr.utils.ISourceDecoder;
 import com.fortify.cli.aviator.util.Constants;
-import com.fortify.cli.aviator.util.FprHandle;
-import com.fortify.cli.aviator.util.StringUtil;
+import com.fortify.cli.common.fpr.model.FVDLMetadata;
+import com.fortify.cli.common.fpr.util.FprHandle;
+import com.fortify.cli.common.fpr.util.StringUtil;
+import com.fortify.cli.common.fpr.utils.ISourceDecoder;
 import com.fortify.cli.common.progress.helper.IProgressWriter;
 import com.fortify.cli.common.progress.helper.ProgressWriterType;
 import com.fortify.grpc.token.DeleteTokenRequest;
@@ -109,15 +110,26 @@ public class AviatorGrpcClient implements AutoCloseable {
     private final java.util.concurrent.ScheduledExecutorService pingScheduler;
     final AtomicBoolean isShutdown = new AtomicBoolean(false);
 
-    public AviatorGrpcClient(ManagedChannel channel, long defaultTimeoutSeconds, IAviatorLogger logger, long pingIntervalSeconds) {
+    /** Fail-fast clients require a connection context for error messages. */
+    AviatorGrpcClient(ManagedChannel channel, long defaultTimeoutSeconds, IAviatorLogger logger, long pingIntervalSeconds,
+            AviatorRequestPolicy requestPolicy, AviatorConnectionContext connectionContext) {
         LOG.debug("Initializing AviatorGrpcClient with ManagedChannel");
+        Objects.requireNonNull(requestPolicy, "requestPolicy");
         this.logger = logger;
         this.channel = channel;
         this.asyncStub = AuditorServiceGrpc.newStub(channel).withCompression("gzip").withMaxInboundMessageSize(Constants.MAX_MESSAGE_SIZE).withMaxOutboundMessageSize(Constants.MAX_MESSAGE_SIZE).withWaitForReady();
-        this.blockingStub = ApplicationServiceGrpc.newBlockingStub(channel).withCompression("gzip").withMaxInboundMessageSize(Constants.MAX_MESSAGE_SIZE).withMaxOutboundMessageSize(Constants.MAX_MESSAGE_SIZE).withWaitForReady();
-        this.tokenServiceBlockingStub = TokenServiceGrpc.newBlockingStub(channel).withCompression("gzip").withMaxInboundMessageSize(Constants.MAX_MESSAGE_SIZE).withMaxOutboundMessageSize(Constants.MAX_MESSAGE_SIZE).withWaitForReady();
-        this.entitlementServiceBlockingStub = EntitlementServiceGrpc.newBlockingStub(channel).withCompression("gzip").withMaxInboundMessageSize(Constants.MAX_MESSAGE_SIZE).withMaxOutboundMessageSize(Constants.MAX_MESSAGE_SIZE).withWaitForReady();
-        this.dastEntitlementServiceBlockingStub = DastEntitlementServiceGrpc.newBlockingStub(channel).withCompression("gzip").withMaxInboundMessageSize(Constants.MAX_MESSAGE_SIZE).withMaxOutboundMessageSize(Constants.MAX_MESSAGE_SIZE).withWaitForReady();
+        this.blockingStub = requestPolicy.configureNewStub(ApplicationServiceGrpc.newBlockingStub(channel)
+            .withCompression("gzip").withMaxInboundMessageSize(Constants.MAX_MESSAGE_SIZE)
+            .withMaxOutboundMessageSize(Constants.MAX_MESSAGE_SIZE), connectionContext);
+        this.tokenServiceBlockingStub = requestPolicy.configureNewStub(TokenServiceGrpc.newBlockingStub(channel)
+            .withCompression("gzip").withMaxInboundMessageSize(Constants.MAX_MESSAGE_SIZE)
+            .withMaxOutboundMessageSize(Constants.MAX_MESSAGE_SIZE), connectionContext);
+        this.entitlementServiceBlockingStub = requestPolicy.configureNewStub(EntitlementServiceGrpc.newBlockingStub(channel)
+            .withCompression("gzip").withMaxInboundMessageSize(Constants.MAX_MESSAGE_SIZE)
+            .withMaxOutboundMessageSize(Constants.MAX_MESSAGE_SIZE), connectionContext);
+        this.dastEntitlementServiceBlockingStub = requestPolicy.configureNewStub(DastEntitlementServiceGrpc.newBlockingStub(channel)
+            .withCompression("gzip").withMaxInboundMessageSize(Constants.MAX_MESSAGE_SIZE)
+            .withMaxOutboundMessageSize(Constants.MAX_MESSAGE_SIZE), connectionContext);
         this.correlationAsyncStub = CorrelationServiceGrpc.newStub(channel).withCompression("gzip").withMaxInboundMessageSize(Constants.MAX_MESSAGE_SIZE).withMaxOutboundMessageSize(Constants.MAX_MESSAGE_SIZE).withWaitForReady();
         this.dastAuditAsyncStub = DastAuditServiceGrpc.newStub(channel)
             .withCompression("gzip")
@@ -138,8 +150,24 @@ public class AviatorGrpcClient implements AutoCloseable {
         });
     }
 
+    /**
+     * Backward-compatible constructor for callers that manage their own channel. These clients retain the
+     * historical wait-for-ready behavior; admin commands use the helper's fail-fast constructor instead.
+     */
+    public AviatorGrpcClient(ManagedChannel channel, long defaultTimeoutSeconds, IAviatorLogger logger, long pingIntervalSeconds) {
+        this(channel, defaultTimeoutSeconds, logger, pingIntervalSeconds, AviatorRequestPolicy.WAIT_FOR_READY, null);
+    }
+
     public AviatorGrpcClient(String host, int port, long defaultTimeoutSeconds, IAviatorLogger logger, long pingIntervalSeconds) {
-        this(ManagedChannelBuilder.forAddress(host, port).useTransportSecurity().maxInboundMessageSize(Constants.MAX_MESSAGE_SIZE).keepAliveTime(30, TimeUnit.SECONDS).keepAliveTimeout(10, TimeUnit.SECONDS).keepAliveWithoutCalls(true).enableRetry().compressorRegistry(CompressorRegistry.getDefaultInstance()).decompressorRegistry(DecompressorRegistry.getDefaultInstance()).build(), defaultTimeoutSeconds, logger, pingIntervalSeconds);
+        this(ManagedChannelBuilder.forAddress(host, port).useTransportSecurity()
+                .maxInboundMessageSize(Constants.MAX_MESSAGE_SIZE)
+                .keepAliveTime(30, TimeUnit.SECONDS)
+                .keepAliveTimeout(10, TimeUnit.SECONDS)
+                .keepAliveWithoutCalls(true)
+                .enableRetry()
+                .compressorRegistry(CompressorRegistry.getDefaultInstance())
+                .decompressorRegistry(DecompressorRegistry.getDefaultInstance())
+                .build(), defaultTimeoutSeconds, logger, pingIntervalSeconds);
         LOG.debug("Initialized AviatorGrpcClient - Host: {}, Port: {}", host, port);
     }
 

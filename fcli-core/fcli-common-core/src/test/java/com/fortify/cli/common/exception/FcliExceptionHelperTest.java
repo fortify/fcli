@@ -64,4 +64,18 @@ public class FcliExceptionHelperTest {
         assertTrue(formatted.contains("java.lang.Exception: generic failure"));
         assertTrue(formatted.contains("\n\tat "));
     }
+
+    @Test
+    void explicitDistrustDoesNotSuggestAddingTrust() {
+        var rejection = new CertificateException("Certificate rejected by fcli distrust policy: CVE-2026-91403");
+        var handshake = new SSLHandshakeException("handshake failed");
+        handshake.initCause(rejection);
+
+        var formatted = FcliExceptionHelper.formatException(new RuntimeException("wrapper", handshake));
+
+        assertTrue(formatted.contains("CVE-2026-91403"));
+        assertTrue(formatted.contains("cannot override"));
+        assertFalse(formatted.contains("add-trusted-url"));
+        assertFalse(formatted.contains("Troubleshooting steps"));
+    }
 }

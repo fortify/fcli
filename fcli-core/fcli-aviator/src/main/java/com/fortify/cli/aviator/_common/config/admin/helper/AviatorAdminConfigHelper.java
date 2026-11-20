@@ -15,6 +15,7 @@ package com.fortify.cli.aviator._common.config.admin.helper;
 import com.fortify.cli.aviator._common.util.AviatorSignatureUtils;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClient;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClientHelper;
+import com.fortify.cli.aviator.grpc.AviatorRequestPolicy;
 import com.fortify.cli.common.session.helper.AbstractSessionHelper;
 
 public class AviatorAdminConfigHelper extends AbstractSessionHelper<AviatorAdminConfigDescriptor> {
@@ -37,8 +38,8 @@ public class AviatorAdminConfigHelper extends AbstractSessionHelper<AviatorAdmin
         return AviatorAdminConfigDescriptor.class;
     }
 
-    public void validateConfig(AviatorAdminConfigDescriptor configDescriptor) {
-        try (AviatorGrpcClient client = AviatorGrpcClientHelper.createClient(configDescriptor.getAviatorUrl())) {
+    public void validateConfig(AviatorAdminConfigDescriptor configDescriptor, AviatorRequestPolicy policy) {
+        try (AviatorGrpcClient client = AviatorGrpcClientHelper.createClient(configDescriptor.getAviatorUrl(), policy)) {
             String[] messageAndSignature = AviatorSignatureUtils.createMessageAndSignature(configDescriptor, configDescriptor.getTenant());
             String message = messageAndSignature[0];
             String signature = messageAndSignature[1];
