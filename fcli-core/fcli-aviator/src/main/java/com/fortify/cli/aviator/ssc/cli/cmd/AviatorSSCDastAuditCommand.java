@@ -171,7 +171,7 @@ public class AviatorSSCDastAuditCommand extends AbstractSSCJsonNodeOutputCommand
             TagMappingConfig tagMappingConfig) {
         List<String> warnings = AviatorSSCTagValidator.validatePreUpload(
             unirest, appVersion.getVersionId(), tagMappingConfig.getTag_id(),
-            tagMappingConfig.getMappedValues(), logger);
+            tagMappingConfig.getMappedValues(), List.of(), logger);
         LOG.info("DAST tag validation complete. {} warning(s) found.", warnings.size());
     }
 

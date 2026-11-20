@@ -13,6 +13,7 @@
 package com.fortify.cli.aviator.ssc.helper;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -75,14 +76,14 @@ public class AviatorSSCCustomTagHelper {
      */
     public SynchronizationResult synchronize(AviatorSSCPrepareHelper.PrepareResult result) {
         try {
-            JsonNode existingTag = findExistingCustomTag();
-            if (existingTag != null) {
-                return handleExistingTag(existingTag, result);
-            }
-
             SynchronizationResult systemManagedResult = checkSystemManagedTag(result);
             if (systemManagedResult != null) {
                 return systemManagedResult;
+            }
+
+            JsonNode existingTag = findExistingCustomTag();
+            if (existingTag != null) {
+                return handleExistingTag(existingTag, result);
             }
 
             return createTagOrFail(result);
@@ -116,9 +117,35 @@ public class AviatorSSCCustomTagHelper {
         if (!isAviatorBuiltInTag()) {
             return null;
         }
-        JsonNode internalTag = findInInternalCustomTags();
+
+        ArrayNode internalTags;
+        try {
+            LOG.debug("Checking /internalCustomTags for system-managed tag '{}'", tagDef.getName());
+            internalTags = AviatorSSCTagJsonHelper.fetchInternalCustomTags(unirest);
+        } catch (UnexpectedHttpResponseException e) {
+            if (e.getStatus() == 404 || e.getStatus() == 405) {
+                LOG.debug("/internalCustomTags is not supported by this SSC version");
+                return null;
+            }
+            throw e;
+        }
+
+        if (internalTags == null) {
+            LOG.error("Invalid /internalCustomTags response while checking '{}'", tagDef.getName());
+            result.addEntry("Custom Tag", "FAILED",
+                    "Unable to verify whether '" + tagDef.getName() + "' is system-managed.");
+            return SynchronizationResult.failure();
+        }
+
+        JsonNode internalTag = AviatorSSCTagJsonHelper.findByGuid(internalTags, tagDef.getGuid());
         if (internalTag == null) {
             return null;
+        }
+        if (!AviatorSSCTagJsonHelper.isSystemManaged(internalTag)) {
+            LOG.error("Unexpected tag type in /internalCustomTags for '{}'", tagDef.getName());
+            result.addEntry("Custom Tag", "FAILED",
+                    "Unable to verify whether '" + tagDef.getName() + "' is system-managed.");
+            return SynchronizationResult.failure();
         }
         LOG.info("Tag '{}' found as system-managed internal tag (SSC 26.2+). Configure through SSC.",
                 tagDef.getName());
@@ -153,31 +180,6 @@ public class AviatorSSCCustomTagHelper {
                 || tagDef == AviatorSSCTagDefs.AVIATOR_STATUS_TAG;
     }
 
-    /**
-     * Queries the /internalCustomTags endpoint to find system-managed Aviator tags.
-     * Returns null if the endpoint doesn't exist (older SSC) or tag not found.
-     */
-    private JsonNode findInInternalCustomTags() {
-        try {
-            LOG.debug("Checking /internalCustomTags for system-managed tag '{}'", tagDef.getName());
-            JsonNode response = unirest.get(SSCUrls.INTERNAL_CUSTOM_TAGS)
-                    .asObject(JsonNode.class).getBody();
-            JsonNode data = response.get("data");
-            if (data == null || !data.isArray()) {
-                LOG.debug("No data array in /internalCustomTags response");
-                return null;
-            }
-            return JsonHelper.stream((ArrayNode) data)
-                    .filter(tag -> tagDef.getGuid().equalsIgnoreCase(tag.path("guid").asText()))
-                    .findFirst().orElse(null);
-        } catch (Exception e) {
-            // Endpoint may not exist in older SSC versions - this is expected.
-            // Various exceptions can occur: HTTP 404, JSON parse errors, etc.
-            LOG.debug("Could not query /internalCustomTags (may not exist in this SSC version): {}", e.getMessage());
-            return null;
-        }
-    }
-
     private JsonNode verifyAndUpdateExistingTag(AviatorSSCPrepareHelper.PrepareResult result, JsonNode existingTag) {
         LOG.debug("Found existing tag '{}'. Verifying values.", tagDef.getName());
         JsonNode fullTagDetails = unirest.get(SSCUrls.CUSTOM_TAG(existingTag.get("id").asText())).asObject(JsonNode.class).getBody().get("data");
@@ -189,14 +191,8 @@ public class AviatorSSCCustomTagHelper {
             return fullTagDetails;
         }
 
-        JsonNode valueListNode = fullTagDetails.get("valueList");
-        ArrayNode valueListArray = (valueListNode != null && valueListNode.isArray())
-            ? (ArrayNode) valueListNode
-            : JsonHelper.getObjectMapper().createArrayNode();
-
-        Set<String> existingValues = JsonHelper.stream(valueListArray)
-            .map(v -> v.get("lookupValue").asText())
-            .collect(Collectors.toSet());
+        Set<String> existingValues = Objects.requireNonNullElse(
+            AviatorSSCTagJsonHelper.lookupValues(fullTagDetails), Set.of());
         List<String> missingValues = tagDef.getValues().stream()
             .filter(v -> !existingValues.contains(v))
             .collect(Collectors.toList());
@@ -212,7 +208,17 @@ public class AviatorSSCCustomTagHelper {
         LOG.info("Updating custom tag '{}' to add missing values.", tagDef.getName());
         ObjectNode updatedTagBody = fullTagDetails.deepCopy();
         ArrayNode valuesArray = updatedTagBody.withArray("valueList");
-        missingValues.forEach(v -> valuesArray.add(JsonHelper.getObjectMapper().createObjectNode().put("lookupValue", v)));
+        long nextLookupIndex = JsonHelper.stream(valuesArray)
+                .mapToLong(value -> value.path("lookupIndex").asLong(0))
+                .max()
+                .orElse(0) + 1;
+        for (String value : missingValues) {
+            valuesArray.add(JsonHelper.getObjectMapper().createObjectNode()
+                    .put("lookupValue", value)
+                    .put("lookupIndex", nextLookupIndex)
+                    .put("seqNumber", nextLookupIndex));
+            nextLookupIndex++;
+        }
         LOG.debug("Update payload for tag '{}': {}", tagDef.getName(), updatedTagBody.toPrettyString());
 
         JsonNode updatedTag = unirest.put(SSCUrls.CUSTOM_TAG(existingTag.get("id").asText())).body(updatedTagBody).asObject(JsonNode.class).getBody().get("data");
