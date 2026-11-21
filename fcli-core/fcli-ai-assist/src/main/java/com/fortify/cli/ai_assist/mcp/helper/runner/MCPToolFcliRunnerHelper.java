@@ -36,17 +36,17 @@ import picocli.CommandLine.Model.CommandSpec;
  * @author Ruud Senden
  */
 class MCPToolFcliRunnerHelper {
-    static final Result collectStdout(String fullCmd, CommandSpec spec) {
-        return FcliRunnerHelper.collectStdout(fullCmd, collectMcpDefaultOptions(spec));
+    static final Result collectStdout(String[] args, CommandSpec spec) {
+        return FcliRunnerHelper.collectStdout(args, collectMcpDefaultOptions(spec));
     }
     
-    static final Result collectRecords(String fullCmd, Consumer<ObjectNode> recordConsumer, CommandSpec spec) {
-        return FcliRunnerHelper.collectRecords(fullCmd, recordConsumer, collectMcpDefaultOptions(spec));
+    static final Result collectRecords(String[] args, Consumer<ObjectNode> recordConsumer, CommandSpec spec) {
+        return FcliRunnerHelper.collectRecords(args, recordConsumer, collectMcpDefaultOptions(spec));
     }
     
-    static final MCPToolResult collectRecords(String fullCmd, CommandSpec spec) {
+    static final MCPToolResult collectRecords(String[] args, CommandSpec spec) {
         var records = new ArrayList<JsonNode>();
-        var result = collectRecords(fullCmd, records::add, spec);
+        var result = collectRecords(args, records::add, spec);
         return MCPToolResult.fromRecords(result, records);
     }
     

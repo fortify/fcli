@@ -24,6 +24,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.exception.FcliExceptionHelper;
 import com.fortify.cli.common.json.JsonHelper;
+import com.fortify.cli.common.log.LogMaskHelper;
+import com.fortify.cli.common.log.LogMessageType;
 import com.fortify.cli.common.session.helper.FcliNoSessionException;
 import com.fortify.cli.common.util.OutputHelper.Result;
 import com.fortify.cli.common.util.StringHelper;
@@ -180,13 +182,21 @@ public class MCPToolResult {
                     and ask them to run the '%s' command from a terminal window. Please \
                     show the command to be run on a separate line for better visibility.
                     """, loginCmd);
-            LOG.debug("Returning MCP tool result (hasError={}):\n{}", hasError, StringHelper.indent(output, "\t"));
+            logResult(hasError, output);
             return CallToolResult.builder().addTextContent(output).isError(hasError).build();
         }
-        LOG.debug("Returning MCP tool result (hasError={}):\n{}", hasError, StringHelper.indent(output, "\t"));
+        logResult(hasError, output);
         return CallToolResult.builder().addTextContent(output).isError(hasError).build();
     }
     
+    private static void logResult(boolean hasError, String output) {
+        if ( LOG.isDebugEnabled() ) {
+            var masked = LogMaskHelper.INSTANCE.mask(LogMessageType.FCLI, output);
+            var safe = masked.replace("\u0085", "\\u0085").replace("\u2028", "\\u2028").replace("\u2029", "\\u2029");
+            LOG.debug("Returning MCP tool result (hasError={}):\n{}", hasError, StringHelper.indent(safe, "\t"));
+        }
+    }
+
     // Pagination metadata inner class
     
     @Data @Builder(toBuilder = true)

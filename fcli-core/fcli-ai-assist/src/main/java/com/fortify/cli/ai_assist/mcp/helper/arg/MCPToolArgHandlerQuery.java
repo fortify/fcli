@@ -14,6 +14,7 @@ package com.fortify.cli.ai_assist.mcp.helper.arg;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -37,7 +38,7 @@ import picocli.CommandLine.Model.CommandSpec;
  * {@link IMCPToolArgHandler} implementation for handling queries. The {@link #updateSchema(JsonSchema)}
  * method adds a {@value MCPToolArgHandlerQuery#ARG_QUERY} argument to the MCP tool schema, generating
  * an associated JSON type definition that lists some of the commonly used fields that can be queried
- * upon. The {@link #getFcliCmdArgs(Map)} uses the {@value MCPToolArgHandlerQuery#ARG_QUERY} argument
+ * upon. The {@link #getFcliArgs(Map)} uses the {@value MCPToolArgHandlerQuery#ARG_QUERY} argument
  * value to generate the appropriate SpEL-formatted value for the fcli --query argument.
  *
  * @author Ruud Senden
@@ -165,9 +166,9 @@ public final class MCPToolArgHandlerQuery implements IMCPToolArgHandler {
     }
     
     @Override
-    public String getFcliCmdArgs(Map<String, Object> toolArgs) {
+    public List<String> getFcliArgs(Map<String, Object> toolArgs) {
         var queries = new ArrayList<String>();
-        var queryObj = toolArgs.get(ARG_QUERY);
+        var queryObj = toolArgs==null ? null : toolArgs.get(ARG_QUERY);
         if ( queryObj != null ) {
             if ( queryObj instanceof Map ) {
                 ((Map<?,?>)queryObj).entrySet().forEach(e->addQuery(queries, (String)e.getKey(), (String)e.getValue() ));
@@ -177,10 +178,18 @@ public final class MCPToolArgHandlerQuery implements IMCPToolArgHandler {
                 throw new FcliSimpleException("Invalid type (%s) for --query; expected object", queryObj.getClass().getSimpleName());
             }
         }
-        return queries.isEmpty() ? "" : String.format("\"--query=%s\"", String.join(" && ", queries));
+        return queries.isEmpty() ? List.of() : List.of("--query="+String.join(" && ", queries));
+    }
+
+    @Override @Deprecated
+    public String getFcliCmdArgs(Map<String, Object> toolArgs) {
+        return IMCPToolArgHandler.toLegacyCmdArgs(getFcliArgs(toolArgs));
     }
 
     private final void addQuery(ArrayList<String> queries, String schemaPropertyName, String value) {
+        if ( value==null ) {
+            throw new FcliSimpleException("Query value for '%s' cannot be null", schemaPropertyName);
+        }
         // Get mapped field name if available, otherwise use schema property name (allows extensibility for unmapped fields)
         var fieldName = fieldsBySchemaPropertyName.getOrDefault(schemaPropertyName, schemaPropertyName);
 
@@ -189,10 +198,8 @@ public final class MCPToolArgHandlerQuery implements IMCPToolArgHandler {
             throw new FcliSimpleException("Invalid query field name '%s'; must contain only alphanumeric characters, dots, underscores, and hyphens", fieldName);
         }
 
-        // Escape backslashes first, then single quotes to prevent SpEL string literal breakout
-        // (value goes inside single quotes in SpEL expression, so double quotes don't need escaping)
-        var escapedValue = value.replace("\\", "\\\\")
-                                 .replace("'", "\\'");
+        // SpEL escapes single quotes by doubling them; backslashes remain part of the regex.
+        var escapedValue = value.replace("'", "''");
 
         queries.add(String.format("%s matches '%s'", fieldName, escapedValue));
     }

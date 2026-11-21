@@ -97,7 +97,7 @@ class MCPToolFcliRunnerRecordsTest {
         Map<String, Object> toolArgs = Map.of("id", "test-123");
         
         // Act
-        String cmdArgs = runner.getToolSpecArgHelper().getFcliCmdArgs(toolArgs);
+        var cmdArgs = runner.getToolSpecArgHelper().getFcliArgs(toolArgs);
         
         // Assert
         assertNotNull(cmdArgs);

@@ -12,6 +12,7 @@
  */
 package com.fortify.cli.ai_assist.mcp.helper.arg;
 
+import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -37,8 +38,8 @@ public final class MCPToolArgHandlerFcliOption extends AbstractMCPToolArgHandler
         return argSpec.longestName();
     }
     @Override
-    protected String combineFcliCmdArgs(String name, Stream<String> values) {
-        return String.format("\"%s=%s\"", name, values.collect(Collectors.joining(",")));
+    protected List<String> combineFcliCmdArgs(String name, Stream<String> values) {
+        return List.of(name+"="+values.collect(Collectors.joining(",")));
     }
     @Override
     protected boolean isRequired() {

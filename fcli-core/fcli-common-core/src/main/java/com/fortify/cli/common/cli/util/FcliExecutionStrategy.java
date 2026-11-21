@@ -18,6 +18,7 @@ import com.fortify.cli.common.cli.mixin.ICommandAware;
 import com.fortify.cli.common.exception.FcliBugException;
 import com.fortify.cli.common.log.LogMaskHelper;
 import com.fortify.cli.common.log.LogMaskSource;
+import com.fortify.cli.common.log.LogMessageType;
 import com.fortify.cli.common.log.MaskValue;
 import com.fortify.cli.common.util.FcliBuildProperties;
 import com.fortify.cli.common.util.FcliDockerHelper;
@@ -149,7 +150,9 @@ public final class FcliExecutionStrategy implements IExecutionStrategy {
 
     private static void logVersionAndArgs(CommandSpec commandSpec) {
         log.info("fcli version: {} ", FcliBuildProperties.INSTANCE.getFcliBuildInfo());
-        log.info("fcli arguments: {} {} ", commandSpec.qualifiedName(), commandSpec.commandLine().getParseResult().expandedArgs());
+        var args = commandSpec.commandLine().getParseResult().expandedArgs().toString();
+        var maskedArgs = LogMaskHelper.INSTANCE.mask(LogMessageType.FCLI, args);
+        log.info("fcli arguments: {} {} ", commandSpec.qualifiedName(), maskedArgs.replaceAll("\\R", " "));
         log.debug("Running in Docker container: {}", FcliDockerHelper.isRunningInContainer());
     }
 

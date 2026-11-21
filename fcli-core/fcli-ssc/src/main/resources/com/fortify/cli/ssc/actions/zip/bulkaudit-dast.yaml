@@ -479,7 +479,7 @@ steps:
                         ${project.project_name}:${project.version_name}
                     - run.fcli:
                         prepare_version:
-                          cmd: aviator ssc prepare --av "${project.app_version}"
+                          cmd: aviator ssc prepare --av "${project.id}"
                           status.check: false
                     - if: ${prepare_version.exitCode != 0}
                       do:
@@ -492,7 +492,7 @@ steps:
                         stats.audit_attempts: ${stats.audit_attempts + 1}
                     - var.set:
                         run_audit: >-
-                          ${#fn.call('runDastAudit', project.app_version, project.aviator_app_name,
+                          ${#fn.call('runDastAudit', project.id, project.aviator_app_name,
                           #ifBlank(cli['tag-mapping'], ''), refresh_metrics, cli['refresh-timeout'])}
                     - if: "${run_audit.exitCode != 0 || (run_audit.records != null && run_audit.records.size() > 0 && (run_audit.records[0].__action__ == 'FAILED' || run_audit.records[0].__action__ == 'PARTIALLY_AUDITED'))}"
                       do:
@@ -521,7 +521,6 @@ formatters:
     id: ${version.id}
     project_name: ${current_project_name}
     version_name: ${current_version_name}
-    app_version: ${current_project_name + ':' + current_version_name}
     aviator_app_name: ${current_aviator_app_name}
     exists_in_aviator: ${project_exists_in_aviator}
 
@@ -529,7 +528,6 @@ formatters:
     id: ${candidate.id}
     project_name: ${candidate.project_name}
     version_name: ${candidate.version_name}
-    app_version: ${candidate.app_version}
     aviator_app_name: ${candidate.aviator_app_name}
     exists_in_aviator: ${candidate.exists_in_aviator}
     latest_dast_scan_date: ${latest_dast_scan_date}

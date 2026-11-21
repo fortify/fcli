@@ -12,7 +12,12 @@
  */
 package com.fortify.cli.common.action.runner.processor;
 import java.io.PrintStream;
+import java.lang.reflect.Array;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
@@ -20,6 +25,7 @@ import java.util.function.Consumer;
 
 import org.apache.commons.lang3.StringUtils;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.BooleanNode;
 import com.fasterxml.jackson.databind.node.IntNode;
@@ -36,6 +42,7 @@ import com.fortify.cli.common.cli.util.FcliCommandExecutorFactory;
 import com.fortify.cli.common.cli.util.FcliCommandExecutorFactory.FcliCommandExecutor;
 import com.fortify.cli.common.cli.util.StdioHelper;
 import com.fortify.cli.common.json.JsonHelper;
+import com.fortify.cli.common.spel.wrapper.TemplateExpression;
 import com.fortify.cli.common.util.OutputHelper.OutputType;
 import com.fortify.cli.common.util.OutputHelper.Result;
 
@@ -77,13 +84,14 @@ public class ActionStepProcessorRunFcli extends AbstractActionStepProcessorMapEn
         if ( isSkipped(entry) ) { return; }
         logStatus(entry, "START");
         var cmd = getVars().eval(entry.getCmd(), String.class);
+        var args = buildStructuredArgs(entry, cmd);
         ctx.getProgressWriter().writeProgress("Executing fcli %s",
                 // Replace all whitespace (including newlines) with single space
                 //   to avoid errors on single-line progress writer
                 // Remove duplicate 'fcli' if included in cmd,
-                asSingleLineString(cmd.replaceAll("^fcli ", "")));
+                asSingleLineString(cmd.replaceAll("^fcli ", "").replaceAll("\\R", " ")));
         var recordConsumer = createFcliRecordConsumer(entry);
-        var cmdExecutor = createCmdExecutor(entry, cmd, recordConsumer);
+        var cmdExecutor = createCmdExecutor(entry, cmd, args, recordConsumer);
         if ( cmdExecutor!=null ) {
             if ( recordConsumer!=null && !cmdExecutor.canCollectRecords() ) {
                 throw new FcliActionValidationException("Can't use records.for-each on fcli command: "+cmd);
@@ -92,13 +100,59 @@ public class ActionStepProcessorRunFcli extends AbstractActionStepProcessorMapEn
         }
     }
 
-    private FcliCommandExecutor createCmdExecutor(ActionStepRunFcliEntry entry, String cmd, FcliRecordConsumer recordConsumer) {
+    private String[] buildStructuredArgs(ActionStepRunFcliEntry entry, String cmd) {
+        if ( entry.getArgs()==null && entry.getPositionals()==null ) { return null; }
+        var args = new ArrayList<>(Arrays.asList(FcliCommandExecutorFactory.parseCommand(cmd)));
+        addEvaluatedArgs(args, entry.getArgs());
+        var positionals = new ArrayList<String>();
+        addEvaluatedArgs(positionals, entry.getPositionals());
+        if ( !positionals.isEmpty() ) {
+            args.add("--");
+            args.addAll(positionals);
+        }
+        return args.toArray(String[]::new);
+    }
+
+    private void addEvaluatedArgs(List<String> args, List<TemplateExpression> expressions) {
+        if ( expressions!=null ) {
+            expressions.forEach(expression->addEvaluatedArg(args, getVars().eval(expression, Object.class)));
+        }
+    }
+
+    private void addEvaluatedArg(List<String> args, Object value) {
+        if ( value==null ) { return; }
+        if ( value instanceof JsonNode node ) {
+            if ( node.isNull() ) { return; }
+            if ( node.isArray() ) {
+                node.forEach(element->addEvaluatedArg(args, element));
+            } else {
+                var text = node.isValueNode() ? node.asText() : node.toString();
+                if ( text!=null ) { args.add(text); }
+            }
+        } else if ( value instanceof Collection<?> collection ) {
+            collection.forEach(element->addEvaluatedArg(args, element));
+        } else if ( value.getClass().isArray() ) {
+            for ( int i=0; i<Array.getLength(value); i++ ) {
+                addEvaluatedArg(args, Array.get(value, i));
+            }
+        } else {
+            args.add(value.toString());
+        }
+    }
+
+    private FcliCommandExecutor createCmdExecutor(
+            ActionStepRunFcliEntry entry, String cmd, String[] args, FcliRecordConsumer recordConsumer) {
         var stdoutOutputType = getOutputTypeOrDefault(entry.getStdoutOutputType(), recordConsumer==null ? OutputType.show : OutputType.suppress );
         var stderrOutputType = getOutputTypeOrDefault(entry.getStderrOutputType(), OutputType.show );
         var metadataHolder = new AtomicReference<ObjectNode>();
         try {
-            return FcliCommandExecutorFactory.builder()
-                    .cmd(cmd)
+            var builder = FcliCommandExecutorFactory.builder();
+            if ( args==null ) {
+                builder.cmd(cmd);
+            } else {
+                builder.args(args).literalArguments(true);
+            }
+            return builder
                     .progressOptionValueIfNotPresent(ctx.getConfig().getProgressWriter().type())
                     .defaultOptionsIfNotPresent(ctx.getConfig().getDefaultFcliRunOptions())
                     .stdoutOutputType(stdoutOutputType)

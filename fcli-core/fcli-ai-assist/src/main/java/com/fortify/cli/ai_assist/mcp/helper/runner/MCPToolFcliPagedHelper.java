@@ -19,6 +19,8 @@ import com.fortify.cli.ai_assist.mcp.helper.MCPJobManager;
 import com.fortify.cli.ai_assist.mcp.helper.arg.MCPToolArgHandlerPaging;
 import com.fortify.cli.common.exception.FcliBugException;
 import com.fortify.cli.common.exception.FcliTechnicalException;
+import com.fortify.cli.common.log.LogMaskHelper;
+import com.fortify.cli.common.log.LogMessageType;
 
 import io.modelcontextprotocol.spec.McpSchema.CallToolRequest;
 import io.modelcontextprotocol.spec.McpSchema.CallToolResult;
@@ -83,7 +85,7 @@ final class MCPToolFcliPagedHelper {
                 .orElseThrow(() -> new FcliBugException("No result path succeeded for: " + jobId));
         } catch (Exception e) {
             log.warn("Paged helper failed jobId='{}' offset={} limit={} error={}",
-                jobId, pageParams.offset, pageParams.limit, e.toString());
+                jobId, pageParams.offset, pageParams.limit, safeLogValue(e));
             return MCPToolResult.fromError(e).asCallToolResult();
         }
     }
@@ -144,7 +146,7 @@ final class MCPToolFcliPagedHelper {
             MCPToolAsyncJobManager.InProgressEntry inProgress, String jobId) {
         if (inProgress.isCompleted() && inProgress.getExitCode() != 0) {
             log.warn("Background async job failed jobId='{}' exitCode={} stderr='{}'",
-                jobId, inProgress.getExitCode(), inProgress.getStderr());
+                jobId, inProgress.getExitCode(), safeLogValue(inProgress.getStderr()));
             var errorResult = MCPToolResult.builder()
                 .exitCode(inProgress.getExitCode())
                 .stderr(inProgress.getStderr())
@@ -188,6 +190,10 @@ final class MCPToolFcliPagedHelper {
     }
 
     // --- Utility helpers ---
+
+    private static String safeLogValue(Object value) {
+        return LogMaskHelper.INSTANCE.mask(LogMessageType.FCLI, String.valueOf(value)).replaceAll("\\R", " ");
+    }
 
     static int toolArgAsInt(CallToolRequest request, String argName, int defaultValue) {
         var o = toolArg(request, argName);

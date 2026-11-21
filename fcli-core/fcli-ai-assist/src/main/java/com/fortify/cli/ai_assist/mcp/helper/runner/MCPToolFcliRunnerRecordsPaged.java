@@ -15,6 +15,7 @@ package com.fortify.cli.ai_assist.mcp.helper.runner;
 import com.fortify.cli.ai_assist.mcp.helper.MCPJobManager;
 import com.fortify.cli.ai_assist.mcp.helper.arg.MCPToolArgHandlers;
 import com.fortify.cli.common.concurrent.job.task.AsyncTaskFcliCommand;
+import com.fortify.cli.common.json.JsonHelper;
 
 import io.modelcontextprotocol.server.McpSyncServerExchange;
 import io.modelcontextprotocol.spec.McpSchema.CallToolRequest;
@@ -46,11 +47,13 @@ public final class MCPToolFcliRunnerRecordsPaged extends AbstractMCPToolFcliRunn
 
     @Override
     public CallToolResult run(McpSyncServerExchange exchange, CallToolRequest request) {
-        var fullCmd = getFullCmd(request);
+        var args = getFullArgs(request);
         var pageParams = MCPToolFcliPagedHelper.PageParams.from(request);
         var defaultOptions = MCPToolFcliRunnerHelper.collectMcpDefaultOptions(commandSpec);
-        var producer = new AsyncTaskFcliCommand(fullCmd, defaultOptions);
-        return pagedHelper.run(fullCmd, pageParams,
-            (jobId, refresh) -> jobManager.getAsyncJobManager().getOrStartBackground(jobId, refresh, producer));
+        var producer = new AsyncTaskFcliCommand(args, defaultOptions);
+        var jobId = JsonHelper.getObjectMapper().valueToTree(args).toString()
+                .replace("\u0085", "\\u0085").replace("\u2028", "\\u2028").replace("\u2029", "\\u2029");
+        return pagedHelper.run(jobId, pageParams,
+            (id, refresh) -> jobManager.getAsyncJobManager().getOrStartBackground(id, refresh, producer));
     }
 }

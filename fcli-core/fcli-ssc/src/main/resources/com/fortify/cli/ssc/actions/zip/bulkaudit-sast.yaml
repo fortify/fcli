@@ -123,11 +123,16 @@ functions:
     steps:
       - run.fcli:
           run_audit:
-            cmd: >-
-              aviator ssc audit-sast --av "${args.projectId}" --app "${args.aviatorAppName}"
-              --log-level=INFO${#isBlank(args.tagMapping) ? '' : ' --tag-mapping="' + args.tagMapping + '"'}
-              --refresh=${args.refresh} --refresh-timeout="${args.refreshTimeout}"${args.quotaFlags}
-              ${#isBlank(args.folderPriorityOrder) ? '' : ' --folder-priority-order="' + args.folderPriorityOrder + '"'}
+            cmd: aviator ssc audit-sast
+            args:
+              - --av=${args.projectId}
+              - --app=${args.aviatorAppName}
+              - --log-level=INFO
+              - "${#isBlank(args.tagMapping) ? null : '--tag-mapping=' + args.tagMapping}"
+              - --refresh=${args.refresh}
+              - --refresh-timeout=${args.refreshTimeout}
+              - "${#isBlank(args.quotaFlags) ? null : args.quotaFlags.trim().split(' ')}"
+              - "${#isBlank(args.folderPriorityOrder) ? null : '--folder-priority-order=' + args.folderPriorityOrder}"
             status.check: false
             records.collect: true
             stdout: show
@@ -407,7 +412,9 @@ steps:
                             stats.create_attempts: ${stats.create_attempts + 1}
                         - run.fcli:
                             create_app:
-                              cmd: aviator app create "${project.aviator_app_name}"
+                              cmd: aviator app create
+                              positionals:
+                                - ${project.aviator_app_name}
                               status.check: false
                         - if: ${create_app.exitCode == 0}
                           var.set:
@@ -446,7 +453,9 @@ steps:
                         - log.progress: Preparing Fortify Remediation Aviator tags for ${project.project_name}:${project.version_name}
                         - run.fcli:
                             prepare_tags:
-                              cmd: aviator ssc prepare --av "${project.id}"
+                              cmd: aviator ssc prepare
+                              args:
+                                - --av=${project.id}
                               status.check: false
                         - if: ${prepare_tags.exitCode != 0}
                           do:
