@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.30.0](https://github.com/fortify/fcli/compare/v3.29.1...v3.30.0) (2026-11-12)
+
+
+### Features
+
+* Add Linux/arm64 release asset ([494a653](https://github.com/fortify/fcli/commit/494a653f14b9b3642da124e84ada72e316a24afb))
+
 ## [3.29.1](https://github.com/fortify/fcli/compare/v3.29.0...v3.29.1) (2026-11-02)
 
 

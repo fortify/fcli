@@ -71,16 +71,41 @@ Each integration provides platform-specific documentation including setup instru
 
 Release assets for fcli are available on the https://github.com/fortify/fcli/releases[Releases] page. This page lists both development releases (named `+Development Release - <branch> branch+`) and final releases. In general, the use of a final release is recommended, unless you want to use any functionality that hasn’t made it into a final release yet.
 
-Each release comes with a list of assets:
+Each release provides the following fcli executables:
+
+[cols="2,2,5"]
+|===
+|Asset|Platform|Notes
+
+|`+fcli-linux.tgz+`
+|Linux x64
+|Fully statically linked native binary; runs on any Linux x64 distribution, including musl-based distributions like Alpine
+
+|`+fcli-linux-arm64.tgz+`
+|Linux arm64
+|Native binary that requires glibc 2.34 or later; can't be used on musl-based distributions like Alpine
+
+|`+fcli-mac.tgz+`
+|macOS arm64
+|Native binary for Apple Silicon
+
+|`+fcli-windows.zip+`
+|Windows x64
+|Native binary; note that some browsers by default will disallow downloading of `+fcli-windows.zip+`, please bypass the warning
+
+|`+fcli.jar+`
+|Any platform with Java 17+
+|Java version of fcli
+|===
+
+* Linux and Mac native binary downloads include an `+auto-completion+` script that makes interactive fcli usage easier
+* In general, the native binaries are easier to invoke, offer better performance, and have the benefit of auto-completion capabilities on Linux & Mac
+* If you experience any unexpected behavior with native binaries, like commands or command line options not being listed or recognized, or technical error messages about methods, constructors or serializers not being
+found, please try with the Java version as it may be an issue specific to the native binaries. See the link:#_troubleshooting[Troubleshooting] section for details.
+
+Each release also provides the following assets:
 
 * `+docs-html.zip+` & `+docs-manpage.zip+`: Manual pages in either HTML or manpage format
-* `+fcli-linux.tgz+`, `+fcli-mac.tgz+` & `+fcli-windows.zip+`: Native binaries for each of the mentioned platforms
-** Note that some browsers by default will disallow downloading of `+fcli-windows.zip+`; please bypass the warning
-** Linux and Mac downloads include an `+auto-completion+` script that makes interactive fcli usage easier
-* `+fcli.jar+`: Java version of fcli, which should be runnable on any platform that has Java 17+ installed
-** Note that in general, the native binaries are easier to invoke, offer better performance, and have the benefit of auto-completion capabilities on Linux & Mac
-** If you experience any unexpected behavior with native binaries, like commands or command line options not being listed or recognized, or technical error messages about methods, constructors or serializers not being
-found, please try with the Java version as it may be an issue specific to the native binaries. See the link:#_troubleshooting[Troubleshooting] section for details.
 * `+fcli-thirdparty.zip+`: Third-party licenses and sources for license purposes; usually no need to download
 * `+LICENSE.TXT+` & `+README.md+`: Some generic information and license for fcli
 * `+*.sha256+`: SHA256 checksum for each asset
