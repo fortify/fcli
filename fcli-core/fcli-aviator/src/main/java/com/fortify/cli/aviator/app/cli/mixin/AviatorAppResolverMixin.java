@@ -31,15 +31,16 @@ import picocli.CommandLine.Parameters;
  * </ul>
  * <p><b>Do not</b> add a name-or-id mixin for the user-facing {@code --app} option. That option has always been
  * a name, so interpreting numeric values as an id would silently change behavior for existing users and scripts
- * that use numeric application names. For the same reason, {@link NameOrIdParameter} treats numeric values as
- * ids, as the admin commands only accepted ids before names were supported.
+ * that use numeric application names. For the same reason, {@link NameOrIdParameter} treats canonical numeric
+ * values (no leading zeros) as ids, as the admin commands only accepted ids before names were supported.
  */
 public final class AviatorAppResolverMixin {
     private AviatorAppResolverMixin() {}
 
     /**
-     * <b>Admin commands only.</b> Positional parameter accepting an application name or id. Numeric values are
-     * always interpreted as an id (no fallback to name), all other values as a name.
+     * <b>Admin commands only.</b> Positional parameter accepting an application name or id. Canonical numeric
+     * values (digits without leading zeros) are interpreted as an id, with no fallback to name. All other values,
+     * including numeric values with leading zeros like {@code 000144}, are looked up as a name, unchanged.
      */
     public static class NameOrIdParameter {
         @Parameters(index = "0", arity = "1", paramLabel = "<app-name-or-id>", descriptionKey = "fcli.aviator.app.app-name-or-id")

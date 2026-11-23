@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.aviator.application.Application;
 import com.fortify.cli.aviator._common.config.admin.helper.AviatorAdminConfigDescriptor;
+import com.fortify.cli.aviator._common.operation.cli.mixin.AviatorOperationIdMixin;
 import com.fortify.cli.aviator._common.output.cli.cmd.AbstractAviatorAdminSessionOutputCommand;
 import com.fortify.cli.aviator._common.util.AviatorGrpcUtils;
 import com.fortify.cli.aviator._common.util.AviatorSignatureUtils;
@@ -37,27 +38,19 @@ import picocli.CommandLine.Parameters;
 public class AviatorAppCreateCommand extends AbstractAviatorAdminSessionOutputCommand implements IActionCommandResultSupplier {
     @Getter @Mixin private OutputHelperMixins.Create outputHelper;
     @Mixin private ProgressWriterFactoryMixin progressWriterFactoryMixin;
+    @Mixin private AviatorOperationIdMixin operationIdMixin;
     @Parameters(index = "0", description = "Name of the application to create") private String applicationName;
     private static final Logger LOG = LoggerFactory.getLogger(AviatorAppCreateCommand.class);
 
     @Override
     protected JsonNode getJsonNode(AviatorAdminConfigDescriptor configDescriptor) {
         try (AviatorGrpcClient client = AviatorGrpcClientHelper.createClient(configDescriptor.getAviatorUrl())) {
-            String[] messageAndSignature = createMessageAndSignature(configDescriptor);
-            Application createdApplication = createApplication(client, configDescriptor, messageAndSignature);
+            Application createdApplication = client.createApplication(applicationName, configDescriptor.getTenant(),
+                    operationIdMixin.getOperationId(),
+                    AviatorSignatureUtils.operationSigner(configDescriptor, configDescriptor.getTenant(), applicationName));
             LOG.info("Application '{}' created successfully for tenant: {}", applicationName, configDescriptor.getTenant());
             return processCreateApplicationResponse(createdApplication);
         }
-    }
-
-    private String[] createMessageAndSignature(AviatorAdminConfigDescriptor configDescriptor) {
-        return AviatorSignatureUtils.createMessageAndSignature(configDescriptor, configDescriptor.getTenant(), applicationName);
-    }
-
-    private Application createApplication(AviatorGrpcClient client, AviatorAdminConfigDescriptor configDescriptor, String[] messageAndSignature) {
-        String message = messageAndSignature[0];
-        String signature = messageAndSignature[1];
-        return client.createApplication(applicationName, configDescriptor.getTenant(), signature, message);
     }
 
     private JsonNode processCreateApplicationResponse(Application createdApplication) {

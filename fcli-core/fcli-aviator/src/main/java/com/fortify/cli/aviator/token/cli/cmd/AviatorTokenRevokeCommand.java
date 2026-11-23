@@ -21,6 +21,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.aviator._common.config.admin.helper.AviatorAdminConfigDescriptor;
 import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
 import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
+import com.fortify.cli.aviator._common.operation.cli.mixin.AviatorOperationIdMixin;
 import com.fortify.cli.aviator._common.output.cli.cmd.AbstractAviatorAdminSessionOutputCommand;
 import com.fortify.cli.aviator._common.session.user.cli.mixin.AviatorUserTokenResolverMixin;
 import com.fortify.cli.aviator._common.util.AviatorSignatureUtils;
@@ -37,6 +38,7 @@ import picocli.CommandLine.Option;
 @Command(name = OutputHelperMixins.Revoke.CMD_NAME)
 public class AviatorTokenRevokeCommand extends AbstractAviatorAdminSessionOutputCommand {
     @Getter @Mixin private OutputHelperMixins.Revoke outputHelper;
+    @Mixin private AviatorOperationIdMixin operationIdMixin;
     @Option(names = {"-e", "--email"}) private String email;
     @Mixin @Getter private AviatorUserTokenResolverMixin tokenResolver;
     private static final Logger LOG = LoggerFactory.getLogger(AviatorTokenRevokeCommand.class);
@@ -46,20 +48,11 @@ public class AviatorTokenRevokeCommand extends AbstractAviatorAdminSessionOutput
         String tokenToRevoke = tokenResolver.getToken();
 
         try (AviatorGrpcClient client = AviatorGrpcClientHelper.createClient(configDescriptor.getAviatorUrl())) {
-            String[] messageAndSignature = createMessageAndSignature(configDescriptor, tokenToRevoke);
-            RevokeTokenResponse response = revokeToken(client, configDescriptor, messageAndSignature, tokenToRevoke);
+            RevokeTokenResponse response = client.revokeToken(tokenToRevoke, configDescriptor.getTenant(),
+                    operationIdMixin.getOperationId(),
+                    AviatorSignatureUtils.operationSigner(configDescriptor, tokenToRevoke, email, configDescriptor.getTenant()));
             return processRevokeResponse(response, tokenToRevoke);
         }
-    }
-
-    private String[] createMessageAndSignature(AviatorAdminConfigDescriptor configDescriptor, String tokenToRevoke) {
-        return AviatorSignatureUtils.createMessageAndSignature(configDescriptor, tokenToRevoke, email, configDescriptor.getTenant());
-    }
-
-    private RevokeTokenResponse revokeToken(AviatorGrpcClient client, AviatorAdminConfigDescriptor configDescriptor, String[] messageAndSignature, String tokenToRevoke) {
-        String message = messageAndSignature[0];
-        String signature = messageAndSignature[1];
-        return client.revokeToken(tokenToRevoke, email, configDescriptor.getTenant(), signature, message);
     }
 
     private JsonNode processRevokeResponse(RevokeTokenResponse response, String tokenToRevoke) {

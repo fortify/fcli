@@ -28,11 +28,14 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.aviator._common.config.admin.helper.AviatorAdminConfigDescriptor;
 import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
 import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
+import com.fortify.cli.aviator._common.operation.cli.mixin.AviatorOperationIdMixin;
 import com.fortify.cli.aviator._common.output.cli.cmd.AbstractAviatorAdminSessionOutputCommand;
 import com.fortify.cli.aviator._common.util.AviatorGrpcUtils;
 import com.fortify.cli.aviator._common.util.AviatorSignatureUtils;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClient;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClientHelper;
+import com.fortify.cli.aviator.grpc.AviatorOperationId;
+import com.fortify.cli.aviator.grpc.AviatorRequestSigner;
 import com.fortify.cli.aviator.util.FileUtil;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
@@ -46,6 +49,7 @@ import picocli.CommandLine.Option;
 @Command(name = OutputHelperMixins.CreateWithDetailsOutput.CMD_NAME)
 public class AviatorTokenCreateCommand extends AbstractAviatorAdminSessionOutputCommand implements IActionCommandResultSupplier {
     @Getter @Mixin private OutputHelperMixins.CreateWithDetailsOutput outputHelper;
+    @Mixin private AviatorOperationIdMixin operationIdMixin;
     @Option(names = {"-e", "--email"}, required = true) private String email;
     @Option(names = {"-n", "--name"}) private String customTokenName;
     @Option(names = {"--end-date"}) private String endDate;
@@ -58,23 +62,24 @@ public class AviatorTokenCreateCommand extends AbstractAviatorAdminSessionOutput
     @Override
     protected JsonNode getJsonNode(AviatorAdminConfigDescriptor configDescriptor) throws AviatorSimpleException, AviatorTechnicalException {
         try (AviatorGrpcClient client = AviatorGrpcClientHelper.createClient(configDescriptor.getAviatorUrl())) {
-            String[] messageAndSignature = createMessageAndSignature(configDescriptor);
-            TokenGenerationResponse response = generateToken(client, configDescriptor, messageAndSignature);
+            TokenGenerationResponse response = generateToken(client, configDescriptor);
             return processTokenResponse(response);
         }
     }
 
-    private String[] createMessageAndSignature(AviatorAdminConfigDescriptor configDescriptor) {
-        String currentDate = CURRENT_DATE_FORMATTER.format(Instant.now().atOffset(ZoneOffset.UTC));
+    private TokenGenerationResponse generateToken(AviatorGrpcClient client, AviatorAdminConfigDescriptor configDescriptor) {
         String safeCustomTokenName = customTokenName == null ? "" : customTokenName;
         String safeEndDate = endDate == null ? "" : endDate;
-        return AviatorSignatureUtils.createMessageAndSignature(configDescriptor, email, safeCustomTokenName, currentDate, safeEndDate);
+        // The signed start date is part of the payload the server deduplicates on. Deriving it from the operation id
+        // keeps every attempt, including a later re-run with --operation-id across UTC midnight, on the same payload.
+        AviatorRequestSigner signer = (fullMethodName, operationId) -> AviatorSignatureUtils.operationSigner(configDescriptor,
+                email, safeCustomTokenName, startDate(operationId), safeEndDate).sign(fullMethodName, operationId);
+        return client.generateToken(email, customTokenName, endDate, configDescriptor.getTenant(), operationIdMixin.getOperationId(), signer);
     }
 
-    private TokenGenerationResponse generateToken(AviatorGrpcClient client, AviatorAdminConfigDescriptor configDescriptor, String[] messageAndSignature) {
-        String message = messageAndSignature[0];
-        String signature = messageAndSignature[1];
-        return client.generateToken(email, customTokenName, signature, message, configDescriptor.getTenant(), endDate);
+    static String startDate(String operationId) {
+        Instant reference = operationId == null ? Instant.now() : AviatorOperationId.issuedAt(operationId);
+        return CURRENT_DATE_FORMATTER.format(reference.atOffset(ZoneOffset.UTC));
     }
 
     private JsonNode processTokenResponse(TokenGenerationResponse response) {

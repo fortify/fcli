@@ -14,6 +14,7 @@ package com.fortify.cli.aviator.app.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.aviator._common.config.admin.helper.AviatorAdminConfigDescriptor;
+import com.fortify.cli.aviator._common.operation.cli.mixin.AviatorOperationIdMixin;
 import com.fortify.cli.aviator._common.output.cli.cmd.AbstractAviatorAdminSessionOutputCommand;
 import com.fortify.cli.aviator._common.util.AviatorGrpcUtils;
 import com.fortify.cli.aviator._common.util.AviatorSignatureUtils;
@@ -32,15 +33,15 @@ public class AviatorAppReduceEntitlementCommand extends AbstractAviatorAdminSess
         implements IActionCommandResultSupplier {
     @Getter @Mixin private OutputHelperMixins.TableNoQuery outputHelper;
     @Mixin private AviatorAppResolverMixin.NameOrIdParameter appResolver;
+    @Mixin private AviatorOperationIdMixin operationIdMixin;
 
     @Override
     protected JsonNode getJsonNode(AviatorAdminConfigDescriptor configDescriptor) {
         try (AviatorGrpcClient client = AviatorGrpcClientHelper.createClient(configDescriptor.getAviatorUrl())) {
             String applicationId = appResolver.getApplicationId(client, configDescriptor);
-            String[] messageAndSignature = AviatorSignatureUtils.createMessageAndSignature(configDescriptor,
-                    configDescriptor.getTenant(), applicationId, "reduce-entitlement");
-            return AviatorGrpcUtils.grpcToJsonNode(client.reduceEntitlement(applicationId, messageAndSignature[1],
-                    messageAndSignature[0], configDescriptor.getTenant()));
+            return AviatorGrpcUtils.grpcToJsonNode(client.reduceEntitlement(applicationId, configDescriptor.getTenant(),
+                    operationIdMixin.getOperationId(),
+                    AviatorSignatureUtils.operationSigner(configDescriptor, configDescriptor.getTenant(), applicationId, "reduce-entitlement")));
         }
     }
 

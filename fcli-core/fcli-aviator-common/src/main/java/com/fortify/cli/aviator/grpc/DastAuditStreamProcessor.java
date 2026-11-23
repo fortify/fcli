@@ -157,6 +157,7 @@ public class DastAuditStreamProcessor implements AutoCloseable {
             .setApplicationName(value(config.applicationName()))
             .setStreamId(streamId)
             .setRequestId(UUID.randomUUID().toString())
+            .setOperationId(AviatorOperationId.generate())
             .setTotalReportedIssues(totalReportedIssues)
             .setTotalIssuesToAudit(pendingIssueIds.size());
         if (config.fprBuildId() != null) init.setFprBuildId(config.fprBuildId());
