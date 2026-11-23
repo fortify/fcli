@@ -29,18 +29,17 @@ import com.fortify.cli.aviator.audit.model.AuditFprOptions;
 import com.fortify.cli.aviator.audit.model.AuditOutcome;
 import com.fortify.cli.aviator.audit.model.AuditResponse;
 import com.fortify.cli.aviator.audit.model.FPRAuditResult;
-import com.fortify.cli.aviator.audit.model.FilterSelection;
 import com.fortify.cli.aviator.audit.model.ParsedFprData;
+import com.fortify.cli.aviator.audit.processor.AuditProcessor;
 import com.fortify.cli.aviator.config.TagMappingConfig;
-import com.fortify.cli.aviator.fpr.SastFprParser;
-import com.fortify.cli.aviator.fpr.Vulnerability;
-import com.fortify.cli.aviator.fpr.filter.FilterSetSelector;
-import com.fortify.cli.aviator.fpr.model.FPRInfo;
-import com.fortify.cli.aviator.fpr.processor.AuditProcessor;
-import com.fortify.cli.aviator.fpr.processor.StreamingFVDLProcessor;
-import com.fortify.cli.aviator.fpr.utils.ISourceDecoder;
-import com.fortify.cli.aviator.util.FprHandle;
 import com.fortify.cli.aviator.util.ResourceUtil;
+import com.fortify.cli.common.fpr.Vulnerability;
+import com.fortify.cli.common.fpr.filter.FilterSelection;
+import com.fortify.cli.common.fpr.filter.FilterSetSelector;
+import com.fortify.cli.common.fpr.model.FPRInfo;
+import com.fortify.cli.common.fpr.processor.StreamingFVDLProcessor;
+import com.fortify.cli.common.fpr.util.FprHandle;
+import com.fortify.cli.common.fpr.utils.ISourceDecoder;
 
 public class AuditFPR {
     private static final Logger LOG = LoggerFactory.getLogger(AuditFPR.class);
@@ -81,7 +80,7 @@ public class AuditFPR {
 
     private static ParsedFprData prepareAndParseFpr(FprHandle fprHandle, ISourceDecoder sourceDecoder) {
         try {
-            return SastFprParser.parse(fprHandle, sourceDecoder);
+            return AviatorSastFprParser.parse(fprHandle, sourceDecoder);
         } catch (Exception e) {
             LOG.error("A critical error occurred during FPR processing.", e);
             throw new AviatorTechnicalException("Failed to process FPR contents.", e);

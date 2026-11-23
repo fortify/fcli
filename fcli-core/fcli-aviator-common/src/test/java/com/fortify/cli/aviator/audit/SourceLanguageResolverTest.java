@@ -20,9 +20,9 @@ import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 
-import com.fortify.cli.aviator.audit.model.StackTraceElement;
-import com.fortify.cli.aviator.fpr.Vulnerability;
-import com.fortify.cli.aviator.fpr.model.FVDLMetadata;
+import com.fortify.cli.common.fpr.Vulnerability;
+import com.fortify.cli.common.fpr.model.FVDLMetadata;
+import com.fortify.cli.common.fpr.model.StackTraceElement;
 
 class SourceLanguageResolverTest {
 

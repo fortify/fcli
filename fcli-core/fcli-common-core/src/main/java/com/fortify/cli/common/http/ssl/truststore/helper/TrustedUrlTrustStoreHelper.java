@@ -64,6 +64,11 @@ public final class TrustedUrlTrustStoreHelper {
     public static TrustedUrlCertificateDescriptor addTrustedUrl(String sourceUrl) {
         var target = parseAndValidateUrl(sourceUrl);
         var certificateChain = fetchServerCertificateChain(target.host(), target.port());
+        try {
+            FcliTrustManager.getInstance().checkDistrust(certificateChain.toArray(X509Certificate[]::new));
+        } catch (CertificateException e) {
+            throw new FcliSimpleException(e.getMessage(), e);
+        }
         var rootCertificate = selectRootCertificate(certificateChain);
         var descriptor = toDescriptor(target, sourceUrl, rootCertificate);
         FcliDataHelper.saveFile(getDescriptorPath(target.key()), descriptor, true);

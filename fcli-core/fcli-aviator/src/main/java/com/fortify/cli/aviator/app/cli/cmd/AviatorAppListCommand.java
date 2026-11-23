@@ -30,7 +30,6 @@ import com.fortify.cli.aviator._common.output.cli.cmd.AbstractAviatorAdminSessio
 import com.fortify.cli.aviator._common.util.AviatorGrpcUtils;
 import com.fortify.cli.aviator._common.util.AviatorSignatureUtils;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClient;
-import com.fortify.cli.aviator.grpc.AviatorGrpcClientHelper;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 
 import lombok.Getter;
@@ -45,7 +44,7 @@ public class AviatorAppListCommand extends AbstractAviatorAdminSessionOutputComm
 
     @Override
     protected JsonNode getJsonNode(AviatorAdminConfigDescriptor configDescriptor) throws AviatorSimpleException, AviatorTechnicalException {
-        try (AviatorGrpcClient client = AviatorGrpcClientHelper.createClient(configDescriptor.getAviatorUrl())) {
+        try (AviatorGrpcClient client = createGrpcClient(configDescriptor)) {
             String[] messageAndSignature = createMessageAndSignature(configDescriptor);
             List<Application> applications = listApplications(client, configDescriptor, messageAndSignature);
             return formatApplicationsArray(applications, configDescriptor.getTenant());

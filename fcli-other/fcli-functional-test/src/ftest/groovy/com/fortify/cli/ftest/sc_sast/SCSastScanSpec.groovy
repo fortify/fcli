@@ -25,14 +25,16 @@ class SCSastScanSpec extends FcliBaseSpec {
         def args = "sc-sast scan -h"
         when:
             def result = Fcli.run(args)
+            def help = result.stdout.join(" ").replaceAll(/\s+/, " ")
         then:
             verifyAll(result.stdout) {
                 size()>=19
                 it[0].equals("Manage ScanCentral SAST scans.")
-                it.any { it.contains("cancel    Cancel a previously submitted scan request.") }
-                it.any { it.contains("start     Start a SAST scan.") }
-                it.any { it.contains("status    Get status for a previously submitted scan request.") }
-                it.any { it.contains("wait-for  Wait for one or more scans to reach or exit specified scan statuses.") }
+                help.contains("cancel Cancel a previously submitted scan request.")
+                help.contains("prioritize Prioritize a queued scan job.")
+                help.contains("start Start a SAST scan.")
+                help.contains("status Get status for a previously submitted scan request.")
+                help.contains("wait-for Wait for one or more scans to reach or exit specified scan statuses.")
             }
     }
     

@@ -12,8 +12,8 @@
  */
 package com.fortify.cli.aviator._common.cli.converter;
 
-import com.fortify.cli.aviator.fpr.utils.ISourceDecoder;
-import com.fortify.cli.aviator.fpr.utils.SourceDecoders;
+import com.fortify.cli.common.fpr.utils.ISourceDecoder;
+import com.fortify.cli.common.fpr.utils.SourceDecoders;
 
 import picocli.CommandLine.ITypeConverter;
 import picocli.CommandLine.TypeConversionException;

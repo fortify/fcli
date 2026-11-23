@@ -20,7 +20,6 @@ import com.fortify.cli.aviator._common.util.AviatorGrpcUtils;
 import com.fortify.cli.aviator._common.util.AviatorSignatureUtils;
 import com.fortify.cli.aviator.app.cli.mixin.AviatorAppResolverMixin;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClient;
-import com.fortify.cli.aviator.grpc.AviatorGrpcClientHelper;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 
@@ -37,7 +36,7 @@ public class AviatorAppReduceEntitlementCommand extends AbstractAviatorAdminSess
 
     @Override
     protected JsonNode getJsonNode(AviatorAdminConfigDescriptor configDescriptor) {
-        try (AviatorGrpcClient client = AviatorGrpcClientHelper.createClient(configDescriptor.getAviatorUrl())) {
+        try (AviatorGrpcClient client = createGrpcClient(configDescriptor)) {
             String applicationId = appResolver.getApplicationId(client, configDescriptor);
             return AviatorGrpcUtils.grpcToJsonNode(client.reduceEntitlement(applicationId, configDescriptor.getTenant(),
                     operationIdMixin.getOperationId(),
