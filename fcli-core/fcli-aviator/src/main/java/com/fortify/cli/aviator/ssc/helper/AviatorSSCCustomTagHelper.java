@@ -147,10 +147,10 @@ public class AviatorSSCCustomTagHelper {
                     "Unable to verify whether '" + tagDef.getName() + "' is system-managed.");
             return SynchronizationResult.failure();
         }
-        LOG.info("Tag '{}' found as system-managed internal tag (SSC 26.2+). Configure through SSC.",
+        LOG.info("Tag '{}' found as system-managed internal tag (SSC 26.2+).",
                 tagDef.getName());
         result.addEntry("Custom Tag", "SYSTEM_MANAGED",
-                "'" + tagDef.getName() + "' is a built-in SSC tag (SSC 26.2+). Configure through SSC.");
+                "'" + tagDef.getName() + "' is a built-in SSC tag (SSC 26.2+).");
         return SynchronizationResult.success(internalTag, true);
     }
 

@@ -162,13 +162,10 @@ public final class AviatorSSCTagValidator {
      * {@link #shouldUseLegacySastStatus}.
      */
     public static String legacyStatusFallbackWarning(int fallbackCount) {
-        return String.format("WARN: %d issue(s) with remediation were marked '%s' instead of '%s', because the "
-            + "system-managed 'Aviator status' tag in SSC did not support '%s' when the audit started. "
-            + "The fallback does not change remediation generation, but SSC will not distinguish these issues "
-            + "from audits without remediation. "
-            + "Configure the system-managed tag through SSC to distinguish them in future audits.",
-            fallbackCount, Constants.PROCESSED_BY_AVIATOR, Constants.PROCESSED_BY_AVIATOR_WITH_REMEDIATION,
-            Constants.PROCESSED_BY_AVIATOR_WITH_REMEDIATION);
+        return String.format("WARN: %d issue(s) with remediation were marked '%s' instead of '%s'. "
+            + "SSC cannot show which issues have remediation using the Aviator status. "
+            + "The remediation is still generated.",
+            fallbackCount, Constants.PROCESSED_BY_AVIATOR, Constants.PROCESSED_BY_AVIATOR_WITH_REMEDIATION);
     }
 
     /**
@@ -248,10 +245,10 @@ public final class AviatorSSCTagValidator {
         }
 
         String resolution = AviatorSSCTagJsonHelper.isSystemManaged(statusTag, AviatorSSCTagDefs.AVIATOR_STATUS_TAG)
-            ? "Configure the system-managed tag through SSC."
-            : RUN_PREPARE;
+            ? ""
+            : RUN_PREPARE + " ";
         warnings.add(String.format(
-            "WARN: 'Aviator status' is missing values %s. %s Audit results for these values may not be visible in SSC.",
+            "WARN: 'Aviator status' is missing values %s. %sAudit results for these values may not be visible in SSC.",
             missingValues, resolution));
     }
 

@@ -131,14 +131,15 @@ class AviatorSSCTagValidatorTest {
     }
 
     @Test
-    @DisplayName("legacy status fallback warning reports the count and preserved remediation data")
+    @DisplayName("legacy status fallback warning reports the count, fallback value, and generated remediation")
     void legacyStatusFallbackWarningIsClear() {
         String warning = AviatorSSCTagValidator.legacyStatusFallbackWarning(3);
 
         assertTrue(warning.startsWith("WARN: 3 issue(s) with remediation were marked 'PROCESSED_BY_AVIATOR'"), warning);
         assertTrue(warning.contains("instead of 'PROCESSED_BY_AVIATOR_WITH_REMEDIATION'"), warning);
-        assertTrue(warning.contains("The fallback does not change remediation generation"), warning);
-        assertTrue(warning.contains("will not distinguish"), warning);
+        assertTrue(warning.contains("SSC cannot show which issues have remediation using the Aviator status"), warning);
+        assertTrue(warning.contains("The remediation is still generated"), warning);
+        assertFalse(warning.contains("Configure"), warning);
         assertFalse(warning.contains("%"), warning);
     }
 
@@ -276,7 +277,7 @@ class AviatorSSCTagValidatorTest {
         List<String> warnings = validate();
 
         assertTrue(warnings.stream().anyMatch(w -> w.contains("PROCESSED_BY_AVIATOR")));
-        assertFalse(warnings.stream().anyMatch(w -> w.contains("will not distinguish")));
+        assertFalse(warnings.stream().anyMatch(w -> w.contains("SSC cannot show which issues have remediation")));
     }
 
     @Test
@@ -349,7 +350,9 @@ class AviatorSSCTagValidatorTest {
         List<String> warnings = validate();
 
         assertTrue(warnings.stream().anyMatch(w -> w.contains("PROCESSED_BY_AVIATOR_WITH_REMEDIATION")));
-        assertTrue(warnings.stream().anyMatch(w -> w.contains("Configure the system-managed tag through SSC")));
+        assertTrue(warnings.stream().anyMatch(w -> w.contains("may not be visible in SSC")));
+        assertFalse(warnings.stream().anyMatch(w -> w.contains("Configure")), warnings.toString());
+        assertFalse(warnings.stream().anyMatch(w -> w.contains("fcli aviator ssc prepare")), warnings.toString());
     }
 
     @Test
