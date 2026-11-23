@@ -13,6 +13,7 @@
 package com.fortify.cli.aviator.grpc;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
@@ -35,6 +36,20 @@ class RequestHandlerTest {
 
         assertEquals(List.of("one", "two", "completed"), events);
         assertTrue(handler.isCompleted());
+    }
+
+    @Test
+    void completeDiscardingPendingDropsQueuedRequests() {
+        var handler = new RequestHandler<String>("stream");
+        handler.sendRequest("one");
+        handler.sendRequest("two");
+
+        handler.completeDiscardingPending().join();
+
+        assertTrue(handler.isCompleted());
+        assertTrue(handler.getRequestQueue().isEmpty());
+        assertFalse(handler.sendRequest("three").join());
+        assertTrue(handler.getRequestQueue().isEmpty());
     }
 
     private StreamObserver<String> observer(List<String> events) {

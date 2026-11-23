@@ -136,6 +136,18 @@ class RequestSendWindowTest {
         assertTrue(huge >= Constants.MAX_DELAY_MS && huge < Constants.MAX_DELAY_MS + 100);
     }
 
+    @Test
+    void serverRetryHintIsHonouredWithoutLocalCap() {
+        long requestDelay = ServerBusyBackoff.delayMs(1, 60_000);
+        long startDelay = ServerBusyBackoff.streamStartDelayMs(1, 60_000);
+        long localStartDelay = ServerBusyBackoff.streamStartDelayMs(50, 0);
+
+        assertTrue(requestDelay >= 60_000 && requestDelay < 60_100);
+        assertTrue(startDelay >= 60_000 && startDelay < 61_000);
+        assertTrue(localStartDelay >= Constants.STREAM_RETRY_MAX_DELAY_MS
+            && localStartDelay < Constants.STREAM_RETRY_MAX_DELAY_MS + 1000);
+    }
+
     private static List<String> requests(int count) {
         List<String> requests = new ArrayList<>();
         for (int i = 0; i < count; i++) {

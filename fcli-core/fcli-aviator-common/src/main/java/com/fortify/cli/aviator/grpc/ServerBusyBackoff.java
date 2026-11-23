@@ -32,18 +32,25 @@ final class ServerBusyBackoff {
         return Math.min(Constants.MAX_DELAY_MS, exponential) + ThreadLocalRandom.current().nextLong(100);
     }
 
-    /** Uses the server's retry hint when it sent one, otherwise the exponential delay. */
+    /**
+     * Uses the server's retry hint when it sent one, otherwise the exponential delay. The hint is
+     * the minimum wait the server asks for, so it is not capped; only the local backoff is.
+     */
     static long delayMs(int attempt, long retryAfterMs) {
         return retryAfterMs > 0
-            ? Math.min(Constants.MAX_DELAY_MS, retryAfterMs) + ThreadLocalRandom.current().nextLong(100)
+            ? retryAfterMs + ThreadLocalRandom.current().nextLong(100)
             : delayMs(attempt);
     }
 
-    /** Delay before re-opening a stream the server refused at start; honours the server's hint. */
+    /**
+     * Delay before re-opening a stream the server refused at start. A server hint is honoured as
+     * sent; only the locally generated exponential delay is capped.
+     */
     static long streamStartDelayMs(int attempt, long retryAfterMs) {
         long base = retryAfterMs > 0
             ? retryAfterMs
-            : Constants.STREAM_RETRY_BASE_DELAY_MS * (1L << Math.min(attempt - 1, 4));
-        return Math.min(Constants.STREAM_RETRY_MAX_DELAY_MS, base) + ThreadLocalRandom.current().nextLong(1000);
+            : Math.min(Constants.STREAM_RETRY_MAX_DELAY_MS,
+                Constants.STREAM_RETRY_BASE_DELAY_MS * (1L << Math.min(attempt - 1, 4)));
+        return base + ThreadLocalRandom.current().nextLong(1000);
     }
 }

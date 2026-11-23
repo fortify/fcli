@@ -343,11 +343,18 @@ class AviatorStreamProcessor implements AutoCloseable {
 
                 if (isInitialized.get() && response.getRequestId().isEmpty()
                         && APPLICATION_LOCK_STATUSES.contains(response.getStatus())) {
-                    logger.warn("Server ended the audit stream: {}. Results received so far are kept; "
+                    logger.warn("Server ended the audit stream: %s. Results received so far are kept; "
                             + "rerun the audit to process the remaining issues.", response.getStatusMessage());
-                    if (requestHandler != null && !requestHandler.isCompleted()) {
-                        requestHandler.complete();
+                    stopPingPong();
+                    // Complete first so processRequestQueue stops picking up new prompts.
+                    if (!resultFuture.isDone()) {
+                        resultFuture.complete(responses);
                     }
+                    if (requestHandler != null && !requestHandler.isCompleted()) {
+                        // Prompts queued but not yet written would be wasted on a stream the server ended.
+                        requestHandler.completeDiscardingPending();
+                    }
+                    streamLatch.countDown();
                     return;
                 }
 

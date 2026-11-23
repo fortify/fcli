@@ -23,6 +23,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.aviator.ssc.helper.AviatorSSCAttributeDefinitions.AttributeDefinition;
 import com.fortify.cli.common.exception.FcliSimpleException;
+import com.fortify.cli.common.json.JSONDateTimeConverter;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.rest.unirest.UnexpectedHttpResponseException;
 import com.fortify.cli.ssc._common.rest.ssc.SSCUrls;
@@ -86,6 +87,50 @@ public class AviatorSSCAttributeHelper {
     /** Writes the current UTC timestamp to the {@code last_correlation} attribute. */
     public static void writeLastCorrelationTimestamp(UnirestInstance unirest, String versionId) {
         writeTimestamp(unirest, versionId, AviatorSSCAttributeDefinitions.LAST_CORRELATION_ATTR);
+    }
+
+    /**
+     * Returns whether the {@code last_correlation} value is not older than the given artifact
+     * upload date, that is, whether the run that produced the artifact finished without failures.
+     * A run with failed requests leaves {@code last_correlation} unchanged, so this returns
+     * {@code false} and the next run retries the failed work.
+     *
+     * <p>Returns {@code true} when this cannot be determined (attribute definition missing,
+     * SSC request failed, unparseable dates), so callers keep the artifact-based check alone.
+     */
+    public static boolean isLastCorrelationOnOrAfter(UnirestInstance unirest, String versionId, String artifactUploadDate) {
+        var attrDef = AviatorSSCAttributeDefinitions.LAST_CORRELATION_ATTR;
+        try {
+            JsonNode definition = new AviatorSSCAttributeHelper(unirest, attrDef).findDefinition();
+            if (definition == null) {
+                LOG.debug("Attribute definition '{}' not found; relying on artifact check only", attrDef.name());
+                return true;
+            }
+            String value = readAttributeValue(unirest, versionId, definition.path("id").asText());
+            if (value == null || value.isBlank()) {
+                LOG.info("No {} value on app version {}; the previous correlation did not finish cleanly", attrDef.name(), versionId);
+                return false;
+            }
+            Instant lastCorrelation = Instant.parse(value.trim());
+            Instant uploaded = new JSONDateTimeConverter().parseZonedDateTime(artifactUploadDate).toInstant();
+            return !lastCorrelation.isBefore(uploaded);
+        } catch (RuntimeException e) {
+            LOG.warn("Could not compare {} with artifact upload date {}; relying on artifact check only: {}",
+                attrDef.name(), artifactUploadDate, e.getMessage());
+            return true;
+        }
+    }
+
+    private static String readAttributeValue(UnirestInstance unirest, String versionId, String attributeDefinitionId) {
+        JsonNode data = unirest.get(SSCUrls.PROJECT_VERSION_ATTRIBUTES(versionId))
+            .asObject(JsonNode.class).getBody().get("data");
+        if (data == null || !data.isArray()) return null;
+        return JsonHelper.stream((ArrayNode) data)
+            .filter(n -> attributeDefinitionId.equals(n.path("attributeDefinitionId").asText()))
+            .map(n -> n.path("value"))
+            .filter(v -> !v.isMissingNode() && !v.isNull())
+            .map(JsonNode::asText)
+            .findFirst().orElse(null);
     }
 
     /**

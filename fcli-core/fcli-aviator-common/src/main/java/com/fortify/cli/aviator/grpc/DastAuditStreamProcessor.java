@@ -353,7 +353,7 @@ public class DastAuditStreamProcessor implements AutoCloseable {
         }
         if (!isRetryScheduled.compareAndSet(false, true)) return;
         long delay = ServerBusyBackoff.streamStartDelayMs(attempt, retryAfterMs);
-        logger.info("Aviator server is busy (%s); retrying DAST audit start in %d ms (attempt %d/%d)",
+        logger.info("Aviator server is busy ({}); retrying DAST audit start in {} ms (attempt {}/{})",
             statusMessage, delay, attempt, Constants.MAX_BUSY_STREAM_START_RETRIES);
         stopPingPong();
         scheduleRetry(delay);
@@ -453,7 +453,7 @@ public class DastAuditStreamProcessor implements AutoCloseable {
             long delay = calculateStreamRetryDelay(retryAttempt);
             String maxAttempts = isInfiniteRetryError(throwable)
                 ? "infinite" : String.valueOf(Constants.MAX_STREAM_RETRIES);
-            logger.info("Retrying DAST audit stream (attempt %d/%s) after %d ms; %d findings remain",
+            logger.info("Retrying DAST audit stream (attempt {}/{}) after {} ms; {} findings remain",
                 retryAttempt, maxAttempts, delay, pendingIssueIds.size());
             scheduleRetry(delay);
             return;

@@ -107,6 +107,8 @@ public class CorrelationStreamProcessor implements AutoCloseable {
     private volatile CorrelationResponseObserver currentObserver;
     private volatile String scanGuid;
     private int busyStartRetryCount;
+    private final AtomicBoolean isClosed = new AtomicBoolean(false);
+    private volatile ScheduledFuture<?> busyStartRetryTask;
 
     /**
      * Keys of SAST–DAST pairs that were confirmed or rejected in a previous run.
@@ -156,6 +158,7 @@ public class CorrelationStreamProcessor implements AutoCloseable {
         serverBusyAttempts.clear();
         this.scanGuid = scanGuid;
         this.busyStartRetryCount = 0;
+        this.isClosed.set(false);
 
         // Build URL→DAST map first; needed to evaluate Phase 1 skip eligibility
         this.urlToDastIssues = buildUrlToDastMap(mixedBuckets);
@@ -602,15 +605,17 @@ public class CorrelationStreamProcessor implements AutoCloseable {
         currentObserver = null;
         stopPingPong();
         long delay = ServerBusyBackoff.streamStartDelayMs(attempt, retryAfterMs);
-        logger.info("Aviator server is busy (%s); retrying correlation start in %d ms (attempt %d/%d)",
+        logger.info("Aviator server is busy ({}); retrying correlation start in {} ms (attempt {}/{})",
             statusMessage, delay, attempt, Constants.MAX_BUSY_STREAM_START_RETRIES);
         Runnable restart = () -> {
-            if (resultFuture == this.resultFuture && !resultFuture.isDone()) startStream(resultFuture, scanGuid);
+            // close() may run during the delay; never open a new RPC after that.
+            if (isClosed.get() || resultFuture != this.resultFuture || resultFuture.isDone()) return;
+            startStream(resultFuture, scanGuid);
         };
         if (pingScheduler == null) {
             CompletableFuture.delayedExecutor(delay, TimeUnit.MILLISECONDS).execute(restart);
         } else {
-            pingScheduler.schedule(restart, delay, TimeUnit.MILLISECONDS);
+            busyStartRetryTask = pingScheduler.schedule(restart, delay, TimeUnit.MILLISECONDS);
         }
     }
 
@@ -888,6 +893,9 @@ public class CorrelationStreamProcessor implements AutoCloseable {
 
     @Override
     public void close() {
+        isClosed.set(true);
+        var retryTask = busyStartRetryTask;
+        if (retryTask != null) retryTask.cancel(false);
         stopPingPong();
         if (requestHandler != null && !requestHandler.isCompleted()) {
             requestHandler.complete();

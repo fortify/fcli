@@ -69,6 +69,7 @@ class CorrelationStreamProcessorWindowTest {
     private volatile boolean failStreamOnFirstRequest;
     private final AtomicInteger busyStreamStartsRemaining = new AtomicInteger();
     private final AtomicInteger flowControlInits = new AtomicInteger();
+    private volatile long busyStartRetryAfterMs = 50;
     private Server server;
     private ManagedChannel channel;
 
@@ -134,6 +135,31 @@ class CorrelationStreamProcessorWindowTest {
     }
 
     @Test
+    void closeDuringBusyStartDelayDoesNotReopenTheStream() throws Exception {
+        busyStreamStartsRemaining.set(1);
+        busyStartRetryAfterMs = 1500;
+        var scheduler = Executors.newSingleThreadScheduledExecutor();
+        try {
+            var processor = new CorrelationStreamProcessor(
+                null, new NoopLogger(), CorrelationServiceGrpc.newStub(channel), scheduler, 0, 0);
+            processor.processCorrelation(new CorrelationStreamConfig("t", "app", null, null, null),
+                List.of(bucket(5)), "scan-guid");
+            long deadline = System.currentTimeMillis() + 5000;
+            while (flowControlInits.get() == 0 && System.currentTimeMillis() < deadline) {
+                Thread.sleep(10);
+            }
+            Thread.sleep(200); // let the client receive SERVER_BUSY and schedule the restart
+
+            processor.close();
+            Thread.sleep(busyStartRetryAfterMs + 1500); // past the hint plus maximum jitter
+
+            assertEquals(1, flowControlInits.get(), "no stream may start after close()");
+        } finally {
+            scheduler.shutdownNow();
+        }
+    }
+
+    @Test
     void streamLevelErrorWithoutRequestIdFailsTheRun() {
         failStreamOnFirstRequest = true;
 
@@ -144,6 +170,12 @@ class CorrelationStreamProcessorWindowTest {
     private CorrelationResult process(int sastFindings) throws Exception {
         var processor = new CorrelationStreamProcessor(
             null, new NoopLogger(), CorrelationServiceGrpc.newStub(channel), null, 0, 0);
+        var config = new CorrelationStreamConfig("t", "app", null, null, null);
+        return processor.processCorrelation(config, List.of(bucket(sastFindings)), "scan-guid")
+            .get(60, TimeUnit.SECONDS);
+    }
+
+    private static CorrelationStreamProcessor.CorrelationBucketData bucket(int sastFindings) {
         List<Vulnerability> vulns = new ArrayList<>();
         for (int i = 0; i < sastFindings; i++) {
             vulns.add(Vulnerability.builder().instanceID("SAST-" + i).build());
@@ -151,9 +183,7 @@ class CorrelationStreamProcessorWindowTest {
         var dast = new DastIssue();
         dast.setId("DAST-1");
         dast.setSessionUrl(DAST_URL);
-        var bucket = new CorrelationStreamProcessor.CorrelationBucketData("SQL Injection", vulns, List.of(dast));
-        var config = new CorrelationStreamConfig("t", "app", null, null, null);
-        return processor.processCorrelation(config, List.of(bucket), "scan-guid").get(60, TimeUnit.SECONDS);
+        return new CorrelationStreamProcessor.CorrelationBucketData("SQL Injection", vulns, List.of(dast));
     }
 
     private static class NoopLogger implements IAviatorLogger {
@@ -179,7 +209,7 @@ class CorrelationStreamProcessorWindowTest {
                             if (message.getInit().getSupportsFlowControl()) flowControlInits.incrementAndGet();
                             if (busyStreamStartsRemaining.getAndUpdate(n -> Math.max(0, n - 1)) > 0) {
                                 send(CorrelationServerMessage.newBuilder().setError(CorrelationErrorResponse.newBuilder()
-                                    .setStatus("SERVER_BUSY").setStatusMessage("at capacity").setRetryAfterMs(50)).build());
+                                    .setStatus("SERVER_BUSY").setStatusMessage("at capacity").setRetryAfterMs(busyStartRetryAfterMs)).build());
                                 synchronized (call) {
                                     call.onCompleted();
                                 }

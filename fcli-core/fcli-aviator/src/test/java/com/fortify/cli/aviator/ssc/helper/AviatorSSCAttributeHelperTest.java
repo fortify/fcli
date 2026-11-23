@@ -14,6 +14,7 @@ package com.fortify.cli.aviator.ssc.helper;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
@@ -60,6 +61,38 @@ class AviatorSSCAttributeHelperTest {
         }
     }
 
+    private static final String UPLOAD_DATE = "2026-11-20T10:00:00.000+0000";
+
+    @Test
+    void lastCorrelationAfterUploadMeansPreviousRunCompleted() throws Exception {
+        try (var server = new TestSscServer().withLastCorrelationValue("2026-11-20T10:05:00Z");
+                var unirest = newUnirest(server)) {
+            assertTrue(AviatorSSCAttributeHelper.isLastCorrelationOnOrAfter(unirest, "42", UPLOAD_DATE));
+        }
+    }
+
+    @Test
+    void lastCorrelationBeforeUploadMeansPreviousRunLeftFailures() throws Exception {
+        try (var server = new TestSscServer().withLastCorrelationValue("2026-11-19T08:00:00Z");
+                var unirest = newUnirest(server)) {
+            assertFalse(AviatorSSCAttributeHelper.isLastCorrelationOnOrAfter(unirest, "42", UPLOAD_DATE));
+        }
+    }
+
+    @Test
+    void missingLastCorrelationValueMeansNotCompleted() throws Exception {
+        try (var server = new TestSscServer(); var unirest = newUnirest(server)) {
+            assertFalse(AviatorSSCAttributeHelper.isLastCorrelationOnOrAfter(unirest, "42", UPLOAD_DATE));
+        }
+    }
+
+    @Test
+    void missingLastCorrelationDefinitionKeepsArtifactCheck() throws Exception {
+        try (var server = new TestSscServer().withLastCorrelationDefinition(false); var unirest = newUnirest(server)) {
+            assertTrue(AviatorSSCAttributeHelper.isLastCorrelationOnOrAfter(unirest, "42", UPLOAD_DATE));
+        }
+    }
+
     private static UnirestInstance newUnirest(TestSscServer server) {
         return UnirestHelper.createUnirestInstance(unirest -> {
             UnirestJsonHeaderConfigurer.configure(unirest);
@@ -72,6 +105,8 @@ class AviatorSSCAttributeHelperTest {
         private final HttpServer server;
         private JsonNode lastUpdate;
         private int updateStatus = 200;
+        private boolean lastCorrelationDefinitionPresent = true;
+        private String lastCorrelationValue;
 
         private TestSscServer() throws IOException {
             server = HttpServer.create(new InetSocketAddress(0), 0);
@@ -93,13 +128,30 @@ class AviatorSSCAttributeHelperTest {
             return this;
         }
 
+        private TestSscServer withLastCorrelationDefinition(boolean present) {
+            lastCorrelationDefinitionPresent = present;
+            return this;
+        }
+
+        private TestSscServer withLastCorrelationValue(String value) {
+            lastCorrelationValue = value;
+            return this;
+        }
+
         private void handleDefinitions(HttpExchange exchange) throws IOException {
+            String lastCorrelation = lastCorrelationDefinitionPresent
+                ? ",{\"id\":\"43\",\"name\":\"last_correlation\",\"category\":\"TECHNICAL\",\"type\":\"TEXT\"}" : "";
             respond(exchange, 200, """
-                {"data":[{"id":"42","guid":"C3D4E5F6-A7B8-9012-BCDE-F12345678902","name":"last_dast_audit","category":"TECHNICAL","type":"TEXT","required":false,"hasDefault":false,"options":[]}]}
-                """);
+                {"data":[{"id":"42","guid":"C3D4E5F6-A7B8-9012-BCDE-F12345678902","name":"last_dast_audit","category":"TECHNICAL","type":"TEXT","required":false,"hasDefault":false,"options":[]}%s]}
+                """.formatted(lastCorrelation));
         }
 
         private void handleAttributes(HttpExchange exchange) throws IOException {
+            if ("GET".equals(exchange.getRequestMethod())) {
+                String value = lastCorrelationValue == null ? "null" : "\"" + lastCorrelationValue + "\"";
+                respond(exchange, 200, "{\"data\":[{\"attributeDefinitionId\":43,\"value\":" + value + "}]}");
+                return;
+            }
             if (!"PUT".equals(exchange.getRequestMethod())) {
                 respond(exchange, 405, "{}");
                 return;
