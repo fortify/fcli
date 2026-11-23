@@ -17,7 +17,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20261118.091337-dev_feat.v3.x.aviator.27.1" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20261123.093034-dev_feat.v3.x.aviator.27.1" %}
 
 
 <div id="header">
@@ -72,7 +72,7 @@ fcli_version:
 <h2 id="_description"><a class="anchor" href="#_description"></a>Description</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Downloads the FPR from an SSC application version, audits it with Fortify Remediation Aviator, and uploads the result back to SSC. This command requires an active user session. Use 'fcli aviator session login' to create a session. This command doesn&#8217;t wait for SSC to finish processing the audited FPR file; please use the 'fcli ssc artifact wait-for' command to wait until the audited FPR file has been processed by SSC. Required option: --av.</p>
+<p>Downloads the FPR from an SSC application version, audits it with Fortify Remediation Aviator, and uploads the result back to SSC. If upload is not confirmed, reports AUDITED_NOT_UPLOADED with the audit statistics and exits nonzero. Aviator quota may have been consumed; retrying the audit may consume more quota. This command requires an active user session. Use 'fcli aviator session login' to create a session. This command doesn&#8217;t wait for SSC to finish processing the audited FPR file; please use the 'fcli ssc artifact wait-for' command to wait until the audited FPR file has been processed by SSC. Required option: --av.</p>
 </div>
 <div class="paragraph">
 <p>Examples:</p>
@@ -272,7 +272,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2026-11-18 09:16:15 UTC
+Last updated 2026-11-23 09:34:02 UTC
 </div>
 </div>
 </body>
