@@ -1524,6 +1524,49 @@ class RemediationProcessorTest {
         return Base64.getEncoder().encodeToString(digest.digest(bytes));
     }
 
+    /**
+     * A fix for a statement that ends a method body ends with the closing brace of its own try block. That brace reads the
+     * same as the method's closing brace that follows the replaced range once indentation is ignored, but it is not a
+     * duplicate of it: dropping it left the method unclosed and the next method declaration inside it.
+     */
+    @Test
+    void keepsTheClosingBraceOfTheFixWhenItOnlyReadsLikeTheMethodsClosingBrace() throws Exception {
+        String source = "public class Example {\n    public void m005(Req request) {\n        String v = request.getParameter(\"p005\");\n        try (Statement st = conn.createStatement();\n                ResultSet rs = st.executeQuery(\"SELECT a FROM t WHERE x = '\" + v + \"'\")) {\n            response.getWriter().write(\"ok \" + v);\n            rs.next();\n        }\n    }\n\n    public void m006(Req request) {\n    }\n}\n";
+        Path sourceFile = writeSourceFile(source);
+        Path fprPath = createRemediationFpr(3, 8, 1, 1, "    public void m005(Req request) {\n        String v = request.getParameter(\"p005\");\n        try (Statement st = conn.createStatement();\n                ResultSet rs = st.executeQuery(\"SELECT a FROM t WHERE x = '\" + v + \"'\")) {\n            response.getWriter().write(\"ok \" + v);\n            rs.next();\n        }\n    }", "        String v = request.getParameter(\"p005\");\n        try (Statement st = conn.createStatement();\n                ResultSet rs = st.executeQuery(\"SELECT a FROM t WHERE x = '\" + v + \"'\")) {\n            response.getWriter().write(\"ok \" + v);\n            rs.next();\n        }",
+            "        String v = request.getParameter(\"p005\");\n        try (PreparedStatement ps = conn.prepareStatement(\"SELECT a FROM t WHERE x = ?\")) {\n            ps.setString(1, v);\n            try (ResultSet rs = ps.executeQuery()) {\n                response.getWriter().write(\"ok \" + escape(v));\n                rs.next();\n            }\n        }");
+
+        RemediationMetric metric;
+        try (FprHandle fprHandle = new FprHandle(fprPath)) {
+            metric = new RemediationProcessor(fprHandle, tempDir.toString()).processRemediationXML();
+        }
+
+        assertEquals(1, metric.appliedRemediations());
+        String expected = String.join("\n", source.split("\n")[0], source.split("\n")[1], "        String v = request.getParameter(\"p005\");\n        try (PreparedStatement ps = conn.prepareStatement(\"SELECT a FROM t WHERE x = ?\")) {\n            ps.setString(1, v);\n            try (ResultSet rs = ps.executeQuery()) {\n                response.getWriter().write(\"ok \" + escape(v));\n                rs.next();\n            }\n        }",
+            source.split("\n")[8], "", "    public void m006(Req request) {", "    }", "}") + "\n";
+        assertEquals(expected, Files.readString(sourceFile));
+    }
+
+    /** The same fix with the method's closing brace repeated at its end: that one is a duplicate and is still dropped. */
+    @Test
+    void stillDropsAClosingBraceThatTheFixRepeatsFromTheLineAfterTheRange() throws Exception {
+        String source = "public class Example {\n    public void m005(Req request) {\n        String v = request.getParameter(\"p005\");\n        try (Statement st = conn.createStatement();\n                ResultSet rs = st.executeQuery(\"SELECT a FROM t WHERE x = '\" + v + \"'\")) {\n            response.getWriter().write(\"ok \" + v);\n            rs.next();\n        }\n    }\n\n    public void m006(Req request) {\n    }\n}\n";
+        Path sourceFile = writeSourceFile(source);
+        Path fprPath = createRemediationFpr(3, 8, 1, 1, "    public void m005(Req request) {\n        String v = request.getParameter(\"p005\");\n        try (Statement st = conn.createStatement();\n                ResultSet rs = st.executeQuery(\"SELECT a FROM t WHERE x = '\" + v + \"'\")) {\n            response.getWriter().write(\"ok \" + v);\n            rs.next();\n        }\n    }", "        String v = request.getParameter(\"p005\");\n        try (Statement st = conn.createStatement();\n                ResultSet rs = st.executeQuery(\"SELECT a FROM t WHERE x = '\" + v + \"'\")) {\n            response.getWriter().write(\"ok \" + v);\n            rs.next();\n        }",
+            "        String v = request.getParameter(\"p005\");\n        try (PreparedStatement ps = conn.prepareStatement(\"SELECT a FROM t WHERE x = ?\")) {\n            ps.setString(1, v);\n            try (ResultSet rs = ps.executeQuery()) {\n                response.getWriter().write(\"ok \" + escape(v));\n                rs.next();\n            }\n        }\n    }");
+
+        RemediationMetric metric;
+        try (FprHandle fprHandle = new FprHandle(fprPath)) {
+            metric = new RemediationProcessor(fprHandle, tempDir.toString()).processRemediationXML();
+        }
+
+        assertEquals(1, metric.appliedRemediations());
+        String[] lines = source.split("\n");
+        String expected = String.join("\n", lines[0], lines[1], "        String v = request.getParameter(\"p005\");\n        try (PreparedStatement ps = conn.prepareStatement(\"SELECT a FROM t WHERE x = ?\")) {\n            ps.setString(1, v);\n            try (ResultSet rs = ps.executeQuery()) {\n                response.getWriter().write(\"ok \" + escape(v));\n                rs.next();\n            }\n        }", lines[8], "",
+            "    public void m006(Req request) {", "    }", "}") + "\n";
+        assertEquals(expected, Files.readString(sourceFile));
+    }
+
     private Path writeSourceFile(String content) throws Exception {
         return writeSourceFile("Example.java", content);
     }
