@@ -22,7 +22,6 @@ import com.fortify.cli.aviator._common.output.cli.cmd.AbstractAviatorAdminSessio
 import com.fortify.cli.aviator._common.session.user.cli.mixin.AviatorUserTokenResolverMixin;
 import com.fortify.cli.aviator._common.util.AviatorSignatureUtils;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClient;
-import com.fortify.cli.aviator.grpc.AviatorGrpcClientHelper;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.grpc.token.TokenValidationResponse;
 
@@ -39,7 +38,7 @@ public class AviatorTokenValidateCommand extends AbstractAviatorAdminSessionOutp
     protected JsonNode getJsonNode(AviatorAdminConfigDescriptor configDescriptor) throws AviatorSimpleException, AviatorTechnicalException {
         String tokenToValidate = tokenResolver.getToken();
 
-        try (AviatorGrpcClient client = AviatorGrpcClientHelper.createClient(configDescriptor.getAviatorUrl())) {
+        try (AviatorGrpcClient client = createGrpcClient(configDescriptor)) {
             String[] messageAndSignature = createMessageAndSignature(configDescriptor, tokenToValidate);
             TokenValidationResponse response = validateToken(client, configDescriptor, messageAndSignature, tokenToValidate);
             return createResponseNode(response);

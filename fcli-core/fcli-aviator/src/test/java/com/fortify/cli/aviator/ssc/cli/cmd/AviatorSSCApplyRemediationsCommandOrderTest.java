@@ -39,13 +39,13 @@ import com.fortify.cli.aviator._common.remediations_cache.IApplyRemediationsOpti
 import com.fortify.cli.aviator._common.remediations_cache.RemediationsApplyHelper;
 import com.fortify.cli.aviator._common.util.AviatorRemediationMetricsHelper;
 import com.fortify.cli.aviator.config.AviatorLoggerImpl;
-import com.fortify.cli.aviator.fpr.utils.ISourceDecoder;
-import com.fortify.cli.aviator.fpr.utils.SourceDecoders;
 import com.fortify.cli.aviator.ssc.cli.mixin.AviatorSSCRemediationsSelectorArgGroups.OnlineModeArgGroup;
 import com.fortify.cli.aviator.ssc.cli.mixin.AviatorSSCRemediationsSelectorArgGroups.OnlineSelectionArgGroup;
 import com.fortify.cli.aviator.ssc.helper.SSCOnlineRemediationsFprSource;
-import com.fortify.cli.aviator.util.FileUtil;
 import com.fortify.cli.common.cli.mixin.CommandHelperMixin;
+import com.fortify.cli.common.fpr.util.FileUtil;
+import com.fortify.cli.common.fpr.utils.ISourceDecoder;
+import com.fortify.cli.common.fpr.utils.SourceDecoders;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.progress.cli.mixin.ProgressWriterFactoryMixin;
 import com.fortify.cli.common.progress.helper.ProgressWriterType;

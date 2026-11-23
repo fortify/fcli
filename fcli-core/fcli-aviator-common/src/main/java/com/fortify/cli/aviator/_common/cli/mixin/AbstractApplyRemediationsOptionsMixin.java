@@ -21,9 +21,9 @@ import org.apache.commons.lang3.StringUtils;
 import com.fortify.cli.aviator._common.remediations_cache.IApplyRemediationsOptions;
 import com.fortify.cli.aviator.fpr.remediation.ImplicitFixApprover;
 import com.fortify.cli.aviator.fpr.remediation.RemediationExecutionMode;
-import com.fortify.cli.aviator.fpr.utils.ISourceDecoder;
 import com.fortify.cli.common.cli.mixin.CommonOptionMixins;
 import com.fortify.cli.common.exception.FcliSimpleException;
+import com.fortify.cli.common.fpr.utils.ISourceDecoder;
 
 import lombok.Getter;
 import picocli.CommandLine.Mixin;
