@@ -40,8 +40,8 @@ import com.fortify.aviator.grpc.CorrelationServerMessage;
 import com.fortify.aviator.grpc.CorrelationServiceGrpc;
 import com.fortify.aviator.grpc.CorrelationValidationResponse;
 import com.fortify.cli.aviator.config.IAviatorLogger;
-import com.fortify.cli.aviator.dast.DastIssue;
-import com.fortify.cli.aviator.fpr.Vulnerability;
+import com.fortify.cli.common.fpr.Vulnerability;
+import com.fortify.cli.common.fpr.dast.DastIssue;
 
 import io.grpc.ManagedChannel;
 import io.grpc.Server;

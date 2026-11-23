@@ -31,7 +31,6 @@ import com.fortify.cli.aviator._common.util.AviatorGrpcUtils;
 import com.fortify.cli.aviator._common.util.AviatorSignatureUtils;
 import com.fortify.cli.aviator.app.cli.mixin.AviatorAppResolverMixin;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClient;
-import com.fortify.cli.aviator.grpc.AviatorGrpcClientHelper;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 
@@ -51,7 +50,7 @@ public class AviatorAppUpdateCommand extends AbstractAviatorAdminSessionOutputCo
 
     @Override
     protected JsonNode getJsonNode(AviatorAdminConfigDescriptor configDescriptor) throws AviatorSimpleException, AviatorTechnicalException {
-        try (AviatorGrpcClient client = AviatorGrpcClientHelper.createClient(configDescriptor.getAviatorUrl())) {
+        try (AviatorGrpcClient client = createGrpcClient(configDescriptor)) {
             String applicationId = appResolver.getApplicationId(client, configDescriptor);
             Application updatedApplication = client.updateApplication(applicationId, newName, configDescriptor.getTenant(),
                     operationIdMixin.getOperationId(),

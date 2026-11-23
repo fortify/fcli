@@ -36,8 +36,8 @@ import com.fortify.aviator.dastaudit.DastAuditResponse;
 import com.fortify.aviator.dastaudit.DastAuditServerMessage;
 import com.fortify.aviator.dastaudit.DastAuditServiceGrpc;
 import com.fortify.cli.aviator.config.IAviatorLogger;
-import com.fortify.cli.aviator.dast.DastIssue;
-import com.fortify.cli.aviator.dast.DastSession;
+import com.fortify.cli.common.fpr.dast.DastIssue;
+import com.fortify.cli.common.fpr.dast.DastSession;
 
 import io.grpc.ManagedChannel;
 import io.grpc.Server;

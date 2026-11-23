@@ -15,8 +15,8 @@ package com.fortify.cli.aviator.grpc;
 import com.fortify.aviator.dastaudit.DastClassification;
 import com.fortify.aviator.dastaudit.DastFindingContext;
 import com.fortify.aviator.dastaudit.DastReproStep;
-import com.fortify.cli.aviator.dast.DastIssue;
-import com.fortify.cli.aviator.dast.DastSession;
+import com.fortify.cli.common.fpr.dast.DastIssue;
+import com.fortify.cli.common.fpr.dast.DastSession;
 
 /**
  * Maps parsed WebInspect data to the DAST audit wire contract.

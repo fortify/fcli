@@ -34,10 +34,9 @@ import com.fortify.cli.aviator._common.session.user.cli.mixin.AviatorUserSession
 import com.fortify.cli.aviator._common.session.user.helper.AviatorUserSessionDescriptor;
 import com.fortify.cli.aviator.app.cli.mixin.AviatorAppResolverMixin;
 import com.fortify.cli.aviator.config.AviatorLoggerImpl;
-import com.fortify.cli.aviator.dast.DastIssue;
-import com.fortify.cli.aviator.fpr.Vulnerability;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClient;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClientHelper;
+import com.fortify.cli.aviator.grpc.AviatorRequestPolicy;
 import com.fortify.cli.aviator.grpc.CorrelationResult;
 import com.fortify.cli.aviator.grpc.CorrelationStreamConfig;
 import com.fortify.cli.aviator.grpc.CorrelationStreamProcessor;
@@ -53,6 +52,8 @@ import com.fortify.cli.aviator.ssc.helper.CategoryGrouper;
 import com.fortify.cli.aviator.ssc.helper.DastFprCorrelationEnricher;
 import com.fortify.cli.aviator.ssc.helper.SastFprCorrelationRecorder;
 import com.fortify.cli.common.exception.FcliSimpleException;
+import com.fortify.cli.common.fpr.Vulnerability;
+import com.fortify.cli.common.fpr.dast.DastIssue;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.progress.cli.mixin.ProgressWriterFactoryMixin;
@@ -284,7 +285,7 @@ public class AviatorSSCCorrelateSastDastCommand extends AbstractSSCJsonNodeOutpu
                 av.getApplicationName(), av.getVersionName(), sastResult.buildId);
 
             CorrelationResult result;
-            try (var grpcClient = AviatorGrpcClientHelper.createClient(sessionDescriptor.getAviatorUrl(), logger, 30)) {
+            try (var grpcClient = AviatorGrpcClientHelper.createClient(sessionDescriptor.getAviatorUrl(), logger, 30, AviatorRequestPolicy.WAIT_FOR_READY)) {
                 result = performCorrelation(grpcClient, config, bucketData, sastResult.scanGuid, alreadyTriedKeys);
             }
 

@@ -51,10 +51,10 @@ import com.fortify.aviator.grpc.SastFindingContext;
 import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
 import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
 import com.fortify.cli.aviator.config.IAviatorLogger;
-import com.fortify.cli.aviator.dast.DastIssue;
-import com.fortify.cli.aviator.fpr.Vulnerability;
 import com.fortify.cli.aviator.grpc.CorrelationStreamState.CandidateMatch;
 import com.fortify.cli.aviator.util.Constants;
+import com.fortify.cli.common.fpr.Vulnerability;
+import com.fortify.cli.common.fpr.dast.DastIssue;
 
 import io.grpc.Status;
 import io.grpc.stub.ClientCallStreamObserver;
@@ -104,6 +104,7 @@ public class CorrelationStreamProcessor implements AutoCloseable {
     private final Map<String, CorrelationClientMessage> requestMessages = new ConcurrentHashMap<>();
     private final Map<String, Integer> serverBusyAttempts = new ConcurrentHashMap<>();
     private volatile CompletableFuture<CorrelationResult> resultFuture;
+    private volatile StreamInitializationTimeout initializationTimeout;
     private volatile CorrelationResponseObserver currentObserver;
     private volatile String scanGuid;
     private int busyStartRetryCount;
@@ -182,6 +183,7 @@ public class CorrelationStreamProcessor implements AutoCloseable {
         this.resultFuture = resultFuture;
         this.streamLatch = new CountDownLatch(1);
 
+        resultFuture.whenComplete((result, error) -> closeInitializationTimeout());
         startStream(resultFuture, scanGuid);
 
         return resultFuture;
@@ -212,8 +214,13 @@ public class CorrelationStreamProcessor implements AutoCloseable {
     // ─── Stream lifecycle ──────────────────────────────────────────────
 
     private void startStream(CompletableFuture<CorrelationResult> resultFuture, String scanGuid) {
-        requestHandler = new RequestHandler<>(state.streamId);
+        var attemptHandler = new RequestHandler<CorrelationClientMessage>(state.streamId);
+        requestHandler = attemptHandler;
         state.isStreamInitialized = false;
+        // One timeout per attempt: a stream re-opened after SERVER_BUSY gets its own countdown.
+        var attemptTimeout = new StreamInitializationTimeout(pingScheduler,
+            () -> attemptHandler.sendError(StreamInitializationTimeout.expiredError("Correlation")));
+        initializationTimeout = attemptTimeout;
         var observer = new CorrelationResponseObserver(resultFuture, scanGuid);
         currentObserver = observer;
 
@@ -247,6 +254,12 @@ public class CorrelationStreamProcessor implements AutoCloseable {
         requestHandler.sendRequest(
             CorrelationClientMessage.newBuilder().setInit(initReq.build()).build()
         );
+        attemptTimeout.arm();
+    }
+
+    private void closeInitializationTimeout() {
+        var timeout = initializationTimeout;
+        if (timeout != null) timeout.close();
     }
 
     // ─── Phase 1: Send correlation requests ────────────────────────────
@@ -406,6 +419,11 @@ public class CorrelationStreamProcessor implements AutoCloseable {
         public void onError(Throwable t) {
             if (this != currentObserver) return;
             stopPingPong();
+            if (initializationTimeout.isExpired()) {
+                resultFuture.completeExceptionally(StreamInitializationTimeout.expiredError("Correlation"));
+                streamLatch.countDown();
+                return;
+            }
             Status status = Status.fromThrowable(t);
             LOG.error("Correlation stream error: {} - {}", status.getCode(), status.getDescription(), t);
             resultFuture.completeExceptionally(
@@ -430,6 +448,7 @@ public class CorrelationStreamProcessor implements AutoCloseable {
     // ─── Response handlers ─────────────────────────────────────────────
 
     private void handleInitResponse(CorrelationInitResponse resp) {
+        if (!initializationTimeout.initialized()) return;
         LOG.info("Correlation stream initialized. Server stream ID: {}, Reserved quota: {}, Status: {}",
             resp.getServerStreamId(), resp.getReservedQuota(), resp.getStatus());
 
@@ -603,6 +622,7 @@ public class CorrelationStreamProcessor implements AutoCloseable {
         }
         // Ignore the refused stream's completion; a fresh stream takes over
         currentObserver = null;
+        closeInitializationTimeout();
         stopPingPong();
         long delay = ServerBusyBackoff.streamStartDelayMs(attempt, retryAfterMs);
         logger.info("Aviator server is busy ({}); retrying correlation start in {} ms (attempt {}/{})",
@@ -893,6 +913,7 @@ public class CorrelationStreamProcessor implements AutoCloseable {
 
     @Override
     public void close() {
+        closeInitializationTimeout();
         isClosed.set(true);
         var retryTask = busyStartRetryTask;
         if (retryTask != null) retryTask.cancel(false);

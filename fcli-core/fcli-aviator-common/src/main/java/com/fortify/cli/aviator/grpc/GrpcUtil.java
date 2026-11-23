@@ -12,12 +12,15 @@
  */
 package com.fortify.cli.aviator.grpc;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,16 +31,17 @@ import com.fortify.aviator.grpc.File;
 import com.fortify.aviator.grpc.Fragment;
 import com.fortify.aviator.grpc.IssueData;
 import com.fortify.aviator.grpc.StackTraceElementList;
+import com.fortify.cli.aviator._common.exception.AviatorConnectivityException;
 import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
 import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
+import com.fortify.cli.aviator.audit.SourceCodeEnricher;
 import com.fortify.cli.aviator.audit.model.AuditResponse;
 import com.fortify.cli.aviator.audit.model.AuditResponse.AuditSkipReason;
 import com.fortify.cli.aviator.audit.model.Autoremediation;
 import com.fortify.cli.aviator.audit.model.Change;
-import com.fortify.cli.aviator.audit.model.StackTraceElement;
 import com.fortify.cli.aviator.audit.model.UserPrompt;
-import com.fortify.cli.aviator.fpr.utils.SourceCodeEnricher;
 import com.fortify.cli.aviator.util.Constants;
+import com.fortify.cli.common.fpr.model.StackTraceElement;
 import com.google.protobuf.Any;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.rpc.ErrorInfo;
@@ -57,6 +61,11 @@ class GrpcUtil {
         R call(S stub, T request) throws StatusRuntimeException;
     }
 
+    /**
+     * Applies the 30-second deadline to each unary call.
+     * Fail-fast stubs carry {@link AviatorConnectionContext#CALL_OPTION} for safe connectivity classification.
+     * Stubs without that option retain the existing status mapping.
+     */
     static <S extends AbstractBlockingStub<S>, T, R> R executeGrpcCall(S stub, GrpcCall<S, T, R> call, T request, String operation) {
         return executeGrpcCall(stub, call, request, operation, null);
     }
@@ -64,10 +73,11 @@ class GrpcUtil {
     /** @param unimplementedHint optional extra advice appended to the error message when the server does not implement the call */
     static <S extends AbstractBlockingStub<S>, T, R> R executeGrpcCall(S stub, GrpcCall<S, T, R> call, T request, String operation, String unimplementedHint) {
         try {
-            S stubWithDeadline = stub.withDeadlineAfter(Constants.DEFAULT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
-            return call.call(stubWithDeadline, request);
+            return call.call(stub.withDeadlineAfter(Constants.DEFAULT_TIMEOUT_SECONDS, TimeUnit.SECONDS), request);
         } catch (StatusRuntimeException e) {
-            throw toAviatorException(e, operation, unimplementedHint);
+            AviatorConnectionContext context = stub.getCallOptions().getOption(AviatorConnectionContext.CALL_OPTION);
+            throw toConnectivityException(e, context)
+                .orElseGet(() -> toAviatorException(e, operation, unimplementedHint, context != null && unimplementedHint == null));
         } catch (Exception e) {
             String errorMessage = "An unexpected client-side error occurred during the " + operation + " operation.";
             LOG.error(errorMessage, e);
@@ -75,8 +85,31 @@ class GrpcUtil {
         }
     }
 
+    private static Optional<RuntimeException> toConnectivityException(StatusRuntimeException e, AviatorConnectionContext context) {
+        if ( context == null ) {
+            return Optional.empty();
+        }
+        return AviatorConnectivityFailureKind.classify(e, context)
+            .map(kind -> {
+                // Cause messages can contain credentials, so log only the cause types.
+                LOG.debug("Aviator connectivity failure: kind={}, causes=[{}]", kind, getCauseTypes(e));
+                return new AviatorConnectivityException(kind.formatMessage(context));
+            });
+    }
+
+    private static String getCauseTypes(Throwable e) {
+        return ExceptionUtils.getThrowableList(e).stream()
+            .map(t -> t.getClass().getName())
+            .collect(Collectors.joining(" <- "));
+    }
+
     /** Maps a failed call to the user facing exception types. */
     static RuntimeException toAviatorException(StatusRuntimeException e, String operation, String unimplementedHint) {
+        return toAviatorException(e, operation, unimplementedHint, false);
+    }
+
+    private static RuntimeException toAviatorException(StatusRuntimeException e, String operation, String unimplementedHint,
+            boolean preserveFailFastUnimplementedContract) {
         Status status = e.getStatus();
         String serverDescription = status.getDescription() != null && !status.getDescription().isBlank()
                 ? status.getDescription()
@@ -102,7 +135,7 @@ class GrpcUtil {
                 return new AviatorSimpleException("Authentication Failed: The token or credentials used are invalid or expired. Please log in again using 'fcli aviator session login' or verify your admin configuration.");
 
             case RESOURCE_EXHAUSTED:
-                return new AviatorSimpleException(String.format("The server's resource limits were exceeded during %s. Please try again later or contact support. Server details: %s", operation, serverDescription));
+                return new AviatorSimpleException(String.format("Aviator server resource limits were exceeded during %s (server details: %s); try again later, and contact support if the problem continues", operation, serverDescription));
             case DEADLINE_EXCEEDED:
                 String timeoutMessage = String.format(
                         "The %s operation timed out because the server did not respond in time.\n\n" +
@@ -115,6 +148,9 @@ class GrpcUtil {
                 return new AviatorSimpleException(timeoutMessage);
 
             case UNIMPLEMENTED:
+                if (preserveFailFastUnimplementedContract) {
+                    return toAviatorTechnicalException(e, operation, status);
+                }
                 LOG.warn("gRPC call for '{}' is not implemented by the server: {}", operation, serverDescription);
                 return new AviatorSimpleException(String.format(
                         "The Aviator service does not support the %s operation.%s",
@@ -127,11 +163,18 @@ class GrpcUtil {
             case UNAVAILABLE:
             case DATA_LOSS:
             default:
-                String techMessage = String.format("A technical error occurred on the server while performing the %s operation. Please check the fcli logs for details or contact support if the issue persists.", operation);
-                String logMessage = String.format("gRPC call for '%s' failed with status %s (%s): %s", operation, status.getCode(), status.getCode().name(), serverDescription);
-                LOG.error(logMessage, e);
-                return new AviatorTechnicalException(techMessage, e);
+                return toAviatorTechnicalException(e, operation, status);
         }
+    }
+
+    private static AviatorTechnicalException toAviatorTechnicalException(StatusRuntimeException e, String operation, Status status) {
+        String serverDescription = status.getDescription() != null && !status.getDescription().isBlank()
+                ? status.getDescription()
+                : "No additional details were provided by the server.";
+        String techMessage = String.format("The Aviator %s operation failed with status %s; check the Aviator URL and network access, run the command again with --log-level DEBUG to log details, and contact support if the problem continues", operation, status.getCode());
+        String logMessage = String.format("gRPC call for '%s' failed with status %s (%s): %s", operation, status.getCode(), status.getCode().name(), serverDescription);
+        LOG.error(logMessage, e);
+        return new AviatorTechnicalException(techMessage, e);
     }
 
     /** Maximum attempts (initial call plus retries) of one mutation; every attempt reuses the operation id. */
@@ -295,11 +338,16 @@ class GrpcUtil {
                         operation, reason, description));
             };
         }
-        RuntimeException mapped = toAviatorException(e, operation, null);
+        AviatorConnectionContext context = stub.getCallOptions().getOption(AviatorConnectionContext.CALL_OPTION);
+        RuntimeException mapped = toConnectivityException(e, context)
+                .orElseGet(() -> toAviatorException(e, operation, null, context != null));
         if (operationId == null || !isUnknownOutcome(e)) {
             return mapped;
         }
         String hint = unknownOutcomeHint(operationId, operation);
+        if (mapped instanceof AviatorConnectivityException) {
+            return new AviatorConnectivityException(mapped.getMessage() + hint);
+        }
         if (mapped instanceof AviatorSimpleException) {
             return new AviatorSimpleException(mapped.getMessage() + hint, mapped.getCause());
         }

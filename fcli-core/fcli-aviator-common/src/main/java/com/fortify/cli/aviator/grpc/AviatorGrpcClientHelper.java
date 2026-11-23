@@ -15,6 +15,7 @@ package com.fortify.cli.aviator.grpc;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.net.URI;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
@@ -44,12 +45,20 @@ public class AviatorGrpcClientHelper {
     private static final Logger LOG = LoggerFactory.getLogger(AviatorGrpcClientHelper.class);
     private static final String AVIATOR_MODULE = "aviator";
 
-    public static AviatorGrpcClient createClient(String url, IAviatorLogger logger, long pingIntervalSeconds) throws AviatorSimpleException {
-        if (url == null || url.trim().isEmpty()) {
-            throw new AviatorSimpleException("Aviator URL cannot be null or empty.");
-        }
+    /**
+     * Creates a client with an explicit unary request policy.
+     * Streaming calls retain their own recovery behavior regardless of this policy.
+     */
+    public static AviatorGrpcClient createClient(String url, IAviatorLogger logger, long pingIntervalSeconds,
+            AviatorRequestPolicy policy) throws AviatorSimpleException {
+        Objects.requireNonNull(policy, "policy");
+        return createClient(createConnectionPlan(url), logger, pingIntervalSeconds, policy);
+    }
 
-        var connectionPlan = createConnectionPlan(url);
+    /** Accepts an explicit route so callers need not resolve proxy settings again. */
+    static AviatorGrpcClient createClient(AviatorConnectionPlan connectionPlan, IAviatorLogger logger, long pingIntervalSeconds,
+            AviatorRequestPolicy policy) {
+        Objects.requireNonNull(policy, "policy");
         var proxyDescriptor = connectionPlan.proxyDescriptor();
         var target = connectionPlan.target();
         var builder = target.port() == null
@@ -63,7 +72,8 @@ public class AviatorGrpcClientHelper {
         }
 
         var channel = configureBuilder(builder, proxyDescriptor).build();
-        return new AviatorGrpcClient(channel, Constants.DEFAULT_TIMEOUT_SECONDS, logger, pingIntervalSeconds);
+        return new AviatorGrpcClient(channel, Constants.DEFAULT_TIMEOUT_SECONDS, logger, pingIntervalSeconds,
+            policy, AviatorConnectionContext.of(connectionPlan));
     }
 
     public static AviatorConnectionPlan createConnectionPlan(String url) {
@@ -79,27 +89,29 @@ public class AviatorGrpcClientHelper {
 
     public static ParsedTarget parseTarget(String url) {
         var normalizedUrl = normalizeUrl(url);
+        var safeUrl = toSafeUrlForDisplay(url);
         URI uri;
         try {
             uri = URI.create(normalizedUrl);
-        } catch (Exception e) {
-            throw new AviatorSimpleException("Aviator URL format is invalid. Expected 'host:port' or a valid target string. Provided URL: " + url, e);
+        } catch (IllegalArgumentException e) {
+            // URI parsing errors include the original URL, which may contain credentials.
+            throw new AviatorSimpleException("Invalid Aviator URL; expected a host and optional port: " + safeUrl);
         }
 
         var host = uri.getHost();
         if ( host==null || host.isBlank() ) {
-            throw new AviatorSimpleException("Aviator URL is invalid: Host cannot be empty. Provided URL: " + url);
+            throw new AviatorSimpleException("Aviator URL is invalid: Host cannot be empty. Provided URL: " + safeUrl);
         }
 
         if ( uri.getPath()!=null && !uri.getPath().isBlank() && !"/".equals(uri.getPath()) ) {
-            LOG.warn("WARN: URL contained a path ('{}'), using only the host/port part. Full URL: {}", uri.getPath(), url);
+            LOG.warn("WARN: Ignoring path in Aviator URL; using only the host and port");
         }
 
         var port = uri.getPort();
         if ( port==-1 ) {
             return new ParsedTarget(host, null);
         } else if (port <= 0 || port > 65535) {
-            throw new AviatorSimpleException("Aviator URL is invalid: Invalid port number '"+port+"'. Provided URL: " + url);
+            throw new AviatorSimpleException("Aviator URL is invalid: Invalid port number '"+port+"'. Provided URL: " + safeUrl);
         } else {
             return new ParsedTarget(host, port);
         }
@@ -121,13 +133,34 @@ public class AviatorGrpcClientHelper {
         var schemeSeparator = trimmed.indexOf("://");
         var scheme = trimmed.substring(0, schemeSeparator);
         if ( !"https".equalsIgnoreCase(scheme) ) {
-            throw new UnsupportedAviatorUrlSchemeException(scheme, url);
+            throw new UnsupportedAviatorUrlSchemeException(scheme, toSafeUrlForDisplay(url));
         }
         if ( "https".equals(scheme) ) {
             return trimmed;
         }
         // Canonicalize scheme casing (HTTPS://host → https://host)
         return "https"+trimmed.substring(schemeSeparator);
+    }
+
+    /**
+     * Returns only the URL scheme and authority, with user-info replaced by {@code ***}.
+     * Paths, queries, and fragments are omitted because they can contain credentials.
+     */
+    static String toSafeUrlForDisplay(String url) {
+        if ( url==null ) {
+            return null;
+        }
+        var schemeSeparator = url.indexOf("://");
+        var authorityStart = schemeSeparator<0 ? 0 : schemeSeparator+3;
+        var authorityEnd = authorityStart;
+        while ( authorityEnd<url.length() && "/?#".indexOf(url.charAt(authorityEnd))<0 ) {
+            authorityEnd++;
+        }
+        var userInfoEnd = url.lastIndexOf('@', authorityEnd-1);
+        if ( userInfoEnd<authorityStart ) {
+            return url.substring(0, authorityEnd);
+        }
+        return url.substring(0, authorityStart)+"***"+url.substring(userInfoEnd, authorityEnd);
     }
 
     private static NettyChannelBuilder configureBuilder(NettyChannelBuilder builder, Optional<ProxyDescriptor> proxyDescriptor) {
@@ -171,8 +204,11 @@ public class AviatorGrpcClientHelper {
         return builder.build();
     }
 
-    public static AviatorGrpcClient createClient(String url) throws AviatorSimpleException {
-        return createClient(url, null, Constants.DEFAULT_PING_INTERVAL_SECONDS);
+    /**
+     * Creates a client with the default ping interval and an explicit unary request policy.
+     */
+    public static AviatorGrpcClient createClient(String url, AviatorRequestPolicy policy) throws AviatorSimpleException {
+        return createClient(url, null, Constants.DEFAULT_PING_INTERVAL_SECONDS, policy);
     }
 
     public record AviatorConnectionPlan(
