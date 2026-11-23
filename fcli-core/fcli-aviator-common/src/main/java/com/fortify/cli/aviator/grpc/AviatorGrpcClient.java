@@ -83,7 +83,10 @@ import com.fortify.grpc.token.TokenValidationResponse;
 import com.fortify.grpc.token.ValidateUserTokenRequest;
 import com.google.protobuf.Empty;
 
+import io.grpc.CompressorRegistry;
+import io.grpc.DecompressorRegistry;
 import io.grpc.ManagedChannel;
+import io.grpc.ManagedChannelBuilder;
 import io.grpc.MethodDescriptor;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
@@ -106,15 +109,6 @@ public class AviatorGrpcClient implements AutoCloseable {
     private final long pingIntervalSeconds;
     private final java.util.concurrent.ScheduledExecutorService pingScheduler;
     final AtomicBoolean isShutdown = new AtomicBoolean(false);
-
-    /**
-     * For subclasses that replace the calls, such as test doubles: the client waits for the connection like the audit
-     * clients do, so no connection context is needed.
-     */
-    protected AviatorGrpcClient(ManagedChannel channel, long defaultTimeoutSeconds, IAviatorLogger logger) {
-        this(channel, defaultTimeoutSeconds, logger, Constants.DEFAULT_PING_INTERVAL_SECONDS,
-                AviatorRequestPolicy.WAIT_FOR_READY, null);
-    }
 
     /** Fail-fast clients require a connection context for error messages. */
     AviatorGrpcClient(ManagedChannel channel, long defaultTimeoutSeconds, IAviatorLogger logger, long pingIntervalSeconds,
@@ -154,6 +148,31 @@ public class AviatorGrpcClient implements AutoCloseable {
             t.setDaemon(true);
             return t;
         });
+    }
+
+    /**
+     * Backward-compatible constructor for callers that manage their own channel. These clients retain the
+     * historical wait-for-ready behavior; admin commands use the helper's fail-fast constructor instead.
+     */
+    public AviatorGrpcClient(ManagedChannel channel, long defaultTimeoutSeconds, IAviatorLogger logger, long pingIntervalSeconds) {
+        this(channel, defaultTimeoutSeconds, logger, pingIntervalSeconds, AviatorRequestPolicy.WAIT_FOR_READY, null);
+    }
+
+    public AviatorGrpcClient(String host, int port, long defaultTimeoutSeconds, IAviatorLogger logger, long pingIntervalSeconds) {
+        this(ManagedChannelBuilder.forAddress(host, port).useTransportSecurity()
+                .maxInboundMessageSize(Constants.MAX_MESSAGE_SIZE)
+                .keepAliveTime(30, TimeUnit.SECONDS)
+                .keepAliveTimeout(10, TimeUnit.SECONDS)
+                .keepAliveWithoutCalls(true)
+                .enableRetry()
+                .compressorRegistry(CompressorRegistry.getDefaultInstance())
+                .decompressorRegistry(DecompressorRegistry.getDefaultInstance())
+                .build(), defaultTimeoutSeconds, logger, pingIntervalSeconds);
+        LOG.debug("Initialized AviatorGrpcClient - Host: {}, Port: {}", host, port);
+    }
+
+    public AviatorGrpcClient(ManagedChannel channel, long defaultTimeoutSeconds, IAviatorLogger logger) {
+        this(channel, defaultTimeoutSeconds, logger, 30);
     }
 
     public CompletableFuture<Map<String, AuditResponse>> processBatchRequests(Queue<UserPrompt> requests, String projectName,

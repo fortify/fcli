@@ -66,8 +66,7 @@ class AviatorGrpcClientOperationTest {
     private AviatorGrpcClient client(ApplicationServiceGrpc.ApplicationServiceImplBase service) throws Exception {
         server = NettyServerBuilder.forAddress(new InetSocketAddress("127.0.0.1", 0)).addService(service).build().start();
         channel = NettyChannelBuilder.forAddress("127.0.0.1", server.getPort()).proxyDetector(address -> null).usePlaintext().build();
-        var context = new AviatorConnectionContext(new AviatorEndpoint("127.0.0.1", server.getPort()), null);
-        return new AviatorGrpcClient(channel, 30, null, 30, AviatorRequestPolicy.FAIL_FAST, context);
+        return new AviatorGrpcClient(channel, 30, null, 30);
     }
 
     /** Records every call and executes a reduction at most once per operation id, like the real server. */

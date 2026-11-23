@@ -75,8 +75,9 @@ class GrpcUtil {
         try {
             return call.call(stub.withDeadlineAfter(Constants.DEFAULT_TIMEOUT_SECONDS, TimeUnit.SECONDS), request);
         } catch (StatusRuntimeException e) {
-            throw toConnectivityException(e, stub.getCallOptions().getOption(AviatorConnectionContext.CALL_OPTION))
-                .orElseGet(() -> toAviatorException(e, operation, unimplementedHint));
+            AviatorConnectionContext context = stub.getCallOptions().getOption(AviatorConnectionContext.CALL_OPTION);
+            throw toConnectivityException(e, context)
+                .orElseGet(() -> toAviatorException(e, operation, unimplementedHint, context != null && unimplementedHint == null));
         } catch (Exception e) {
             String errorMessage = "An unexpected client-side error occurred during the " + operation + " operation.";
             LOG.error(errorMessage, e);
@@ -104,6 +105,11 @@ class GrpcUtil {
 
     /** Maps a failed call to the user facing exception types. */
     static RuntimeException toAviatorException(StatusRuntimeException e, String operation, String unimplementedHint) {
+        return toAviatorException(e, operation, unimplementedHint, false);
+    }
+
+    private static RuntimeException toAviatorException(StatusRuntimeException e, String operation, String unimplementedHint,
+            boolean preserveFailFastUnimplementedContract) {
         Status status = e.getStatus();
         String serverDescription = status.getDescription() != null && !status.getDescription().isBlank()
                 ? status.getDescription()
@@ -142,6 +148,9 @@ class GrpcUtil {
                 return new AviatorSimpleException(timeoutMessage);
 
             case UNIMPLEMENTED:
+                if (preserveFailFastUnimplementedContract) {
+                    return toAviatorTechnicalException(e, operation, status);
+                }
                 LOG.warn("gRPC call for '{}' is not implemented by the server: {}", operation, serverDescription);
                 return new AviatorSimpleException(String.format(
                         "The Aviator service does not support the %s operation.%s",
@@ -154,11 +163,18 @@ class GrpcUtil {
             case UNAVAILABLE:
             case DATA_LOSS:
             default:
-                String techMessage = String.format("The Aviator %s operation failed with status %s; check the Aviator URL and network access, run the command again with --log-level DEBUG to log details, and contact support if the problem continues", operation, status.getCode());
-                String logMessage = String.format("gRPC call for '%s' failed with status %s (%s): %s", operation, status.getCode(), status.getCode().name(), serverDescription);
-                LOG.error(logMessage, e);
-                return new AviatorTechnicalException(techMessage, e);
+                return toAviatorTechnicalException(e, operation, status);
         }
+    }
+
+    private static AviatorTechnicalException toAviatorTechnicalException(StatusRuntimeException e, String operation, Status status) {
+        String serverDescription = status.getDescription() != null && !status.getDescription().isBlank()
+                ? status.getDescription()
+                : "No additional details were provided by the server.";
+        String techMessage = String.format("The Aviator %s operation failed with status %s; check the Aviator URL and network access, run the command again with --log-level DEBUG to log details, and contact support if the problem continues", operation, status.getCode());
+        String logMessage = String.format("gRPC call for '%s' failed with status %s (%s): %s", operation, status.getCode(), status.getCode().name(), serverDescription);
+        LOG.error(logMessage, e);
+        return new AviatorTechnicalException(techMessage, e);
     }
 
     /** Maximum attempts (initial call plus retries) of one mutation; every attempt reuses the operation id. */
@@ -322,11 +338,16 @@ class GrpcUtil {
                         operation, reason, description));
             };
         }
-        RuntimeException mapped = toAviatorException(e, operation, null);
+        AviatorConnectionContext context = stub.getCallOptions().getOption(AviatorConnectionContext.CALL_OPTION);
+        RuntimeException mapped = toConnectivityException(e, context)
+                .orElseGet(() -> toAviatorException(e, operation, null, context != null));
         if (operationId == null || !isUnknownOutcome(e)) {
             return mapped;
         }
         String hint = unknownOutcomeHint(operationId, operation);
+        if (mapped instanceof AviatorConnectivityException) {
+            return new AviatorConnectivityException(mapped.getMessage() + hint);
+        }
         if (mapped instanceof AviatorSimpleException) {
             return new AviatorSimpleException(mapped.getMessage() + hint, mapped.getCause());
         }
