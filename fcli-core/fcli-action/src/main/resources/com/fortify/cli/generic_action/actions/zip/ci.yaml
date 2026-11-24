@@ -4,15 +4,23 @@ author: Fortify
 usage:
   header: Run CI pipeline
   description: |
-    This action can be used to run a full, standardized CI pipeline that performs the
-    following activities:
+    This action runs a standardized CI pipeline against either FoD or SSC, depending on
+    whether `FOD_URL` or `SSC_URL` is set. Depending on the configured scan types and
+    options, the pipeline performs the following activities:
     
     * Create & configure SSC application version / FoD release if needed
     * Install ScanCentral Client for packaging
     * Package source code using ScanCentral Client
     * Submit SAST scan request
-    * Wait for SAST scan completion
-    * Perform post-scan activities, like checking security policy outcome, exporting results, ...
+    * Optionally submit DAST scan request using pre-existing SC-DAST scan settings (SSC only)
+    * Optionally run Debricked software composition analysis (SCA) and publish results (SSC only)
+    * Wait for scan completion as configured
+    * Optionally run a Fortify Agentic Analyzer (FAA) scan, using the latest available SAST
+      results as context, and import (FoD) or upload (SSC) the FAA results as a SARIF report
+    * Optionally run an Aviator audit (SSC) or enable Aviator audits in the release
+      settings (FoD), and optionally apply Aviator remediations
+    * Perform configured post-scan activities, such as policy checks, summaries,
+      pull request comments, and result exports
     
     Configuration for this fcli action is done through environment variables; the
     sections below list the environment variables supported by this action.

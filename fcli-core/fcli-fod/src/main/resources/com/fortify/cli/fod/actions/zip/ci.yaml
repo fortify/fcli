@@ -3,17 +3,24 @@ author: Fortify
 usage:
   header: Run FoD CI pipeline
   description: |
-    This action can be used to run a full, standardized CI pipeline that performs the
-    following activities:
+    This action runs a FoD CI pipeline with the following activities, depending on
+    the configured options:
 
     * Create & configure FoD application release if needed
     * Package source code
     * Submit SAST scan request
-    * Wait for SAST scan completion
-    * Perform post-scan activities, like checking policy outcome, exporting results, ...
+    * Wait for SAST scan completion as configured
+    * Optionally run Fortify Agentic Analyzer (FAA) and import SARIF results to FoD
+    * Optionally perform Aviator remediation
+    * Perform configured post-scan activities, such as policy checks, summaries,
+      pull request comments, and result exports
     
     Configuration for this fcli action is done through environment variables; the
     sections below list the environment variables supported by this action.
+
+    NOTE: Standard CI integrations use the top-level 'fcli action run ci' action.
+    When invoking this FoD action directly with FAA integration enabled, manually
+    configure the environment variables required by the FAA license check.
     
     ${#include('/ci-action-bootstrap'+(isAsciiDoc?'.adoc':'.txt'))}
     
@@ -65,6 +72,11 @@ steps:
             #fcliCmdSkipFromEnvReason('WAIT', false)
             ?:#fcliCmdSkipFromEnvReason('SAST_WAIT', false) 
         }
+      faa.skipReason: > # Disabled by default; requires DO_FAA_SCAN=true (or FAA_SCAN_ACTION/FAA_SCAN_EXTRA_OPTS) to be enabled
+        ${
+            #actionCmdSkipFromEnvReason('FAA_SCAN', true)
+        }
+
       # Post-scan tasks will be skipped if wait is skipped or if no scans were completed
       # successfully. Post-scan skip reason will be reset to null once the wait task for
       # any scan completed successfully. 
@@ -134,7 +146,17 @@ steps:
           - ${SAST_SCAN.dependencySkipReason}                  # Skip if SAST_SCAN was skipped or failed
         on.success:
           - var.set: { postScan.skipReason: } # Reset postScan.skipReason to allow post-scan tasks to run
-             
+
+      # Run FAA scan; SAST context is taken from the latest SAST scan results for the release (if any).
+      # FoD SARIF imports can't be waited for, so FAA results may not yet be reflected by post-scan tasks.
+      FAA_SCAN:
+        cmd: >
+          ${#actionCmd('FAA_SCAN', 'fod', 'faa-scan')}
+          "--source-dir=${global.ci.sourceDir}"
+          "--release=${global.ci.rel}"
+        skip.if-reason:
+          - ${faa.skipReason}                        # Skip if FAA scan is disabled
+      
       AVIATOR_REMEDIATIONS:
         cmd: ${#actionCmd('AVIATOR_REMEDIATIONS', 'fod', global.ci.fod_aviatorRemediationsAction)} "--rel=${global.ci.rel}" "--source-dir=${global.ci.sourceDir}" "--progress=none"
         skip.if-reason:
