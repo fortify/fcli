@@ -136,6 +136,7 @@ public final class AviatorSSCFprTransferHelper {
             IAviatorLogger logger) {
         return uploadEngineSpecificFprBestEffort(
             fprPath,
+            appVersion.getVersionId(),
             engine,
             logger,
             candidate -> AviatorSSCFprFilterHelper.filterEngineSpecificFprInPlace(candidate, engine),
@@ -144,6 +145,7 @@ public final class AviatorSSCFprTransferHelper {
 
     static UploadResult uploadEngineSpecificFprBestEffort(
             Path fprPath,
+            String versionId,
             AviatorSSCFprFilterHelper.Engine engine,
             IAviatorLogger logger,
             Consumer<Path> pruneFpr,
@@ -151,7 +153,8 @@ public final class AviatorSSCFprTransferHelper {
         Path candidate = null;
         Path fprToUpload = fprPath;
         try {
-            candidate = Files.createTempFile(fprPath.toAbsolutePath().getParent(), "aviator-", ".fpr");
+            String prefix = "aviator_" + versionId + "_";
+            candidate = Files.createTempFile(fprPath.toAbsolutePath().getParent(), prefix, ".fpr");
             Files.copy(fprPath, candidate, StandardCopyOption.REPLACE_EXISTING);
             pruneFpr.accept(candidate);
             fprToUpload = candidate;
