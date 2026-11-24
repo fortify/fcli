@@ -151,7 +151,7 @@ public final class AviatorSSCFprTransferHelper {
         Path candidate = null;
         Path fprToUpload = fprPath;
         try {
-            candidate = Files.createTempFile(fprPath.toAbsolutePath().getParent(), "aviator-", ".fpr");
+            candidate = Files.createTempFile(fprPath.toAbsolutePath().getParent(), "aviator_", ".fpr");
             Files.copy(fprPath, candidate, StandardCopyOption.REPLACE_EXISTING);
             pruneFpr.accept(candidate);
             fprToUpload = candidate;
