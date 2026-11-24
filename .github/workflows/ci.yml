@@ -40,11 +40,12 @@ permissions: read-all
 env:
   native_image_opts: --verbose -H:Log=registerResource:verbose -H:+PrintClassInitialization -march=compatibility
   graal_distribution: graalvm-community
-  graal_java_version: 21
+  graal_version: '25.6.5.1'
+  graal_java_version: 25
           
 jobs:
   check-duplicate-run:
-    uses: fortify/shared-github/.github/workflows/reusable-check-duplicate-run.yml@5ad1afec0f56a21b03f0887eea35505cb6a66554
+    uses: fortify/shared-github/.github/workflows/reusable-check-duplicate-run.yml@15d0b01f3bedb5c1523cb806e745f041e9bce5a3
 
   create-release:
     name: create-release
@@ -66,10 +67,10 @@ jobs:
       patch: ${{ steps.create_prod_release.outputs.patch }}
     steps:
       - name: Check-out source code
-        uses: fortify/shared-github/actions/3rdparty/actions/checkout/v6@5ad1afec0f56a21b03f0887eea35505cb6a66554
+        uses: fortify/shared-github/actions/3rdparty/actions/checkout/v6@15d0b01f3bedb5c1523cb806e745f041e9bce5a3
       - name: PROD - Prepare GitHub release
         id: create_prod_release
-        uses: fortify/shared-github/actions/3rdparty/googleapis/release-please-action/v5@5ad1afec0f56a21b03f0887eea35505cb6a66554
+        uses: fortify/shared-github/actions/3rdparty/googleapis/release-please-action/v5@15d0b01f3bedb5c1523cb806e745f041e9bce5a3
         if: contains(github.ref, 'refs/heads/rel/')
         with:
           skip-github-pull-request: true
@@ -84,8 +85,8 @@ jobs:
       contents: read
     steps:
       - name: Check-out source code
-        uses: fortify/shared-github/actions/3rdparty/actions/checkout/v6@5ad1afec0f56a21b03f0887eea35505cb6a66554
-      - uses: fortify/shared-github/actions/3rdparty/actions/setup-java/v5@5ad1afec0f56a21b03f0887eea35505cb6a66554
+        uses: fortify/shared-github/actions/3rdparty/actions/checkout/v6@15d0b01f3bedb5c1523cb806e745f041e9bce5a3
+      - uses: fortify/shared-github/actions/3rdparty/actions/setup-java/v5@15d0b01f3bedb5c1523cb806e745f041e9bce5a3
         with:
           distribution: 'temurin'
           java-version: '17'
@@ -140,7 +141,7 @@ jobs:
         
       - name: Archive test results
         if: env.DO_BUILD && (success() || failure())
-        uses: fortify/shared-github/actions/3rdparty/actions/upload-artifact/v7@5ad1afec0f56a21b03f0887eea35505cb6a66554
+        uses: fortify/shared-github/actions/3rdparty/actions/upload-artifact/v7@15d0b01f3bedb5c1523cb806e745f041e9bce5a3
         with:
           name: test-results
           path: |
@@ -153,17 +154,17 @@ jobs:
         run: java -jar build/libs/fcli.jar --version | tee /dev/stderr | grep -E '[0-9]+\.[0-9]+\.[0-9]+' >/dev/null || (echo "fcli --version doesn't output proper version number"; exit 1)
         
       - name: Publish build artifacts
-        uses: fortify/shared-github/actions/3rdparty/actions/upload-artifact/v7@5ad1afec0f56a21b03f0887eea35505cb6a66554
+        uses: fortify/shared-github/actions/3rdparty/actions/upload-artifact/v7@15d0b01f3bedb5c1523cb806e745f041e9bce5a3
         with:
           name: build-output
           path: build/dist/**/*
 
-      - uses: fortify/shared-github/actions/3rdparty/actions/upload-artifact/v7@5ad1afec0f56a21b03f0887eea35505cb6a66554
+      - uses: fortify/shared-github/actions/3rdparty/actions/upload-artifact/v7@15d0b01f3bedb5c1523cb806e745f041e9bce5a3
         with:
           name: fcli-jar
           path: build/dist/release-assets/fcli.jar
 
-      - uses: fortify/shared-github/actions/3rdparty/actions/upload-artifact/v7@5ad1afec0f56a21b03f0887eea35505cb6a66554
+      - uses: fortify/shared-github/actions/3rdparty/actions/upload-artifact/v7@15d0b01f3bedb5c1523cb806e745f041e9bce5a3
         with:
           name: fcli-ftest-jar
           path: build/dist/fcli-ftest.jar
@@ -208,15 +209,13 @@ jobs:
           # requires glibc on the target system, the resulting binary can't be used on musl-based
           # distributions like Alpine, nor in 'FROM scratch' Docker images. The build host glibc
           # version (ubuntu-22.04) determines the minimum glibc version required on target systems.
-          # Note that GraalVM for JDK 21 doesn't support the --static-nolibc option yet, hence the
-          # -H:+StaticExecutableWithDynamicLibC option. For consistency with the Linux x64 image, we
-          # disable Jansi and exclude Jansi native libraries.
+          # For consistency with the Linux x64 image, we disable Jansi and exclude Jansi native libraries.
           - name: linux-arm64
             runner: ubuntu-22.04-arm
             asset: fcli-linux-arm64.tgz
             upx: true
             native_image_opts: >-
-              -H:+StaticExecutableWithDynamicLibC -Djansi.disable=true
+              --static-nolibc -Djansi.disable=true
               --initialize-at-build-time=com.fortify.cli.common.util.JAnsiConfig
               -H:ExcludeResources="org/fusesource/jansi/internal/native/.*"
           # For MacOS, we build a dynamically linked image. Jansi by default provides a resource-config.json
@@ -248,11 +247,12 @@ jobs:
         shell: ${{ matrix.shell || 'bash' }}
     steps:
       - name: Check-out source code
-        uses: fortify/shared-github/actions/3rdparty/actions/checkout/v6@5ad1afec0f56a21b03f0887eea35505cb6a66554
+        uses: fortify/shared-github/actions/3rdparty/actions/checkout/v6@15d0b01f3bedb5c1523cb806e745f041e9bce5a3
 
-      - uses: fortify/shared-github/actions/3rdparty/graalvm/setup-graalvm/v1@5ad1afec0f56a21b03f0887eea35505cb6a66554
+      - uses: fortify/shared-github/actions/3rdparty/graalvm/setup-graalvm/v1@15d0b01f3bedb5c1523cb806e745f041e9bce5a3
         with:
           distribution: ${{ env.graal_distribution }}
+          version: ${{ env.graal_version }}
           java-version: ${{ env.graal_java_version }}
           native-image-musl: ${{ matrix.musl == true }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -265,7 +265,7 @@ jobs:
             fcli-core/fcli-common-core/src/main/resources/com/fortify/cli/common/http/ssl/trust/distrusted-keys.txt \
             "$JAVA_HOME/lib/security/cacerts"
 
-      - uses: fortify/shared-github/actions/3rdparty/actions/download-artifact/v8@5ad1afec0f56a21b03f0887eea35505cb6a66554
+      - uses: fortify/shared-github/actions/3rdparty/actions/download-artifact/v8@15d0b01f3bedb5c1523cb806e745f041e9bce5a3
         with:
           path: ./artifacts
           name: build-output
@@ -275,7 +275,7 @@ jobs:
 
       - name: Compress native fcli
         if: matrix.upx
-        uses: fortify/shared-github/actions/3rdparty/crazy-max/ghaction-upx/v4@5ad1afec0f56a21b03f0887eea35505cb6a66554
+        uses: fortify/shared-github/actions/3rdparty/crazy-max/ghaction-upx/v4@15d0b01f3bedb5c1523cb806e745f041e9bce5a3
         with:
           files: ${{ runner.os == 'Windows' && 'fcli.exe' || 'fcli' }}
 
@@ -301,7 +301,7 @@ jobs:
         env:
           ASSET: ${{ matrix.asset }}
 
-      - uses: fortify/shared-github/actions/3rdparty/actions/upload-artifact/v7@5ad1afec0f56a21b03f0887eea35505cb6a66554
+      - uses: fortify/shared-github/actions/3rdparty/actions/upload-artifact/v7@15d0b01f3bedb5c1523cb806e745f041e9bce5a3
         with:
           path: ./artifacts/**/${{ matrix.asset }}
           name: fcli-${{ matrix.name }}
@@ -311,7 +311,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Download artifacts
-        uses: fortify/shared-github/actions/3rdparty/actions/download-artifact/v8@5ad1afec0f56a21b03f0887eea35505cb6a66554
+        uses: fortify/shared-github/actions/3rdparty/actions/download-artifact/v8@15d0b01f3bedb5c1523cb806e745f041e9bce5a3
         with:
           path: ./artifacts
           merge-multiple: true
@@ -330,7 +330,7 @@ jobs:
         env:
           SIGN_PASSPHRASE: ${{ secrets.SIGN_PASSPHRASE }}
           SIGN_KEY: ${{ secrets.SIGN_KEY }}
-      - uses: fortify/shared-github/actions/3rdparty/actions/upload-artifact/v7@5ad1afec0f56a21b03f0887eea35505cb6a66554
+      - uses: fortify/shared-github/actions/3rdparty/actions/upload-artifact/v7@15d0b01f3bedb5c1523cb806e745f041e9bce5a3
         with:
           path: ./artifacts
           name: combined-artifacts
@@ -347,7 +347,7 @@ jobs:
       #  - The workflow_run trigger executes the workflow file from the default branch, whereas this approach
       #    allows for running the workflow file from the same branch as the ci workflow.
       - name: Check-out source code
-        uses: fortify/shared-github/actions/3rdparty/actions/checkout/v6@5ad1afec0f56a21b03f0887eea35505cb6a66554
+        uses: fortify/shared-github/actions/3rdparty/actions/checkout/v6@15d0b01f3bedb5c1523cb806e745f041e9bce5a3
       - run: | 
           # Use branch output from build job if available, otherwise fall back to GITHUB_REF
           if [ -n "${BUILD_BRANCH}" ]; then
@@ -373,17 +373,17 @@ jobs:
       id-token: write
     steps:
       - name: Check-out source code
-        uses: fortify/shared-github/actions/3rdparty/actions/checkout/v6@5ad1afec0f56a21b03f0887eea35505cb6a66554
+        uses: fortify/shared-github/actions/3rdparty/actions/checkout/v6@15d0b01f3bedb5c1523cb806e745f041e9bce5a3
         
       - name: Download artifacts
-        uses: fortify/shared-github/actions/3rdparty/actions/download-artifact/v8@5ad1afec0f56a21b03f0887eea35505cb6a66554
+        uses: fortify/shared-github/actions/3rdparty/actions/download-artifact/v8@15d0b01f3bedb5c1523cb806e745f041e9bce5a3
         with:
           path: ./artifacts
           name: combined-artifacts
           
       - name: PROD - Prepare release PR
         if: contains(github.ref, 'refs/heads/rel/')
-        uses: fortify/shared-github/actions/3rdparty/googleapis/release-please-action/v5@5ad1afec0f56a21b03f0887eea35505cb6a66554
+        uses: fortify/shared-github/actions/3rdparty/googleapis/release-please-action/v5@15d0b01f3bedb5c1523cb806e745f041e9bce5a3
         with:
           skip-github-release: true
           target-branch: ${{ github.ref_name }}
@@ -400,7 +400,7 @@ jobs:
           RELEASE_BRANCH: ${{ needs.build.outputs.branch }}
           
       - name: DEV - Update ${{ needs.build.outputs.release_tag }} tag
-        uses: fortify/shared-github/actions/fortify/update-tag@5ad1afec0f56a21b03f0887eea35505cb6a66554
+        uses: fortify/shared-github/actions/fortify/update-tag@15d0b01f3bedb5c1523cb806e745f041e9bce5a3
         if: needs.build.outputs.do_dev_release
         with:
           tag_name: ${{ needs.build.outputs.release_tag }}
@@ -433,16 +433,16 @@ jobs:
       contents: write
     steps:
       - name: Check-out source code
-        uses: fortify/shared-github/actions/3rdparty/actions/checkout/v6@5ad1afec0f56a21b03f0887eea35505cb6a66554
+        uses: fortify/shared-github/actions/3rdparty/actions/checkout/v6@15d0b01f3bedb5c1523cb806e745f041e9bce5a3
             
       - name: Download artifacts
-        uses: fortify/shared-github/actions/3rdparty/actions/download-artifact/v8@5ad1afec0f56a21b03f0887eea35505cb6a66554
+        uses: fortify/shared-github/actions/3rdparty/actions/download-artifact/v8@15d0b01f3bedb5c1523cb806e745f041e9bce5a3
         with:
           path: ./artifacts
           name: combined-artifacts
     
       - name: PROD - Publish ${{ matrix.semantic_version }} tag
-        uses: fortify/shared-github/actions/fortify/update-tag@5ad1afec0f56a21b03f0887eea35505cb6a66554
+        uses: fortify/shared-github/actions/fortify/update-tag@15d0b01f3bedb5c1523cb806e745f041e9bce5a3
         with:
           tag_name: ${{ matrix.semantic_version }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
@@ -493,12 +493,12 @@ jobs:
       pages: write
     steps:
       - name: Check-out existing docs from gh-pages branch
-        uses: fortify/shared-github/actions/3rdparty/actions/checkout/v6@5ad1afec0f56a21b03f0887eea35505cb6a66554
+        uses: fortify/shared-github/actions/3rdparty/actions/checkout/v6@15d0b01f3bedb5c1523cb806e745f041e9bce5a3
         with:
           ref: gh-pages
         
       - name: Download artifacts
-        uses: fortify/shared-github/actions/3rdparty/actions/download-artifact/v8@5ad1afec0f56a21b03f0887eea35505cb6a66554
+        uses: fortify/shared-github/actions/3rdparty/actions/download-artifact/v8@15d0b01f3bedb5c1523cb806e745f041e9bce5a3
         with:
           path: ./tmp
           name: build-output
