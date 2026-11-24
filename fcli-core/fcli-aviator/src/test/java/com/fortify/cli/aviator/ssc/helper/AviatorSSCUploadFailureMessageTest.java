@@ -58,7 +58,7 @@ class AviatorSSCUploadFailureMessageTest {
             new IOException("intermediate failure", root));
         try (var progress = ProgressWriterType.none.create()) {
             var upload = AviatorSSCFprTransferHelper.uploadEngineSpecificFprBestEffort(
-                fpr, engine, new AviatorLoggerImpl(progress),
+                fpr, "42", engine, new AviatorLoggerImpl(progress),
                 candidate -> AviatorSSCFprFilterHelper.filterEngineSpecificFprInPlace(candidate, engine),
                 candidate -> { throw failure; });
 
