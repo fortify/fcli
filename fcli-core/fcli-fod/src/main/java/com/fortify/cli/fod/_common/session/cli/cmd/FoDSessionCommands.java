@@ -21,6 +21,7 @@ import picocli.CommandLine.Command;
         subcommands = {
                 FoDSessionListCommand.class,
                 FoDSessionLoginCommand.class,
+                FoDSessionLoginSsoCommand.class,
                 FoDSessionLogoutCommand.class 
         }
 )
