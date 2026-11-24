@@ -29,6 +29,10 @@ usage:
     This action assumes active sessions with SSC, Fortify Remediation Aviator (user role for auditing),
     and Fortify Aviator (admin role for application listing and creation).
 
+    Audits with unconfirmed SSC uploads are counted as failures; remaining candidates
+    are still processed. SSC may have accepted the upload and Aviator quota may have
+    been consumed; retrying the audit may consume more quota.
+
 config:
   output: immediate
   rest.target.default: ssc
@@ -487,9 +491,15 @@ steps:
       - if: ${!cli['dry-run']}
         do:
           - if: ${stats.quota_skipped > 0}
-            log.info: "Complete (mapping: ${cli['aviator-app-mapping']}) - Apps created ${stats.create_successes}/${stats.create_attempts}, Audits attempted ${stats.audit_attempts}, Quota-skipped ${stats.quota_skipped}"
+            log.info: >-
+              Complete (mapping: ${cli['aviator-app-mapping']}) - Apps created
+              ${stats.create_successes}/${stats.create_attempts}, Audits attempted ${stats.audit_attempts},
+              Audit failures ${stats.audit_failures}, Quota-skipped ${stats.quota_skipped}
           - if: ${stats.quota_skipped == 0}
-            log.info: "Complete (mapping: ${cli['aviator-app-mapping']}) - Apps created ${stats.create_successes}/${stats.create_attempts}, Audits attempted ${stats.audit_attempts}"
+            log.info: >-
+              Complete (mapping: ${cli['aviator-app-mapping']}) - Apps created
+              ${stats.create_successes}/${stats.create_attempts}, Audits attempted ${stats.audit_attempts},
+              Audit failures ${stats.audit_failures}
           - if: ${stats.entitlement_exhausted}
             log.info: Note - Entitlement exhausted, some app creations were skipped
 

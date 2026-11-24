@@ -1,0 +1,10 @@
+[{
+  "name" : "com.fortify.cli.license.ncd_report.config.NcdReportAdoSourceConfig[]"
+},{
+  "name" : "com.fortify.cli.license.ncd_report.config.NcdReportGitHubSourceConfig[]"
+},{
+  "name" : "com.fortify.cli.license.ncd_report.config.NcdReportGitLabSourceConfig[]"
+},{
+  "name" : "com.fortify.cli.license.ncd_report.config.NcdReportMockSourceConfig[]"
+}
+]

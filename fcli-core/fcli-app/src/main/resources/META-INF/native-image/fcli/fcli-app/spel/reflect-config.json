@@ -158,5 +158,53 @@
 },{
   "name" : "java.util.Collections$SingletonSet",
   "allPublicMethods" : true
+},{
+  "name" : "java.lang.Comparable",
+  "allPublicMethods" : true
+},{
+  "name" : "java.lang.Iterable",
+  "allPublicMethods" : true
+},{
+  "name" : "java.util.AbstractCollection",
+  "allPublicMethods" : true
+},{
+  "name" : "java.util.Collection",
+  "allPublicMethods" : true
+},{
+  "name" : "java.util.Enumeration",
+  "allPublicMethods" : true
+},{
+  "name" : "java.util.Iterator",
+  "allPublicMethods" : true
+},{
+  "name" : "java.util.List",
+  "allPublicMethods" : true
+},{
+  "name" : "java.util.ListIterator",
+  "allPublicMethods" : true
+},{
+  "name" : "java.util.Map",
+  "allPublicMethods" : true
+},{
+  "name" : "java.util.NavigableMap",
+  "allPublicMethods" : true
+},{
+  "name" : "java.util.NavigableSet",
+  "allPublicMethods" : true
+},{
+  "name" : "java.util.Set",
+  "allPublicMethods" : true
+},{
+  "name" : "java.util.SortedMap",
+  "allPublicMethods" : true
+},{
+  "name" : "java.util.SortedSet",
+  "allPublicMethods" : true
+},{
+  "name" : "org.springframework.integration.json.JsonPropertyAccessor$JsonNodeWrapper",
+  "allPublicMethods" : true
+},{
+  "name" : "com.fortify.cli.common.action.helper.ci.IActionSpelFunctions",
+  "allPublicMethods" : true
 }
 ]
