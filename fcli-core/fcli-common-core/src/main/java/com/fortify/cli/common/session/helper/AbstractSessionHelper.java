@@ -55,8 +55,7 @@ public abstract class AbstractSessionHelper<T extends ISessionDescriptor> {
         } catch ( Exception e ) {
             FcliDataHelper.deleteFile(sessionDescriptorPath, false);
             conditionalThrow(failIfUnavailable, ()->new FcliTechnicalException("Error reading session descriptor, please try logging in again", e));
-            LOG.warn("Error reading session descriptor from {}; session descriptor has been deleted", sessionDescriptorPath);
-            LOG.warn("Exception details: ", e);
+            LOG.warn("Error reading session descriptor from {}; session descriptor has been deleted", sessionDescriptorPath, e);
             return null;
         }
     }

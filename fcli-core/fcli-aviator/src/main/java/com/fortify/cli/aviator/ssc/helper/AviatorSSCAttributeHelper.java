@@ -113,8 +113,8 @@ public class AviatorSSCAttributeHelper {
                 .asObject(JsonNode.class);
             LOG.info("{} timestamp written to app version {}", attributeDefinition.name(), versionId);
         } catch (FcliSimpleException | UnirestException e) {
-            LOG.warn("Could not write {} timestamp; the audit result remains successful but bulk selection may retry this version. "
-                    + "Run 'fcli aviator ssc prepare' if the attribute definition is missing.", attributeDefinition.name());
+            LOG.warn("WARN: Could not write {} timestamp; the audit result remains successful but bulk selection may retry this version. "
+                    + "Run 'fcli aviator ssc prepare' if the attribute definition is missing.", attributeDefinition.name(), e);
         }
     }
 

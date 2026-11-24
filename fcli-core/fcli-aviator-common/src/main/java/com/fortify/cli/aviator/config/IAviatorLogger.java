@@ -15,6 +15,7 @@ package com.fortify.cli.aviator.config;
 public interface IAviatorLogger {
     void progress(String format, Object... args);
     void info(String format, Object... args);
+    /** Formats a warning; an optional trailing Throwable supplies its cause. */
     void warn(String format, Object... args);
     void error(String format, Object... args);
 }

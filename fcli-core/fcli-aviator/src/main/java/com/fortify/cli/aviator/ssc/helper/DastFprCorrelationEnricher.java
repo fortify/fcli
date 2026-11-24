@@ -81,7 +81,7 @@ public class DastFprCorrelationEnricher {
         try (FprHandle fprHandle = new FprHandle(dastFprPath)) {
             Path webinspectPath = fprHandle.getPath("/webinspect.xml");
             if (!Files.exists(webinspectPath)) {
-                LOG.warn("DAST FPR does not contain webinspect.xml; skipping injection.");
+                LOG.warn("WARN: DAST FPR does not contain webinspect.xml; skipping injection.");
                 return dastFprPath;
             }
 

@@ -12,6 +12,7 @@
  */
 package com.fortify.cli.common.cli.util;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
@@ -99,6 +100,45 @@ class FcliExecutionContextTest {
     void currentThrowsWhenNoContextHasBeenPushed() {
         // Verify that current() never silently creates a context — callers must push explicitly.
         assertThrows(FcliBugException.class, FcliExecutionContextHolder::current);
+    }
+
+    @Test
+    void borrowedContextRestoresTheStackAndKeepsResourcesOpen() {
+        try (var owner = FcliExecutionContextHolder.pushNew(); var borrowed = new FcliExecutionContext()) {
+            var client = borrowed.getUnirestContext().getUnirestInstance("borrowed", null);
+            int depth = FcliExecutionContextHolder.stackDepth();
+            FcliExecutionContextHolder.runWithContext(borrowed, () -> {
+                assertSame(borrowed, FcliExecutionContextHolder.current());
+                assertEquals(depth + 1, FcliExecutionContextHolder.stackDepth());
+            });
+            assertSame(owner.context(), FcliExecutionContextHolder.current());
+            assertEquals(depth, FcliExecutionContextHolder.stackDepth());
+            assertSame(client, borrowed.getUnirestContext().getUnirestInstance("borrowed", null));
+        }
+    }
+
+    @Test
+    void borrowedContextRestoresAnEmptyStackAfterFailure() {
+        try (var borrowed = new FcliExecutionContext()) {
+            var failure = new AssertionError("borrowed work failed");
+            assertSame(failure, assertThrows(AssertionError.class,
+                    () -> FcliExecutionContextHolder.runWithContext(borrowed, () -> { throw failure; })));
+            assertNull(FcliExecutionContextHolder.tryCurrentContext());
+            assertEquals(0, FcliExecutionContextHolder.stackDepth());
+        }
+    }
+
+    @Test
+    void borrowedContextRejectsAnUnbalancedStack() {
+        try (var borrowed = new FcliExecutionContext()) {
+            try {
+                assertThrows(FcliBugException.class, () -> FcliExecutionContextHolder.runWithContext(borrowed,
+                        FcliExecutionContextHolder::pushNew));
+            } finally {
+                FcliExecutionContextHolder.pop();
+                FcliExecutionContextHolder.pop();
+            }
+        }
     }
 
     private static final class DummySessionDescriptor implements ISessionDescriptor {
