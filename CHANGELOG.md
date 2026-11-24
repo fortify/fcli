@@ -1,5 +1,14 @@
 # Changelog
 
+## [3.30.1](https://github.com/fortify/fcli/compare/v3.30.0...v3.30.1) (2026-11-24)
+
+
+### Bug Fixes
+
+* `fcli aviator ssc audit-dast`: Upload engine-specific FPRs ([a979461](https://github.com/fortify/fcli/commit/a979461f16aaf0bc7df2a9727bea54680a945299))
+* `fcli aviator ssc audit-sast`: Upload engine-specific FPRs ([a979461](https://github.com/fortify/fcli/commit/a979461f16aaf0bc7df2a9727bea54680a945299))
+* Build native binaries with GraalVM CE 25.6.5.1 (based on JDK 25.0.5.1), which includes the November 2026 Java security fixes ([a25cb5b](https://github.com/fortify/fcli/commit/a25cb5b99c06df31816a3b1541f216eba3ed2177))
+
 ## [3.30.0](https://github.com/fortify/fcli/compare/v3.29.1...v3.30.0) (2026-11-12)
 
 
