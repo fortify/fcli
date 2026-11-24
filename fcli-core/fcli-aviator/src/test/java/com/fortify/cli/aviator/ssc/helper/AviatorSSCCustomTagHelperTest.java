@@ -28,6 +28,8 @@ import java.util.Map;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -38,6 +40,7 @@ import com.fortify.cli.aviator.ssc.helper.AviatorSSCTagDefs.TagDefinition;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.rest.unirest.UnirestHelper;
 import com.fortify.cli.common.rest.unirest.config.UnirestJsonHeaderConfigurer;
+import com.fortify.cli.common.rest.unirest.config.UnirestUnexpectedHttpResponseConfigurer;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 
@@ -168,8 +171,9 @@ class AviatorSSCCustomTagHelperTest {
             assertEquals("FB7B0462-2C2E-46D9-811A-DCC1F3C83051", tag.getGuid());
             assertEquals("Aviator status", tag.getName());
             assertEquals("LIST", tag.getValueType());
-            assertEquals(1, tag.getValues().size());
+            assertEquals(2, tag.getValues().size());
             assertTrue(tag.getValues().contains("PROCESSED_BY_AVIATOR"));
+            assertTrue(tag.getValues().contains("PROCESSED_BY_AVIATOR_WITH_REMEDIATION"));
         }
 
         @Test
@@ -203,7 +207,7 @@ class AviatorSSCCustomTagHelperTest {
                     assertNotNull(syncResult);
                     assertNotNull(syncResult.getTag());
                     assertEquals(tagId, syncResult.getTag().get("id").asText());
-                    assertEquals(1, syncResult.getTag().withArray("valueList").size());
+                    assertEquals(2, syncResult.getTag().withArray("valueList").size());
                     assertEquals(1, server.getCustomTagsGetCount());
                     assertEquals(1, server.getCustomTagDetailsGetCount());
                     assertEquals(0, server.getCustomTagCreateCount());
@@ -249,6 +253,34 @@ class AviatorSSCCustomTagHelperTest {
         }
 
         @Test
+        void testSynchronizeAddsNewStatusValueToExistingCustomTag() throws Exception {
+            try (var server = new TestSscServer()) {
+                String tagId = "1003";
+                TagDefinition tagDefinition = AviatorSSCTagDefs.AVIATOR_STATUS_TAG;
+                server.withCustomTags(tagSummary(tagId, tagDefinition));
+                server.withCustomTagDetails(tagId, tagDetails(tagId, tagDefinition, "PROCESSED_BY_AVIATOR"));
+
+                try (var unirest = newUnirest(server)) {
+                    var result = new AviatorSSCPrepareHelper.PrepareResult();
+                    SynchronizationResult syncResult = new AviatorSSCCustomTagHelper(unirest, tagDefinition)
+                        .synchronize(result);
+
+                    assertTrue(syncResult.isSuccessful());
+                    assertEquals(2, syncResult.getTag().withArray("valueList").size());
+                    assertTrue(hasLookupValue(syncResult.getTag().get("valueList"), "PROCESSED_BY_AVIATOR"));
+                    assertTrue(hasLookupValue(syncResult.getTag().get("valueList"),
+                            "PROCESSED_BY_AVIATOR_WITH_REMEDIATION"));
+                    assertEquals(1, server.getCustomTagUpdateCount());
+                    assertEquals(0, server.getCustomTagCreateCount());
+                    JsonNode addedValue = findLookupValue(server.getLastUpdatedTag().get("valueList"),
+                            "PROCESSED_BY_AVIATOR_WITH_REMEDIATION");
+                    assertEquals(2, addedValue.path("lookupIndex").asInt());
+                    assertEquals(2, addedValue.path("seqNumber").asInt());
+                }
+            }
+        }
+
+        @Test
         void testSynchronizeCreatesTagWhenAbsentFromBothEndpoints() throws Exception {
             try (var server = new TestSscServer()) {
                 server.withCreateResponse(createdTag("2002", AviatorSSCTagDefs.AVIATOR_STATUS_TAG));
@@ -268,6 +300,91 @@ class AviatorSSCCustomTagHelperTest {
                     assertEquals("CREATED", result.toJsonNode().get(0).get("status").asText());
                     assertEquals("Tag 'Aviator status' created successfully.",
                         result.toJsonNode().get(0).get("details").asText());
+                    assertTrue(hasLookupValue(server.getLastCreatedTag().get("valueList"),
+                            "PROCESSED_BY_AVIATOR"));
+                    assertTrue(hasLookupValue(server.getLastCreatedTag().get("valueList"),
+                            "PROCESSED_BY_AVIATOR_WITH_REMEDIATION"));
+                }
+            }
+        }
+
+        @Test
+        void testSystemManagedStatusTagIsNotModifiedEvenWhenListedAsCustom() throws Exception {
+            try (var server = new TestSscServer()) {
+                String tagId = "3001";
+                server.withInternalTags(systemManagedTag(tagId, AviatorSSCTagDefs.AVIATOR_STATUS_TAG));
+                server.withCustomTags(tagSummary(tagId, AviatorSSCTagDefs.AVIATOR_STATUS_TAG));
+                server.withCustomTagDetails(tagId, tagDetails(tagId, AviatorSSCTagDefs.AVIATOR_STATUS_TAG,
+                        "PROCESSED_BY_AVIATOR"));
+
+                try (var unirest = newUnirest(server)) {
+                    var result = new AviatorSSCPrepareHelper.PrepareResult();
+                    SynchronizationResult syncResult = new AviatorSSCCustomTagHelper(
+                            unirest, AviatorSSCTagDefs.AVIATOR_STATUS_TAG).synchronize(result);
+
+                    assertTrue(syncResult.isSystemManaged());
+                    assertFalse(syncResult.requiresAssociation());
+                    assertEquals(1, server.getInternalTagsGetCount());
+                    assertEquals(0, server.getCustomTagsGetCount());
+                    assertEquals(0, server.getCustomTagDetailsGetCount());
+                    assertEquals(0, server.getCustomTagCreateCount());
+                    assertEquals(0, server.getCustomTagUpdateCount());
+                    assertEquals("SYSTEM_MANAGED", result.toJsonNode().get(0).get("status").asText());
+                }
+            }
+        }
+
+        @ParameterizedTest
+        @ValueSource(ints = {404, 405})
+        void testUnsupportedInternalCatalogUsesCustomTagPath(int status) throws Exception {
+            try (var server = new TestSscServer().withInternalTagsFailure(status)) {
+                server.withCreateResponse(createdTag("2003", AviatorSSCTagDefs.AVIATOR_STATUS_TAG));
+
+                try (var unirest = newUnirest(server)) {
+                    var result = new AviatorSSCPrepareHelper.PrepareResult();
+                    SynchronizationResult syncResult = new AviatorSSCCustomTagHelper(
+                            unirest, AviatorSSCTagDefs.AVIATOR_STATUS_TAG).synchronize(result);
+
+                    assertTrue(syncResult.isSuccessful());
+                    assertFalse(syncResult.isSystemManaged());
+                    assertEquals(1, server.getInternalTagsGetCount());
+                    assertEquals(1, server.getCustomTagsGetCount());
+                    assertEquals(1, server.getCustomTagCreateCount());
+                    assertEquals("CREATED", result.toJsonNode().get(0).get("status").asText());
+                }
+            }
+        }
+
+        @Test
+        void testInternalCatalogWithoutDataArrayFails() throws Exception {
+            try (var server = new TestSscServer().withoutInternalTagsData()) {
+                try (var unirest = newUnirest(server)) {
+                    var result = new AviatorSSCPrepareHelper.PrepareResult();
+                    SynchronizationResult syncResult = new AviatorSSCCustomTagHelper(
+                            unirest, AviatorSSCTagDefs.AVIATOR_STATUS_TAG).synchronize(result);
+
+                    assertFalse(syncResult.isSuccessful());
+                    assertEquals(0, server.getCustomTagsGetCount());
+                    assertEquals(0, server.getCustomTagCreateCount());
+                    assertEquals("FAILED", result.toJsonNode().get(0).get("status").asText());
+                }
+            }
+        }
+
+        @Test
+        void testInternalCatalogFailureDoesNotFallBackToCustomTagMutation() throws Exception {
+            try (var server = new TestSscServer().withInternalTagsFailure(500)) {
+                try (var unirest = newUnirest(server)) {
+                    var result = new AviatorSSCPrepareHelper.PrepareResult();
+                    SynchronizationResult syncResult = new AviatorSSCCustomTagHelper(
+                            unirest, AviatorSSCTagDefs.AVIATOR_STATUS_TAG).synchronize(result);
+
+                    assertFalse(syncResult.isSuccessful());
+                    assertEquals(1, server.getInternalTagsGetCount());
+                    assertEquals(0, server.getCustomTagsGetCount());
+                    assertEquals(0, server.getCustomTagCreateCount());
+                    assertEquals(0, server.getCustomTagUpdateCount());
+                    assertEquals("FAILED", result.toJsonNode().get(0).get("status").asText());
                 }
             }
         }
@@ -275,6 +392,7 @@ class AviatorSSCCustomTagHelperTest {
         private UnirestInstance newUnirest(TestSscServer server) {
             return UnirestHelper.createUnirestInstance(unirest -> {
                 UnirestJsonHeaderConfigurer.configure(unirest);
+                UnirestUnexpectedHttpResponseConfigurer.configure(unirest);
                 unirest.config().defaultBaseUrl(server.getBaseUrl());
             });
         }
@@ -295,10 +413,19 @@ class AviatorSSCCustomTagHelperTest {
                 .put("valueType", "LIST")
                 .put("customTagType", "CUSTOM");
             ArrayNode valueList = result.putArray("valueList");
-            for (String value : values) {
-                valueList.add(JsonHelper.getObjectMapper().createObjectNode().put("lookupValue", value));
+            for (int i = 0; i < values.length; i++) {
+                valueList.add(JsonHelper.getObjectMapper().createObjectNode()
+                        .put("lookupValue", values[i])
+                        .put("lookupIndex", i + 1)
+                        .put("seqNumber", i + 1));
             }
             return result;
+        }
+
+        private static ObjectNode systemManagedTag(String id, TagDefinition tagDefinition) {
+            ObjectNode tag = tagDetails(id, tagDefinition, tagDefinition.getValues().toArray(String[]::new));
+            tag.put("customTagType", "AVIATOR");
+            return tag;
         }
 
         private static ObjectNode createdTag(String id, TagDefinition tagDefinition) {
@@ -315,13 +442,25 @@ class AviatorSSCCustomTagHelperTest {
             }
             return false;
         }
+
+        private static JsonNode findLookupValue(JsonNode valueList, String lookupValue) {
+            for (JsonNode value : valueList) {
+                if (lookupValue.equals(value.path("lookupValue").asText())) {
+                    return value;
+                }
+            }
+            throw new AssertionError("Value not found: " + lookupValue);
+        }
     }
 
     private static final class TestSscServer implements AutoCloseable {
         private final HttpServer server;
         private final ArrayNode customTags = JsonHelper.getObjectMapper().createArrayNode();
+        private final ArrayNode internalTags = JsonHelper.getObjectMapper().createArrayNode();
         private final Map<String, JsonNode> customTagDetailsById = new HashMap<>();
         private JsonNode createResponse = JsonHelper.getObjectMapper().createObjectNode();
+        private JsonNode lastCreatedTag;
+        private int internalTagsGetCount;
         private int customTagsGetCount;
         private int customTagDetailsGetCount;
         private int customTagCreateCount;
@@ -332,6 +471,7 @@ class AviatorSSCCustomTagHelperTest {
             this.server = HttpServer.create(new InetSocketAddress(0), 0);
             server.createContext("/api/v1/customTags", this::handleCustomTags);
             server.createContext("/api/v1/customTags/", this::handleCustomTagById);
+            server.createContext("/api/v1/internalCustomTags", this::handleInternalCustomTags);
             server.start();
         }
 
@@ -357,11 +497,54 @@ class AviatorSSCCustomTagHelperTest {
             return this;
         }
 
+        private TestSscServer withInternalTags(JsonNode... tags) {
+            internalTagsFailureStatus = 0;
+            internalTags.removeAll();
+            for (JsonNode tag : tags) {
+                internalTags.add(tag);
+            }
+            return this;
+        }
+
+        private TestSscServer withoutInternalTagsData() {
+            this.internalTagsFailureStatus = 0;
+            this.omitInternalTagsData = true;
+            return this;
+        }
+
+        private TestSscServer withInternalTagsFailure(int status) {
+            this.internalTagsFailureStatus = status;
+            return this;
+        }
+
+        private int internalTagsFailureStatus = 404;
+        private boolean omitInternalTagsData;
+        private int getInternalTagsGetCount() { return internalTagsGetCount; }
         private int getCustomTagsGetCount() { return customTagsGetCount; }
         private int getCustomTagDetailsGetCount() { return customTagDetailsGetCount; }
         private int getCustomTagCreateCount() { return customTagCreateCount; }
         private int getCustomTagUpdateCount() { return customTagUpdateCount; }
         private JsonNode getLastUpdatedTag() { return lastUpdatedTag; }
+        private JsonNode getLastCreatedTag() { return lastCreatedTag; }
+
+        private void handleInternalCustomTags(HttpExchange exchange) throws IOException {
+            internalTagsGetCount++;
+            if (internalTagsFailureStatus != 0) {
+                exchange.sendResponseHeaders(internalTagsFailureStatus, -1);
+                exchange.close();
+                return;
+            }
+            if (omitInternalTagsData) {
+                byte[] body = "{}".getBytes(StandardCharsets.UTF_8);
+                exchange.getResponseHeaders().add("Content-Type", "application/json");
+                exchange.sendResponseHeaders(200, body.length);
+                try (OutputStream out = exchange.getResponseBody()) {
+                    out.write(body);
+                }
+                return;
+            }
+            writeJson(exchange, internalTags);
+        }
 
         private void handleCustomTags(HttpExchange exchange) throws IOException {
             if ("GET".equals(exchange.getRequestMethod())) {
@@ -369,6 +552,7 @@ class AviatorSSCCustomTagHelperTest {
                 writeJson(exchange, customTags);
             } else if ("POST".equals(exchange.getRequestMethod())) {
                 customTagCreateCount++;
+                lastCreatedTag = JsonHelper.getObjectMapper().readTree(exchange.getRequestBody());
                 writeJson(exchange, createResponse);
             } else {
                 exchange.sendResponseHeaders(405, -1);

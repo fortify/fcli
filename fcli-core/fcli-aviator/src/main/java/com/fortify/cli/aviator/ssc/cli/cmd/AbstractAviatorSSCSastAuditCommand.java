@@ -303,6 +303,8 @@ abstract class AbstractAviatorSSCSastAuditCommand extends AbstractSSCJsonNodeOut
     JsonNode processFpr(UnirestInstance unirest, SSCAppVersionDescriptor av, String token, String url,
             AviatorLoggerImpl logger, Path downloadedFprPath) {
         FPRAuditResult auditResult;
+        boolean useLegacySastStatusForRemediation =
+            AviatorSSCTagValidator.shouldUseLegacySastStatus(unirest, av.getVersionId(), logger);
 
         try (FprHandle fprHandle = new FprHandle(downloadedFprPath)) {
             auditResult = auditFpr(AuditFprOptions.builder()
@@ -317,6 +319,7 @@ abstract class AbstractAviatorSSCSastAuditCommand extends AbstractSSCJsonNodeOut
                     .folderNames(folderNames)
                     .folderPriorityOrder(getFolderPriorityOrder())
                     .forceReaudit(forceReaudit)
+                    .useLegacySastStatusForRemediation(useLegacySastStatusForRemediation)
                     .sourceDecoder(sourceEncodingsMixin.getSourceDecoder())
                     .build());
         }
@@ -327,7 +330,12 @@ abstract class AbstractAviatorSSCSastAuditCommand extends AbstractSSCJsonNodeOut
         ObjectNode result = AviatorSSCAuditHelper.buildResultNode(av, null, action);
         AviatorSSCAuditHelper.setAuditStats(result, auditResult);
         if (auditResult.getUpdatedFile() != null && !"SKIPPED".equals(action) && !"FAILED".equals(action)) {
-            AviatorSSCAuditHelper.setUploadResult(result, uploadAuditedFprToSSC(unirest, downloadedFprPath, av, logger));
+            if (auditResult.getLegacyStatusFallbacks() > 0) {
+                logger.warn("%s", AviatorSSCTagValidator.legacyStatusFallbackWarning(auditResult.getLegacyStatusFallbacks()));
+            }
+            AviatorSSCAuditHelper.setUploadResult(result,
+                uploadAuditedFprToSSC(unirest, downloadedFprPath, av, logger,
+                    AviatorSSCTagValidator.sastStatusValues(useLegacySastStatusForRemediation)));
         }
 
         return result;
@@ -343,14 +351,14 @@ abstract class AbstractAviatorSSCSastAuditCommand extends AbstractSSCJsonNodeOut
      * values so the user can take corrective action.
      */
     private void validateSSCTagsBeforeUpload(UnirestInstance unirest, SSCAppVersionDescriptor av,
-            AviatorLoggerImpl logger) {
+            AviatorLoggerImpl logger, List<String> statusValues) {
         LOG.info("Starting SSC tag validation before FPR upload for app version id={}.", av.getVersionId());
         TagMappingConfig tagMappingConfig = loadTagMappingForValidation();
         LOG.debug("Tag mapping config loaded: tag_id='{}', mapping={}", tagMappingConfig.getTag_id(), tagMappingConfig.getMapping());
         Set<String> analysisTagValues = tagMappingConfig.getMappedValues();
         LOG.info("Analysis tag values to validate: {}", analysisTagValues);
         List<String> warnings = AviatorSSCTagValidator.validatePreUpload(
-            unirest, av.getVersionId(), tagMappingConfig.getTag_id(), analysisTagValues, logger);
+            unirest, av.getVersionId(), tagMappingConfig.getTag_id(), analysisTagValues, statusValues, logger);
         LOG.info("Tag validation complete. {} warning(s) found.", warnings.size());
     }
 
@@ -388,9 +396,10 @@ abstract class AbstractAviatorSSCSastAuditCommand extends AbstractSSCJsonNodeOut
 
     @SneakyThrows
     private UploadResult uploadAuditedFprToSSC(
-            UnirestInstance unirest, Path auditedFpr, SSCAppVersionDescriptor av, AviatorLoggerImpl logger) {
+            UnirestInstance unirest, Path auditedFpr, SSCAppVersionDescriptor av, AviatorLoggerImpl logger,
+            List<String> statusValues) {
         try (IProgressWriter progressWriter = progressWriterFactoryMixin.create()) {
-            validateSSCTagsBeforeUpload(unirest, av, logger);
+            validateSSCTagsBeforeUpload(unirest, av, logger, statusValues);
             return AviatorSSCFprTransferHelper.uploadEngineSpecificFprBestEffort(
                 unirest, av, auditedFpr, AviatorSSCFprFilterHelper.Engine.SAST, progressWriter, logger);
         }

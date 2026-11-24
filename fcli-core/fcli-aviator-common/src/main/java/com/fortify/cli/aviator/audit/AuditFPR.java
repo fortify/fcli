@@ -74,7 +74,8 @@ public class AuditFPR {
         // --- STAGE 4: FINALIZATION ---
         return finalizeFprAudit(
                 auditOutcome, auditResponses, parsedData.auditProcessor,
-            tagMappingConfig, issueCategoryLookup, parsedData.fprInfo, parsedData.streamingFVDLProcessor
+                tagMappingConfig, issueCategoryLookup, parsedData.fprInfo, parsedData.streamingFVDLProcessor,
+                options.isUseLegacySastStatusForRemediation()
         );
     }
 
@@ -133,7 +134,8 @@ public class AuditFPR {
     private static FPRAuditResult finalizeFprAudit(
             AuditOutcome auditOutcome, Map<String, AuditResponse> auditResponses,
             AuditProcessor auditProcessor, TagMappingConfig tagMappingConfig,
-            Map<String, String> issueCategoryLookup, FPRInfo fprInfo, StreamingFVDLProcessor streamingFVDLProcessor) {
+            Map<String, String> issueCategoryLookup, FPRInfo fprInfo, StreamingFVDLProcessor streamingFVDLProcessor,
+            boolean useLegacySastStatusForRemediation) {
 
         int totalIssuesToAudit = auditOutcome.getTotalIssuesToAudit();
         int issuesSubmitted = getSubmittedAuditCount(auditResponses);
@@ -180,7 +182,7 @@ public class AuditFPR {
         if (issuesSuccessfullyAudited > 0) {
             updatedFile = auditProcessor.updateAndSaveAuditAndRemediationsXml(
                     auditResponses, tagMappingConfig, issueCategoryLookup, fprInfo,
-                    streamingFVDLProcessor.getFvdlMetadata());
+                    streamingFVDLProcessor.getFvdlMetadata(), useLegacySastStatusForRemediation);
         }
         AuditProcessor.RemediationGenerationMetric remediationGenerationMetric = auditProcessor.getLastRemediationGenerationMetric();
 
@@ -194,7 +196,7 @@ public class AuditFPR {
         LOG.info("FPR audit process completed with status: {}", status);
         return new FPRAuditResult(updatedFile, status, message, (int) issuesSuccessfullyAudited, totalIssuesToAudit,
             issuesSubmitted, issuesSkipped, skippedByReason, remediationGenerationMetric.skippedRemediations(),
-                remediationGenerationMetric.skippedByReason());
+                remediationGenerationMetric.skippedByReason(), remediationGenerationMetric.legacyStatusFallbacks());
     }
 
     static int getSubmittedAuditCount(Map<String, AuditResponse> auditResponses) {
