@@ -40,6 +40,8 @@ public class RequestHandler<T> {
     private final AtomicBoolean isCompleted;
     private final AtomicBoolean isInitialized;
     private final AtomicInteger pendingRequests;
+    /** Set by {@link #completeDiscardingPending()}: queued requests are dropped instead of sent. */
+    private final AtomicBoolean discardPending = new AtomicBoolean(false);
 
     // Metrics
     private long totalSent = 0;
@@ -73,7 +75,7 @@ public class RequestHandler<T> {
      * This method is thread-safe and non-blocking.
      */
     public CompletableFuture<Boolean> sendRequest(T request) {
-        if (isCompleted.get()) {
+        if (isCompleted.get() || discardPending.get()) {
             logger.warn("WARN: Cannot send request on completed stream: {}", streamId);
             return CompletableFuture.completedFuture(false);
         }
@@ -104,7 +106,7 @@ public class RequestHandler<T> {
         try {
             T request;
             while ((request = requestQueue.poll()) != null) {
-                if (isCompleted.get()) {
+                if (isCompleted.get() || discardPending.get()) {
                     return false;
                 }
 
@@ -131,6 +133,16 @@ public class RequestHandler<T> {
     }
 
     /**
+     * Half-close the stream without sending requests that are still queued. Used when the server
+     * has ended the stream's work, so anything not yet written would be wasted. Requests offered
+     * after this call are rejected.
+     */
+    public CompletableFuture<Void> completeDiscardingPending() {
+        discardPending.set(true);
+        return complete();
+    }
+
+    /**
      * Complete the stream and send any remaining requests.
      */
     public CompletableFuture<Void> complete() {
@@ -146,6 +158,14 @@ public class RequestHandler<T> {
                 }
 
                 T request;
+                if (discardPending.get()) {
+                    int dropped = 0;
+                    while (requestQueue.poll() != null) dropped++;
+                    pendingRequests.addAndGet(-dropped);
+                    if (dropped > 0) {
+                        logger.info("Stream {}: discarded {} unsent request(s)", streamId, dropped);
+                    }
+                }
                 while ((request = requestQueue.poll()) != null) {
                     if (requestObserver != null) {
                         requestObserver.onNext(request);

@@ -24,18 +24,32 @@ import java.util.function.Function;
  * Client-side sliding window for stream requests. Keeps at most {@code windowSize} requests
  * in flight on a stream; a slot is only freed when a request reaches a terminal state
  * (response or error), so the number of outstanding requests never depends on how many
- * credits the server grants.
+ * credits the server grants. The window shrinks or grows (up to its initial size) when the
+ * server recommends a different window; a smaller window never cancels requests already in flight.
  */
 final class RequestSendWindow<T> {
-    private final int windowSize;
+    private final int maxWindowSize;
+    private int windowSize;
     private final Function<T, String> requestIdOf;
     private final Deque<T> queue = new ArrayDeque<>();
     private final Set<String> inFlight = new HashSet<>();
 
     RequestSendWindow(int windowSize, Function<T, String> requestIdOf) {
         if (windowSize <= 0) throw new IllegalArgumentException("windowSize must be positive");
+        this.maxWindowSize = windowSize;
         this.windowSize = windowSize;
         this.requestIdOf = requestIdOf;
+    }
+
+    /** Applies the server's recommended window, capped at the initial size. Ignores non-positive values. */
+    synchronized void recommend(int recommendedWindow) {
+        if (recommendedWindow > 0) {
+            windowSize = Math.min(maxWindowSize, recommendedWindow);
+        }
+    }
+
+    synchronized int windowSize() {
+        return windowSize;
     }
 
     synchronized void enqueue(List<T> messages) {

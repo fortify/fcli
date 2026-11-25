@@ -67,6 +67,7 @@ import io.grpc.stub.ClientResponseObserver;
 
 class AviatorStreamProcessor implements AutoCloseable {
     private static final Logger LOG = LoggerFactory.getLogger(AviatorStreamProcessor.class);
+    private static final Set<String> APPLICATION_LOCK_STATUSES = Set.of("APPLICATION_LOCK_LOST", "APPLICATION_LOCK_ERROR");
 
     private final AviatorGrpcClient client;
     private final IAviatorLogger logger;
@@ -346,6 +347,23 @@ class AviatorStreamProcessor implements AutoCloseable {
                     resultFuture.completeExceptionally(new AviatorTechnicalException(cliMessage));
                     if (requestHandler != null) {
                         requestHandler.complete();
+                    }
+                    streamLatch.countDown();
+                    return;
+                }
+
+                if (isInitialized.get() && response.getRequestId().isEmpty()
+                        && APPLICATION_LOCK_STATUSES.contains(response.getStatus())) {
+                    logger.warn("Server ended the audit stream: %s. Results received so far are kept; "
+                            + "rerun the audit to process the remaining issues.", response.getStatusMessage());
+                    stopPingPong();
+                    // Complete first so processRequestQueue stops picking up new prompts.
+                    if (!resultFuture.isDone()) {
+                        resultFuture.complete(responses);
+                    }
+                    if (requestHandler != null && !requestHandler.isCompleted()) {
+                        // Prompts queued but not yet written would be wasted on a stream the server ended.
+                        requestHandler.completeDiscardingPending();
                     }
                     streamLatch.countDown();
                     return;
@@ -1059,7 +1077,8 @@ class AviatorStreamProcessor implements AutoCloseable {
     private void startPingPong() {
         if (isPinging.compareAndSet(false, true)) {
             logger.info("Starting ping-pong keepalive with interval of {} seconds", pingIntervalSeconds);
-            pingTask = pingScheduler.scheduleAtFixedRate(this::sendPing, pingIntervalSeconds, pingIntervalSeconds, TimeUnit.SECONDS);
+            // Fixed delay: a fixed rate would replay every missed ping at once after a system sleep.
+            pingTask = pingScheduler.scheduleWithFixedDelay(this::sendPing, pingIntervalSeconds, pingIntervalSeconds, TimeUnit.SECONDS);
         }
     }
 

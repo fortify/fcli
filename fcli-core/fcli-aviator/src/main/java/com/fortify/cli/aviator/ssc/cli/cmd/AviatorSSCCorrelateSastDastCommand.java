@@ -189,8 +189,12 @@ public class AviatorSSCCorrelateSastDastCommand extends AbstractSSCJsonNodeOutpu
                     unirest, historyArtifact, logger, progressWriter);
                 AviatorSSCCorrelateHelper.validateDownloadedFpr(statePath, "merged");
                 AviatorSSCCorrelateHelper.validateDownloadedFpr(historyPath, "correlation history");
+                // A run with failed requests does not write last_correlation, so its artifact
+                // does not count as unchanged and the failed work is retried.
                 boolean unchangedSinceCorrelation = AviatorSSCCorrelateHelper.isUnchangedSinceCorrelation(
-                    sastArtifact, historyArtifact);
+                        sastArtifact, historyArtifact)
+                    && AviatorSSCAttributeHelper.isLastCorrelationOnOrAfter(
+                        unirest, av.getVersionId(), historyArtifact.getUploadDate());
                 return new CorrelationFiles(statePath, historyPath, unchangedSinceCorrelation);
             } catch (IOException e) {
                 deleteTemporaryFile(statePath);
@@ -326,7 +330,15 @@ public class AviatorSSCCorrelateSastDastCommand extends AbstractSSCJsonNodeOutpu
             String artifactId = AviatorSSCFprTransferHelper.uploadFpr(
                 unirest, av, statePath, progressWriter);
             logger.progress("Status: Correlated merged FPR uploaded (artifact id=%s)", artifactId);
-            writeLastCorrelationTimestamp();
+            int failedRequests = result.failedCorrelationResponses() + result.failedValidationResponses();
+            if (failedRequests > 0) {
+                // Failed pairs are not recorded as tried; leaving last_correlation unchanged keeps
+                // this version eligible for bulk and direct reruns, which retry only those pairs.
+                logger.warn("%d correlation request(s) failed; last_correlation was not updated so the "
+                    + "next run retries them.", failedRequests);
+            } else {
+                writeLastCorrelationTimestamp();
+            }
             return artifactId;
         }
 

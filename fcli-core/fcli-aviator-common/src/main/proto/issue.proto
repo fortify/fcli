@@ -64,6 +64,8 @@ message StreamInitRequest {
   // Lowercase UUIDv7 identifying this stream operation. A duplicate init with the same id never reserves
   // quota a second time. An id is single-use once its stream ran; reconnect with a new id.
   string operation_id = 10;
+  // Client honours recommended_window and retry_after_ms, and retries a stream the server rejects as SERVER_BUSY.
+  bool supports_flow_control = 11;
 }
 message UserPromptRequest {
   oneof request_type {
@@ -131,6 +133,10 @@ message AuditorResponse {
   optional string quotaLastUpdated = 16;
   repeated com.fortify.aviator.EntitlementReassignment entitlementReassignments = 17;
   optional string reassignedEntitlementId = 18;
+  // Max requests the server wants in flight on this stream
+  optional int32 recommended_window = 19;
+  // Set on SERVER_BUSY: wait this long before retrying
+  optional int64 retry_after_ms = 20;
 }
 
 message AuditResult {
