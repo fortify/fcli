@@ -82,6 +82,16 @@ class GrpcUtilTest {
     }
 
     @Test
+    void shouldMarkAuditRequestAsReauditOnlyWhenPromptIsReaudit() {
+        UserPrompt firstTime = UserPrompt.builder().category("SQL Injection").build();
+        UserPrompt reaudit = UserPrompt.builder().category("SQL Injection").build();
+        reaudit.setReaudit(true);
+
+        assertFalse(GrpcUtil.convertToAuditRequest(firstTime, "stream-1", "request-1").getIsReaudit());
+        assertTrue(GrpcUtil.convertToAuditRequest(reaudit, "stream-1", "request-2").getIsReaudit());
+    }
+
+    @Test
     void shouldPreserveResolvedProgrammingLanguages() {
         File file = new File();
         file.setName("db/t1.sql");

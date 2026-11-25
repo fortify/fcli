@@ -29,6 +29,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
@@ -104,9 +105,8 @@ public final class AuditXmlReader {
         auditIssueBuilder.revision(Optional.of(revisionStr).filter(str -> !str.isEmpty()).map(Integer::parseInt).orElse(0));
 
         Map<String, String> tags = new HashMap<>();
-        NodeList tagNodes = issueElement.getElementsByTagNameNS(AUDIT_NAMESPACE_URI, "Tag");
-        for (int j = 0; j < tagNodes.getLength(); j++) {
-            Element tagElement = (Element) tagNodes.item(j);
+        // Only the issue's own tags: the Tag elements inside ClientAuditTrail/TagHistory are earlier values
+        for (Element tagElement : directChildren(issueElement, "Tag")) {
             String tagId = tagElement.getAttribute("id");
             String tagValue = Optional.ofNullable(getTagValue(tagElement)).orElse("");
             tags.put(tagId, tagValue);
@@ -128,6 +128,17 @@ public final class AuditXmlReader {
         auditIssueBuilder.threadedComments(threadedComments);
 
         return auditIssueBuilder.build();
+    }
+
+    private static List<Element> directChildren(Element parent, String localName) {
+        List<Element> children = new ArrayList<>();
+        for (Node child = parent.getFirstChild(); child != null; child = child.getNextSibling()) {
+            if (child instanceof Element element && AUDIT_NAMESPACE_URI.equals(element.getNamespaceURI())
+                    && localName.equals(element.getLocalName())) {
+                children.add(element);
+            }
+        }
+        return children;
     }
 
     private Map<String, String> lastTagUsernames(Element issueElement) {

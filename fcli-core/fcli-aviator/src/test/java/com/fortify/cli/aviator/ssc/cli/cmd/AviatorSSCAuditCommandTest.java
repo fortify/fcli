@@ -50,6 +50,7 @@ import com.fortify.cli.aviator.audit.model.FPRAuditResult;
 import com.fortify.cli.aviator.config.AviatorLoggerImpl;
 import com.fortify.cli.aviator.ssc.helper.AviatorSSCAuditHelper;
 import com.fortify.cli.aviator.ssc.helper.AviatorSSCFprTransferHelper;
+import com.fortify.cli.aviator.ssc.helper.AviatorSSCTagDefs;
 import com.fortify.cli.common.cli.mixin.ICommandAware;
 import com.fortify.cli.common.cli.util.FcliCommandSpecHelper;
 import com.fortify.cli.common.fpr.util.FprHandle;
@@ -567,6 +568,150 @@ class AviatorSSCAuditCommandTest {
         } finally {
             server.stop(0);
         }
+    }
+
+    @Test
+    void testAllowsAllIssuesOption() throws Exception {
+        var cmd = parse("--all-issues");
+        Field field = AbstractAviatorSSCSastAuditCommand.class.getDeclaredField("allIssues");
+        field.setAccessible(true);
+        assertTrue((boolean) field.get(cmd));
+        assertFalse((boolean) field.get(parse()));
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+        "AUDITED, 3, true",
+        "SKIPPED, 0, true",
+        "SKIPPED, 3, false",
+        "PARTIALLY_AUDITED, 3, false",
+        "FAILED, 3, false",
+        "FAILED, 0, false"
+    })
+    void lastAuditDateIsOnlyRecordedForARunThatEvaluatedTheWholeVersion(String status, int totalIssues, boolean complete) {
+        var result = new FPRAuditResult(null, status, null, 0, totalIssues);
+
+        assertEquals(complete, AbstractAviatorSSCSastAuditCommand.isAuditRunComplete(result));
+    }
+
+    @ParameterizedTest
+    @CsvSource({"--skip-if-exceeding-quota", "--test-exceeding-quota"})
+    void quotaChecksTreatTheIssueCountAsUnknownWithAllIssues(String quotaOption) {
+        // The count cannot include already-audited issues whose source changed, so no SSC lookup is made
+        // (the null SSC arguments would fail) and the unknown count makes the quota check fail closed.
+        var cmd = parse("--no-filterset", "--all-issues", quotaOption);
+
+        assertEquals(-1, cmd.getPreflightIssueCount(null, null, new AviatorLoggerImpl(new RecordingProgressWriter())));
+    }
+
+    @ParameterizedTest
+    @CsvSource(value = {
+        "NONE, true", "--no-filterset, true", "Default, true", "Custom, false", "Unknown, false"
+    })
+    void lastAuditDateIsOnlyRecordedWhenTheAuditCoveredTheDefaultOrNoFilterSet(String option, boolean recorded) throws Exception {
+        var server = HttpServer.create(new InetSocketAddress(0), 0);
+        server.createContext("/api/v1/projectVersions/42/filterSets", exchange -> {
+            var data = JsonHelper.getObjectMapper().createArrayNode();
+            data.addObject().put("guid", "default-guid").put("title", "Default").put("defaultFilterSet", true);
+            data.addObject().put("guid", "custom-guid").put("title", "Custom").put("defaultFilterSet", false);
+            byte[] response = JsonHelper.getObjectMapper().createObjectNode().set("data", data).toString()
+                    .getBytes(StandardCharsets.UTF_8);
+            exchange.getResponseHeaders().set("Content-Type", "application/json");
+            exchange.sendResponseHeaders(200, response.length);
+            try (var output = exchange.getResponseBody()) {
+                output.write(response);
+            }
+        });
+        server.start();
+        try (var unirest = unirestFor(server)) {
+            var cmd = switch (option) {
+                case "NONE" -> parse();
+                case "--no-filterset" -> parse("--no-filterset");
+                default -> parse("--filterset", option);
+            };
+
+            assertEquals(recorded, cmd.auditsDefaultOrNoFilterSet(unirest, versionDescriptor()));
+        } finally {
+            server.stop(0);
+        }
+    }
+
+    @Test
+    void allIssuesAlwaysProceedsToDownloadWithoutAnSscLookup() {
+        assertTrue(parse("--no-filterset", "--all-issues").mayHaveReauditCandidates(null, null, null));
+    }
+
+    @Test
+    void forceReauditAlreadyCountedAviatorProcessedIssuesSoNeedsNoExtraLookup() {
+        assertFalse(parse("--no-filterset", "--force-reaudit").mayHaveReauditCandidates(null, null, null));
+    }
+
+    @Test
+    void defaultRunProceedsWhenAviatorHasProcessedIssuesThatCouldBeReaudited() throws Exception {
+        var server = issuesServer(processedIssue());
+        try (var unirest = unirestFor(server)) {
+            assertTrue(parse("--no-filterset").mayHaveReauditCandidates(unirest, versionDescriptor(),
+                    new AviatorLoggerImpl(new RecordingProgressWriter())));
+        } finally {
+            server.stop(0);
+        }
+    }
+
+    @Test
+    void defaultRunStillSkipsWhenThereAreNoAviatorProcessedIssues() throws Exception {
+        var server = issuesServer(auditedWithoutAviator());
+        try (var unirest = unirestFor(server)) {
+            assertFalse(parse("--no-filterset").mayHaveReauditCandidates(unirest, versionDescriptor(),
+                    new AviatorLoggerImpl(new RecordingProgressWriter())));
+        } finally {
+            server.stop(0);
+        }
+    }
+
+    private static ObjectNode processedIssue() {
+        ObjectNode issue = JsonHelper.getObjectMapper().createObjectNode().put("audited", true);
+        issue.putObject("_embed").putArray("auditValues").addObject()
+                .put("customTagGuid", AviatorSSCTagDefs.AVIATOR_STATUS_TAG.getGuid())
+                .put("customTagIndex", 0);
+        return issue;
+    }
+
+    private static ObjectNode auditedWithoutAviator() {
+        ObjectNode issue = JsonHelper.getObjectMapper().createObjectNode().put("audited", true);
+        issue.putObject("_embed").putArray("auditValues");
+        return issue;
+    }
+
+    private static SSCAppVersionDescriptor versionDescriptor() {
+        var av = new SSCAppVersionDescriptor();
+        av.setVersionId("42");
+        return av;
+    }
+
+    private static HttpServer issuesServer(ObjectNode... issues) throws Exception {
+        var server = HttpServer.create(new InetSocketAddress(0), 0);
+        server.createContext("/api/v1/projectVersions/42/issues", exchange -> {
+            var data = JsonHelper.getObjectMapper().createArrayNode();
+            for (ObjectNode issue : issues) {
+                data.add(issue);
+            }
+            byte[] response = JsonHelper.getObjectMapper().createObjectNode().put("count", issues.length)
+                    .set("data", data).toString().getBytes(StandardCharsets.UTF_8);
+            exchange.getResponseHeaders().set("Content-Type", "application/json");
+            exchange.sendResponseHeaders(200, response.length);
+            try (var output = exchange.getResponseBody()) {
+                output.write(response);
+            }
+        });
+        server.start();
+        return server;
+    }
+
+    private static UnirestInstance unirestFor(HttpServer server) {
+        return UnirestHelper.createUnirestInstance(instance -> {
+            UnirestJsonHeaderConfigurer.configure(instance);
+            instance.config().defaultBaseUrl("http://localhost:" + server.getAddress().getPort());
+        });
     }
 
     private static final class RecordingProgressWriter implements IProgressWriter {

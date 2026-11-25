@@ -4,10 +4,21 @@ author: Fortify
 usage:
   header: (PREVIEW) Perform Fortify Remediation Aviator SAST audits of SSC application versions in bulk.
   description: |
-    This action identifies SSC application versions with pending SAST audit issues and
-    automatically submits them for auditing by Fortify Remediation Aviator. The action
-    intelligently filters to only process versions with actual pending audit issues,
-    while ignoring versions for which audit information needs to be refreshed.
+    This action identifies SSC application versions that need a SAST audit and
+    automatically submits them for auditing by Fortify Remediation Aviator. A version is
+    selected when it has pending audit issues, or when it has no pending issues but its
+    newest SAST scan is later than the SSC `last_sast_audit` attribute written by
+    'fcli aviator ssc audit-sast' (or that attribute has not been written yet). The latter
+    lets Fortify Remediation Aviator re-audit already-audited issues whose source code
+    changed in the new scan. Issues last audited by someone other than Fortify Remediation
+    Aviator are only re-audited if --all-issues is specified. Use --pending-issues-only to
+    select only versions with pending issues, as in earlier releases. Versions for which
+    audit information needs to be refreshed are ignored.
+
+    The `last_sast_audit` attribute is only updated after an audit that completely evaluated
+    the version. If the Fortify Remediation Aviator quota runs out part-way through a version,
+    the attribute is left unchanged and the version is selected again by the next run. Run
+    'fcli aviator ssc prepare' once to create the attribute definition.
 
     For application versions that don't already exist in Fortify Aviator, the action will
     automatically create them before submitting for audit.
@@ -62,6 +73,18 @@ cli.options:
     description: "Optional inverse filter to exclude projects from audit. Projects matching this filter will be skipped. Example: 'Languages:c#' to exclude .NET projects. Can be combined with --filter. Default: no exclusion"
     required: false
     default: ""
+  pending-issues-only:
+    names: --pending-issues-only
+    description: "Only select application versions with pending audit issues, as in earlier releases. By default, versions without pending issues are also selected if their newest SAST scan is later than the SSC 'last_sast_audit' attribute, so already-audited issues whose source code changed can be re-audited. Default: false"
+    required: false
+    default: false
+    type: boolean
+  all-issues:
+    names: --all-issues
+    description: "Also re-audit issues last audited by someone other than Fortify Remediation Aviator when their source code changed since they were audited, passed to 'fcli aviator ssc audit-sast --all-issues' for every audited version. Without this option only issues last audited by Fortify Remediation Aviator are re-audited. Re-audits use Fortify Remediation Aviator quota, and the number of issues to re-audit is only known after the FPR has been analyzed, so this option cannot be combined with --skip-if-exceeding-quota or --test-exceeding-quota. Default: false"
+    required: false
+    default: false
+    type: boolean
   dry-run:
     names: --dry-run, -n
     description: "Show what aviator commands would be executed without actually running them. Default: false"
@@ -119,6 +142,7 @@ functions:
       refreshTimeout: { required: true }
       quotaFlags: { required: true }
       folderPriorityOrder: { required: true }
+      allIssues: { required: true, type: boolean }
     return: ${run_audit}
     steps:
       - run.fcli:
@@ -127,7 +151,7 @@ functions:
               aviator ssc audit-sast --av "${args.projectId}" --app "${args.aviatorAppName}"
               --log-level=INFO${#isBlank(args.tagMapping) ? '' : ' --tag-mapping="' + args.tagMapping + '"'}
               --refresh=${args.refresh} --refresh-timeout="${args.refreshTimeout}"${args.quotaFlags}
-              ${#isBlank(args.folderPriorityOrder) ? '' : ' --folder-priority-order="' + args.folderPriorityOrder + '"'}
+              ${#isBlank(args.folderPriorityOrder) ? '' : ' --folder-priority-order="' + args.folderPriorityOrder + '"'}${args.allIssues ? ' --all-issues' : ''}
             status.check: false
             records.collect: true
             stdout: show
@@ -144,6 +168,12 @@ steps:
   # Validate that at least one of --tag-mapping or --add-aviator-tags is specified
   - if: ${(cli['tag-mapping'] == null || cli['tag-mapping'] == '') && !cli['add-aviator-tags']}
     throw: "Either --tag-mapping or --add-aviator-tags must be specified."
+
+  # Validate that --all-issues is not used with the quota checks, which cannot count the issues it re-audits
+  - if: ${cli['all-issues'] && (cli['skip-if-exceeding-quota'] || cli['test-exceeding-quota'])}
+    do:
+      - log.progress: "ERROR: --all-issues cannot be combined with --skip-if-exceeding-quota or --test-exceeding-quota."
+      - throw: "--all-issues cannot be combined with --skip-if-exceeding-quota or --test-exceeding-quota, because the number of issues it re-audits is only known after the FPR has been analyzed and the quota check cannot count them."
 
   # Validate that --dry-run and --test-exceeding-quota are not used together
   - if: ${cli['dry-run'] && cli['test-exceeding-quota']}
@@ -182,8 +212,34 @@ steps:
         - var.set:
             aviator_app_names..: ${aviator_app.name}
 
+  # Find the SSC attribute definition for the last complete audit. Without it, versions without
+  # pending issues cannot be compared with their last audit and are all selected.
+  - var.set:
+      last_sast_audit_guid: null
+      last_sast_audit_id: null
+  - if: ${!cli['pending-issues-only']}
+    do:
+      - rest.call:
+          sast_audit_attribute_definitions:
+            uri: /api/v1/attributeDefinitions
+            type: paged
+            query:
+              limit: -1
+            records.for-each:
+              record.var-name: attribute_definition
+              breakIf: ${last_sast_audit_guid != null || last_sast_audit_id != null}
+              if: ${attribute_definition.name == 'last_sast_audit' && attribute_definition.category == 'TECHNICAL' && attribute_definition.type == 'TEXT'}
+              do:
+                - var.set:
+                    last_sast_audit_guid: ${attribute_definition.guid}
+                    last_sast_audit_id: ${attribute_definition.id}
+      - if: ${last_sast_audit_guid == null && last_sast_audit_id == null}
+        log.warn: >-
+          SSC attribute definition 'last_sast_audit' was not found, so every version with a SAST scan will
+          be selected. Run 'fcli aviator ssc prepare' to create it
+
   # Query SSC for projects needing audit
-  - log.progress: Querying SSC for projects with pending audit issues...
+  - log.progress: Querying SSC for application versions to audit...
 
   - var.set:
       enriched_versions: null
@@ -197,7 +253,7 @@ steps:
           filterby: ${cli.filter}
         records.for-each:
           record.var-name: version
-          if: ${version.issuesPendingReview > 0 && !version.snapshotOutOfDate}
+          if: ${!version.snapshotOutOfDate && (version.issuesPendingReview > 0 || !cli['pending-issues-only'])}
           embed:
             project_details:
               uri: /api/v1/projectVersions/${version.id}
@@ -215,9 +271,9 @@ steps:
                 enriched_versions..: {fmt: enriched_project}
 
   - if: ${enriched_versions != null}
-    log.progress: Found ${enriched_versions.size()} application versions with pending audit issues
+    log.progress: Found ${enriched_versions.size()} application versions to check
   - if: ${enriched_versions == null}
-    log.progress: Found 0 application versions with pending audit issues
+    log.progress: Found 0 application versions to check
 
   # Apply exclusion filter if specified
   - if: ${enriched_versions != null && enriched_versions.size() > 0 && cli['exclude-filter'] != ""}
@@ -232,7 +288,7 @@ steps:
               filterby: ${cli['exclude-filter']}
             records.for-each:
               record.var-name: excluded_version
-              if: ${excluded_version.issuesPendingReview > 0 && !excluded_version.snapshotOutOfDate}
+              if: ${!excluded_version.snapshotOutOfDate}
               do:
                 - var.set:
                     excluded_ids..: ${excluded_version.id}
@@ -263,6 +319,92 @@ steps:
         log.progress: Excluded ${excluded_count} application versions, ${enriched_versions.size()} remaining
       - if: ${enriched_versions == null}
         log.progress: Excluded ${excluded_count} application versions, 0 remaining
+
+  # Versions without pending issues are only selected if they have a SAST scan newer than the last
+  # complete audit, or have never been audited, so that changed source code can be re-audited
+  - if: ${!cli['pending-issues-only'] && enriched_versions != null && enriched_versions.size() > 0}
+    do:
+      - var.set:
+          selected_versions: null
+          stats.scan_selected: 0
+          stats.scan_unchanged: 0
+          stats.scan_check_failures: 0
+      - records.for-each:
+          from: ${enriched_versions}
+          record.var-name: candidate
+          do:
+            - var.set:
+                keep_candidate: true
+            - if: ${candidate.issuesPendingReview == 0}
+              do:
+                - var.set:
+                    keep_candidate: false
+                    latest_sast_scan_date: null
+                    last_sast_audit_value: null
+                    scan_check_failed: false
+                - rest.call:
+                    candidate_artifacts:
+                      uri: /api/v1/projectVersions/${candidate.id}/artifacts
+                      type: paged
+                      query:
+                        limit: -1
+                        embed: scans
+                        orderby: uploadDate DESC
+                      records.for-each:
+                        record.var-name: artifact
+                        breakIf: ${latest_sast_scan_date != null}
+                        do:
+                          - var.set:
+                              artifact_scan_date: ${#ifBlank(artifact.lastScanDate, artifact.uploadDate)}
+                          - if: ${latest_sast_scan_date == null && artifact.status == 'PROCESS_COMPLETE' && !#isBlank(artifact_scan_date) && artifact._embed.scans?.^[type=='SCA'] != null}
+                            var.set:
+                              latest_sast_scan_date: ${artifact_scan_date}
+                      on.fail:
+                        - var.set:
+                            scan_check_failed: true
+                        - log.warn: "Unable to inspect SAST artifacts for ${candidate.project_name}:${candidate.version_name}; skipping this version and continuing"
+                - if: ${!scan_check_failed && latest_sast_scan_date != null}
+                  do:
+                    - rest.call:
+                        candidate_attributes:
+                          uri: /api/v1/projectVersions/${candidate.id}/attributes
+                          records.for-each:
+                            record.var-name: attribute
+                            breakIf: ${last_sast_audit_value != null}
+                            if: "${last_sast_audit_guid != null && attribute.guid == last_sast_audit_guid || last_sast_audit_id != null && attribute.attributeDefinitionId != null && attribute.attributeDefinitionId.toString() == last_sast_audit_id.toString()}"
+                            do:
+                              - var.set:
+                                  last_sast_audit_value: ${attribute.value}
+                          on.fail:
+                            - var.set:
+                                scan_check_failed: true
+                            - log.warn: "Unable to inspect SAST audit state for ${candidate.project_name}:${candidate.version_name}; skipping this version and continuing"
+                    - if: ${!scan_check_failed && (#isBlank(last_sast_audit_value))}
+                      var.set:
+                        keep_candidate: true
+                    - if: ${!scan_check_failed && !#isBlank(last_sast_audit_value)}
+                      var.set:
+                        keep_candidate: ${#date(latest_sast_scan_date).isAfter(#date(last_sast_audit_value))}
+                      on.fail:
+                        - var.set:
+                            scan_check_failed: true
+                            keep_candidate: false
+                        - log.warn: "Unable to compare SAST scan date '${latest_sast_scan_date}' with last_sast_audit '${last_sast_audit_value}' for ${candidate.project_name}:${candidate.version_name}; skipping this version and continuing"
+                - if: ${scan_check_failed}
+                  var.set:
+                    stats.scan_check_failures: ${stats.scan_check_failures + 1}
+                - if: ${!scan_check_failed && keep_candidate}
+                  var.set:
+                    stats.scan_selected: ${stats.scan_selected + 1}
+                - if: ${!scan_check_failed && !keep_candidate}
+                  var.set:
+                    stats.scan_unchanged: ${stats.scan_unchanged + 1}
+            - if: ${keep_candidate}
+              var.set:
+                selected_versions..: ${candidate}
+      - var.set:
+          enriched_versions: ${selected_versions}
+      - log.progress: "Selected ${stats.scan_selected} versions without pending issues because of a newer scan, skipped ${stats.scan_unchanged} without a newer scan, ${stats.scan_check_failures} could not be checked"
 
   # Early exit if no candidates
   - if: ${enriched_versions == null || enriched_versions.size() == 0}
@@ -360,7 +502,7 @@ steps:
                         run_audit: >-
                           ${#fn.call('runSastAudit', project.id, project.aviator_app_name,
                           #ifBlank(cli['tag-mapping'], ''), cli.refresh, cli['refresh-timeout'], quota_flags,
-                          #ifBlank(cli['folder-priority-order'], ''))}
+                          #ifBlank(cli['folder-priority-order'], ''), cli['all-issues'])}
 
                     - if: ${run_audit.exitCode == 0 && run_audit.records != null && run_audit.records.size() > 0 && run_audit.records[0].__action__ != null && run_audit.records[0].__action__ == 'QUOTA_EXCEEDED'}
                       var.set:
@@ -387,7 +529,7 @@ steps:
                           ${#fn.call('runSastAudit', project.id, project.aviator_app_name,
                           #ifBlank(cli['tag-mapping'], ''), cli.refresh, cli['refresh-timeout'],
                           ' --test-exceeding-quota --default-quota-fallback',
-                          #ifBlank(cli['folder-priority-order'], ''))}
+                          #ifBlank(cli['folder-priority-order'], ''), cli['all-issues'])}
 
                     # If pre-check shows quota exceeded, skip this version entirely
                     - if: ${quota_precheck.exitCode == 0 && quota_precheck.records != null && quota_precheck.records.size() > 0 && quota_precheck.records[0].__action__ != null && quota_precheck.records[0].__action__ == 'QUOTA_EXCEEDED'}
@@ -470,7 +612,7 @@ steps:
                             run_audit: >-
                               ${#fn.call('runSastAudit', project.id, project.aviator_app_name,
                               #ifBlank(cli['tag-mapping'], ''), cli.refresh, cli['refresh-timeout'], quota_flags,
-                              #ifBlank(cli['folder-priority-order'], ''))}
+                              #ifBlank(cli['folder-priority-order'], ''), cli['all-issues'])}
 
                         # Track quota-skipped results
                         - if: ${run_audit.exitCode == 0 && run_audit.records != null && run_audit.records.size() > 0 && run_audit.records[0].__action__ != null && run_audit.records[0].__action__ == 'QUOTA_EXCEEDED'}
