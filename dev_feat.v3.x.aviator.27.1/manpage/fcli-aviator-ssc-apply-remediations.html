@@ -17,7 +17,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20261125.045900-dev_feat.v3.x.aviator.27.1" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20261125.055020-dev_feat.v3.x.aviator.27.1" %}
 
 
 <div id="header">
@@ -44,7 +44,7 @@ fcli_version:
 <h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli aviator ssc apply-remediations</strong> [<strong>--preview</strong>] [<strong>--progress</strong>=<em>&lt;type&gt;</em>]
+<p><strong>fcli aviator ssc apply-remediations</strong> [<strong>-y</strong>] [<strong>--preview</strong>] [<strong>--progress</strong>=<em>&lt;type&gt;</em>]
                                     [<strong>--source-dir</strong>=<em>&lt;sourceCodeDirectory&gt;</em>]
                                     [<strong>--issue-ids</strong>=<em>&lt;issueIds&gt;</em>[,<em>&lt;issueIds&gt;</em>&#8230;&#8203;]]&#8230;&#8203;
                                     [<strong>--source-encodings</strong>=<em>encoding</em>[,
@@ -178,6 +178,10 @@ fcli_version:
 <dd>
 <p>Comma-separated source encoding candidates to try in order when decoding source files. Use FPR to try the source encoding recorded in audit.fvdl. When writing remediated files, the accepted encoding is used. Default value: FPR,UTF-8,ISO-8859-1.</p>
 </dd>
+<dt class="hdlist1"><strong>-y</strong>, <strong>--confirm</strong></dt>
+<dd>
+<p>Apply, without asking, fixes that were not requested but are needed to resolve requested issues. For example, an issue that is superseded by a wider fix can only be resolved by applying that fix. Without this option, fcli asks interactively and does not apply such fixes in non-interactive mode.</p>
+</dd>
 </dl>
 </div>
 </div>
@@ -258,7 +262,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2026-11-25 05:02:43 UTC
+Last updated 2026-11-25 05:54:08 UTC
 </div>
 </div>
 </body>
