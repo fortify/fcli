@@ -46,6 +46,26 @@ class AviatorSSCAttributeHelperTest {
     }
 
     @Test
+    void writesLastSastAuditTimestampAsTextAttribute() throws Exception {
+        try (var server = new TestSscServer(); var unirest = newUnirest(server)) {
+            AviatorSSCAttributeHelper.writeLastSastAuditTimestamp(unirest, "42");
+
+            JsonNode update = server.getLastUpdate();
+            assertEquals("44", update.get(0).path("attributeDefinitionId").asText());
+            assertTrue(update.get(0).path("value").asText().matches("\\d{4}-\\d{2}-\\d{2}T.*Z"));
+        }
+    }
+
+    @Test
+    void exposesStableSastAuditAttributeDefinition() {
+        var definition = AviatorSSCAttributeDefinitions.LAST_SAST_AUDIT_ATTR;
+
+        assertEquals("last_sast_audit", definition.name());
+        assertEquals("TECHNICAL", definition.category());
+        assertEquals("TEXT", definition.type());
+    }
+
+    @Test
     void exposesStableDastAuditAttributeDefinition() {
         var definition = AviatorSSCAttributeDefinitions.LAST_DAST_AUDIT_ATTR;
 
@@ -142,7 +162,8 @@ class AviatorSSCAttributeHelperTest {
             String lastCorrelation = lastCorrelationDefinitionPresent
                 ? ",{\"id\":\"43\",\"name\":\"last_correlation\",\"category\":\"TECHNICAL\",\"type\":\"TEXT\"}" : "";
             respond(exchange, 200, """
-                {"data":[{"id":"42","guid":"C3D4E5F6-A7B8-9012-BCDE-F12345678902","name":"last_dast_audit","category":"TECHNICAL","type":"TEXT","required":false,"hasDefault":false,"options":[]}%s]}
+                {"data":[{"id":"42","guid":"C3D4E5F6-A7B8-9012-BCDE-F12345678902","name":"last_dast_audit","category":"TECHNICAL","type":"TEXT","required":false,"hasDefault":false,"options":[]},
+                {"id":"44","guid":"D4E5F6A7-B8C9-0123-CDEF-123456789013","name":"last_sast_audit","category":"TECHNICAL","type":"TEXT","required":false,"hasDefault":false,"options":[]}%s]}
                 """.formatted(lastCorrelation));
         }
 

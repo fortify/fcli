@@ -49,6 +49,18 @@ public final class AviatorSSCTagDefs {
     );
 
     /**
+     * Free-text tag storing the evidence fingerprint of the source code behind an audited issue, so that a later
+     * audit can detect code changes and re-audit the issue.
+     * The GUID must match {@code Constants.AVIATOR_SOURCE_FINGERPRINT_TAG_ID}.
+     */
+    public static final TagDefinition AVIATOR_SOURCE_FINGERPRINT_TAG = new TagDefinition(
+            "2F049165-CC3C-4FF0-ACFC-6FF251461E25",
+            "Aviator source fingerprint",
+            "TEXT",
+            List.of()
+    );
+
+    /**
      * Free-text tag persisting SAST–DAST correlation status per issue.
      * Value format: {@code CORRELATED::DAST-1,DAST-2|REJECTED::DAST-3}
      * Written by {@code SastFprCorrelationRecorder} into the SAST FPR's audit.xml.

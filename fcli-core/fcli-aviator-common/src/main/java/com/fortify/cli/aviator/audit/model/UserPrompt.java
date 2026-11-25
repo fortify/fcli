@@ -21,6 +21,7 @@ import com.fortify.cli.common.fpr.model.StackTraceElement;
 
 import lombok.Builder;
 import lombok.Getter;
+import lombok.Setter;
 
 @Getter
 @Builder
@@ -41,4 +42,5 @@ public class UserPrompt {
     private StackTraceElement source;
     private StackTraceElement sink;
     private String categoryLevel;
+    @Setter private boolean reaudit;
 }

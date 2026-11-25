@@ -33,6 +33,7 @@ import com.fortify.cli.aviator.audit.model.AuditFprOptions;
 import com.fortify.cli.aviator.audit.model.FPRAuditResult;
 import com.fortify.cli.aviator.config.AviatorLoggerImpl;
 import com.fortify.cli.aviator.config.TagMappingConfig;
+import com.fortify.cli.aviator.ssc.helper.AviatorSSCAttributeHelper;
 import com.fortify.cli.aviator.ssc.helper.AviatorSSCAuditHelper;
 import com.fortify.cli.aviator.ssc.helper.AviatorSSCAuditHelper.AuditableIssuePresence;
 import com.fortify.cli.aviator.ssc.helper.AviatorSSCFprFilterHelper;
@@ -57,6 +58,7 @@ import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionRefreshOptions;
 import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionResolverMixin;
 import com.fortify.cli.ssc.appversion.helper.SSCAppVersionDescriptor;
 import com.fortify.cli.ssc.issue.cli.mixin.SSCIssueFilterSetOptionMixin;
+import com.fortify.cli.ssc.issue.helper.SSCIssueFilterSetHelper;
 
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
@@ -81,6 +83,7 @@ abstract class AbstractAviatorSSCSastAuditCommand extends AbstractSSCJsonNodeOut
     @Option(names = {"--test-exceeding-quota"}) private boolean testExceedingQuota;
     @Option(names = {"--default-quota-fallback"}) private boolean defaultQuotaFallback;
     @Option(names = {"--force-reaudit"}) private boolean forceReaudit;
+    @Option(names = {"--all-issues"}) private boolean allIssues;
     @Mixin private SourceEncodingsMixin sourceEncodingsMixin;
     private static final Logger LOG = LoggerFactory.getLogger(AbstractAviatorSSCSastAuditCommand.class);
     private Long checkedQuotaBefore;
@@ -114,9 +117,12 @@ abstract class AbstractAviatorSSCSastAuditCommand extends AbstractSSCJsonNodeOut
             long auditableIssueCount = getPreflightIssueCount(unirest, av, logger);
             if (auditableIssueCount == 0) {
                 AviatorSSCAuditHelper.failIfNoSastResults(unirest, av);
+            }
+            if (auditableIssueCount == 0 && !mayHaveReauditCandidates(unirest, av, logger)) {
                 logger.progress("Audit skipped - no auditable issues found matching the specified filters.");
                 ObjectNode result = AviatorSSCAuditHelper.buildResultNode(av, null, "SKIPPED");
                 AviatorSSCAuditHelper.setOperationMessage(result, "No auditable issues found matching the specified filters");
+                recordLastAuditDate(unirest, av);
                 return result;
             }
 
@@ -156,8 +162,19 @@ abstract class AbstractAviatorSSCSastAuditCommand extends AbstractSSCJsonNodeOut
      * Quota modes require the full count. Other audits only need a presence check:
      * return an exact zero to skip, or -1 when the total is unknown, including when
      * a candidate was found. This keeps a presence result out of quota comparisons.
+     *
+     * <p>With --all-issues the count is unknown in quota modes: issues audited by anyone are re-audited when
+     * their source code changed, and which ones changed is only known once the FPR has been downloaded. The SSC
+     * count cannot include them, so it could be zero or far too low, and the quota check would give the wrong
+     * answer. An unknown count makes --skip-if-exceeding-quota skip the audit and --test-exceeding-quota report
+     * that the quota could not be checked.
      */
     long getPreflightIssueCount(UnirestInstance unirest, SSCAppVersionDescriptor av, AviatorLoggerImpl logger) {
+        if ((isSkipIfExceedingQuota() || testExceedingQuota) && allIssues) {
+            logger.progress("Status: With --all-issues the number of issues to re-audit is only known after the FPR "
+                    + "has been analyzed, so the quota check cannot count them.");
+            return -1;
+        }
         if (isSkipIfExceedingQuota() || testExceedingQuota) {
             return AviatorSSCAuditHelper.getAuditableIssueCount(
                     unirest, av, logger, isNoFilterSet(), getFilterSetTitleOrId(), folderNames, forceReaudit);
@@ -169,6 +186,24 @@ abstract class AbstractAviatorSSCSastAuditCommand extends AbstractSSCJsonNodeOut
 
     private boolean isSkipIfExceedingQuota() {
         return quotaHandlingArgGroup.skipIfExceedingQuota;
+    }
+
+    /**
+     * An audit with no new issues can still have work to do: already-audited issues whose source code changed are
+     * re-audited, and the FPR must be downloaded to know which. That is only possible when Aviator has processed
+     * issues, or when --all-issues widens the scope. --force-reaudit already counts Aviator-processed issues.
+     * An unknown answer proceeds, so a failed SSC lookup never hides re-audit work.
+     */
+    boolean mayHaveReauditCandidates(UnirestInstance unirest, SSCAppVersionDescriptor av, AviatorLoggerImpl logger) {
+        if (allIssues) {
+            return true;
+        }
+        if (forceReaudit) {
+            return false;
+        }
+        return AviatorSSCAuditHelper.getAuditableIssuePresence(
+                unirest, av, logger, isNoFilterSet(), getFilterSetTitleOrId(), folderNames, true)
+                != AuditableIssuePresence.NONE;
     }
 
     private List<String> getFolderPriorityOrder() {
@@ -318,6 +353,7 @@ abstract class AbstractAviatorSSCSastAuditCommand extends AbstractSSCJsonNodeOut
                     .folderNames(folderNames)
                     .folderPriorityOrder(getFolderPriorityOrder())
                     .forceReaudit(forceReaudit)
+                    .allIssues(allIssues)
                     .sourceDecoder(sourceEncodingsMixin.getSourceDecoder())
                     .build());
         }
@@ -327,8 +363,19 @@ abstract class AbstractAviatorSSCSastAuditCommand extends AbstractSSCJsonNodeOut
 
         ObjectNode result = AviatorSSCAuditHelper.buildResultNode(av, null, action);
         AviatorSSCAuditHelper.setAuditStats(result, auditResult);
-        if (auditResult.getUpdatedFile() != null && !"SKIPPED".equals(action) && !"FAILED".equals(action)) {
-            AviatorSSCAuditHelper.setUploadResult(result, uploadAuditedFprToSSC(unirest, downloadedFprPath, av, logger));
+        UploadResult upload = null;
+        // A run that only recorded evidence baselines is SKIPPED but still has an FPR to upload
+        if (auditResult.getUpdatedFile() != null && !"FAILED".equals(action)
+                && (!"SKIPPED".equals(action) || auditResult.getEvidenceBaselines() > 0)) {
+            upload = uploadAuditedFprToSSC(unirest, downloadedFprPath, av, logger);
+            AviatorSSCAuditHelper.setUploadResult(result, upload);
+        }
+
+        // The date is only written when the run completely evaluated the version and, if an audited FPR
+        // was produced, SSC confirmed the upload. Otherwise bulk audit must select the version again.
+        if (isAuditRunComplete(auditResult)
+                && (auditResult.getUpdatedFile() == null || (upload != null && upload.artifactId() != null))) {
+            recordLastAuditDate(unirest, av);
         }
 
         return result;
@@ -336,6 +383,47 @@ abstract class AbstractAviatorSSCSastAuditCommand extends AbstractSSCJsonNodeOut
 
     FPRAuditResult auditFpr(AuditFprOptions options) {
         return AuditFPR.auditFPR(options);
+    }
+
+    /**
+     * A run completely evaluated the version when all issues were audited, or when there was nothing to audit.
+     * A run that audited only some issues, for example because the Aviator quota ran out part-way, or that
+     * skipped or failed on all of them, is not complete.
+     */
+    static boolean isAuditRunComplete(FPRAuditResult auditResult) {
+        return "AUDITED".equals(auditResult.getStatus())
+                || "SKIPPED".equals(auditResult.getStatus()) && auditResult.getTotalIssuesToAudit() == 0;
+    }
+
+    /**
+     * Records when this version was last completely audited, for bulk audit to compare with the newest scan
+     * date. A run limited to some folders or to a non-default filter set, or a quota test, did not look at the
+     * whole version.
+     */
+    private void recordLastAuditDate(UnirestInstance unirest, SSCAppVersionDescriptor av) {
+        if (testExceedingQuota || folderNames != null && !folderNames.isEmpty() || !auditsDefaultOrNoFilterSet(unirest, av)) {
+            return;
+        }
+        AviatorSSCAttributeHelper.writeLastSastAuditTimestamp(unirest, av.getVersionId());
+    }
+
+    /**
+     * Audits normally cover the default filter set, or every issue with --no-filterset. Any other filter set may
+     * exclude issues, so the version cannot be recorded as completely audited. If the filter set cannot be
+     * resolved, assume it is not the default one.
+     */
+    boolean auditsDefaultOrNoFilterSet(UnirestInstance unirest, SSCAppVersionDescriptor av) {
+        String filterSet = getFilterSetTitleOrId();
+        if (filterSet == null || filterSet.isBlank()) {
+            return true;
+        }
+        try {
+            var descriptor = new SSCIssueFilterSetHelper(unirest, av.getVersionId()).getDescriptorByTitleOrId(filterSet, false);
+            return descriptor != null && descriptor.isDefaultFilterSet();
+        } catch (RuntimeException e) {
+            LOG.debug("Could not resolve filter set '{}' for version {}", filterSet, av.getVersionId(), e);
+            return false;
+        }
     }
 
     /**
