@@ -151,6 +151,7 @@ class AviatorSSCFprTransferHelperTest {
 
         var result = AviatorSSCFprTransferHelper.uploadEngineSpecificFprBestEffort(
             fpr,
+            "42",
             engine,
             logger,
             candidate -> {
@@ -185,8 +186,9 @@ class AviatorSSCFprTransferHelperTest {
             message.contains("uploading the full original FPR including all engines")));
     }
 
-    @Test
-    void successfulPruningUploadsEngineOnlyCandidate() throws Exception {
+    @ParameterizedTest
+    @EnumSource(AviatorSSCFprFilterHelper.Engine.class)
+    void successfulPruningUploadsEngineOnlyCandidate(AviatorSSCFprFilterHelper.Engine engine) throws Exception {
         Path fpr = createFpr();
         byte[] originalBytes = Files.readAllBytes(fpr);
         var logger = new RecordingLogger();
@@ -194,19 +196,23 @@ class AviatorSSCFprTransferHelperTest {
 
         var result = AviatorSSCFprTransferHelper.uploadEngineSpecificFprBestEffort(
             fpr,
-            AviatorSSCFprFilterHelper.Engine.SAST,
+            "42",
+            engine,
             logger,
             candidate -> AviatorSSCFprFilterHelper.filterEngineSpecificFprInPlace(
-                candidate, AviatorSSCFprFilterHelper.Engine.SAST),
+                candidate, engine),
             candidate -> {
                 assertTrue(!fpr.equals(candidate));
+                assertTrue(candidate.getFileName().toString().startsWith("aviator_42_"));
+                assertTrue(candidate.getFileName().toString().endsWith(".fpr"));
                 uploadedEntries.add(entries(candidate));
                 return "2786";
             });
 
         assertEquals("2786", result.artifactId());
         assertNull(result.failureMessage());
-        assertEquals(List.of(Set.of("VERSION", "attachments.xml", "audit.fvdl", "audit.xml")), uploadedEntries);
+        assertEquals(List.of(Set.of("VERSION", "attachments.xml", "audit.xml",
+            engine == AviatorSSCFprFilterHelper.Engine.SAST ? "audit.fvdl" : "webinspect.xml")), uploadedEntries);
         assertArrayEquals(originalBytes, Files.readAllBytes(fpr));
         assertEquals(Set.of(fpr), fprFiles());
         assertTrue(logger.messages.isEmpty());
@@ -219,6 +225,7 @@ class AviatorSSCFprTransferHelperTest {
 
         AviatorSSCFprTransferHelper.uploadEngineSpecificFprBestEffort(
             fpr,
+            "42",
             AviatorSSCFprFilterHelper.Engine.SAST,
             new RecordingLogger(),
             candidate -> { },
@@ -240,6 +247,7 @@ class AviatorSSCFprTransferHelperTest {
 
         var result = AviatorSSCFprTransferHelper.uploadEngineSpecificFprBestEffort(
             fpr,
+            "42",
             engine,
             logger,
             candidate -> AviatorSSCFprFilterHelper.filterEngineSpecificFprInPlace(
@@ -277,7 +285,7 @@ class AviatorSSCFprTransferHelperTest {
             new IOException("intermediate failure", new IOException(rootMessage)));
 
         var result = AviatorSSCFprTransferHelper.uploadEngineSpecificFprBestEffort(
-            fpr, AviatorSSCFprFilterHelper.Engine.SAST, logger,
+            fpr, "42", AviatorSSCFprFilterHelper.Engine.SAST, logger,
             candidate -> AviatorSSCFprFilterHelper.filterEngineSpecificFprInPlace(
                 candidate, AviatorSSCFprFilterHelper.Engine.SAST),
             candidate -> { throw failure; });

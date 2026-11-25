@@ -53,13 +53,13 @@ jobs:
     steps:
       # Java is required for running the functional tests
       - name: Setup Java
-        uses: fortify/shared-github/actions/3rdparty/actions/setup-java/v5@5ad1afec0f56a21b03f0887eea35505cb6a66554
+        uses: fortify/shared-github/actions/3rdparty/actions/setup-java/v5@15d0b01f3bedb5c1523cb806e745f041e9bce5a3
         with:
           distribution: 'temurin'
           java-version: '17'
 
       - name: Download release artifact
-        uses: fortify/shared-github/actions/3rdparty/actions/download-artifact/v8@5ad1afec0f56a21b03f0887eea35505cb6a66554
+        uses: fortify/shared-github/actions/3rdparty/actions/download-artifact/v8@15d0b01f3bedb5c1523cb806e745f041e9bce5a3
         with:
           run-id: ${{ inputs.runId }}
           name: ${{ matrix.type == 'jar' && 'fcli-jar' || matrix.native_artifact }}
@@ -67,7 +67,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Download fcli-ftest.jar
-        uses: fortify/shared-github/actions/3rdparty/actions/download-artifact/v8@5ad1afec0f56a21b03f0887eea35505cb6a66554
+        uses: fortify/shared-github/actions/3rdparty/actions/download-artifact/v8@15d0b01f3bedb5c1523cb806e745f041e9bce5a3
         with:
           run-id: ${{ inputs.runId }}
           name: fcli-ftest-jar
@@ -99,7 +99,7 @@ jobs:
         
       - name: Publish test logs
         if: failure()
-        uses: fortify/shared-github/actions/3rdparty/actions/upload-artifact/v7@5ad1afec0f56a21b03f0887eea35505cb6a66554
+        uses: fortify/shared-github/actions/3rdparty/actions/upload-artifact/v7@15d0b01f3bedb5c1523cb806e745f041e9bce5a3
         with:
           name: test-log-${{ matrix.os }}-${{ matrix.type }}
           path: test-*.log
@@ -117,13 +117,13 @@ jobs:
     steps:
       # Java is required for running the functional tests
       - name: Setup Java
-        uses: fortify/shared-github/actions/3rdparty/actions/setup-java/v5@5ad1afec0f56a21b03f0887eea35505cb6a66554
+        uses: fortify/shared-github/actions/3rdparty/actions/setup-java/v5@15d0b01f3bedb5c1523cb806e745f041e9bce5a3
         with:
           distribution: 'temurin'
           java-version: '17'
 
       - name: Download fcli-linux.tgz
-        uses: fortify/shared-github/actions/3rdparty/actions/download-artifact/v8@5ad1afec0f56a21b03f0887eea35505cb6a66554
+        uses: fortify/shared-github/actions/3rdparty/actions/download-artifact/v8@15d0b01f3bedb5c1523cb806e745f041e9bce5a3
         with:
           run-id: ${{ inputs.runId }}
           name: fcli-linux
@@ -131,7 +131,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Download fcli-ftest.jar
-        uses: fortify/shared-github/actions/3rdparty/actions/download-artifact/v8@5ad1afec0f56a21b03f0887eea35505cb6a66554
+        uses: fortify/shared-github/actions/3rdparty/actions/download-artifact/v8@15d0b01f3bedb5c1523cb806e745f041e9bce5a3
         with:
           run-id: ${{ inputs.runId }}
           name: fcli-ftest-jar
@@ -170,7 +170,7 @@ jobs:
         
       - name: Publish test logs
         if: always()
-        uses: fortify/shared-github/actions/3rdparty/actions/upload-artifact/v7@5ad1afec0f56a21b03f0887eea35505cb6a66554
+        uses: fortify/shared-github/actions/3rdparty/actions/upload-artifact/v7@15d0b01f3bedb5c1523cb806e745f041e9bce5a3
         with:
           name: test-log-${{ matrix.type }}
           path: test-*.log
