@@ -49,7 +49,29 @@
                     </xs:documentation>
                 </xs:annotation>
             </xs:element>            
-            <xs:element name="FileChanges" type="FileChangesType" minOccurs="1" maxOccurs="unbounded"/>
+            <xs:choice>
+                <xs:sequence>
+                    <xs:element name="FileChanges" type="FileChangesType" minOccurs="1" maxOccurs="unbounded"/>
+                    <xs:element name="SupersedesPriorFix" type="IssueReferenceType" minOccurs="0" maxOccurs="unbounded">
+                        <xs:annotation>
+                            <xs:documentation>
+                                Issues (referenced by instanceId) whose own fix is contained in the FileChanges of
+                                this remediation. Those issues carry a CoveredByPriorFix reference to this remediation
+                                instead of FileChanges of their own; applying this remediation resolves them.
+                            </xs:documentation>
+                        </xs:annotation>
+                    </xs:element>
+                </xs:sequence>
+                <xs:element name="CoveredByPriorFix" type="IssueReferenceType" minOccurs="1" maxOccurs="unbounded">
+                    <xs:annotation>
+                        <xs:documentation>
+                            Used instead of FileChanges when this issue has no fix of its own because the fix of another
+                            issue (referenced by instanceId) already covers or contains it. Clients should apply the
+                            referenced remediation and report this issue as resolved by it.
+                        </xs:documentation>
+                    </xs:annotation>
+                </xs:element>
+            </xs:choice>
         </xs:sequence>
         <xs:attribute name="instanceId" type="xs:string" use="required"/>
         <xs:attribute name="writeDate" type="xs:dateTime" use="required">
@@ -60,6 +82,11 @@
                 </xs:documentation>
             </xs:annotation>
         </xs:attribute>
+    </xs:complexType>
+
+    <!-- IssueReferenceType -->
+    <xs:complexType name="IssueReferenceType">
+        <xs:attribute name="instanceId" type="xs:string" use="required"/>
     </xs:complexType>
 
     <!-- FileChangesType -->

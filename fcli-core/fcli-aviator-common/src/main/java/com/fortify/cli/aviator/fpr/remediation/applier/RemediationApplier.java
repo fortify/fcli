@@ -216,9 +216,10 @@ public final class RemediationApplier {
     private void dropDuplicatedBoundaryTokens(List<String> newCodeLines, List<String> originalLines,
             int lineFrom, int lineTo, String instanceId, String filename) {
         if (newCodeLines.isEmpty()) return;
+        List<String> replacedLines = originalLines.subList(lineFrom - 1, lineTo);
         if (lineFrom > 1 && newCodeLines.size() > 1) {
             String lineBefore = originalLines.get(lineFrom - 2);
-            if (boundaryLinesMatch(lineBefore, newCodeLines.get(0))) {
+            if (boundaryLinesMatch(lineBefore, newCodeLines.get(0)) && isDuplicate(newCodeLines, 0, replacedLines)) {
                 LOG.debug("Remediation {} for '{}': dropping duplicated leading boundary token in NewCode (matches line {})",
                     instanceId, filename, lineFrom - 1);
                 newCodeLines.remove(0);
@@ -226,12 +227,34 @@ public final class RemediationApplier {
         }
         if (lineTo < originalLines.size() && newCodeLines.size() > 1) {
             String lineAfter = originalLines.get(lineTo);
-            if (boundaryLinesMatch(lineAfter, newCodeLines.get(newCodeLines.size() - 1))) {
+            if (boundaryLinesMatch(lineAfter, newCodeLines.get(newCodeLines.size() - 1))
+                    && isDuplicate(newCodeLines, newCodeLines.size() - 1, replacedLines)) {
                 LOG.debug("Remediation {} for '{}': dropping duplicated trailing boundary token in NewCode (matches line {})",
                     instanceId, filename, lineTo + 1);
                 newCodeLines.remove(newCodeLines.size() - 1);
             }
         }
+    }
+
+    /**
+     * A boundary line of NewCode that reads like the neighbouring line is a duplicate of it only if it is not needed. A line
+     * made of delimiters, such as {@code }}, reads the same at any indentation, so its text proves nothing: a fix that ends
+     * with the {@code }} of its own try block ends with the same text as the method's {@code }} that follows the range, and
+     * dropping it would unbalance the method. Such a line is only dropped when the NewCode has a different delimiter balance
+     * than the lines it replaces and dropping the line restores it.
+     */
+    private boolean isDuplicate(List<String> newCodeLines, int index, List<String> replacedLines) {
+        String line = newCodeLines.get(index);
+        if (!DelimiterBalance.isDelimitersOnly(line) && DelimiterBalance.isBalanced(DelimiterBalance.of(line))) {
+            return true; // an ordinary line: reading the same as its neighbour is what makes it a duplicate
+        }
+        int[] expected = DelimiterBalance.of(replacedLines);
+        if (Arrays.equals(expected, DelimiterBalance.of(newCodeLines))) {
+            return false; // the NewCode is balanced as the replaced lines were: the line belongs to it
+        }
+        List<String> without = new ArrayList<>(newCodeLines);
+        without.remove(index);
+        return Arrays.equals(expected, DelimiterBalance.of(without));
     }
 
     private boolean boundaryLinesMatch(String a, String b) {

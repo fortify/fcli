@@ -212,6 +212,25 @@ class AviatorSSCFprTransferHelperTest {
         assertTrue(logger.messages.isEmpty());
     }
 
+    @Test
+    void uploadedEngineSpecificFprIsNamedLikeTheOtherAviatorFprs() throws Exception {
+        Path fpr = createFpr();
+        var uploadedNames = new ArrayList<String>();
+
+        AviatorSSCFprTransferHelper.uploadEngineSpecificFprBestEffort(
+            fpr,
+            AviatorSSCFprFilterHelper.Engine.SAST,
+            new RecordingLogger(),
+            candidate -> { },
+            candidate -> {
+                uploadedNames.add(candidate.getFileName().toString());
+                return "ok";
+            });
+
+        assertEquals(1, uploadedNames.size());
+        assertTrue(uploadedNames.get(0).matches("aviator_.+\\.fpr"), uploadedNames.get(0));
+    }
+
     @ParameterizedTest
     @EnumSource(AviatorSSCFprFilterHelper.Engine.class)
     void uploadFailureReturnsUnconfirmedResultAndCleansCandidate(AviatorSSCFprFilterHelper.Engine engine) throws Exception {

@@ -86,6 +86,24 @@ public class CommonOptionMixins {
             }
         }
         
+        /**
+         * Non-aborting variant of {@link #checkConfirmed(Object...)} for commands that can carry on without the
+         * confirmed action. Returns true if confirmed through {@code -y/--confirm} or by answering the prompt, and false
+         * if the user declines or no interactive console is available.
+         */
+        public boolean isConfirmed(Object... promptArgs) {
+            if ( confirmed ) {
+                return true;
+            }
+            if ( System.console()==null ) {
+                return false;
+            }
+            CommandSpec spec = commandHelper.getCommandSpec();
+            String expectedResponse = FcliCommandSpecHelper.getRequiredMessageString(spec, "expectedConfirmPromptResponse");
+            System.out.print(""); // Ensure any progress output is cleared before prompting
+            return expectedResponse.equalsIgnoreCase(System.console().readLine(getPrompt(spec, promptArgs)));
+        }
+
         private String getPrompt(CommandSpec spec, Object... promptArgs) {
             String prompt = getPlainPrompt(spec, promptArgs);
             String promptOptions = FcliCommandSpecHelper.getRequiredMessageString(spec, "confirmPromptOptions");
