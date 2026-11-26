@@ -17,7 +17,7 @@ import java.util.List;
 import lombok.Builder;
 
 /**
- * Results and quota metadata returned by one DAST audit stream.
+ * DAST audit results and quota metadata from the latest accepted stream.
  */
 @Builder
 public record DastAuditStreamResult(

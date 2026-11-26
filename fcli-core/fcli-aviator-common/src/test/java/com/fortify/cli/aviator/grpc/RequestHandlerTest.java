@@ -13,6 +13,7 @@
 package com.fortify.cli.aviator.grpc;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
@@ -20,6 +21,7 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
@@ -28,6 +30,42 @@ import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
 
 class RequestHandlerTest {
+    @Test
+    @Timeout(10)
+    void contendedSendDoesNotReportSuccessBeforeTheQueueIsFlushed() throws Exception {
+        var entered = new CountDownLatch(1);
+        var release = new CountDownLatch(1);
+        var events = new ArrayList<String>();
+        var handler = new RequestHandler<String>("stream");
+        handler.sendRequest("one");
+        handler.initialize(new StreamObserver<>() {
+            public void onNext(String value) {
+                if ("one".equals(value)) {
+                    entered.countDown();
+                    try {
+                        assertTrue(release.await(5, TimeUnit.SECONDS));
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                        throw new AssertionError(e);
+                    }
+                }
+                events.add(value);
+            }
+            public void onError(Throwable error) { }
+            public void onCompleted() { }
+        });
+        assertTrue(entered.await(5, TimeUnit.SECONDS));
+        var send = handler.sendRequest("two");
+        try {
+            assertThrows(TimeoutException.class, () -> send.get(100, TimeUnit.MILLISECONDS));
+        } finally {
+            release.countDown();
+        }
+        assertTrue(send.get(5, TimeUnit.SECONDS));
+        handler.complete().join();
+        assertEquals(List.of("one", "two"), events);
+    }
+
     @Test
     @Timeout(10)
     void initializationFlushReportsAQueuedSendFailure() throws Exception {
@@ -66,7 +104,7 @@ class RequestHandlerTest {
         });
         handler.sendRequest("one");
         assertTrue(sending.await(5, TimeUnit.SECONDS));
-        handler.sendRequest("two").join();
+        handler.sendRequest("two");
         try {
             handler.abort(new Exception("Injected disconnect"));
             assertTrue(handler.isCompleted());

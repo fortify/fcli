@@ -17,7 +17,7 @@ import java.io.File;
 import lombok.Builder;
 
 /**
- * Summary of processing one DAST FPR.
+ * Summary of processing one DAST FPR. Quota metadata describes the latest accepted stream.
  */
 @Builder
 public record DastAuditFprResult(

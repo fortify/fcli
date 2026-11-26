@@ -62,7 +62,7 @@ class DastAuditStreamProcessorTest {
         assertTrue(DastAuditStreamProcessor.isRetryableError(Status.UNAVAILABLE.asRuntimeException()));
         assertTrue(DastAuditStreamProcessor.isRetryableError(
             Status.INTERNAL.withDescription("RST_STREAM closed").asRuntimeException()));
-        assertTrue(DastAuditStreamProcessor.isInfiniteRetryError(
+        assertTrue(DastAuditStreamProcessor.isRetryableError(
             Status.INTERNAL.withDescription("PROTOCOL_ERROR").asRuntimeException()));
         assertFalse(DastAuditStreamProcessor.isRetryableError(Status.INVALID_ARGUMENT.asRuntimeException()));
     }

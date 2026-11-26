@@ -22,11 +22,10 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.LongSupplier;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -61,13 +60,11 @@ public class DastAuditStreamProcessor implements AutoCloseable {
     private final DastAuditServiceGrpc.DastAuditServiceStub asyncStub;
     private final ScheduledExecutorService pingScheduler;
     private final long pingIntervalSeconds;
-    private final AtomicBoolean isPinging = new AtomicBoolean(false);
     private final AtomicBoolean isClosed = new AtomicBoolean(false);
     private final AtomicBoolean isRpcCompleted = new AtomicBoolean(false);
     private final AtomicBoolean isRetryScheduled = new AtomicBoolean(false);
-    private final AtomicInteger streamRetryCount = new AtomicInteger();
-    private final AtomicInteger stagnantRetryCount = new AtomicInteger();
     private final AtomicLong streamGeneration = new AtomicLong();
+    private boolean streamInitialized;
 
     private RequestHandler<DastAuditClientMessage> requestHandler;
     private ScheduledFuture<?> pingTask;
@@ -77,7 +74,6 @@ public class DastAuditStreamProcessor implements AutoCloseable {
     private DastAuditStreamConfig config;
     private List<DastAuditWorkItem> workItems;
     private int totalReportedIssues;
-    private int lastRetryCompletedCount;
     private CompletableFuture<DastAuditStreamResult> resultFuture;
     private final List<DastAuditResult> results = Collections.synchronizedList(new ArrayList<>());
     private final Map<String, String> requestIssueIds = new ConcurrentHashMap<>();
@@ -92,22 +88,29 @@ public class DastAuditStreamProcessor implements AutoCloseable {
     private int reservedQuota;
     private int exceededCount;
     private boolean unlimitedQuota;
-    private boolean quotaMetadataInitialized;
     private String quotaLastUpdated;
     private String nextQuotaUpdateMessage;
+    private final StreamConnectionRecovery recovery;
 
     public DastAuditStreamProcessor(
             IAviatorLogger logger,
             DastAuditServiceGrpc.DastAuditServiceStub asyncStub,
             ScheduledExecutorService pingScheduler,
             long pingIntervalSeconds) {
+        this(logger, asyncStub, pingScheduler, pingIntervalSeconds, System::nanoTime);
+    }
+
+    DastAuditStreamProcessor(IAviatorLogger logger, DastAuditServiceGrpc.DastAuditServiceStub asyncStub,
+            ScheduledExecutorService pingScheduler, long pingIntervalSeconds, LongSupplier nanoTime) {
         this.logger = logger;
         this.asyncStub = asyncStub;
         this.pingScheduler = pingScheduler;
         this.pingIntervalSeconds = pingIntervalSeconds;
+        this.recovery = new StreamConnectionRecovery(pingScheduler, this, nanoTime, () ->
+            completeExceptionally(new AviatorTechnicalException("DAST audit connection recovery timed out")));
     }
 
-    public CompletableFuture<DastAuditStreamResult> process(
+    public synchronized CompletableFuture<DastAuditStreamResult> process(
             DastAuditStreamConfig config,
             List<DastAuditWorkItem> workItems,
             int totalReportedIssues) {
@@ -117,13 +120,22 @@ public class DastAuditStreamProcessor implements AutoCloseable {
         this.requestIdsByIssue.clear();
         this.completedRequestIds.clear();
         this.results.clear();
-        this.streamRetryCount.set(0);
-        this.stagnantRetryCount.set(0);
-        this.lastRetryCompletedCount = 0;
         this.isClosed.set(false);
-        this.quotaMetadataInitialized = false;
         initializeWorkItems(workItems);
-        resultFuture.whenComplete((result, error) -> closeInitializationTimeout());
+        resultFuture.whenComplete((result, error) -> {
+            synchronized (this) {
+                recovery.end();
+                closeInitializationTimeout();
+                stopPingPong();
+                streamGeneration.incrementAndGet();
+                if (retryTask != null) retryTask.cancel(false);
+                if (error != null && !isRpcCompleted.get() && activeRequestStream != null) {
+                    activeRequestStream.cancel("DAST audit run ended", error);
+                }
+                if (requestHandler != null && error != null) requestHandler.abort(error);
+            }
+        });
+        AviatorGrpcClient.registerStream(pingScheduler, this::close, resultFuture);
         startStream();
         return resultFuture;
     }
@@ -135,7 +147,7 @@ public class DastAuditStreamProcessor implements AutoCloseable {
     }
 
     private void startStream() {
-        if (resultFuture.isDone() || isClosed.get()) return;
+        if (resultFuture.isDone() || isClosed.get() || recovery.expireIfOverdue()) return;
         this.streamId = UUID.randomUUID().toString();
         this.requestIssueIds.clear();
         this.sendWindow.clear();
@@ -145,17 +157,28 @@ public class DastAuditStreamProcessor implements AutoCloseable {
         this.activeRequestStream = null;
         this.isRpcCompleted.set(false);
         this.isRetryScheduled.set(false);
+        this.streamInitialized = false;
         long generation = streamGeneration.incrementAndGet();
+        requestHandler.getSendFailure().thenAcceptAsync(error -> {
+            synchronized (this) {
+                if (generation == streamGeneration.get() && !resultFuture.isDone()) handleStreamError(error);
+            }
+        });
         LOG.debug("Starting DAST audit stream {} with {} pending findings and {} reported findings",
             streamId, pendingIssueIds.size(), totalReportedIssues);
 
         try {
-            var attemptHandler = requestHandler;
             var attemptTimeout = new StreamInitializationTimeout(pingScheduler,
-                () -> attemptHandler.sendError(StreamInitializationTimeout.expiredError("DAST audit")));
+                () -> {
+                    synchronized (this) {
+                        if (generation != streamGeneration.get() || resultFuture.isDone()) return;
+                        handleStreamError(StreamInitializationTimeout.expiredError("DAST audit"), recovery.active());
+                    }
+                });
             initializationTimeout = attemptTimeout;
             StreamObserver<DastAuditClientMessage> requestObserver =
-                asyncStub.processDastAuditStream(new ResponseObserver(generation, attemptTimeout));
+                asyncStub.processDastAuditStream(new ResponseObserver(generation));
+            if (generation != streamGeneration.get() || resultFuture.isDone()) return;
             requestHandler.initialize(requestObserver);
             startPingPong();
             sendInit();
@@ -180,19 +203,23 @@ public class DastAuditStreamProcessor implements AutoCloseable {
     }
 
     private void handleInit(DastAuditInitResponse response) {
+        if (streamInitialized || recovery.expireIfOverdue()) return;
+        if ("APPLICATION_BUSY".equals(response.getStatus())) {
+            handleStreamError(new AviatorSimpleException("Application is busy"), true);
+            return;
+        }
         if (!initializationTimeout.initialized()) return;
         if (!isSuccess(response.getStatus())) {
             fail(new AviatorSimpleException("DAST audit initialization failed: " + response.getStatusMessage()));
             return;
         }
-        if (!quotaMetadataInitialized) {
-            reservedQuota = response.getReservedQuota();
-            exceededCount = response.getExceededCount();
-            unlimitedQuota = response.getUnlimitedQuota();
-            quotaLastUpdated = response.hasQuotaLastUpdated() ? response.getQuotaLastUpdated() : null;
-            nextQuotaUpdateMessage = response.hasNextQuotaUpdateMessage() ? response.getNextQuotaUpdateMessage() : null;
-            quotaMetadataInitialized = true;
-        }
+        streamInitialized = true;
+        recovery.end();
+        reservedQuota = response.getReservedQuota();
+        exceededCount = response.getExceededCount();
+        unlimitedQuota = response.getUnlimitedQuota();
+        quotaLastUpdated = response.hasQuotaLastUpdated() ? response.getQuotaLastUpdated() : null;
+        nextQuotaUpdateMessage = response.hasNextQuotaUpdateMessage() ? response.getNextQuotaUpdateMessage() : null;
         List<DastAuditWorkItem> remainingWorkItems = remainingWorkItems();
         logger.info("DAST audit stream initialized; submitting " + remainingWorkItems.size() + " findings");
         sendWindow.enqueue(prepareAuditRequests(remainingWorkItems, streamId));
@@ -201,7 +228,8 @@ public class DastAuditStreamProcessor implements AutoCloseable {
 
     /** Sends queued audit requests while the in-flight window has free slots. */
     private void sendQueuedRequests() {
-        if (requestHandler == null || requestHandler.isCompleted() || resultFuture.isDone()) return;
+        if (!streamInitialized || isRetryScheduled.get() || requestHandler == null
+                || requestHandler.isCompleted() || resultFuture.isDone()) return;
         for (DastAuditClientMessage request : sendWindow.drainSendable()) {
             sendRequest(request);
         }
@@ -268,6 +296,11 @@ public class DastAuditStreamProcessor implements AutoCloseable {
     }
 
     private void handleError(DastAuditErrorResponse response) {
+        if (!streamInitialized && ("APPLICATION_BUSY".equals(response.getStatus())
+                || recovery.active() && ServerBusyBackoff.isServerBusy(response.getStatus()))) {
+            handleStreamError(new AviatorSimpleException("Aviator server is busy"), true);
+            return;
+        }
         if (ServerBusyBackoff.isServerBusy(response.getStatus()) && scheduleServerBusyRetry(response.getRequestId())) {
             return;
         }
@@ -319,9 +352,11 @@ public class DastAuditStreamProcessor implements AutoCloseable {
 
         long generation = streamGeneration.get();
         Runnable resend = () -> {
-            if (generation != streamGeneration.get() || resultFuture.isDone() || isClosed.get()
-                    || !requestIssueIds.containsKey(requestId)) return;
-            sendRequest(message);
+            synchronized (this) {
+                if (generation != streamGeneration.get() || resultFuture.isDone() || isClosed.get()
+                        || !requestIssueIds.containsKey(requestId)) return;
+                sendRequest(message);
+            }
         };
         if (pingScheduler == null) {
             CompletableFuture.delayedExecutor(delay, TimeUnit.MILLISECONDS).execute(resend);
@@ -343,11 +378,9 @@ public class DastAuditStreamProcessor implements AutoCloseable {
 
     private class ResponseObserver implements ClientResponseObserver<DastAuditClientMessage, DastAuditServerMessage> {
         private final long generation;
-        private final StreamInitializationTimeout attemptTimeout;
 
-        private ResponseObserver(long generation, StreamInitializationTimeout attemptTimeout) {
+        private ResponseObserver(long generation) {
             this.generation = generation;
-            this.attemptTimeout = attemptTimeout;
         }
 
         private boolean isCurrent() {
@@ -356,116 +389,115 @@ public class DastAuditStreamProcessor implements AutoCloseable {
 
         @Override
         public void beforeStart(ClientCallStreamObserver<DastAuditClientMessage> requestStream) {
-            if (isCurrent()) activeRequestStream = requestStream;
+            synchronized (DastAuditStreamProcessor.this) {
+                if (isCurrent() && !resultFuture.isDone()) activeRequestStream = requestStream;
+                else requestStream.cancel("DAST audit attempt retired", null);
+            }
         }
 
         @Override
         public void onNext(DastAuditServerMessage message) {
-            if (!isCurrent()) return;
-            switch (message.getResponseTypeCase()) {
-                case INIT -> handleInit(message.getInit());
-                case AUDIT -> handleAudit(message.getAudit());
-                case ERROR -> handleError(message.getError());
-                case PONG -> handlePong(message.getPong());
-                default -> LOG.warn("Unknown DAST audit response type: {}", message.getResponseTypeCase());
+            synchronized (DastAuditStreamProcessor.this) {
+                if (!isCurrent() || resultFuture.isDone() || recovery.expireIfOverdue()) return;
+                try {
+                    switch (message.getResponseTypeCase()) {
+                        case INIT -> handleInit(message.getInit());
+                        case AUDIT -> handleAudit(message.getAudit());
+                        case ERROR -> handleError(message.getError());
+                        case PONG -> handlePong(message.getPong());
+                        default -> LOG.warn("Unknown DAST audit response type: {}", message.getResponseTypeCase());
+                    }
+                } catch (RuntimeException error) {
+                    completeExceptionally(new AviatorTechnicalException("Error handling DAST audit response", error));
+                }
             }
         }
 
         @Override
         public void onError(Throwable throwable) {
-            if (!isCurrent()) return;
-            isRpcCompleted.set(true);
-            if (attemptTimeout.isExpired()) {
-                stopPingPong();
-                completeExceptionally(StreamInitializationTimeout.expiredError("DAST audit"));
-                return;
+            synchronized (DastAuditStreamProcessor.this) {
+                if (!isCurrent()) return;
+                isRpcCompleted.set(true);
+                handleStreamError(throwable);
             }
-            handleStreamError(throwable);
         }
 
         @Override
         public void onCompleted() {
-            if (!isCurrent()) return;
-            isRpcCompleted.set(true);
-            stopPingPong();
-            LOG.debug("DAST audit stream {} completed with {} terminal responses for {} submitted findings",
-                streamId, results.size(), workItems.size());
-            if (resultFuture.isDone()) return;
-            if (!pendingIssueIds.isEmpty()) {
-                handleStreamError(Status.UNAVAILABLE
-                    .withDescription("DAST audit stream completed before all findings received terminal responses")
-                    .asRuntimeException());
-                return;
+            synchronized (DastAuditStreamProcessor.this) {
+                if (!isCurrent()) return;
+                isRpcCompleted.set(true);
+                stopPingPong();
+                if (resultFuture.isDone()) return;
+                if (!streamInitialized || !pendingIssueIds.isEmpty()) {
+                    handleStreamError(Status.UNAVAILABLE
+                        .withDescription("DAST audit stream completed before all findings received terminal responses")
+                        .asRuntimeException());
+                    return;
+                }
+                completeSuccessfully();
             }
-            completeSuccessfully();
         }
     }
 
     private void startPingPong() {
         if (pingScheduler == null || pingIntervalSeconds <= 0) return;
-        pingTask = pingScheduler.scheduleAtFixedRate(() -> {
-            if (isPinging.compareAndSet(false, true)) {
-                try {
-                    if (requestHandler != null && requestHandler.isReady()) {
-                        var ping = DastAuditPingRequest.newBuilder()
-                            .setStreamId(streamId)
-                            .setTimestamp(System.currentTimeMillis())
-                            .build();
-                        sendRequest(DastAuditClientMessage.newBuilder().setPing(ping).build());
-                    }
-                } finally {
-                    isPinging.set(false);
+        long generation = streamGeneration.get();
+        pingTask = pingScheduler.scheduleWithFixedDelay(() -> {
+            synchronized (this) {
+                if (generation != streamGeneration.get() || resultFuture.isDone() || isClosed.get()) return;
+                if (requestHandler != null && requestHandler.isReady()) {
+                    var ping = DastAuditPingRequest.newBuilder()
+                        .setStreamId(streamId)
+                        .setTimestamp(System.currentTimeMillis())
+                        .build();
+                    sendRequest(DastAuditClientMessage.newBuilder().setPing(ping).build());
                 }
             }
         }, pingIntervalSeconds, pingIntervalSeconds, TimeUnit.SECONDS);
     }
 
     private void handleStreamError(Throwable throwable) {
+        handleStreamError(throwable, isRetryableError(throwable));
+    }
+
+    private void handleStreamError(Throwable throwable, boolean retryable) {
         closeInitializationTimeout();
         stopPingPong();
         if (resultFuture.isDone() || isClosed.get() || isRetryScheduled.get()) return;
 
-        if (pendingIssueIds.isEmpty()) {
+        if (recovery.expireIfOverdue()) return;
+        if (retryable && streamInitialized && pendingIssueIds.isEmpty()) {
+            logger.warn("WARN: DAST audit stream disconnected after all finding responses were received");
             completeSuccessfully();
             return;
         }
-
-        if (isRetryableError(throwable) && canRetry(throwable)) {
+        if (retryable) {
             if (!isRetryScheduled.compareAndSet(false, true)) return;
-            int retryAttempt = streamRetryCount.incrementAndGet();
-            long delay = calculateStreamRetryDelay(retryAttempt);
-            String maxAttempts = isInfiniteRetryError(throwable)
-                ? "infinite" : String.valueOf(Constants.MAX_STREAM_RETRIES);
-            logger.info("Retrying DAST audit stream (attempt %d/%s) after %d ms; %d findings remain",
-                retryAttempt, maxAttempts, delay, pendingIssueIds.size());
-            scheduleRetry(delay);
+            recovery.begin();
+            long delay = recovery.nextDelayMs();
+            logger.warn("WARN: Retrying DAST audit stream connection after %d ms delay; %d findings remain",
+                delay, pendingIssueIds.size());
+            scheduleRetry(delay, throwable);
             return;
         }
 
         Status status = Status.fromThrowable(throwable);
-        completeExceptionally(new AviatorTechnicalException(
-            "DAST audit stream failed: " + status.getDescription(), throwable));
+        completeExceptionally(throwable instanceof AviatorSimpleException simple ? simple
+            : new AviatorTechnicalException("DAST audit stream failed: " + status.getDescription(), throwable));
     }
 
-    private boolean canRetry(Throwable throwable) {
-        int completedCount = workItems.size() - pendingIssueIds.size();
-        if (completedCount == lastRetryCompletedCount) {
-            if (stagnantRetryCount.incrementAndGet() >= 3) {
-                LOG.error("DAST audit stream made no progress after multiple retries");
-                return false;
-            }
-        } else {
-            stagnantRetryCount.set(0);
-        }
-        lastRetryCompletedCount = completedCount;
-        return isInfiniteRetryError(throwable) || streamRetryCount.get() < Constants.MAX_STREAM_RETRIES;
-    }
-
-    private void scheduleRetry(long delay) {
+    private void scheduleRetry(long delay, Throwable error) {
+        long generation = streamGeneration.incrementAndGet();
+        streamInitialized = false;
+        if (requestHandler != null) requestHandler.abort(error);
+        var run = resultFuture;
         Runnable retry = () -> {
-            if (!resultFuture.isDone() && !isClosed.get()) {
-                isRetryScheduled.set(false);
-                startStream();
+            synchronized (this) {
+                if (run == resultFuture && generation == streamGeneration.get() && !run.isDone() && !isClosed.get()) {
+                    isRetryScheduled.set(false);
+                    startStream();
+                }
             }
         };
         if (!isRpcCompleted.get() && activeRequestStream != null) {
@@ -479,44 +511,27 @@ public class DastAuditStreamProcessor implements AutoCloseable {
     }
 
     static boolean isRetryableError(Throwable throwable) {
-        Status status = Status.fromThrowable(throwable);
-        String description = status.getDescription();
-        return status.getCode() == Status.Code.UNAVAILABLE ||
-            status.getCode() == Status.Code.INTERNAL && description != null &&
-                (description.contains("RST_STREAM") || description.contains("PROTOCOL_ERROR"));
-    }
-
-    static boolean isInfiniteRetryError(Throwable throwable) {
-        Status status = Status.fromThrowable(throwable);
-        String description = status.getDescription();
-        return status.getCode() == Status.Code.INTERNAL && description != null &&
-            description.contains("PROTOCOL_ERROR");
-    }
-
-    static long calculateStreamRetryDelay(int retryCount) {
-        long delay = (long) (Constants.STREAM_RETRY_BASE_DELAY_MS * Math.pow(2, retryCount - 1));
-        return Math.min(delay, Constants.STREAM_RETRY_MAX_DELAY_MS) +
-            ThreadLocalRandom.current().nextLong(1000);
+        return StreamConnectionRecovery.isRetryable(throwable);
     }
 
     private void sendRequest(DastAuditClientMessage request) {
         RequestHandler<DastAuditClientMessage> currentHandler = requestHandler;
+        long generation = streamGeneration.get();
         currentHandler.sendRequest(request).whenComplete((sent, throwable) -> {
-            if (currentHandler != requestHandler || resultFuture.isDone() || isClosed.get()) return;
-            if (throwable != null || !Boolean.TRUE.equals(sent)) {
-                Throwable cause = throwable != null ? throwable : Status.UNAVAILABLE
-                    .withDescription("Unable to send DAST audit stream request")
-                    .asRuntimeException();
-                handleStreamError(cause);
+            synchronized (this) {
+                if (generation != streamGeneration.get() || currentHandler != requestHandler
+                        || resultFuture.isDone() || isClosed.get()) return;
+                if (throwable != null || !Boolean.TRUE.equals(sent)) {
+                    Throwable cause = throwable != null ? throwable : currentHandler.getSendFailure().getNow(null);
+                    handleStreamError(cause != null ? cause : Status.UNAVAILABLE
+                        .withDescription("Unable to send DAST audit stream request").asRuntimeException());
+                }
             }
         });
     }
 
     private void fail(RuntimeException exception) {
         stopPingPong();
-        if (requestHandler != null && !requestHandler.isCompleted()) {
-            requestHandler.sendError(exception);
-        }
         completeExceptionally(exception);
     }
 
@@ -555,16 +570,8 @@ public class DastAuditStreamProcessor implements AutoCloseable {
     }
 
     @Override
-    public void close() {
+    public synchronized void close() {
         isClosed.set(true);
-        closeInitializationTimeout();
-        stopPingPong();
-        if (retryTask != null) retryTask.cancel(false);
-        if (!isRpcCompleted.get() && activeRequestStream != null) {
-            activeRequestStream.cancel("DAST audit stream processor closed", null);
-        } else if (requestHandler != null && !requestHandler.isCompleted()) {
-            requestHandler.sendError(new AviatorTechnicalException("DAST audit stream processor closed"));
-        }
         if (resultFuture != null && !resultFuture.isDone()) {
             completeExceptionally(new AviatorTechnicalException("DAST audit stream processor closed"));
         }

@@ -22,6 +22,7 @@ import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -139,7 +140,7 @@ public class AviatorGrpcClient implements AutoCloseable {
     }
 
     private static ScheduledExecutorService createPingScheduler() {
-        return Executors.newSingleThreadScheduledExecutor(r -> {
+        return new ClientScheduler(r -> {
             Thread t = new Thread(r, "aviator-client-ping-" + r.hashCode());
             t.setDaemon(true);
             return t;
@@ -198,6 +199,7 @@ public class AviatorGrpcClient implements AutoCloseable {
             processorsToClose = List.copyOf(activeStreamProcessors);
         }
         processorsToClose.forEach(AviatorStreamProcessor::close);
+        if (pingScheduler instanceof ClientScheduler scheduler) scheduler.closeStreams();
         if (channel != null && !channel.isShutdown()) {
             try {
                 channel.shutdown().awaitTermination(5, TimeUnit.SECONDS);
@@ -232,6 +234,46 @@ public class AviatorGrpcClient implements AutoCloseable {
         }
 
         LOG.debug("Client closed");
+    }
+
+    static void registerStream(ScheduledExecutorService scheduler, Runnable close, CompletableFuture<?> result) {
+        if (!(scheduler instanceof ClientScheduler owner) || result.isDone()) return;
+        Runnable unregister = owner.register(close);
+        result.whenComplete((value, error) -> unregister.run());
+    }
+
+    private static final class ClientScheduler extends ScheduledThreadPoolExecutor {
+        private final Set<Runnable> streams = new HashSet<>();
+        private boolean closing;
+
+        private ClientScheduler(java.util.concurrent.ThreadFactory threads) {
+            super(1, threads);
+        }
+
+        private Runnable register(Runnable close) {
+            synchronized (this) {
+                if (!closing && !isShutdown()) {
+                    streams.add(close);
+                    return () -> {
+                        synchronized (this) {
+                            streams.remove(close);
+                        }
+                    };
+                }
+            }
+            close.run();
+            return () -> {};
+        }
+
+        private void closeStreams() {
+            Set<Runnable> snapshot;
+            synchronized (this) {
+                closing = true;
+                snapshot = Set.copyOf(streams);
+                streams.clear();
+            }
+            snapshot.forEach(Runnable::run);
+        }
     }
 
     public Application createApplication(String name, String tenantName, String signature, String message) {

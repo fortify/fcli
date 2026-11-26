@@ -99,11 +99,12 @@ public class RequestHandler<T> {
      * Uses a lock to ensure only one thread sends at a time.
      */
     public boolean flush() {
-        if (!isInitialized.get() || !sendLock.tryLock()) {
-            // Stream not ready or another thread is already flushing
+        if (!isInitialized.get()) {
             return true;
         }
-
+        // A concurrent flush may already have observed an empty queue. Wait for it
+        // before reporting that this flush has sent the newly queued request.
+        sendLock.lock();
         try {
             T request;
             while ((request = requestQueue.poll()) != null) {
