@@ -26,6 +26,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.LongSupplier;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -88,7 +89,6 @@ public class CorrelationStreamProcessor implements AutoCloseable {
 
     private RequestHandler<CorrelationClientMessage> requestHandler;
     private ScheduledFuture<?> pingTask;
-    private final AtomicBoolean isPinging = new AtomicBoolean(false);
 
     private volatile CorrelationStreamState state;
     private CountDownLatch streamLatch;
@@ -98,6 +98,7 @@ public class CorrelationStreamProcessor implements AutoCloseable {
     private Map<String, List<DastIssue>> urlToDastIssues;
     private final Set<String> pendingCorrelationRequestIds = ConcurrentHashMap.newKeySet();
     private final Set<String> pendingValidationRequestIds = ConcurrentHashMap.newKeySet();
+    private final Set<String> completedRequestIds = ConcurrentHashMap.newKeySet();
     private final ConcurrentHashMap<String, String> validationRequestToDastId = new ConcurrentHashMap<>();
     private final RequestSendWindow<CorrelationClientMessage> sendWindow = new RequestSendWindow<>(
         Constants.INITIAL_REQUEST_WINDOW, CorrelationStreamProcessor::requestIdOf);
@@ -105,6 +106,13 @@ public class CorrelationStreamProcessor implements AutoCloseable {
     private final Map<String, Integer> serverBusyAttempts = new ConcurrentHashMap<>();
     private volatile CompletableFuture<CorrelationResult> resultFuture;
     private volatile StreamInitializationTimeout initializationTimeout;
+    private volatile CorrelationResponseObserver currentObserver;
+    private volatile String scanGuid;
+    private final AtomicBoolean isClosed = new AtomicBoolean(false);
+    private volatile ScheduledFuture<?> retryTask;
+    private ClientCallStreamObserver<CorrelationClientMessage> activeRequestStream;
+    private boolean rpcCompleted;
+    private final StreamConnectionRecovery recovery;
 
     /**
      * Keys of SAST–DAST pairs that were confirmed or rejected in a previous run.
@@ -119,12 +127,20 @@ public class CorrelationStreamProcessor implements AutoCloseable {
             ScheduledExecutorService pingScheduler,
             long pingIntervalSeconds,
             long defaultTimeoutSeconds) {
+        this(client, logger, asyncStub, pingScheduler, pingIntervalSeconds, defaultTimeoutSeconds, System::nanoTime);
+    }
+
+    CorrelationStreamProcessor(AviatorGrpcClient client, IAviatorLogger logger,
+            CorrelationServiceGrpc.CorrelationServiceStub asyncStub, ScheduledExecutorService pingScheduler,
+            long pingIntervalSeconds, long defaultTimeoutSeconds, LongSupplier nanoTime) {
         this.client = client;
         this.logger = logger;
         this.asyncStub = asyncStub;
         this.pingScheduler = pingScheduler;
         this.pingIntervalSeconds = pingIntervalSeconds;
         this.defaultTimeoutSeconds = defaultTimeoutSeconds;
+        this.recovery = new StreamConnectionRecovery(pingScheduler, this, nanoTime, () ->
+            resultFuture.completeExceptionally(new AviatorTechnicalException("Correlation connection recovery timed out")));
     }
 
     /**
@@ -138,7 +154,7 @@ public class CorrelationStreamProcessor implements AutoCloseable {
     *                                {@code "sastInstanceId::dastIssueId"}; may be {@code null}
      * @return future that completes with the list of confirmed correlated pairs
      */
-    public CompletableFuture<CorrelationResult> processCorrelation(
+    public synchronized CompletableFuture<CorrelationResult> processCorrelation(
             CorrelationStreamConfig config,
             List<? extends Object> mixedBuckets,
             String scanGuid,
@@ -148,10 +164,13 @@ public class CorrelationStreamProcessor implements AutoCloseable {
             previouslyTriedPairKeys != null ? previouslyTriedPairKeys : Set.of();
         pendingCorrelationRequestIds.clear();
         pendingValidationRequestIds.clear();
+        completedRequestIds.clear();
         validationRequestToDastId.clear();
         sendWindow.clear();
         requestMessages.clear();
         serverBusyAttempts.clear();
+        this.scanGuid = scanGuid;
+        this.isClosed.set(false);
 
         // Build URL→DAST map first; needed to evaluate Phase 1 skip eligibility
         this.urlToDastIssues = buildUrlToDastMap(mixedBuckets);
@@ -175,9 +194,21 @@ public class CorrelationStreamProcessor implements AutoCloseable {
         this.resultFuture = resultFuture;
         this.streamLatch = new CountDownLatch(1);
 
-        initializationTimeout = new StreamInitializationTimeout(pingScheduler,
-            () -> requestHandler.sendError(StreamInitializationTimeout.expiredError("Correlation")));
-        resultFuture.whenComplete((result, error) -> initializationTimeout.close());
+        resultFuture.whenComplete((result, error) -> {
+            synchronized (this) {
+                recovery.end();
+                if (initializationTimeout != null) initializationTimeout.close();
+                stopPingPong();
+                if (retryTask != null) retryTask.cancel(false);
+                currentObserver = null;
+                if (error != null && !rpcCompleted && activeRequestStream != null) {
+                    activeRequestStream.cancel("Correlation run ended", error);
+                }
+                if (requestHandler != null && error != null) requestHandler.abort(error);
+                streamLatch.countDown();
+            }
+        });
+        AviatorGrpcClient.registerStream(pingScheduler, this::close, resultFuture);
         startStream(resultFuture, scanGuid);
 
         return resultFuture;
@@ -207,16 +238,40 @@ public class CorrelationStreamProcessor implements AutoCloseable {
 
     // ─── Stream lifecycle ──────────────────────────────────────────────
 
-    private void startStream(CompletableFuture<CorrelationResult> resultFuture, String scanGuid) {
-        requestHandler = new RequestHandler<>(state.streamId);
+    private synchronized void startStream(CompletableFuture<CorrelationResult> resultFuture, String scanGuid) {
+        if (isClosed.get() || resultFuture.isDone() || recovery.expireIfOverdue()) return;
+        rpcCompleted = false;
+        activeRequestStream = null;
+        var attemptHandler = new RequestHandler<CorrelationClientMessage>(state.streamId);
+        requestHandler = attemptHandler;
+        state.isStreamInitialized = false;
+        var attemptTimeout = new StreamInitializationTimeout(pingScheduler, () -> {
+            synchronized (this) {
+                if (attemptHandler != requestHandler || currentObserver == null || resultFuture.isDone()) return;
+                handleStreamError(StreamInitializationTimeout.expiredError("Correlation"), recovery.active());
+            }
+        });
+        initializationTimeout = attemptTimeout;
+        var observer = new CorrelationResponseObserver(resultFuture, scanGuid);
+        currentObserver = observer;
+        attemptHandler.getSendFailure().thenAcceptAsync(error -> {
+            synchronized (this) {
+                if (observer == currentObserver && !resultFuture.isDone()) handleStreamError(error);
+            }
+        });
+        try {
+            StreamObserver<CorrelationClientMessage> requestObserver = asyncStub.processCorrelationStream(observer);
+            if (observer != currentObserver || resultFuture.isDone()) return;
+            requestHandler.initialize(requestObserver);
+            startPingPong();
+            sendInit();
+            attemptTimeout.arm();
+        } catch (RuntimeException error) {
+            handleStreamError(error);
+        }
+    }
 
-        StreamObserver<CorrelationClientMessage> requestObserver =
-            asyncStub.processCorrelationStream(new CorrelationResponseObserver(resultFuture, scanGuid));
-
-        requestHandler.initialize(requestObserver);
-        startPingPong();
-
-        // Send init message
+    private void sendInit() {
         var initReq = CorrelationStreamInitRequest.newBuilder()
             .setToken(state.token)
             .setApplicationName(state.applicationName != null ? state.applicationName : "")
@@ -235,10 +290,7 @@ public class CorrelationStreamProcessor implements AutoCloseable {
             initReq.setSscApplicationVersion(state.sscApplicationVersion);
         }
 
-        requestHandler.sendRequest(
-            CorrelationClientMessage.newBuilder().setInit(initReq.build()).build()
-        );
-        initializationTimeout.arm();
+        sendRequest(CorrelationClientMessage.newBuilder().setInit(initReq.build()).build());
     }
 
     // ─── Phase 1: Send correlation requests ────────────────────────────
@@ -306,11 +358,12 @@ public class CorrelationStreamProcessor implements AutoCloseable {
     /** Sends queued requests while the in-flight window has free slots. */
     private void sendQueuedRequests() {
         var currentFuture = resultFuture;
-        if (requestHandler == null || requestHandler.isCompleted() || currentFuture == null || currentFuture.isDone()) {
+        if (!state.isStreamInitialized || currentObserver == null || requestHandler == null
+                || requestHandler.isCompleted() || currentFuture == null || currentFuture.isDone()) {
             return;
         }
         for (var message : sendWindow.drainSendable()) {
-            requestHandler.sendRequest(message);
+            sendRequest(message);
             if (message.getRequestTypeCase() == CorrelationClientMessage.RequestTypeCase.CORRELATION) {
                 state.sentCorrelations.incrementAndGet();
             } else {
@@ -321,6 +374,7 @@ public class CorrelationStreamProcessor implements AutoCloseable {
 
     /** Marks a request as finished: frees its window slot and drops its retry state. */
     private void completeRequest(String requestId) {
+        completedRequestIds.add(requestId);
         requestMessages.remove(requestId);
         serverBusyAttempts.remove(requestId);
         sendWindow.release(requestId);
@@ -346,10 +400,13 @@ public class CorrelationStreamProcessor implements AutoCloseable {
             requestId, delay, attempt, Constants.MAX_RETRIES);
 
         var run = resultFuture;
+        var observer = currentObserver;
         Runnable resend = () -> {
-            if (run != resultFuture || run.isDone() || requestHandler.isCompleted()
-                    || !requestMessages.containsKey(requestId)) return;
-            requestHandler.sendRequest(message);
+            synchronized (this) {
+                if (run != resultFuture || run.isDone() || requestHandler.isCompleted()
+                        || observer != currentObserver || !requestMessages.containsKey(requestId)) return;
+                sendRequest(message);
+            }
         };
         if (pingScheduler == null) {
             CompletableFuture.delayedExecutor(delay, TimeUnit.MILLISECONDS).execute(resend);
@@ -374,69 +431,143 @@ public class CorrelationStreamProcessor implements AutoCloseable {
 
         @Override
         public void beforeStart(ClientCallStreamObserver<CorrelationClientMessage> requestStream) {
-            // No special setup needed; RequestHandler manages the stream
+            synchronized (CorrelationStreamProcessor.this) {
+                if (this == currentObserver && !resultFuture.isDone()) activeRequestStream = requestStream;
+                else requestStream.cancel("Correlation attempt retired", null);
+            }
         }
 
         @Override
         public void onNext(CorrelationServerMessage message) {
-            try {
-                switch (message.getResponseTypeCase()) {
-                    case INIT -> handleInitResponse(message.getInit());
-                    case CORRELATION -> handleCorrelationResponse(message.getCorrelation());
-                    case VALIDATION -> handleValidationResponse(message.getValidation(), scanGuid);
-                    case ERROR -> handleErrorResponse(message.getError(), resultFuture);
-                    case PONG -> handlePongResponse(message.getPong());
-                    default -> LOG.warn("Unknown correlation response type: {}", message.getResponseTypeCase());
+            synchronized (CorrelationStreamProcessor.this) {
+                if (this != currentObserver || resultFuture.isDone() || recovery.expireIfOverdue()) return;
+                try {
+                    switch (message.getResponseTypeCase()) {
+                        case INIT -> handleInitResponse(message.getInit());
+                        case CORRELATION -> handleCorrelationResponse(message.getCorrelation());
+                        case VALIDATION -> handleValidationResponse(message.getValidation(), scanGuid);
+                        case ERROR -> handleErrorResponse(message.getError(), resultFuture);
+                        case PONG -> handlePongResponse(message.getPong());
+                        default -> LOG.warn("Unknown correlation response type: {}", message.getResponseTypeCase());
+                    }
+                } catch (Exception e) {
+                    resultFuture.completeExceptionally(new AviatorTechnicalException("Error handling correlation response", e));
                 }
-            } catch (Exception e) {
-                LOG.error("Error handling correlation response", e);
             }
         }
 
         @Override
         public void onError(Throwable t) {
-            stopPingPong();
-            if (initializationTimeout.isExpired()) {
-                resultFuture.completeExceptionally(StreamInitializationTimeout.expiredError("Correlation"));
-                streamLatch.countDown();
-                return;
+            synchronized (CorrelationStreamProcessor.this) {
+                if (this != currentObserver) return;
+                rpcCompleted = true;
+                stopPingPong();
+                handleStreamError(t);
             }
-            Status status = Status.fromThrowable(t);
-            LOG.error("Correlation stream error: {} - {}", status.getCode(), status.getDescription(), t);
-            resultFuture.completeExceptionally(
-                new AviatorTechnicalException("Correlation stream failed: " + status.getDescription(), t)
-            );
-            streamLatch.countDown();
         }
 
         @Override
         public void onCompleted() {
-            stopPingPong();
-            state.currentPhase = CorrelationStreamState.Phase.COMPLETE;
-            logger.info("Correlation stream completed — " + state.confirmedPairs.size() + " confirmed pairs");
-            if (!resultFuture.isDone()) {
-                resultFuture.complete(createResultSnapshot());
+            synchronized (CorrelationStreamProcessor.this) {
+                if (this != currentObserver) return;
+                rpcCompleted = true;
+                if (!state.isStreamInitialized || !requestMessages.isEmpty()) {
+                    handleStreamError(Status.UNAVAILABLE.withDescription("Correlation stream completed before all responses")
+                        .asRuntimeException());
+                    return;
+                }
+                stopPingPong();
+                state.currentPhase = CorrelationStreamState.Phase.COMPLETE;
+                logger.info("Correlation stream completed — " + state.confirmedPairs.size() + " confirmed pairs");
+                if (!resultFuture.isDone()) resultFuture.complete(createResultSnapshot());
+                streamLatch.countDown();
             }
-            streamLatch.countDown();
         }
     }
 
     // ─── Response handlers ─────────────────────────────────────────────
 
     private void handleInitResponse(CorrelationInitResponse resp) {
+        if (state.isStreamInitialized || recovery.expireIfOverdue()) return;
+        if ("APPLICATION_BUSY".equals(resp.getStatus())) {
+            handleStreamError(new AviatorSimpleException("Application is busy"), true);
+            return;
+        }
         if (!initializationTimeout.initialized()) return;
         LOG.info("Correlation stream initialized. Server stream ID: {}, Reserved quota: {}, Status: {}",
             resp.getServerStreamId(), resp.getReservedQuota(), resp.getStatus());
 
-        state.isStreamInitialized = true;
-        state.quota = resp.getReservedQuota();
-
         if (!"OK".equalsIgnoreCase(resp.getStatus()) && !"SUCCESS".equalsIgnoreCase(resp.getStatus())) {
-            LOG.warn("Init response status: {} — {}", resp.getStatus(), resp.getStatusMessage());
+            resultFuture.completeExceptionally(new AviatorSimpleException(
+                "Correlation initialization failed: " + resp.getStatusMessage()));
+            return;
         }
+        state.isStreamInitialized = true;
+        recovery.end();
+        state.quota = resp.getReservedQuota();
+        if (state.currentPhase == CorrelationStreamState.Phase.INIT) {
+            sendCorrelationRequests();
+        } else {
+            sendWindow.clear();
+            List<CorrelationClientMessage> replay = requestMessages.values().stream().map(message ->
+                switch (message.getRequestTypeCase()) {
+                    case CORRELATION -> message.toBuilder().setCorrelation(
+                        message.getCorrelation().toBuilder().setStreamId(state.streamId)).build();
+                    case VALIDATION -> message.toBuilder().setValidation(
+                        message.getValidation().toBuilder().setStreamId(state.streamId)).build();
+                    default -> message;
+                }).toList();
+            enqueueRequests(replay);
+            sendQueuedRequests();
+        }
+    }
 
-        // Start sending correlation requests
-        sendCorrelationRequests();
+    private void sendRequest(CorrelationClientMessage message) {
+        var handler = requestHandler;
+        var observer = currentObserver;
+        handler.sendRequest(message).whenComplete((sent, error) -> {
+            synchronized (this) {
+                if (observer != currentObserver || resultFuture.isDone() || isClosed.get()) return;
+                if (error != null || !Boolean.TRUE.equals(sent)) {
+                    Throwable cause = error != null ? error : handler.getSendFailure().getNow(null);
+                    handleStreamError(cause != null ? cause : Status.UNAVAILABLE
+                        .withDescription("Unable to send correlation request").asRuntimeException());
+                }
+            }
+        });
+    }
+
+    private void handleStreamError(Throwable error) {
+        handleStreamError(error, StreamConnectionRecovery.isRetryable(error));
+    }
+
+    private void handleStreamError(Throwable error, boolean retryable) {
+        if (resultFuture.isDone() || isClosed.get() || currentObserver == null) return;
+        if (recovery.expireIfOverdue()) return;
+        if (!retryable) {
+            resultFuture.completeExceptionally(error instanceof AviatorSimpleException simple ? simple
+                : new AviatorTechnicalException("Correlation stream failed: " + Status.fromThrowable(error).getDescription(), error));
+            return;
+        }
+        recovery.begin();
+        long delay = recovery.nextDelayMs();
+        logger.warn("WARN: Retrying correlation stream connection after %d ms delay", delay);
+        currentObserver = null;
+        state.isStreamInitialized = false;
+        if (initializationTimeout != null) initializationTimeout.close();
+        stopPingPong();
+        if (requestHandler != null) requestHandler.abort(error);
+        if (!rpcCompleted && activeRequestStream != null) activeRequestStream.cancel("Correlation attempt retired", null);
+        state.streamId = UUID.randomUUID().toString();
+        var run = resultFuture;
+        Runnable restart = () -> {
+            synchronized (this) {
+                if (isClosed.get() || run != resultFuture || run.isDone()) return;
+                startStream(run, scanGuid);
+            }
+        };
+        if (pingScheduler == null) CompletableFuture.delayedExecutor(delay, TimeUnit.MILLISECONDS).execute(restart);
+        else retryTask = pingScheduler.schedule(restart, delay, TimeUnit.MILLISECONDS);
     }
 
     private void handleCorrelationResponse(CorrelationResponse resp) {
@@ -539,6 +670,11 @@ public class CorrelationStreamProcessor implements AutoCloseable {
     private void handleErrorResponse(CorrelationErrorResponse resp,
                                       CompletableFuture<CorrelationResult> resultFuture) {
         String requestId = resp.getRequestId();
+        if (!state.isStreamInitialized && ("APPLICATION_BUSY".equals(resp.getStatus())
+                || recovery.active() && ServerBusyBackoff.isServerBusy(resp.getStatus()))) {
+            handleStreamError(new AviatorSimpleException("Aviator server is busy"), true);
+            return;
+        }
         if (ServerBusyBackoff.isServerBusy(resp.getStatus()) && scheduleServerBusyRetry(requestId)) {
             return;
         }
@@ -561,6 +697,7 @@ public class CorrelationStreamProcessor implements AutoCloseable {
             onValidationRequestFinished(received);
             return;
         }
+        if (completedRequestIds.contains(requestId)) return;
         LOG.error("Correlation stream error from server: {} — {}",
             resp.getStatus(), resp.getStatusMessage());
         resultFuture.completeExceptionally(
@@ -580,20 +717,16 @@ public class CorrelationStreamProcessor implements AutoCloseable {
     private void startPingPong() {
         if (pingIntervalSeconds <= 0 || pingScheduler == null) return;
 
-        pingTask = pingScheduler.scheduleAtFixedRate(() -> {
-            if (isPinging.compareAndSet(false, true)) {
-                try {
-                    if (requestHandler != null && requestHandler.isReady()) {
-                        var ping = CorrelationPingRequest.newBuilder()
-                            .setStreamId(state.streamId)
-                            .setTimestamp(System.currentTimeMillis())
-                            .build();
-                        requestHandler.sendRequest(
-                            CorrelationClientMessage.newBuilder().setPing(ping).build()
-                        );
-                    }
-                } finally {
-                    isPinging.set(false);
+        var observer = currentObserver;
+        pingTask = pingScheduler.scheduleWithFixedDelay(() -> {
+            synchronized (this) {
+                if (observer != currentObserver || resultFuture.isDone() || isClosed.get()) return;
+                if (requestHandler != null && requestHandler.isReady()) {
+                    var ping = CorrelationPingRequest.newBuilder()
+                        .setStreamId(state.streamId)
+                        .setTimestamp(System.currentTimeMillis())
+                        .build();
+                    sendRequest(CorrelationClientMessage.newBuilder().setPing(ping).build());
                 }
             }
         }, pingIntervalSeconds, pingIntervalSeconds, TimeUnit.SECONDS);
@@ -847,11 +980,10 @@ public class CorrelationStreamProcessor implements AutoCloseable {
     // ─── Cleanup ───────────────────────────────────────────────────────
 
     @Override
-    public void close() {
-        if (initializationTimeout != null) initializationTimeout.close();
-        stopPingPong();
-        if (requestHandler != null && !requestHandler.isCompleted()) {
-            requestHandler.complete();
+    public synchronized void close() {
+        isClosed.set(true);
+        if (resultFuture != null && !resultFuture.isDone()) {
+            resultFuture.completeExceptionally(new AviatorTechnicalException("Correlation stream processor closed"));
         }
     }
 }

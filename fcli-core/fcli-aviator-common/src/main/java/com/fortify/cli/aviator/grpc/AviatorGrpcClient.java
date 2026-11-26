@@ -12,14 +12,17 @@
  */
 package com.fortify.cli.aviator.grpc;
 
+import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Queue;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -51,7 +54,6 @@ import com.fortify.aviator.grpc.AuditorServiceGrpc;
 import com.fortify.aviator.grpc.CorrelationServiceGrpc;
 import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
 import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
-import com.fortify.cli.aviator.audit.model.AuditResponse;
 import com.fortify.cli.aviator.audit.model.UserPrompt;
 import com.fortify.cli.aviator.config.IAviatorLogger;
 import com.fortify.cli.aviator.util.Constants;
@@ -92,10 +94,18 @@ public class AviatorGrpcClient implements AutoCloseable {
     private final long pingIntervalSeconds;
     private final java.util.concurrent.ScheduledExecutorService pingScheduler;
     final AtomicBoolean isShutdown = new AtomicBoolean(false);
+    private final Object streamProcessorsLock = new Object();
+    private final Set<AviatorStreamProcessor> activeStreamProcessors = new HashSet<>();
 
     /** Fail-fast clients require a connection context for error messages. */
     AviatorGrpcClient(ManagedChannel channel, long defaultTimeoutSeconds, IAviatorLogger logger, long pingIntervalSeconds,
             AviatorRequestPolicy requestPolicy, AviatorConnectionContext connectionContext) {
+        this(channel, defaultTimeoutSeconds, logger, pingIntervalSeconds, requestPolicy, connectionContext, createPingScheduler());
+    }
+
+    AviatorGrpcClient(ManagedChannel channel, long defaultTimeoutSeconds, IAviatorLogger logger, long pingIntervalSeconds,
+            AviatorRequestPolicy requestPolicy, AviatorConnectionContext connectionContext,
+            ScheduledExecutorService pingScheduler) {
         LOG.debug("Initializing AviatorGrpcClient with ManagedChannel");
         Objects.requireNonNull(requestPolicy, "requestPolicy");
         this.logger = logger;
@@ -126,20 +136,52 @@ public class AviatorGrpcClient implements AutoCloseable {
             return t;
         });
         this.pingIntervalSeconds = pingIntervalSeconds;
-        this.pingScheduler = Executors.newSingleThreadScheduledExecutor(r -> {
+        this.pingScheduler = Objects.requireNonNull(pingScheduler, "pingScheduler");
+    }
+
+    private static ScheduledExecutorService createPingScheduler() {
+        return new ClientScheduler(r -> {
             Thread t = new Thread(r, "aviator-client-ping-" + r.hashCode());
             t.setDaemon(true);
             return t;
         });
     }
 
-    public CompletableFuture<Map<String, AuditResponse>> processBatchRequests(Queue<UserPrompt> requests, String projectName,
+    /**
+     * Processes SAST requests, returning received responses and explicit stream completion or failure.
+     * Quota filtering, interruption and unexpected local failures complete the future exceptionally.
+     *
+     * @return the stream outcome; normal stream completion does not imply every audit succeeded
+     */
+    public CompletableFuture<SastStreamOutcome> processBatchRequests(Queue<UserPrompt> requests, String projectName,
             String FPRBuildId, String SSCApplicationName, String SSCApplicationVersion, String token, FprHandle fprHandle,
             List<String> customPriorityOrder, ISourceDecoder sourceDecoder, FVDLMetadata fvdlMetadata) {
         AviatorStreamProcessor processor = new AviatorStreamProcessor(this, logger, asyncStub, processingExecutor, pingScheduler,
                 pingIntervalSeconds, defaultTimeoutSeconds, fprHandle, sourceDecoder, fvdlMetadata);
-        CompletableFuture<Map<String, AuditResponse>> future = processor.processBatchRequests(requests, projectName, FPRBuildId, SSCApplicationName, SSCApplicationVersion, token, customPriorityOrder);
-        future.whenComplete((res, th) -> processor.close());
+        synchronized (streamProcessorsLock) {
+            if (isShutdown.get()) {
+                processor.close();
+                return CompletableFuture.failedFuture(new AviatorTechnicalException("Audit stream closed"));
+            }
+            activeStreamProcessors.add(processor);
+        }
+        CompletableFuture<SastStreamOutcome> future;
+        try {
+            future = processor.processBatchRequests(requests, projectName, FPRBuildId,
+                    SSCApplicationName, SSCApplicationVersion, token, customPriorityOrder);
+        } catch (RuntimeException e) {
+            processor.close();
+            synchronized (streamProcessorsLock) {
+                activeStreamProcessors.remove(processor);
+            }
+            throw e;
+        }
+        future.whenComplete((res, th) -> {
+            processor.close();
+            synchronized (streamProcessorsLock) {
+                activeStreamProcessors.remove(processor);
+            }
+        });
         return future.exceptionally(ex -> {
             Throwable cause = (ex instanceof CompletionException || ex instanceof ExecutionException) && ex.getCause() != null ? ex.getCause() : ex;
             if (cause instanceof AviatorSimpleException) throw (AviatorSimpleException) cause;
@@ -151,7 +193,13 @@ public class AviatorGrpcClient implements AutoCloseable {
     @Override
     public void close() {
         LOG.debug("Closing client...");
-        isShutdown.set(true);
+        List<AviatorStreamProcessor> processorsToClose;
+        synchronized (streamProcessorsLock) {
+            isShutdown.set(true);
+            processorsToClose = List.copyOf(activeStreamProcessors);
+        }
+        processorsToClose.forEach(AviatorStreamProcessor::close);
+        if (pingScheduler instanceof ClientScheduler scheduler) scheduler.closeStreams();
         if (channel != null && !channel.isShutdown()) {
             try {
                 channel.shutdown().awaitTermination(5, TimeUnit.SECONDS);
@@ -186,6 +234,46 @@ public class AviatorGrpcClient implements AutoCloseable {
         }
 
         LOG.debug("Client closed");
+    }
+
+    static void registerStream(ScheduledExecutorService scheduler, Runnable close, CompletableFuture<?> result) {
+        if (!(scheduler instanceof ClientScheduler owner) || result.isDone()) return;
+        Runnable unregister = owner.register(close);
+        result.whenComplete((value, error) -> unregister.run());
+    }
+
+    private static final class ClientScheduler extends ScheduledThreadPoolExecutor {
+        private final Set<Runnable> streams = new HashSet<>();
+        private boolean closing;
+
+        private ClientScheduler(java.util.concurrent.ThreadFactory threads) {
+            super(1, threads);
+        }
+
+        private Runnable register(Runnable close) {
+            synchronized (this) {
+                if (!closing && !isShutdown()) {
+                    streams.add(close);
+                    return () -> {
+                        synchronized (this) {
+                            streams.remove(close);
+                        }
+                    };
+                }
+            }
+            close.run();
+            return () -> {};
+        }
+
+        private void closeStreams() {
+            Set<Runnable> snapshot;
+            synchronized (this) {
+                closing = true;
+                snapshot = Set.copyOf(streams);
+                streams.clear();
+            }
+            snapshot.forEach(Runnable::run);
+        }
     }
 
     public Application createApplication(String name, String tenantName, String signature, String message) {

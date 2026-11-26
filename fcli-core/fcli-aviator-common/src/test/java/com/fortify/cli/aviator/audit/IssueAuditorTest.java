@@ -13,6 +13,9 @@
 package com.fortify.cli.aviator.audit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
@@ -26,7 +29,10 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -34,11 +40,23 @@ import java.util.zip.ZipOutputStream;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.NullAndEmptySource;
+import org.junit.jupiter.params.provider.ValueSource;
 
+import com.fortify.cli.aviator._common.exception.AviatorQuotaFilterException;
+import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
+import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
 import com.fortify.cli.aviator.audit.model.AuditFprOptions;
+import com.fortify.cli.aviator.audit.model.AuditResponse;
+import com.fortify.cli.aviator.audit.model.AuditResult;
 import com.fortify.cli.aviator.audit.model.UserPrompt;
+import com.fortify.cli.aviator.config.AviatorLoggerImpl;
 import com.fortify.cli.aviator.config.IAviatorLogger;
+import com.fortify.cli.aviator.config.TagMappingConfig;
+import com.fortify.cli.aviator.grpc.SastStreamOutcome;
 import com.fortify.cli.aviator.util.Constants;
+import com.fortify.cli.aviator.util.ResourceUtil;
 import com.fortify.cli.common.fpr.Vulnerability;
 import com.fortify.cli.common.fpr.filter.Filter;
 import com.fortify.cli.common.fpr.filter.FilterSelection;
@@ -48,6 +66,8 @@ import com.fortify.cli.common.fpr.model.AuditIssue;
 import com.fortify.cli.common.fpr.model.FPRInfo;
 import com.fortify.cli.common.fpr.model.FVDLMetadata;
 import com.fortify.cli.common.fpr.util.FprHandle;
+import com.fortify.cli.common.fpr.utils.SourceDecoders;
+import com.fortify.cli.common.progress.helper.IProgressWriter;
 
 
 class IssueAuditorTest {
@@ -62,6 +82,23 @@ class IssueAuditorTest {
 
     private Path tempFprFile;
     private FprHandle fprHandle;
+    private final List<String> warnings = new ArrayList<>();
+    private final List<String> progress = new ArrayList<>();
+    private final IAviatorLogger outcomeLogger = new AviatorLoggerImpl(new IProgressWriter() {
+        @Override public boolean isMultiLineSupported() { return false; }
+        @Override public void writeProgress(String message, Object... args) {
+            progress.add(args == null || args.length == 0 ? message : String.format(message, args));
+        }
+        @Override public void writeInfo(String message, Object... args) {}
+        @Override public void writeInfoWithException(String message, Throwable cause, Object... args) {}
+        @Override public void writeWarning(String message, Object... args) {
+            warnings.add(args == null || args.length == 0 ? message : String.format(message, args));
+        }
+        @Override public void writeWarningWithException(String message, Throwable cause, Object... args) {}
+        @Override public void clearProgress() {}
+        @Override public void close() {}
+        @Override public String type() { return "test"; }
+    });
 
     @BeforeEach
     void setup() throws IOException {
@@ -94,6 +131,184 @@ class IssueAuditorTest {
         if (tempFprFile != null) {
             Files.deleteIfExists(tempFprFile);
         }
+    }
+
+    @Test
+    void retainsPartialResultsForFprFinalizationAfterTerminalFailure() throws Exception {
+        IssueAuditor auditor = createIssueAuditor(false, false, Map.of());
+        var response = AuditResponse.builder().issueId(TEST_ISSUE_ID).status("SUCCESS").tier("GOLD")
+                .submittedToAviator(true)
+                .auditResult(AuditResult.builder().tagValue("Exploitable").comment("Audit result").build()).build();
+        var failure = new SastStreamOutcome.Failed(Map.of(TEST_ISSUE_ID, response),
+                new AviatorTechnicalException("Injected stream failure"));
+        Map<String, AuditResponse> responses = new HashMap<>();
+
+        var outcome = auditor.collectAuditOutcome(CompletableFuture.completedFuture(failure), responses, 2);
+
+        assertSame(response, responses.get(TEST_ISSUE_ID));
+        assertSame(responses, outcome.getAuditResponses());
+        assertEquals(2, outcome.getTotalIssuesToAudit());
+        long successfulResponses = outcome.getAuditResponses().values().stream()
+                .filter(auditResponse -> "SUCCESS".equalsIgnoreCase(auditResponse.getStatus()))
+                .count();
+        int skippedResponses = (int) outcome.getAuditResponses().values().stream()
+                .filter(auditResponse -> "SKIPPED".equalsIgnoreCase(auditResponse.getStatus()))
+                .count();
+        assertEquals("PARTIALLY_AUDITED", AuditFPR.determineAuditStatus(successfulResponses, skippedResponses,
+                outcome.getTotalIssuesToAudit(), outcome.getAuditResponses().size()));
+        assertEquals(List.of("WARN: Audit stream failed. Received responses: 1. Remaining responses are unavailable."),
+                warnings);
+        assertTrue(progress.isEmpty(), "A failed stream must not announce normal completion");
+
+        var parsed = AviatorSastFprParser.parse(fprHandle, SourceDecoders.defaults());
+        var mapping = ResourceUtil.loadYamlResource("default_tag_mapping.yaml", TagMappingConfig.class).resolveForSast();
+        var updatedFile = parsed.auditProcessor.updateAndSaveAuditAndRemediationsXml(
+                outcome.getAuditResponses(), mapping, Map.of(), parsed.fprInfo);
+
+        assertEquals(tempFprFile, updatedFile.toPath());
+        String auditXml = Files.readString(fprHandle.getPath("/audit.xml"));
+        assertTrue(auditXml.contains("instanceId=\"" + TEST_ISSUE_ID + "\""));
+        assertTrue(auditXml.contains("Audit result"));
+        fprHandle.close();
+        fprHandle = new FprHandle(tempFprFile);
+        assertTrue(Files.readString(fprHandle.getPath("/audit.xml")).contains("Audit result"),
+                "The received audit must persist after closing and reopening the FPR");
+    }
+
+    @Test
+    void warningLoggerDoesNotDuplicateExistingWarnPrefix() {
+        outcomeLogger.warn("WARN: Existing warning");
+
+        assertEquals(List.of("WARN: Existing warning"), warnings);
+    }
+
+    @Test
+    void keepsTerminalFailureWhenNoPartialResultsExist() {
+        IssueAuditor auditor = createIssueAuditor(false, false, Map.of());
+        var failure = new AviatorTechnicalException("Injected stream failure");
+        Map<String, AuditResponse> responses = new HashMap<>();
+
+        var thrown = assertThrows(AviatorTechnicalException.class,
+                () -> auditor.collectAuditOutcome(CompletableFuture.completedFuture(
+                        new SastStreamOutcome.Failed(Map.of(), failure)), responses, 2));
+
+        assertSame(failure, thrown);
+        assertTrue(responses.isEmpty());
+        assertTrue(warnings.isEmpty());
+    }
+
+    @ParameterizedTest
+    @NullAndEmptySource
+    @ValueSource(strings = {"Exploitable"})
+    void terminalFailureWithoutUsableSuccessIsNotFinalized(String tagValue) {
+        IssueAuditor auditor = createIssueAuditor(false, false, Map.of());
+        var failure = new AviatorTechnicalException("Injected stream failure");
+        var response = AuditResponse.builder().issueId(TEST_ISSUE_ID)
+                .status("Exploitable".equals(tagValue) ? "FAILED" : "SUCCESS")
+                .auditResult(AuditResult.builder().tagValue(tagValue).build()).build();
+        var result = new SastStreamOutcome.Failed(Map.of(TEST_ISSUE_ID, response), failure);
+        Map<String, AuditResponse> responses = new HashMap<>();
+
+        assertSame(failure, assertThrows(AviatorTechnicalException.class,
+                () -> auditor.collectAuditOutcome(CompletableFuture.completedFuture(result), responses, 2)));
+        assertTrue(responses.isEmpty());
+        assertTrue(warnings.isEmpty());
+    }
+
+    @Test
+    void terminalFailureWithMissingAuditResultIsNotFinalized() {
+        var auditor = createIssueAuditor(false, false, Map.of());
+        var response = AuditResponse.builder().issueId(TEST_ISSUE_ID).status("SUCCESS").build();
+        var failure = new AviatorTechnicalException("Injected stream failure");
+        var result = new SastStreamOutcome.Failed(Map.of(TEST_ISSUE_ID, response), failure);
+
+        assertSame(failure, assertThrows(AviatorTechnicalException.class,
+                () -> auditor.collectAuditOutcome(CompletableFuture.completedFuture(result), new HashMap<>(), 2)));
+    }
+
+    @Test
+    void completedStreamRetainsIssueLevelFailureWithoutPartialWarning() {
+        var auditor = createIssueAuditor(false, false, Map.of());
+        var response = AuditResponse.builder().issueId(TEST_ISSUE_ID).status("FAILED").build();
+        var result = new SastStreamOutcome.Completed(Map.of(TEST_ISSUE_ID, response));
+
+        var outcome = auditor.collectAuditOutcome(CompletableFuture.completedFuture(result), new HashMap<>(), 1);
+
+        assertSame(response, outcome.getAuditResponses().get(TEST_ISSUE_ID));
+        assertEquals(1, outcome.getTotalIssuesToAudit());
+        assertTrue(warnings.isEmpty());
+        assertEquals(List.of("Audit stream completed"), progress);
+    }
+
+    @Test
+    void quotaFilteringStillReportsZeroAuditableIssues() {
+        var auditor = createIssueAuditor(false, false, Map.of());
+        var failure = new AviatorQuotaFilterException("No quota");
+
+        var outcome = auditor.collectAuditOutcome(CompletableFuture.failedFuture(failure), new HashMap<>(), 2);
+
+        assertEquals(0, outcome.getTotalIssuesToAudit());
+        assertTrue(outcome.getAuditResponses().isEmpty());
+        assertTrue(warnings.isEmpty());
+    }
+
+    @Test
+    void initializationFailureKeepsExistingDomainException() {
+        var auditor = createIssueAuditor(false, false, Map.of());
+        var failure = new AviatorSimpleException("Audit initialization timed out");
+
+        assertSame(failure, assertThrows(AviatorSimpleException.class,
+                () -> auditor.collectAuditOutcome(CompletableFuture.completedFuture(
+                        new SastStreamOutcome.Failed(Map.of(), failure)), new HashMap<>(), 2)));
+    }
+
+    @Test
+    void unexpectedExceptionalFutureIsNotFinalized() {
+        var auditor = createIssueAuditor(false, false, Map.of());
+        var failure = new IllegalStateException("Injected implementation failure");
+
+        var thrown = assertThrows(AviatorTechnicalException.class,
+                () -> auditor.collectAuditOutcome(CompletableFuture.failedFuture(failure), new HashMap<>(), 2));
+
+        assertSame(failure, thrown.getCause());
+        assertTrue(warnings.isEmpty());
+    }
+
+    @Test
+    void interruptedWaitRestoresInterruptAndDoesNotFinalize() {
+        var auditor = createIssueAuditor(false, false, Map.of());
+        Thread.currentThread().interrupt();
+        try {
+            var thrown = assertThrows(AviatorTechnicalException.class,
+                    () -> auditor.collectAuditOutcome(new CompletableFuture<>(), new HashMap<>(), 2));
+            assertEquals("Audit interrupted", thrown.getMessage());
+            assertTrue(Thread.currentThread().isInterrupted());
+            assertTrue(warnings.isEmpty());
+        } finally {
+            Thread.interrupted();
+        }
+        assertFalse(Thread.currentThread().isInterrupted());
+    }
+
+    @Test
+    void outerTimeoutRemainsExceptionalWithoutPartialFinalization() {
+        var auditor = createIssueAuditor(false, false, Map.of());
+        var timeout = new TimeoutException("Injected outer timeout");
+        var future = new CompletableFuture<SastStreamOutcome>() {
+            @Override
+            public SastStreamOutcome get(long duration, TimeUnit unit) throws TimeoutException {
+                assertEquals(500, duration);
+                assertEquals(TimeUnit.MINUTES, unit);
+                throw timeout;
+            }
+        };
+
+        var thrown = assertThrows(AviatorTechnicalException.class,
+                () -> auditor.collectAuditOutcome(future, new HashMap<>(), 2));
+
+        assertSame(timeout, thrown.getCause());
+        assertEquals("Audit timed out after 500 minutes", thrown.getMessage());
+        assertTrue(warnings.isEmpty());
     }
 
     @Test
@@ -312,7 +527,7 @@ class IssueAuditorTest {
                 .fprInfo(fprInfo)
                 .filterSelection(new FilterSelection(null, null))
                 .sourceLanguageResolver(new SourceLanguageResolver(new FVDLMetadata()))
-                .options(auditOptions(forceReaudit, NO_OP_LOGGER, tagMappingPath))
+                .options(auditOptions(forceReaudit, outcomeLogger, tagMappingPath))
                 .build();
     }
 
