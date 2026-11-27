@@ -36,6 +36,19 @@ class SourceLanguageResolver {
         this.sourceFileTypeMetadata = snapshotSourceFileTypeMetadata(fvdlMetadata);
     }
 
+    // TODO: Replace this temporary compatibility mapping after SAST FVDL language values
+    // are verified and aligned with Aviator tier configuration.
+    private String mapFvdlCppToPrimaryExtensionLanguage(String language, Vulnerability vulnerability) {
+        if (!"CPP".equals(language)) {
+            return language;
+        }
+        switch (resolvePrimaryFileExtension(vulnerability)) {
+            case "c": return "C";
+            case "cpp": return "C++";
+            default: return language;
+        }
+    }
+
     String resolvePrimaryLanguage(Vulnerability vulnerability) {
         if (vulnerability == null) {
             return UNKNOWN_LANGUAGE;
@@ -46,12 +59,12 @@ class SourceLanguageResolver {
 
         String exactFprLanguage = resolveFromFprExactMatches(candidateFileNames);
         if (!isUnknown(exactFprLanguage)) {
-            return exactFprLanguage;
+            return mapFvdlCppToPrimaryExtensionLanguage(exactFprLanguage, vulnerability);
         }
 
         String extensionFprLanguage = resolveFromFprExtensionMatches(candidateFileNames);
         if (!isUnknown(extensionFprLanguage)) {
-            return extensionFprLanguage;
+            return mapFvdlCppToPrimaryExtensionLanguage(extensionFprLanguage, vulnerability);
         }
 
         String fallbackLanguage = normalizeLanguage(fallbackFileType);
