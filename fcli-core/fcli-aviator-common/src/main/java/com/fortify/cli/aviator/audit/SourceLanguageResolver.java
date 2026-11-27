@@ -38,11 +38,11 @@ class SourceLanguageResolver {
 
     // TODO: Replace this temporary compatibility mapping after SAST FVDL language values
     // are verified and aligned with Aviator tier configuration.
-    private String mapFvdlCppToPrimaryExtensionLanguage(String language, Vulnerability vulnerability) {
+    private String mapFvdlCppToPrimaryExtensionLanguage(String language, String fileName) {
         if (!"CPP".equals(language)) {
             return language;
         }
-        switch (resolvePrimaryFileExtension(vulnerability)) {
+        switch (normalizeExtension(fileName)) {
             case "c": return "C";
             case "cpp": return "C++";
             default: return language;
@@ -59,12 +59,12 @@ class SourceLanguageResolver {
 
         String exactFprLanguage = resolveFromFprExactMatches(candidateFileNames);
         if (!isUnknown(exactFprLanguage)) {
-            return mapFvdlCppToPrimaryExtensionLanguage(exactFprLanguage, vulnerability);
+            return exactFprLanguage;
         }
 
         String extensionFprLanguage = resolveFromFprExtensionMatches(candidateFileNames);
         if (!isUnknown(extensionFprLanguage)) {
-            return mapFvdlCppToPrimaryExtensionLanguage(extensionFprLanguage, vulnerability);
+            return extensionFprLanguage;
         }
 
         String fallbackLanguage = normalizeLanguage(fallbackFileType);
@@ -201,7 +201,7 @@ class SourceLanguageResolver {
         for (String candidateFileName : candidateFileNames) {
             String resolvedLanguage = resolveFromFprExactMatch(candidateFileName);
             if (!isUnknown(resolvedLanguage)) {
-                return resolvedLanguage;
+                return mapFvdlCppToPrimaryExtensionLanguage(resolvedLanguage, candidateFileName);
             }
         }
         return UNKNOWN_LANGUAGE;
@@ -211,7 +211,7 @@ class SourceLanguageResolver {
         for (String candidateFileName : candidateFileNames) {
             String resolvedLanguage = resolveFromFprExtension(candidateFileName);
             if (!isUnknown(resolvedLanguage)) {
-                return resolvedLanguage;
+                return mapFvdlCppToPrimaryExtensionLanguage(resolvedLanguage, candidateFileName);
             }
         }
         return UNKNOWN_LANGUAGE;

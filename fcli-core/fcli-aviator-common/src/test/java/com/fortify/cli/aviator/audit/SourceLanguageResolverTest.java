@@ -124,6 +124,21 @@ class SourceLanguageResolverTest {
     }
 
     @Test
+    void shouldNotMapCppUsingAnotherFilesExtension() {
+        FVDLMetadata metadata = new FVDLMetadata();
+        metadata.registerSourceFileType("src/noextension", "CPP");
+        metadata.registerSourceFileType("src/other.c", "JAVA");
+        Vulnerability vulnerability = Vulnerability.builder()
+                .lastStackTraceElement(stackTraceElement("src/noextension"))
+                .stackTrace(List.of(List.of(stackTraceElement("src/other.c"))))
+                .build();
+
+        SourceLanguageResolver resolver = new SourceLanguageResolver(metadata);
+        assertEquals("c", resolver.resolvePrimaryFileExtension(vulnerability));
+        assertEquals("CPP", resolver.resolvePrimaryLanguage(vulnerability));
+    }
+
+    @Test
     void shouldKeepCppUnchangedForMissingOrUnmatchedMetadata() {
         Vulnerability noFile = Vulnerability.builder().filetype("CPP").build();
         assertEquals("CPP", new SourceLanguageResolver(new FVDLMetadata()).resolvePrimaryLanguage(noFile));
